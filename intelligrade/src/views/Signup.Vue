@@ -1,5 +1,5 @@
 <template>
-  <div class="auth-container">
+  <div class="auth-wrapper">
     <div class="auth-box">
       <h1>Create Account</h1>
       <form>
@@ -17,9 +17,13 @@
 </template>
 
 <style scoped>
-.auth-container {
+.auth-wrapper {
+  position: fixed; /* Force full-screen */
+  top: 0;
+  left: 0;
+  width: 100vw; /* Full width */
+  height: 100vh; /* Full height */
   background-color: #3d8d7a;
-  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -30,7 +34,8 @@
   padding: 40px;
   border-radius: 10px;
   box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.2);
-  width: 400px;
+  width: 100%;
+  max-width: 500px; /* Wider for desktop */
 }
 
 h1 {
