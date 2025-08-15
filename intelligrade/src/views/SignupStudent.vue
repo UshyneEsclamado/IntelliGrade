@@ -1,16 +1,18 @@
 <template>
   <div class="auth-wrapper">
     <div class="auth-box">
-      <h1>Create Account</h1>
+      <h1>Create Student Account</h1>
       <form>
-        <input type="text" placeholder="Name" />
+        <input type="text" placeholder="Full Name" />
         <input type="email" placeholder="Email" />
         <input type="password" placeholder="Password" />
+        <input type="text" placeholder="Student ID" />
+        <input type="text" placeholder="Course/Year" />
         <button type="submit" class="signup-btn">Sign Up</button>
       </form>
       <p class="auth-text">
         Already have an account?
-        <router-link to="/login" class="login-link">Login</router-link>
+        <router-link to="/login" class="login-btn-link">Login</router-link>
       </p>
     </div>
   </div>
@@ -56,7 +58,12 @@ input {
   border-radius: 5px;
   border: 1px solid #ccc;
   outline: none;
-  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+/* Match placeholder style from login */
+input::placeholder {
+  color: #6c757d; /* same faded gray look */
+  font-weight: normal;
 }
 
 input:focus {
@@ -79,18 +86,9 @@ input:focus {
 }
 
 .auth-text {
+  text-align: center;
   margin-top: 15px;
-  color: #3d8d7a;
+  color: #3d8d7a; 
   font-weight: bold;
-}
-
-.login-link {
-  color: #3d8d7a;
-  font-weight: bold;
-  text-decoration: none;
-}
-
-.login-link:hover {
-  text-decoration: underline;
 }
 </style>
