@@ -1,5 +1,6 @@
 <template>
   <div class="auth-wrapper">
+    <div class="geometric-shapes"></div>
     <div class="auth-box">
       <div class="logo-section">
         <div class="user-icon">
@@ -142,82 +143,145 @@ export default {
 </script>
 
 <style scoped>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
+/* Update auth-wrapper */
 .auth-wrapper {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: #FBFFE4;
+  position: absolute;
+  inset: 0;
+  background: transparent !important;
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 100vh;
   padding: 20px;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Inter', sans-serif;
+  overflow-y: auto;
 }
 
-.auth-box {
-  background: #A3D1C6;
-  padding: 32px;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  text-align: center;
+/* Geometric Background Styles */
+.geometric-shapes {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: linear-gradient(135deg, #3D8D7A, #A3D1C6);
+}
+
+.geometric-shapes::before {
+  content: '';
+  position: absolute;
   width: 100%;
-  max-width: 380px;
+  height: 100%;
+  background: 
+    linear-gradient(45deg, transparent 48%, rgba(255,255,255,0.1) 50%, transparent 52%) 0 0 / 60px 60px,
+    linear-gradient(-45deg, transparent 48%, rgba(255,255,255,0.1) 50%, transparent 52%) 0 0 / 60px 60px,
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,0.1) 0, transparent 50px),
+    radial-gradient(circle at 80% 20%, rgba(255,255,255,0.1) 0, transparent 70px),
+    radial-gradient(circle at 10% 80%, rgba(255,255,255,0.1) 0, transparent 60px),
+    radial-gradient(circle at 90% 70%, rgba(255,255,255,0.1) 0, transparent 80px);
+  animation: moveBackground 30s linear infinite;
 }
 
+.geometric-shapes::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 10% 20%, rgba(255,255,255,0.2) 0, transparent 200px),
+    radial-gradient(circle at 90% 80%, rgba(255,255,255,0.2) 0, transparent 200px),
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1) 0, transparent 300px);
+  animation: floatShapes 20s ease-in-out infinite;
+}
+
+/* Auth box styles update */
+.auth-box {
+  background: rgba(251, 255, 228, 0.92);
+  backdrop-filter: blur(12px);
+  padding: 35px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 20px 40px rgba(61, 141, 122, 0.2),
+    0 0 100px rgba(255, 255, 255, 0.1);
+  width: 100%;
+  max-width: 460px;
+  text-align: center;
+  position: relative;
+  margin: 20px auto;
+  z-index: 1;
+}
+
+@keyframes moveBackground {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  100% {
+    transform: translate(-60px, -60px) rotate(5deg);
+  }
+}
+
+@keyframes floatShapes {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(20px, 20px);
+  }
+}
+
+/* Update logo section */
 .logo-section {
-  margin-bottom: 28px;
+  margin-bottom: 30px;
 }
 
 .user-icon {
-  width: 50px;
-  height: 50px;
-  background: rgba(61, 141, 122, 0.2);
+  width: 80px;
+  height: 80px;
+  background: rgba(61, 141, 122, 0.1);
   border-radius: 50%;
-  margin: 0 auto 16px;
+  margin: 0 auto 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #3D8D7A;
+}
+
+.user-icon svg {
+  width: 32px;
+  height: 32px;
 }
 
 h1 {
   color: #3D8D7A;
-  font-size: 20px;
-  font-weight: 600;
-  margin-bottom: 6px;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
   letter-spacing: -0.5px;
 }
 
 .subtitle {
   color: #3D8D7A;
-  font-size: 13px;
-  opacity: 0.8;
-  font-weight: 400;
+  font-size: 16px;
+  opacity: 0.85;
+  font-weight: 500;
 }
 
+/* Update form styles */
 .signup-form {
-  text-align: left;
-  margin-bottom: 20px;
+  margin: 25px auto;
+  max-width: 380px;
 }
 
 .form-group {
   margin-bottom: 16px;
+  text-align: left;
 }
 
 .form-group label {
   display: block;
   color: #3D8D7A;
-  font-size: 12px;
-  font-weight: 500;
-  margin-bottom: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 10px;
   letter-spacing: 0.2px;
 }
 
@@ -225,134 +289,110 @@ h1 {
   position: relative;
   display: flex;
   align-items: center;
+  margin: 0 auto;
 }
 
 .input-icon {
   position: absolute;
-  left: 10px;
-  color: #6B7280;
-  z-index: 1;
+  left: 12px;
+  width: 20px !important;
+  height: 20px !important;
+  color: rgba(61, 141, 122, 0.6);
 }
 
 input {
   width: 100%;
-  padding: 10px 10px 10px 32px;
-  font-size: 13px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
+  padding: 12px 12px 12px 45px;
+  font-size: 15px;
+  border: 2px solid rgba(61, 141, 122, 0.2);
+  border-radius: 12px;
   outline: none;
-  background: rgba(255, 255, 255, 0.9);
-  color: #374151;
+  background: white;
+  color: #3D8D7A;
   transition: all 0.3s ease;
-  font-weight: 400;
 }
 
 input:focus {
   border-color: #3D8D7A;
-  background: white;
-  box-shadow: 0 0 0 2px rgba(61, 141, 122, 0.1);
+  box-shadow: 0 0 0 4px rgba(61, 141, 122, 0.1);
 }
 
-input::placeholder {
-  color: #9CA3AF;
-  font-size: 12px;
-  font-weight: 400;
-}
-
+/* Update button styles */
 .signup-btn {
   width: 100%;
-  background: #3D8D7A;
-  color: white;
-  padding: 11px 16px;
-  font-size: 13px;
-  font-weight: 500;
+  background: linear-gradient(135deg, #3D8D7A, #A3D1C6);
+  color: #FBFFE4;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 600;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  letter-spacing: 0.3px;
+  gap: 10px;
+  margin-top: 20px;
 }
 
 .signup-btn:hover:not(:disabled) {
-  background: #2d6b5a;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(61, 141, 122, 0.2);
 }
 
 .signup-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
-  transform: none;
 }
 
+/* Update login section */
 .login-section {
-  font-size: 12px;
+  margin-top: 20px;
+  font-size: 16px;
   color: #3D8D7A;
-  line-height: 1.4;
 }
 
 .login-text {
   color: #3D8D7A;
-  opacity: 0.8;
-  font-weight: 400;
+  opacity: 0.85;
+  font-weight: 500;
 }
 
 .login-link {
   color: #3D8D7A;
   text-decoration: none;
   font-weight: 600;
+  margin-left: 4px;
   transition: all 0.3s ease;
-  border-bottom: 1px solid transparent;
+  padding-bottom: 2px;
+  border-bottom: 2px solid transparent;
 }
 
 .login-link:hover {
-  opacity: 0.8;
   border-bottom-color: #3D8D7A;
 }
 
-@media (max-width: 480px) {
+/* Update responsive styles */
+@media (max-width: 768px) {
   .auth-box {
-    padding: 24px 20px;
-    margin: 16px;
+    padding: 30px;
+    max-width: 400px;
+    margin: 15px;
+  }
+  
+  .signup-form {
     max-width: 340px;
   }
+}
 
-  .user-icon {
-    width: 44px;
-    height: 44px;
+@media (max-height: 700px) {
+  .auth-wrapper {
+    align-items: flex-start;
   }
-
-  h1 {
-    font-size: 18px;
-  }
-
-  .subtitle {
-    font-size: 12px;
-  }
-
-  input {
-    padding: 9px 9px 9px 30px;
-    font-size: 12px;
-  }
-
-  .input-icon {
-    left: 9px;
-  }
-
-  .form-group label {
-    font-size: 11px;
-  }
-
-  .signup-btn {
-    font-size: 12px;
-    padding: 10px 16px;
-  }
-
-  .login-section {
-    font-size: 11px;
+  
+  .auth-box {
+    margin: 20px auto;
   }
 }
 </style>

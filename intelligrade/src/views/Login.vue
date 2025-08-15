@@ -1,5 +1,11 @@
 <template>
   <div class="auth-wrapper">
+    <div class="geometric-shapes"></div>
+    <div class="floating-elements">
+      <div class="floating-circle circle-1"></div>
+      <div class="floating-circle circle-2"></div>
+      <div class="floating-circle circle-3"></div>
+    </div>
     <div class="auth-box">
       <div class="logo-section">
         <div class="user-icon">
@@ -115,80 +121,245 @@ export default {
 </script>
 
 <style scoped>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
+/* Update auth-wrapper */
 .auth-wrapper {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: #FBFFE4;
+  position: absolute;  /* Changed from fixed */
+  inset: 0;
+  background: transparent !important;
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 100vh;
   padding: 20px;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Inter', sans-serif;
+  overflow-y: auto; /* Add scroll */
 }
 
-.auth-box {
-  background: #A3D1C6;
-  padding: 40px;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  text-align: center;
+/* Geometric Background Styles */
+.geometric-shapes {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: linear-gradient(135deg, #3D8D7A, #A3D1C6);
+}
+
+.geometric-shapes::before {
+  content: '';
+  position: absolute;
   width: 100%;
-  max-width: 400px;
+  height: 100%;
+  background: 
+    linear-gradient(45deg, transparent 48%, rgba(255,255,255,0.1) 50%, transparent 52%) 0 0 / 60px 60px,
+    linear-gradient(-45deg, transparent 48%, rgba(255,255,255,0.1) 50%, transparent 52%) 0 0 / 60px 60px,
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,0.1) 0, transparent 50px),
+    radial-gradient(circle at 80% 20%, rgba(255,255,255,0.1) 0, transparent 70px),
+    radial-gradient(circle at 10% 80%, rgba(255,255,255,0.1) 0, transparent 60px),
+    radial-gradient(circle at 90% 70%, rgba(255,255,255,0.1) 0, transparent 80px);
+  animation: moveBackground 30s linear infinite;
+}
+
+.geometric-shapes::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 10% 20%, rgba(255,255,255,0.2) 0, transparent 200px),
+    radial-gradient(circle at 90% 80%, rgba(255,255,255,0.2) 0, transparent 200px),
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1) 0, transparent 300px);
+  animation: floatShapes 20s ease-in-out infinite;
+}
+
+/* Update auth-box styles */
+.auth-box {
+  background: rgba(251, 255, 228, 0.92);
+  backdrop-filter: blur(12px);
+  padding: 35px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 20px 40px rgba(61, 141, 122, 0.2),
+    0 0 100px rgba(255, 255, 255, 0.1);
+  width: 100%;
+  max-width: 460px; /* Match SignupStudent width */
+  text-align: center;
+  position: relative;
+  margin: 20px auto;
+  z-index: 1;
+}
+
+/* Update form styles */
+.login-form {
+  margin: 25px auto;
+  max-width: 380px; /* Match SignupStudent form width */
+}
+
+.form-group {
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+/* Update input styles */
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin: 0 auto;
+}
+
+input {
+  width: 100%;
+  padding: 12px 12px 12px 45px;
+  font-size: 15px;
+  border: 2px solid rgba(61, 141, 122, 0.2);
+  border-radius: 12px;
+  outline: none;
+  background: white;
+  color: #3D8D7A;
+  transition: all 0.3s ease;
+}
+
+/* Update button styles */
+.login-btn {
+  width: 100%;
+  max-width: 380px; /* Match form width */
+  margin: 20px auto 0;
+}
+
+/* Update responsive styles */
+@media (max-width: 768px) {
+  .auth-box {
+    padding: 30px;
+    max-width: 400px;
+    margin: 15px;
+  }
+  
+  .login-form {
+    max-width: 340px;
+  }
+}
+
+@media (max-height: 700px) {
+  .auth-wrapper {
+    align-items: flex-start;
+  }
+  
+  .auth-box {
+    margin: 20px auto;
+  }
+}
+
+/* Base styles */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+.floating-circle {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.1;
+  animation: float 8s ease-in-out infinite;
+}
+
+.circle-1 { 
+  width: 80px; 
+  height: 80px; 
+  background: #B3D8A8; 
+  top: 10%; 
+  left: 15%; 
+  animation-delay: 0s; 
+}
+
+.circle-2 { 
+  width: 120px; 
+  height: 120px; 
+  background: #FBFFE4; 
+  bottom: 15%; 
+  right: 20%; 
+  animation-delay: 2s; 
+}
+
+.circle-3 { 
+  width: 100px; 
+  height: 100px; 
+  background: #A3D1C6; 
+  top: 50%; 
+  left: 60%; 
+  animation-delay: 4s; 
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(180deg); }
+}
+
+@keyframes moveBackground {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  100% {
+    transform: translate(-60px, -60px) rotate(5deg);
+  }
+}
+
+@keyframes floatShapes {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(20px, 20px);
+  }
 }
 
 .logo-section {
-  margin-bottom: 32px;
+  margin-bottom: 40px;
 }
 
 .user-icon {
-  width: 60px;
-  height: 60px;
-  background: rgba(61, 141, 122, 0.2);
-  border-radius: 50%;
-  margin: 0 auto 20px;
+  width: 80px;  /* Smaller icon */
+  height: 80px;
+  margin: 0 auto 20px;  /* Reduced margin */
   display: flex;
   align-items: center;
   justify-content: center;
   color: #3D8D7A;
+  box-shadow: 0 8px 16px rgba(61, 141, 122, 0.1);
+}
+
+.user-icon svg {
+  width: 32px;  /* Smaller svg */
+  height: 32px;
 }
 
 h1 {
   color: #3D8D7A;
-  font-size: 24px;
-  font-weight: 600;
-  margin-bottom: 8px;
+  font-size: 28px;  /* Smaller font */
+  font-weight: 700;
+  margin-bottom: 8px;  /* Reduced margin */
+  letter-spacing: -0.5px;
 }
 
 .subtitle {
   color: #3D8D7A;
-  font-size: 14px;
-  opacity: 0.8;
+  font-size: 16px;  /* Smaller font */
+  opacity: 0.85;
+  font-weight: 500;
 }
 
 .login-form {
   text-align: left;
-  margin-bottom: 24px;
+  margin: 30px 0;  /* Reduced margin */
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 20px;  /* Reduced margin */
 }
 
 .form-group label {
   display: block;
   color: #3D8D7A;
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  letter-spacing: 0.2px;
 }
 
 .input-wrapper {
@@ -199,117 +370,154 @@ h1 {
 
 .input-icon {
   position: absolute;
-  left: 12px;
-  color: #6B7280;
-  z-index: 1;
+  left: 16px;
+  width: 24px !important;
+  height: 24px !important;
+  color: rgba(61, 141, 122, 0.6);
 }
 
 input {
   width: 100%;
-  padding: 12px 12px 12px 40px;
-  font-size: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
+  padding: 14px 14px 14px 45px;  /* Reduced padding */
+  font-size: 15px;  /* Smaller font */
+  border: 2px solid rgba(61, 141, 122, 0.2);
+  border-radius: 12px;
   outline: none;
-  background: rgba(255, 255, 255, 0.9);
-  color: #374151;
+  background: white;
+  color: #3D8D7A;
   transition: all 0.3s ease;
 }
 
 input:focus {
   border-color: #3D8D7A;
-  background: white;
-  box-shadow: 0 0 0 2px rgba(61, 141, 122, 0.1);
+  box-shadow: 0 0 0 4px rgba(61, 141, 122, 0.1);
 }
 
 input::placeholder {
-  color: #9CA3AF;
-  font-size: 13px;
+  color: rgba(61, 141, 122, 0.5);
+  font-size: 15px;
 }
 
 .login-btn {
   width: 100%;
-  background: #3D8D7A;
-  color: white;
-  padding: 12px 16px;
-  font-size: 14px;
-  font-weight: 500;
+  background: linear-gradient(135deg, #3D8D7A, #A3D1C6);
+  color: #FBFFE4;
+  padding: 14px;  /* Reduced padding */
+  font-size: 16px;  /* Smaller font */
+  font-weight: 600;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
+  margin-top: 16px;  /* Reduced margin */
 }
 
 .login-btn:hover:not(:disabled) {
-  background: #2d6b5a;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(61, 141, 122, 0.2);
 }
 
 .login-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
-  transform: none;
 }
 
 .forgot-section {
-  margin: 20px 0;
+  margin: 20px 0;  /* Reduced margin */
 }
 
 .forgot-section a {
   color: #3D8D7A;
-  font-size: 13px;
+  font-size: 16px;
   text-decoration: none;
-  opacity: 0.9;
-  transition: opacity 0.3s ease;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  padding-bottom: 2px;
+  border-bottom: 2px solid transparent;
 }
 
 .forgot-section a:hover {
-  opacity: 1;
+  border-bottom-color: #3D8D7A;
 }
 
 .signup-section {
-  font-size: 13px;
+  font-size: 16px;
   color: #3D8D7A;
-  opacity: 0.8;
+  margin-top: 20px;
 }
 
 .signup-link {
   color: #3D8D7A;
   text-decoration: none;
-  font-weight: 500;
-  transition: opacity 0.3s ease;
+  font-weight: 600;
+  margin-left: 4px;
+  transition: all 0.3s ease;
+  padding-bottom: 2px;
+  border-bottom: 2px solid transparent;
 }
 
 .signup-link:hover {
-  opacity: 0.8;
+  border-bottom-color: #3D8D7A;
 }
 
-@media (max-width: 480px) {
+/* Responsive styles */
+@media (max-width: 768px) {
   .auth-box {
-    padding: 32px 24px;
-    margin: 16px;
+    padding: 25px 20px;
+    margin: 15px;
+    max-width: 340px;
   }
 
   .user-icon {
-    width: 50px;
-    height: 50px;
+    width: 80px;
+    height: 80px;
+  }
+
+  .user-icon svg {
+    width: 32px;
+    height: 32px;
   }
 
   h1 {
-    font-size: 20px;
+    font-size: 28px;
+  }
+
+  .subtitle {
+    font-size: 16px;
   }
 
   input {
-    padding: 10px 10px 10px 36px;
-    font-size: 13px;
+    padding: 14px 14px 14px 45px;
+    font-size: 15px;
   }
 
   .input-icon {
-    left: 10px;
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  .login-btn {
+    font-size: 16px;
+    padding: 14px;
+  }
+
+  .forgot-section a,
+  .signup-section {
+    font-size: 14px;
+  }
+}
+
+@media (max-height: 700px) {
+  .auth-wrapper {
+    align-items: flex-start;
+  }
+  
+  .auth-box {
+    margin: 20px auto;
   }
 }
 </style>
