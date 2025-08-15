@@ -2,14 +2,25 @@
   <div class="auth-wrapper">
     <div class="auth-box">
       <h1>Login</h1>
-      <form>
-        <input type="email" placeholder="Email" />
-        <input type="password" placeholder="Password" />
+      <form @submit.prevent="handleLogin">
+        <input 
+          type="email" 
+          placeholder="Email" 
+          v-model="email"
+        />
+        <input 
+          type="password" 
+          placeholder="Password" 
+          v-model="password"
+        />
         <button type="submit" class="login-btn">Login</button>
       </form>
 
+      <!-- Show error if fields are empty or login fails -->
+      <p v-if="error" class="error-message">{{ error }}</p>
+
       <p class="forgot-password">
-        <a href="#">Forgot password?</a>
+        <a href="#" @click.prevent="handleForgotPassword">Forgot password?</a>
       </p>
 
       <!-- Redirect to Role Selection -->
@@ -20,7 +31,74 @@
   </div>
 </template>
 
+<script>
+import { supabase } from "../supabase.js";
+
+export default {
+  data() {
+    return {
+      email: "",
+      password: "",
+      error: ""
+    };
+  },
+  methods: {
+    async handleLogin() {
+      this.error = "";
+      if (!this.email || !this.password) {
+        this.error = "Email and password are required";
+        return;
+      }
+
+      const { data: user, error } = await supabase.auth.signInWithPassword({
+        email: this.email,
+        password: this.password
+      });
+
+      if (error) {
+        this.error = error.message;
+      } else {
+        const { data, error: profileError } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.user.id)
+          .single();
+
+        if (profileError) {
+          this.error = profileError.message;
+        } else {
+          if (data.role === "teacher") {
+            this.$router.push("/teacher-home");
+          } else if (data.role === "student") {
+            this.$router.push("/student-home");
+          }
+        }
+      }
+    },
+
+    async handleForgotPassword() {
+      this.error = "";
+      if (!this.email) {
+        this.error = "Please enter your email to reset password";
+        return;
+      }
+
+      const { data, error } = await supabase.auth.resetPasswordForEmail(this.email, {
+        redirectTo: window.location.origin + "/login" // redirect after reset
+      });
+
+      if (error) {
+        this.error = error.message;
+      } else {
+        alert("Password reset email sent! Please check your inbox.");
+      }
+    }
+  }
+};
+</script>
+
 <style scoped>
+/* Keep your original styles */
 .auth-wrapper {
   position: fixed;
   top: 0;
@@ -108,5 +186,12 @@ input:focus {
 
 .create-account-btn:hover {
   background-color: #A3D1C6;
+}
+
+.error-message {
+  color: red;
+  margin: 10px 0;
+  font-size: 14px;
+  font-weight: bold;
 }
 </style>
