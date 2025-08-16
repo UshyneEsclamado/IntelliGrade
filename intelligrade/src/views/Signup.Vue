@@ -83,6 +83,8 @@
           </svg>
           {{ isLoading ? 'Creating Account...' : 'Create Account' }}
         </button>
+
+        <div v-if="error" class="error-message">{{ error }}</div>
       </form>
 
       <div class="login-section">
@@ -94,6 +96,8 @@
 </template>
 
 <script>
+import { supabase } from '../supabase'
+
 export default {
   name: 'Signup',
   data() {
@@ -102,40 +106,55 @@ export default {
       email: '',
       password: '',
       confirmPassword: '',
-      isLoading: false
+      isLoading: false,
+      error: null,
+      role: 'teacher' // Default role, you can add a dropdown for student/teacher
     }
   },
   methods: {
     async handleSignup() {
       if (!this.fullName || !this.email || !this.password || !this.confirmPassword) {
-        alert('Please fill in all fields');
-        return;
+        this.error = 'Please fill in all fields'
+        return
       }
-      
       if (this.password !== this.confirmPassword) {
-        alert('Passwords do not match');
-        return;
+        this.error = 'Passwords do not match'
+        return
       }
-      
-      this.isLoading = true;
-      
+      this.isLoading = true
+      this.error = null
       try {
-        console.log('Signup attempt:', {
-          fullName: this.fullName,
+        // Create user in Supabase Auth
+        const { data, error } = await supabase.auth.signUp({
           email: this.email,
           password: this.password
-        });
-        
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Handle successful signup
-        // this.$router.push('/login');
-        
+        })
+        if (error || !data.user) throw error || new Error('Signup failed')
+        // Insert profile
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([{
+            id: data.user.id,
+            full_name: this.fullName,
+            role: this.role
+          }])
+        if (profileError) throw profileError
+        // Save session and redirect
+        localStorage.setItem('user', JSON.stringify(data.user))
+        localStorage.setItem('profile', JSON.stringify({
+          id: data.user.id,
+          full_name: this.fullName,
+          role: this.role
+        }))
+        if (this.role === 'student') {
+          this.$router.push('/student-dashboard')
+        } else {
+          this.$router.push('/teacher-dashboard')
+        }
       } catch (error) {
-        console.error('Signup error:', error);
-        alert('Signup failed. Please try again.');
+        this.error = error?.message || 'Signup failed. Please try again.'
       } finally {
-        this.isLoading = false;
+        this.isLoading = false
       }
     }
   }
@@ -378,7 +397,7 @@ input:focus {
   .auth-box {
     padding: 30px;
     max-width: 400px;
-    margin: 15px;
+   margin: 30px auto;
   }
   
   .signup-form {
@@ -386,13 +405,14 @@ input:focus {
   }
 }
 
-@media (max-height: 700px) {
+@media (max-height: 768px) {
   .auth-wrapper {
     align-items: flex-start;
+    padding-top: 30px;
   }
   
   .auth-box {
-    margin: 20px auto;
+    margin-top: 20px; /* ma-respect na ni */
   }
 }
 </style>
