@@ -105,28 +105,29 @@ export default {
   },
   methods: {
     async handleSignup() {
-      // Validate required fields
-      if (!this.fullName || !this.email || !this.password) {
-        this.error = "Full Name, Email, and Password are required";
+      if (!this.fullName || !this.email || !this.password || !this.studentId || !this.courseYear) {
+        this.error = "Please fill in all fields";
         return;
       }
 
       this.isLoading = true;
+      this.error = "";
 
-      // Sign up with Supabase
-      const { data: user, error } = await supabase.auth.signUp({
-        email: this.email,
-        password: this.password
-      });
+      try {
+        // Sign up with Supabase Auth
+        const { data, error } = await supabase.auth.signUp({
+          email: this.email,
+          password: this.password
+        });
 
-      if (error) {
-        this.error = error.message;
-        this.isLoading = false;
-      } else {
-        // Insert additional student info into profiles table
+        if (error || !data.user) {
+          throw error || new Error("Signup failed");
+        }
+
+        // Insert student profile
         const { error: profileError } = await supabase.from("profiles").insert([
           {
-            id: user.user.id,
+            id: data.user.id,
             full_name: this.fullName,
             role: "student",
             student_id: this.studentId,
@@ -134,13 +135,23 @@ export default {
           }
         ]);
 
-        if (profileError) {
-          this.error = profileError.message;
-          this.isLoading = false;
-        } else {
-          alert("Signup successful! Please check your email to confirm.");
-          this.$router.push("/login");
-        }
+        if (profileError) throw profileError;
+
+        // Save session and redirect to student dashboard
+        localStorage.setItem("user", JSON.stringify(data.user));
+        localStorage.setItem("profile", JSON.stringify({
+          id: data.user.id,
+          full_name: this.fullName,
+          role: "student",
+          student_id: this.studentId,
+          course_year: this.courseYear
+        }));
+
+        this.$router.push("/student-dashboard");
+      } catch (error) {
+        this.error = error?.message || "Signup failed. Please try again.";
+      } finally {
+        this.isLoading = false;
       }
     }
   }
