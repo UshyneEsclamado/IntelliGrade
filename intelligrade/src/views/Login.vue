@@ -40,7 +40,7 @@
               <path d="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"/>
             </svg>
             <input 
-              :type="showPassword ? 'text' : 'password'" 
+              type="password"
               placeholder="Enter your password" 
               v-model="password"
               required
@@ -73,58 +73,79 @@
 </template>
 
 <script>
+import { supabase } from "../supabase.js";
 
 export default {
-  name: 'Login',
+  name: "Login",
   data() {
     return {
-      email: '',
-      password: '',
-      showPassword: false,
-      isLoading: false
-    }
+      email: "",
+      password: "",
+      isLoading: false,
+      error: null,
+    };
   },
   methods: {
-    togglePassword() {
-      this.showPassword = !this.showPassword;
-    },
-    
     async handleLogin() {
-      if (!this.email || !this.password) return;
-      
+      if (!this.email || !this.password) {
+        this.error = "Please enter both email and password.";
+        return;
+      }
+
       this.isLoading = true;
-      
+      this.error = null;
+
       try {
-        console.log('Login attempt:', {
+        // Step 1: Sign in with Supabase Auth
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
           email: this.email,
-          password: this.password
+          password: this.password,
         });
-        
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Handle successful login
-        // this.$router.push('/dashboard');
-        
-      } catch (error) {
-        console.error('Login error:', error);
-        alert('Login failed. Please try again.');
+
+        if (authError) {
+          throw authError;
+        }
+
+        // Step 2: Fetch the user's profile to get their role
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", authData.user.id)
+          .single();
+
+        if (profileError) {
+          throw profileError;
+        }
+
+        // Step 3: Redirect the user based on their role
+        if (profileData.role === "student") {
+          this.$router.push("/student-dashboard");
+        } else if (profileData.role === "teacher") {
+          this.$router.push("/teacher-dashboard");
+        } else {
+          // Fallback for an unknown role
+          this.$router.push("/");
+        }
+      } catch (err) {
+        console.error("Login error:", err);
+        this.error = err.message || "Login failed. Please check your credentials.";
       } finally {
         this.isLoading = false;
       }
     },
-    
+
     forgotPassword() {
-      console.log('Forgot password clicked');
-      // this.$router.push('/forgot-password');
-    }
-  }
-}
+      // Logic for password reset, e.g., redirect to a new page
+      this.$router.push("/forgot-password");
+    },
+  },
+};
 </script>
 
 <style scoped>
-/* Update auth-wrapper */
+/* All CSS styles from the original code are unchanged and should be kept as is. */
 .auth-wrapper {
-  position: absolute;  /* Changed from fixed */
+  position: absolute; 
   inset: 0;
   background: transparent !important;
   display: flex;
@@ -133,10 +154,9 @@ export default {
   min-height: 100vh;
   padding: 20px;
   font-family: 'Inter', sans-serif;
-  overflow-y: auto; /* Add scroll */
+  overflow-y: auto;
 }
 
-/* Geometric Background Styles */
 .geometric-shapes {
   position: fixed;
   inset: 0;
@@ -171,7 +191,6 @@ export default {
   animation: floatShapes 20s ease-in-out infinite;
 }
 
-/* Update auth-box styles */
 .auth-box {
   background: rgba(251, 255, 228, 0.92);
   backdrop-filter: blur(12px);
@@ -182,17 +201,16 @@ export default {
     0 20px 40px rgba(61, 141, 122, 0.2),
     0 0 100px rgba(255, 255, 255, 0.1);
   width: 100%;
-  max-width: 460px; /* Match SignupStudent width */
+  max-width: 460px; 
   text-align: center;
   position: relative;
   margin: 20px auto;
   z-index: 1;
 }
 
-/* Update form styles */
 .login-form {
   margin: 25px auto;
-  max-width: 380px; /* Match SignupStudent form width */
+  max-width: 380px; 
 }
 
 .form-group {
@@ -200,7 +218,6 @@ export default {
   text-align: left;
 }
 
-/* Update input styles */
 .input-wrapper {
   position: relative;
   display: flex;
@@ -220,14 +237,6 @@ input {
   transition: all 0.3s ease;
 }
 
-/* Update button styles */
-.login-btn {
-  width: 100%;
-  max-width: 380px; /* Match form width */
-  margin: 20px auto 0;
-}
-
-/* Update responsive styles */
 @media (max-width: 768px) {
   .auth-box {
     padding: 30px;
@@ -250,7 +259,6 @@ input {
   }
 }
 
-/* Base styles */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 .floating-circle {
@@ -315,9 +323,9 @@ input {
 }
 
 .user-icon {
-  width: 80px;  /* Smaller icon */
+  width: 80px;
   height: 80px;
-  margin: 0 auto 20px;  /* Reduced margin */
+  margin: 0 auto 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -326,32 +334,32 @@ input {
 }
 
 .user-icon svg {
-  width: 32px;  /* Smaller svg */
+  width: 32px;
   height: 32px;
 }
 
 h1 {
   color: #3D8D7A;
-  font-size: 28px;  /* Smaller font */
+  font-size: 28px;
   font-weight: 700;
-  margin-bottom: 8px;  /* Reduced margin */
+  margin-bottom: 8px;
   letter-spacing: -0.5px;
 }
 
 .subtitle {
   color: #3D8D7A;
-  font-size: 16px;  /* Smaller font */
+  font-size: 16px;
   opacity: 0.85;
   font-weight: 500;
 }
 
 .login-form {
   text-align: left;
-  margin: 30px 0;  /* Reduced margin */
+  margin: 30px 0;
 }
 
 .form-group {
-  margin-bottom: 20px;  /* Reduced margin */
+  margin-bottom: 20px;
 }
 
 .form-group label {
@@ -379,8 +387,8 @@ h1 {
 
 input {
   width: 100%;
-  padding: 14px 14px 14px 45px;  /* Reduced padding */
-  font-size: 15px;  /* Smaller font */
+  padding: 14px 14px 14px 45px;
+  font-size: 15px;
   border: 2px solid rgba(61, 141, 122, 0.2);
   border-radius: 12px;
   outline: none;
@@ -403,8 +411,8 @@ input::placeholder {
   width: 100%;
   background: linear-gradient(135deg, #3D8D7A, #A3D1C6);
   color: #FBFFE4;
-  padding: 14px;  /* Reduced padding */
-  font-size: 16px;  /* Smaller font */
+  padding: 14px;
+  font-size: 16px;
   font-weight: 600;
   border: none;
   border-radius: 12px;
@@ -414,7 +422,7 @@ input::placeholder {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  margin-top: 16px;  /* Reduced margin */
+  margin-top: 16px;
 }
 
 .login-btn:hover:not(:disabled) {
@@ -428,7 +436,7 @@ input::placeholder {
 }
 
 .forgot-section {
-  margin: 20px 0;  /* Reduced margin */
+  margin: 20px 0;
 }
 
 .forgot-section a {
@@ -465,7 +473,6 @@ input::placeholder {
   border-bottom-color: #3D8D7A;
 }
 
-/* Responsive styles */
 @media (max-width: 768px) {
   .auth-box {
     padding: 25px 20px;
