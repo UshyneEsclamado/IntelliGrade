@@ -108,51 +108,54 @@ export default {
       confirmPassword: '',
       isLoading: false,
       error: null,
-      role: 'teacher' // Default role, you can add a dropdown for student/teacher
+      role: 'teacher'
     }
   },
   methods: {
     async handleSignup() {
       if (!this.fullName || !this.email || !this.password || !this.confirmPassword) {
-        this.error = 'Please fill in all fields'
+        this.error = 'Please fill in all fields.'
         return
       }
       if (this.password !== this.confirmPassword) {
-        this.error = 'Passwords do not match'
+        this.error = 'Passwords do not match.'
         return
       }
+      
       this.isLoading = true
       this.error = null
+
       try {
-        // Create user in Supabase Auth
-        const { data, error } = await supabase.auth.signUp({
+        // Step 1: Create user in Supabase Auth
+        const { data: authData, error: authError } = await supabase.auth.signUp({
           email: this.email,
-          password: this.password
+          password: this.password,
         })
-        if (error || !data.user) throw error || new Error('Signup failed')
-        // Insert profile
+
+        if (authError) {
+          throw authError
+        }
+
+        // Step 2: Insert additional user profile data into the "profiles" table
+        const user = authData.user;
         const { error: profileError } = await supabase
           .from('profiles')
           .insert([{
-            id: data.user.id,
+            id: user.id,
             full_name: this.fullName,
-            role: this.role
+            role: this.role,
           }])
-        if (profileError) throw profileError
-        // Save session and redirect
-        localStorage.setItem('user', JSON.stringify(data.user))
-        localStorage.setItem('profile', JSON.stringify({
-          id: data.user.id,
-          full_name: this.fullName,
-          role: this.role
-        }))
-        if (this.role === 'student') {
-          this.$router.push('/student-dashboard')
-        } else {
-          this.$router.push('/teacher-dashboard')
+
+        if (profileError) {
+          throw profileError
         }
-      } catch (error) {
-        this.error = error?.message || 'Signup failed. Please try again.'
+
+        // Step 3: Redirect to the correct dashboard based on role
+        this.$router.push('/teacher-dashboard')
+        
+      } catch (err) {
+        console.error('Signup error:', err);
+        this.error = err.message || 'An unexpected error occurred during signup.';
       } finally {
         this.isLoading = false
       }
@@ -162,9 +165,9 @@ export default {
 </script>
 
 <style scoped>
-/* Update auth-wrapper */
+/* Change fixed to absolute to enable scrolling */
 .auth-wrapper {
-  position: absolute;
+  position: absolute; 
   inset: 0;
   background: transparent !important;
   display: flex;
@@ -173,7 +176,7 @@ export default {
   min-height: 100vh;
   padding: 20px;
   font-family: 'Inter', sans-serif;
-  overflow-y: auto;
+  overflow-y: auto; 
 }
 
 /* Geometric Background Styles */
@@ -397,7 +400,7 @@ input:focus {
   .auth-box {
     padding: 30px;
     max-width: 400px;
-   margin: 30px auto;
+    margin: 30px auto;
   }
   
   .signup-form {
@@ -412,7 +415,7 @@ input:focus {
   }
   
   .auth-box {
-    margin-top: 20px; /* ma-respect na ni */
+    margin-top: 20px;
   }
 }
 </style>

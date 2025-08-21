@@ -10,7 +10,7 @@
       <div class="logo-section">
         <div class="user-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 3L1 9L12 15L21 10.09V17H23V9M5 13.18V17.18L12 21L19 17.18V13.18L12 17L5 13.18Z"/>
+            <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"/>
           </svg>
         </div>
         <h1>Create Student Account</h1>
@@ -106,7 +106,7 @@ export default {
   methods: {
     async handleSignup() {
       if (!this.fullName || !this.email || !this.password || !this.studentId || !this.courseYear) {
-        this.error = "Please fill in all fields";
+        this.error = "Please fill in all fields.";
         return;
       }
 
@@ -114,42 +114,41 @@ export default {
       this.error = "";
 
       try {
-        // Sign up with Supabase Auth
-        const { data, error } = await supabase.auth.signUp({
+        // Step 1: Sign up the user with email and password
+        const { data: authData, error: authError } = await supabase.auth.signUp({
           email: this.email,
-          password: this.password
+          password: this.password,
         });
 
-        if (error || !data.user) {
-          throw error || new Error("Signup failed");
+        if (authError) {
+          throw authError;
         }
 
-        // Insert student profile
-        const { error: profileError } = await supabase.from("profiles").insert([
-          {
-            id: data.user.id,
-            full_name: this.fullName,
-            role: "student",
-            student_id: this.studentId,
-            course_year: this.courseYear
-          }
-        ]);
+        // Step 2: Insert additional user profile data into the "profiles" table
+        const user = authData.user;
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .insert([
+            {
+              id: user.id,
+              full_name: this.fullName,
+              role: "student", // Automatically set the role to 'student'
+              student_id: this.studentId,
+              course_year: this.courseYear,
+            },
+          ]);
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          // If profile insertion fails, you might want to handle it or show an error
+          throw profileError;
+        }
 
-        // Save session and redirect to student dashboard
-        localStorage.setItem("user", JSON.stringify(data.user));
-        localStorage.setItem("profile", JSON.stringify({
-          id: data.user.id,
-          full_name: this.fullName,
-          role: "student",
-          student_id: this.studentId,
-          course_year: this.courseYear
-        }));
-
+        // Step 3: Redirect to the student dashboard on success
         this.$router.push("/student-dashboard");
-      } catch (error) {
-        this.error = error?.message || "Signup failed. Please try again.";
+        
+      } catch (err) {
+        console.error("Signup error:", err);
+        this.error = err.message || "An unexpected error occurred during signup.";
       } finally {
         this.isLoading = false;
       }
@@ -161,7 +160,7 @@ export default {
 <style scoped>
 /* Change fixed to absolute to enable scrolling */
 .auth-wrapper {
-  position: absolute;  /* Changed from fixed */
+  position: absolute; 
   inset: 0;
   background: linear-gradient(135deg, #3D8D7A, #A3D1C6);
   display: flex;
@@ -170,7 +169,7 @@ export default {
   min-height: 100vh;
   padding: 20px;
   font-family: 'Inter', sans-serif;
-  overflow-y: auto; /* Add scroll */
+  overflow-y: auto; 
 }
 
 .auth-box {
@@ -180,14 +179,13 @@ export default {
   border-radius: 20px;
   box-shadow: 0 20px 40px rgba(61, 141, 122, 0.2);
   width: 100%;
-  max-width: 500px; /* Increased width */
+  max-width: 500px;
   text-align: center;
   position: relative;
   margin: 80px auto;
   z-index: 1;
 }
 
-/* Update logo section */
 .logo-section {
   margin-bottom: 30px;
 }
@@ -224,14 +222,13 @@ h1 {
   font-weight: 500;
 }
 
-/* Update form styles */
 .signup-form {
   margin: 25px auto;
-  max-width: 380px; /* Increased form width */
+  max-width: 380px;
 }
 
 .form-group {
-  margin-bottom: 16px; /* Reduced spacing between form groups */
+  margin-bottom: 16px;
   text-align: left;
 }
 
@@ -248,7 +245,7 @@ h1 {
   position: relative;
   display: flex;
   align-items: center;
-  margin: 0 auto; /* Center the input fields */
+  margin: 0 auto;
 }
 
 .input-icon {
@@ -261,7 +258,7 @@ h1 {
 
 input {
   width: 100%;
-  padding: 12px 12px 12px 45px; /* Slightly reduced padding */
+  padding: 12px 12px 12px 45px;
   font-size: 15px;
   border: 2px solid rgba(61, 141, 122, 0.2);
   border-radius: 12px;
@@ -276,7 +273,6 @@ input:focus {
   box-shadow: 0 0 0 4px rgba(61, 141, 122, 0.1);
 }
 
-/* Update button styles */
 .signup-btn {
   width: 100%;
   background: linear-gradient(135deg, #3D8D7A, #A3D1C6);
@@ -305,7 +301,6 @@ input:focus {
   cursor: not-allowed;
 }
 
-/* Update login section */
 .login-section {
   margin-top: 20px;
   font-size: 16px;
@@ -326,7 +321,6 @@ input:focus {
   border-bottom-color: #3D8D7A;
 }
 
-/* Geometric Background Styles */
 .geometric-shapes {
   position: fixed;
   inset: 0;
@@ -361,7 +355,6 @@ input:focus {
   animation: floatShapes 20s ease-in-out infinite;
 }
 
-/* Update floating elements */
 .floating-circle {
   position: absolute;
   border-radius: 50%;
@@ -398,7 +391,6 @@ input:focus {
   animation-delay: 4s; 
 }
 
-/* Add animations */
 @keyframes moveBackground {
   0% {
     transform: translate(0, 0) rotate(0deg);
@@ -426,7 +418,6 @@ input:focus {
   }
 }
 
-/* Update responsive styles for smaller screens */
 @media (max-height: 700px) {
   .auth-wrapper {
     align-items: flex-start;
@@ -441,7 +432,7 @@ input:focus {
 @media (max-width: 768px) {
   .auth-box {
     padding: 30px;
-    max-width: 400px; /* Adjusted for mobile */
+    max-width: 400px;
     margin: 15px;
   }
   
