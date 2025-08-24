@@ -96,7 +96,6 @@ export default {
       this.error = null;
 
       try {
-        // Step 1: Sign in with Supabase Auth
         const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
           email: this.email,
           password: this.password,
@@ -106,7 +105,6 @@ export default {
           throw authError;
         }
 
-        // Step 2: Fetch the user's profile to get their role
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("role")
@@ -117,13 +115,11 @@ export default {
           throw profileError;
         }
 
-        // Step 3: Redirect the user based on their role
         if (profileData.role === "student") {
           this.$router.push("/student-dashboard");
         } else if (profileData.role === "teacher") {
-          this.$router.push("/teacher-dashboard");
+          this.$router.push("/teacher/dashboard"); // This line is correct
         } else {
-          // Fallback for an unknown role
           this.$router.push("/");
         }
       } catch (err) {
@@ -135,7 +131,6 @@ export default {
     },
 
     forgotPassword() {
-      // Logic for password reset, e.g., redirect to a new page
       this.$router.push("/forgot-password");
     },
   },
