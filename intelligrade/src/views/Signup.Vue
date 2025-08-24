@@ -126,7 +126,6 @@ export default {
       this.error = null
 
       try {
-        // Step 1: Create user in Supabase Auth
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: this.email,
           password: this.password,
@@ -136,7 +135,6 @@ export default {
           throw authError
         }
 
-        // Step 2: Insert additional user profile data into the "profiles" table
         const user = authData.user;
         const { error: profileError } = await supabase
           .from('profiles')
@@ -150,8 +148,8 @@ export default {
           throw profileError
         }
 
-        // Step 3: Redirect to the correct dashboard based on role
-        this.$router.push('/teacher-dashboard')
+        // FIX: Redirect to the correct dashboard based on role
+        this.$router.push('/teacher/dashboard')
         
       } catch (err) {
         console.error('Signup error:', err);
