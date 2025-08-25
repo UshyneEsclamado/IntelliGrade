@@ -284,7 +284,6 @@ onMounted(() => {
   fill: #3D8D7A;
   transform: scale(1.1);
 }
-
 .logout-btn {
   background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
   color: white;
@@ -295,10 +294,17 @@ onMounted(() => {
   font-weight: 600;
   font-size: 0.95rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-top: auto; /* Pushing the button to the bottom */
+  /* replaced auto push with fixed spacing to match nav-item gaps */
+  margin-top: 0.75rem; /* same gap as .nav-links children */
+  margin-bottom: 0.75rem; /* leave some space from bottom */
   box-shadow: 0 8px 32px rgba(61, 141, 122, 0.2);
   position: relative;
   overflow: hidden;
+  display: flex;               /* center label inside button */
+  align-items: center;         /* vertical centering */
+  justify-content: center;     /* horizontal centering */
+  line-height: 1; 
+  width: 100%; /* match nav item width */
 }
 
 .logout-btn::before {
@@ -316,6 +322,7 @@ onMounted(() => {
 .logout-btn span {
   position: relative;
   z-index: 1;
+  display: inline-block; 
 }
 
 .logout-btn:hover {
