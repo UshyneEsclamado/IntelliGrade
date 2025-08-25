@@ -89,8 +89,11 @@
               <div 
                 v-for="convo in filteredConversations" 
                 :key="convo.id" 
-                :class="['conversation-item', {'unread': !convo.read}]"
-                @click.stop="openConversationModal(convo)"
+               :class="[
+    'conversation-item', 
+    { 'unread': !convo.read, 'menu-open': activeMessageMenu === convo.id }
+  ]"
+  @click.stop="openConversationModal(convo)"
               >
                 <div class="sender-info">
                   <div class="sender-avatar">
@@ -184,6 +187,8 @@
                 :key="notif.id" 
                 :class="['notification-item', {'unread': !notif.read, 'important': notif.important}]"
                 @click="openNotificationModal(notif)"
+
+                
               >
                 <div class="notification-header">
                   <span class="notification-icon">
@@ -842,6 +847,16 @@ onMounted(() => {
   display: block;
 }
 
+.conversation-item {
+  overflow: visible;
+  position: relative; /* Add this */
+  z-index: 10;        /* Add this */
+}
+
+.conversation-item.menu-open {
+  z-index: 10000;
+}
+
 .conversation-list,
 .notification-list {
   display: flex;
@@ -960,7 +975,7 @@ onMounted(() => {
 
 .message-options-container {
   position: relative;
-  z-index: 999;
+  z-index: 20;
 }
 
 .options-btn {
@@ -1285,6 +1300,7 @@ onMounted(() => {
   border-color: #3D8D7A;
   box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
 }
+
 
 .send-btn {
   background: #3D8D7A;
