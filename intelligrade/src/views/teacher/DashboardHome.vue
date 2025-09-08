@@ -80,12 +80,13 @@
               <p>View, manage, and create classes.</p>
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
             </router-link>
-            <div class="quick-link-card" @click="createQuiz">
+            <!-- New Quick Link for Upload Assessment -->
+            <router-link to="/teacher/upload-assessment" class="quick-link-card">
               <div class="card-glow"></div>
-              <h3>Create a Quiz</h3>
-              <p>Design a new online quiz.</p>
+              <h3>Upload Assessment</h3>
+              <p>Upload an assessment based on a template and it will be automatically graded.</p>
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-            </div>
+            </router-link>
           </div>
         </section>
       </div>
@@ -150,18 +151,13 @@ const gradeAssessment = (assessment) => {
   // Add navigation to grading interface
 };
 
-const createQuiz = () => {
-  console.log('Navigating to quiz creation...');
-  // Navigate to the MyClasses page, from which the user can select a class to create a quiz in.
-  router.push({ name: 'MyClasses' });
-};
-
 onMounted(() => {
   fetchUserProfile();
   fetchAssessmentsToGrade();
   fetchDashboardStats();
 });
 </script>
+
 
 <style scoped>
 /*
