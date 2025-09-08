@@ -14,10 +14,11 @@ import DashboardHome from '@/views/teacher/DashboardHome.vue'
 import MyClasses from '@/views/teacher/MyClasses.vue'
 import ClassDetails from '@/views/teacher/ClassDetails.vue'
 import MessagesPage from '@/views/MessagesPage.vue'
-import AssessmentResults from '@/views/teacher/AssessmentResults.vue'
+import AssessmentResults from '@/views/teacher/AssessmentResults.vue'  // Importing the AssessmentResults component
 import CreateClass from '@/views/teacher/CreateClass.vue'
 import CreateQuiz from '@/views/teacher/CreateQuiz.vue'
-import SettingsPage from '@/views/SettingsPage.vue' // BAG-ONG IMPORT
+import SettingsPage from '@/views/SettingsPage.vue' // New import for SettingsPage
+import UploadAssessment from '@/components/UploadAssessment.vue' // New component for uploading assessments
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -35,7 +36,7 @@ const router = createRouter({
       meta: { requiresAuth: true },
       children: [
         {
-          path: '', 
+          path: '',
           redirect: 'dashboard'
         },
         {
@@ -60,7 +61,7 @@ const router = createRouter({
           component: MessagesPage
         },
         {
-          path: 'settings', // BAG-ONG ROUTE
+          path: 'settings', 
           name: 'SettingsPage',
           component: SettingsPage
         },
@@ -80,6 +81,12 @@ const router = createRouter({
           name: 'CreateQuiz',
           component: CreateQuiz,
           props: true
+        },
+        // New route for uploading assessments
+        {
+          path: 'upload-assessment',
+          name: 'UploadAssessment',
+          component: UploadAssessment,
         }
       ]
     }
