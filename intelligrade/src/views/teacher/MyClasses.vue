@@ -15,8 +15,26 @@
         </button>
       </div>
 
-      <section class="classes-grid">
-        <div class="card-box class-card" v-for="c in classes" :key="c.id">
+      <div v-if="loading" class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading your classes...</p>
+      </div>
+
+      <div v-else-if="error" class="error-state">
+        <p>{{ error }}</p>
+        <button @click="fetchClasses" class="retry-btn">Retry</button>
+      </div>
+
+      <section v-else class="classes-grid">
+        <div v-if="classes.length === 0" class="empty-state">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor" class="empty-icon">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+          </svg>
+          <h3>No Classes Yet</h3>
+          <p>Create your first class to get started!</p>
+        </div>
+        
+        <div v-else class="card-box class-card" v-for="c in classes" :key="c.id">
           <router-link :to="{ name: 'ClassDetails', params: { id: c.id } }" class="class-link">
             <h2 class="class-name">{{ c.name }}</h2>
             <p class="class-subject">{{ c.subject }}</p>
@@ -28,7 +46,7 @@
                   <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
                   <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                 </svg>
-                {{ c.students }} Students
+                {{ c.students || 0 }} Students
               </p>
               <p>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -38,34 +56,68 @@
                   <line x1="16" y1="17" x2="8" y2="17"></line>
                   <polyline points="10 9 9 9 8 9"></polyline>
                 </svg>
-                {{ c.assessments }} Assessments
+                {{ c.assessments || 0 }} Assessments
               </p>
             </div>
           </router-link>
         </div>
       </section>
-
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import { supabase } from '../../supabase';
 
 const router = useRouter();
+const route = useRoute();
 const classes = ref([]);
+const loading = ref(true);
+const error = ref('');
 
-const fetchClasses = () => {
-  classes.value = [
-    { id: 1, name: 'Grade 10 - Rizal', subject: 'Mathematics', students: 30, assessments: 5 },
-    { id: 2, name: 'Grade 9 - Bonifacio', subject: 'Science', students: 28, assessments: 4 },
-  ];
+// Fetch classes from Supabase
+const fetchClasses = async () => {
+  try {
+    loading.value = true;
+    error.value = '';
+    
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
+    // Fetch classes for current user
+    const { data, error: fetchError } = await supabase
+      .from('classes')
+      .select('*')
+      .eq('teacher_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (fetchError) throw fetchError;
+
+    classes.value = data || [];
+  } catch (err) {
+    console.error('Error fetching classes:', err);
+    error.value = 'Failed to load classes. Please try again.';
+  } finally {
+    loading.value = false;
+  }
 };
 
 const goToCreateClass = () => {
   router.push({ name: 'CreateClass' });
 };
+
+// Watch for route changes (when coming back from create class)
+watch(() => route.query.createdAt, (newVal) => {
+  if (newVal) {
+    fetchClasses();
+  }
+});
 
 onMounted(() => {
   fetchClasses();
@@ -147,6 +199,59 @@ onMounted(() => {
 
 .create-class-btn svg {
   color: #fff;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(61, 141, 122, 0.2);
+  border-left: 4px solid #3D8D7A;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #b00020;
+}
+
+.retry-btn {
+  background: #3D8D7A;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #666;
+}
+
+.empty-icon {
+  color: #A3D1C6;
+  margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+  color: #3D8D7A;
+  margin-bottom: 0.5rem;
 }
 
 .classes-grid {
