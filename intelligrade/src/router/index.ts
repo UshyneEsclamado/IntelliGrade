@@ -19,6 +19,8 @@ import CreateClass from '@/views/teacher/CreateClass.vue'
 import CreateQuiz from '@/views/teacher/CreateQuiz.vue'
 import SettingsPage from '@/views/SettingsPage.vue' // New import for SettingsPage
 import UploadAssessment from '@/components/UploadAssessment.vue' // New component for uploading assessments
+import EditClass from '@/views/teacher/EditClass.vue' // New import for EditClass
+import ClassStudents from '@/views/teacher/ClassStudents.vue' // New import for ClassStudents
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -53,6 +55,18 @@ const router = createRouter({
           path: 'classes/:id',
           name: 'ClassDetails',
           component: ClassDetails,
+          props: true
+        },
+        {
+          path: 'edit-class/:id',
+          name: 'EditClass',
+          component: EditClass,
+          props: true
+        },
+        {
+          path: 'class-students/:id',
+          name: 'ClassStudents',
+          component: ClassStudents,
           props: true
         },
         {

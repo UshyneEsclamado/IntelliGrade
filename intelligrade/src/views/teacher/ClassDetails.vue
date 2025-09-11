@@ -9,8 +9,8 @@
             </svg>
             Back to Classes
           </button>
-          <h1>{{ classData.name }}</h1>
-          <p>{{ classData.subject }}</p>
+          <h1>{{ classData.name || 'Loading...' }}</h1>
+          <p>{{ classData.subject || 'Loading...' }}</p>
         </div>
         <button class="create-quiz-btn" @click="goToCreateQuiz">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -24,24 +24,30 @@
       <section class="class-details-grid">
         <div class="card-box students-list-section">
           <div class="section-header">
-            <h2>Students ({{ classData.students.length }})</h2>
+            <h2>Students ({{ students.length }})</h2>
           </div>
-          <ul class="students-list">
-            <li v-for="student in classData.students" :key="student.id">
+          <ul class="students-list" v-if="students.length > 0">
+            <li v-for="student in students" :key="student.id">
               {{ student.name }}
             </li>
           </ul>
+          <div v-else class="empty-state">
+            <p>No students enrolled in this class yet.</p>
+          </div>
         </div>
         
         <div class="card-box assessments-list-section">
           <div class="section-header">
-            <h2>Assessments ({{ classData.assessments.length }})</h2>
+            <h2>Assessments ({{ assessments.length }})</h2>
           </div>
-          <ul class="assessments-list">
-            <li v-for="assessment in classData.assessments" :key="assessment.id">
+          <ul class="assessments-list" v-if="assessments.length > 0">
+            <li v-for="assessment in assessments" :key="assessment.id">
               {{ assessment.title }}
             </li>
           </ul>
+          <div v-else class="empty-state">
+            <p>No assessments created for this class yet.</p>
+          </div>
         </div>
 
         <div class="card-box ai-grading-section full-width">
@@ -88,58 +94,124 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { supabase } from '../../supabase';
 
 const route = useRoute();
 const router = useRouter();
 const classId = ref(route.params.id);
 
-const classData = ref({
-  id: classId.value,
-  name: 'Loading...',
-  subject: 'Loading...',
-  students: [],
-  assessments: []
-});
-
+const classData = ref({});
+const students = ref([]);
+const assessments = ref([]);
 const assessmentsToGrade = ref([]);
+const isLoading = ref(true);
 
-const fetchClassDetails = () => {
-  if (classId.value == 1) {
-    classData.value = {
-      id: 1,
-      name: 'Grade 10 - Rizal',
-      subject: 'Mathematics',
-      students: [
-        { id: 101, name: 'Juan Dela Cruz' },
-        { id: 102, name: 'Maria Santos' },
-        { id: 103, name: 'Jose Rizal' }
-      ],
-      assessments: [
-        { id: 1, title: 'Algebra Quiz 1' },
-        { id: 4, title: 'Geometry Test' }
-      ]
-    };
-    assessmentsToGrade.value = [
-      { id: 1, title: 'Algebra Quiz 1', studentsSubmitted: 20, totalStudents: 30, isGrading: false, isGraded: false },
-    ];
-  } else if (classId.value == 2) {
-    classData.value = {
-      id: 2,
-      name: 'Grade 9 - Bonifacio',
-      subject: 'Science',
-      students: [
-        { id: 201, name: 'Andres Bonifacio' },
-        { id: 202, name: 'Gregoria de Jesus' }
-      ],
-      assessments: [
-        { id: 2, title: 'Science Test 2' },
-        { id: 3, title: 'History Essay' }
-      ]
-    };
-    assessmentsToGrade.value = [
-      { id: 2, title: 'Science Test 2', studentsSubmitted: 28, totalStudents: 28, isGrading: false, isGraded: true },
-      { id: 3, title: 'History Essay', studentsSubmitted: 15, totalStudents: 28, isGrading: false, isGraded: false },
-    ];
+// Fetch class data from Supabase
+const fetchClassDetails = async () => {
+  try {
+    isLoading.value = true;
+    
+    // Fetch class information
+    const { data: classInfo, error: classError } = await supabase
+      .from('classes')
+      .select('*')
+      .eq('id', classId.value)
+      .single();
+    
+    if (classError) {
+      console.error('Error fetching class:', classError);
+      return;
+    }
+    
+    classData.value = classInfo;
+    
+    // Fetch students for this class
+    await fetchStudents();
+    
+    // Fetch assessments for this class
+    await fetchAssessments();
+    
+  } catch (error) {
+    console.error('Error fetching class details:', error);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const fetchStudents = async () => {
+  try {
+    console.log('Fetching students for class_id:', classId.value);
+    
+    // Option 1: If students have a class_id column
+    const { data: studentData, error } = await supabase
+      .from('students')
+      .select('*')
+      .eq('class_id', classId.value); // Adjust column name if different
+    
+    console.log('Supabase query result:', { data: studentData, error });
+    
+    if (error) {
+      console.error('Error fetching students:', error);
+      return;
+    }
+    
+    students.value = studentData || [];
+    
+    // Debug: Log the fetched data
+    console.log('Class ID:', classId.value);
+    console.log('Fetched students:', studentData);
+    console.log('Students count:', students.value.length);
+    
+    // Update student count in classes table
+    await updateStudentCount();
+    
+  } catch (error) {
+    console.error('Error in fetchStudents:', error);
+  }
+};
+
+// Fetch assessments for this class
+const fetchAssessments = async () => {
+  try {
+    const { data: assessmentData, error } = await supabase
+      .from('assessments')
+      .select('*')
+      .eq('class_id', classId.value); // Adjust column name if different
+    
+    if (error) {
+      console.error('Error fetching assessments:', error);
+      return;
+    }
+    
+    assessments.value = assessmentData || [];
+    
+    // Create assessments to grade list
+    assessmentsToGrade.value = assessmentData?.map(assessment => ({
+      ...assessment,
+      studentsSubmitted: 0, // You'll need to calculate this based on your submission table
+      totalStudents: students.value.length,
+      isGrading: false,
+      isGraded: false
+    })) || [];
+    
+  } catch (error) {
+    console.error('Error in fetchAssessments:', error);
+  }
+};
+
+// Update student count in the classes table
+const updateStudentCount = async () => {
+  try {
+    const { error } = await supabase
+      .from('classes')
+      .update({ student_count: students.value.length })
+      .eq('id', classId.value);
+    
+    if (error) {
+      console.error('Error updating student count:', error);
+    }
+  } catch (error) {
+    console.error('Error in updateStudentCount:', error);
   }
 };
 
@@ -158,6 +230,7 @@ const gradeAssessmentWithAI = async (assessmentId) => {
   assessment.isGrading = true;
   console.log(`Starting AI grading for assessment ID: ${assessmentId} in class ${classId.value}`);
   
+  // Simulate AI grading process - replace with actual AI grading logic
   await new Promise(resolve => setTimeout(resolve, 3000));
   
   assessment.isGrading = false;
