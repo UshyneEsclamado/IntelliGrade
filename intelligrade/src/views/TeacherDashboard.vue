@@ -2,13 +2,19 @@
   <div class="dashboard-container">
     <aside class="sidebar">
       <div class="user-info">
-        <div class="profile-pic-placeholder">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
-          </svg>
+        <div class="profile-pic-container">
+          <img v-if="profileData.profile" :src="profileData.profile" :alt="profileData.full_name" class="profile-pic">
+          <div v-else class="profile-pic-placeholder">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
+            </svg>
+          </div>
         </div>
-        <h3>{{ fullName || 'Loading...' }}</h3>
-        <p class="role">Teacher</p>
+        <div class="user-details">
+          <h3>{{ profileData.full_name || 'Loading...' }}</h3>
+          <p class="role">Teacher</p>
+          <p v-if="profileData.bio" class="bio">{{ profileData.bio }}</p>
+        </div>
       </div>
 
       <nav class="nav-links">
@@ -49,11 +55,15 @@
 import { ref, onMounted } from 'vue';
 import { supabase } from '../supabase';
 import { useRouter } from 'vue-router';
-import { useDarkMode } from '../composables/useDarkMode'; // ✅ added composable
+import { useDarkMode } from '../composables/useDarkMode';
 
 const router = useRouter();
-const fullName = ref('');
-const { isDarkMode } = useDarkMode(); // ✅ use global dark mode state
+const profileData = ref({
+  full_name: '',
+  bio: '',
+  profile: ''
+});
+const { isDarkMode } = useDarkMode();
 
 const fetchUserProfile = async () => {
   try {
@@ -63,20 +73,42 @@ const fetchUserProfile = async () => {
       return;
     }
 
+    // Fetch all profile fields including profile picture and bio
     const { data: profile, error } = await supabase
       .from('profiles')
-      .select('full_name')
+      .select('full_name, bio, profile')
       .eq('id', user.id)
       .single();
 
     if (error) {
-      throw error;
+      console.warn('Profile not found, using defaults:', error);
+      // Set default values if profile doesn't exist
+      profileData.value = {
+        full_name: user.email || 'User',
+        bio: '',
+        profile: ''
+      };
+      return;
     }
 
-    fullName.value = profile.full_name;
+    profileData.value = {
+      full_name: profile.full_name || user.email || 'User',
+      bio: profile.bio || '',
+      profile: profile.profile || ''
+    };
   } catch (err) {
     console.error('Error fetching user profile:', err);
-    router.push('/login');
+    // Don't redirect to login on profile fetch error, just use defaults
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      profileData.value = {
+        full_name: user.email || 'User',
+        bio: '',
+        profile: ''
+      };
+    } else {
+      router.push('/login');
+    }
   }
 };
 
@@ -96,7 +128,6 @@ onMounted(() => {
   fetchUserProfile();
 });
 </script>
-
 
 <style scoped>
 /*
@@ -156,13 +187,35 @@ onMounted(() => {
 }
 
 .user-info {
-  text-align: center;
   margin-bottom: 2.5rem;
   padding-bottom: 2rem;
   border-bottom: 1px solid rgba(61, 141, 122, 0.15);
   background: rgba(251, 255, 228, 0.3);
   border-radius: 20px;
   padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.profile-pic-container {
+  margin-bottom: 1rem;
+}
+
+.profile-pic {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #3D8D7A;
+  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.profile-pic:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 12px 40px rgba(61, 141, 122, 0.4);
 }
 
 .profile-pic-placeholder {
@@ -173,7 +226,6 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 1rem;
   color: white;
   box-shadow: 0 8px 32px rgba(61, 141, 122, 0.3);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -187,6 +239,10 @@ onMounted(() => {
 .profile-pic-placeholder svg {
   width: 48px;
   height: 48px;
+}
+
+.user-details {
+  width: 100%;
 }
 
 .user-info h3 {
@@ -207,6 +263,19 @@ onMounted(() => {
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
   display: inline-block;
+  margin-bottom: 0.5rem;
+}
+
+.user-info .bio {
+  font-size: 0.875rem;
+  color: #666;
+  font-style: italic;
+  line-height: 1.4;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(61, 141, 122, 0.05);
+  border-radius: 8px;
+  border-left: 3px solid #3D8D7A;
 }
 
 .nav-links {
@@ -286,6 +355,7 @@ onMounted(() => {
   fill: #3D8D7A;
   transform: scale(1.1);
 }
+
 .logout-btn {
   background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
   color: white;
@@ -296,17 +366,16 @@ onMounted(() => {
   font-weight: 600;
   font-size: 0.95rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  /* replaced auto push with fixed spacing to match nav-item gaps */
-  margin-top: 0.75rem; /* same gap as .nav-links children */
-  margin-bottom: 0.75rem; /* leave some space from bottom */
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
   box-shadow: 0 8px 32px rgba(61, 141, 122, 0.2);
   position: relative;
   overflow: hidden;
-  display: flex;               /* center label inside button */
-  align-items: center;         /* vertical centering */
-  justify-content: center;     /* horizontal centering */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   line-height: 1; 
-  width: 100%; /* match nav item width */
+  width: 100%;
 }
 
 .logout-btn::before {
@@ -381,10 +450,13 @@ onMounted(() => {
     border-radius: 16px;
   }
   
-  .profile-pic-placeholder {
+  .profile-pic-container {
+    margin-bottom: 0;
+  }
+  
+  .profile-pic, .profile-pic-placeholder {
     width: 50px;
     height: 50px;
-    margin: 0;
   }
   
   .profile-pic-placeholder svg {
@@ -400,6 +472,10 @@ onMounted(() => {
   .user-info .role {
     font-size: 0.75rem;
     padding: 0.2rem 0.5rem;
+  }
+  
+  .user-info .bio {
+    display: none; /* Hide bio on mobile to save space */
   }
   
   .nav-links {
@@ -430,7 +506,7 @@ onMounted(() => {
     gap: 0.75rem;
   }
   
-  .profile-pic-placeholder {
+  .profile-pic, .profile-pic-placeholder {
     width: 40px;
     height: 40px;
   }
