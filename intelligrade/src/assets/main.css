@@ -34,3 +34,114 @@ a,
   }
 }
 
+/* Light mode variables (default) */
+:root {
+  --bg-primary: linear-gradient(135deg, #f8fffe 0%, #f0f7f4 100%);
+  --bg-secondary: #ffffff;
+  --card-background: rgba(255, 255, 255, 0.95);
+  --card-border-color: rgba(61, 141, 122, 0.08);
+  --primary-text-color: #333333;
+  --secondary-text-color: #666666;
+  --accent-color: #3D8D7A;
+  --accent-hover: #2d6d5a;
+  --action-btn-bg: rgba(61, 141, 122, 0.1);
+  --action-btn-color: #3D8D7A;
+  --background-color: #ffffff;
+  --border-color: #e0e0e0;
+  --input-bg: #ffffff;
+  --input-border: #ddd;
+}
+
+/* Dark mode variables */
+:root.dark {
+  --bg-primary: linear-gradient(135deg, #1a1f1e 0%, #2d3634 100%);
+  --bg-secondary: #1e2322;
+  --card-background: rgba(30, 35, 34, 0.95);
+  --card-border-color: rgba(61, 141, 122, 0.2);
+  --primary-text-color: #e0e0e0;
+  --secondary-text-color: #a0a8a6;
+  --accent-color: #5fb3a0;
+  --accent-hover: #4a9b87;
+  --action-btn-bg: rgba(95, 179, 160, 0.1);
+  --action-btn-color: #5fb3a0;
+  --background-color: #2d3634;
+  --border-color: rgba(61, 141, 122, 0.3);
+  --input-bg: #2d3634;
+  --input-border: rgba(61, 141, 122, 0.3);
+}
+
+/* Global body styles */
+body {
+  background: var(--bg-primary);
+  color: var(--primary-text-color);
+  transition: all 0.3s ease;
+  margin: 0;
+  padding: 0;
+}
+
+body.dark-mode {
+  background: var(--bg-primary);
+  color: var(--primary-text-color);
+}
+
+/* Global component styles that use CSS variables */
+.card-box {
+  background: var(--card-background);
+  border-color: var(--card-border-color);
+  color: var(--primary-text-color);
+}
+
+.form-input {
+  background-color: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--primary-text-color);
+}
+
+.modal-content {
+  background: var(--card-background);
+  color: var(--primary-text-color);
+}
+
+.modal-header {
+  border-bottom-color: var(--card-border-color);
+}
+
+.modal-footer {
+  border-top-color: var(--card-border-color);
+}
+
+/* Dark mode specific overrides for better contrast */
+.dark .text-secondary {
+  color: var(--secondary-text-color);
+}
+
+.dark .btn-secondary {
+  background: rgba(95, 179, 160, 0.1);
+  color: var(--secondary-text-color);
+}
+
+.dark .btn-secondary:hover {
+  background: rgba(95, 179, 160, 0.2);
+}
+
+.dark .close-btn {
+  color: var(--secondary-text-color);
+}
+
+.dark .close-btn:hover {
+  color: var(--primary-text-color);
+}
+
+/* Global body styles for dark mode */
+body {
+  margin: 0;
+  padding: 0;
+  transition: all 0.3s ease;
+}
+
+body.dark-mode {
+  background: linear-gradient(135deg, #1a1f1e 0%, #2d3634 100%);
+  color: #e0e0e0;
+}
+
+/* You can add more global dark mode styles here for other components */

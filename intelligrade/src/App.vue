@@ -1,14 +1,15 @@
 <template>
-  <router-view />
+  <div id="app">
+    <router-view />
+  </div>
 </template>
 
-<script setup>
+<script>
+export default {
+  name: 'App'
+}
 </script>
 
 <style>
-/* Optional: reset margins/padding */
-body, html {
-  margin: 0;
-  padding: 0;
-}
+/* Your styles here */
 </style>

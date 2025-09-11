@@ -45,14 +45,15 @@
     </main>
   </div>
 </template>
-
 <script setup>
 import { ref, onMounted } from 'vue';
 import { supabase } from '../supabase';
 import { useRouter } from 'vue-router';
+import { useDarkMode } from '../composables/useDarkMode'; // ✅ added composable
 
 const router = useRouter();
 const fullName = ref('');
+const { isDarkMode } = useDarkMode(); // ✅ use global dark mode state
 
 const fetchUserProfile = async () => {
   try {
@@ -61,17 +62,17 @@ const fetchUserProfile = async () => {
       router.push('/login');
       return;
     }
-    
+
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('full_name')
       .eq('id', user.id)
       .single();
-    
+
     if (error) {
       throw error;
     }
-    
+
     fullName.value = profile.full_name;
   } catch (err) {
     console.error('Error fetching user profile:', err);
@@ -95,6 +96,7 @@ onMounted(() => {
   fetchUserProfile();
 });
 </script>
+
 
 <style scoped>
 /*
