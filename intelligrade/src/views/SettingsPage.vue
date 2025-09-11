@@ -1,6 +1,7 @@
 <template>
   <div class="page-container">
     <div class="main-wrapper">
+      <!-- Header Section -->
       <div class="hero-header card-box">
         <div class="header-content">
           <div class="header-icon">
@@ -13,32 +14,51 @@
         </div>
       </div>
       
+      <!-- Settings Grid -->
       <section class="settings-grid">
+        <!-- Account & Profile Card -->
         <div class="card-box settings-card">
-          <h2><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="section-icon"><path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" /></svg> Account & Profile</h2>
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="section-icon">
+              <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
+            </svg> 
+            Account & Profile
+          </h2>
           <p class="section-subtitle">Update your personal information and profile settings.</p>
           <ul class="settings-list">
             <li>
               <div class="setting-item">
-                <span>Change Password</span>
-                <button @click="openPasswordModal" class="action-btn">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                <span>Update Profile Info</span>
+                <button @click="openProfileModal" class="action-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                  </svg>
                 </button>
               </div>
             </li>
             <li>
               <div class="setting-item">
-                <span>Update Profile Info</span>
-                <button @click="openProfileModal" class="action-btn">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                <span>Change Password</span>
+                <button @click="openPasswordModal" class="action-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <circle cx="12" cy="16" r="1"></circle>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
                 </button>
               </div>
             </li>
           </ul>
         </div>
         
+        <!-- App Preferences Card -->
         <div class="card-box settings-card">
-          <h2><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="section-icon"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg> App Preferences</h2>
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="section-icon">
+              <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+            </svg> 
+            App Preferences
+          </h2>
           <p class="section-subtitle">Customize the app's look and feel.</p>
           <ul class="settings-list">
             <li>
@@ -62,15 +82,24 @@
           </ul>
         </div>
 
+        <!-- Privacy & Legal Card -->
         <div class="card-box settings-card">
-          <h2><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="section-icon"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg> Privacy & Legal</h2>
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="section-icon">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg> 
+            Privacy & Legal
+          </h2>
           <p class="section-subtitle">Understand our policies and manage your data.</p>
           <ul class="settings-list">
             <li>
               <div class="setting-item">
                 <span>Privacy Policy</span>
                 <a href="#" class="action-btn">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                  </svg>
                 </a>
               </div>
             </li>
@@ -78,22 +107,39 @@
               <div class="setting-item">
                 <span>Terms of Service</span>
                 <a href="#" class="action-btn">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                  </svg>
                 </a>
               </div>
             </li>
           </ul>
         </div>
 
+        <!-- Danger Zone Card -->
         <div class="card-box settings-card danger-zone">
-          <h2><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="section-icon"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Danger Zone</h2>
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="section-icon">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg> 
+            Danger Zone
+          </h2>
           <p class="section-subtitle">Sensitive actions that cannot be undone.</p>
           <ul class="settings-list">
             <li>
               <div class="setting-item">
                 <span class="danger-text">Delete Account</span>
                 <button @click="confirmDeleteAccount" class="action-btn danger-btn">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l3 0l0 15a2 2 0 0 0 2 2l8 0a2 2 0 0 0 2 -2l0 -15l3 0"/><path d="M14 10l0 5"/><path d="M10 10l0 5"/><path d="M18 6l-12 0"/><path d="M10 3l4 0l0 3l-4 0l0 -3z"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 6l3 0l0 15a2 2 0 0 0 2 2l8 0a2 2 0 0 0 2 -2l0 -15l3 0"/>
+                    <path d="M14 10l0 5"/>
+                    <path d="M10 10l0 5"/>
+                    <path d="M18 6l-12 0"/>
+                    <path d="M10 3l4 0l0 3l-4 0l0 -3z"/>
+                  </svg>
                 </button>
               </div>
             </li>
@@ -101,31 +147,31 @@
         </div>
       </section>
       
+      <!-- About Section -->
       <section class="about-section">
         <div class="about-card card-box">
           <h2>IntelliGrade</h2>
           <p class="copyright-text">© 2025 IntelliGrade. All Rights Reserved.</p>
         </div>
       </section>
-
     </div>
   </div>
 
   <!-- Profile Update Modal -->
-  <div v-if="isProfileModalOpen" class="modal-overlay" @click="closeProfileModal">
+  <div v-if="showProfileModal" class="modal-overlay" @click="closeProfileModal">
     <div class="modal-content" @click.stop>
       <div class="modal-header">
         <h3>Update Profile</h3>
         <button @click="closeProfileModal" class="close-btn">×</button>
       </div>
       <div class="modal-body">
-        <!-- Profile Picture Section - FIRST -->
+        <!-- Profile Picture Section -->
         <div class="form-group">
           <label>Profile Picture</label>
           <div class="avatar-upload-section">
-            <div v-if="profileForm.profile || previewImage" class="current-avatar">
+            <div v-if="profileData.profile || imagePreview" class="current-avatar">
               <img 
-                :src="previewImage || profileForm.profile" 
+                :src="imagePreview || profileData.profile" 
                 alt="Profile Picture" 
                 class="avatar-preview"
               >
@@ -138,7 +184,7 @@
             </div>
             <input 
               type="file" 
-              @change="handleFileSelect"
+              @change="handleImageSelect"
               accept="image/*"
               class="file-input"
               id="avatar-upload"
@@ -148,51 +194,51 @@
                 <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
                 <circle cx="12" cy="13" r="3"/>
               </svg>
-              {{ selectedFile ? 'Change Photo' : 'Choose Photo' }}
+              {{ selectedImage ? 'Change Photo' : 'Choose Photo' }}
             </label>
-            <div v-if="selectedFile" class="selected-file">
-              Selected: {{ selectedFile.name }}
+            <div v-if="selectedImage" class="selected-file">
+              Selected: {{ selectedImage.name }}
             </div>
           </div>
         </div>
         
-        <!-- Full Name Section - SECOND -->
+        <!-- Full Name Section -->
         <div class="form-group">
           <label>Full Name</label>
           <input 
             type="text" 
-            v-model="profileForm.full_name" 
+            v-model="profileData.full_name" 
             placeholder="Enter your full name"
             class="form-input"
           >
         </div>
         
-        <!-- Bio Section - THIRD -->
+        <!-- Bio Section -->
         <div class="form-group">
           <label>Bio</label>
           <textarea 
-            v-model="profileForm.bio" 
+            v-model="profileData.bio" 
             placeholder="Tell us about yourself"
             class="form-input"
             rows="4"
           ></textarea>
         </div>
         
-        <!-- Messages -->
+        <!-- Error/Success Messages -->
         <div v-if="profileError" class="error-message">{{ profileError }}</div>
         <div v-if="profileSuccess" class="success-message">{{ profileSuccess }}</div>
       </div>
       <div class="modal-footer">
         <button @click="closeProfileModal" class="btn-secondary">Cancel</button>
-        <button @click="updateProfile" class="btn-primary" :disabled="isUpdating">
-          {{ isUpdating ? 'Updating...' : 'Update Profile' }}
+        <button @click="saveProfile" class="btn-primary" :disabled="isSaving">
+          {{ isSaving ? 'Saving...' : 'Save Profile' }}
         </button>
       </div>
     </div>
   </div>
 
   <!-- Password Change Modal -->
-  <div v-if="isPasswordModalOpen" class="modal-overlay" @click="closePasswordModal">
+  <div v-if="showPasswordModal" class="modal-overlay" @click="closePasswordModal">
     <div class="modal-content" @click.stop>
       <div class="modal-header">
         <h3>Change Password</h3>
@@ -203,7 +249,7 @@
           <label>Current Password</label>
           <input 
             type="password" 
-            v-model="passwordForm.currentPassword" 
+            v-model="passwordData.currentPassword" 
             placeholder="Enter current password"
             class="form-input"
           >
@@ -212,7 +258,7 @@
           <label>New Password</label>
           <input 
             type="password" 
-            v-model="passwordForm.newPassword" 
+            v-model="passwordData.newPassword" 
             placeholder="Enter new password"
             class="form-input"
           >
@@ -221,11 +267,13 @@
           <label>Confirm New Password</label>
           <input 
             type="password" 
-            v-model="passwordForm.confirmPassword" 
+            v-model="passwordData.confirmPassword" 
             placeholder="Confirm new password"
             class="form-input"
           >
         </div>
+        
+        <!-- Error/Success Messages -->
         <div v-if="passwordError" class="error-message">{{ passwordError }}</div>
         <div v-if="passwordSuccess" class="success-message">{{ passwordSuccess }}</div>
       </div>
@@ -242,10 +290,8 @@ import { ref, onMounted, computed } from 'vue';
 import { supabase } from '../supabase';
 import { useThemeStore } from '../stores/theme';
 
-// Use the Pinia theme store
+// ===== THEME MANAGEMENT =====
 const themeStore = useThemeStore();
-
-// Computed property for two-way binding with dark mode checkbox
 const isDarkMode = computed({
   get: () => themeStore.isDarkMode,
   set: (value) => {
@@ -255,99 +301,124 @@ const isDarkMode = computed({
   }
 });
 
-const notificationsEnabled = ref(false);
-
-// Modal states
-const isProfileModalOpen = ref(false);
-const isPasswordModalOpen = ref(false);
-
-// User data
-const userId = ref(null);
-const profileForm = ref({
-  full_name: '',
-  bio: '',
-  profile: ''
-});
-
-// File upload
-const selectedFile = ref(null);
-const isUpdating = ref(false);
-const previewImage = ref(null);
-
-// Password form
-const passwordForm = ref({
-  currentPassword: '',
-  newPassword: '',
-  confirmPassword: ''
-});
-
-// Messages
-const passwordError = ref('');
-const passwordSuccess = ref('');
-const profileError = ref('');
-const profileSuccess = ref('');
-
-// Dark mode toggle function
 const handleDarkModeToggle = () => {
   themeStore.toggleDarkMode();
 };
 
-// Notifications toggle
+// ===== APP PREFERENCES =====
+const notificationsEnabled = ref(false);
+
 const toggleNotifications = () => {
   localStorage.setItem('notifications', notificationsEnabled.value.toString());
   console.log('Notifications:', notificationsEnabled.value ? 'Enabled' : 'Disabled');
 };
 
-// File upload handler with preview
-const handleFileSelect = (event) => {
-  const file = event.target.files[0];
-  if (file) {
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      profileError.value = 'Please select an image file';
-      return;
-    }
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      profileError.value = 'File size must be less than 5MB';
-      return;
-    }
-    selectedFile.value = file;
-    profileError.value = '';
+// ===== MODAL STATES =====
+const showProfileModal = ref(false);
+const showPasswordModal = ref(false);
 
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      previewImage.value = e.target.result;
-    };
-    reader.readAsDataURL(file);
+// ===== PROFILE MANAGEMENT =====
+const profileData = ref({
+  full_name: '',
+  bio: '',
+  profile: ''
+});
+
+const selectedImage = ref(null);
+const imagePreview = ref(null);
+const isSaving = ref(false);
+const profileError = ref('');
+const profileSuccess = ref('');
+
+// Profile Modal Functions
+const openProfileModal = async () => {
+  showProfileModal.value = true;
+  await loadUserProfile();
+  clearMessages();
+};
+
+const closeProfileModal = () => {
+  showProfileModal.value = false;
+  selectedImage.value = null;
+  imagePreview.value = null;
+  clearMessages();
+};
+
+// Load user profile data
+const loadUserProfile = async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name, bio, profile')
+      .eq('id', user.id)
+      .single();
+
+    if (profile) {
+      profileData.value = {
+        full_name: profile.full_name || '',
+        bio: profile.bio || '',
+        profile: profile.profile || ''
+      };
+    }
+  } catch (error) {
+    console.error('Error loading profile:', error);
+    profileError.value = 'Failed to load profile data';
   }
 };
 
-// Upload avatar to Supabase storage
-const uploadAvatar = async () => {
-  if (!selectedFile.value) return null;
+// Handle image selection
+const handleImageSelect = (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  // Validate file type
+  if (!file.type.startsWith('image/')) {
+    profileError.value = 'Please select an image file';
+    return;
+  }
+
+  // Validate file size (max 5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    profileError.value = 'File size must be less than 5MB';
+    return;
+  }
+
+  selectedImage.value = file;
+  profileError.value = '';
+
+  // Create preview
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    imagePreview.value = e.target.result;
+  };
+  reader.readAsDataURL(file);
+};
+
+// Upload image to Supabase Storage
+const uploadImage = async () => {
+  if (!selectedImage.value) return null;
+
   try {
-    const { data: { user } } = await supabase.auth.getUser ();
-    if (!user) {
-      throw new Error('No user logged in');
-    }
-    const fileExt = selectedFile.value.name.split('.').pop();
-    const fileName = `${user.id}/${user.id}-${Date.now()}.${fileExt}`;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('No user logged in');
 
-    // Upload file to Supabase Storage
+    const fileExt = selectedImage.value.name.split('.').pop();
+    const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+
     const { data, error } = await supabase.storage
-      .from('avatars')
-      .upload(fileName, selectedFile.value, { cacheControl: '3600', upsert: true });
+      .from('profiles')
+      .upload(fileName, selectedImage.value, { 
+        cacheControl: '3600', 
+        upsert: true 
+      });
 
-    if (error) {
-      console.error('Upload error:', error);
-      throw new Error(`Upload failed: ${error.message}`);
-    }
+    if (error) throw new Error(`Upload failed: ${error.message}`);
 
-    // Get the public URL
     const { data: { publicUrl } } = supabase.storage
-      .from('avatars')
+      .from('profiles')
       .getPublicUrl(fileName);
 
     return publicUrl;
@@ -357,52 +428,31 @@ const uploadAvatar = async () => {
   }
 };
 
-// Profile Modal functions
-const openProfileModal = async () => {
-  isProfileModalOpen.value = true;
-  profileError.value = '';
-  profileSuccess.value = '';
-  selectedFile.value = null;
-  previewImage.value = null;
-  await fetchUserProfile();
-};
+// Save profile
+const saveProfile = async () => {
+  clearMessages();
 
-const closeProfileModal = () => {
-  isProfileModalOpen.value = false;
-  selectedFile.value = null;
-  previewImage.value = null;
-};
-
-// Update profile function
-const updateProfile = async () => {
-  profileError.value = '';
-  profileSuccess.value = '';
-
-  // Basic validation
-  if (!profileForm.value.full_name.trim()) {
+  if (!profileData.value.full_name.trim()) {
     profileError.value = 'Full name is required';
     return;
   }
 
-  isUpdating.value = true;
+  isSaving.value = true;
 
   try {
-    const { data: { user } } = await supabase.auth.getUser ();
-    if (!user) {
-      throw new Error('No user logged in');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('No user logged in');
+
+    // Upload new image if selected
+    let profileUrl = profileData.value.profile;
+    if (selectedImage.value) {
+      profileUrl = await uploadImage();
     }
 
-    // Upload profile if a new file is selected
-    let profileUrl = profileForm.value.profile;
-    if (selectedFile.value) {
-      profileUrl = await uploadAvatar();  // <-- fixed here
-    }
-
-    const profileData = {
-      full_name: profileForm.value.full_name.trim(),
-      bio: profileForm.value.bio.trim(),
-      profile: profileUrl,
-      updated_at: new Date().toISOString()
+    const updateData = {
+      full_name: profileData.value.full_name.trim(),
+      bio: profileData.value.bio.trim(),
+      profile: profileUrl
     };
 
     // Check if profile exists
@@ -414,86 +464,105 @@ const updateProfile = async () => {
 
     let result;
     if (existingProfile) {
-      // Update existing profile
       result = await supabase
         .from('profiles')
-        .update(profileData)
+        .update(updateData)
         .eq('id', user.id);
     } else {
-      // Create new profile
       result = await supabase
         .from('profiles')
-        .insert({ id: user.id, ...profileData });
+        .insert({ id: user.id, ...updateData });
     }
 
-    if (result.error) {
-      console.error('Profile update error:', result.error);
-      throw new Error(result.error.message);
-    }
+    if (result.error) throw new Error(result.error.message);
 
     profileSuccess.value = 'Profile updated successfully!';
+    profileData.value.profile = profileUrl;
 
-    // Update the form with the new profile URL if uploaded
-    if (profileUrl) {
-      profileForm.value.profile = profileUrl;
-    }
-
-    // Close modal after success
     setTimeout(() => {
       closeProfileModal();
-    }, 2000);
+    }, 1500);
 
   } catch (error) {
-    console.error('Profile update error:', error);
-    profileError.value = error.message || 'Failed to update profile';
+    console.error('Profile save error:', error);
+    profileError.value = error.message || 'Failed to save profile';
   } finally {
-    isUpdating.value = false;
+    isSaving.value = false;
   }
 };
 
-// Password Modal functions
+// ===== PASSWORD MANAGEMENT =====
+const passwordData = ref({
+  currentPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+});
+
+const passwordError = ref('');
+const passwordSuccess = ref('');
+
+// Password Modal Functions
 const openPasswordModal = () => {
-  isPasswordModalOpen.value = true;
-  passwordError.value = '';
-  passwordSuccess.value = '';
-  passwordForm.value = {
+  showPasswordModal.value = true;
+  resetPasswordForm();
+  clearMessages();
+};
+
+const closePasswordModal = () => {
+  showPasswordModal.value = false;
+  resetPasswordForm();
+};
+
+const resetPasswordForm = () => {
+  passwordData.value = {
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   };
 };
 
-const closePasswordModal = () => {
-  isPasswordModalOpen.value = false;
-};
-
+// Change password
 const changePassword = async () => {
-  passwordError.value = '';
-  passwordSuccess.value = '';
+  clearMessages();
 
-  if (!passwordForm.value.newPassword || !passwordForm.value.confirmPassword) {
+  // Validation
+  if (!passwordData.value.newPassword || !passwordData.value.confirmPassword) {
     passwordError.value = 'All fields are required';
     return;
   }
-  if (passwordForm.value.newPassword.length < 6) {
+
+  if (passwordData.value.newPassword.length < 6) {
     passwordError.value = 'New password must be at least 6 characters';
     return;
   }
-  if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
+
+  if (passwordData.value.newPassword !== passwordData.value.confirmPassword) {
     passwordError.value = 'Passwords do not match';
     return;
   }
 
   try {
-    const { error } = await supabase.auth.updateUser ({ password: passwordForm.value.newPassword });
+    const { error } = await supabase.auth.updateUser({ 
+      password: passwordData.value.newPassword 
+    });
+    
     if (error) throw error;
+    
     passwordSuccess.value = 'Password updated successfully!';
     setTimeout(() => {
       closePasswordModal();
-    }, 2000);
+    }, 1500);
   } catch (error) {
     passwordError.value = error.message;
   }
+};
+
+// ===== UTILITY FUNCTIONS =====
+const clearMessages = () => {
+  profileError.value = '';
+  profileSuccess.value = '';
+  passwordError.value = '';
+  passwordSuccess.value = '';
 };
 
 const confirmDeleteAccount = () => {
@@ -505,40 +574,13 @@ const confirmDeleteAccount = () => {
   }
 };
 
-// Fetch user profile data
-const fetchUserProfile = async () => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      userId.value = user.id;
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name, bio, profile')
-        .eq('id', user.id)
-        .single();
-
-      if (profile) {
-        profileForm.value = {
-          full_name: profile.full_name || '',
-          bio: profile.bio || '',
-          profile: profile.profile || '',
-        };
-      }
-    }
-  } catch (error) {
-    console.error('Error fetching profile:', error.message);
-    profileError.value = 'Failed to load profile data';
-  }
-};
-
+// ===== INITIALIZATION =====
 onMounted(() => {
   // Load saved notifications preference
   const savedNotifications = localStorage.getItem('notifications');
   if (savedNotifications !== null) {
     notificationsEnabled.value = savedNotifications === 'true';
   }
-  // Fetch user profile
-  fetchUserProfile();
 });
 </script>
 
@@ -579,12 +621,11 @@ onMounted(() => {
   --input-border: rgba(61, 141, 122, 0.3);
 }
 
+/* Base Styles */
 .page-container {
   padding: 2rem 5%;
   font-family: 'Inter', sans-serif;
   min-height: 100vh;
-  position: relative;
-  overflow-x: hidden;
   background: var(--bg-primary);
   color: var(--primary-text-color);
   transition: all 0.3s ease;
@@ -611,6 +652,7 @@ onMounted(() => {
   color: var(--primary-text-color);
 }
 
+/* Header Styles */
 .hero-header {
   margin-bottom: 2rem;
   text-align: center;
@@ -637,15 +679,11 @@ onMounted(() => {
 }
 
 @keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }
 
-.hero-header .page-title {
+.page-title {
   font-size: 2.5rem;
   font-weight: 800;
   color: var(--primary-text-color);
@@ -653,17 +691,73 @@ onMounted(() => {
   letter-spacing: -0.02em;
 }
 
-.hero-header .page-subtitle {
+.page-subtitle {
   font-size: 1.2rem;
   color: var(--secondary-text-color);
   margin: 0;
   max-width: 600px;
 }
 
+/* Settings Grid */
 .settings-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 2rem;
+}
+
+/* Profile Display Card */
+.profile-display-card {
+  grid-column: 1 / -1;
+  padding: 2rem;
+}
+
+.profile-display {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.profile-avatar {
+  flex-shrink: 0;
+}
+
+.profile-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--accent-color);
+}
+
+.profile-placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--action-btn-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-color);
+  border: 2px dashed var(--accent-color);
+}
+
+.profile-info {
+  flex: 1;
+}
+
+.profile-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-text-color);
+  margin: 0 0 0.5rem 0;
+}
+
+.profile-bio {
+  font-size: 1rem;
+  color: var(--secondary-text-color);
+  margin: 0;
+  line-height: 1.5;
 }
 
 .settings-card {
@@ -682,25 +776,6 @@ onMounted(() => {
 
 .section-icon {
   stroke: var(--primary-text-color);
-}
-
-.settings-card.danger-zone h2 {
-  color: #d9534f;
-}
-
-.settings-card.danger-zone .section-subtitle,
-.settings-card.danger-zone .setting-item {
-  color: #d9534f;
-}
-
-.settings-card.danger-zone .action-btn.danger-btn {
-  background-color: #f2dede;
-  color: #d9534f;
-}
-
-.settings-card.danger-zone .action-btn.danger-btn:hover {
-  background-color: #d9534f;
-  color: white;
 }
 
 .section-subtitle {
@@ -756,11 +831,7 @@ onMounted(() => {
   transform: scale(1.1);
 }
 
-.action-btn svg {
-  stroke: currentColor;
-}
-
-/* Toggle Switch Styles */
+/* Toggle Switch */
 .switch {
   position: relative;
   display: inline-block;
@@ -800,10 +871,6 @@ input:checked + .slider {
   background-color: var(--accent-color);
 }
 
-input:focus + .slider {
-  box-shadow: 0 0 1px var(--accent-color);
-}
-
 input:checked + .slider:before {
   transform: translateX(22px);
 }
@@ -816,6 +883,30 @@ input:checked + .slider:before {
   border-radius: 50%;
 }
 
+/* Danger Zone */
+.danger-zone h2 {
+  color: #d9534f;
+}
+
+.danger-zone .section-subtitle {
+  color: #d9534f;
+}
+
+.danger-text {
+  color: #d9534f;
+}
+
+.danger-btn {
+  background-color: rgba(217, 83, 79, 0.1);
+  color: #d9534f;
+}
+
+.danger-btn:hover {
+  background-color: #d9534f;
+  color: white;
+}
+
+/* About Section */
 .about-section {
   margin-top: 2rem;
   text-align: center;
@@ -831,16 +922,14 @@ input:checked + .slider:before {
   font-size: 1.5rem;
   color: var(--accent-color);
   margin-bottom: 1rem;
-  display: block;
 }
 
-.about-card p {
+.copyright-text {
   color: var(--secondary-text-color);
   font-size: 1rem;
-  line-height: 1.5;
 }
 
-/* Modal Styles - IMPROVED LAYOUT */
+/* Modal Styles */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -858,7 +947,6 @@ input:checked + .slider:before {
 .modal-content {
   background: var(--card-background);
   border-radius: 16px;
-  padding: 0;
   width: 100%;
   max-width: 500px;
   max-height: 90vh;
@@ -903,7 +991,6 @@ input:checked + .slider:before {
 
 .modal-body {
   padding: 1.5rem;
-  padding-bottom: 0;
 }
 
 .form-group {
@@ -938,7 +1025,7 @@ input:checked + .slider:before {
   color: var(--secondary-text-color);
 }
 
-/* Avatar upload styles - IMPROVED */
+/* Avatar Upload */
 .avatar-upload-section {
   display: flex;
   flex-direction: column;
@@ -1009,6 +1096,7 @@ input:checked + .slider:before {
   white-space: nowrap;
 }
 
+/* Messages */
 .error-message {
   color: #d9534f;
   margin-top: 1rem;
@@ -1075,11 +1163,7 @@ input:checked + .slider:before {
   color: white;
 }
 
-.danger-text {
-  color: #d9534f;
-}
-
-/* Dark mode specific adjustments */
+/* Dark mode adjustments */
 :root.dark .error-message {
   background: rgba(217, 83, 79, 0.2);
   color: #ff6b6b;
@@ -1106,7 +1190,7 @@ input:checked + .slider:before {
     padding: 1rem 3%;
   }
   
-  .hero-header .page-title {
+  .page-title {
     font-size: 2rem;
   }
   
@@ -1119,17 +1203,11 @@ input:checked + .slider:before {
   }
   
   .modal-content {
-    width: 100%;
     max-height: 95vh;
   }
   
-  .modal-header, .modal-footer {
+  .modal-header, .modal-footer, .modal-body {
     padding: 1rem;
-  }
-  
-  .modal-body {
-    padding: 1rem;
-    padding-bottom: 0;
   }
 }
 </style>
