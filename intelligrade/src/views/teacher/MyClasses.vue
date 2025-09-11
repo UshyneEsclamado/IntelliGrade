@@ -98,7 +98,7 @@
                   <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
                   <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                 </svg>
-                {{ c.students || 0 }} Students
+                {{ c.studentCount || 0 }} Students
               </p>
               <p>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -172,7 +172,7 @@ const handleClickOutside = (event) => {
   }
 };
 
-// Fetch classes from Supabase
+// FIXED FETCH CLASSES FUNCTION
 const fetchClasses = async () => {
   try {
     loading.value = true;
@@ -186,7 +186,7 @@ const fetchClasses = async () => {
     }
 
     // Fetch classes for current user
-    const { data, error: fetchError } = await supabase
+    const { data: classesData, error: fetchError } = await supabase
       .from('classes')
       .select('*')
       .eq('teacher_id', user.id)
@@ -194,7 +194,28 @@ const fetchClasses = async () => {
 
     if (fetchError) throw fetchError;
 
-    classes.value = data || [];
+    // For each class, count the students
+    const processedClasses = [];
+    for (const classItem of classesData || []) {
+      // Count students for this class
+      const { count: studentCount, error: countError } = await supabase
+        .from('students')
+        .select('*', { count: 'exact' })
+        .eq('class_id', classItem.id);
+
+      if (countError) {
+        console.error('Error counting students:', countError);
+      }
+
+      processedClasses.push({
+        ...classItem,
+        studentCount: studentCount || 0,  // Use studentCount instead of students
+        assessments: classItem.assessments || 0
+      });
+    }
+
+    classes.value = processedClasses;
+    
   } catch (err) {
     console.error('Error fetching classes:', err);
     error.value = 'Failed to load classes. Please try again.';
@@ -214,14 +235,14 @@ const toggleMenu = (classId) => {
 
 const editClass = (classData) => {
   activeMenu.value = null;
-  // Navigate to edit class page (you'll need to create this route)
+  // Now can navigate to a simple edit page for name/subject only
   router.push({ name: 'EditClass', params: { id: classData.id } });
 };
 
 const manageStudents = (classData) => {
   activeMenu.value = null;
-  // Navigate to students management page (you'll need to create this route)
-  router.push({ name: 'ManageStudents', params: { classId: classData.id } });
+  // Navigate to dedicated student management page
+  router.push({ name: 'ClassStudents', params: { id: classData.id } });
 };
 
 const duplicateClass = async (classData) => {
@@ -236,7 +257,7 @@ const duplicateClass = async (classData) => {
       name: `${classData.name} (Copy)`,
       subject: classData.subject,
       teacher_id: user.id,
-      students: 0,
+      student_count: 0,
       assessments: 0,
       created_at: new Date().toISOString()
     };
