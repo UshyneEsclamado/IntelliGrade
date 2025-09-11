@@ -119,29 +119,22 @@
         <button @click="closeProfileModal" class="close-btn">×</button>
       </div>
       <div class="modal-body">
-        <div class="form-group">
-          <label>Full Name</label>
-          <input 
-            type="text" 
-            v-model="profileForm.full_name" 
-            placeholder="Enter your full name"
-            class="form-input"
-          >
-        </div>
-        <div class="form-group">
-          <label>Bio</label>
-          <textarea 
-            v-model="profileForm.bio" 
-            placeholder="Tell us about yourself"
-            class="form-input"
-            rows="4"
-          ></textarea>
-        </div>
+        <!-- Profile Picture Section - FIRST -->
         <div class="form-group">
           <label>Profile Picture</label>
           <div class="avatar-upload-section">
-            <div v-if="profileForm.avatar_url" class="current-avatar">
-              <img :src="profileForm.avatar_url" alt="Current Avatar" class="avatar-preview">
+            <div v-if="profileForm.profile || previewImage" class="current-avatar">
+              <img 
+                :src="previewImage || profileForm.profile" 
+                alt="Profile Picture" 
+                class="avatar-preview"
+              >
+            </div>
+            <div v-else class="avatar-placeholder">
+              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2z"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
             </div>
             <input 
               type="file" 
@@ -155,29 +148,44 @@
                 <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
                 <circle cx="12" cy="13" r="3"/>
               </svg>
-              Choose Photo
+              {{ selectedFile ? 'Change Photo' : 'Choose Photo' }}
             </label>
             <div v-if="selectedFile" class="selected-file">
               Selected: {{ selectedFile.name }}
             </div>
           </div>
         </div>
+        
+        <!-- Full Name Section - SECOND -->
         <div class="form-group">
-          <label>Avatar URL (Optional)</label>
+          <label>Full Name</label>
           <input 
             type="text" 
-            v-model="profileForm.avatar_url" 
-            placeholder="Or enter avatar URL directly"
+            v-model="profileForm.full_name" 
+            placeholder="Enter your full name"
             class="form-input"
           >
         </div>
+        
+        <!-- Bio Section - THIRD -->
+        <div class="form-group">
+          <label>Bio</label>
+          <textarea 
+            v-model="profileForm.bio" 
+            placeholder="Tell us about yourself"
+            class="form-input"
+            rows="4"
+          ></textarea>
+        </div>
+        
+        <!-- Messages -->
         <div v-if="profileError" class="error-message">{{ profileError }}</div>
         <div v-if="profileSuccess" class="success-message">{{ profileSuccess }}</div>
       </div>
       <div class="modal-footer">
         <button @click="closeProfileModal" class="btn-secondary">Cancel</button>
-        <button @click="updateProfile" class="btn-primary" :disabled="isUploading">
-          {{ isUploading ? 'Uploading...' : 'Save Changes' }}
+        <button @click="updateProfile" class="btn-primary" :disabled="isUpdating">
+          {{ isUpdating ? 'Updating...' : 'Update Profile' }}
         </button>
       </div>
     </div>
@@ -237,7 +245,7 @@ import { useThemeStore } from '../stores/theme';
 // Use the Pinia theme store
 const themeStore = useThemeStore();
 
-// Create a computed property for two-way binding with the checkbox
+// Computed property for two-way binding with dark mode checkbox
 const isDarkMode = computed({
   get: () => themeStore.isDarkMode,
   set: (value) => {
@@ -258,12 +266,13 @@ const userId = ref(null);
 const profileForm = ref({
   full_name: '',
   bio: '',
-  avatar_url: ''
+  profile: ''
 });
 
 // File upload
 const selectedFile = ref(null);
-const isUploading = ref(false);
+const isUpdating = ref(false);
+const previewImage = ref(null);
 
 // Password form
 const passwordForm = ref({
@@ -283,12 +292,13 @@ const handleDarkModeToggle = () => {
   themeStore.toggleDarkMode();
 };
 
+// Notifications toggle
 const toggleNotifications = () => {
   localStorage.setItem('notifications', notificationsEnabled.value.toString());
   console.log('Notifications:', notificationsEnabled.value ? 'Enabled' : 'Disabled');
 };
 
-// File upload handler with better validation
+// File upload handler with preview
 const handleFileSelect = (event) => {
   const file = event.target.files[0];
   if (file) {
@@ -297,111 +307,101 @@ const handleFileSelect = (event) => {
       profileError.value = 'Please select an image file';
       return;
     }
-    
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       profileError.value = 'File size must be less than 5MB';
       return;
     }
-    
     selectedFile.value = file;
     profileError.value = '';
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      previewImage.value = e.target.result;
+    };
+    reader.readAsDataURL(file);
   }
 };
 
-// FIXED: Improved uploadAvatar function with better error handling
+// Upload avatar to Supabase storage
 const uploadAvatar = async () => {
   if (!selectedFile.value) return null;
-  
-  isUploading.value = true;
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser ();
     if (!user) {
-      profileError.value = 'No user logged in';
-      return null;
+      throw new Error('No user logged in');
     }
-    
     const fileExt = selectedFile.value.name.split('.').pop();
-    const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-    
-    // Check if avatars bucket exists
-    const { data: buckets } = await supabase.storage.listBuckets();
-    const avatarBucket = buckets?.find(bucket => bucket.name === 'avatars');
-    
-    if (!avatarBucket) {
-      profileError.value = 'Avatar storage not set up. Please contact administrator.';
-      return null;
-    }
-    
+    const fileName = `${user.id}/${user.id}-${Date.now()}.${fileExt}`;
+
+    // Upload file to Supabase Storage
     const { data, error } = await supabase.storage
       .from('avatars')
-      .upload(fileName, selectedFile.value, {
-        cacheControl: '3600',
-        upsert: false
-      });
-    
+      .upload(fileName, selectedFile.value, { cacheControl: '3600', upsert: true });
+
     if (error) {
       console.error('Upload error:', error);
-      profileError.value = `Upload failed: ${error.message}`;
-      return null;
+      throw new Error(`Upload failed: ${error.message}`);
     }
-    
+
     // Get the public URL
     const { data: { publicUrl } } = supabase.storage
       .from('avatars')
       .getPublicUrl(fileName);
-    
+
     return publicUrl;
   } catch (error) {
     console.error('Upload error:', error);
-    profileError.value = 'Failed to upload image';
-    return null;
-  } finally {
-    isUploading.value = false;
+    throw error;
   }
 };
 
 // Profile Modal functions
-const openProfileModal = () => {
+const openProfileModal = async () => {
   isProfileModalOpen.value = true;
   profileError.value = '';
   profileSuccess.value = '';
   selectedFile.value = null;
-  fetchUserProfile();
+  previewImage.value = null;
+  await fetchUserProfile();
 };
 
 const closeProfileModal = () => {
   isProfileModalOpen.value = false;
   selectedFile.value = null;
+  previewImage.value = null;
 };
 
-// FIXED: Better updateProfile function with proper error handling
+// Update profile function
 const updateProfile = async () => {
   profileError.value = '';
   profileSuccess.value = '';
 
+  // Basic validation
+  if (!profileForm.value.full_name.trim()) {
+    profileError.value = 'Full name is required';
+    return;
+  }
+
+  isUpdating.value = true;
+
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    
+    const { data: { user } } = await supabase.auth.getUser ();
     if (!user) {
-      profileError.value = 'No user logged in';
-      return;
+      throw new Error('No user logged in');
     }
 
-    // Upload avatar if a new file is selected
-    let avatarUrl = profileForm.value.avatar_url;
+    // Upload profile if a new file is selected
+    let profileUrl = profileForm.value.profile;
     if (selectedFile.value) {
-      const uploadedUrl = await uploadAvatar();
-      if (!uploadedUrl) {
-        return; // uploadAvatar already set the error message
-      }
-      avatarUrl = uploadedUrl;
+      profileUrl = await uploadAvatar();  // <-- fixed here
     }
 
     const profileData = {
-      full_name: profileForm.value.full_name,
-      bio: profileForm.value.bio,
-      avatar_url: avatarUrl,
+      full_name: profileForm.value.full_name.trim(),
+      bio: profileForm.value.bio.trim(),
+      profile: profileUrl,
       updated_at: new Date().toISOString()
     };
 
@@ -413,39 +413,41 @@ const updateProfile = async () => {
       .single();
 
     let result;
-    
     if (existingProfile) {
+      // Update existing profile
       result = await supabase
         .from('profiles')
         .update(profileData)
         .eq('id', user.id);
     } else {
+      // Create new profile
       result = await supabase
         .from('profiles')
-        .insert({
-          id: user.id,
-          ...profileData
-        });
+        .insert({ id: user.id, ...profileData });
     }
 
     if (result.error) {
       console.error('Profile update error:', result.error);
-      throw result.error;
+      throw new Error(result.error.message);
     }
 
     profileSuccess.value = 'Profile updated successfully!';
-    
-    // Update the form with the new avatar URL if uploaded
-    if (avatarUrl) {
-      profileForm.value.avatar_url = avatarUrl;
+
+    // Update the form with the new profile URL if uploaded
+    if (profileUrl) {
+      profileForm.value.profile = profileUrl;
     }
-    
+
+    // Close modal after success
     setTimeout(() => {
       closeProfileModal();
     }, 2000);
+
   } catch (error) {
     console.error('Profile update error:', error);
     profileError.value = error.message || 'Failed to update profile';
+  } finally {
+    isUpdating.value = false;
   }
 };
 
@@ -473,24 +475,18 @@ const changePassword = async () => {
     passwordError.value = 'All fields are required';
     return;
   }
-
   if (passwordForm.value.newPassword.length < 6) {
     passwordError.value = 'New password must be at least 6 characters';
     return;
   }
-
   if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
     passwordError.value = 'Passwords do not match';
     return;
   }
 
   try {
-    const { error } = await supabase.auth.updateUser({
-      password: passwordForm.value.newPassword
-    });
-
+    const { error } = await supabase.auth.updateUser ({ password: passwordForm.value.newPassword });
     if (error) throw error;
-
     passwordSuccess.value = 'Password updated successfully!';
     setTimeout(() => {
       closePasswordModal();
@@ -504,11 +500,12 @@ const confirmDeleteAccount = () => {
   if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
     if (confirm('This will permanently delete all your data. Are you absolutely sure?')) {
       console.log('Account deletion initiated');
+      // Add your account deletion logic here
     }
   }
 };
 
-// FIXED: Updated fetchUserProfile function with bio column
+// Fetch user profile data
 const fetchUserProfile = async () => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -516,15 +513,15 @@ const fetchUserProfile = async () => {
       userId.value = user.id;
       const { data: profile } = await supabase
         .from('profiles')
-        .select('full_name, bio, avatar_url')
+        .select('full_name, bio, profile')
         .eq('id', user.id)
         .single();
-      
+
       if (profile) {
         profileForm.value = {
           full_name: profile.full_name || '',
           bio: profile.bio || '',
-          avatar_url: profile.avatar_url || '',
+          profile: profile.profile || '',
         };
       }
     }
@@ -540,7 +537,6 @@ onMounted(() => {
   if (savedNotifications !== null) {
     notificationsEnabled.value = savedNotifications === 'true';
   }
-  
   // Fetch user profile
   fetchUserProfile();
 });
@@ -751,6 +747,7 @@ onMounted(() => {
   color: var(--action-btn-color);
   cursor: pointer;
   transition: all 0.2s ease;
+  text-decoration: none;
 }
 
 .action-btn:hover {
@@ -843,7 +840,7 @@ input:checked + .slider:before {
   line-height: 1.5;
 }
 
-/* Modal Styles */
+/* Modal Styles - IMPROVED LAYOUT */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -855,14 +852,17 @@ input:checked + .slider:before {
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  padding: 20px;
 }
 
 .modal-content {
   background: var(--card-background);
   border-radius: 16px;
   padding: 0;
-  width: 90%;
+  width: 100%;
   max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   color: var(--primary-text-color);
 }
@@ -873,6 +873,10 @@ input:checked + .slider:before {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: sticky;
+  top: 0;
+  background: var(--card-background);
+  border-radius: 16px 16px 0 0;
 }
 
 .modal-header h3 {
@@ -899,6 +903,7 @@ input:checked + .slider:before {
 
 .modal-body {
   padding: 1.5rem;
+  padding-bottom: 0;
 }
 
 .form-group {
@@ -933,17 +938,21 @@ input:checked + .slider:before {
   color: var(--secondary-text-color);
 }
 
-/* Avatar upload styles */
+/* Avatar upload styles - IMPROVED */
 .avatar-upload-section {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
   align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--action-btn-bg);
+  border-radius: 12px;
+  border: 2px dashed var(--card-border-color);
 }
 
 .current-avatar {
-  width: 80px;
-  height: 80px;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
   overflow: hidden;
   border: 3px solid var(--accent-color);
@@ -955,6 +964,18 @@ input:checked + .slider:before {
   object-fit: cover;
 }
 
+.avatar-placeholder {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: var(--card-background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-color);
+  border: 2px dashed var(--accent-color);
+}
+
 .file-input {
   display: none;
 }
@@ -963,7 +984,7 @@ input:checked + .slider:before {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 1.5rem;
   background: var(--accent-color);
   color: white;
   border-radius: 8px;
@@ -982,6 +1003,10 @@ input:checked + .slider:before {
   font-size: 0.9rem;
   color: var(--secondary-text-color);
   text-align: center;
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .error-message {
@@ -1008,6 +1033,10 @@ input:checked + .slider:before {
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
+  position: sticky;
+  bottom: 0;
+  background: var(--card-background);
+  border-radius: 0 0 16px 16px;
 }
 
 .btn-primary, .btn-secondary {
@@ -1025,7 +1054,7 @@ input:checked + .slider:before {
   color: white;
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
   background: var(--accent-hover);
   transform: translateY(-1px);
 }
@@ -1033,11 +1062,6 @@ input:checked + .slider:before {
 .btn-primary:disabled {
   background: #ccc;
   cursor: not-allowed;
-  transform: none;
-}
-
-.btn-primary:disabled:hover {
-  background: #ccc;
   transform: none;
 }
 
@@ -1066,6 +1090,10 @@ input:checked + .slider:before {
   color: #51cf66;
 }
 
+:root.dark .avatar-placeholder {
+  background: rgba(95, 179, 160, 0.1);
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .settings-grid {
@@ -1086,8 +1114,22 @@ input:checked + .slider:before {
     padding: 1.5rem;
   }
   
+  .modal-overlay {
+    padding: 10px;
+  }
+  
   .modal-content {
-    width: 95%;
+    width: 100%;
+    max-height: 95vh;
+  }
+  
+  .modal-header, .modal-footer {
+    padding: 1rem;
+  }
+  
+  .modal-body {
+    padding: 1rem;
+    padding-bottom: 0;
   }
 }
 </style>
