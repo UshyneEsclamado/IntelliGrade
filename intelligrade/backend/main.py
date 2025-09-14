@@ -11,7 +11,7 @@ import json
 import asyncio
 
 # FastAPI imports
-from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form, status
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Form, status, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer
 from fastapi.responses import JSONResponse
@@ -32,6 +32,7 @@ from utils.analytics import GradingAnalytics
 from utils.validators import ValidationUtils
 import crud
 import models
+import schemas
 
 # Configure logging
 logging.basicConfig(
@@ -72,6 +73,36 @@ security = HTTPBearer()
 feedback_generator = FeedbackGenerator()
 analytics = GradingAnalytics()
 validator = ValidationUtils()
+
+# WebSocket Connection Manager
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: Dict[int, WebSocket] = {}
+    
+    async def connect(self, websocket: WebSocket, user_id: int):
+        await websocket.accept()
+        self.active_connections[user_id] = websocket
+    
+    def disconnect(self, user_id: int):
+        if user_id in self.active_connections:
+            del self.active_connections[user_id]
+    
+    async def send_personal_message(self, message: str, user_id: int):
+        if user_id in self.active_connections:
+            websocket = self.active_connections[user_id]
+            await websocket.send_text(message)
+    
+    async def send_message_to_conversation(self, message: dict, conversation_id: int, sender_id: int, db: Session):
+        # Get conversation participants
+        conversation = crud.get_conversation(db, conversation_id)
+        if conversation:
+            recipient_id = conversation.user2_id if conversation.user1_id == sender_id else conversation.user1_id
+            
+            # Send to recipient if online
+            if recipient_id in self.active_connections:
+                await self.send_personal_message(json.dumps(message), recipient_id)
+
+manager = ConnectionManager()
 
 # Pydantic models for API
 class UserLogin(BaseModel):
@@ -873,6 +904,236 @@ async def validate_assessment_data(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Validation failed"
         )
+
+# Messaging API Endpoints
+
+@app.websocket("/ws/{user_id}")
+async def websocket_endpoint(websocket: WebSocket, user_id: int, db: Session = Depends(get_db)):
+    """WebSocket endpoint for real-time messaging"""
+    await manager.connect(websocket, user_id)
+    try:
+        while True:
+            # Receive message from WebSocket
+            data = await websocket.receive_text()
+            message_data = json.loads(data)
+            
+            if message_data.get("type") == "message":
+                # Create new message in database
+                conversation_id = message_data.get("conversation_id")
+                content = message_data.get("content")
+                receiver_id = message_data.get("receiver_id")
+                
+                if conversation_id and content and receiver_id:
+                    # Save message to database
+                    new_message = crud.create_message(
+                        db=db,
+                        conversation_id=conversation_id,
+                        sender_id=user_id,
+                        receiver_id=receiver_id,
+                        content=content
+                    )
+                    
+                    # Prepare response message
+                    response_message = {
+                        "type": "new_message",
+                        "message": {
+                            "id": new_message.id,
+                            "conversation_id": new_message.conversation_id,
+                            "sender_id": new_message.sender_id,
+                            "receiver_id": new_message.receiver_id,
+                            "content": new_message.content,
+                            "created_at": new_message.created_at.isoformat(),
+                            "is_read": new_message.is_read
+                        }
+                    }
+                    
+                    # Send to both sender and receiver
+                    await manager.send_message_to_conversation(
+                        response_message, conversation_id, user_id, db
+                    )
+                    # Echo back to sender
+                    await manager.send_personal_message(
+                        json.dumps(response_message), user_id
+                    )
+            
+            elif message_data.get("type") == "mark_read":
+                conversation_id = message_data.get("conversation_id")
+                if conversation_id:
+                    crud.mark_messages_as_read(db, conversation_id, user_id)
+                    
+    except WebSocketDisconnect:
+        manager.disconnect(user_id)
+
+@app.get("/api/conversations", response_model=List[schemas.Conversation])
+async def get_conversations(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all conversations for the current user"""
+    user_id = current_user["user_id"]
+    conversations = crud.get_user_conversations(db, user_id)
+    return conversations
+
+@app.get("/api/conversations/{conversation_id}/messages", response_model=List[schemas.Message])
+async def get_conversation_messages(
+    conversation_id: int,
+    skip: int = 0,
+    limit: int = 50,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get messages for a specific conversation"""
+    # Verify user is part of the conversation
+    conversation = crud.get_conversation(db, conversation_id)
+    user_id = current_user["user_id"]
+    
+    if not conversation or (conversation.user1_id != user_id and conversation.user2_id != user_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied to this conversation"
+        )
+    
+    messages = crud.get_conversation_messages(db, conversation_id, skip, limit)
+    
+    # Mark messages as read
+    crud.mark_messages_as_read(db, conversation_id, user_id)
+    
+    return messages
+
+@app.post("/api/conversations", response_model=schemas.Conversation)
+async def create_or_get_conversation(
+    participant_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Create a new conversation or get existing one between two users"""
+    user_id = current_user["user_id"]
+    
+    # Check if conversation already exists
+    existing_conversation = crud.get_conversation_by_users(db, user_id, participant_id)
+    if existing_conversation:
+        return existing_conversation
+    
+    # Create new conversation
+    new_conversation = crud.create_conversation(db, user_id, participant_id)
+    return new_conversation
+
+@app.post("/api/messages", response_model=schemas.Message)
+async def send_message(
+    message_data: schemas.MessageCreate,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Send a new message (REST endpoint as fallback)"""
+    user_id = current_user["user_id"]
+    receiver_id = message_data.receiver_id
+    
+    # Get or create conversation
+    conversation = crud.get_conversation_by_users(db, user_id, receiver_id)
+    if not conversation:
+        conversation = crud.create_conversation(db, user_id, receiver_id)
+    
+    # Create message
+    new_message = crud.create_message(
+        db=db,
+        conversation_id=conversation.id,
+        sender_id=user_id,
+        receiver_id=receiver_id,
+        content=message_data.content
+    )
+    
+    # Send real-time notification if receiver is online
+    response_message = {
+        "type": "new_message",
+        "message": {
+            "id": new_message.id,
+            "conversation_id": new_message.conversation_id,
+            "sender_id": new_message.sender_id,
+            "receiver_id": new_message.receiver_id,
+            "content": new_message.content,
+            "created_at": new_message.created_at.isoformat(),
+            "is_read": new_message.is_read
+        }
+    }
+    
+    await manager.send_personal_message(
+        json.dumps(response_message), receiver_id
+    )
+    
+    return new_message
+
+@app.get("/api/users", response_model=List[schemas.User])
+async def get_users(
+    role: Optional[str] = None,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get list of users (for finding conversation participants)"""
+    if role:
+        users = crud.get_users_by_role(db, role)
+    else:
+        users = crud.get_users_by_role(db, "teacher") + crud.get_users_by_role(db, "student")
+    
+    # Remove current user from list
+    user_id = current_user["user_id"]
+    users = [user for user in users if user.id != user_id]
+    
+    return users
+
+@app.get("/api/users/search", response_model=List[schemas.User])
+async def search_users(
+    query: str,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Search for users by name"""
+    if not query or len(query.strip()) < 2:
+        raise HTTPException(
+            status_code=400, 
+            detail="Search query must be at least 2 characters long"
+        )
+    
+    users = crud.search_users_by_name(db, query.strip())
+    
+    # Remove current user from results
+    user_id = current_user["user_id"]
+    users = [user for user in users if user.id != user_id]
+    
+    return users
+
+@app.post("/api/conversations/create", response_model=schemas.Conversation)
+async def create_conversation(
+    other_user_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Create a new conversation with another user"""
+    user_id = current_user["user_id"]
+    
+    if user_id == other_user_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot create conversation with yourself"
+        )
+    
+    # Check if conversation already exists
+    existing_conversation = crud.get_conversation_between_users(db, user_id, other_user_id)
+    if existing_conversation:
+        return existing_conversation
+    
+    # Create new conversation
+    conversation = crud.create_conversation(db, user_id, other_user_id)
+    return conversation
+
+@app.get("/api/unread-count")
+async def get_unread_count(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get count of unread messages for current user"""
+    user_id = current_user["user_id"]
+    count = crud.get_unread_message_count(db, user_id)
+    return {"unread_count": count}
 
 # Error handlers
 @app.exception_handler(HTTPException)

@@ -1,0 +1,1613 @@
+<template>
+  <div class="calendar-container">
+    <!-- Header Section -->
+    <div class="page-header">
+      <div class="header-content">
+        <div class="header-icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19,19H5V8H19M19,3H18V1H16V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M16.5,13.5H11V18.5H16.5V13.5Z" />
+          </svg>
+        </div>
+        <div class="header-text">
+          <h1 class="page-title">Academic Calendar</h1>
+          <p class="page-subtitle">Track your deadlines and stay organized</p>
+        </div>
+      </div>
+      <div class="header-stats">
+        <div class="stat-card">
+          <div class="stat-number">{{ upcomingDeadlines }}</div>
+          <div class="stat-label">Upcoming</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">{{ overdueCount }}</div>
+          <div class="stat-label">Overdue</div>
+        </div>
+        <button @click="goToToday" class="today-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19,19H5V8H19M19,3H18V1H16V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3Z" />
+          </svg>
+          Today
+        </button>
+      </div>
+    </div>
+
+    <!-- Status Legend -->
+    <div class="status-legend">
+      <div class="legend-item">
+        <div class="legend-color upcoming"></div>
+        <span>Upcoming Deadline</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color due-today"></div>
+        <span>Due Today</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color completed"></div>
+        <span>Completed</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color overdue"></div>
+        <span>Overdue</span>
+      </div>
+    </div>
+
+    <!-- Calendar Navigation -->
+    <div class="calendar-nav">
+      <div class="nav-controls">
+        <button @click="previousMonth" class="nav-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z" />
+          </svg>
+        </button>
+        <h2 class="current-month">{{ currentMonthYear }}</h2>
+        <button @click="nextMonth" class="nav-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" />
+          </svg>
+        </button>
+      </div>
+      <div class="view-toggle">
+        <button 
+          v-for="view in views" 
+          :key="view.key"
+          @click="currentView = view.key"
+          :class="['view-btn', { 'active': currentView === view.key }]"
+        >
+          {{ view.label }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Calendar Grid -->
+    <div class="calendar-content">
+      <div v-if="currentView === 'month'" class="calendar-grid">
+        <!-- Days of Week Header -->
+        <div class="calendar-header">
+          <div v-for="day in daysOfWeek" :key="day" class="day-header">
+            {{ day }}
+          </div>
+        </div>
+        
+        <!-- Calendar Days -->
+        <div class="calendar-body">
+          <div 
+            v-for="day in calendarDays" 
+            :key="day.date"
+            :class="['calendar-day', {
+              'other-month': !day.isCurrentMonth,
+              'today': day.isToday,
+              'has-events': day.events.length > 0,
+              'has-due-today': day.hasDueToday,
+              'has-overdue': day.hasOverdue,
+              'has-upcoming': day.hasUpcoming,
+              'clickable': day.events.length > 0
+            }]"
+            @click="selectDay(day)"
+          >
+            <span class="day-number">{{ day.day }}</span>
+            <div class="day-events">
+              <div 
+                v-for="event in day.events.slice(0, 2)" 
+                :key="event.id"
+                :class="['event-dot', getEventStatus(event)]"
+                :title="`${event.title} - ${getEventStatusText(event)}`"
+              ></div>
+              <span v-if="day.events.length > 2" class="more-events">
+                +{{ day.events.length - 2 }}
+              </span>
+            </div>
+            <div v-if="day.events.length > 0" class="event-count">
+              {{ day.events.length }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- List View -->
+      <div v-if="currentView === 'list'" class="events-list">
+        <div v-for="(dayEvents, date) in groupedEvents" :key="date" class="day-group">
+          <h3 class="day-title">{{ formatDate(date) }}</h3>
+          <div class="events-container">
+            <div 
+              v-for="event in dayEvents" 
+              :key="event.id"
+              :class="['event-item', event.type, getEventStatus(event)]"
+            >
+              <div class="event-time">{{ event.time }}</div>
+              <div class="event-content">
+                <h4 class="event-title">{{ event.title }}</h4>
+                <p class="event-subject">{{ event.subject }}</p>
+                <p class="event-description">{{ event.description }}</p>
+                <div class="event-status-badge">
+                  <span :class="['status-badge', getEventStatus(event)]">
+                    {{ getEventStatusText(event) }}
+                  </span>
+                </div>
+              </div>
+              <div class="event-actions">
+                <button v-if="getEventStatus(event) === 'upcoming' || getEventStatus(event) === 'due-today'" 
+                        class="answer-btn" 
+                        @click="markAsCompleted(event)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
+                  </svg>
+                  Answer
+                </button>
+                <button class="view-btn-small" @click="viewEvent(event)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Day Details Modal -->
+    <div v-if="selectedDay" class="modal-overlay" @click="closeDayModal">
+      <div class="day-modal-content" @click.stop>
+        <div class="day-modal-header">
+          <h3>{{ formatSelectedDayDate() }}</h3>
+          <button @click="closeDayModal" class="close-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+            </svg>
+          </button>
+        </div>
+        <div class="day-modal-body">
+          <div class="day-events-summary">
+            <div class="summary-stats">
+              <div class="summary-stat">
+                <span class="summary-number">{{ selectedDay.events.length }}</span>
+                <span class="summary-label">Total Events</span>
+              </div>
+              <div class="summary-stat">
+                <span class="summary-number">{{ getCompletedCount(selectedDay.events) }}</span>
+                <span class="summary-label">Completed</span>
+              </div>
+              <div class="summary-stat">
+                <span class="summary-number">{{ getPendingCount(selectedDay.events) }}</span>
+                <span class="summary-label">Pending</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="day-events-list">
+            <h4>Deadlines & Events</h4>
+            <div class="day-event-items">
+              <div 
+                v-for="event in selectedDay.events" 
+                :key="event.id"
+                :class="['day-event-item', getEventStatus(event)]"
+              >
+                <div class="event-status-indicator">
+                  <div :class="['status-dot', getEventStatus(event)]"></div>
+                </div>
+                <div class="event-details">
+                  <h5 class="event-name">{{ event.title }}</h5>
+                  <p class="event-subject-small">{{ event.subject }}</p>
+                  <p class="event-time-small">{{ event.time }}</p>
+                  <p class="event-desc-small">{{ event.description }}</p>
+                </div>
+                <div class="event-status-text">
+                  <span :class="['status-badge-small', getEventStatus(event)]">
+                    {{ getEventStatusText(event) }}
+                  </span>
+                </div>
+                <div class="event-quick-actions">
+                  <button v-if="getEventStatus(event) === 'upcoming' || getEventStatus(event) === 'due-today'" 
+                          class="quick-answer-btn" 
+                          @click="markAsCompleted(event)"
+                          :title="'Mark ' + event.title + ' as completed'">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
+                    </svg>
+                  </button>
+                  <button class="quick-view-btn" 
+                          @click="viewEventFromDay(event)"
+                          :title="'View ' + event.title + ' details'">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Event Details Modal -->
+    <div v-if="selectedEvent" class="modal-overlay" @click="closeModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>{{ selectedEvent.title }}</h3>
+          <button @click="closeModal" class="close-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="event-detail">
+            <strong>Subject:</strong> {{ selectedEvent.subject }}
+          </div>
+          <div class="event-detail">
+            <strong>Date:</strong> {{ formatEventDate(selectedEvent.date) }}
+          </div>
+          <div class="event-detail">
+            <strong>Time:</strong> {{ selectedEvent.time }}
+          </div>
+          <div class="event-detail">
+            <strong>Type:</strong> {{ selectedEvent.type }}
+          </div>
+          <div class="event-detail">
+            <strong>Status:</strong> 
+            <span :class="['status-badge', getEventStatus(selectedEvent)]">
+              {{ getEventStatusText(selectedEvent) }}
+            </span>
+          </div>
+          <div class="event-detail">
+            <strong>Description:</strong> {{ selectedEvent.description }}
+          </div>
+          <div v-if="getEventStatus(selectedEvent) === 'upcoming' || getEventStatus(selectedEvent) === 'due-today'" class="modal-actions">
+            <button class="answer-btn-modal" @click="markAsCompleted(selectedEvent)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
+              </svg>
+              Mark as Completed
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'Calendar',
+  data() {
+    return {
+      currentDate: new Date(),
+      currentView: 'month',
+      selectedEvent: null,
+      selectedDay: null,
+      currentTime: new Date(),
+      statusUpdateInterval: null,
+      views: [
+        { key: 'month', label: 'Month' },
+        { key: 'list', label: 'List' }
+      ],
+      daysOfWeek: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+      events: [
+        {
+          id: 1,
+          title: 'Math Quiz 1',
+          subject: 'Mathematics 101',
+          date: new Date(2024, 10, 23), // November 23, 2024
+          time: '10:00 AM',
+          type: 'assessment',
+          description: 'Chapter 1-3 quiz covering basic algebra and functions',
+          isCompleted: false,
+          submittedAt: null
+        },
+        {
+          id: 2,
+          title: 'Essay Submission',
+          subject: 'English Literature',
+          date: new Date(2024, 10, 20), // November 20, 2024 (overdue)
+          time: '11:59 PM',
+          type: 'assignment',
+          description: 'Submit 5-page essay on Shakespeare\'s Hamlet',
+          isCompleted: false,
+          submittedAt: null
+        },
+        {
+          id: 3,
+          title: 'Lab Report Due',
+          subject: 'Chemistry 101',
+          date: new Date(2024, 10, 25), // November 25, 2024
+          time: '2:00 PM',
+          type: 'assignment',
+          description: 'Organic chemistry lab report submission',
+          isCompleted: true,
+          submittedAt: new Date(2024, 10, 24)
+        },
+        {
+          id: 4,
+          title: 'Physics Exam',
+          subject: 'Physics 102',
+          date: new Date(), // Today
+          time: '9:00 AM',
+          type: 'exam',
+          description: 'Midterm examination covering mechanics and thermodynamics',
+          isCompleted: false,
+          submittedAt: null
+        },
+        {
+          id: 5,
+          title: 'Group Presentation',
+          subject: 'Computer Science 201',
+          date: new Date(2024, 10, 30), // November 30, 2024
+          time: '1:00 PM',
+          type: 'presentation',
+          description: 'Final project presentation - 15 minutes per group',
+          isCompleted: false,
+          submittedAt: null
+        },
+        {
+          id: 6,
+          title: 'Programming Assignment',
+          subject: 'Computer Science 201',
+          date: new Date(2024, 10, 23), // November 23, 2024 (same day as math quiz)
+          time: '3:00 PM',
+          type: 'assignment',
+          description: 'Complete the data structures assignment',
+          isCompleted: false,
+          submittedAt: null
+        }
+      ]
+    };
+  },
+  computed: {
+    currentMonthYear() {
+      return this.currentDate.toLocaleDateString('en-US', {
+        month: 'long',
+        year: 'numeric'
+      });
+    },
+    upcomingDeadlines() {
+      return this.events.filter(event => 
+        this.getEventStatus(event) === 'upcoming' || this.getEventStatus(event) === 'due-today'
+      ).length;
+    },
+    overdueCount() {
+      return this.events.filter(event => this.getEventStatus(event) === 'overdue').length;
+    },
+    calendarDays() {
+      const year = this.currentDate.getFullYear();
+      const month = this.currentDate.getMonth();
+      const today = new Date(this.currentTime);
+      today.setHours(0, 0, 0, 0);
+      
+      // First day of the month
+      const firstDay = new Date(year, month, 1);
+      const startDate = new Date(firstDay);
+      startDate.setDate(startDate.getDate() - firstDay.getDay());
+      
+      // Generate 42 days (6 weeks)
+      const days = [];
+      for (let i = 0; i < 42; i++) {
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + i);
+        date.setHours(0, 0, 0, 0);
+        
+        const dayEvents = this.events.filter(event => {
+          const eventDate = new Date(event.date);
+          eventDate.setHours(0, 0, 0, 0);
+          return eventDate.getTime() === date.getTime();
+        });
+        
+        // Check day status
+        const hasDueToday = dayEvents.some(event => this.getEventStatus(event) === 'due-today');
+        const hasOverdue = dayEvents.some(event => this.getEventStatus(event) === 'overdue');
+        const hasUpcoming = dayEvents.some(event => this.getEventStatus(event) === 'upcoming');
+        
+        days.push({
+          date: date.toDateString(),
+          day: date.getDate(),
+          fullDate: new Date(date),
+          isCurrentMonth: date.getMonth() === month,
+          isToday: date.getTime() === today.getTime(),
+          events: dayEvents,
+          hasDueToday,
+          hasOverdue,
+          hasUpcoming
+        });
+      }
+      
+      return days;
+    },
+    groupedEvents() {
+      const grouped = {};
+      this.events
+        .sort((a, b) => a.date - b.date)
+        .forEach(event => {
+          const dateKey = event.date.toDateString();
+          if (!grouped[dateKey]) {
+            grouped[dateKey] = [];
+          }
+          grouped[dateKey].push(event);
+        });
+      return grouped;
+    }
+  },
+  watch: {
+    // Watch for changes in event completion status to update the calendar
+    events: {
+      handler() {
+        this.$forceUpdate();
+      },
+      deep: true
+    }
+  },
+  methods: {
+    getEventStatus(event) {
+      const eventDate = new Date(event.date);
+      const today = new Date(this.currentTime);
+      today.setHours(0, 0, 0, 0);
+      eventDate.setHours(0, 0, 0, 0);
+      
+      if (event.isCompleted) {
+        return 'completed';
+      }
+      
+      if (eventDate.getTime() < today.getTime()) {
+        return 'overdue';
+      }
+      
+      if (eventDate.getTime() === today.getTime()) {
+        return 'due-today';
+      }
+      
+      return 'upcoming';
+    },
+    getEventStatusText(event) {
+      const status = this.getEventStatus(event);
+      switch (status) {
+        case 'completed':
+          return 'Completed';
+        case 'overdue':
+          return 'Overdue';
+        case 'due-today':
+          return 'Due Today';
+        case 'upcoming':
+          return 'Upcoming';
+        default:
+          return 'Unknown';
+      }
+    },
+    getCompletedCount(events) {
+      return events.filter(event => this.getEventStatus(event) === 'completed').length;
+    },
+    getPendingCount(events) {
+      return events.filter(event => 
+        this.getEventStatus(event) === 'upcoming' || 
+        this.getEventStatus(event) === 'due-today' || 
+        this.getEventStatus(event) === 'overdue'
+      ).length;
+    },
+    markAsCompleted(event) {
+      const eventIndex = this.events.findIndex(e => e.id === event.id);
+      if (eventIndex !== -1) {
+        this.$set(this.events[eventIndex], 'isCompleted', true);
+        this.$set(this.events[eventIndex], 'submittedAt', new Date());
+      }
+      
+      // Close modals
+      this.selectedEvent = null;
+      this.selectedDay = null;
+      
+      // Show success message
+      this.$nextTick(() => {
+        console.log(`Marked ${event.title} as completed`);
+        // You can add a toast notification here
+      });
+    },
+    updateCurrentTime() {
+      this.currentTime = new Date();
+    },
+    previousMonth() {
+      this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() - 1, 1);
+    },
+    nextMonth() {
+      this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 1);
+    },
+    goToToday() {
+      this.currentDate = new Date();
+    },
+    selectDay(day) {
+      if (day.events.length > 0) {
+        this.selectedDay = day;
+      }
+    },
+    closeDayModal() {
+      this.selectedDay = null;
+    },
+    viewEvent(event) {
+      this.selectedEvent = event;
+    },
+    viewEventFromDay(event) {
+      this.selectedDay = null;
+      this.selectedEvent = event;
+    },
+    closeModal() {
+      this.selectedEvent = null;
+    },
+    formatSelectedDayDate() {
+      if (!this.selectedDay) return '';
+      return this.selectedDay.fullDate.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    },
+    formatDate(dateString) {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    },
+    formatEventDate(date) {
+      return date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    }
+  },
+  mounted() {
+    // Update current time every minute for real-time status updates
+    this.statusUpdateInterval = setInterval(() => {
+      this.updateCurrentTime();
+    }, 60000); // Update every minute
+    
+    // Also update every 10 seconds for more responsive updates during testing
+    this.fastUpdateInterval = setInterval(() => {
+      this.updateCurrentTime();
+    }, 10000); // Update every 10 seconds
+  },
+  beforeDestroy() {
+    if (this.statusUpdateInterval) {
+      clearInterval(this.statusUpdateInterval);
+    }
+    if (this.fastUpdateInterval) {
+      clearInterval(this.fastUpdateInterval);
+    }
+  }
+};
+</script>
+
+<style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+.calendar-container {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f7fee7 100%);
+  min-height: 100vh;
+}
+
+.page-header {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(251, 255, 228, 0.95) 100%);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 2.5rem;
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 12px 40px rgba(61, 141, 122, 0.15);
+  border: 1px solid rgba(61, 141, 122, 0.1);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.header-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.3);
+}
+
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #3D8D7A;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 2px 4px rgba(61, 141, 122, 0.1);
+}
+
+.page-subtitle {
+  font-size: 1.1rem;
+  color: #666;
+  margin: 0;
+}
+
+.header-stats {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  padding: 1rem 1.5rem;
+  text-align: center;
+  border: 1px solid rgba(61, 141, 122, 0.1);
+  min-width: 80px;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(61, 141, 122, 0.15);
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #3D8D7A;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 0.5rem;
+}
+
+.status-legend {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 1.5rem 2rem;
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.1);
+  border: 1px solid rgba(61, 141, 122, 0.1);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #666;
+}
+
+.legend-color {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.legend-color.upcoming {
+  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+}
+
+.legend-color.due-today {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+}
+
+.legend-color.completed {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+}
+
+.legend-color.overdue {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+}
+
+.today-btn {
+  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 0.875rem 1.5rem;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.2);
+  font-family: 'Inter', sans-serif;
+}
+
+.today-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(61, 141, 122, 0.3);
+}
+
+.calendar-nav {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.1);
+  border: 1px solid rgba(61, 141, 122, 0.1);
+}
+
+.nav-controls {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.nav-btn {
+  background: rgba(251, 255, 228, 0.8);
+  border: 1px solid rgba(61, 141, 122, 0.1);
+  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3D8D7A;
+}
+
+.nav-btn:hover {
+  background: rgba(61, 141, 122, 0.1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.15);
+}
+
+.current-month {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #3D8D7A;
+  margin: 0;
+  min-width: 220px;
+  text-align: center;
+}
+
+.view-toggle {
+  display: flex;
+  gap: 0.5rem;
+  background: rgba(251, 255, 228, 0.5);
+  padding: 0.5rem;
+  border-radius: 16px;
+}
+
+.view-btn {
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  color: #3D8D7A;
+  font-family: 'Inter', sans-serif;
+}
+
+.view-btn:hover {
+  background: rgba(61, 141, 122, 0.1);
+}
+
+.view-btn.active {
+  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  color: white;
+  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.2);
+}
+
+.calendar-content {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 2.5rem;
+  box-shadow: 0 12px 40px rgba(61, 141, 122, 0.15);
+  border: 1px solid rgba(61, 141, 122, 0.1);
+}
+
+.calendar-grid {
+  width: 100%;
+}
+
+.calendar-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 1.5rem;
+}
+
+.day-header {
+  padding: 1.25rem;
+  text-align: center;
+  font-weight: 700;
+  color: #3D8D7A;
+  background: linear-gradient(135deg, rgba(251, 255, 228, 0.8) 0%, rgba(163, 209, 198, 0.2) 100%);
+  border-radius: 12px;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.calendar-body {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.calendar-day {
+  min-height: 130px;
+  padding: 1rem;
+  background: rgba(251, 255, 228, 0.3);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  border: 2px solid transparent;
+}
+
+.calendar-day.clickable {
+  cursor: pointer;
+}
+
+.calendar-day.clickable:hover {
+  background: rgba(251, 255, 228, 0.7);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(61, 141, 122, 0.15);
+}
+
+.calendar-day.other-month {
+  opacity: 0.4;
+}
+
+.calendar-day.today {
+  background: linear-gradient(135deg, rgba(61, 141, 122, 0.15) 0%, rgba(163, 209, 198, 0.15) 100%);
+  border-color: #3D8D7A;
+  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.2);
+}
+
+.calendar-day.has-due-today {
+  border-color: #ff6b6b;
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.15) 0%, rgba(238, 90, 82, 0.1) 100%);
+}
+
+.calendar-day.has-overdue {
+  border-color: #fbbf24;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(245, 158, 11, 0.1) 100%);
+}
+
+.calendar-day.has-upcoming {
+  border-color: #3D8D7A;
+}
+
+.day-number {
+  font-weight: 700;
+  color: #3D8D7A;
+  margin-bottom: 0.75rem;
+  font-size: 1.1rem;
+}
+
+.day-events {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.event-dot {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  margin-bottom: 2px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.event-dot.upcoming {
+  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+}
+
+.event-dot.due-today {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+}
+
+.event-dot.completed {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+}
+
+.event-dot.overdue {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+}
+
+.more-events {
+  font-size: 0.7rem;
+  color: #666;
+  font-weight: 600;
+  text-align: center;
+  margin-top: 0.5rem;
+  padding: 0.25rem;
+  background: rgba(61, 141, 122, 0.1);
+  border-radius: 6px;
+}
+
+.event-count {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.3);
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.day-modal-content {
+  background: white;
+  border-radius: 24px;
+  padding: 0;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(61, 141, 122, 0.25);
+  border: 1px solid rgba(61, 141, 122, 0.1);
+}
+
+.day-modal-header {
+  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  color: white;
+  padding: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.day-modal-header h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.8);
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.day-modal-body {
+  padding: 2rem;
+  overflow-y: auto;
+  max-height: 60vh;
+}
+
+.day-events-summary {
+  margin-bottom: 2rem;
+}
+
+.summary-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.summary-stat {
+  background: rgba(251, 255, 228, 0.5);
+  border-radius: 16px;
+  padding: 1.5rem;
+  text-align: center;
+  border: 1px solid rgba(61, 141, 122, 0.1);
+}
+
+.summary-number {
+  display: block;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #3D8D7A;
+  line-height: 1;
+}
+
+.summary-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 0.5rem;
+}
+
+.day-events-list h4 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #3D8D7A;
+  margin-bottom: 1.5rem;
+}
+
+.day-event-items {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.day-event-item {
+  background: rgba(251, 255, 228, 0.3);
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  transition: all 0.3s ease;
+  border-left: 4px solid;
+}
+
+.day-event-item:hover {
+  background: rgba(251, 255, 228, 0.6);
+  transform: translateX(4px);
+}
+
+.day-event-item.upcoming {
+  border-left-color: #3D8D7A;
+}
+
+.day-event-item.due-today {
+  border-left-color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
+}
+
+.day-event-item.completed {
+  border-left-color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.day-event-item.overdue {
+  border-left-color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+}
+
+.event-status-indicator {
+  margin-top: 0.25rem;
+}
+
+.status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.status-dot.upcoming {
+  background: #3D8D7A;
+}
+
+.status-dot.due-today {
+  background: #ff6b6b;
+}
+
+.status-dot.completed {
+  background: #22c55e;
+}
+
+.status-dot.overdue {
+  background: #fbbf24;
+}
+
+.event-details {
+  flex: 1;
+}
+
+.event-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #3D8D7A;
+  margin-bottom: 0.25rem;
+}
+
+.event-subject-small {
+  font-size: 0.875rem;
+  color: #777;
+  margin-bottom: 0.25rem;
+}
+
+.event-time-small {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #3D8D7A;
+  margin-bottom: 0.5rem;
+}
+
+.event-desc-small {
+  font-size: 0.875rem;
+  color: #666;
+  margin: 0;
+}
+
+.event-status-text {
+  display: flex;
+  align-items: center;
+  margin-top: 0.25rem;
+}
+
+.status-badge-small {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 0.25rem 0.75rem;
+  border-radius: 8px;
+  letter-spacing: 0.5px;
+}
+
+.status-badge-small.upcoming {
+  background: rgba(61, 141, 122, 0.2);
+  color: #3D8D7A;
+}
+
+.status-badge-small.due-today {
+  background: rgba(255, 107, 107, 0.2);
+  color: #dc2626;
+}
+
+.status-badge-small.completed {
+  background: rgba(34, 197, 94, 0.2);
+  color: #16a34a;
+}
+
+.status-badge-small.overdue {
+  background: rgba(251, 191, 36, 0.2);
+  color: #d97706;
+}
+
+.event-quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.quick-answer-btn {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quick-answer-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.quick-view-btn {
+  background: rgba(61, 141, 122, 0.1);
+  border: 1px solid rgba(61, 141, 122, 0.2);
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3D8D7A;
+}
+
+.quick-view-btn:hover {
+  background: rgba(61, 141, 122, 0.2);
+  transform: scale(1.1);
+}
+
+/* List View Styles */
+.events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.day-group {
+  border-bottom: 1px solid rgba(61, 141, 122, 0.1);
+  padding-bottom: 1.5rem;
+}
+
+.day-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #3D8D7A;
+  margin-bottom: 1rem;
+}
+
+.events-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.event-item {
+  background: rgba(251, 255, 228, 0.5);
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  transition: all 0.3s ease;
+  border-left: 4px solid;
+}
+
+.event-item:hover {
+  background: rgba(251, 255, 228, 0.8);
+  transform: translateX(4px);
+}
+
+.event-item.upcoming {
+  border-left-color: #3D8D7A;
+}
+
+.event-item.due-today {
+  border-left-color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
+}
+
+.event-item.completed {
+  border-left-color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.event-item.overdue {
+  border-left-color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+}
+
+.event-time {
+  font-weight: 700;
+  color: #3D8D7A;
+  min-width: 80px;
+}
+
+.event-content {
+  flex: 1;
+}
+
+.event-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #3D8D7A;
+  margin-bottom: 0.25rem;
+}
+
+.event-subject {
+  font-size: 0.875rem;
+  color: #777;
+  margin-bottom: 0.25rem;
+}
+
+.event-description {
+  font-size: 0.875rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.event-status-badge {
+  display: inline-block;
+}
+
+.status-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.upcoming {
+  background: rgba(61, 141, 122, 0.2);
+  color: #3D8D7A;
+}
+
+.status-badge.due-today {
+  background: rgba(255, 107, 107, 0.2);
+  color: #dc2626;
+}
+
+.status-badge.completed {
+  background: rgba(34, 197, 94, 0.2);
+  color: #16a34a;
+}
+
+.status-badge.overdue {
+  background: rgba(251, 191, 36, 0.2);
+  color: #d97706;
+}
+
+.event-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.answer-btn {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Inter', sans-serif;
+}
+
+.answer-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(34, 197, 94, 0.3);
+}
+
+.view-btn-small {
+  background: rgba(61, 141, 122, 0.1);
+  border: 1px solid rgba(61, 141, 122, 0.2);
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3D8D7A;
+}
+
+.view-btn-small:hover {
+  background: rgba(61, 141, 122, 0.2);
+  transform: scale(1.1);
+}
+
+.modal-content {
+  background: white;
+  border-radius: 24px;
+  padding: 2rem;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(61, 141, 122, 0.25);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(61, 141, 122, 0.1);
+}
+
+.modal-header h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #3D8D7A;
+  margin: 0;
+}
+
+.modal-header .close-btn {
+  color: #666;
+}
+
+.modal-header .close-btn:hover {
+  background: rgba(61, 141, 122, 0.1);
+  color: #3D8D7A;
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.event-detail {
+  display: flex;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(61, 141, 122, 0.05);
+  align-items: center;
+}
+
+.event-detail strong {
+  min-width: 80px;
+  color: #3D8D7A;
+  font-weight: 600;
+}
+
+.modal-actions {
+  padding-top: 1rem;
+  border-top: 1px solid rgba(61, 141, 122, 0.1);
+}
+
+.answer-btn-modal {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 0.875rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Inter', sans-serif;
+  width: 100%;
+  justify-content: center;
+}
+
+.answer-btn-modal:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(34, 197, 94, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .calendar-container {
+    padding: 1rem;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 2rem;
+    padding: 2rem;
+  }
+  
+  .header-content {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .header-stats {
+    flex-direction: row;
+    justify-content: center;
+  }
+  
+  .page-title {
+    font-size: 2rem;
+  }
+  
+  .status-legend {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  
+  .calendar-nav {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .nav-controls {
+    justify-content: center;
+  }
+  
+  .calendar-day {
+    min-height: 100px;
+    padding: 0.75rem;
+  }
+  
+  .day-header {
+    padding: 0.75rem;
+    font-size: 0.8rem;
+  }
+  
+  .event-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .event-time {
+    min-width: auto;
+  }
+  
+  .event-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .day-modal-content {
+    max-width: 95%;
+  }
+  
+  .summary-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .day-event-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .event-quick-actions {
+    flex-direction: row;
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+</style>

@@ -1,8 +1,9 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, func, desc
-from models import Assessment, AssessmentResult, StudentFeedback, GradingAnalytics
+from sqlalchemy import and_, func, desc, or_
+from models import Assessment, AssessmentResult, StudentFeedback, GradingAnalytics, User, Conversation, Message
 from typing import List, Dict, Optional
 import json
+from datetime import datetime
 
 # Assessment CRUD
 def create_assessment(db: Session, assessment_data: dict):
@@ -115,4 +116,100 @@ def get_student_feedback(db: Session, student_id: int, assessment_result_id: int
     query = db.query(StudentFeedback).filter(StudentFeedback.student_id == student_id)
     if assessment_result_id:
         query = query.filter(StudentFeedback.assessment_result_id == assessment_result_id)
+    return query.all()
+
+# User CRUD
+def get_user(db: Session, user_id: int):
+    return db.query(User).filter(User.id == user_id).first()
+
+def get_user_by_username(db: Session, username: str):
+    return db.query(User).filter(User.username == username).first()
+
+def get_user_by_email(db: Session, email: str):
+    return db.query(User).filter(User.email == email).first()
+
+def create_user(db: Session, user_data: dict):
+    user = User(**user_data)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+def get_users_by_role(db: Session, role: str, skip: int = 0, limit: int = 100):
+    return db.query(User).filter(User.role == role).offset(skip).limit(limit).all()
+
+def search_users_by_name(db: Session, query: str, skip: int = 0, limit: int = 20):
+    """Search users by name (case-insensitive)"""
+    search_term = f"%{query.lower()}%"
+    return db.query(User).filter(
+        func.lower(User.name).like(search_term)
+    ).offset(skip).limit(limit).all()
+
+# Conversation CRUD
+def get_conversation(db: Session, conversation_id: int):
+    return db.query(Conversation).filter(Conversation.id == conversation_id).first()
+
+def get_conversation_by_users(db: Session, user1_id: int, user2_id: int):
+    return db.query(Conversation).filter(
+        or_(
+            and_(Conversation.user1_id == user1_id, Conversation.user2_id == user2_id),
+            and_(Conversation.user1_id == user2_id, Conversation.user2_id == user1_id)
+        )
+    ).first()
+
+def get_conversation_between_users(db: Session, user1_id: int, user2_id: int):
+    """Alias for get_conversation_by_users for API compatibility"""
+    return get_conversation_by_users(db, user1_id, user2_id)
+
+def create_conversation(db: Session, user1_id: int, user2_id: int):
+    conversation = Conversation(user1_id=user1_id, user2_id=user2_id)
+    db.add(conversation)
+    db.commit()
+    db.refresh(conversation)
+    return conversation
+
+def get_user_conversations(db: Session, user_id: int):
+    return db.query(Conversation).filter(
+        or_(Conversation.user1_id == user_id, Conversation.user2_id == user_id)
+    ).order_by(desc(Conversation.updated_at)).all()
+
+# Message CRUD
+def create_message(db: Session, conversation_id: int, sender_id: int, receiver_id: int, content: str):
+    message = Message(
+        conversation_id=conversation_id,
+        sender_id=sender_id,
+        receiver_id=receiver_id,
+        content=content
+    )
+    db.add(message)
+    db.commit()
+    db.refresh(message)
+    
+    # Update conversation's last message and timestamp
+    conversation = get_conversation(db, conversation_id)
+    conversation.last_message_id = message.id
+    conversation.updated_at = datetime.utcnow()
+    db.commit()
+    
+    return message
+
+def get_conversation_messages(db: Session, conversation_id: int, skip: int = 0, limit: int = 50):
+    return db.query(Message).filter(
+        Message.conversation_id == conversation_id
+    ).order_by(Message.created_at).offset(skip).limit(limit).all()
+
+def mark_messages_as_read(db: Session, conversation_id: int, user_id: int):
+    db.query(Message).filter(
+        and_(
+            Message.conversation_id == conversation_id,
+            Message.receiver_id == user_id,
+            Message.is_read == False
+        )
+    ).update({Message.is_read: True})
+    db.commit()
+
+def get_unread_message_count(db: Session, user_id: int):
+    return db.query(Message).filter(
+        and_(Message.receiver_id == user_id, Message.is_read == False)
+    ).count()
     return query.all()

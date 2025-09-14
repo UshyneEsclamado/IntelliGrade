@@ -72,21 +72,12 @@
                 </svg>
                 <input type="text" v-model="searchQuery" placeholder="Search conversations..." class="search-input" />
               </div>
-              <div class="action-buttons">
-                <button class="action-btn new-chat-btn" @click="openNewChatModal">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                  </svg>
-                  New Chat
-                </button>
-                <button class="action-btn" @click="markAllAsRead">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="20,6 9,17 4,12"/>
-                  </svg>
-                  Mark all read
-                </button>
-              </div>
+              <button class="action-btn" @click="markAllAsRead">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20,6 9,17 4,12"/>
+                </svg>
+                Mark all read
+              </button>
             </div>
             
             <div v-if="filteredConversations.length === 0" class="empty-state">
@@ -108,23 +99,23 @@
                 :key="convo.id" 
                :class="[
     'conversation-item', 
-    { 'unread': convo.unread_count > 0, 'menu-open': activeMessageMenu === convo.id }
+    { 'unread': !convo.read, 'menu-open': activeMessageMenu === convo.id }
   ]"
   @click.stop="openConversationModal(convo)"
               >
                 <div class="sender-info">
                   <div class="sender-avatar">
-                    <span>{{ convo.other_user?.name?.[0] || 'U' }}</span>
+                    <span>{{ convo.sender[0] }}</span>
                   </div>
                   <div class="message-content">
                     <div class="message-header">
-                      <p class="sender-name">{{ convo.other_user?.name || 'Unknown User' }}</p>
+                      <p class="sender-name">{{ convo.sender }}</p>
                       <div class="message-indicators">
-                        <span v-if="convo.unread_count > 0" class="unread-dot"></span>
-                        <span class="message-time">{{ formatTime(convo.last_message?.created_at) }}</span>
+                        <span v-if="!convo.read" class="unread-dot"></span>
+                        <span class="message-time">{{ convo.time }}</span>
                       </div>
                     </div>
-                    <p class="last-message">{{ convo.last_message?.content || 'No messages yet' }}</p>
+                    <p class="last-message">{{ convo.lastMessage }}</p>
                   </div>
                 </div>
                 <div class="message-options-container">
@@ -138,7 +129,7 @@
                     <div v-if="activeMessageMenu === convo.id" class="options-menu">
                         <a href="#" @click.stop.prevent="toggleReadStatus(convo.id)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12A10 10 0 0 1 12 2a10 10 0 0 0 0 20c3.2 0 6.2-1.3 8.4-3.5L14 14.5V12a2 2 0 1 1 4 0v2.5l6 6c-2.2 2.2-5.4 3.5-8.8 3.5A10 10 0 0 1 2 12a10 10 0 0 1 20 0z"/></svg>
-                            {{ convo.unread_count > 0 ? 'Mark as Read' : 'Mark as Unread' }}
+                            {{ convo.read ? 'Mark as Unread' : 'Mark as Read' }}
                         </a>
                         <a href="#" @click.stop.prevent="archiveMessage(convo.id)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v3m18 0h-16c-1.1 0-2 .9-2 2v7c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-8-3v4m-4 0v-4"/></svg>
@@ -195,7 +186,7 @@
                 </svg>
               </div>
               <p>No notifications found</p>
-              <span class="empty-subtext">You're all up to date with school announcements.</span>
+              <span class="empty-subtext">You're all up to date with announcements and updates.</span>
             </div>
             
             <div v-else class="notification-list">
@@ -312,20 +303,20 @@
           <button @click="closeModal" class="close-btn">&times;</button>
           <div class="header-info">
             <div class="sender-avatar">
-              <span>{{ activeConversation?.other_user?.name?.[0] || 'U' }}</span>
+              <span>{{ activeConversation.sender[0] }}</span>
             </div>
-            <h2 class="modal-title">{{ activeConversation?.other_user?.name || 'Unknown User' }}</h2>
+            <h2 class="modal-title">{{ activeConversation.sender }}</h2>
           </div>
         </div>
         <div class="modal-body">
           <div class="messages-container" ref="messagesContainer">
             <div 
-              v-for="message in currentMessages" 
+              v-for="message in activeConversation.messages" 
               :key="message.id" 
-              :class="['message-bubble', { 'sent': message.sender_id === currentUser.id, 'received': message.sender_id !== currentUser.id }]"
+              :class="['message-bubble', { 'sent': message.sender === 'You', 'received': message.sender !== 'You' }]"
             >
-              <p class="message-text">{{ message.content }}</p>
-              <span class="message-time">{{ formatTime(message.created_at) }}</span>
+              <p class="message-text">{{ message.text }}</p>
+              <span class="message-time">{{ message.time }}</span>
             </div>
           </div>
         </div>
@@ -334,12 +325,11 @@
             <input 
               type="text" 
               v-model="newMessage" 
-              @keyup.enter="handleSendMessage" 
-              @input="handleMessageTyping"
+              @keyup.enter="sendMessage" 
               placeholder="Type your message..." 
               class="message-input"
             />
-            <button class="send-btn" @click="handleSendMessage">
+            <button class="send-btn" @click="sendMessage">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="22" y1="2" x2="11" y2="13"></line>
                 <polygon points="22 2 15.46 22 11 13 2 9.54 22 2"></polygon>
@@ -349,294 +339,98 @@
         </div>
       </div>
     </div>
-
-    <!-- New Chat Modal -->
-    <div v-if="isNewChatModalOpen" class="modal-overlay" @click.self="closeNewChatModal">
-      <div class="modal-content new-chat-modal">
-        <div class="modal-header">
-          <button @click="closeNewChatModal" class="close-btn">&times;</button>
-          <div class="header-info">
-            <div class="header-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24"></path>
-              </svg>
-            </div>
-            <h2 class="modal-title">Start New Chat</h2>
-          </div>
-        </div>
-        <div class="modal-body">
-          <div class="search-section">
-            <div class="search-bar">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-              <input 
-                type="text" 
-                v-model="userSearchQuery" 
-                @input="handleUserSearch"
-                placeholder="Search for students or teachers..." 
-                class="search-input"
-                autofocus
-              />
-            </div>
-          </div>
-          
-          <div class="search-results">
-            <div v-if="isSearching" class="loading-state">
-              <div class="loading-spinner"></div>
-              <span>Searching...</span>
-            </div>
-            
-            <div v-else-if="userSearchQuery.trim().length < 2 && searchResults.length === 0" class="empty-state">
-              <div class="empty-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="3"></circle>
-                  <path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24"></path>
-                </svg>
-              </div>
-              <p>Find someone to chat with</p>
-              <span class="empty-subtext">Type at least 2 characters to search for students and teachers.</span>
-            </div>
-            
-            <div v-else-if="userSearchQuery.trim().length >= 2 && searchResults.length === 0 && !isSearching" class="empty-state">
-              <div class="empty-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-                  <line x1="9" y1="9" x2="9.01" y2="9"/>
-                  <line x1="15" y1="9" x2="15.01" y2="9"/>
-                </svg>
-              </div>
-              <p>No users found</p>
-              <span class="empty-subtext">Try a different search term.</span>
-            </div>
-            
-            <div v-else class="user-list">
-              <div 
-                v-for="user in searchResults" 
-                :key="user.id"
-                class="user-item"
-                @click="startChatWithUser(user)"
-              >
-                <div class="user-avatar">
-                  <span>{{ user.name?.[0]?.toUpperCase() || 'U' }}</span>
-                </div>
-                <div class="user-info">
-                  <p class="user-name">{{ user.name }}</p>
-                  <span class="user-role">{{ user.role === 'teacher' ? 'Teacher' : 'Student' }}</span>
-                </div>
-                <div class="chat-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useMessaging } from '@/composables/useMessaging'
+import { ref, computed, onMounted, nextTick } from 'vue';
+import { useMessaging } from '@/composables/useMessaging.js';
 
-const router = useRouter()
+const currentTab = ref('messages');
+const currentFilter = ref('all');
+const searchQuery = ref('');
+const activeMessageMenu = ref(null);
+const isModalOpen = ref(false);
+const activeConversation = ref(null);
+const newMessage = ref('');
+const messagesContainer = ref(null);
 
-// Get user data from localStorage or auth system
-const getCurrentUser = () => {
-  const user = localStorage.getItem('user')
-  if (user) {
-    return JSON.parse(user)
-  }
-  return { id: 1, name: 'Teacher Name', role: 'teacher' } // fallback
-}
-
-const currentUser = ref(getCurrentUser())
-
-// Initialize messaging composable
+// Use the messaging composable
 const {
   conversations,
-  messages,
+  notifications,
+  archivedConversations,
+  unreadCount,
   isConnected,
-  connectionStatus,
-  sendMessage,
-  sendTypingIndicator,
-  markAsRead,
-  loadConversations,
-  loadMessages,
-  connectWebSocket,
-  disconnect,
-  searchUsers,
-  createConversationWithUser
-} = useMessaging(currentUser.value.id)
+  currentUser,
+  fetchConversations,
+  fetchConversationMessages,
+  sendMessage: sendMessageAPI,
+  markMessagesAsRead,
+  fetchUsers,
+  fetchNotifications
+} = useMessaging();
 
-// State management
-const currentTab = ref('messages')
-const selectedChat = ref(null)
-const newMessage = ref('')
-const searchQuery = ref('')
-const isTyping = ref(false)
-const typingTimer = ref(null)
-const activeMessageMenu = ref(null)
-const isModalOpen = ref(false)
-const activeConversation = ref(null)
-const messagesContainer = ref(null)
-const currentFilter = ref('all')
-
-// New chat search functionality
-const isNewChatModalOpen = ref(false)
-const userSearchQuery = ref('')
-const searchResults = ref([])
-const isSearching = ref(false)
-const searchDebounceTimer = ref(null)
-
-// Archived conversations (for the archived tab)
-const archivedConversations = ref([])
-
-// Mock notifications (keeping this as dummy data for now)
-const notifications = ref([
-  { id: 1, title: 'Holiday Announcement', body: 'Classes are suspended on Monday due to a public holiday. Regular schedule resumes Tuesday.', time: '2 hours ago', read: false, important: true },
-  { id: 2, title: 'Faculty Meeting', body: 'The monthly faculty meeting is scheduled for Friday at 3:00 PM in the conference room.', time: '1 day ago', read: false, important: false },
-  { id: 3, title: 'System Update', body: 'The learning management system will undergo maintenance tonight from 10 PM to 12 AM.', time: '3 days ago', read: true, important: false },
-  { id: 4, title: 'Grade Submission Reminder', body: 'Final grades must be submitted by the end of the day on Friday. Please ensure all grades are entered correctly.', time: '1 week ago', read: true, important: true },
-])
-
-// Message typing handler
-const handleMessageTyping = () => {
-  isTyping.value = true
-  
-  if (typingTimer.value) {
-    clearTimeout(typingTimer.value)
-  }
-  
-  if (selectedChat.value) {
-    sendTypingIndicator(selectedChat.value.id, true)
-  }
-  
-  typingTimer.value = setTimeout(() => {
-    isTyping.value = false
-    if (selectedChat.value) {
-      sendTypingIndicator(selectedChat.value.id, false)
-    }
-  }, 1000)
-}
-
-// Send message handler
-const handleSendMessage = async () => {
-  if (!newMessage.value.trim() || !selectedChat.value) return
-  
-  const messageText = newMessage.value.trim()
-  newMessage.value = ''
-  
-  try {
-    await sendMessage(selectedChat.value.id, messageText)
-  } catch (error) {
-    console.error('Failed to send message:', error)
-    // Show error to user
-  }
-}
-
-// Chat selection handler
-const selectChat = async (conversation) => {
-  selectedChat.value = conversation
-  activeConversation.value = conversation
-  try {
-    await loadMessages(conversation.id)
-    await markAsRead(conversation.id)
-  } catch (error) {
-    console.error('Failed to load messages:', error)
-  }
-}
-
-const openModal = (conversation) => {
-  selectChat(conversation)
-  isModalOpen.value = true
-}
-
-const closeModal = () => {
-  isModalOpen.value = false
-  activeConversation.value = null
-  selectedChat.value = null
-}
-
-const toggleMessageMenu = (id) => {
-  activeMessageMenu.value = activeMessageMenu.value === id ? null : id
-}
-
-// Computed properties
 const filteredConversations = computed(() => {
-  if (!searchQuery.value) return conversations.value
-  
-  const query = searchQuery.value.toLowerCase()
-  return conversations.value.filter(conv => 
-    conv.other_user?.name.toLowerCase().includes(query) ||
-    conv.last_message?.content.toLowerCase().includes(query)
-  )
-})
+  const query = searchQuery.value.toLowerCase();
+  if (!query) {
+    return conversations.value;
+  }
+  return conversations.value.filter(convo =>
+    convo.sender.toLowerCase().includes(query) ||
+    convo.lastMessage.toLowerCase().includes(query)
+  );
+});
 
 const filteredNotifications = computed(() => {
   if (currentFilter.value === 'unread') {
-    return notifications.value.filter(notif => !notif.read)
+    return notifications.value.filter(notif => !notif.read);
   } else if (currentFilter.value === 'important') {
-    return notifications.value.filter(notif => notif.important)
+    return notifications.value.filter(notif => notif.important);
   } else {
-    return notifications.value
+    return notifications.value;
   }
-})
+});
 
-const currentMessages = computed(() => {
-  if (!selectedChat.value || !activeConversation.value) return []
-  return messages.value[selectedChat.value.id] || []
-})
-
-// Legacy functions for compatibility with template
-const fetchConversations = () => {
-  loadConversations()
-}
-
-const fetchNotifications = () => {
-  // Notifications are already loaded as mock data
-}
-
-const sendMessageLegacy = () => {
-  handleSendMessage()
-}
-
-// Navigation and menu functions
-const goBack = () => {
-  router.push('/teacher-dashboard')
-}
+const toggleMessageMenu = (id) => {
+  activeMessageMenu.value = activeMessageMenu.value === id ? null : id;
+};
 
 const toggleReadStatus = (id) => {
   const convo = conversations.value.find(c => c.id === id);
   if (convo) {
-    markAsRead(id);
+    convo.read = !convo.read;
   }
   activeMessageMenu.value = null;
 };
 
 const archiveMessage = (id) => {
-  console.log('Archive message:', id);
+  const convoToArchive = conversations.value.find(convo => convo.id === id);
+  if (convoToArchive) {
+    archivedConversations.value.unshift(convoToArchive);
+    conversations.value = conversations.value.filter(convo => convo.id !== id);
+  }
   activeMessageMenu.value = null;
 };
 
 const unarchiveMessage = (id) => {
-  console.log('Unarchive message:', id);
+  const convoToUnarchive = archivedConversations.value.find(convo => convo.id === id);
+  if (convoToUnarchive) {
+    conversations.value.unshift(convoToUnarchive);
+    archivedConversations.value = archivedConversations.value.filter(convo => convo.id !== id);
+  }
   activeMessageMenu.value = null;
 };
 
 const unarchiveAll = () => {
+  conversations.value.unshift(...archivedConversations.value);
+  archivedConversations.value = [];
   activeMessageMenu.value = null;
 };
 
 const deleteMessage = (id) => {
   if (confirm('Are you sure you want to delete this message? This action cannot be undone.')) {
+    conversations.value = conversations.value.filter(convo => convo.id !== id);
     console.log(`Deleted message with ID: ${id}`);
   }
   activeMessageMenu.value = null;
@@ -644,6 +438,7 @@ const deleteMessage = (id) => {
 
 const deleteArchived = (id) => {
   if (confirm('Are you sure you want to permanently delete this archived message?')) {
+    archivedConversations.value = archivedConversations.value.filter(convo => convo.id !== id);
     console.log(`Permanently deleted archived message with ID: ${id}`);
   }
   activeMessageMenu.value = null;
@@ -657,78 +452,108 @@ const clearNotifications = () => {
   notifications.value = [];
 };
 
-const openConversationModal = (convo) => {
-  selectChat(convo);
+const openConversationModal = async (convo) => {
+  activeConversation.value = convo;
   isModalOpen.value = true;
+  convo.read = true;
+  
+  // Fetch messages for this conversation if not already loaded
+  if (!convo.messages || convo.messages.length === 0) {
+    try {
+      const messages = await fetchConversationMessages(convo.id);
+      convo.messages = messages;
+    } catch (error) {
+      console.error('Failed to load messages:', error);
+    }
+  }
+  
+  // Mark messages as read
+  markMessagesAsRead(convo.id);
+  
+  // Wait for the modal to render, then scroll to the bottom
+  nextTick(() => {
+    if (messagesContainer.value) {
+      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+    }
+  });
 };
 
-const openNotificationModal = (notification) => {
-  notification.read = true;
+const closeModal = () => {
+  isModalOpen.value = false;
+  activeConversation.value = null;
+  newMessage.value = '';
+  activeMessageMenu.value = null;
+};
+
+const sendMessage = async () => {
+  if (newMessage.value.trim() === '' || !activeConversation.value) return;
+
+  const messageText = newMessage.value.trim();
+  const conversation = activeConversation.value;
+  
+  // Find receiver ID (the other participant in conversation)
+  const receiverId = getOtherParticipantId(conversation);
+  
+  try {
+    // Add message optimistically to UI
+    const optimisticMessage = {
+      id: Date.now(), // Temporary ID
+      text: messageText,
+      sender: 'You',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+    
+    if (!conversation.messages) conversation.messages = [];
+    conversation.messages.push(optimisticMessage);
+    conversation.lastMessage = messageText;
+    newMessage.value = '';
+    
+    // Scroll to bottom
+    nextTick(() => {
+      if (messagesContainer.value) {
+        messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+      }
+    });
+    
+    // Send message via API
+    await sendMessageAPI(conversation.id, receiverId, messageText);
+    
+  } catch (error) {
+    console.error('Failed to send message:', error);
+    // Remove optimistic message on error
+    if (conversation.messages) {
+      conversation.messages = conversation.messages.filter(msg => msg.id !== optimisticMessage.id);
+    }
+  }
+};
+
+const getOtherParticipantId = (conversation) => {
+  // This would need to be determined based on conversation structure
+  // For now, we'll need to store participant IDs in the conversation object
+  return conversation.otherParticipantId || 1; // Fallback
+};
+
+const openNotificationModal = (notif) => {
+  console.log('Opening notification modal for:', notif);
+  notif.read = true;
 };
 
 const dismissNotification = (id) => {
   notifications.value = notifications.value.filter(notif => notif.id !== id);
 };
 
-// Lifecycle hooks
-onMounted(async () => {
-  try {
-    await connectWebSocket()
-    await loadConversations()
-  } catch (error) {
-    console.error('Failed to initialize messaging:', error)
-  }
-  
+onMounted(() => {
   // Close menu when clicking outside
   window.addEventListener('click', (e) => {
     if (!e.target.closest('.message-options-container') && activeMessageMenu.value) {
       activeMessageMenu.value = null;
     }
   });
-})
-
-onUnmounted(() => {
-  disconnect()
-  if (typingTimer.value) {
-    clearTimeout(typingTimer.value)
-  }
-  if (searchDebounceTimer.value) {
-    clearTimeout(searchDebounceTimer.value)
-  }
-})
+});
 </script>
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
-/* Connection Status */
-.connection-status {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  margin-bottom: 1rem;
-}
-
-.connection-status.connected {
-  background-color: #10b981;
-  color: white;
-}
-
-.connection-status.disconnected {
-  background-color: #f59e0b;
-  color: white;
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: currentColor;
-}
 
 /* Main Page Styling */
 .page-container {
@@ -919,24 +744,6 @@ onUnmounted(() => {
   margin-bottom: 2rem;
   gap: 1rem;
   flex-wrap: wrap;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.action-btn.new-chat-btn {
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  color: white;
-  border: none;
-  font-weight: 600;
-}
-
-.action-btn.new-chat-btn:hover {
-  background: linear-gradient(135deg, #347c6b 0%, #92c5b8 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
 }
 
 .search-bar {
@@ -1135,7 +942,6 @@ onUnmounted(() => {
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
-  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -1488,142 +1294,6 @@ onUnmounted(() => {
   transform: scale(1.05);
 }
 
-/* New Chat Modal Styles */
-.new-chat-modal {
-  max-width: 500px;
-  height: auto;
-  max-height: 70vh;
-}
-
-.new-chat-modal .modal-header .header-icon {
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
-
-.search-section {
-  margin-bottom: 1.5rem;
-}
-
-.search-results {
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.loading-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 2rem;
-  color: #666;
-}
-
-.loading-spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid #e0e0e0;
-  border-top: 2px solid #3D8D7A;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.user-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.user-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  background: linear-gradient(135deg, rgba(251, 255, 228, 0.8) 0%, rgba(255, 255, 255, 0.9) 100%);
-  border: 1px solid rgba(61, 141, 122, 0.08);
-  border-radius: 16px;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.user-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(61, 141, 122, 0.12);
-  border-color: rgba(61, 141, 122, 0.15);
-  background: linear-gradient(135deg, #e8fffb 0%, #f0fdfc 100%);
-}
-
-.user-avatar {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, #A3D1C6 0%, #B3D8A8 100%);
-  color: #3D8D7A;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 1rem;
-  flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.1);
-}
-
-.user-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.user-name {
-  font-weight: 700;
-  color: #3D8D7A;
-  margin: 0;
-  font-size: 1rem;
-}
-
-.user-role {
-  font-size: 0.875rem;
-  color: #666;
-  text-transform: capitalize;
-}
-
-.chat-icon {
-  color: #3D8D7A;
-  opacity: 0.7;
-  transition: opacity 0.2s ease;
-}
-
-.user-item:hover .chat-icon {
-  opacity: 1;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .new-chat-modal {
-    width: 95%;
-    max-width: none;
-    margin: 1rem;
-  }
-  
-  .action-buttons {
-    flex-direction: column;
-    width: 100%;
-  }
-  
-  .action-btn {
-    justify-content: center;
-  }
-}
-
 /* Responsive Styles */
 @media (max-width: 768px) {
   .page-container {
@@ -1672,7 +1342,6 @@ onUnmounted(() => {
 @media (max-width: 480px) {
   .last-message {
     -webkit-line-clamp: 1;
-    line-clamp: 1;
   }
 }
 </style> 
