@@ -1,18 +1,35 @@
 <template>
   <div class="home-container">
-    <!-- Welcome Header -->
-    <div class="welcome-header">
-      <div class="welcome-content">
-        <h1 class="greeting">Hello, {{ studentName }}!</h1>
-        <p class="welcome-message">
-          Welcome to your student dashboard. Here you can view your subjects, assessments, grades, and track your academic progress.
-        </p>
+    <!-- Enhanced Header Section -->
+    <div class="section-header-card">
+      <!-- Background Decorations -->
+      <div class="header-bg-decoration"></div>
+      <div class="floating-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
       </div>
-      <div class="profile-avatar">
-        <div class="avatar-circle">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
-          </svg>
+      
+      <div class="section-header-content">
+        <div class="section-header-left">
+          <div class="section-header-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <div class="header-text">
+            <div class="section-header-title">Hello, {{ studentName }}!</div>
+            <div class="section-header-subtitle">Welcome to your student dashboard</div>
+            <div class="section-header-description">Track your academic progress and stay on top of your studies</div>
+          </div>
+        </div>
+        
+        <div class="header-badge">
+          <div class="badge-content">
+            <div class="badge-icon">🎓</div>
+            <div class="badge-text">Active Student</div>
+          </div>
         </div>
       </div>
     </div>
@@ -118,38 +135,18 @@ export default {
   name: 'Home',
   data() {
     return {
-      // This should be dynamically fetched from your authentication system
-      studentName: 'Student Juan', // Replace with actual logged-in user name
-      totalSubjects: 6,
-      pendingAssessments: 4,
-      recentAssessments: [
-        {
-          id: 1,
-          title: 'Math Quiz 1',
-          subject: 'Mathematics 101',
-          dueDate: new Date('2024-09-20'),
-          status: 'pending'
-        },
-        {
-          id: 2,
-          title: 'Essay Assignment',
-          subject: 'English Literature',
-          dueDate: new Date('2024-09-22'),
-          status: 'in-progress'
-        },
-        {
-          id: 3,
-          title: 'Lab Report',
-          subject: 'Chemistry 101',
-          dueDate: new Date('2024-09-25'),
-          status: 'pending'
-        }
-      ]
+      studentName: 'Student Juan', // Will be updated from backend
+      totalSubjects: 0,
+      pendingAssessments: 0,
+      recentAssessments: [],
+      pollInterval: null
     };
   },
   methods: {
     formatDate(date) {
-      return date.toLocaleDateString('en-US', {
+      if (!date) return '';
+      const d = typeof date === 'string' ? new Date(date) : date;
+      return d.toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric'
       });
@@ -165,12 +162,36 @@ export default {
     },
     navigateToSettings() {
       this.$parent.navigateTo('settings');
+    },
+    async fetchDashboardData() {
+      try {
+        // Replace with your actual backend API endpoints
+        const statsRes = await fetch('/api/student/dashboard-stats');
+        const stats = await statsRes.json();
+        this.studentName = stats.studentName || 'Student Juan';
+        this.totalSubjects = stats.totalSubjects || 0;
+        this.pendingAssessments = stats.pendingAssessments || 0;
+
+        const assessmentsRes = await fetch('/api/student/recent-assessments');
+        const assessments = await assessmentsRes.json();
+        this.recentAssessments = Array.isArray(assessments)
+          ? assessments.map(a => ({
+              ...a,
+              dueDate: a.dueDate ? new Date(a.dueDate) : null
+            }))
+          : [];
+      } catch (err) {
+        // Optionally handle error
+        // console.error('Failed to fetch dashboard data', err);
+      }
     }
   },
   mounted() {
-    // TODO: Fetch actual user data from your authentication system
-    // Example:
-    // this.fetchUserData();
+    this.fetchDashboardData();
+    this.pollInterval = setInterval(this.fetchDashboardData, 5000);
+  },
+  beforeDestroy() {
+    if (this.pollInterval) clearInterval(this.pollInterval);
   }
 };
 </script>
@@ -185,50 +206,179 @@ export default {
   font-family: 'Inter', sans-serif;
 }
 
-.welcome-header {
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(20px);
-  border-radius: 24px;
-  padding: 2.5rem;
-  margin-bottom: 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.1);
-  border: 1px solid rgba(61, 141, 122, 0.1);
+/* Enhanced Header Design */
+.section-header-card {
+  position: relative;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fcfa 100%);
+  border-radius: 32px;
+  padding: 3.5rem;
+  margin-bottom: 2.5rem;
+  min-height: 180px;
+  box-shadow: 
+    0 24px 48px rgba(61, 141, 122, 0.08),
+    0 12px 24px rgba(61, 141, 122, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border: 2px solid rgba(61, 141, 122, 0.08);
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.greeting {
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: #3D8D7A;
-  margin-bottom: 1rem;
-  text-shadow: 0 2px 4px rgba(61, 141, 122, 0.1);
+.section-header-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 32px 64px rgba(61, 141, 122, 0.12),
+    0 16px 32px rgba(61, 141, 122, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
-.welcome-message {
-  font-size: 1.1rem;
-  color: #666;
-  line-height: 1.6;
-  max-width: 600px;
+.header-bg-decoration {
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 120%;
+  height: 200%;
+  background: radial-gradient(ellipse at center, rgba(77, 187, 152, 0.08) 0%, transparent 70%);
+  z-index: 1;
 }
 
-.profile-avatar {
-  flex-shrink: 0;
+.floating-shapes {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  pointer-events: none;
 }
 
-.avatar-circle {
+.shape {
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(77, 187, 152, 0.1) 0%, rgba(51, 128, 107, 0.05) 100%);
+}
+
+.shape-1 {
+  width: 120px;
+  height: 120px;
+  top: -30px;
+  right: 10%;
+  animation: float 6s ease-in-out infinite;
+}
+
+.shape-2 {
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  border-radius: 50%;
+  bottom: -20px;
+  right: 25%;
+  animation: float 8s ease-in-out infinite reverse;
+}
+
+.shape-3 {
+  width: 60px;
+  height: 60px;
+  top: 50%;
+  right: 5%;
+  animation: float 7s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(10deg); }
+}
+
+.section-header-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.section-header-left {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+}
+
+.section-header-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #4dbb98 0%, #33806b 100%);
+  border-radius: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.3);
+  color: #fff;
+  box-shadow: 
+    0 12px 24px rgba(61, 141, 122, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
 }
 
+.section-header-icon:hover {
+  transform: scale(1.05);
+}
+
+.header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.section-header-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #2d6a57;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #33806b 0%, #4dbb98 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.25rem;
+}
+
+.section-header-subtitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #5e8c7a;
+  margin-bottom: 0.25rem;
+}
+
+.section-header-description {
+  font-size: 1rem;
+  color: #7a9c8f;
+  font-weight: 400;
+  opacity: 0.9;
+}
+
+.header-badge {
+  background: rgba(77, 187, 152, 0.1);
+  border: 2px solid rgba(77, 187, 152, 0.2);
+  border-radius: 20px;
+  padding: 1rem 1.5rem;
+  backdrop-filter: blur(10px);
+}
+
+.badge-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.badge-icon {
+  font-size: 1.5rem;
+}
+
+.badge-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #33806b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Rest of the styles remain the same */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -418,14 +568,23 @@ export default {
     padding: 1rem;
   }
   
-  .welcome-header {
+  .section-header-card {
+    padding: 2.5rem 2rem;
+    min-height: 140px;
+  }
+  
+  .section-header-left {
     flex-direction: column;
     text-align: center;
     gap: 1.5rem;
-    padding: 2rem;
   }
   
-  .greeting {
+  .section-header-content {
+    flex-direction: column;
+    gap: 2rem;
+  }
+  
+  .section-header-title {
     font-size: 2rem;
   }
   
@@ -441,5 +600,4 @@ export default {
   .quick-links-grid {
     grid-template-columns: 1fr;
   }
-}
-</style>
+}</style>

@@ -1,33 +1,23 @@
 <template>
   <div class="calendar-container">
-    <!-- Header Section -->
-    <div class="page-header">
-      <div class="header-content">
-        <div class="header-icon">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M19,19H5V8H19M19,3H18V1H16V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M16.5,13.5H11V18.5H16.5V13.5Z" />
+    <!-- Minimal Card Header (Subjects style) -->
+    <div class="section-header-card minimal-header-card header-flex-align">
+      <div class="section-header-left">
+        <div class="section-header-icon minimal-header-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M5,19V5H19V19H5Z" />
           </svg>
         </div>
-        <div class="header-text">
-          <h1 class="page-title">Academic Calendar</h1>
-          <p class="page-subtitle">Track your deadlines and stay organized</p>
+        <div>
+          <div class="section-header-title minimal-header-title">Academic Calendar</div>
+          <div class="section-header-sub minimal-header-sub">View and manage your academic events</div>
         </div>
       </div>
-      <div class="header-stats">
-        <div class="stat-card">
-          <div class="stat-number">{{ upcomingDeadlines }}</div>
-          <div class="stat-label">Upcoming</div>
+      <div class="section-header-stats align-top">
+        <div class="stat-item">
+          <span class="stat-number">{{ events.length }}</span>
+          <span class="stat-label">Total Events</span>
         </div>
-        <div class="stat-card">
-          <div class="stat-number">{{ overdueCount }}</div>
-          <div class="stat-label">Overdue</div>
-        </div>
-        <button @click="goToToday" class="today-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M19,19H5V8H19M19,3H18V1H16V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3Z" />
-          </svg>
-          Today
-        </button>
       </div>
     </div>
 
@@ -598,6 +588,104 @@ export default {
 </script>
 
 <style scoped>
+/* Flex alignment for header stat */
+.header-flex-align {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.section-header-stats.align-top {
+  align-items: flex-start;
+  margin-top: 0.1rem;
+}
+/* --- Minimal Header Card Styles (from Subjects.vue) --- */
+.minimal-header-card {
+  border-radius: 28px;
+  box-shadow: 0 8px 32px 0 rgba(61, 141, 122, 0.13);
+  background: #fff;
+  border: 1.5px solid #b7e4d8;
+  padding: 3.5rem 4.5rem;
+  min-height: 170px;
+  gap: 3.5rem;
+  margin-bottom: 2.2rem;
+}
+.minimal-header-icon {
+  width: 88px;
+  height: 88px;
+  background: #4dbb98;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: none;
+}
+.minimal-header-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #33806b;
+  margin-bottom: 0.12rem;
+  letter-spacing: -0.01em;
+}
+.minimal-header-sub {
+  font-size: 1.25rem;
+  color: #5e8c7a;
+  font-weight: 400;
+  margin-bottom: 0;
+}
+.section-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+.section-header-icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #4dbb98 0%, #33806b 100%);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 2px 8px 0 rgba(61, 141, 122, 0.10);
+}
+.section-header-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #33806b;
+  margin-bottom: 0.18rem;
+  letter-spacing: -0.01em;
+}
+.section-header-sub {
+  font-size: 1.08rem;
+  color: #5e8c7a;
+  font-weight: 400;
+  margin-bottom: 0;
+}
+.section-header-stats {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #3D8D7A;
+  line-height: 1;
+}
+.stat-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 0.5rem;
+}
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 * {
@@ -701,9 +789,10 @@ export default {
   border-radius: 20px;
   padding: 1.5rem 2rem;
   margin-bottom: 2rem;
+  margin-top: 1.5rem;
   display: flex;
   justify-content: center;
-  gap: 3rem;
+  gap: 4.5rem;
   box-shadow: 0 8px 32px rgba(61, 141, 122, 0.1);
   border: 1px solid rgba(61, 141, 122, 0.1);
 }
@@ -711,8 +800,8 @@ export default {
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  font-size: 0.9rem;
+  gap: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 600;
   color: #666;
 }
@@ -1611,3 +1700,155 @@ export default {
   }
 }
 </style>
+
+/* --- Modern Card Header Styles (from Home.vue) --- */
+.section-header-card {
+  position: relative;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fcfa 100%);
+  border-radius: 32px;
+  padding: 3.5rem;
+  margin-bottom: 2.5rem;
+  min-height: 180px;
+  box-shadow: 
+    0 24px 48px rgba(61, 141, 122, 0.08),
+    0 12px 24px rgba(61, 141, 122, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border: 2px solid rgba(61, 141, 122, 0.08);
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.section-header-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 32px 64px rgba(61, 141, 122, 0.12),
+    0 16px 32px rgba(61, 141, 122, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.header-bg-decoration {
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 120%;
+  height: 200%;
+  background: radial-gradient(ellipse at center, rgba(77, 187, 152, 0.08) 0%, transparent 70%);
+  z-index: 1;
+}
+.floating-shapes {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+.shape {
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(77, 187, 152, 0.1) 0%, rgba(51, 128, 107, 0.05) 100%);
+}
+.shape-1 {
+  width: 120px;
+  height: 120px;
+  top: -30px;
+  right: 10%;
+  animation: float 6s ease-in-out infinite;
+}
+.shape-2 {
+  width: 80px;
+  height: 80px;
+  bottom: -20px;
+  right: 25%;
+  animation: float 8s ease-in-out infinite reverse;
+}
+.shape-3 {
+  width: 60px;
+  height: 60px;
+  top: 50%;
+  right: 5%;
+  animation: float 7s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(10deg); }
+}
+.section-header-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+.section-header-left {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+}
+.section-header-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #4dbb98 0%, #33806b 100%);
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 
+    0 12px 24px rgba(61, 141, 122, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+.section-header-icon:hover {
+  transform: scale(1.05);
+}
+.header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.section-header-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #2d6a57;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #33806b 0%, #4dbb98 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.25rem;
+}
+.section-header-subtitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #5e8c7a;
+  margin-bottom: 0.25rem;
+}
+.section-header-description {
+  font-size: 1rem;
+  color: #7a9c8f;
+  font-weight: 400;
+  opacity: 0.9;
+}
+.header-badge {
+  background: rgba(77, 187, 152, 0.1);
+  border: 2px solid rgba(77, 187, 152, 0.2);
+  border-radius: 20px;
+  padding: 1rem 1.5rem;
+  backdrop-filter: blur(10px);
+}
+.badge-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.badge-icon {
+  font-size: 1.5rem;
+}
+.badge-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #33806b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}

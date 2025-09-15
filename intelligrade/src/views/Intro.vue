@@ -18,7 +18,7 @@ const router = useRouter()
 onMounted(() => {
   setTimeout(() => {
     document.querySelector('.intro').classList.add('fade-out')
-    setTimeout(() => router.push('/login'), 1000) // Wait for fade animation
+    setTimeout(() => router.push('/landing'), 1000) // Wait for fade animation
   }, 2500)
 })
 </script>

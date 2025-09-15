@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 // Import all necessary components
 import Intro from '@/views/Intro.vue'
+import Landing from '@/views/Landing.vue'
 import Login from '@/views/Login.vue'
 import Signup from '@/views/Signup.vue'
 import SignupStudent from '@/views/SignupStudent.vue'
@@ -25,7 +26,8 @@ import ClassStudents from '@/views/teacher/ClassStudents.vue' // New import for 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    { path: '/', name: 'intro', component: Intro },
+  { path: '/', name: 'intro', component: Intro },
+  { path: '/landing', name: 'landing', component: Landing },
     { path: '/login', name: 'login', component: Login },
     { path: '/signup', name: 'signup', component: Signup },
     { path: '/signup-student', name: 'signupStudent', component: SignupStudent },
