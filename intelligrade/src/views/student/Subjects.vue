@@ -178,6 +178,8 @@ export default {
   max-width: 1400px;
   margin: 0 auto;
   font-family: 'Inter', sans-serif;
+  background: var(--bg-primary);
+  min-height: 100vh;
 }
 
 
@@ -185,10 +187,10 @@ export default {
 .section-header-card {
   display: flex;
   align-items: center;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 24px;
-  box-shadow: 0 4px 24px 0 rgba(61, 141, 122, 0.10);
-  border: 1.5px solid #e0f3ea;
+  box-shadow: 0 4px 24px 0 var(--shadow-medium);
+  border: 1.5px solid var(--border-color-hover);
   padding: 2.2rem 2.5rem;
   margin-bottom: 2.2rem;
   min-height: 110px;
@@ -197,9 +199,9 @@ export default {
 }
 .minimal-header-card {
   border-radius: 28px;
-  box-shadow: 0 8px 32px 0 rgba(61, 141, 122, 0.13);
-  background: #fff;
-  border: 1.5px solid #b7e4d8;
+  box-shadow: 0 8px 32px 0 var(--shadow-strong);
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-color-hover);
   padding: 3.5rem 4.5rem;
   min-height: 170px;
   gap: 3.5rem;
@@ -218,13 +220,13 @@ export default {
 .minimal-header-title {
   font-size: 2.5rem;
   font-weight: 700;
-  color: #33806b;
+  color: var(--text-primary);
   margin-bottom: 0.12rem;
   letter-spacing: -0.01em;
 }
 .minimal-header-sub {
   font-size: 1.25rem;
-  color: #5e8c7a;
+  color: var(--text-secondary);
   font-weight: 400;
   margin-bottom: 0;
 }
@@ -247,13 +249,13 @@ export default {
 .section-header-title {
   font-size: 2rem;
   font-weight: 700;
-  color: #33806b;
+  color: var(--text-primary);
   margin-bottom: 0.18rem;
   letter-spacing: -0.01em;
 }
 .section-header-sub {
   font-size: 1.08rem;
-  color: #5e8c7a;
+  color: var(--text-secondary);
   font-weight: 400;
   margin-bottom: 0;
 }
@@ -279,14 +281,14 @@ export default {
 .stat-label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #777;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-top: 0.5rem;
 }
 
 .controls-section {
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--bg-card-translucent);
   backdrop-filter: blur(20px);
   border-radius: 20px;
   padding: 2rem;
@@ -295,15 +297,15 @@ export default {
   justify-content: space-between;
   align-items: center;
   gap: 2rem;
-  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.1);
-  border: 1px solid rgba(61, 141, 122, 0.1);
+  box-shadow: 0 8px 32px var(--shadow-light);
+  border: 1px solid var(--border-color-light);
 }
 
 .search-box {
   display: flex;
   align-items: center;
-  background: rgba(251, 255, 228, 0.5);
-  border: 1px solid rgba(61, 141, 122, 0.1);
+  background: var(--bg-input);
+  border: 1px solid var(--border-color-light);
   border-radius: 16px;
   padding: 1rem 1.5rem;
   gap: 1rem;
@@ -312,8 +314,8 @@ export default {
 }
 
 .search-box:focus-within {
-  border-color: rgba(61, 141, 122, 0.3);
-  background: rgba(251, 255, 228, 0.8);
+  border-color: var(--border-color-focus);
+  background: var(--bg-input-focus);
 }
 
 .search-box svg {
@@ -326,13 +328,13 @@ export default {
   background: transparent;
   outline: none;
   font-size: 1rem;
-  color: #3D8D7A;
+  color: var(--text-primary);
   width: 100%;
   font-family: 'Inter', sans-serif;
 }
 
 .search-input::placeholder {
-  color: #999;
+  color: var(--text-placeholder);
 }
 
 .filter-tabs {
@@ -341,19 +343,19 @@ export default {
 }
 
 .filter-tab {
-  background: rgba(251, 255, 228, 0.5);
-  border: 1px solid rgba(61, 141, 122, 0.1);
+  background: var(--bg-input);
+  border: 1px solid var(--border-color-light);
   border-radius: 12px;
   padding: 0.75rem 1.5rem;
   cursor: pointer;
   transition: all 0.3s ease;
   font-weight: 600;
-  color: #3D8D7A;
+  color: var(--text-primary);
   font-family: 'Inter', sans-serif;
 }
 
 .filter-tab:hover {
-  background: rgba(61, 141, 122, 0.1);
+  background: var(--bg-hover);
   transform: translateY(-1px);
 }
 
@@ -373,12 +375,12 @@ export default {
 }
 
 .subject-card {
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--bg-card-translucent);
   backdrop-filter: blur(20px);
   border-radius: 18px;
   padding: 1.1rem 1rem 1.2rem 1rem;
-  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.08);
-  border: 1px solid rgba(61, 141, 122, 0.08);
+  box-shadow: 0 4px 16px var(--shadow-light);
+  border: 1px solid var(--border-color-light);
   transition: all 0.2s ease;
   cursor: pointer;
   display: flex;
@@ -390,7 +392,7 @@ export default {
 
 .subject-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 16px 48px rgba(61, 141, 122, 0.15);
+  box-shadow: 0 16px 48px var(--shadow-medium);
 }
 
 .subject-header {
@@ -443,7 +445,7 @@ export default {
 .subject-title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #3D8D7A;
+  color: var(--text-primary);
   margin-bottom: 0.5rem;
   line-height: 1.2;
 }
@@ -451,7 +453,7 @@ export default {
 .subject-code {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #777;
+  color: var(--text-muted);
   margin-bottom: 0.5rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -459,12 +461,12 @@ export default {
 
 .subject-instructor {
   font-size: 1rem;
-  color: #666;
+  color: var(--text-secondary);
   margin: 0;
 }
 
 .subject-stats {
-  background: rgba(251, 255, 228, 0.5);
+  background: var(--bg-stats);
   border-radius: 16px;
   padding: 1.5rem;
 }
@@ -490,7 +492,7 @@ export default {
 .stat-text {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #777;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-top: 0.5rem;
@@ -529,24 +531,24 @@ export default {
 }
 
 .action-btn.secondary {
-  background: rgba(251, 255, 228, 0.8);
+  background: var(--bg-secondary);
   color: #3D8D7A;
-  border: 1px solid rgba(61, 141, 122, 0.2);
+  border: 1px solid var(--border-color-light);
 }
 
 .action-btn.secondary:hover {
-  background: rgba(61, 141, 122, 0.1);
+  background: var(--bg-hover);
   transform: translateY(-2px);
 }
 
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--bg-card-translucent);
   backdrop-filter: blur(20px);
   border-radius: 24px;
-  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.1);
-  border: 1px solid rgba(61, 141, 122, 0.1);
+  box-shadow: 0 8px 32px var(--shadow-light);
+  border: 1px solid var(--border-color-light);
 }
 
 .empty-icon {
@@ -569,7 +571,7 @@ export default {
 }
 
 .empty-state p {
-  color: #666;
+  color: var(--text-secondary);
   font-size: 1rem;
   margin: 0;
 }

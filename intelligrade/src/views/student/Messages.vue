@@ -558,7 +558,7 @@ onMounted(() => {
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
-  background: linear-gradient(135deg, #f8fffe 0%, #f0f7f4 100%);
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
 }
 
 .bg-decoration {
@@ -619,14 +619,14 @@ onMounted(() => {
 }
 
 .card-box {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--bg-card);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(61, 141, 122, 0.08);
+  border: 1px solid var(--border-color);
   border-radius: 28px;
   padding: 2.5rem;
   box-shadow: 
-    0 20px 60px rgba(61, 141, 122, 0.05),
-    0 8px 32px rgba(61, 141, 122, 0.03),
+    0 20px 60px var(--shadow-light),
+    0 8px 32px var(--shadow-medium),
     0 0 0 1px rgba(255, 255, 255, 0.3);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -634,8 +634,8 @@ onMounted(() => {
 .card-box:hover {
   transform: translateY(-2px);
   box-shadow: 
-    0 25px 70px rgba(61, 141, 122, 0.08),
-    0 12px 40px rgba(61, 141, 122, 0.05),
+    0 25px 70px var(--shadow-medium),
+    0 12px 40px var(--shadow-strong),
     0 0 0 1px rgba(255, 255, 255, 0.4);
 }
 
@@ -646,10 +646,10 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: 28px;
-  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.13);
-  border: 1.5px solid #b6e2d3;
+  box-shadow: 0 8px 32px var(--shadow-medium);
+  border: 1.5px solid var(--border-color-hover);
   padding: 3rem 4rem 3rem 3.5rem;
   margin-bottom: 2.8rem;
   min-height: 140px;
@@ -669,18 +669,18 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 16px 0 rgba(61, 141, 122, 0.13);
-  color: #fff;
+  color: var(--text-inverse);
 }
 .section-header-title {
   font-size: 2.1rem;
   font-weight: 700;
-  color: #33806b;
+  color: var(--text-accent);
   margin-bottom: 0.18rem;
   letter-spacing: -0.01em;
 }
 .section-header-sub {
   font-size: 1.15rem;
-  color: #5e8c7a;
+  color: var(--text-secondary);
   font-weight: 400;
   margin-bottom: 0;
 }
@@ -706,28 +706,28 @@ onMounted(() => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  background: #f0f7f4;
-  border: 1px solid rgba(61, 141, 122, 0.1);
+  background: var(--bg-accent);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
-  color: #777;
+  color: var(--text-muted);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .tab-btn:hover {
-  background: #e6f0ed;
+  background: var(--bg-accent-hover);
 }
 
 .tab-btn.active {
-  background: #3D8D7A;
-  color: white;
-  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.2);
+  background: var(--text-accent);
+  color: var(--text-inverse);
+  box-shadow: 0 4px 12px var(--shadow-medium);
 }
 
 .tab-btn.active svg {
-  color: white;
-  stroke: white;
+  color: var(--text-inverse);
+  stroke: var(--text-inverse);
 }
 
 .tab-content {
@@ -760,16 +760,18 @@ onMounted(() => {
 .search-input {
   width: 100%;
   padding: 0.75rem 1rem 0.75rem 3rem;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   font-size: 1rem;
+  background: var(--bg-card);
+  color: var(--text-primary);
   transition: all 0.2s ease;
 }
 
 .search-input:focus {
   outline: none;
-  border-color: #3D8D7A;
-  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
+  border-color: var(--text-accent);
+  box-shadow: 0 0 0 3px var(--shadow-light);
 }
 
 .action-btn {
@@ -777,10 +779,10 @@ onMounted(() => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
-  background: rgba(61, 141, 122, 0.05);
-  border: 1px solid rgba(61, 141, 122, 0.1);
+  background: var(--bg-accent);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
-  color: #3D8D7A;
+  color: var(--text-accent);
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
@@ -788,18 +790,18 @@ onMounted(() => {
 }
 
 .action-btn:hover {
-  background: rgba(61, 141, 122, 0.1);
+  background: var(--bg-accent-hover);
   transform: translateY(-1px);
 }
 
 .empty-state {
   text-align: center;
-  color: #888;
+  color: var(--text-muted);
   padding: 3rem 2rem;
 }
 
 .empty-icon {
-  color: #ccc;
+  color: var(--text-muted);
   margin-bottom: 1rem;
 }
 
@@ -807,12 +809,12 @@ onMounted(() => {
   font-size: 1.1rem;
   font-weight: 600;
   margin: 0;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .empty-subtext {
   font-size: 0.9rem;
-  color: #999;
+  color: var(--text-muted);
   margin-top: 0.5rem;
   display: block;
 }
@@ -840,8 +842,8 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem;
-  background: linear-gradient(135deg, rgba(251, 255, 228, 0.8) 0%, rgba(255, 255, 255, 0.9) 100%);
-  border: 1px solid rgba(61, 141, 122, 0.08);
+  background: linear-gradient(135deg, var(--bg-accent) 0%, var(--bg-card) 100%);
+  border: 1px solid var(--border-color);
   border-radius: 20px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -849,25 +851,25 @@ onMounted(() => {
 }
 
 .conversation-item.unread {
-  background: linear-gradient(135deg, #e8fffb 0%, #f0fdfc 100%);
-  border-color: #A3D1C6;
+  background: linear-gradient(135deg, var(--bg-unread) 0%, var(--bg-card) 100%);
+  border-color: var(--border-color-hover);
 }
 
 .notification-item.unread {
-  background: linear-gradient(135deg, #e8fffb 0%, #f0fdfc 100%);
-  border-color: #A3D1C6;
+  background: linear-gradient(135deg, var(--bg-unread) 0%, var(--bg-card) 100%);
+  border-color: var(--border-color-hover);
 }
 
 .notification-item.important {
-  background: linear-gradient(135deg, #fff3e0 0%, #fffbf0 100%);
+  background: linear-gradient(135deg, var(--bg-important) 0%, var(--bg-card) 100%);
   border-color: #ffc107;
 }
 
 .conversation-item:hover,
 .notification-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(61, 141, 122, 0.12);
-  border-color: rgba(61, 141, 122, 0.15);
+  box-shadow: 0 12px 40px var(--shadow-medium);
+  border-color: var(--border-color-hover);
 }
 
 .sender-info {
@@ -882,7 +884,7 @@ onMounted(() => {
   width: 48px;
   height: 48px;
   background: linear-gradient(135deg, #A3D1C6 0%, #B3D8A8 100%);
-  color: #3D8D7A;
+  color: var(--text-accent);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -890,7 +892,7 @@ onMounted(() => {
   font-weight: 600;
   font-size: 1.2rem;
   flex-shrink: 0;
-  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.1);
+  box-shadow: 0 4px 16px var(--shadow-light);
 }
 
 .message-content {
@@ -907,7 +909,7 @@ onMounted(() => {
 
 .sender-name {
   font-weight: 700;
-  color: #3D8D7A;
+  color: var(--text-accent);
   margin: 0;
   font-size: 1.1rem;
 }
@@ -921,24 +923,25 @@ onMounted(() => {
 .unread-dot {
   width: 8px;
   height: 8px;
-  background: #3D8D7A;
+  background: var(--text-accent);
   border-radius: 50%;
   flex-shrink: 0;
 }
 
 .message-time {
   font-size: 0.85rem;
-  color: #999;
+  color: var(--text-muted);
   font-weight: 500;
 }
 
 .last-message {
   font-size: 0.95rem;
-  color: #666;
+  color: var(--text-secondary);
   margin: 0;
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -951,24 +954,24 @@ onMounted(() => {
 .options-btn {
   background: none;
   border: none;
-  color: #999;
+  color: var(--text-muted);
   cursor: pointer;
   padding: 0.5rem;
   transition: color 0.2s ease;
 }
 
 .options-btn:hover {
-  color: #3D8D7A;
+  color: var(--text-accent);
 }
 
 .options-menu {
   position: absolute;
   top: 100%;
   right: 0;
-  background-color: white;
-  border: 1px solid #e0e0e0;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 24px var(--shadow-medium);
   padding: 0.5rem;
   display: flex;
   flex-direction: column;
@@ -982,15 +985,15 @@ onMounted(() => {
     align-items: center;
     gap: 0.75rem;
     padding: 0.75rem 1rem;
-    color: #555;
+    color: var(--text-secondary);
     text-decoration: none;
     border-radius: 8px;
     transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .options-menu a:hover {
-    background-color: #f0f7f4;
-    color: #3D8D7A;
+    background-color: var(--bg-accent);
+    color: var(--text-accent);
 }
 
 .options-menu a.delete-option {
@@ -1010,23 +1013,23 @@ onMounted(() => {
 .filter-btn {
   padding: 0.5rem 1rem;
   background: transparent;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--border-color);
   border-radius: 12px;
-  color: #777;
+  color: var(--text-muted);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .filter-btn:hover {
-  background: #f0f0f0;
+  background: var(--bg-accent);
 }
 
 .filter-btn.active {
-  background: #3D8D7A;
-  border-color: #3D8D7A;
-  color: white;
-  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.2);
+  background: var(--text-accent);
+  border-color: var(--text-accent);
+  color: var(--text-inverse);
+  box-shadow: 0 4px 12px var(--shadow-medium);
 }
 
 .notification-header {
@@ -1037,8 +1040,8 @@ onMounted(() => {
 }
 
 .notification-icon {
-  color: #3D8D7A;
-  background: rgba(61, 141, 122, 0.1);
+  color: var(--text-accent);
+  background: var(--bg-accent);
   padding: 8px;
   border-radius: 12px;
 }
@@ -1059,7 +1062,7 @@ onMounted(() => {
 
 .unread-label {
   background: #3D8D7A;
-  color: white;
+  color: var(--text-inverse);
   font-size: 0.75rem;
   font-weight: 600;
   padding: 0.25rem 0.75rem;
@@ -1132,7 +1135,7 @@ onMounted(() => {
 }
 
 .modal-content {
-  background: #fff;
+  background: var(--card-background);
   border-radius: 20px;
   width: 90%;
   max-width: 600px;
@@ -1147,7 +1150,7 @@ onMounted(() => {
 .modal-header {
   padding: 1.5rem 2rem;
   background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  color: white;
+  color: var(--text-inverse);
   display: flex;
   align-items: center;
   gap: 1.5rem;
@@ -1158,7 +1161,7 @@ onMounted(() => {
 .modal-header .close-btn {
   background: none;
   border: none;
-  color: white;
+  color: var(--text-inverse);
   font-size: 2rem;
   cursor: pointer;
   position: absolute;
@@ -1222,7 +1225,7 @@ onMounted(() => {
 
 .message-bubble.sent {
   background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  color: white;
+  color: var(--text-inverse);
   align-self: flex-end;
   border-bottom-right-radius: 4px;
 }
@@ -1274,7 +1277,7 @@ onMounted(() => {
 
 .send-btn {
   background: #3D8D7A;
-  color: white;
+  color: var(--text-inverse);
   border: none;
   width: 48px;
   height: 48px;
@@ -1339,6 +1342,7 @@ onMounted(() => {
 @media (max-width: 480px) {
   .last-message {
     -webkit-line-clamp: 1;
+    line-clamp: 1;
   }
 }
 </style> 

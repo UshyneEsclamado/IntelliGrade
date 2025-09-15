@@ -10,8 +10,11 @@
           </div>
         </div>
         <div class="user-details">
-          <h3>{{ fullName }}</h3>
+          <h3 v-if="!isLoading">{{ fullName }}</h3>
+          <h3 v-else class="loading-text">Loading...</h3>
           <p class="role">Student</p>
+          <p v-if="!isLoading && studentId" class="student-id">ID: {{ studentId }}</p>
+          <p v-if="!isLoading && courseYear" class="course-year">{{ courseYear }}</p>
         </div>
       </div>
 
@@ -68,7 +71,10 @@
         </a>
       </nav>
 
-      <button @click="handleLogout" class="logout-btn">
+      <button @click="showLogoutModal" class="logout-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M16,17V14H9V10H16V7L21,12L16,17M14,2A2,2 0 0,1 16,4V6H14V4H5V20H14V18H16V20A2,2 0 0,1 14,22H5A2,2 0 0,1 3,20V4A2,2 0 0,1 5,2H14Z" />
+        </svg>
         <span>Logout</span>
       </button>
     </aside>
@@ -76,6 +82,30 @@
     <main class="main-content">
       <component :is="currentComponent" />
     </main>
+
+    <!-- Logout Confirmation Modal -->
+    <div v-if="isLogoutModalVisible" class="modal-overlay" @click="hideLogoutModal">
+      <div class="modal-container" @click.stop>
+        <div class="modal-header">
+          <div class="modal-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9,12L11,14.4L15,9.6M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2Z" />
+            </svg>
+          </div>
+          <h3 class="modal-title">Confirm Logout</h3>
+          <p class="modal-message">Are you sure you want to logout from your account?</p>
+        </div>
+        
+        <div class="modal-actions">
+          <button @click="hideLogoutModal" class="btn-cancel">
+            Cancel
+          </button>
+          <button @click="confirmLogout" class="btn-confirm">
+            Yes, Logout
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -85,13 +115,18 @@ import Subjects from './student/Subjects.vue';
 import Calendar from './student/Calendar.vue';
 import Messages from './student/Messages.vue';
 import Settings from './student/Settings.vue';
+import { supabase } from '../supabase.js';
 
 export default {
   name: 'StudentDashboard',
   data() {
     return {
-      fullName: 'Student Name',
+      fullName: 'Loading...',
+      studentId: '',
+      courseYear: '',
       currentView: 'home',
+      isLogoutModalVisible: false,
+      isLoading: true,
     };
   },
   computed: {
@@ -112,12 +147,95 @@ export default {
       }
     },
   },
+  async mounted() {
+    await this.loadUserProfile();
+    this.initializeDarkMode();
+  },
   methods: {
+    async loadUserProfile() {
+      try {
+        // Get the current user from Supabase auth
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError || !user) {
+          console.error('Auth error:', authError);
+          // Redirect to login if not authenticated
+          this.$router.push('/login');
+          return;
+        }
+
+        // Fetch the user profile from the profiles table
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('full_name, student_id, course_year, role')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Profile error:', profileError);
+          this.fullName = 'Student';
+          return;
+        }
+
+        if (profile) {
+          this.fullName = profile.full_name || 'Student';
+          this.studentId = profile.student_id || '';
+          this.courseYear = profile.course_year || '';
+          
+          // Verify this is actually a student
+          if (profile.role !== 'student') {
+            console.warn('User is not a student');
+            this.$router.push('/login');
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Error loading user profile:', error);
+        this.fullName = 'Student';
+      } finally {
+        this.isLoading = false;
+      }
+    },
     navigateTo(view) {
       this.currentView = view;
     },
-    handleLogout() {
-      console.log('Logout logic here');
+    initializeDarkMode() {
+      const savedTheme = localStorage.getItem('darkMode');
+      if (savedTheme === 'true') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    },
+    showLogoutModal() {
+      this.isLogoutModalVisible = true;
+    },
+    hideLogoutModal() {
+      this.isLogoutModalVisible = false;
+    },
+    async confirmLogout() {
+      // Hide modal first
+      this.isLogoutModalVisible = false;
+      
+      try {
+        // Sign out from Supabase
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+          console.error('Logout error:', error);
+        }
+        
+        // Clear any local storage data
+        localStorage.removeItem('userProfile');
+        
+        console.log('User logged out');
+        
+        // Navigate to Landing page
+        this.$router.push('/');
+      } catch (error) {
+        console.error('Error during logout:', error);
+        // Still redirect even if there's an error
+        this.$router.push('/');
+      }
     },
   },
 };
@@ -144,7 +262,7 @@ export default {
   right: 0;
   bottom: 0;
   font-family: 'Inter', sans-serif;
-  background: linear-gradient(135deg, #FBFFE4 0%, #B3D8A8 50%, #A3D1C6 100%);
+  background: var(--bg-primary);
 }
 
 .dashboard-container::before {
@@ -155,24 +273,24 @@ export default {
   width: 100%;
   height: 100%;
   background: 
-    radial-gradient(circle at 20% 80%, rgba(61, 141, 122, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(179, 216, 168, 0.15) 0%, transparent 50%),
-    radial-gradient(circle at 50% 50%, rgba(163, 209, 198, 0.08) 0%, transparent 50%);
+    radial-gradient(circle at 20% 80%, rgba(61, 141, 122, 0.02) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(179, 216, 168, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(163, 209, 198, 0.01) 0%, transparent 50%);
   z-index: 0;
   pointer-events: none;
 }
 
 .sidebar {
   width: 300px;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--card-background);
   backdrop-filter: blur(20px);
-  border-right: 1px solid rgba(61, 141, 122, 0.1);
+  border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   padding: 2.5rem 1.5rem;
   box-shadow: 
-    0 8px 32px rgba(61, 141, 122, 0.1),
-    0 0 0 1px rgba(255, 255, 255, 0.2);
+    0 8px 32px var(--shadow-medium),
+    0 0 0 1px var(--border-color);
   overflow-y: auto;
   flex-shrink: 0;
   position: relative;
@@ -182,8 +300,8 @@ export default {
 .user-info {
   margin-bottom: 2.5rem;
   padding-bottom: 2rem;
-  border-bottom: 1px solid rgba(61, 141, 122, 0.15);
-  background: rgba(251, 255, 228, 0.3);
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-accent);
   border-radius: 20px;
   padding: 2rem 1.5rem;
   display: flex;
@@ -199,19 +317,19 @@ export default {
 .profile-pic-placeholder {
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  background: var(--accent-color);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.3);
+  box-shadow: 0 8px 32px var(--shadow-strong);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .profile-pic-placeholder:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 12px 40px rgba(61, 141, 122, 0.4);
+  transform: none;
+  box-shadow: 0 8px 32px var(--shadow-strong);
 }
 
 .profile-pic-placeholder svg {
@@ -226,22 +344,35 @@ export default {
 .user-info h3 {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #3D8D7A;
+  color: var(--accent-color);
   margin-bottom: 0.5rem;
-  text-shadow: 0 1px 2px rgba(61, 141, 122, 0.1);
 }
 
 .user-info .role {
   font-size: 0.875rem;
-  color: #777;
+  color: var(--text-muted);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  background: rgba(61, 141, 122, 0.1);
+  background: var(--bg-accent);
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
   display: inline-block;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.user-info .student-id,
+.user-info .course-year {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 0.15rem;
+  opacity: 0.8;
+}
+
+.loading-text {
+  color: var(--text-secondary);
+  opacity: 0.7;
 }
 
 .nav-links {
@@ -256,18 +387,21 @@ export default {
   align-items: center;
   padding: 1rem 1.25rem;
   border-radius: 16px;
-  color: #3D8D7A;
+  color: var(--accent-color);
   text-decoration: none;
   font-weight: 600;
   font-size: 0.95rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: rgba(251, 255, 228, 0.5);
-  border: 1px solid rgba(61, 141, 122, 0.1);
+  background: var(--bg-accent);
+  border: 1px solid var(--border-color);
   cursor: pointer;
   width: 100%;
   text-align: left;
   position: relative;
   overflow: hidden;
+  margin: 0;
+  box-shadow: none;
+  line-height: 1;
 }
 
 .nav-item::before {
@@ -298,9 +432,9 @@ export default {
 }
 
 .nav-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(61, 141, 122, 0.15);
-  border-color: rgba(61, 141, 122, 0.2);
+  transform: none;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.08);
+  border-color: rgba(61, 141, 122, 0.15);
 }
 
 .nav-item:hover::before {
@@ -308,40 +442,80 @@ export default {
 }
 
 .nav-item:hover svg {
-  transform: scale(1.1);
+  transform: none;
 }
 
 .nav-item.is-active {
-  background: linear-gradient(135deg, rgba(61, 141, 122, 0.1) 0%, rgba(163, 209, 198, 0.15) 100%);
-  border-color: rgba(61, 141, 122, 0.2);
-  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.1);
+  background: rgba(95, 179, 160, 0.12);
+  border-color: rgba(95, 179, 160, 0.3);
+  box-shadow: 0 2px 8px rgba(95, 179, 160, 0.1);
+  color: var(--accent-color);
+  transform: none;
 }
 
 .nav-item.is-active svg {
-  fill: #3D8D7A;
-  transform: scale(1.1);
+  fill: var(--accent-color);
+  transform: none;
+}
+
+.nav-item.is-active span {
+  color: var(--accent-color);
+  font-weight: 600;
+}
+
+/* Dark mode active state */
+:root.dark .nav-item.is-active {
+  background: rgba(95, 179, 160, 0.15);
+  border-color: rgba(95, 179, 160, 0.35);
+  box-shadow: 0 2px 8px rgba(95, 179, 160, 0.15);
 }
 
 .logout-btn {
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  color: white;
-  padding: 1rem 1.5rem;
-  border: none;
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.25rem;
   border-radius: 16px;
-  cursor: pointer;
+  color: var(--text-inverse);
+  text-decoration: none;
   font-weight: 600;
   font-size: 0.95rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-top: 0.75rem;
-  margin-bottom: 0.75rem;
-  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.2);
+  background: var(--accent-color);
+  border: 1px solid var(--accent-color);
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
   position: relative;
   overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1; 
-  width: 100%;
+  margin-top: 0.75rem;
+  box-shadow: none;
+  line-height: 1;
+  gap: 1rem;
+  justify-content: flex-start;
+  box-sizing: border-box;
+}
+
+.logout-btn svg {
+  width: 22px;
+  height: 22px;
+  margin-right: 1rem;
+}
+
+.logout-btn span {
+  position: relative;
+  z-index: 1;
+}
+
+.logout-btn:hover {
+  background: var(--accent-hover);
+  color: var(--text-inverse);
+  border-color: var(--accent-hover);
+  transform: none;
+  box-shadow: 0 2px 8px rgba(24, 60, 46, 0.1);
+}
+
+.logout-btn:hover svg {
+  transform: none;
 }
 
 .logout-btn::before {
@@ -351,24 +525,38 @@ export default {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #A3D1C6 0%, #3D8D7A 100%);
+  background: linear-gradient(135deg, rgba(179, 216, 168, 0.3) 0%, rgba(163, 209, 198, 0.2) 100%);
   transition: left 0.3s ease;
   z-index: 0;
+}
+
+.logout-btn svg {
+  margin-right: 1rem;
+  width: 22px;
+  height: 22px;
+  fill: #3D8D7A;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
 }
 
 .logout-btn span {
   position: relative;
   z-index: 1;
-  display: inline-block; 
 }
 
 .logout-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 16px 48px rgba(61, 141, 122, 0.3);
+  transform: none;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.08);
+  border-color: rgba(61, 141, 122, 0.15);
 }
 
 .logout-btn:hover::before {
   left: 0;
+}
+
+.logout-btn:hover svg {
+  transform: none;
 }
 
 .main-content {
@@ -378,6 +566,171 @@ export default {
   min-width: 0;
   position: relative;
   z-index: 1;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modal-container {
+  background: var(--card-background);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 2.5rem;
+  max-width: 450px;
+  width: 90%;
+  box-shadow: 
+    0 20px 60px rgba(61, 141, 122, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(61, 141, 122, 0.1);
+  animation: modalSlideIn 0.3s ease-out;
+  text-align: center;
+}
+
+/* Dark mode styles for modal */
+:root.dark .modal-container {
+  background: rgba(30, 35, 34, 0.95);
+  border: 1px solid rgba(95, 179, 160, 0.2);
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(95, 179, 160, 0.1);
+}
+
+:root.dark .modal-title {
+  color: var(--text-primary);
+}
+
+:root.dark .modal-message {
+  color: var(--text-secondary);
+}
+
+.modal-header {
+  margin-bottom: 2rem;
+}
+
+.modal-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  color: white;
+  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.3);
+}
+
+.modal-icon svg {
+  width: 48px;
+  height: 48px;
+}
+
+.modal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent-color);
+  margin-bottom: 0.75rem;
+}
+
+.modal-message {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 0;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.btn-cancel,
+.btn-confirm {
+  padding: 0.875rem 2rem;
+  border: none;
+  border-radius: 16px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 120px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-cancel {
+  background: var(--bg-accent);
+  color: var(--accent-color);
+  border: 2px solid var(--border-color);
+}
+
+.btn-cancel:hover {
+  background: var(--bg-accent-hover);
+  border-color: rgba(61, 141, 122, 0.3);
+  transform: none;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.08);
+}
+
+.btn-confirm {
+  background: var(--accent-color);
+  color: var(--text-inverse);
+  box-shadow: 0 2px 8px var(--shadow-medium);
+  transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.btn-confirm:hover {
+  background: var(--accent-hover);
+  color: var(--text-inverse);
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.15);
+  transform: none;
+}
+
+/* Dark mode styles for modal buttons */
+:root.dark .btn-cancel {
+  background: rgba(95, 179, 160, 0.1);
+  color: var(--accent-color);
+  border: 2px solid rgba(95, 179, 160, 0.3);
+}
+
+:root.dark .btn-cancel:hover {
+  background: rgba(95, 179, 160, 0.2);
+  border-color: var(--accent-color);
+}
+
+:root.dark .btn-confirm {
+  background: var(--accent-color);
+  color: white;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalSlideIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(-30px) scale(0.95); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0) scale(1); 
+  }
 }
 
 /*
@@ -456,6 +809,20 @@ export default {
     overflow-y: auto;
     height: calc(100vh - 100px);
   }
+
+  .modal-container {
+    padding: 2rem;
+    margin: 1rem;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+  }
+  
+  .btn-cancel,
+  .btn-confirm {
+    width: 100%;
+  }
 }
 
 @media (max-width: 480px) {
@@ -485,6 +852,24 @@ export default {
   .logout-btn {
     padding: 0.6rem 1rem;
     font-size: 0.8rem;
+  }
+
+  .modal-container {
+    padding: 1.5rem;
+  }
+  
+  .modal-icon {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .modal-icon svg {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .modal-title {
+    font-size: 1.25rem;
   }
 }
 </style>

@@ -46,10 +46,29 @@ a,
   --accent-hover: #2d6d5a;
   --action-btn-bg: rgba(61, 141, 122, 0.1);
   --action-btn-color: #3D8D7A;
-  --background-color: #ffffff;
+  --background-color: rgba(255, 255, 255, 0.95);
   --border-color: #e0e0e0;
-  --input-bg: #ffffff;
+  --input-bg: rgba(255, 255, 255, 0.95);
   --input-border: #ddd;
+  --text-inverse: #ffffff;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --text-muted: #777777;
+  --text-accent: #3D8D7A;
+  --bg-card: rgba(255, 255, 255, 0.9);
+  --bg-card-hover: rgba(255, 255, 255, 1);
+  --bg-accent: rgba(251, 255, 228, 0.5);
+  --bg-accent-hover: rgba(251, 255, 228, 0.8);
+  --bg-unread: rgba(232, 255, 251, 1);
+  --bg-important: rgba(255, 243, 224, 1);
+  --border-color-hover: rgba(61, 141, 122, 0.15);
+  --shadow-light: rgba(61, 141, 122, 0.04);
+  --shadow-medium: rgba(61, 141, 122, 0.08);
+  --shadow-strong: rgba(61, 141, 122, 0.12);
+  --error-bg: rgba(217, 83, 79, 0.1);
+  --error-color: #d9534f;
+  --success-bg: rgba(92, 184, 92, 0.1);
+  --success-color: #5cb85c;
 }
 
 /* Dark mode variables */
@@ -64,10 +83,29 @@ a,
   --accent-hover: #4a9b87;
   --action-btn-bg: rgba(95, 179, 160, 0.1);
   --action-btn-color: #5fb3a0;
-  --background-color: #2d3634;
+  --background-color: rgba(30, 35, 34, 0.95);
   --border-color: rgba(61, 141, 122, 0.3);
-  --input-bg: #2d3634;
+  --input-bg: rgba(30, 35, 34, 0.95);
   --input-border: rgba(61, 141, 122, 0.3);
+  --text-inverse: #ffffff;
+  --text-primary: #e0e0e0;
+  --text-secondary: #a0a8a6;
+  --text-muted: #64748b;
+  --text-accent: #5fb3a0;
+  --bg-card: rgba(30, 35, 34, 0.95);
+  --bg-card-hover: rgba(40, 45, 44, 1);
+  --bg-accent: rgba(95, 179, 160, 0.1);
+  --bg-accent-hover: rgba(95, 179, 160, 0.2);
+  --bg-unread: rgba(95, 179, 160, 0.15);
+  --bg-important: rgba(255, 193, 7, 0.15);
+  --border-color-hover: rgba(95, 179, 160, 0.3);
+  --shadow-light: rgba(0, 0, 0, 0.1);
+  --shadow-medium: rgba(0, 0, 0, 0.2);
+  --shadow-strong: rgba(0, 0, 0, 0.3);
+  --error-bg: rgba(217, 83, 79, 0.2);
+  --error-color: #ff6b6b;
+  --success-bg: rgba(92, 184, 92, 0.2);
+  --success-color: #51cf66;
 }
 
 /* Global body styles */

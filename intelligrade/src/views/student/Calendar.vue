@@ -1,25 +1,45 @@
 <template>
   <div class="calendar-container">
-    <!-- Minimal Card Header (Subjects style) -->
-    <div class="section-header-card minimal-header-card header-flex-align">
-      <div class="section-header-left">
-        <div class="section-header-icon minimal-header-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M5,19V5H19V19H5Z" />
-          </svg>
-        </div>
-        <div>
-          <div class="section-header-title minimal-header-title">Academic Calendar</div>
-          <div class="section-header-sub minimal-header-sub">View and manage your academic events</div>
-        </div>
-      </div>
-      <div class="section-header-stats align-top">
-        <div class="stat-item">
-          <span class="stat-number">{{ events.length }}</span>
-          <span class="stat-label">Total Events</span>
-        </div>
-      </div>
+    <!-- Loading State -->
+    <div v-if="loading" class="loading-container">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Loading your calendar...</p>
     </div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="error-container">
+      <div class="error-icon">⚠️</div>
+      <h3 class="error-title">Unable to load calendar</h3>
+      <p class="error-message">{{ error }}</p>
+      <button @click="initializeData" class="retry-btn">Try Again</button>
+    </div>
+
+    <!-- Main Calendar Content -->
+    <div v-else>
+      <!-- Minimal Card Header (Subjects style) -->
+      <div class="section-header-card minimal-header-card header-flex-align">
+        <div class="section-header-left">
+          <div class="section-header-icon minimal-header-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M5,19V5H19V19H5Z" />
+            </svg>
+          </div>
+          <div>
+            <div class="section-header-title minimal-header-title">Academic Calendar</div>
+            <div class="section-header-sub minimal-header-sub">View and manage your academic events - Real-time updates</div>
+          </div>
+        </div>
+        <div class="section-header-stats align-top">
+          <div class="stat-item">
+            <span class="stat-number">{{ events.length }}</span>
+            <span class="stat-label">Total Events</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number live-indicator">🔴</span>
+            <span class="stat-label">Live</span>
+          </div>
+        </div>
+      </div>
 
     <!-- Status Legend -->
     <div class="status-legend">
@@ -274,12 +294,33 @@
         </div>
       </div>
     </div>
+    </div>
+
+    <!-- Notifications Area -->
+    <div v-if="notifications.length > 0" class="notifications-container">
+      <div 
+        v-for="notification in notifications" 
+        :key="notification.id"
+        :class="['notification', notification.type]"
+        @click="removeNotification(notification.id)"
+      >
+        <div class="notification-content">
+          <span class="notification-icon">
+            {{ getNotificationIcon(notification.type) }}
+          </span>
+          <span class="notification-message">{{ notification.message }}</span>
+        </div>
+        <button class="notification-close">&times;</button>
+      </div>
+    </div>
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { supabase } from '@/supabase.js'
+
 export default {
-  name: 'Calendar',
+  name: 'StudentCalendar',
   data() {
     return {
       currentDate: new Date(),
@@ -288,79 +329,17 @@ export default {
       selectedDay: null,
       currentTime: new Date(),
       statusUpdateInterval: null,
+      realTimeSubscription: null,
+      loading: true,
+      error: null,
+      notifications: [],
       views: [
         { key: 'month', label: 'Month' },
         { key: 'list', label: 'List' }
       ],
       daysOfWeek: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-      events: [
-        {
-          id: 1,
-          title: 'Math Quiz 1',
-          subject: 'Mathematics 101',
-          date: new Date(2024, 10, 23), // November 23, 2024
-          time: '10:00 AM',
-          type: 'assessment',
-          description: 'Chapter 1-3 quiz covering basic algebra and functions',
-          isCompleted: false,
-          submittedAt: null
-        },
-        {
-          id: 2,
-          title: 'Essay Submission',
-          subject: 'English Literature',
-          date: new Date(2024, 10, 20), // November 20, 2024 (overdue)
-          time: '11:59 PM',
-          type: 'assignment',
-          description: 'Submit 5-page essay on Shakespeare\'s Hamlet',
-          isCompleted: false,
-          submittedAt: null
-        },
-        {
-          id: 3,
-          title: 'Lab Report Due',
-          subject: 'Chemistry 101',
-          date: new Date(2024, 10, 25), // November 25, 2024
-          time: '2:00 PM',
-          type: 'assignment',
-          description: 'Organic chemistry lab report submission',
-          isCompleted: true,
-          submittedAt: new Date(2024, 10, 24)
-        },
-        {
-          id: 4,
-          title: 'Physics Exam',
-          subject: 'Physics 102',
-          date: new Date(), // Today
-          time: '9:00 AM',
-          type: 'exam',
-          description: 'Midterm examination covering mechanics and thermodynamics',
-          isCompleted: false,
-          submittedAt: null
-        },
-        {
-          id: 5,
-          title: 'Group Presentation',
-          subject: 'Computer Science 201',
-          date: new Date(2024, 10, 30), // November 30, 2024
-          time: '1:00 PM',
-          type: 'presentation',
-          description: 'Final project presentation - 15 minutes per group',
-          isCompleted: false,
-          submittedAt: null
-        },
-        {
-          id: 6,
-          title: 'Programming Assignment',
-          subject: 'Computer Science 201',
-          date: new Date(2024, 10, 23), // November 23, 2024 (same day as math quiz)
-          time: '3:00 PM',
-          type: 'assignment',
-          description: 'Complete the data structures assignment',
-          isCompleted: false,
-          submittedAt: null
-        }
-      ]
+      events: [],
+      user: null
     };
   },
   computed: {
@@ -424,15 +403,15 @@ export default {
     },
     groupedEvents() {
       const grouped = {};
-      this.events
-        .sort((a, b) => a.date - b.date)
-        .forEach(event => {
-          const dateKey = event.date.toDateString();
-          if (!grouped[dateKey]) {
-            grouped[dateKey] = [];
-          }
-          grouped[dateKey].push(event);
-        });
+      const sortedEvents = [...this.events].sort((a, b) => a.date - b.date);
+      
+      sortedEvents.forEach(event => {
+        const dateKey = event.date.toDateString();
+        if (!grouped[dateKey]) {
+          grouped[dateKey] = [];
+        }
+        grouped[dateKey].push(event);
+      });
       return grouped;
     }
   },
@@ -446,6 +425,315 @@ export default {
     }
   },
   methods: {
+    // Real-time API methods
+    async initializeData() {
+      try {
+        this.loading = true;
+        this.error = null;
+        
+        // Get current user
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError) throw userError;
+        
+        this.user = user;
+        
+        // Load initial events
+        await this.loadEvents();
+        
+        // Setup real-time subscription
+        this.setupRealTimeSubscription();
+        
+      } catch (error) {
+        console.error('Error initializing calendar:', error);
+        this.error = 'Failed to load calendar data';
+        this.showNotification('Error loading calendar data', 'error');
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async loadEvents() {
+      try {
+        // Fetch events from Supabase
+        const { data: eventsData, error } = await supabase
+          .from('assignments')
+          .select(`
+            id,
+            title,
+            description,
+            due_date,
+            due_time,
+            type,
+            is_completed,
+            submitted_at,
+            subjects (
+              id,
+              name,
+              code
+            )
+          `)
+          .eq('student_id', this.user?.id)
+          .order('due_date', { ascending: true });
+
+        if (error) throw error;
+
+        // Transform data for calendar
+        this.events = eventsData.map(event => ({
+          id: event.id,
+          title: event.title,
+          subject: `${event.subjects?.name} (${event.subjects?.code})` || 'Unknown Subject',
+          date: new Date(event.due_date),
+          time: event.due_time || '11:59 PM',
+          type: event.type || 'assignment',
+          description: event.description || '',
+          isCompleted: event.is_completed || false,
+          submittedAt: event.submitted_at ? new Date(event.submitted_at) : null
+        }));
+
+        console.log('Events loaded:', this.events.length);
+        
+      } catch (error) {
+        console.error('Error loading events:', error);
+        this.showNotification('Failed to load events', 'error');
+      }
+    },
+
+    setupRealTimeSubscription() {
+      // Subscribe to real-time changes
+      this.realTimeSubscription = supabase
+        .channel('calendar-changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'assignments',
+          filter: `student_id=eq.${this.user?.id}`
+        }, (payload) => {
+          console.log('Real-time update:', payload);
+          this.handleRealTimeUpdate(payload);
+        })
+        .subscribe((status) => {
+          console.log('Real-time subscription status:', status);
+        });
+    },
+
+    handleRealTimeUpdate(payload) {
+      const { eventType, new: newRecord, old: oldRecord } = payload;
+      
+      switch (eventType) {
+        case 'INSERT':
+          this.handleEventInsert(newRecord);
+          break;
+        case 'UPDATE':
+          this.handleEventUpdate(newRecord, oldRecord);
+          break;
+        case 'DELETE':
+          this.handleEventDelete(oldRecord);
+          break;
+      }
+    },
+
+    handleEventInsert(record) {
+      const newEvent = {
+        id: record.id,
+        title: record.title,
+        subject: 'Loading...', // Will be updated when subject data loads
+        date: new Date(record.due_date),
+        time: record.due_time || '11:59 PM',
+        type: record.type || 'assignment',
+        description: record.description || '',
+        isCompleted: record.is_completed || false,
+        submittedAt: record.submitted_at ? new Date(record.submitted_at) : null
+      };
+      
+      this.events.push(newEvent);
+      this.showNotification(`New assignment added: ${record.title}`, 'info');
+      
+      // Load subject name
+      this.loadSubjectForEvent(newEvent, record.subject_id);
+    },
+
+    handleEventUpdate(newRecord) {
+      const eventIndex = this.events.findIndex(e => e.id === newRecord.id);
+      if (eventIndex !== -1) {
+        this.events[eventIndex] = {
+          ...this.events[eventIndex],
+          title: newRecord.title,
+          date: new Date(newRecord.due_date),
+          time: newRecord.due_time || '11:59 PM',
+          type: newRecord.type || 'assignment',
+          description: newRecord.description || '',
+          isCompleted: newRecord.is_completed || false,
+          submittedAt: newRecord.submitted_at ? new Date(newRecord.submitted_at) : null
+        };
+        
+        this.showNotification(`Assignment updated: ${newRecord.title}`, 'info');
+      }
+    },
+
+    handleEventDelete(record) {
+      const eventIndex = this.events.findIndex(e => e.id === record.id);
+      if (eventIndex !== -1) {
+        const eventTitle = this.events[eventIndex].title;
+        this.events.splice(eventIndex, 1);
+        this.showNotification(`Assignment removed: ${eventTitle}`, 'warning');
+      }
+    },
+
+    async loadSubjectForEvent(event, subjectId) {
+      try {
+        const { data: subject, error } = await supabase
+          .from('subjects')
+          .select('name, code')
+          .eq('id', subjectId)
+          .single();
+
+        if (!error && subject) {
+          event.subject = `${subject.name} (${subject.code})`;
+        }
+      } catch (error) {
+        console.error('Error loading subject:', error);
+      }
+    },
+
+    async markAsCompleted(event) {
+      try {
+        // Update in database
+        const { error } = await supabase
+          .from('assignments')
+          .update({
+            is_completed: true,
+            submitted_at: new Date().toISOString()
+          })
+          .eq('id', event.id);
+
+        if (error) throw error;
+
+        // Update local state (will also be updated via real-time subscription)
+        const eventIndex = this.events.findIndex(e => e.id === event.id);
+        if (eventIndex !== -1) {
+          this.events[eventIndex].isCompleted = true;
+          this.events[eventIndex].submittedAt = new Date();
+        }
+
+        // Close modals
+        this.selectedEvent = null;
+        this.selectedDay = null;
+
+        this.showNotification(`${event.title} marked as completed!`, 'success');
+        
+      } catch (error) {
+        console.error('Error marking as completed:', error);
+        this.showNotification('Failed to update assignment', 'error');
+      }
+    },
+
+    showNotification(message, type = 'info') {
+      const notification = {
+        id: Date.now(),
+        message,
+        type,
+        timestamp: new Date()
+      };
+
+      this.notifications.push(notification);
+      
+      // Auto-remove notification after 5 seconds
+      setTimeout(() => {
+        this.removeNotification(notification.id);
+      }, 5000);
+      
+      console.log(`[${type.toUpperCase()}] ${message}`);
+    },
+
+    removeNotification(notificationId) {
+      const index = this.notifications.findIndex(n => n.id === notificationId);
+      if (index !== -1) {
+        this.notifications.splice(index, 1);
+      }
+    },
+
+    getNotificationIcon(type) {
+      switch (type) {
+        case 'success': return '✅';
+        case 'error': return '❌';
+        case 'warning': return '⚠️';
+        case 'info': return 'ℹ️';
+        default: return 'ℹ️';
+      }
+    },
+
+    // WebSocket connection for real-time updates
+    setupWebSocket() {
+      if (window.WebSocket) {
+        try {
+          const wsUrl = process.env.VUE_APP_WS_URL || 'ws://localhost:8080/ws/calendar';
+          this.websocket = new WebSocket(wsUrl);
+          
+          this.websocket.onopen = () => {
+            console.log('WebSocket connected');
+            // Send authentication
+            this.websocket.send(JSON.stringify({
+              type: 'auth',
+              token: this.user?.access_token
+            }));
+          };
+          
+          this.websocket.onmessage = (event) => {
+            try {
+              const data = JSON.parse(event.data);
+              this.handleWebSocketMessage(data);
+            } catch (error) {
+              console.error('Error parsing WebSocket message:', error);
+            }
+          };
+          
+          this.websocket.onclose = () => {
+            console.log('WebSocket disconnected');
+            // Attempt to reconnect after 5 seconds
+            setTimeout(() => {
+              if (!this.websocket || this.websocket.readyState === WebSocket.CLOSED) {
+                this.setupWebSocket();
+              }
+            }, 5000);
+          };
+          
+          this.websocket.onerror = (error) => {
+            console.error('WebSocket error:', error);
+          };
+          
+        } catch (error) {
+          console.error('Failed to setup WebSocket:', error);
+        }
+      }
+    },
+
+    handleWebSocketMessage(data) {
+      switch (data.type) {
+        case 'assignment_created':
+          this.handleEventInsert(data.assignment);
+          break;
+        case 'assignment_updated':
+          this.handleEventUpdate(data.assignment);
+          break;
+        case 'assignment_deleted':
+          this.handleEventDelete(data.assignment);
+          break;
+        case 'deadline_reminder':
+          this.showNotification(
+            `Reminder: ${data.assignment.title} is due ${data.time_remaining}`,
+            'warning'
+          );
+          break;
+        case 'grade_posted':
+          this.showNotification(
+            `Grade posted for: ${data.assignment.title}`,
+            'info'
+          );
+          break;
+      }
+    },
+
+    // Existing methods with real-time updates
     getEventStatus(event) {
       const eventDate = new Date(event.date);
       const today = new Date(this.currentTime);
@@ -466,6 +754,7 @@ export default {
       
       return 'upcoming';
     },
+
     getEventStatusText(event) {
       const status = this.getEventStatus(event);
       switch (status) {
@@ -481,9 +770,11 @@ export default {
           return 'Unknown';
       }
     },
+
     getCompletedCount(events) {
       return events.filter(event => this.getEventStatus(event) === 'completed').length;
     },
+
     getPendingCount(events) {
       return events.filter(event => 
         this.getEventStatus(event) === 'upcoming' || 
@@ -491,53 +782,75 @@ export default {
         this.getEventStatus(event) === 'overdue'
       ).length;
     },
-    markAsCompleted(event) {
-      const eventIndex = this.events.findIndex(e => e.id === event.id);
-      if (eventIndex !== -1) {
-        this.$set(this.events[eventIndex], 'isCompleted', true);
-        this.$set(this.events[eventIndex], 'submittedAt', new Date());
-      }
-      
-      // Close modals
-      this.selectedEvent = null;
-      this.selectedDay = null;
-      
-      // Show success message
-      this.$nextTick(() => {
-        console.log(`Marked ${event.title} as completed`);
-        // You can add a toast notification here
-      });
-    },
+
     updateCurrentTime() {
       this.currentTime = new Date();
+      
+      // Check for deadline reminders
+      this.checkDeadlineReminders();
     },
+
+    checkDeadlineReminders() {
+      const now = new Date();
+      const oneHour = 60 * 60 * 1000;
+      const oneDay = 24 * oneHour;
+
+      this.events.forEach(event => {
+        if (event.isCompleted) return;
+
+        const eventDateTime = new Date(event.date);
+        const timeDiff = eventDateTime.getTime() - now.getTime();
+
+        // Show reminders for events due in 1 hour or 1 day
+        if (timeDiff > 0 && timeDiff <= oneHour) {
+          this.showNotification(
+            `⏰ ${event.title} is due in less than 1 hour!`,
+            'warning'
+          );
+        } else if (timeDiff > oneHour && timeDiff <= oneDay) {
+          this.showNotification(
+            `📅 ${event.title} is due today!`,
+            'info'
+          );
+        }
+      });
+    },
+
     previousMonth() {
       this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() - 1, 1);
     },
+
     nextMonth() {
       this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 1);
     },
+
     goToToday() {
       this.currentDate = new Date();
     },
+
     selectDay(day) {
       if (day.events.length > 0) {
         this.selectedDay = day;
       }
     },
+
     closeDayModal() {
       this.selectedDay = null;
     },
+
     viewEvent(event) {
       this.selectedEvent = event;
     },
+
     viewEventFromDay(event) {
       this.selectedDay = null;
       this.selectedEvent = event;
     },
+
     closeModal() {
       this.selectedEvent = null;
     },
+
     formatSelectedDayDate() {
       if (!this.selectedDay) return '';
       return this.selectedDay.fullDate.toLocaleDateString('en-US', {
@@ -547,6 +860,7 @@ export default {
         day: 'numeric'
       });
     },
+
     formatDate(dateString) {
       const date = new Date(dateString);
       return date.toLocaleDateString('en-US', {
@@ -556,6 +870,7 @@ export default {
         day: 'numeric'
       });
     },
+
     formatEventDate(date) {
       return date.toLocaleDateString('en-US', {
         weekday: 'long',
@@ -563,31 +878,58 @@ export default {
         month: 'long',
         day: 'numeric'
       });
+    },
+
+    // Cleanup methods
+    cleanup() {
+      // Clear intervals
+      if (this.statusUpdateInterval) {
+        clearInterval(this.statusUpdateInterval);
+      }
+      if (this.fastUpdateInterval) {
+        clearInterval(this.fastUpdateInterval);
+      }
+
+      // Close real-time subscription
+      if (this.realTimeSubscription) {
+        this.realTimeSubscription.unsubscribe();
+      }
+
+      // Close WebSocket
+      if (this.websocket) {
+        this.websocket.close();
+      }
     }
   },
   mounted() {
+    // Initialize real-time data
+    this.initializeData();
+    
     // Update current time every minute for real-time status updates
     this.statusUpdateInterval = setInterval(() => {
       this.updateCurrentTime();
     }, 60000); // Update every minute
     
-    // Also update every 10 seconds for more responsive updates during testing
+    // More frequent updates for testing (every 10 seconds)
     this.fastUpdateInterval = setInterval(() => {
       this.updateCurrentTime();
-    }, 10000); // Update every 10 seconds
+    }, 10000);
+
+    // Setup WebSocket for additional real-time features
+    this.setupWebSocket();
   },
-  beforeDestroy() {
-    if (this.statusUpdateInterval) {
-      clearInterval(this.statusUpdateInterval);
-    }
-    if (this.fastUpdateInterval) {
-      clearInterval(this.fastUpdateInterval);
-    }
+
+  beforeUnmount() {
+    this.cleanup();
   }
 };
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+
+
 /* Flex alignment for header stat */
 .header-flex-align {
   display: flex;
@@ -601,9 +943,9 @@ export default {
 /* --- Minimal Header Card Styles (from Subjects.vue) --- */
 .minimal-header-card {
   border-radius: 28px;
-  box-shadow: 0 8px 32px 0 rgba(61, 141, 122, 0.13);
-  background: #fff;
-  border: 1.5px solid #b7e4d8;
+  box-shadow: 0 8px 32px 0 var(--shadow-strong);
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-color-hover);
   padding: 3.5rem 4.5rem;
   min-height: 170px;
   gap: 3.5rem;
@@ -617,19 +959,19 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--text-inverse);
   box-shadow: none;
 }
 .minimal-header-title {
   font-size: 2.5rem;
   font-weight: 700;
-  color: #33806b;
+  color: var(--text-primary);
   margin-bottom: 0.12rem;
   letter-spacing: -0.01em;
 }
 .minimal-header-sub {
   font-size: 1.25rem;
-  color: #5e8c7a;
+  color: var(--text-secondary);
   font-weight: 400;
   margin-bottom: 0;
 }
@@ -646,19 +988,19 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--text-inverse);
   box-shadow: 0 2px 8px 0 rgba(61, 141, 122, 0.10);
 }
 .section-header-title {
   font-size: 2rem;
   font-weight: 700;
-  color: #33806b;
+  color: var(--text-primary);
   margin-bottom: 0.18rem;
   letter-spacing: -0.01em;
 }
 .section-header-sub {
   font-size: 1.08rem;
-  color: #5e8c7a;
+  color: var(--text-secondary);
   font-weight: 400;
   margin-bottom: 0;
 }
@@ -681,15 +1023,197 @@ export default {
 .stat-label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #777;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-top: 0.5rem;
 }
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 * {
   box-sizing: border-box;
+}
+
+/* Loading States */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 2rem;
+}
+
+.loading-spinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid rgba(61, 141, 122, 0.1);
+  border-left: 4px solid #3D8D7A;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading-text {
+  font-size: 1.25rem;
+  color: #3D8D7A;
+  font-weight: 600;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error States */
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 1.5rem;
+  text-align: center;
+}
+
+.error-icon {
+  font-size: 4rem;
+}
+
+.error-title {
+  font-size: 1.75rem;
+  color: #dc2626;
+  font-weight: 700;
+  margin: 0;
+}
+
+.error-message {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.retry-btn {
+  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  color: var(--text-inverse);
+  border: none;
+  border-radius: 12px;
+  padding: 1rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.retry-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(61, 141, 122, 0.3);
+}
+
+/* Notifications */
+.notifications-container {
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 400px;
+}
+
+.notification {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 8px 32px var(--shadow-medium);
+  border-left: 4px solid;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  animation: slideIn 0.3s ease;
+}
+
+.notification:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.notification.success {
+  border-left-color: #22c55e;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(255, 255, 255, 1) 100%);
+}
+
+.notification.error {
+  border-left-color: #dc2626;
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.05) 0%, rgba(255, 255, 255, 1) 100%);
+}
+
+.notification.warning {
+  border-left-color: #f59e0b;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(255, 255, 255, 1) 100%);
+}
+
+.notification.info {
+  border-left-color: #3D8D7A;
+  background: linear-gradient(135deg, rgba(61, 141, 122, 0.05) 0%, rgba(255, 255, 255, 1) 100%);
+}
+
+.notification-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.notification-icon {
+  font-size: 1.25rem;
+}
+
+.notification-message {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.notification-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #666;
+  cursor: pointer;
+  padding: 0.25rem;
+  transition: color 0.3s ease;
+}
+
+.notification-close:hover {
+  color: #333;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Live Indicator */
+.live-indicator {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .calendar-container {
@@ -697,12 +1221,12 @@ export default {
   max-width: 1400px;
   margin: 0 auto;
   font-family: 'Inter', sans-serif;
-  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f7fee7 100%);
+  background: var(--bg-primary);
   min-height: 100vh;
 }
 
 .page-header {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(251, 255, 228, 0.95) 100%);
+  background: var(--bg-card-translucent);
   backdrop-filter: blur(20px);
   border-radius: 24px;
   padding: 2.5rem;
@@ -710,8 +1234,8 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 12px 40px rgba(61, 141, 122, 0.15);
-  border: 1px solid rgba(61, 141, 122, 0.1);
+  box-shadow: 0 12px 40px var(--shadow-medium);
+  border: 1px solid var(--border-color-light);
 }
 
 .header-content {
@@ -728,7 +1252,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--text-inverse);
   box-shadow: 0 8px 32px rgba(61, 141, 122, 0.3);
 }
 
@@ -742,7 +1266,7 @@ export default {
 
 .page-subtitle {
   font-size: 1.1rem;
-  color: #666;
+  color: var(--text-secondary);
   margin: 0;
 }
 
@@ -753,11 +1277,11 @@ export default {
 }
 
 .stat-card {
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--bg-card-translucent);
   border-radius: 16px;
   padding: 1rem 1.5rem;
   text-align: center;
-  border: 1px solid rgba(61, 141, 122, 0.1);
+  border: 1px solid var(--border-color-light);
   min-width: 80px;
   transition: all 0.3s ease;
 }
@@ -784,7 +1308,7 @@ export default {
 }
 
 .status-legend {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--bg-card-translucent);
   backdrop-filter: blur(20px);
   border-radius: 20px;
   padding: 1.5rem 2rem;
@@ -793,8 +1317,8 @@ export default {
   display: flex;
   justify-content: center;
   gap: 4.5rem;
-  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.1);
-  border: 1px solid rgba(61, 141, 122, 0.1);
+  box-shadow: 0 8px 32px var(--shadow-light);
+  border: 1px solid var(--border-color-light);
 }
 
 .legend-item {
@@ -803,7 +1327,7 @@ export default {
   gap: 0.9rem;
   font-size: 0.95rem;
   font-weight: 600;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .legend-color {
@@ -831,7 +1355,7 @@ export default {
 
 .today-btn {
   background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  color: white;
+  color: var(--text-inverse);
   border: none;
   border-radius: 12px;
   padding: 0.875rem 1.5rem;
@@ -925,7 +1449,7 @@ export default {
 
 .view-btn.active {
   background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  color: white;
+  color: var(--text-inverse);
   box-shadow: 0 4px 16px rgba(61, 141, 122, 0.2);
 }
 
@@ -954,7 +1478,7 @@ export default {
   text-align: center;
   font-weight: 700;
   color: #3D8D7A;
-  background: linear-gradient(135deg, rgba(251, 255, 228, 0.8) 0%, rgba(163, 209, 198, 0.2) 100%);
+  background: var(--bg-secondary);
   border-radius: 12px;
   font-size: 0.9rem;
   text-transform: uppercase;
@@ -970,7 +1494,7 @@ export default {
 .calendar-day {
   min-height: 130px;
   padding: 1rem;
-  background: rgba(251, 255, 228, 0.3);
+  background: var(--bg-input);
   border-radius: 12px;
   transition: all 0.3s ease;
   display: flex;
@@ -984,9 +1508,9 @@ export default {
 }
 
 .calendar-day.clickable:hover {
-  background: rgba(251, 255, 228, 0.7);
+  background: var(--bg-input-focus);
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(61, 141, 122, 0.15);
+  box-shadow: 0 8px 25px var(--shadow-medium);
 }
 
 .calendar-day.other-month {
@@ -1067,7 +1591,7 @@ export default {
   top: 0.5rem;
   right: 0.5rem;
   background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  color: white;
+  color: var(--text-inverse);
   border-radius: 50%;
   width: 24px;
   height: 24px;
@@ -1095,7 +1619,7 @@ export default {
 }
 
 .day-modal-content {
-  background: white;
+  background: var(--card-background);
   border-radius: 24px;
   padding: 0;
   max-width: 600px;
@@ -1108,7 +1632,7 @@ export default {
 
 .day-modal-header {
   background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  color: white;
+  color: var(--text-inverse);
   padding: 2rem;
   display: flex;
   justify-content: space-between;
@@ -1133,7 +1657,7 @@ export default {
 
 .close-btn:hover {
   background: rgba(255, 255, 255, 0.1);
-  color: white;
+  color: var(--text-inverse);
 }
 
 .day-modal-body {
@@ -1325,7 +1849,7 @@ export default {
 
 .quick-answer-btn {
   background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-  color: white;
+  color: var(--text-inverse);
   border: none;
   border-radius: 8px;
   width: 32px;
@@ -1387,7 +1911,7 @@ export default {
 }
 
 .event-item {
-  background: rgba(251, 255, 228, 0.5);
+  background: var(--bg-input);
   border-radius: 16px;
   padding: 1.5rem;
   display: flex;
@@ -1398,7 +1922,7 @@ export default {
 }
 
 .event-item:hover {
-  background: rgba(251, 255, 228, 0.8);
+  background: var(--bg-input-focus);
   transform: translateX(4px);
 }
 
@@ -1434,7 +1958,7 @@ export default {
 .event-title {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #3D8D7A;
+  color: var(--text-primary);
   margin-bottom: 0.25rem;
 }
 
@@ -1491,7 +2015,7 @@ export default {
 
 .answer-btn {
   background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-  color: white;
+  color: var(--text-inverse);
   border: none;
   border-radius: 8px;
   padding: 0.5rem 1rem;
@@ -1530,7 +2054,7 @@ export default {
 }
 
 .modal-content {
-  background: white;
+  background: var(--card-background);
   border-radius: 24px;
   padding: 2rem;
   max-width: 500px;
@@ -1592,7 +2116,7 @@ export default {
 
 .answer-btn-modal {
   background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-  color: white;
+  color: var(--text-inverse);
   border: none;
   border-radius: 12px;
   padding: 0.875rem 1.5rem;
@@ -1704,7 +2228,7 @@ export default {
 /* --- Modern Card Header Styles (from Home.vue) --- */
 .section-header-card {
   position: relative;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fcfa 100%);
+  background: var(--bg-primary);
   border-radius: 32px;
   padding: 3.5rem;
   margin-bottom: 2.5rem;
@@ -1793,7 +2317,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--text-inverse);
   box-shadow: 
     0 12px 24px rgba(61, 141, 122, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
