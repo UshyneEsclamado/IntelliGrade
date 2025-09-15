@@ -19,7 +19,10 @@
             </svg>
           </div>
           <div class="header-text">
-            <div class="section-header-title">Hello, {{ studentName }}!</div>
+            <div class="section-header-title">
+              <span v-if="!isLoadingName">Hello, {{ studentName }}!</span>
+              <span v-else>Hello, Loading...</span>
+            </div>
             <div class="section-header-subtitle">Welcome to your student dashboard</div>
             <div class="section-header-description">Track your academic progress and stay on top of your studies</div>
           </div>
@@ -131,18 +134,53 @@
 </template>
 
 <script>
+import { supabase } from '../../supabase.js';
+
 export default {
   name: 'Home',
   data() {
     return {
-      studentName: 'Student Juan', // Will be updated from backend
+      studentName: 'Student', // Default fallback
       totalSubjects: 0,
       pendingAssessments: 0,
       recentAssessments: [],
-      pollInterval: null
+      pollInterval: null,
+      isLoadingName: true
     };
   },
   methods: {
+    async loadStudentProfile() {
+      try {
+        // Get the current user from Supabase auth
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError || !user) {
+          console.error('Auth error:', authError);
+          this.studentName = 'Student';
+          this.isLoadingName = false;
+          return;
+        }
+
+        // Fetch the user profile from the profiles table
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Profile error:', profileError);
+          this.studentName = 'Student';
+        } else if (profile) {
+          this.studentName = profile.full_name || 'Student';
+        }
+      } catch (error) {
+        console.error('Error loading student profile:', error);
+        this.studentName = 'Student';
+      } finally {
+        this.isLoadingName = false;
+      }
+    },
     formatDate(date) {
       if (!date) return '';
       const d = typeof date === 'string' ? new Date(date) : date;
@@ -186,7 +224,8 @@ export default {
       }
     }
   },
-  mounted() {
+  async mounted() {
+    await this.loadStudentProfile();
     this.fetchDashboardData();
     this.pollInterval = setInterval(this.fetchDashboardData, 5000);
   },
@@ -204,21 +243,23 @@ export default {
   max-width: 1200px;
   margin: 0 auto;
   font-family: 'Inter', sans-serif;
+  background: var(--bg-primary);
+  min-height: 100vh;
 }
 
 /* Enhanced Header Design */
 .section-header-card {
   position: relative;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fcfa 100%);
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
   border-radius: 32px;
   padding: 3.5rem;
   margin-bottom: 2.5rem;
   min-height: 180px;
   box-shadow: 
-    0 24px 48px rgba(61, 141, 122, 0.08),
-    0 12px 24px rgba(61, 141, 122, 0.04),
+    0 24px 48px var(--shadow-medium),
+    0 12px 24px var(--shadow-light),
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  border: 2px solid rgba(61, 141, 122, 0.08);
+  border: 2px solid var(--border-color);
   overflow: hidden;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -226,8 +267,8 @@ export default {
 .section-header-card:hover {
   transform: translateY(-2px);
   box-shadow: 
-    0 32px 64px rgba(61, 141, 122, 0.12),
-    0 16px 32px rgba(61, 141, 122, 0.06),
+    0 32px 64px var(--shadow-strong),
+    0 16px 32px var(--shadow-medium),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
@@ -329,7 +370,7 @@ export default {
 .section-header-title {
   font-size: 2.5rem;
   font-weight: 800;
-  color: #2d6a57;
+  color: var(--text-accent);
   letter-spacing: -0.02em;
   background: linear-gradient(135deg, #33806b 0%, #4dbb98 100%);
   background-clip: text;
@@ -341,13 +382,13 @@ export default {
 .section-header-subtitle {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #5e8c7a;
+  color: var(--text-secondary);
   margin-bottom: 0.25rem;
 }
 
 .section-header-description {
   font-size: 1rem;
-  color: #7a9c8f;
+  color: var(--text-muted);
   font-weight: 400;
   opacity: 0.9;
 }
@@ -373,7 +414,7 @@ export default {
 .badge-text {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #33806b;
+  color: var(--text-accent);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -387,21 +428,21 @@ export default {
 }
 
 .stat-card {
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--bg-card);
   backdrop-filter: blur(20px);
   border-radius: 20px;
   padding: 2rem;
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.1);
-  border: 1px solid rgba(61, 141, 122, 0.1);
+  box-shadow: 0 8px 32px var(--shadow-medium);
+  border: 1px solid var(--border-color);
   transition: all 0.3s ease;
 }
 
 .stat-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(61, 141, 122, 0.15);
+  box-shadow: 0 12px 40px var(--shadow-strong);
 }
 
 .stat-icon {
@@ -425,14 +466,14 @@ export default {
 .stat-number {
   font-size: 2.5rem;
   font-weight: 800;
-  color: #3D8D7A;
+  color: var(--text-accent);
   line-height: 1;
 }
 
 .stat-label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #777;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-top: 0.5rem;
@@ -445,12 +486,12 @@ export default {
 }
 
 .content-card {
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--bg-card);
   backdrop-filter: blur(20px);
   border-radius: 24px;
   padding: 2rem;
-  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.1);
-  border: 1px solid rgba(61, 141, 122, 0.1);
+  box-shadow: 0 8px 32px var(--shadow-medium);
+  border: 1px solid var(--border-color);
 }
 
 .card-header {
@@ -460,7 +501,7 @@ export default {
 .card-header h3 {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #3D8D7A;
+  color: var(--text-accent);
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -468,7 +509,7 @@ export default {
 }
 
 .card-subtitle {
-  color: #666;
+  color: var(--text-secondary);
   font-size: 0.95rem;
 }
 
@@ -479,30 +520,30 @@ export default {
 }
 
 .assessment-item {
-  background: rgba(251, 255, 228, 0.5);
+  background: var(--bg-accent);
   border-radius: 16px;
   padding: 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border: 1px solid rgba(61, 141, 122, 0.1);
+  border: 1px solid var(--border-color);
   transition: all 0.3s ease;
 }
 
 .assessment-item:hover {
-  background: rgba(251, 255, 228, 0.8);
+  background: var(--bg-accent-hover);
   transform: translateX(4px);
 }
 
 .assessment-info h4 {
   font-weight: 600;
-  color: #3D8D7A;
+  color: var(--text-accent);
   margin-bottom: 0.25rem;
 }
 
 .assessment-subject {
   font-size: 0.875rem;
-  color: #777;
+  color: var(--text-muted);
 }
 
 .assessment-due {
@@ -512,7 +553,7 @@ export default {
 .due-date {
   display: block;
   font-weight: 600;
-  color: #3D8D7A;
+  color: var(--text-accent);
   margin-bottom: 0.25rem;
 }
 
@@ -532,7 +573,7 @@ export default {
 
 .status.in-progress {
   background: rgba(61, 141, 122, 0.2);
-  color: #3D8D7A;
+  color: var(--text-accent);
 }
 
 .quick-links-grid {
@@ -542,8 +583,8 @@ export default {
 }
 
 .quick-link-btn {
-  background: rgba(251, 255, 228, 0.5);
-  border: 1px solid rgba(61, 141, 122, 0.1);
+  background: var(--bg-accent);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 1.5rem 1rem;
   display: flex;
@@ -553,14 +594,14 @@ export default {
   cursor: pointer;
   transition: all 0.3s ease;
   font-weight: 600;
-  color: #3D8D7A;
+  color: var(--text-accent);
   text-decoration: none;
 }
 
 .quick-link-btn:hover {
-  background: rgba(61, 141, 122, 0.1);
+  background: var(--bg-accent-hover);
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(61, 141, 122, 0.15);
+  box-shadow: 0 8px 25px var(--shadow-strong);
 }
 
 @media (max-width: 768px) {
