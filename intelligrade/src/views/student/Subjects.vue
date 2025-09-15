@@ -1,19 +1,19 @@
 <template>
   <div class="subjects-container">
-    <!-- Header Section -->
-    <div class="page-header">
-      <div class="header-content">
-        <div class="header-icon">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+    <!-- Header Section (Uniform Card Style) -->
+    <div class="section-header-card minimal-header-card">
+      <div class="section-header-left">
+        <div class="section-header-icon minimal-header-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M5,19V5H19V19H5Z" />
           </svg>
         </div>
-        <div class="header-text">
-          <h1 class="page-title">My Subjects</h1>
-          <p class="page-subtitle">View and manage your enrolled subjects</p>
+        <div>
+          <div class="section-header-title minimal-header-title">My Subjects</div>
+          <div class="section-header-sub minimal-header-sub">View and manage your enrolled subjects</div>
         </div>
       </div>
-      <div class="header-stats">
+      <div class="section-header-stats">
         <div class="stat-item">
           <span class="stat-number">{{ totalSubjects }}</span>
           <span class="stat-label">Total Subjects</span>
@@ -69,31 +69,18 @@
           <p class="subject-instructor">{{ subject.instructor }}</p>
         </div>
         
-        <div class="subject-stats">
-          <div class="stat-row">
-            <div class="stat">
-              <span class="stat-value">{{ subject.assessments }}</span>
-              <span class="stat-text">Assessments</span>
-            </div>
-            <div class="stat">
-              <span class="stat-value">{{ subject.attendance }}%</span>
-              <span class="stat-text">Attendance</span>
-            </div>
+        <div class="subject-stats compact">
+          <div class="stat">
+            <span class="stat-value">{{ subject.assessments }}</span>
+            <span class="stat-text">Assessments</span>
           </div>
         </div>
-        
-        <div class="subject-actions">
+        <div class="subject-actions compact">
           <button class="action-btn primary" @click.stop="viewAssessments(subject)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
             </svg>
-            Assessments
-          </button>
-          <button class="action-btn secondary" @click.stop="viewMaterials(subject)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M13,9H18.5L13,3.5V9M6,2H14L20,8V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V4C4,2.89 4.89,2 6,2M15,18V16H6V18H15M18,14V12H6V14H18Z" />
-            </svg>
-            Materials
+            Assess
           </button>
         </div>
       </div>
@@ -125,68 +112,8 @@ export default {
         { key: 'completed', label: 'Completed' },
         { key: 'pending', label: 'Pending' }
       ],
-      subjects: [
-        {
-          id: 1,
-          name: 'Mathematics 101',
-          code: 'MATH101',
-          instructor: 'Dr. Smith Johnson',
-          status: 'active',
-          assessments: 8,
-          attendance: 95,
-          color: 'linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%)'
-        },
-        {
-          id: 2,
-          name: 'English Literature',
-          code: 'ENG201',
-          instructor: 'Prof. Emily Davis',
-          status: 'active',
-          assessments: 6,
-          attendance: 88,
-          color: 'linear-gradient(135deg, #B3D8A8 0%, #3D8D7A 100%)'
-        },
-        {
-          id: 3,
-          name: 'Chemistry 101',
-          code: 'CHEM101',
-          instructor: 'Dr. Michael Brown',
-          status: 'active',
-          assessments: 10,
-          attendance: 92,
-          color: 'linear-gradient(135deg, #A3D1C6 0%, #B3D8A8 100%)'
-        },
-        {
-          id: 4,
-          name: 'Physics 102',
-          code: 'PHY102',
-          instructor: 'Prof. Sarah Wilson',
-          status: 'pending',
-          assessments: 0,
-          attendance: 0,
-          color: 'linear-gradient(135deg, #3D8D7A 0%, #FBFFE4 100%)'
-        },
-        {
-          id: 5,
-          name: 'History 101',
-          code: 'HIST101',
-          instructor: 'Dr. Robert Taylor',
-          status: 'completed',
-          assessments: 12,
-          attendance: 100,
-          color: 'linear-gradient(135deg, #B3D8A8 0%, #A3D1C6 100%)'
-        },
-        {
-          id: 6,
-          name: 'Computer Science 201',
-          code: 'CS201',
-          instructor: 'Prof. Lisa Anderson',
-          status: 'active',
-          assessments: 15,
-          attendance: 97,
-          color: 'linear-gradient(135deg, #A3D1C6 0%, #3D8D7A 100%)'
-        }
-      ]
+      subjects: [],
+      pollingInterval: null,
     };
   },
   computed: {
@@ -214,6 +141,16 @@ export default {
     }
   },
   methods: {
+    async fetchSubjects() {
+      try {
+        const response = await fetch('/api/subjects');
+        if (!response.ok) throw new Error('Failed to fetch subjects');
+        const data = await response.json();
+        this.subjects = data;
+      } catch (error) {
+        console.error('Error fetching subjects:', error);
+      }
+    },
     viewSubjectDetails(subject) {
       console.log('Viewing subject details:', subject);
       // Navigate to subject details page
@@ -221,11 +158,14 @@ export default {
     viewAssessments(subject) {
       console.log('Viewing assessments for:', subject);
       // Navigate to assessments for this subject
-    },
-    viewMaterials(subject) {
-      console.log('Viewing materials for:', subject);
-      // Navigate to materials for this subject
     }
+  },
+  mounted() {
+    this.fetchSubjects();
+    this.pollingInterval = setInterval(this.fetchSubjects, 5000);
+  },
+  beforeUnmount() {
+    if (this.pollingInterval) clearInterval(this.pollingInterval);
   }
 };
 </script>
@@ -240,53 +180,87 @@ export default {
   font-family: 'Inter', sans-serif;
 }
 
-.page-header {
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(20px);
+
+/* Modern section header card style (shared with dashboard/settings) */
+.section-header-card {
+  display: flex;
+  align-items: center;
+  background: #fff;
   border-radius: 24px;
-  padding: 2.5rem;
-  margin-bottom: 2rem;
-  display: flex;
+  box-shadow: 0 4px 24px 0 rgba(61, 141, 122, 0.10);
+  border: 1.5px solid #e0f3ea;
+  padding: 2.2rem 2.5rem;
+  margin-bottom: 2.2rem;
+  min-height: 110px;
+  gap: 2.2rem;
   justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.1);
-  border: 1px solid rgba(61, 141, 122, 0.1);
 }
-
-.header-content {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
+.minimal-header-card {
+  border-radius: 28px;
+  box-shadow: 0 8px 32px 0 rgba(61, 141, 122, 0.13);
+  background: #fff;
+  border: 1.5px solid #b7e4d8;
+  padding: 3.5rem 4.5rem;
+  min-height: 170px;
+  gap: 3.5rem;
 }
-
-.header-icon {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+.minimal-header-icon {
+  width: 88px;
+  height: 88px;
+  background: #4dbb98;
   border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.3);
+  color: #fff;
+  box-shadow: none;
 }
-
-.page-title {
+.minimal-header-title {
   font-size: 2.5rem;
-  font-weight: 800;
-  color: #3D8D7A;
-  margin-bottom: 0.5rem;
-  text-shadow: 0 2px 4px rgba(61, 141, 122, 0.1);
+  font-weight: 700;
+  color: #33806b;
+  margin-bottom: 0.12rem;
+  letter-spacing: -0.01em;
 }
-
-.page-subtitle {
-  font-size: 1.1rem;
-  color: #666;
-  margin: 0;
+.minimal-header-sub {
+  font-size: 1.25rem;
+  color: #5e8c7a;
+  font-weight: 400;
+  margin-bottom: 0;
 }
-
-.header-stats {
-  text-align: center;
+.section-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+.section-header-icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #4dbb98 0%, #33806b 100%);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 2px 8px 0 rgba(61, 141, 122, 0.10);
+}
+.section-header-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #33806b;
+  margin-bottom: 0.18rem;
+  letter-spacing: -0.01em;
+}
+.section-header-sub {
+  font-size: 1.08rem;
+  color: #5e8c7a;
+  font-weight: 400;
+  margin-bottom: 0;
+}
+.section-header-stats {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
 }
 
 .stat-item {
@@ -390,25 +364,28 @@ export default {
   box-shadow: 0 4px 16px rgba(61, 141, 122, 0.2);
 }
 
+
 .subjects-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: 2rem;
-  margin-bottom: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.2rem;
+  margin-bottom: 1.2rem;
 }
 
 .subject-card {
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(20px);
-  border-radius: 24px;
-  padding: 2rem;
-  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.1);
-  border: 1px solid rgba(61, 141, 122, 0.1);
-  transition: all 0.3s ease;
+  border-radius: 18px;
+  padding: 1.1rem 1rem 1.2rem 1rem;
+  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.08);
+  border: 1px solid rgba(61, 141, 122, 0.08);
+  transition: all 0.2s ease;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
+  min-width: 0;
+  min-height: 0;
 }
 
 .subject-card:hover {

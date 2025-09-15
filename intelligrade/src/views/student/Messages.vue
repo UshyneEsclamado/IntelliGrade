@@ -7,22 +7,17 @@
     </div>
     
     <div class="main-wrapper">
-      <div class="hero-header card-box">
-        <div class="header-content">
-          <div class="header-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Header Section (Uniform Card Style) -->
+      <div class="section-header-card">
+        <div class="section-header-left">
+          <div class="section-header-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
             </svg>
           </div>
-          <h1 class="page-title">Messages & Notifications</h1>
-          <p class="page-subtitle">Stay up-to-date with messages and important announcements.</p>
-          <div v-if="isConnected" class="connection-status connected">
-            <span class="status-dot"></span>
-            Connected
-          </div>
-          <div v-else class="connection-status disconnected">
-            <span class="status-dot"></span>
-            Reconnecting...
+          <div>
+            <div class="section-header-title">Messages & Notifications</div>
+            <div class="section-header-sub">View and manage your messages and announcements</div>
           </div>
         </div>
       </div>
@@ -553,6 +548,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 /* Main Page Styling */
@@ -643,49 +639,50 @@ onMounted(() => {
     0 0 0 1px rgba(255, 255, 255, 0.4);
 }
 
-.hero-header {
-  margin-bottom: 2rem;
-  text-align: center;
-}
 
-.header-content {
+
+/* --- Header card style to match Settings.vue/Subjects.vue --- */
+.section-header-card {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  justify-content: flex-start;
+  background: #fff;
+  border-radius: 28px;
+  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.13);
+  border: 1.5px solid #b6e2d3;
+  padding: 3rem 4rem 3rem 3.5rem;
+  margin-bottom: 2.8rem;
+  min-height: 140px;
+  gap: 2.5rem;
 }
-
-.header-icon {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  border-radius: 24px;
+.section-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1.7rem;
+}
+.section-header-icon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #4dbb98 0%, #33806b 100%);
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.2);
-  animation: pulse 3s ease-in-out infinite;
+  box-shadow: 0 4px 16px 0 rgba(61, 141, 122, 0.13);
+  color: #fff;
 }
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+.section-header-title {
+  font-size: 2.1rem;
+  font-weight: 700;
+  color: #33806b;
+  margin-bottom: 0.18rem;
+  letter-spacing: -0.01em;
 }
-
-.hero-header .page-title {
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: #3D8D7A;
-  margin: 0;
-  letter-spacing: -0.02em;
-}
-
-.hero-header .page-subtitle {
-  font-size: 1.2rem;
-  color: #666;
-  margin: 0;
-  max-width: 600px;
+.section-header-sub {
+  font-size: 1.15rem;
+  color: #5e8c7a;
+  font-weight: 400;
+  margin-bottom: 0;
 }
 
 .content-section {

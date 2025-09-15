@@ -1,18 +1,23 @@
 <template>
   <div class="page-container">
     <div class="main-wrapper">
-      <!-- Header Section -->
-      <div class="hero-header card-box">
-        <div class="header-content">
-          <div class="header-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+
+      <!-- Header Section (Match Messages.vue Design & Size) -->
+      <div class="section-header-card">
+        <div class="section-header-left">
+          <div class="section-header-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11.03L21.54,9.37C21.73,9.22 21.78,8.95 21.67,8.75L19.67,5.27C19.56,5.08 19.3,5.03 19.1,5.12L16.9,6C16.5,5.65 16.08,5.36 15.61,5.1L15.2,2.83C15.15,2.56 14.9,2.33 14.62,2.33L9.38,2.33C9.1,2.33 8.85,2.56 8.8,2.83L8.39,5.09C7.92,5.34 7.5,5.65 7.1,6L4.9,5.12C4.7,5.03 4.44,5.08 4.33,5.27L2.33,8.75C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11.03C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.33,15.25L4.33,18.73C4.44,18.92 4.7,18.97 4.9,18.88L7.1,18C7.5,18.35 7.92,18.64 8.39,18.9L8.8,21.17C8.85,21.44 9.1,21.67 9.38,21.67L14.62,21.67C14.9,21.67 15.15,21.44 15.2,21.17L15.61,18.91C16.08,18.66 16.5,18.35 16.9,18L19.1,18.88C19.3,18.97 19.56,18.92 19.67,18.73L21.67,15.25C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" />
             </svg>
           </div>
-          <h1 class="page-title">Settings</h1>
-          <p class="page-subtitle">Manage your account, profile, and app preferences.</p>
+          <div>
+            <div class="section-header-title">Settings</div>
+            <div class="section-header-sub">Manage your account, profile, and app preferences.</div>
+          </div>
         </div>
       </div>
+<!-- ...existing code... -->
+<!-- ...existing code... -->
       
       <!-- Settings Grid -->
       <section class="settings-grid">
@@ -1078,5 +1083,48 @@ input:checked + .slider:before {
   .modal-header, .modal-footer, .modal-body {
     padding: 1rem;
   }
+}
+/* --- Header card style to match Messages.vue --- */
+.section-header-card {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  background: #fff;
+  border-radius: 28px;
+  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.13);
+  border: 1.5px solid #b6e2d3;
+  padding: 3rem 4rem 3rem 3.5rem;
+  margin-bottom: 2.8rem;
+  min-height: 140px;
+  gap: 2.5rem;
+}
+.section-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1.7rem;
+}
+.section-header-icon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #4dbb98 0%, #33806b 100%);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px 0 rgba(61, 141, 122, 0.13);
+  color: #fff;
+}
+.section-header-title {
+  font-size: 2.1rem;
+  font-weight: 700;
+  color: #33806b;
+  margin-bottom: 0.18rem;
+  letter-spacing: -0.01em;
+}
+.section-header-sub {
+  font-size: 1.15rem;
+  color: #5e8c7a;
+  font-weight: 400;
+  margin-bottom: 0;
 }
 </style>
