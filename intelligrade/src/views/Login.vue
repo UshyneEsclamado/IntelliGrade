@@ -71,6 +71,27 @@
           <span>Don't have an account? </span>
           <router-link to="/role-selection" class="signup-link">Sign up here</router-link>
         </div>
+
+        <!-- New Join Class Section -->
+        <div class="divider-section">
+          <div class="divider">
+            <span>OR</span>
+          </div>
+        </div>
+
+        <div class="join-class-section">
+          <button 
+            type="button"
+            class="join-class-btn"
+            @click="handleJoinClass"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,16.5L6.5,12L7.91,10.59L11,13.67L16.59,8.09L18,9.5L11,16.5Z"/>
+            </svg>
+            Join a Class
+          </button>
+          <p class="join-class-description">Join a class with a code from your teacher</p>
+        </div>
       </div>
       
       <!-- Logo Space - Right Side -->
@@ -149,6 +170,12 @@ export default {
 
     forgotPassword() {
       this.$router.push("/forgot-password");
+    },
+
+    // New method for handling Join a Class
+    handleJoinClass() {
+      // Navigate to the Join Class authentication check page
+      this.$router.push("/join-class");
     },
   },
 };
@@ -475,6 +502,76 @@ input::placeholder {
   border-bottom-color: rgba(61, 141, 122, 0.5);
 }
 
+/* New styles for Join Class Section */
+.divider-section {
+  margin: 30px 0 25px 0;
+}
+
+.divider {
+  position: relative;
+  text-align: center;
+}
+
+.divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(61, 141, 122, 0.15);
+}
+
+.divider span {
+  background: rgba(255, 255, 255, 0.95);
+  color: rgba(61, 141, 122, 0.6);
+  padding: 0 20px;
+  font-size: 14px;
+  font-weight: 500;
+  position: relative;
+}
+
+.join-class-section {
+  margin-top: 25px;
+  text-align: center;
+}
+
+.join-class-btn {
+  width: 100%;
+  background: linear-gradient(135deg, rgba(61, 141, 122, 0.1) 0%, rgba(163, 209, 198, 0.15) 100%);
+  color: #3D8D7A;
+  border: 2px solid rgba(61, 141, 122, 0.2);
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.join-class-btn:hover {
+  background: linear-gradient(135deg, rgba(61, 141, 122, 0.15) 0%, rgba(163, 209, 198, 0.2) 100%);
+  border-color: rgba(61, 141, 122, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(61, 141, 122, 0.1);
+}
+
+.join-class-btn:active {
+  transform: translateY(-1px);
+}
+
+.join-class-description {
+  color: rgba(61, 141, 122, 0.7);
+  font-size: 14px;
+  margin: 0;
+  font-weight: 400;
+}
+
 @keyframes float {
   0%, 100% { 
     transform: translateY(0) rotate(0deg); 
@@ -560,7 +657,8 @@ input::placeholder {
     height: 16px !important;
   }
 
-  .login-btn {
+  .login-btn,
+  .join-class-btn {
     font-size: 16px;
     padding: 16px;
   }
@@ -568,6 +666,10 @@ input::placeholder {
   .forgot-section a,
   .signup-section {
     font-size: 15px;
+  }
+
+  .join-class-description {
+    font-size: 13px;
   }
 }
 
