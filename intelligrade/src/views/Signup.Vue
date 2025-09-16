@@ -12,12 +12,12 @@
       <div class="logo-space">
         <div class="logo-placeholder">
           <div class="logo-icon">
-            <svg width="120" height="120" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"/>
+            <svg width="180" height="180" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM19 7V9L15 13L11 9L7 11V9L11 7L15 11L19 7ZM5 13L9 17L15 11L21 17H3L5 13ZM9 19V21H15V19H9Z"/>
             </svg>
           </div>
-          <h2>Welcome to Our Platform</h2>
-          <p>Create your teaching account and start making a difference</p>
+          <h2>IntelliGrade</h2>
+          <p>Empower your teaching with AI</p>
         </div>
       </div>
       
@@ -29,8 +29,8 @@
               <path d="M17,14H19V17H22V19H19V22H17V19H14V17H17V14M12,3A4,4 0 0,1 16,7A4,4 0 0,1 12,11A4,4 0 0,1 8,7A4,4 0 0,1 12,3M12,13C16.42,13 20,14.79 20,17V20H4V17C4,14.79 7.58,13 12,13Z"/>
             </svg>
           </div>
-          <h1>Create Teacher Account</h1>
-          <p class="subtitle">Join our teaching community</p>
+          <h1>Join IntelliGrade</h1>
+          <p class="subtitle">Create your teacher account</p>
         </div>
 
         <form @submit.prevent="handleSignup" class="signup-form">
@@ -319,30 +319,32 @@ export default {
 }
 
 .logo-icon {
-  width: 140px;
-  height: 140px;
-  margin: 0 auto 20px;
+  width: 200px;
+  height: 200px;
+  margin: 0 auto 30px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 50%;
   color: #3D8D7A;
-  box-shadow: 0 15px 30px rgba(61, 141, 122, 0.1);
+  box-shadow: 0 20px 40px rgba(61, 141, 122, 0.15);
 }
 
 .logo-placeholder h2 {
   color: #3D8D7A;
-  font-size: 24px;
-  font-weight: 600;
-  margin-bottom: 12px;
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  text-shadow: 0 2px 4px rgba(61, 141, 122, 0.1);
 }
 
 .logo-placeholder p {
   color: #3D8D7A;
-  font-size: 16px;
-  opacity: 0.8;
-  line-height: 1.5;
+  font-size: 20px;
+  opacity: 0.95;
+  line-height: 1.6;
+  font-weight: 500;
 }
 
 .logo-section {
@@ -541,16 +543,16 @@ input::placeholder {
   }
   
   .logo-icon {
-    width: 100px;
-    height: 100px;
+    width: 150px;
+    height: 150px;
   }
   
   .logo-placeholder h2 {
-    font-size: 20px;
+    font-size: 26px;
   }
   
   .logo-placeholder p {
-    font-size: 14px;
+    font-size: 18px;
   }
 }
 
