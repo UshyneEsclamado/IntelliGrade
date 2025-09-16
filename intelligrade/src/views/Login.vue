@@ -94,16 +94,16 @@
         </div>
       </div>
       
-      <!-- Logo Space - Right Side -->
+            <!-- Logo Space - Right Side -->
       <div class="logo-space">
         <div class="logo-placeholder">
           <div class="logo-icon">
-            <svg width="120" height="120" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z"/>
+            <svg width="180" height="180" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM19 7V9L15 13L11 9L7 11V9L11 7L15 11L19 7ZM5 13L9 17L15 11L21 17H3L5 13ZM9 19V21H15V19H9Z"/>
             </svg>
           </div>
-          <h2>Your Logo Here</h2>
-          <p>Brand tagline or description</p>
+          <h2>IntelliGrade</h2>
+          <p>Welcome back to smart grading</p>
         </div>
       </div>
     </div>
@@ -316,29 +316,31 @@ export default {
 }
 
 .logo-icon {
-  width: 140px;
-  height: 140px;
-  margin: 0 auto 20px;
+  width: 200px;
+  height: 200px;
+  margin: 0 auto 30px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 50%;
   color: #3D8D7A;
-  box-shadow: 0 15px 30px rgba(61, 141, 122, 0.1);
+  box-shadow: 0 20px 40px rgba(61, 141, 122, 0.15);
 }
 
 .logo-placeholder h2 {
   color: #3D8D7A;
-  font-size: 24px;
-  font-weight: 600;
-  margin-bottom: 8px;
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  text-shadow: 0 2px 4px rgba(61, 141, 122, 0.1);
 }
 
 .logo-placeholder p {
   color: #3D8D7A;
-  font-size: 16px;
-  opacity: 0.8;
+  font-size: 20px;
+  opacity: 0.95;
+  font-weight: 500;
 }
 
 .logo-section {
@@ -610,16 +612,16 @@ input::placeholder {
   }
   
   .logo-icon {
-    width: 100px;
-    height: 100px;
+    width: 150px;
+    height: 150px;
   }
   
   .logo-placeholder h2 {
-    font-size: 20px;
+    font-size: 26px;
   }
   
   .logo-placeholder p {
-    font-size: 14px;
+    font-size: 18px;
   }
 }
 
