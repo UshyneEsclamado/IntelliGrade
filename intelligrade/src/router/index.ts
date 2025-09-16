@@ -15,17 +15,12 @@ import ClassCodeEntry from '@/views/ClassCodeEntry.vue' // Add this import
 
 // Teacher Dashboard children components
 import DashboardHome from '@/views/teacher/DashboardHome.vue'
-import MyClasses from '@/views/teacher/MyClasses.vue'
 import MySubjects from '@/views/teacher/MySubjects.vue' // Add this import
-import ClassDetails from '@/views/teacher/ClassDetails.vue'
 import MessagesPage from '@/views/MessagesPage.vue'
 import AssessmentResults from '@/views/teacher/AssessmentResults.vue'
-import CreateClass from '@/views/teacher/CreateClass.vue'
 import CreateQuiz from '@/views/teacher/CreateQuiz.vue'
 import SettingsPage from '@/views/SettingsPage.vue'
 import UploadAssessment from '@/components/UploadAssessment.vue'
-import EditClass from '@/views/teacher/EditClass.vue'
-import ClassStudents from '@/views/teacher/ClassStudents.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -100,29 +95,6 @@ const router = createRouter({
           component: MySubjects
         },
         {
-          path: 'classes',
-          name: 'MyClasses',
-          component: MyClasses
-        },
-        {
-          path: 'classes/:id',
-          name: 'ClassDetails',
-          component: ClassDetails,
-          props: true
-        },
-        {
-          path: 'edit-class/:id',
-          name: 'EditClass',
-          component: EditClass,
-          props: true
-        },
-        {
-          path: 'class-students/:id',
-          name: 'ClassStudents',
-          component: ClassStudents,
-          props: true
-        },
-        {
           path: 'messages',
           name: 'MessagesPage',
           component: MessagesPage
@@ -139,12 +111,7 @@ const router = createRouter({
           props: true
         },
         {
-          path: 'create-class',
-          name: 'CreateClass',
-          component: CreateClass
-        },
-        {
-          path: 'classes/:classId/create-quiz',
+          path: 'create-quiz/:subjectId',
           name: 'CreateQuiz',
           component: CreateQuiz,
           props: true
