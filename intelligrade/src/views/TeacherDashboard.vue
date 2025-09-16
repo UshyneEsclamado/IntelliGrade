@@ -22,6 +22,14 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" /></svg>
           <span>Home</span>
         </router-link>
+
+        <router-link to="/teacher/subjects" class="nav-item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M5,19V5H19V19H5M12,7A2,2 0 0,1 14,9A2,2 0 0,1 12,11A2,2 0 0,1 10,9A2,2 0 0,1 12,7M16,15H8V14C8,12.67 10.67,12 12,12C13.33,12 16,12.67 16,14V15Z" />
+          </svg>
+          <span>My Subjects</span>
+        </router-link>
+
         <router-link to="/teacher/classes" class="nav-item">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M13,11A1,1 0 0,0 12,10A1,1 0 0,0 11,11V14H10A1,1 0 0,0 9,15A1,1 0 0,0 10,16H11V17A1,1 0 0,0 12,18A1,1 0 0,0 13,17V16H14A1,1 0 0,0 15,15A1,1 0 0,0 14,14H13V11M20,2A2,2 0 0,1 22,4V22A2,2 0 0,1 20,24H4A2,2 0 0,1 2,22V4A2,2 0 0,1 4,2H11C11,1.45 11.45,1 12,1C12.55,1 13,1.45 13,2H20M20,4H13V2H11V4H4V22H20V4Z" /></svg>
           <span>My Classes</span>
@@ -51,6 +59,7 @@
     </main>
   </div>
 </template>
+
 <script setup>
 import { ref, onMounted } from 'vue';
 import { supabase } from '../supabase';
