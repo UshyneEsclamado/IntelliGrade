@@ -30,7 +30,6 @@
         
         <div class="header-badge">
           <div class="badge-content">
-            <div class="badge-icon">🎓</div>
             <div class="badge-text">Active Student</div>
           </div>
         </div>
