@@ -1,3 +1,8 @@
+.quick-link-btn:hover svg {
+  color: var(--accent-color);
+  fill: var(--accent-color);
+  filter: drop-shadow(0 0 6px var(--accent-color));
+}
 <template>
   <div class="home-container">
     <!-- Enhanced Header Section -->
@@ -30,7 +35,6 @@
         
         <div class="header-badge">
           <div class="badge-content">
-            <div class="badge-icon">🎓</div>
             <div class="badge-text">Active Student</div>
           </div>
         </div>
@@ -576,14 +580,8 @@ export default {
   color: var(--text-accent);
 }
 
-.quick-links-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-
 .quick-link-btn {
-  background: var(--bg-accent);
+  background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 1.5rem 1rem;
@@ -598,8 +596,14 @@ export default {
   text-decoration: none;
 }
 
+.quick-link-btn svg {
+  color: var(--text-accent);
+  fill: var(--text-accent);
+  transition: color 0.3s;
+}
+
 .quick-link-btn:hover {
-  background: var(--bg-accent-hover);
+  background: var(--bg-card-hover);
   transform: translateY(-2px);
   box-shadow: 0 8px 25px var(--shadow-strong);
 }

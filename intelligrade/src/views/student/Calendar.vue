@@ -1308,7 +1308,7 @@ export default {
 }
 
 .status-legend {
-  background: var(--bg-card-translucent);
+  background: var(--bg-card);
   backdrop-filter: blur(20px);
   border-radius: 20px;
   padding: 1.5rem 2rem;
@@ -1318,7 +1318,7 @@ export default {
   justify-content: center;
   gap: 4.5rem;
   box-shadow: 0 8px 32px var(--shadow-light);
-  border: 1px solid var(--border-color-light);
+  border: 1px solid var(--border-color);
 }
 
 .legend-item {
@@ -1376,7 +1376,7 @@ export default {
 }
 
 .calendar-nav {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--bg-card);
   backdrop-filter: blur(20px);
   border-radius: 20px;
   padding: 2rem;
@@ -1384,8 +1384,8 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.1);
-  border: 1px solid rgba(61, 141, 122, 0.1);
+  box-shadow: 0 8px 32px var(--shadow-light);
+  border: 1px solid var(--border-color);
 }
 
 .nav-controls {
@@ -1426,7 +1426,7 @@ export default {
 .view-toggle {
   display: flex;
   gap: 0.5rem;
-  background: rgba(251, 255, 228, 0.5);
+  background: var(--bg-accent);
   padding: 0.5rem;
   border-radius: 16px;
 }
@@ -1454,12 +1454,12 @@ export default {
 }
 
 .calendar-content {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--bg-card);
   backdrop-filter: blur(20px);
   border-radius: 24px;
   padding: 2.5rem;
-  box-shadow: 0 12px 40px rgba(61, 141, 122, 0.15);
-  border: 1px solid rgba(61, 141, 122, 0.1);
+  box-shadow: 0 12px 40px var(--shadow-medium);
+  border: 1px solid var(--border-color);
 }
 
 .calendar-grid {
@@ -1477,7 +1477,7 @@ export default {
   padding: 1.25rem;
   text-align: center;
   font-weight: 700;
-  color: #3D8D7A;
+  color: var(--text-accent);
   background: var(--bg-secondary);
   border-radius: 12px;
   font-size: 0.9rem;
@@ -1494,7 +1494,7 @@ export default {
 .calendar-day {
   min-height: 130px;
   padding: 1rem;
-  background: var(--bg-input);
+  background: var(--input-bg);
   border-radius: 12px;
   transition: all 0.3s ease;
   display: flex;
@@ -1508,7 +1508,7 @@ export default {
 }
 
 .calendar-day.clickable:hover {
-  background: var(--bg-input-focus);
+  background: var(--input-bg);
   transform: translateY(-2px);
   box-shadow: 0 8px 25px var(--shadow-medium);
 }
@@ -1911,7 +1911,7 @@ export default {
 }
 
 .event-item {
-  background: var(--bg-input);
+  background: var(--input-bg);
   border-radius: 16px;
   padding: 1.5rem;
   display: flex;
@@ -1922,7 +1922,7 @@ export default {
 }
 
 .event-item:hover {
-  background: var(--bg-input-focus);
+  background: var(--input-bg);
   transform: translateX(4px);
 }
 
