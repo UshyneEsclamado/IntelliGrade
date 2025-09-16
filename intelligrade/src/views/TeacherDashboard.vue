@@ -30,9 +30,11 @@
           <span>My Subjects</span>
         </router-link>
 
-        <router-link to="/teacher/classes" class="nav-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M13,11A1,1 0 0,0 12,10A1,1 0 0,0 11,11V14H10A1,1 0 0,0 9,15A1,1 0 0,0 10,16H11V17A1,1 0 0,0 12,18A1,1 0 0,0 13,17V16H14A1,1 0 0,0 15,15A1,1 0 0,0 14,14H13V11M20,2A2,2 0 0,1 22,4V22A2,2 0 0,1 20,24H4A2,2 0 0,1 2,22V4A2,2 0 0,1 4,2H11C11,1.45 11.45,1 12,1C12.55,1 13,1.45 13,2H20M20,4H13V2H11V4H4V22H20V4Z" /></svg>
-          <span>My Classes</span>
+        <router-link to="/teacher/create-quiz" class="nav-item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M13,7H11V11H7V13H11V17H13V13H17V11H13V7Z" />
+          </svg>
+          <span>Create Quiz</span>
         </router-link>
         
         <router-link to="/teacher/messages" class="nav-item">

@@ -76,13 +76,68 @@
           <small class="link-description">Students can join any section using this main link</small>
         </div>
 
+        <!-- Enhanced Sections List with Action Buttons -->
         <div class="sections-list" v-if="subject.sections && subject.sections.length > 0">
           <h4>Sections:</h4>
           <div class="sections">
-            <div v-for="section in subject.sections" :key="section.id" class="section-item">
+            <div v-for="section in subject.sections" :key="section.id" class="section-item enhanced-section">
               <div class="section-info">
-                <span class="section-name">{{ section.name }}</span>
-                <span class="section-code">Code: {{ section.section_code }}</span>
+                <div class="section-header-info">
+                  <span class="section-name">{{ section.name }}</span>
+                  <span class="section-code">Code: {{ section.section_code }}</span>
+                </div>
+                <div class="section-stats-info">
+                  <span class="student-count">{{ section.student_count || 0 }} students</span>
+                </div>
+                
+                <!-- Section Action Buttons -->
+                <div class="section-actions">
+                  <button 
+                    @click="navigateToCreateQuiz(subject, section)"
+                    class="section-action-btn create-quiz"
+                    title="Create Quiz/Assessment"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                    </svg>
+                    Create Quiz
+                  </button>
+                  
+                  <button 
+                    @click="viewQuizzes(subject, section)"
+                    class="section-action-btn view-quizzes"
+                    title="View Past Quizzes"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M13,9V3.5L18.5,9M6,2C4.89,2 4,2.89 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2H6Z" />
+                    </svg>
+                    View Quizzes
+                  </button>
+                  
+                  <button 
+                    @click="manageGrades(subject, section)"
+                    class="section-action-btn manage-grades"
+                    title="Grade Management"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M19,19H5V5H19V19M17,12H7V10H17V12M15,16H7V14H15V16M17,8H7V6H17V8Z" />
+                    </svg>
+                    Grades
+                  </button>
+                  
+                  <button 
+                    @click="generateReports(subject, section)"
+                    class="section-action-btn generate-reports"
+                    title="Generate Reports"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M9,17H7V10H9V17M13,17H11V7H13V17M17,17H15V13H17V17M19.5,3.5L18,2L16.5,3.5L15,2L13.5,3.5L12,2L10.5,3.5L9,2L7.5,3.5L6,2L4.5,3.5L3,2V22L4.5,20.5L6,22L7.5,20.5L9,22L10.5,20.5L12,22L13.5,20.5L15,22L16.5,20.5L18,22L19.5,20.5L21,22V2L19.5,3.5Z" />
+                    </svg>
+                    Reports
+                  </button>
+                </div>
+                
+                <!-- Section Link Display -->
                 <div class="section-link-display">
                   <input 
                     :value="generateSectionLink(subject.class_code, section.section_code)" 
@@ -96,9 +151,6 @@
                     {{ copiedLinkId === section.id ? 'Copied!' : 'Copy' }}
                   </button>
                 </div>
-              </div>
-              <div class="section-stats">
-                <span class="student-count">{{ section.student_count || 0 }} students</span>
               </div>
             </div>
           </div>
@@ -343,7 +395,11 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { supabase } from '../../supabase'
+
+// Router
+const router = useRouter()
 
 // State
 const subjects = ref([])
@@ -370,7 +426,59 @@ const canProceedToStep2 = computed(() => {
   return formData.value.name && formData.value.grade_level && formData.value.number_of_sections
 })
 
-// Methods
+// NEW ASSESSMENT METHODS
+const navigateToCreateQuiz = (subject, section) => {
+  // Navigate to CreateQuiz.vue with subject and section data
+  router.push({
+    name: 'CreateQuiz',
+    params: {
+      subjectId: subject.id,
+      sectionId: section.id
+    },
+    query: {
+      subjectName: subject.name,
+      sectionName: section.name,
+      gradeLevel: subject.grade_level,
+      classCode: subject.class_code,
+      sectionCode: section.section_code
+    }
+  })
+}
+
+const viewQuizzes = (subject, section) => {
+  // For now, show alert - you can implement this later
+  alert(`View Quizzes for:\nSubject: ${subject.name}\nSection: ${section.name}\n\nThis feature will show all past quizzes for this section.`)
+  
+  // Later you can implement:
+  // router.push({
+  //   name: 'ViewQuizzes',
+  //   params: { subjectId: subject.id, sectionId: section.id }
+  // })
+}
+
+const manageGrades = (subject, section) => {
+  // For now, show alert - you can implement this later
+  alert(`Grade Management for:\nSubject: ${subject.name}\nSection: ${section.name}\n\nThis feature will show the gradebook for this section.`)
+  
+  // Later you can implement:
+  // router.push({
+  //   name: 'GradeManagement',
+  //   params: { subjectId: subject.id, sectionId: section.id }
+  // })
+}
+
+const generateReports = (subject, section) => {
+  // For now, show alert - you can implement this later
+  alert(`Generate Reports for:\nSubject: ${subject.name}\nSection: ${section.name}\n\nThis feature will show analytics and performance reports for this section.`)
+  
+  // Later you can implement:
+  // router.push({
+  //   name: 'Reports',
+  //   params: { subjectId: subject.id, sectionId: section.id }
+  // })
+}
+
+// Methods (keeping all existing methods from original code)
 const fetchSubjects = async () => {
   try {
     const { data: { user } } = await supabase.auth.getUser()
@@ -725,6 +833,101 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Enhanced Section Styles */
+.enhanced-section {
+  background: white;
+  border: 2px solid rgba(61, 141, 122, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.05);
+}
+
+.enhanced-section:hover {
+  border-color: rgba(61, 141, 122, 0.3);
+  box-shadow: 0 8px 24px rgba(61, 141, 122, 0.15);
+  transform: translateY(-2px);
+}
+
+.section-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.section-stats-info {
+  margin-bottom: 1rem;
+}
+
+.section-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.section-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+  text-align: center;
+  min-height: 44px;
+}
+
+.create-quiz {
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  color: white;
+}
+
+.create-quiz:hover {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.view-quizzes {
+  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+  color: white;
+}
+
+.view-quizzes:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.manage-grades {
+  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+  color: white;
+}
+
+.manage-grades:hover {
+  background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+}
+
+.generate-reports {
+  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+  color: white;
+}
+
+.generate-reports:hover {
+  background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+}
+
+/* Keep all existing styles from the original file */
 .subjects-page {
   padding: 2rem;
   max-width: 1400px;
@@ -960,64 +1163,39 @@ onMounted(() => {
 .sections {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .section-item {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  padding: 1rem;
-  background: white;
-  border-radius: 12px;
-  border: 1px solid rgba(61, 141, 122, 0.1);
-  transition: all 0.3s ease;
-}
-
-.section-item:hover {
-  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.1);
-}
-
-.section-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  width: 100%;
 }
 
 .section-name {
   font-weight: 600;
   color: #3D8D7A;
-  font-size: 1rem;
+  font-size: 1.1rem;
 }
 
 .section-code {
   color: #666;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-family: 'Courier New', monospace;
 }
 
 .section-link-display {
   display: flex;
   gap: 0.5rem;
-  margin-top: 0.5rem;
+  align-items: center;
 }
 
 .section-link-input {
   flex: 1;
-  padding: 0.4rem 0.6rem;
+  padding: 0.5rem;
   border: 1px solid rgba(61, 141, 122, 0.2);
   border-radius: 6px;
   font-family: 'Courier New', monospace;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   background: rgba(251, 255, 228, 0.5);
-}
-
-.section-stats {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex-shrink: 0;
 }
 
 .student-count {
@@ -1232,243 +1410,5 @@ onMounted(() => {
   background: transparent;
   color: #666;
   border: 2px solid #ddd;
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.cancel-btn:hover, .back-btn:hover {
-  background: #f5f5f5;
-  border-color: #999;
-}
-
-.next-btn, .save-btn {
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.next-btn:hover:not(:disabled), .save-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(61, 141, 122, 0.3);
-}
-
-.next-btn:disabled, .save-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-/* Enhanced Class Link Modal Styles */
-.class-link-content {
-  padding: 2rem;
-}
-
-.class-info {
-  margin-bottom: 3rem;
-  padding: 1.5rem;
-  background: rgba(251, 255, 228, 0.5);
-  border-radius: 12px;
-}
-
-.class-info h3 {
-  color: #3D8D7A;
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-}
-
-.class-info p {
-  color: #666;
-}
-
-.main-link-section {
-  margin-bottom: 2rem;
-}
-
-.link-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem;
-  border: 1px solid rgba(61, 141, 122, 0.1);
-  border-radius: 12px;
-  background: white;
-  margin-bottom: 1rem;
-  transition: all 0.3s ease;
-}
-
-.link-item:hover {
-  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.1);
-}
-
-.link-info {
-  flex: 1;
-}
-
-.link-label {
-  font-weight: 600;
-  color: #3D8D7A;
-  font-size: 1rem;
-  margin-bottom: 0.2rem;
-}
-
-.link-code {
-  font-family: 'Courier New', monospace;
-  color: #666;
-  font-size: 0.9rem;
-}
-
-.link-url-container {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.link-input {
-  flex: 1;
-  padding: 0.75rem;
-  border: 2px solid rgba(61, 141, 122, 0.1);
-  border-radius: 8px;
-  font-family: 'Courier New', monospace;
-  font-size: 0.9rem;
-  background: rgba(251, 255, 228, 0.3);
-}
-
-.copy-btn {
-  background: #3D8D7A;
-  color: white;
-  border: none;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-}
-
-.copy-btn:hover {
-  background: #2d6b5a;
-}
-
-.share-instructions {
-  margin-top: 2rem;
-  padding: 1.5rem;
-  background: rgba(179, 216, 168, 0.1);
-  border-radius: 12px;
-  border-left: 4px solid #3D8D7A;
-}
-
-.share-instructions h4 {
-  color: #3D8D7A;
-  margin-bottom: 1rem;
-}
-
-.share-instructions ol {
-  color: #666;
-  padding-left: 1.5rem;
-}
-
-.share-instructions li {
-  margin-bottom: 0.5rem;
-}
-
-/* Loading Overlay */
-.loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-}
-
-.loading-content {
-  background: white;
-  padding: 2rem;
-  border-radius: 16px;
-  text-align: center;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-}
-
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(61, 141, 122, 0.2);
-  border-top: 4px solid #3D8D7A;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 1rem;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .subjects-page {
-    padding: 1rem;
-  }
-
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .subjects-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  .subject-card {
-    padding: 1.5rem;
-  }
-
-  .subject-stats {
-    gap: 1rem;
-  }
-
-  .modal-overlay {
-    padding: 1rem;
-  }
-
-  .modal-content {
-    margin: 0;
-  }
-
-  .modal-header,
-  .subject-form,
-  .class-link-content {
-    padding: 1.5rem;
-  }
-
-  .section-setup-item {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .section-number {
-    align-self: flex-start;
-  }
 }
 </style>

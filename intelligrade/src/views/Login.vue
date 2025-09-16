@@ -94,16 +94,75 @@
         </div>
       </div>
       
-      <!-- Logo Space - Right Side -->
+      <!-- IntelliGrade Logo Space - Right Side -->
       <div class="logo-space">
-        <div class="logo-placeholder">
-          <div class="logo-icon">
-            <svg width="120" height="120" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z"/>
-            </svg>
+        <div class="intelligrade-branding">
+          <div class="logo-container">
+            <!-- IntelliGrade Logo SVG -->
+            <div class="logo-circle">
+              <svg class="logo-svg" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Circular text path -->
+                <defs>
+                  <path id="circle" d="M 100, 100 m -80, 0 a 80,80 0 1,1 160,0 a 80,80 0 1,1 -160,0"/>
+                </defs>
+                
+                <!-- Background circle -->
+                <circle cx="100" cy="100" r="85" fill="#4A9B8E" stroke="none"/>
+                
+                <!-- Text along circle -->
+                <text font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#FBFFE4" letter-spacing="3">
+                  <textPath href="#circle" startOffset="0%">
+                    INTELLIGRADE • INTELLIGRADE •
+                  </textPath>
+                </text>
+                
+                <!-- Central laptop with hands -->
+                <g transform="translate(100, 100)">
+                  <!-- Laptop screen -->
+                  <rect x="-25" y="-15" width="50" height="30" rx="2" fill="#FBFFE4" stroke="#333" stroke-width="1.5"/>
+                  
+                  <!-- Laptop keyboard -->
+                  <path d="M-30 15 L30 15 L25 25 L-25 25 Z" fill="#FBFFE4" stroke="#333" stroke-width="1.5"/>
+                  
+                  <!-- Keyboard lines -->
+                  <line x1="-20" y1="18" x2="20" y2="18" stroke="#333" stroke-width="0.5"/>
+                  <line x1="-15" y1="21" x2="15" y2="21" stroke="#333" stroke-width="0.5"/>
+                  
+                  <!-- Left hand -->
+                  <g transform="translate(-35, 10) rotate(-15)">
+                    <ellipse cx="0" cy="0" rx="8" ry="12" fill="#E8E8E8" stroke="#333" stroke-width="1"/>
+                    <!-- Fingers -->
+                    <ellipse cx="-3" cy="-8" rx="2" ry="4" fill="#E8E8E8"/>
+                    <ellipse cx="0" cy="-9" rx="2" ry="4" fill="#E8E8E8"/>
+                    <ellipse cx="3" cy="-8" rx="2" ry="4" fill="#E8E8E8"/>
+                  </g>
+                  
+                  <!-- Right hand -->
+                  <g transform="translate(35, 10) rotate(15)">
+                    <ellipse cx="0" cy="0" rx="8" ry="12" fill="#E8E8E8" stroke="#333" stroke-width="1"/>
+                    <!-- Fingers -->
+                    <ellipse cx="-3" cy="-8" rx="2" ry="4" fill="#E8E8E8"/>
+                    <ellipse cx="0" cy="-9" rx="2" ry="4" fill="#E8E8E8"/>
+                    <ellipse cx="3" cy="-8" rx="2" ry="4" fill="#E8E8E8"/>
+                  </g>
+                  
+                  <!-- Checkmark on screen -->
+                  <path d="M-8 -5 L-3 0 L8 -10" stroke="#4A9B8E" stroke-width="2" fill="none" stroke-linecap="round"/>
+                </g>
+                
+                <!-- Decorative elements around laptop -->
+                <circle cx="60" cy="70" r="2" fill="#FBFFE4" opacity="0.8"/>
+                <circle cx="140" cy="80" r="1.5" fill="#FBFFE4" opacity="0.6"/>
+                <circle cx="70" cy="130" r="1" fill="#FBFFE4" opacity="0.7"/>
+                <circle cx="130" cy="120" r="2" fill="#FBFFE4" opacity="0.5"/>
+              </svg>
+            </div>
           </div>
-          <h2>Your Logo Here</h2>
-          <p>Brand tagline or description</p>
+          
+          <div class="branding-text">
+            <h2 class="brand-name">IntelliGrade</h2>
+            <p class="brand-tagline">Grading made easy with fast, accurate, and hassle-free results</p>
+          </div>
         </div>
       </div>
     </div>
@@ -304,41 +363,64 @@ export default {
   max-width: 400px;
 }
 
-.logo-placeholder {
+/* IntelliGrade Branding Styles */
+.intelligrade-branding {
   text-align: center;
-  opacity: 0.7;
   transition: all 0.3s ease;
 }
 
-.logo-placeholder:hover {
-  opacity: 1;
-  transform: translateY(-2px);
+.intelligrade-branding:hover {
+  transform: translateY(-5px);
 }
 
-.logo-icon {
-  width: 140px;
-  height: 140px;
-  margin: 0 auto 20px;
+.logo-container {
+  margin-bottom: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.logo-circle {
+  width: 180px;
+  height: 180px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 50%;
-  color: #3D8D7A;
-  box-shadow: 0 15px 30px rgba(61, 141, 122, 0.1);
+  filter: drop-shadow(0 10px 30px rgba(74, 155, 142, 0.2));
+  transition: all 0.3s ease;
 }
 
-.logo-placeholder h2 {
-  color: #3D8D7A;
-  font-size: 24px;
-  font-weight: 600;
-  margin-bottom: 8px;
+.logo-circle:hover {
+  filter: drop-shadow(0 15px 40px rgba(74, 155, 142, 0.3));
+  transform: scale(1.05);
 }
 
-.logo-placeholder p {
-  color: #3D8D7A;
-  font-size: 16px;
-  opacity: 0.8;
+.logo-svg {
+  width: 100%;
+  height: 100%;
+  animation: slowRotate 60s linear infinite;
+}
+
+.branding-text {
+  max-width: 350px;
+}
+
+.brand-name {
+  color: #4A9B8E;
+  font-size: 36px;
+  font-weight: 800;
+  margin-bottom: 15px;
+  letter-spacing: -1px;
+  text-shadow: 0 2px 10px rgba(74, 155, 142, 0.1);
+}
+
+.brand-tagline {
+  color: #4A9B8E;
+  font-size: 18px;
+  line-height: 1.5;
+  font-weight: 500;
+  opacity: 0.85;
+  letter-spacing: 0.3px;
 }
 
 .logo-section {
@@ -572,6 +654,7 @@ input::placeholder {
   font-weight: 400;
 }
 
+/* Animations */
 @keyframes float {
   0%, 100% { 
     transform: translateY(0) rotate(0deg); 
@@ -599,6 +682,16 @@ input::placeholder {
   }
 }
 
+@keyframes slowRotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive Design */
 @media (max-width: 1024px) {
   .auth-container {
     flex-direction: column;
@@ -609,17 +702,17 @@ input::placeholder {
     order: -1;
   }
   
-  .logo-icon {
-    width: 100px;
-    height: 100px;
+  .logo-circle {
+    width: 140px;
+    height: 140px;
   }
   
-  .logo-placeholder h2 {
-    font-size: 20px;
+  .brand-name {
+    font-size: 30px;
   }
   
-  .logo-placeholder p {
-    font-size: 14px;
+  .brand-tagline {
+    font-size: 16px;
   }
 }
 
@@ -670,6 +763,19 @@ input::placeholder {
 
   .join-class-description {
     font-size: 13px;
+  }
+  
+  .logo-circle {
+    width: 120px;
+    height: 120px;
+  }
+  
+  .brand-name {
+    font-size: 26px;
+  }
+  
+  .brand-tagline {
+    font-size: 15px;
   }
 }
 
