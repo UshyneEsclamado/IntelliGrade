@@ -11,16 +11,21 @@ import RoleSelection from '@/views/RoleSelection.vue'
 import StudentDashboard from '@/views/StudentDashboard.vue'
 import TeacherDashboard from '@/views/TeacherDashboard.vue'
 import JoinClassAuth from '@/views/JoinClassAuth.vue'
-import ClassCodeEntry from '@/views/ClassCodeEntry.vue' // Add this import
 
 // Teacher Dashboard children components
 import DashboardHome from '@/views/teacher/DashboardHome.vue'
-import MySubjects from '@/views/teacher/MySubjects.vue' // Add this import
+import MySubjects from '@/views/teacher/MySubjects.vue'
 import MessagesPage from '@/views/MessagesPage.vue'
 import AssessmentResults from '@/views/teacher/AssessmentResults.vue'
 import CreateQuiz from '@/views/teacher/CreateQuiz.vue'
 import SettingsPage from '@/views/SettingsPage.vue'
 import UploadAssessment from '@/components/UploadAssessment.vue'
+
+// Import the Sections Page (corrected path)
+import Sections from '@/views/teacher/Sections.vue'  // Your Sections component
+
+// Create Analytics component (you'll need to create this)
+import Analytics from '@/views/teacher/Analytics.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -33,16 +38,17 @@ const router = createRouter({
     { path: '/role-selection', name: 'roleSelection', component: RoleSelection },
     { path: '/student-dashboard', name: 'studentDashboard', component: StudentDashboard, meta: { requiresAuth: true } },
     
-    // Join Class Routes (Manual Entry from Login)
+    // Join Class Routes (Manual Entry from Login) - Updated flow
     {
       path: '/join-class',
       name: 'JoinClassAuth',
       component: JoinClassAuth
     },
+    // Updated: Direct flow to section code entry (no class code entry step)
     {
-      path: '/join-class/enter-code',
-      name: 'ClassCodeEntry',
-      component: ClassCodeEntry,
+      path: '/join-class/section-code',
+      name: 'SectionCode',
+      component: () => import('@/views/SectionCode.vue'),
       meta: { requiresAuth: true, requiresStudent: true }
     },
     {
@@ -66,15 +72,8 @@ const router = createRouter({
       props: true,
       meta: { skipSectionSelection: true }
     },
-    
-    // Section code input page
-    {
-      path: '/join-class/section-code',
-      name: 'SectionCode',
-      component: () => import('@/views/SectionCode.vue'),
-      meta: { requiresAuth: true, requiresStudent: true }
-    },
 
+    // Teacher Dashboard with all routes
     {
       path: '/teacher',
       component: TeacherDashboard,
@@ -95,6 +94,12 @@ const router = createRouter({
           component: MySubjects
         },
         {
+          path: 'sections',  // Sections route
+          name: 'Sections',
+          component: Sections,
+          meta: { requiresAuth: true }
+        },
+        {
           path: 'messages',
           name: 'MessagesPage',
           component: MessagesPage
@@ -110,17 +115,32 @@ const router = createRouter({
           component: AssessmentResults,
           props: true
         },
+        // Updated Create Quiz route - general quiz creation without requiring subjectId
+        {
+          path: 'create-quiz',
+          name: 'CreateQuizGeneral',
+          component: CreateQuiz,
+          meta: { requiresAuth: true }
+        },
+        // Keep the old route for backward compatibility (with subject ID)
         {
           path: 'create-quiz/:subjectId',
           name: 'CreateQuiz',
           component: CreateQuiz,
           props: true
         },
-        // New route for uploading assessments
+        // Upload Assessment route
         {
           path: 'upload-assessment',
           name: 'UploadAssessment',
           component: UploadAssessment,
+        },
+        // New Analytics route
+        {
+          path: 'analytics',
+          name: 'Analytics',
+          component: Analytics,
+          meta: { requiresAuth: true }
         }
       ]
     }

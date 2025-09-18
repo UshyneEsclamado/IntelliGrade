@@ -1,719 +1,608 @@
-<template>
-  <div class="upload-assessment-container">
-    <div class="header">
-      <h1>Upload Assessment</h1>
-      <p class="subtitle">Create and upload assessments for automatic AI grading</p>
-    </div>
+  <template>
+    <div class="upload-page">
+      <!-- Floating Gradient Blobs -->
+      <div class="floating-shape shape1"></div>
+      <div class="floating-shape shape2"></div>
+      <div class="floating-shape shape3"></div>
 
-    <!-- Loading State -->
-    <div v-if="isLoading" class="loading-overlay">
-      <div class="loader"></div>
-      <p>Processing assessment...</p>
-    </div>
-
-    <!-- Assessment Details Form -->
-    <div class="assessment-form">
-      <div class="form-group">
-        <label for="assessment-title">Assessment Title:</label>
-        <input 
-          v-model="assessmentTitle" 
-          id="assessment-title" 
-          type="text" 
-          class="form-control"
-          placeholder="Enter assessment title"
-          required
-        />
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label for="template">Assessment Type:</label>
-          <select v-model="selectedTemplate" id="template" class="form-control">
-            <option value="multiple-choice">Multiple Choice (MCQ)</option>
-            <option value="true-false">True/False</option>
-            <option value="short-answer">Short Answer</option>
-            <option value="essay">Essay Questions</option>
-            <option value="mixed">Mixed Format</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="subject">Subject:</label>
-          <input 
-            v-model="subject" 
-            id="subject" 
-            type="text" 
-            class="form-control"
-            placeholder="e.g., Mathematics, Science"
-          />
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label for="duration">Duration (minutes):</label>
-          <input 
-            v-model="duration" 
-            id="duration" 
-            type="number" 
-            class="form-control"
-            min="1"
-            max="300"
-            placeholder="60"
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="total-points">Total Points:</label>
-          <input 
-            v-model="totalPoints" 
-            id="total-points" 
-            type="number" 
-            class="form-control"
-            min="1"
-            placeholder="100"
-          />
-        </div>
-      </div>
-    </div>
-
-    <!-- File Upload Section -->
-    <div class="upload-section">
-      <div class="form-group">
-        <label for="file-upload">Upload Assessment File:</label>
-        <div class="file-upload-area" :class="{ 'drag-over': isDragOver }" 
-             @dragover.prevent="handleDragOver" 
-             @dragleave.prevent="handleDragLeave"
-             @drop.prevent="handleDrop">
-          <input 
-            type="file" 
-            id="file-upload" 
-            @change="handleFileUpload" 
-            class="file-input"
-            accept=".txt,.csv,.json,.docx,.pdf"
-            ref="fileInput"
-          />
-          <div class="upload-content">
-            <svg class="upload-icon" viewBox="0 0 24 24" width="48" height="48">
-              <path fill="#666" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-            </svg>
-            <p v-if="!assessmentFile">
-              Drop your assessment file here or <span class="upload-link">click to browse</span>
-            </p>
-            <p v-else class="file-selected">
-              📄 {{ assessmentFile.name }} ({{ formatFileSize(assessmentFile.size) }})
-            </p>
-            <small>Supported formats: TXT, CSV, JSON, DOCX, PDF</small>
+      <!-- Header -->
+      <div class="header-card">
+        <div class="header-content">
+          <div class="icon-wrapper">📝</div>
+          <div>
+            <h1>Upload Assessment</h1>
+            <p>Create and upload assessments for automatic AI grading</p>
           </div>
         </div>
       </div>
 
-      <!-- Template Format Guide -->
-      <div v-if="selectedTemplate" class="template-guide">
-        <h4>{{ getTemplateTitle(selectedTemplate) }} Format Guide:</h4>
-        <div class="format-example">
-          <pre>{{ getTemplateExample(selectedTemplate) }}</pre>
-        </div>
-      </div>
-    </div>
-
-    <!-- Answer Key Section (for MCQ and True/False) -->
-    <div v-if="['multiple-choice', 'true-false'].includes(selectedTemplate)" class="answer-key-section">
-      <div class="form-group">
-        <label for="answer-key">Answer Key (Optional - for auto-grading):</label>
-        <textarea 
-          v-model="answerKey" 
-          id="answer-key" 
-          class="form-control"
-          rows="4"
-          placeholder="Enter correct answers (e.g., 1:A, 2:B, 3:C, 4:A, 5:D)"
-        ></textarea>
-        <small>Format: Question Number:Answer (separated by commas)</small>
-      </div>
-    </div>
-
-    <!-- AI Grading Settings -->
-    <div class="ai-settings">
-      <h3>AI Grading Configuration</h3>
-      <div class="form-row">
-        <div class="form-group">
-          <label>
-            <input type="checkbox" v-model="aiGradingEnabled" />
-            Enable AI-powered grading
-          </label>
-        </div>
-        
-        <div class="form-group" v-if="aiGradingEnabled">
-          <label>
-            <input type="checkbox" v-model="provideFeedback" />
-            Generate detailed feedback for students
-          </label>
-        </div>
+      <!-- Loading Overlay -->
+      <div v-if="isLoading" class="loading-overlay">
+        <div class="loader"></div>
+        <p>Processing assessment...</p>
       </div>
 
-      <div v-if="aiGradingEnabled" class="grading-criteria">
-        <label for="grading-rubric">Grading Criteria (Optional):</label>
-        <textarea 
-          v-model="gradingRubric" 
-          id="grading-rubric" 
-          class="form-control"
-          rows="3"
-          placeholder="Specify grading criteria for better AI assessment..."
-        ></textarea>
+      <!-- Assessment Details -->
+      <div class="card">
+        <div class="card-header">
+          <h2>Assessment Details</h2>
+          <p>Start by providing the basic information for your assessment.</p>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label for="assessment-title">Assessment Title</label>
+            <input v-model="assessmentTitle" id="assessment-title" type="text" class="form-control"
+              placeholder="e.g., Chapter 5 Biology Quiz" required />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="template">Assessment Type</label>
+              <select v-model="selectedTemplate" id="template" class="form-control">
+                <option value="multiple-choice">Multiple Choice (MCQ)</option>
+                <option value="true-false">True/False</option>
+                <option value="short-answer">Short Answer</option>
+                <option value="essay">Essay Questions</option>
+                <option value="mixed">Mixed Format</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="subject">Subject</label>
+              <input v-model="subject" id="subject" type="text" class="form-control"
+                placeholder="e.g., Mathematics, Science" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="duration">Duration (minutes)</label>
+              <input v-model="duration" id="duration" type="number" class="form-control" min="1" max="300"
+                placeholder="60" />
+            </div>
+
+            <div class="form-group">
+              <label for="total-points">Total Points</label>
+              <input v-model="totalPoints" id="total-points" type="number" class="form-control" min="1"
+                placeholder="100" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload File -->
+      <div class="card">
+        <div class="card-header">
+          <h2>Upload File</h2>
+          <p>Attach the document containing the assessment questions.</p>
+        </div>
+        <div class="card-body">
+          <div class="file-upload-area" :class="{ 'drag-over': isDragOver }" @dragover.prevent="handleDragOver"
+            @dragleave.prevent="handleDragLeave" @drop.prevent="handleDrop" @click="$refs.fileInput.click()">
+            <input type="file" id="file-upload" @change="handleFileUpload" class="file-input"
+              accept=".txt,.csv,.json,.docx,.pdf" ref="fileInput" />
+            <div class="upload-content">
+              <svg class="upload-icon" fill="currentColor" viewBox="0 0 24 24" width="48" height="48">
+                <path
+                  d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" />
+              </svg>
+              <p v-if="!assessmentFile">
+                Drop your file here or <span class="upload-link">browse</span>
+              </p>
+              <p v-else class="file-selected">
+                📄 {{ assessmentFile.name }} ({{ formatFileSize(assessmentFile.size) }})
+              </p>
+              <small>Supported formats: TXT, CSV, JSON, DOCX, PDF</small>
+            </div>
+          </div>
+
+          <div v-if="selectedTemplate" class="template-guide">
+            <h4>{{ getTemplateTitle(selectedTemplate) }} Format Guide:</h4>
+            <div class="format-example">
+              <pre>{{ getTemplateExample(selectedTemplate) }}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grading Configuration -->
+      <div class="card">
+        <div class="card-header">
+          <h2>Grading Configuration</h2>
+          <p>Set up the answer key and AI grading preferences.</p>
+        </div>
+        <div class="card-body grid-container">
+          <div v-if="['multiple-choice', 'true-false'].includes(selectedTemplate)">
+            <div class="form-group">
+              <label for="answer-key">Answer Key (Optional)</label>
+              <textarea v-model="answerKey" id="answer-key" class="form-control" rows="4"
+                placeholder="e.g., 1:A, 2:B, 3:C"></textarea>
+              <small>Format: QuestionNumber:Answer, separated by commas.</small>
+            </div>
+          </div>
+
+          <div>
+            <div class="form-group checkbox-group">
+              <label>
+                <input type="checkbox" v-model="aiGradingEnabled" />
+                Enable AI-powered grading
+              </label>
+            </div>
+
+            <div class="form-group checkbox-group" v-if="aiGradingEnabled">
+              <label>
+                <input type="checkbox" v-model="provideFeedback" />
+                Generate detailed feedback
+              </label>
+            </div>
+
+            <div v-if="aiGradingEnabled" class="form-group">
+              <label for="grading-rubric">Grading Criteria (Optional)</label>
+              <textarea v-model="gradingRubric" id="grading-rubric" class="form-control" rows="3"
+                placeholder="e.g., Clarity: 40%, Accuracy: 60%"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preview -->
+      <div v-if="assessmentPreview" class="card">
+        <div class="card-header">
+          <h2>File Preview</h2>
+        </div>
+        <div class="card-body">
+          <div class="preview-meta">
+            <span class="badge">{{ selectedTemplate.replace('-', ' ').toUpperCase() }}</span>
+            <span class="file-info">{{ assessmentFile?.name }}</span>
+          </div>
+          <div class="preview-text">
+            <pre>{{ assessmentPreview }}</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error -->
+      <div v-if="error" class="error-message">
+        <strong>Error:</strong> {{ error }}
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <button @click="clearForm" class="btn-secondary">Clear Form</button>
+        <button @click="submitAssessment" class="btn-submit" :disabled="!canSubmit || isLoading">
+          <span v-if="isLoading">Processing...</span>
+          <span v-else>Submit Assessment</span>
+        </button>
       </div>
     </div>
+  </template>
 
-    <!-- Preview Section -->
-    <div v-if="assessmentPreview" class="preview-section">
-      <h3>Assessment Preview:</h3>
-      <div class="preview-content">
-        <div class="preview-meta">
-          <span class="badge">{{ selectedTemplate.replace('-', ' ').toUpperCase() }}</span>
-          <span class="file-info">{{ assessmentFile?.name }}</span>
-        </div>
-        <div class="preview-text">
-          <pre>{{ assessmentPreview }}</pre>
-        </div>
-      </div>
-    </div>
+  <script>
+  import { ref, computed, watch } from "vue";
 
-    <!-- Error Display -->
-    <div v-if="error" class="error-message">
-      <strong>Error:</strong> {{ error }}
-    </div>
+  export default {
+    name: "UploadAssessment",
+    setup() {
+      const isLoading = ref(false);
+      const isDragOver = ref(false);
+      const assessmentTitle = ref("");
+      const selectedTemplate = ref("");
+      const subject = ref("");
+      const duration = ref(null);
+      const totalPoints = ref(null);
+      const assessmentFile = ref(null);
+      const assessmentPreview = ref("");
+      const answerKey = ref("");
+      const aiGradingEnabled = ref(false);
+      const provideFeedback = ref(false);
+      const gradingRubric = ref("");
+      const error = ref("");
 
-    <!-- Action Buttons -->
-    <div class="action-buttons">
-      <button @click="clearForm" class="btn-secondary">Clear Form</button>
-      <button @click="submitAssessment" class="btn-submit" :disabled="!canSubmit || isLoading">
-        <span v-if="isLoading">Processing...</span>
-        <span v-else>Submit Assessment</span>
-      </button>
-    </div>
-  </div>
-</template>
+      const handleFileUpload = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+          assessmentFile.value = file;
+          readFile(file);
+        }
+      };
 
-<script>
-import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+      const handleDragOver = () => {
+        isDragOver.value = true;
+      };
 
-export default {
-  name: 'UploadAssessment',
-  setup() {
-    const router = useRouter();
-    
-    // Form data
-    const assessmentTitle = ref('');
-    const selectedTemplate = ref('multiple-choice');
-    const subject = ref('');
-    const duration = ref(60);
-    const totalPoints = ref(100);
-    const assessmentFile = ref(null);
-    const answerKey = ref('');
-    const aiGradingEnabled = ref(true);
-    const provideFeedback = ref(true);
-    const gradingRubric = ref('');
-    
-    // UI state
-    const assessmentPreview = ref(null);
-    const isLoading = ref(false);
-    const isDragOver = ref(false);
-    const error = ref('');
-    const fileInput = ref(null);
+      const handleDragLeave = () => {
+        isDragOver.value = false;
+      };
 
-    // Computed properties
-    const canSubmit = computed(() => {
-      return assessmentTitle.value.trim() && 
-             assessmentFile.value && 
-             !isLoading.value;
-    });
+      const handleDrop = (event) => {
+        const file = event.dataTransfer.files[0];
+        if (file) {
+          assessmentFile.value = file;
+          readFile(file);
+        }
+        isDragOver.value = false;
+      };
 
-    // File handling methods
-    const handleFileUpload = (event) => {
-      const file = event.target.files[0];
-      processFile(file);
-    };
-
-    const handleDrop = (event) => {
-      isDragOver.value = false;
-      const file = event.dataTransfer.files[0];
-      processFile(file);
-    };
-
-    const handleDragOver = () => {
-      isDragOver.value = true;
-    };
-
-    const handleDragLeave = () => {
-      isDragOver.value = false;
-    };
-
-    const processFile = (file) => {
-      if (!file) return;
-      
-      // Validate file type
-      const allowedTypes = ['.txt', '.csv', '.json', '.docx', '.pdf'];
-      const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
-      
-      if (!allowedTypes.includes(fileExtension)) {
-        error.value = `Unsupported file type. Please use: ${allowedTypes.join(', ')}`;
-        return;
-      }
-
-      // Validate file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        error.value = 'File size must be less than 10MB';
-        return;
-      }
-
-      error.value = '';
-      assessmentFile.value = file;
-      
-      // Preview for text files
-      if (fileExtension === '.txt' || fileExtension === '.csv') {
+      const readFile = (file) => {
         const reader = new FileReader();
-        reader.onload = () => {
-          assessmentPreview.value = reader.result.substring(0, 500) + '...'; // First 500 chars
+        reader.onload = (e) => {
+          assessmentPreview.value = e.target.result.substring(0, 1000);
         };
         reader.readAsText(file);
-      } else {
-        assessmentPreview.value = `File uploaded: ${file.name} (${formatFileSize(file.size)})`;
-      }
-    };
-
-    const formatFileSize = (bytes) => {
-      if (bytes === 0) return '0 Bytes';
-      const k = 1024;
-      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    };
-
-    // Template methods
-    const getTemplateTitle = (template) => {
-      const titles = {
-        'multiple-choice': 'Multiple Choice Questions',
-        'true-false': 'True/False Questions',
-        'short-answer': 'Short Answer Questions',
-        'essay': 'Essay Questions',
-        'mixed': 'Mixed Format'
       };
-      return titles[template] || 'Assessment';
-    };
 
-    const getTemplateExample = (template) => {
-      const examples = {
-        'multiple-choice': `Question 1: What is 2 + 2?
-A) 3
-B) 4
-C) 5
-D) 6
-
-Question 2: Which planet is closest to the sun?
-A) Venus
-B) Mercury
-C) Earth
-D) Mars`,
-        
-        'true-false': `Question 1: The Earth is flat. (False)
-Question 2: Python is a programming language. (True)
-Question 3: The sun rises in the west. (False)`,
-        
-        'short-answer': `Question 1: Explain the water cycle in 2-3 sentences.
-Question 2: What are the three primary colors?
-Question 3: Define photosynthesis.`,
-        
-        'essay': `Question 1: Discuss the impact of technology on modern education. (500 words)
-Question 2: Analyze the causes and effects of climate change. (750 words)`,
-        
-        'mixed': `Section A: Multiple Choice
-Question 1: What is the capital of France?
-A) London B) Berlin C) Paris D) Madrid
-
-Section B: Short Answer  
-Question 2: Explain democracy in your own words.`
+      const formatFileSize = (size) => {
+        if (size < 1024) return size + " bytes";
+        else if (size < 1048576) return (size / 1024).toFixed(1) + " KB";
+        else return (size / 1048576).toFixed(1) + " MB";
       };
-      return examples[template] || 'Please format your questions according to the selected template.';
-    };
 
-    // Form methods
-    const clearForm = () => {
-      assessmentTitle.value = '';
-      selectedTemplate.value = 'multiple-choice';
-      subject.value = '';
-      duration.value = 60;
-      totalPoints.value = 100;
-      assessmentFile.value = null;
-      answerKey.value = '';
-      gradingRubric.value = '';
-      assessmentPreview.value = null;
-      error.value = '';
-      if (fileInput.value) {
-        fileInput.value.value = '';
-      }
-    };
-
-    const submitAssessment = async () => {
-      if (!canSubmit.value) return;
-
-      isLoading.value = true;
-      error.value = '';
-
-      try {
-        const formData = new FormData();
-        formData.append('title', assessmentTitle.value);
-        formData.append('template', selectedTemplate.value);
-        formData.append('subject', subject.value);
-        formData.append('duration', duration.value.toString());
-        formData.append('total_points', totalPoints.value.toString());
-        formData.append('file', assessmentFile.value);
-        formData.append('answer_key', answerKey.value);
-        formData.append('ai_grading_enabled', aiGradingEnabled.value.toString());
-        formData.append('provide_feedback', provideFeedback.value.toString());
-        formData.append('grading_rubric', gradingRubric.value);
-
-        const response = await fetch('http://127.0.0.1:8000/api/assessments/upload', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`, // Add auth if needed
-          },
-          body: formData,
-        });
-
-        const result = await response.json();
-
-        if (response.ok) {
-          alert('Assessment uploaded successfully! AI grading has been initiated.');
-          router.push('/teacher/dashboard');
-        } else {
-          error.value = result.detail || 'Failed to upload assessment';
+      const getTemplateTitle = (template) => {
+        switch (template) {
+          case "multiple-choice":
+            return "Multiple Choice (MCQ)";
+          case "true-false":
+            return "True/False";
+          case "short-answer":
+            return "Short Answer";
+          case "essay":
+            return "Essay";
+          case "mixed":
+            return "Mixed Format";
+          default:
+            return "";
         }
-      } catch (err) {
-        console.error('Upload error:', err);
-        error.value = 'Network error. Please check your connection and try again.';
-      } finally {
-        isLoading.value = false;
-      }
-    };
+      };
 
-    return {
-      // Form data
-      assessmentTitle,
-      selectedTemplate,
-      subject,
-      duration,
-      totalPoints,
-      assessmentFile,
-      answerKey,
-      aiGradingEnabled,
-      provideFeedback,
-      gradingRubric,
-      
-      // UI state
-      assessmentPreview,
-      isLoading,
-      isDragOver,
-      error,
-      fileInput,
-      
-      // Computed
-      canSubmit,
-      
-      // Methods
-      handleFileUpload,
-      handleDrop,
-      handleDragOver,
-      handleDragLeave,
-      formatFileSize,
-      getTemplateTitle,
-      getTemplateExample,
-      clearForm,
-      submitAssessment
-    };
-  }
-};
-</script>
+      const getTemplateExample = (template) => {
+        switch (template) {
+          case "multiple-choice":
+            return "Q1. What is 2+2?\nA) 3\nB) 4\nC) 5\nAnswer: B";
+          case "true-false":
+            return "Q1. The Earth is flat.\nAnswer: False";
+          case "short-answer":
+            return "Q1. What is the capital of France?\nAnswer: Paris";
+          case "essay":
+            return "Q1. Explain the theory of evolution.\n[Student writes essay]";
+          case "mixed":
+            return "Q1. MCQ: 2+2=?\nA)3 B)4\nAnswer: B\nQ2. Short Answer: Capital of Italy?\nAnswer: Rome";
+          default:
+            return "";
+        }
+      };
 
-<style scoped>
-.upload-assessment-container {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 2rem;
-  background: #f8f9fa;
-  min-height: 100vh;
-}
+      const clearForm = () => {
+        assessmentTitle.value = "";
+        selectedTemplate.value = "";
+        subject.value = "";
+        duration.value = null;
+        totalPoints.value = null;
+        assessmentFile.value = null;
+        assessmentPreview.value = "";
+        answerKey.value = "";
+        aiGradingEnabled.value = false;
+        provideFeedback.value = false;
+        gradingRubric.value = "";
+        error.value = "";
+      };
 
-.header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
+      const submitAssessment = () => {
+        if (!assessmentTitle.value || !assessmentFile.value || !selectedTemplate.value) {
+          error.value = "Please fill all required fields and upload a file.";
+          return;
+        }
+        isLoading.value = true;
+        error.value = "";
 
-.header h1 {
-  color: #2c3e50;
-  margin-bottom: 0.5rem;
-}
+        setTimeout(() => {
+          isLoading.value = false;
+          alert("Assessment submitted successfully!");
+          clearForm();
+        }, 2000);
+      };
 
-.subtitle {
-  color: #6c757d;
-  font-size: 1.1rem;
-}
+      const canSubmit = computed(() => {
+        return assessmentTitle.value && selectedTemplate.value && assessmentFile.value;
+      });
 
-.assessment-form, .upload-section, .answer-key-section, .ai-settings {
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  margin-bottom: 2rem;
-}
+      watch(selectedTemplate, (newVal) => {
+        if (newVal === "essay" || newVal === "short-answer") {
+          aiGradingEnabled.value = true;
+        }
+      });
 
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
+      return {
+        isLoading,
+        isDragOver,
+        assessmentTitle,
+        selectedTemplate,
+        subject,
+        duration,
+        totalPoints,
+        assessmentFile,
+        assessmentPreview,
+        answerKey,
+        aiGradingEnabled,
+        provideFeedback,
+        gradingRubric,
+        error,
+        handleFileUpload,
+        handleDragOver,
+        handleDragLeave,
+        handleDrop,
+        formatFileSize,
+        getTemplateTitle,
+        getTemplateExample,
+        clearForm,
+        submitAssessment,
+        canSubmit,
+      };
+    },
+  };
+  </script>
 
-.form-group {
-  margin-bottom: 1.5rem;
-}
+  <style scoped>
 
-.form-group label {
-  display: block;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: #2c3e50;
-}
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
-.form-control {
-  width: 100%;
-  padding: 0.8rem;
-  border: 2px solid #e9ecef;
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: border-color 0.3s ease;
-}
-
-.form-control:focus {
-  outline: none;
-  border-color: #4caf50;
-  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
-}
-
-.file-upload-area {
-  border: 3px dashed #dee2e6;
-  border-radius: 12px;
-  padding: 3rem;
-  text-align: center;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  position: relative;
-}
-
-.file-upload-area:hover, .file-upload-area.drag-over {
-  border-color: #4caf50;
-  background-color: #f8fff9;
-}
-
-.file-input {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  cursor: pointer;
-}
-
-.upload-content {
-  pointer-events: none;
-}
-
-.upload-icon {
-  margin-bottom: 1rem;
-  opacity: 0.5;
-}
-
-.upload-link {
-  color: #4caf50;
-  text-decoration: underline;
-}
-
-.file-selected {
-  color: #4caf50;
-  font-weight: 600;
-}
-
-.template-guide {
-  margin-top: 2rem;
-  padding: 1rem;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border-left: 4px solid #4caf50;
-}
-
-.format-example {
-  background: white;
-  padding: 1rem;
-  border-radius: 6px;
-  margin-top: 1rem;
-}
-
-.format-example pre {
-  margin: 0;
-  white-space: pre-wrap;
-  font-family: 'Courier New', monospace;
-  font-size: 0.9rem;
-  color: #495057;
-}
-
-.ai-settings h3 {
-  margin-bottom: 1rem;
-  color: #2c3e50;
-}
-
-.grading-criteria {
-  margin-top: 1rem;
-}
-
-.preview-section {
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  margin-bottom: 2rem;
-}
-
-.preview-meta {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.badge {
-  background: #4caf50;
-  color: white;
-  padding: 0.3rem 0.8rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.file-info {
-  color: #6c757d;
-  font-style: italic;
-}
-
-.preview-text {
-  background: #f8f9fa;
-  padding: 1rem;
-  border-radius: 6px;
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.preview-text pre {
-  margin: 0;
-  white-space: pre-wrap;
-  font-family: 'Courier New', monospace;
-  font-size: 0.9rem;
-}
-
-.error-message {
-  background: #f8d7da;
-  color: #721c24;
-  padding: 1rem;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-  border: 1px solid #f5c6cb;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-  margin-top: 2rem;
-}
-
-.btn-submit, .btn-secondary {
-  padding: 0.8rem 2rem;
-  border: none;
-  border-radius: 8px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-submit {
-  background: #4caf50;
-  color: white;
-}
-
-.btn-submit:hover:not(:disabled) {
-  background: #45a049;
-  transform: translateY(-2px);
-}
-
-.btn-submit:disabled {
-  background: #cccccc;
-  cursor: not-allowed;
-}
-
-.btn-secondary {
-  background: #6c757d;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background: #5a6268;
-}
-
-.loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  color: white;
-}
-
-.loader {
-  width: 50px;
-  height: 50px;
-  border: 5px solid #f3f3f3;
-  border-top: 5px solid #4caf50;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Mobile Responsive */
-@media (max-width: 768px) {
-  .upload-assessment-container {
+  /* Reuse Dashboard Design Language */
+  .upload-page {
+    max-width: 1000px;
+    margin: 2rem auto;
     padding: 1rem;
+    position: relative;
+    z-index: 1;
+    font-family: 'Poppins', sans-serif;
   }
-  
+
+  /* Floating Gradient Shapes */
+  .floating-shape {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(70px);
+    opacity: 0.4;
+    z-index: 0;
+  }
+  .shape1 { top: -100px; left: -100px; width: 300px; height: 300px; background: #3D8D7A; animation: float 6s ease-in-out infinite; }
+  .shape2 { bottom: -120px; right: -80px; width: 250px; height: 250px; background: #B3D8A8; animation: float 7s ease-in-out infinite; }
+  .shape3 { top: 40%; left: -60px; width: 200px; height: 200px; background: #87CBB9; animation: float 8s ease-in-out infinite; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0) translateX(0); }
+    50% { transform: translateY(-20px) translateX(20px); }
+  }
+
+  /* Header Card */
+  .header-card {
+    background: linear-gradient(135deg, #3D8D7A, #87CBB9);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    color: white;
+    position: relative;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+  }
+  .header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .header-content h1 {
+    font-size: 2rem;
+    margin: 0 0 0.3rem 0;
+  }
+  .header-content p {
+    margin: 0;
+    font-size: 1rem;
+    opacity: 0.9;
+  }
+  .icon-wrapper {
+    background: rgba(255,255,255,0.2);
+    padding: 1rem;
+    border-radius: 50%;
+    font-size: 2rem;
+  }
+
+  /* Cards */
+  .card {
+    background: rgba(255,255,255,0.85);
+    border-radius: 16px;
+    box-shadow: 0 6px 25px rgba(0,0,0,0.05);
+    margin-bottom: 2rem;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  }
+  .card-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+  }
+  .card-header h2 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+  }
+  .card-header p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #6c757d;
+  }
+  .card-body {
+    padding: 2rem;
+  }
+
+  /* Forms */
   .form-row {
-    grid-template-columns: 1fr;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
   }
-  
-  .action-buttons {
-    flex-direction: column;
+  .form-group {
+    margin-bottom: 1.5rem;
   }
-  
+  .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    font-size: 0.95rem;
+  }
+  .form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #E0E7EE;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .form-control:focus {
+    border-color: #3D8D7A;
+    box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.15);
+    outline: none;
+  }
+
+  /* Upload */
   .file-upload-area {
-    padding: 2rem 1rem;
+    border: 2px dashed #E0E7EE;
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    background: rgba(250, 252, 254, 0.8);
+    transition: all 0.3s ease;
+    cursor: pointer;
   }
-}
-</style>
+  .file-upload-area:hover, .file-upload-area.drag-over {
+    border-color: #3D8D7A;
+    background-color: rgba(61, 141, 122, 0.05);
+  }
+  .file-input { display: none; }
+  .upload-icon { color: #a0aec0; margin-bottom: 1rem; }
+  .upload-link { color: #3D8D7A; font-weight: 600; }
+  .file-selected { color: #3D8D7A; font-weight: 500; }
+
+  /* Template Guide */
+  .template-guide {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    border-left: 4px solid #87CBB9;
+    background: rgba(135,203,185,0.1);
+    border-radius: 8px;
+  }
+  .format-example pre {
+    margin: 0;
+    padding: 1rem;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #E0E7EE;
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: #555;
+  }
+
+  /* Preview */
+  .preview-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .badge {
+    background: #B3D8A8;
+    color: #2c3e50;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  .preview-text {
+    background: #F7F9F7;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #E0E7EE;
+    max-height: 250px;
+    overflow-y: auto;
+  }
+
+  /* Buttons */
+  .action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-bottom: 2rem;
+  }
+  .btn-submit, .btn-secondary {
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .btn-submit {
+    background: #3D8D7A;
+    color: white;
+    box-shadow: 0 4px 12px rgba(61,141,122,0.3);
+  }
+  .btn-submit:hover:not(:disabled) {
+    background: #317c6b;
+    transform: translateY(-2px);
+  }
+  .btn-secondary {
+    background: #E2E8F0;
+    color: #555;
+  }
+  .btn-secondary:hover { background: #cbd5e0; }
+
+  /* Error */
+  .error-message {
+    background: #fff5f5;
+    color: #c53030;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #fed7d7;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Loader */
+  .loading-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(255,255,255,0.8);
+    backdrop-filter: blur(6px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  .loader {
+    width: 50px; height: 50px;
+    border: 5px solid #B3D8A8;
+    border-top: 5px solid #3D8D7A;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .form-row, .grid-container {
+      grid-template-columns: 1fr;
+    }
+    .action-buttons {
+      flex-direction: column-reverse;
+    }
+    .btn-submit, .btn-secondary {
+      width: 100%;
+    }
+  }
+
+
+  </style>
+
