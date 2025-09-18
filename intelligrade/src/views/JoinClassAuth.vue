@@ -210,7 +210,6 @@
     </div>
   </div>
 </template>
-
 <script>
 import { supabase } from "../supabase.js";
 
@@ -277,29 +276,11 @@ export default {
         }
 
         if (profileData.role === "student") {
-          // Check if coming from section link (has both classCode and sectionCode)
-          if (this.classCode && this.sectionCode) {
-            // Go directly to section code input
-            this.$router.push({
-              name: 'SectionCode',
-              query: { 
-                classCode: this.classCode, 
-                sectionCode: this.sectionCode 
-              }
-            });
-          }
-          // Check if coming from class link (has only classCode)
-          else if (this.classCode) {
-            // Go to section selection
-            this.$router.push({
-              name: 'SectionSelection',
-              query: { classCode: this.classCode }
-            });
-          }
-          // Default: manual entry flow (no URL parameters)
-          else {
-            this.$router.push("/join-class/enter-code");
-          }
+          // Skip classCodeEntry and go directly to section selection
+          this.$router.push({
+            name: 'SectionSelection',
+            query: { classCode: this.classCode }
+          });
         } else {
           // Only students can join classes
           this.error = "Only student accounts can join classes.";
@@ -344,43 +325,22 @@ export default {
         // Create profile for the new user
         const { error: profileError } = await supabase
           .from("profiles")
-          .insert([
-            {
-              id: authData.user.id,
-              full_name: this.fullName,
-              email: this.email,
-              role: "student",
-            },
-          ]);
+          .insert([{
+            id: authData.user.id,
+            full_name: this.fullName,
+            email: this.email,
+            role: "student",
+          }]);
 
         if (profileError) {
           throw profileError;
         }
 
-        // Same routing logic as login
-        // Check if coming from section link (has both classCode and sectionCode)
-        if (this.classCode && this.sectionCode) {
-          // Go directly to section code input
-          this.$router.push({
-            name: 'SectionCode',
-            query: { 
-              classCode: this.classCode, 
-              sectionCode: this.sectionCode 
-            }
-          });
-        }
-        // Check if coming from class link (has only classCode)
-        else if (this.classCode) {
-          // Go to section selection
-          this.$router.push({
-            name: 'SectionSelection',
-            query: { classCode: this.classCode }
-          });
-        }
-        // Default: manual entry flow (no URL parameters)
-        else {
-          this.$router.push("/join-class/enter-code");
-        }
+        // After signup, go directly to section selection
+        this.$router.push({
+          name: 'SectionSelection',
+          query: { classCode: this.classCode }
+        });
       } catch (err) {
         console.error("Signup error:", err);
         this.error = err.message || "Signup failed. Please try again.";
@@ -395,6 +355,7 @@ export default {
   },
 };
 </script>
+
 
 <style scoped>
 /* Base styles - inherited from login component */

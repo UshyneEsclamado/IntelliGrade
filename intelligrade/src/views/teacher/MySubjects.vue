@@ -19,17 +19,11 @@
           <div class="subject-info">
             <h3>{{ subject.name }}</h3>
             <p class="grade-level">Grade {{ subject.grade_level }}</p>
-            <p class="subject-code">Class Code: <strong>{{ subject.class_code }}</strong></p>
           </div>
           <div class="subject-actions">
             <button @click="editSubject(subject)" class="action-btn edit" title="Edit Subject">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
-              </svg>
-            </button>
-            <button @click="viewClassLink(subject)" class="action-btn view" title="View All Links">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
               </svg>
             </button>
             <button @click="deleteSubject(subject.id)" class="action-btn delete" title="Delete Subject">
@@ -55,39 +49,27 @@
           </div>
         </div>
 
-        <!-- Main Class Link -->
-        <div class="main-class-link">
-          <div class="class-link-header">
-            <h4>Main Class Link:</h4>
-            <button @click="copyLink(generateMainClassLink(subject.class_code), `main-${subject.id}`)" class="copy-btn-small">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z" />
-              </svg>
-              {{ copiedLinkId === `main-${subject.id}` ? 'Copied!' : 'Copy' }}
-            </button>
-          </div>
-          <div class="link-display">
-            <input 
-              :value="generateMainClassLink(subject.class_code)" 
-              readonly 
-              class="link-input-small"
-            />
-          </div>
-          <small class="link-description">Students can join any section using this main link</small>
-        </div>
-
-        <!-- Enhanced Sections List with Action Buttons -->
+        <!-- Sections List with Section Codes -->
         <div class="sections-list" v-if="subject.sections && subject.sections.length > 0">
-          <h4>Sections:</h4>
+          <h4>Sections & Codes:</h4>
           <div class="sections">
             <div v-for="section in subject.sections" :key="section.id" class="section-item enhanced-section">
               <div class="section-info">
                 <div class="section-header-info">
                   <span class="section-name">{{ section.name }}</span>
-                  <span class="section-code">Code: {{ section.section_code }}</span>
+                  <div class="section-code-display">
+                    <span class="code-label">Section Code:</span>
+                    <span class="section-code">{{ section.section_code }}</span>
+                    <button @click="copyCode(section.section_code, section.id)" class="copy-code-btn">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z" />
+                      </svg>
+                      {{ copiedCodeId === section.id ? 'Copied!' : 'Copy' }}
+                    </button>
+                  </div>
                 </div>
                 <div class="section-stats-info">
-                  <span class="student-count">{{ section.student_count || 0 }} students</span>
+                  <span class="student-count">{{ section.student_count || 0 }} students enrolled</span>
                 </div>
                 
                 <!-- Section Action Buttons -->
@@ -134,21 +116,6 @@
                       <path d="M9,17H7V10H9V17M13,17H11V7H13V17M17,17H15V13H17V17M19.5,3.5L18,2L16.5,3.5L15,2L13.5,3.5L12,2L10.5,3.5L9,2L7.5,3.5L6,2L4.5,3.5L3,2V22L4.5,20.5L6,22L7.5,20.5L9,22L10.5,20.5L12,22L13.5,20.5L15,22L16.5,20.5L18,22L19.5,20.5L21,22V2L19.5,3.5Z" />
                     </svg>
                     Reports
-                  </button>
-                </div>
-                
-                <!-- Section Link Display -->
-                <div class="section-link-display">
-                  <input 
-                    :value="generateSectionLink(subject.class_code, section.section_code)" 
-                    readonly 
-                    class="section-link-input"
-                  />
-                  <button @click="copyLink(generateSectionLink(subject.class_code, section.section_code), section.id)" class="copy-btn-small">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z" />
-                    </svg>
-                    {{ copiedLinkId === section.id ? 'Copied!' : 'Copy' }}
                   </button>
                 </div>
               </div>
@@ -234,7 +201,7 @@
           <!-- Step 2: Section Setup -->
           <div v-if="currentStep === 2" class="step-content">
             <h3 class="step-title">Step 2: Setup Sections</h3>
-            <p class="step-subtitle">Customize section names and codes will be auto-generated</p>
+            <p class="step-subtitle">Customize section names and unique codes will be generated</p>
 
             <div class="sections-setup">
               <div v-for="(section, index) in formData.sections" :key="index" class="section-setup-item">
@@ -248,7 +215,7 @@
                     :placeholder="`Section ${index + 1}`"
                     required
                   />
-                  <small class="section-code-preview">Code will be: {{ generateSectionCode(section.name || `Section ${index + 1}`) }}</small>
+                  <small class="section-code-preview">Code will be: {{ generateSectionCode(section.name || `Section ${index + 1}`, index) }}</small>
                 </div>
               </div>
             </div>
@@ -266,120 +233,6 @@
             </div>
           </div>
         </form>
-      </div>
-    </div>
-
-    <!-- Class Link Modal (same as before) -->
-    <div v-if="showClassLinkModal" class="modal-overlay" @click="showClassLinkModal = false">
-      <div class="modal-content class-link-modal" @click.stop>
-        <div class="modal-header">
-          <h2>{{ selectedSubject?.name }} - All Class Links</h2>
-          <button @click="showClassLinkModal = false" class="close-btn">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
-            </svg>
-          </button>
-        </div>
-
-        <div class="class-link-content">
-          <div class="class-info">
-            <h3>{{ selectedSubject?.name }}</h3>
-            <p>Grade {{ selectedSubject?.grade_level }} • Class Code: <strong>{{ selectedSubject?.class_code }}</strong></p>
-          </div>
-
-          <!-- Main Class Link Section -->
-          <div class="main-link-section">
-            <h4>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 8px;">
-                <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M7.07,18.28C7.5,17.38 10.12,16.5 12,16.5C13.88,16.5 16.5,17.38 16.93,18.28C15.57,19.36 13.86,20 12,20C10.14,20 8.43,19.36 7.07,18.28M18.36,16.83C16.93,15.09 13.46,14.5 12,14.5C10.54,14.5 7.07,15.09 5.64,16.83C4.62,15.5 4,13.82 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,13.82 19.38,15.5 18.36,16.83M12,6C10.06,6 8.5,7.56 8.5,9.5C8.5,11.44 10.06,13 12,13C13.94,13 15.5,11.44 15.5,9.5C15.5,7.56 13.94,6 12,6M12,11A1.5,1.5 0 0,1 10.5,9.5A1.5,1.5 0 0,1 12,8A1.5,1.5 0 0,1 13.5,9.5A1.5,1.5 0 0,1 12,11Z" />
-              </svg>
-              Main Class Link
-            </h4>
-            <p class="section-description">Students can use this link to join any available section in this class</p>
-            
-            <div class="link-item main-link">
-              <div class="link-info">
-                <span class="link-label">{{ selectedSubject?.name }} Grade {{ selectedSubject?.grade_level }}</span>
-                <span class="link-code">Class Code: {{ selectedSubject?.class_code }}</span>
-              </div>
-              <div class="link-url-container">
-                <input 
-                  :value="generateMainClassLink(selectedSubject?.class_code)" 
-                  readonly 
-                  class="link-input"
-                  :id="`main-link-${selectedSubject?.id}`"
-                />
-                <button @click="copyLink(generateMainClassLink(selectedSubject?.class_code), `main-modal-${selectedSubject?.id}`)" class="copy-btn">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z" />
-                  </svg>
-                  {{ copiedLinkId === `main-modal-${selectedSubject?.id}` ? 'Copied!' : 'Copy' }}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Section-Specific Links -->
-          <div class="sections-links">
-            <h4>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 8px;">
-                <path d="M12,2L13.09,8.26L22,9L17.5,13.74L18.18,21L12,17.77L5.82,21L6.5,13.74L2,9L10.91,8.26L12,2Z" />
-              </svg>
-              Section-Specific Links
-            </h4>
-            <p class="section-description">Direct links to specific sections - students will join exactly this section</p>
-            
-            <div v-for="section in selectedSubject?.sections" :key="section.id" class="link-item">
-              <div class="link-info">
-                <span class="link-label">{{ section.name }}</span>
-                <span class="link-code">{{ section.section_code }}</span>
-                <span class="student-count">{{ section.student_count || 0 }} students enrolled</span>
-              </div>
-              <div class="link-url-container">
-                <input 
-                  :value="generateSectionLink(selectedSubject?.class_code, section.section_code)" 
-                  readonly 
-                  class="link-input"
-                  :id="`section-link-${section.id}`"
-                />
-                <button @click="copyLink(generateSectionLink(selectedSubject?.class_code, section.section_code), `section-modal-${section.id}`)" class="copy-btn">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z" />
-                  </svg>
-                  {{ copiedLinkId === `section-modal-${section.id}` ? 'Copied!' : 'Copy' }}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div class="share-instructions">
-            <h4>How to use these links:</h4>
-            <div class="instruction-grid">
-              <div class="instruction-item">
-                <div class="instruction-icon main">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M7.07,18.28C7.5,17.38 10.12,16.5 12,16.5C13.88,16.5 16.5,17.38 16.93,18.28C15.57,19.36 13.86,20 12,20C10.14,20 8.43,19.36 7.07,18.28M18.36,16.83C16.93,15.09 13.46,14.5 12,14.5C10.54,14.5 7.07,15.09 5.64,16.83C4.62,15.5 4,13.82 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,13.82 19.38,15.5 18.36,16.83M12,6C10.06,6 8.5,7.56 8.5,9.5C8.5,11.44 10.06,13 12,13C13.94,13 15.5,11.44 15.5,9.5C15.5,7.56 13.94,6 12,6M12,11A1.5,1.5 0 0,1 10.5,9.5A1.5,1.5 0 0,1 12,8A1.5,1.5 0 0,1 13.5,9.5A1.5,1.5 0 0,1 12,11Z" />
-                  </svg>
-                </div>
-                <div class="instruction-content">
-                  <h5>Main Class Link</h5>
-                  <p>Share when you want students to choose their own section or when sections aren't full</p>
-                </div>
-              </div>
-              <div class="instruction-item">
-                <div class="instruction-icon section">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12,2L13.09,8.26L22,9L17.5,13.74L18.18,21L12,17.77L5.82,21L6.5,13.74L2,9L10.91,8.26L12,2Z" />
-                  </svg>
-                </div>
-                <div class="instruction-content">
-                  <h5>Section-Specific Links</h5>
-                  <p>Share when you want students to join a specific section directly</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -404,14 +257,12 @@ const router = useRouter()
 // State
 const subjects = ref([])
 const showCreateModal = ref(false)
-const showClassLinkModal = ref(false)
-const selectedSubject = ref(null)
 const isEditing = ref(false)
 const isLoading = ref(false)
 const loadingMessage = ref('')
 const currentSubjectId = ref(null)
 const currentStep = ref(1)
-const copiedLinkId = ref(null)
+const copiedCodeId = ref(null)
 
 // Form data
 const formData = ref({
@@ -426,9 +277,8 @@ const canProceedToStep2 = computed(() => {
   return formData.value.name && formData.value.grade_level && formData.value.number_of_sections
 })
 
-// NEW ASSESSMENT METHODS
+// ASSESSMENT METHODS
 const navigateToCreateQuiz = (subject, section) => {
-  // Navigate to CreateQuiz.vue with subject and section data
   router.push({
     name: 'CreateQuiz',
     params: {
@@ -439,46 +289,24 @@ const navigateToCreateQuiz = (subject, section) => {
       subjectName: subject.name,
       sectionName: section.name,
       gradeLevel: subject.grade_level,
-      classCode: subject.class_code,
       sectionCode: section.section_code
     }
   })
 }
 
 const viewQuizzes = (subject, section) => {
-  // For now, show alert - you can implement this later
   alert(`View Quizzes for:\nSubject: ${subject.name}\nSection: ${section.name}\n\nThis feature will show all past quizzes for this section.`)
-  
-  // Later you can implement:
-  // router.push({
-  //   name: 'ViewQuizzes',
-  //   params: { subjectId: subject.id, sectionId: section.id }
-  // })
 }
 
 const manageGrades = (subject, section) => {
-  // For now, show alert - you can implement this later
   alert(`Grade Management for:\nSubject: ${subject.name}\nSection: ${section.name}\n\nThis feature will show the gradebook for this section.`)
-  
-  // Later you can implement:
-  // router.push({
-  //   name: 'GradeManagement',
-  //   params: { subjectId: subject.id, sectionId: section.id }
-  // })
 }
 
 const generateReports = (subject, section) => {
-  // For now, show alert - you can implement this later
   alert(`Generate Reports for:\nSubject: ${subject.name}\nSection: ${section.name}\n\nThis feature will show analytics and performance reports for this section.`)
-  
-  // Later you can implement:
-  // router.push({
-  //   name: 'Reports',
-  //   params: { subjectId: subject.id, sectionId: section.id }
-  // })
 }
 
-// Methods (keeping all existing methods from original code)
+// CORE METHODS
 const fetchSubjects = async () => {
   try {
     const { data: { user } } = await supabase.auth.getUser()
@@ -490,7 +318,6 @@ const fetchSubjects = async () => {
     loadingMessage.value = 'Loading subjects...'
     isLoading.value = true
 
-    // Fetch subjects with sections from real database
     const { data: subjectsData, error: subjectsError } = await supabase
       .from('subjects')
       .select(`
@@ -537,36 +364,39 @@ const generateSections = () => {
   }
 }
 
-const generateClassCode = (subjectName, gradeLevel) => {
-  const subjectPrefix = subjectName.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, '') || 'SUB'
-  const year = new Date().getFullYear()
-  const randomSuffix = Math.random().toString(36).substring(2, 4).toUpperCase()
-  return `${subjectPrefix}${gradeLevel}${randomSuffix}${year}`
-}
-
 const generateSectionCode = (sectionName, index = 0) => {
   if (!formData.value.name || !formData.value.grade_level) return 'CODE-PREVIEW'
   
   const subjectPrefix = formData.value.name.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, '') || 'SUB'
   const gradeLevel = formData.value.grade_level
   const cleanSectionName = sectionName.replace(/[^a-zA-Z0-9]/g, '').substring(0, 1).toUpperCase() || 'S'
-  // Use timestamp + index to ensure uniqueness during preview
   const timestamp = Date.now().toString().slice(-4)
   const indexSuffix = String(index + 1).padStart(2, '0')
   
   return `${subjectPrefix}${gradeLevel}-${cleanSectionName}${indexSuffix}${timestamp}`
 }
 
-// Generate main class link (students choose section)
-const generateMainClassLink = (classCode) => {
-  const baseUrl = window.location.origin
-  return `${baseUrl}/join-class/${classCode}`
-}
-
-// Generate section-specific link (direct to section)  
-const generateSectionLink = (classCode, sectionCode) => {
-  const baseUrl = window.location.origin
-  return `${baseUrl}/join-section/${classCode}/${sectionCode}`
+const copyCode = async (code, codeId) => {
+  try {
+    await navigator.clipboard.writeText(code)
+    copiedCodeId.value = codeId
+    setTimeout(() => {
+      copiedCodeId.value = null
+    }, 2000)
+  } catch (err) {
+    console.error('Failed to copy code:', err)
+    // Fallback for older browsers
+    const textArea = document.createElement('textarea')
+    textArea.value = code
+    document.body.appendChild(textArea)
+    textArea.select()
+    document.execCommand('copy')
+    document.body.removeChild(textArea)
+    copiedCodeId.value = codeId
+    setTimeout(() => {
+      copiedCodeId.value = null
+    }, 2000)
+  }
 }
 
 const nextStep = () => {
@@ -586,44 +416,10 @@ const saveSubject = async () => {
       throw new Error('Please login to continue')
     }
 
-    // Generate unique class code
-    let classCode
-    let isUnique = false
-    let attempts = 0
-    const maxAttempts = 10
-
-    // Ensure class code is unique
-    while (!isUnique && attempts < maxAttempts) {
-      classCode = generateClassCode(formData.value.name, formData.value.grade_level)
-      
-      // Check if class code already exists
-      const { data: existingSubject, error: checkError } = await supabase
-        .from('subjects')
-        .select('class_code')
-        .eq('class_code', classCode)
-        .maybeSingle()
-
-      if (checkError) {
-        console.error('Error checking class code uniqueness:', checkError)
-        throw checkError
-      }
-
-      if (!existingSubject) {
-        isUnique = true
-      }
-      
-      attempts++
-    }
-
-    if (!isUnique) {
-      throw new Error('Could not generate unique class code. Please try again.')
-    }
-
-    // Prepare subject data
+    // Prepare subject data (remove class_code since we're not using it)
     const subjectData = {
       name: formData.value.name,
       grade_level: parseInt(formData.value.grade_level),
-      class_code: classCode,
       teacher_id: user.id
     }
 
@@ -664,6 +460,7 @@ const saveSubject = async () => {
     // Create sections with unique section codes
     const sectionsToInsert = []
     const baseTimestamp = Date.now()
+    const maxAttempts = 10
     
     for (let i = 0; i < formData.value.sections.length; i++) {
       const section = formData.value.sections[i]
@@ -673,14 +470,13 @@ const saveSubject = async () => {
 
       // Ensure section code is unique
       while (!isSectionUnique && sectionAttempts < maxAttempts) {
-        // Generate section code with more randomness
         const subjectPrefix = formData.value.name.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, '') || 'SUB'
         const gradeLevel = formData.value.grade_level
         const cleanSectionName = section.name.replace(/[^a-zA-Z0-9]/g, '').substring(0, 1).toUpperCase() || 'S'
         const uniqueTimestamp = (baseTimestamp + i + sectionAttempts).toString().slice(-5)
         const randomSuffix = Math.random().toString(36).substring(2, 3).toUpperCase()
         
-        sectionCode = `${subjectPrefix}${gradeLevel}-${cleanSectionName}${uniqueTimestamp}${randomSuffix}`
+        sectionCode = `${subjectPrefix}${gradeLevel}${cleanSectionName}${uniqueTimestamp}${randomSuffix}`
         
         // Check if section code already exists
         const { data: existingSection, error: sectionCheckError } = await supabase
@@ -725,13 +521,13 @@ const saveSubject = async () => {
     await fetchSubjects()
     closeModal()
 
-    // Show success message with class code and links
-    const mainLink = generateMainClassLink(classCode)
-    alert(`✅ Subject "${formData.value.name}" ${isEditing.value ? 'updated' : 'created'} successfully!\n\n🔑 Class Code: ${classCode}\n\n🔗 Main Class Link:\n${mainLink}\n\n📚 Students can use this link to join any section in your class.\n\nYou can also find section-specific links in the subject card!`)
+    // Show success message with all section codes
+    const sectionCodes = insertedSections.map(s => `${s.name}: ${s.section_code}`).join('\n')
+    alert(`Subject "${formData.value.name}" ${isEditing.value ? 'updated' : 'created'} successfully!\n\nSection Codes:\n${sectionCodes}\n\nShare these codes with your students to join their respective sections.`)
 
   } catch (error) {
     console.error('Error saving subject:', error)
-    alert(`❌ Error ${isEditing.value ? 'updating' : 'creating'} subject:\n\n${error.message}`)
+    alert(`Error ${isEditing.value ? 'updating' : 'creating'} subject:\n\n${error.message}`)
   } finally {
     isLoading.value = false
   }
@@ -752,7 +548,7 @@ const editSubject = (subject) => {
 
 const deleteSubject = async (subjectId) => {
   const subject = subjects.value.find(s => s.id === subjectId)
-  if (!confirm(`⚠️ Are you sure you want to delete "${subject?.name}"?\n\nThis will permanently remove:\n• All sections (${subject?.sections?.length || 0} sections)\n• All enrolled students\n• All class data\n\nThis action cannot be undone.`)) {
+  if (!confirm(`Are you sure you want to delete "${subject?.name}"?\n\nThis will permanently remove:\n• All sections (${subject?.sections?.length || 0} sections)\n• All enrolled students\n• All class data\n\nThis action cannot be undone.`)) {
     return
   }
 
@@ -760,7 +556,6 @@ const deleteSubject = async (subjectId) => {
   loadingMessage.value = 'Deleting subject...'
 
   try {
-    // Delete the subject (sections will be deleted automatically via foreign key cascade)
     const { error } = await supabase
       .from('subjects')
       .delete()
@@ -769,40 +564,12 @@ const deleteSubject = async (subjectId) => {
     if (error) throw error
 
     await fetchSubjects()
-    alert(`✅ Subject "${subject?.name}" deleted successfully!`)
+    alert(`Subject "${subject?.name}" deleted successfully!`)
   } catch (error) {
     console.error('Error deleting subject:', error)
-    alert(`❌ Error deleting subject: ${error.message}`)
+    alert(`Error deleting subject: ${error.message}`)
   } finally {
     isLoading.value = false
-  }
-}
-
-const viewClassLink = (subject) => {
-  selectedSubject.value = subject
-  showClassLinkModal.value = true
-}
-
-const copyLink = async (link, linkId) => {
-  try {
-    await navigator.clipboard.writeText(link)
-    copiedLinkId.value = linkId
-    setTimeout(() => {
-      copiedLinkId.value = null
-    }, 2000)
-  } catch (err) {
-    console.error('Failed to copy link:', err)
-    // Fallback for older browsers
-    const textArea = document.createElement('textarea')
-    textArea.value = link
-    document.body.appendChild(textArea)
-    textArea.select()
-    document.execCommand('copy')
-    document.body.removeChild(textArea)
-    copiedLinkId.value = linkId
-    setTimeout(() => {
-      copiedLinkId.value = null
-    }, 2000)
   }
 }
 
@@ -813,8 +580,6 @@ const getTotalStudents = (subject) => {
 
 const closeModal = () => {
   showCreateModal.value = false
-  showClassLinkModal.value = false
-  selectedSubject.value = null
   isEditing.value = false
   currentSubjectId.value = null
   currentStep.value = 1
@@ -852,8 +617,56 @@ onMounted(() => {
 .section-header-info {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
   margin-bottom: 1rem;
+}
+
+.section-code-display {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(61, 141, 122, 0.05);
+  border-radius: 10px;
+  border: 1px solid rgba(61, 141, 122, 0.1);
+}
+
+.code-label {
+  font-weight: 600;
+  color: #3D8D7A;
+  font-size: 0.9rem;
+}
+
+.section-code {
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  color: #3D8D7A;
+  font-size: 1.1rem;
+  background: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid rgba(61, 141, 122, 0.2);
+  flex: 1;
+}
+
+.copy-code-btn {
+  background: #3D8D7A;
+  color: white;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.copy-code-btn:hover {
+  background: #2a6b5f;
+  transform: scale(1.05);
 }
 
 .section-stats-info {
@@ -927,7 +740,7 @@ onMounted(() => {
   box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
 }
 
-/* Keep all existing styles from the original file */
+/* Base Styles */
 .subjects-page {
   padding: 2rem;
   max-width: 1400px;
@@ -1020,12 +833,6 @@ onMounted(() => {
   margin-bottom: 0.5rem;
 }
 
-.subject-code {
-  color: #666;
-  font-size: 0.9rem;
-  font-family: 'Courier New', monospace;
-}
-
 .subject-actions {
   display: flex;
   gap: 0.5rem;
@@ -1042,11 +849,6 @@ onMounted(() => {
 .action-btn.edit {
   background: rgba(59, 130, 246, 0.1);
   color: #3b82f6;
-}
-
-.action-btn.view {
-  background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
 }
 
 .action-btn.delete {
@@ -1087,68 +889,6 @@ onMounted(() => {
   font-weight: 600;
 }
 
-/* Main Class Link Styles */
-.main-class-link {
-  background: rgba(16, 185, 129, 0.05);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.class-link-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.class-link-header h4 {
-  color: #10b981;
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.link-display {
-  margin-bottom: 0.5rem;
-}
-
-.link-input-small {
-  width: 100%;
-  padding: 0.6rem;
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  border-radius: 8px;
-  font-family: 'Courier New', monospace;
-  font-size: 0.85rem;
-  background: rgba(16, 185, 129, 0.05);
-  color: #059669;
-}
-
-.link-description {
-  color: #666;
-  font-size: 0.8rem;
-  font-style: italic;
-}
-
-.copy-btn-small {
-  background: #10b981;
-  color: white;
-  border: none;
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.8rem;
-  transition: all 0.3s ease;
-}
-
-.copy-btn-small:hover {
-  background: #059669;
-}
-
 .sections-list {
   margin-bottom: 1.5rem;
 }
@@ -1171,36 +911,16 @@ onMounted(() => {
 }
 
 .section-name {
-  font-weight: 600;
+  font-weight: 700;
   color: #3D8D7A;
-  font-size: 1.1rem;
-}
-
-.section-code {
-  color: #666;
-  font-size: 0.9rem;
-  font-family: 'Courier New', monospace;
-}
-
-.section-link-display {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.section-link-input {
-  flex: 1;
-  padding: 0.5rem;
-  border: 1px solid rgba(61, 141, 122, 0.2);
-  border-radius: 6px;
-  font-family: 'Courier New', monospace;
-  font-size: 0.8rem;
-  background: rgba(251, 255, 228, 0.5);
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
 }
 
 .student-count {
   color: #666;
   font-size: 0.9rem;
+  font-weight: 500;
 }
 
 .empty-state {
@@ -1269,10 +989,6 @@ onMounted(() => {
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-}
-
-.class-link-modal {
-  max-width: 900px;
 }
 
 .modal-header {
@@ -1410,5 +1126,110 @@ onMounted(() => {
   background: transparent;
   color: #666;
   border: 2px solid #ddd;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cancel-btn:hover, .back-btn:hover {
+  border-color: #3D8D7A;
+  color: #3D8D7A;
+}
+
+.next-btn, .save-btn {
+  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.next-btn:hover, .save-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(61, 141, 122, 0.3);
+}
+
+.next-btn:disabled, .save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Loading Styles */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+}
+
+.loading-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(61, 141, 122, 0.1);
+  border-left: 4px solid #3D8D7A;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .subjects-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .subject-stats {
+    gap: 1rem;
+  }
+  
+  .section-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .modal-overlay {
+    padding: 1rem;
+  }
+  
+  .section-code-display {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
 }
 </style>

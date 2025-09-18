@@ -19,8 +19,25 @@
 
       <nav class="nav-links">
         <router-link to="/teacher/dashboard" class="nav-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" /></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" />
+          </svg>
           <span>Home</span>
+        </router-link>
+
+        <router-link to="/teacher/upload-assessment" class="nav-item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z M12,12L16,16H13V19H11V16H8L12,12Z" />
+          </svg>
+          <span>Upload Assessment</span>
+        </router-link>
+
+        <!-- Updated Create Quiz link - no subject ID needed for general quiz creation -->
+        <router-link to="/teacher/create-quiz" class="nav-item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19,3A2,2 0 0,1 21,5V19A2,2 0 0,1 19,21H5A2,2 0 0,1 3,19V5A2,2 0 0,1 5,3H19M19,19V5H5V19H19M16.5,16.25L19,14L16.5,11.75V13.5H10V14.5H16.5V16.25M7.5,7.75L5,10L7.5,12.25V10.5H14V9.5H7.5V7.75Z" />
+          </svg>
+          <span>Create Quiz</span>
         </router-link>
 
         <router-link to="/teacher/subjects" class="nav-item">
@@ -30,15 +47,22 @@
           <span>My Subjects</span>
         </router-link>
 
-        <router-link to="/teacher/create-quiz" class="nav-item">
+        <router-link to="/teacher/sections" class="nav-item">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M13,7H11V11H7V13H11V17H13V13H17V11H13V7Z" />
+            <path d="M16,4C16.88,4 17.67,4.38 18.12,5H20A2,2 0 0,1 22,7V19A2,2 0 0,1 20,21H4A2,2 0 0,1 2,19V7A2,2 0 0,1 4,5H5.88C6.33,4.38 7.12,4 8,4H16M16,6H8A1,1 0 0,0 7,7V8H17V7A1,1 0 0,0 16,6M4,9V19H20V9H4M6,11H10V13H6V11M12,11H18V13H12V11M6,15H8V17H6V15M10,15H18V17H10V15Z" />
           </svg>
-          <span>Create Quiz</span>
+          <span>Sections</span>
+        </router-link>
+
+        <router-link to="/teacher/analytics" class="nav-item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M22,21H2V3H4V19H6V17H10V19H12V16H16V19H18V17H22V21M2,2H4V4H2V2M5,2H7V4H5V2M8,2H10V4H8V2M11,2H13V4H11V2M14,2H16V4H14V2M17,2H19V4H17V2M20,2H22V4H20V2Z" />
+          </svg>
+          <span>Analytics</span>
         </router-link>
         
         <router-link to="/teacher/messages" class="nav-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="messages-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zM4 6h16v.5l-8 5-8-5V6zm0 13.5V8l8 5 8-5v11.5H4z"/>
           </svg>
           <span>Messages</span>
@@ -51,6 +75,7 @@
           <span>Settings</span>
         </router-link>
       </nav>
+      
       <button @click="handleLogout" class="logout-btn">
         <span>Logout</span>
       </button>
@@ -141,6 +166,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* ... (keeping all your existing styles) ... */
 /*
  * Imported fonts
  */
