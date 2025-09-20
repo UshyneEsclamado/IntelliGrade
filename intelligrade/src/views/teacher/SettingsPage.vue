@@ -65,7 +65,7 @@
               <div class="setting-item">
                 <span>Dark Mode</span>
                 <label class="switch">
-                  <input type="checkbox" v-model="isDarkMode">
+                  <input type="checkbox" v-model="isDarkMode" @change="handleDarkModeToggle">
                   <span class="slider round"></span>
                 </label>
               </div>
@@ -288,18 +288,33 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { supabase } from '../../supabase.js';
-import { useThemeStore } from '../../stores/theme.ts';
 
 // ===== THEME MANAGEMENT =====
-const themeStore = useThemeStore();
-const isDarkMode = computed({
-  get: () => themeStore.isDarkMode,
-  set: (value) => {
-    if (value !== themeStore.isDarkMode) {
-      themeStore.toggleDarkMode();
-    }
+const isDarkMode = ref(false);
+
+const handleDarkModeToggle = () => {
+  localStorage.setItem('darkMode', isDarkMode.value.toString());
+  applyTheme();
+  console.log('Dark Mode:', isDarkMode.value ? 'Enabled' : 'Disabled');
+};
+
+const applyTheme = () => {
+  if (isDarkMode.value) {
+    document.documentElement.classList.add('dark');
+    document.body.classList.add('dark-mode');
+  } else {
+    document.documentElement.classList.remove('dark');
+    document.body.classList.remove('dark-mode');
   }
-});
+};
+
+const initializeTheme = () => {
+  const savedTheme = localStorage.getItem('darkMode');
+  if (savedTheme !== null) {
+    isDarkMode.value = savedTheme === 'true';
+    applyTheme();
+  }
+};
 
 // ===== APP PREFERENCES =====
 const notificationsEnabled = ref(false);
@@ -577,46 +592,13 @@ onMounted(() => {
   if (savedNotifications !== null) {
     notificationsEnabled.value = savedNotifications === 'true';
   }
+  
+  // Initialize theme
+  initializeTheme();
 });
 </script>
 
 <style scoped>
-/* Light mode variables (default) */
-:root {
-  --bg-primary: linear-gradient(135deg, #f8fffe 0%, #f0f7f4 100%);
-  --bg-secondary: #ffffff;
-  --card-background: rgba(255, 255, 255, 0.95);
-  --card-border-color: rgba(61, 141, 122, 0.08);
-  --primary-text-color: #333333;
-  --secondary-text-color: #666666;
-  --accent-color: #3D8D7A;
-  --accent-hover: #2d6d5a;
-  --action-btn-bg: rgba(61, 141, 122, 0.1);
-  --action-btn-color: #3D8D7A;
-  --background-color: #ffffff;
-  --border-color: #e0e0e0;
-  --input-bg: #ffffff;
-  --input-border: #ddd;
-}
-
-/* Dark mode variables */
-:root.dark {
-  --bg-primary: linear-gradient(135deg, #1a1f1e 0%, #2d3634 100%);
-  --bg-secondary: #1e2322;
-  --card-background: rgba(30, 35, 34, 0.95);
-  --card-border-color: rgba(61, 141, 122, 0.2);
-  --primary-text-color: #e0e0e0;
-  --secondary-text-color: #a0a8a6;
-  --accent-color: #5fb3a0;
-  --accent-hover: #4a9b87;
-  --action-btn-bg: rgba(95, 179, 160, 0.1);
-  --action-btn-color: #5fb3a0;
-  --background-color: #2d3634;
-  --border-color: rgba(61, 141, 122, 0.3);
-  --input-bg: #2d3634;
-  --input-border: rgba(61, 141, 122, 0.3);
-}
-
 /* Base Styles */
 .page-container {
   padding: 2rem 5%;

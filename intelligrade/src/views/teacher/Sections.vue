@@ -488,22 +488,43 @@ export default {
   padding: 1.5rem;
   max-width: 1200px;
   margin: 0 auto;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background: var(--bg-primary);
   min-height: 100vh;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--primary-text-color);
+  transition: all 0.3s ease;
 }
 
-.header-section {
+.page-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 2.5rem;
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--card-background);
   backdrop-filter: blur(20px);
   padding: 2rem;
   border-radius: 1.25rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--card-border-color);
+  box-shadow: 0 8px 32px var(--shadow-light);
+}
+
+.page-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--primary-text-color);
+  margin: 0;
+  letter-spacing: -0.025em;
+  background: linear-gradient(135deg, var(--accent-color), #7c3aed, #db2777);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.page-subtitle {
+  color: var(--secondary-text-color);
+  margin: 0.5rem 0 0 0;
+  font-size: 1rem;
+  font-weight: 400;
 }
 
 .page-title {
@@ -526,8 +547,8 @@ export default {
 }
 
 .create-btn {
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--accent-color) 0%, #7c3aed 50%, #db2777 100%);
+  color: var(--text-inverse);
   border: none;
   padding: 0.875rem 1.75rem;
   border-radius: 0.75rem;
@@ -538,12 +559,12 @@ export default {
   align-items: center;
   gap: 0.5rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 4px 14px var(--shadow-medium);
 }
 
 .create-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(79, 70, 229, 0.4);
+  box-shadow: 0 8px 25px var(--shadow-strong);
 }
 
 .stats-grid {

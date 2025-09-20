@@ -737,7 +737,7 @@ onUnmounted(() => {
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
-  background: linear-gradient(135deg, #f8fffe 0%, #f0f7f4 100%);
+  background: var(--bg-primary);
 }
 
 .bg-decoration {
@@ -760,7 +760,7 @@ onUnmounted(() => {
 .shape-1 {
   width: 300px;
   height: 300px;
-  background: #3D8D7A;
+  background: var(--accent-color);
   top: 10%;
   right: 10%;
   animation-delay: 0s;
@@ -798,14 +798,14 @@ onUnmounted(() => {
 }
 
 .card-box {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--card-background);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(61, 141, 122, 0.08);
+  border: 1px solid var(--card-border-color);
   border-radius: 28px;
   padding: 2.5rem;
   box-shadow: 
-    0 20px 60px rgba(61, 141, 122, 0.05),
-    0 8px 32px rgba(61, 141, 122, 0.03),
+    0 20px 60px var(--shadow-light),
+    0 8px 32px var(--shadow-light),
     0 0 0 1px rgba(255, 255, 255, 0.3);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -813,8 +813,8 @@ onUnmounted(() => {
 .card-box:hover {
   transform: translateY(-2px);
   box-shadow: 
-    0 25px 70px rgba(61, 141, 122, 0.08),
-    0 12px 40px rgba(61, 141, 122, 0.05),
+    0 25px 70px var(--shadow-medium),
+    0 12px 40px var(--shadow-light),
     0 0 0 1px rgba(255, 255, 255, 0.4);
 }
 
@@ -833,13 +833,13 @@ onUnmounted(() => {
 .header-icon {
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  background: linear-gradient(135deg, var(--accent-color) 0%, #A3D1C6 100%);
   border-radius: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.2);
+  box-shadow: 0 8px 32px var(--shadow-light);
   animation: pulse 3s ease-in-out infinite;
 }
 
@@ -851,14 +851,14 @@ onUnmounted(() => {
 .hero-header .page-title {
   font-size: 2.5rem;
   font-weight: 800;
-  color: #3D8D7A;
+  color: var(--accent-color);
   margin: 0;
   letter-spacing: -0.02em;
 }
 
 .hero-header .page-subtitle {
   font-size: 1.2rem;
-  color: #666;
+  color: var(--secondary-text-color);
   margin: 0;
   max-width: 600px;
 }
@@ -884,23 +884,23 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  background: #f0f7f4;
-  border: 1px solid rgba(61, 141, 122, 0.1);
+  background: var(--bg-accent);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
-  color: #777;
+  color: var(--secondary-text-color);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .tab-btn:hover {
-  background: #e6f0ed;
+  background: var(--bg-accent-hover);
 }
 
 .tab-btn.active {
-  background: #3D8D7A;
+  background: var(--accent-color);
   color: white;
-  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.2);
+  box-shadow: 0 4px 12px var(--shadow-light);
 }
 
 .tab-btn.active svg {
@@ -927,16 +927,16 @@ onUnmounted(() => {
 }
 
 .action-btn.new-chat-btn {
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  background: linear-gradient(135deg, var(--accent-color) 0%, #A3D1C6 100%);
   color: white;
   border: none;
   font-weight: 600;
 }
 
 .action-btn.new-chat-btn:hover {
-  background: linear-gradient(135deg, #347c6b 0%, #92c5b8 100%);
+  background: linear-gradient(135deg, var(--accent-hover) 0%, #92c5b8 100%);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
+  box-shadow: 0 4px 12px var(--shadow-light);
 }
 
 .search-bar {
@@ -950,22 +950,24 @@ onUnmounted(() => {
   left: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #999;
+  color: var(--secondary-text-color);
 }
 
 .search-input {
   width: 100%;
   padding: 0.75rem 1rem 0.75rem 3rem;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   font-size: 1rem;
+  background: var(--input-bg);
+  color: var(--primary-text-color);
   transition: all 0.2s ease;
 }
 
 .search-input:focus {
   outline: none;
-  border-color: #3D8D7A;
-  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px var(--shadow-light);
 }
 
 .action-btn {
@@ -973,10 +975,10 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
-  background: rgba(61, 141, 122, 0.05);
-  border: 1px solid rgba(61, 141, 122, 0.1);
+  background: var(--action-btn-bg);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
-  color: #3D8D7A;
+  color: var(--action-btn-color);
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
@@ -984,18 +986,18 @@ onUnmounted(() => {
 }
 
 .action-btn:hover {
-  background: rgba(61, 141, 122, 0.1);
+  background: var(--bg-accent-hover);
   transform: translateY(-1px);
 }
 
 .empty-state {
   text-align: center;
-  color: #888;
+  color: var(--secondary-text-color);
   padding: 3rem 2rem;
 }
 
 .empty-icon {
-  color: #ccc;
+  color: var(--border-color);
   margin-bottom: 1rem;
 }
 
@@ -1003,12 +1005,12 @@ onUnmounted(() => {
   font-size: 1.1rem;
   font-weight: 600;
   margin: 0;
-  color: #666;
+  color: var(--secondary-text-color);
 }
 
 .empty-subtext {
   font-size: 0.9rem;
-  color: #999;
+  color: var(--text-muted);
   margin-top: 0.5rem;
   display: block;
 }
@@ -1036,8 +1038,8 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem;
-  background: linear-gradient(135deg, rgba(251, 255, 228, 0.8) 0%, rgba(255, 255, 255, 0.9) 100%);
-  border: 1px solid rgba(61, 141, 122, 0.08);
+  background: var(--bg-card);
+  border: 1px solid var(--card-border-color);
   border-radius: 20px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1045,25 +1047,25 @@ onUnmounted(() => {
 }
 
 .conversation-item.unread {
-  background: linear-gradient(135deg, #e8fffb 0%, #f0fdfc 100%);
-  border-color: #A3D1C6;
+  background: var(--bg-unread);
+  border-color: var(--accent-color);
 }
 
 .notification-item.unread {
-  background: linear-gradient(135deg, #e8fffb 0%, #f0fdfc 100%);
-  border-color: #A3D1C6;
+  background: var(--bg-unread);
+  border-color: var(--accent-color);
 }
 
 .notification-item.important {
-  background: linear-gradient(135deg, #fff3e0 0%, #fffbf0 100%);
+  background: var(--bg-important);
   border-color: #ffc107;
 }
 
 .conversation-item:hover,
 .notification-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(61, 141, 122, 0.12);
-  border-color: rgba(61, 141, 122, 0.15);
+  box-shadow: 0 12px 40px var(--shadow-medium);
+  border-color: var(--border-color-hover);
 }
 
 .sender-info {
@@ -1078,7 +1080,7 @@ onUnmounted(() => {
   width: 48px;
   height: 48px;
   background: linear-gradient(135deg, #A3D1C6 0%, #B3D8A8 100%);
-  color: #3D8D7A;
+  color: var(--accent-color);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -1086,7 +1088,7 @@ onUnmounted(() => {
   font-weight: 600;
   font-size: 1.2rem;
   flex-shrink: 0;
-  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.1);
+  box-shadow: 0 4px 16px var(--shadow-light);
 }
 
 .message-content {
@@ -1103,7 +1105,7 @@ onUnmounted(() => {
 
 .sender-name {
   font-weight: 700;
-  color: #3D8D7A;
+  color: var(--accent-color);
   margin: 0;
   font-size: 1.1rem;
 }
@@ -1117,20 +1119,20 @@ onUnmounted(() => {
 .unread-dot {
   width: 8px;
   height: 8px;
-  background: #3D8D7A;
+  background: var(--accent-color);
   border-radius: 50%;
   flex-shrink: 0;
 }
 
 .message-time {
   font-size: 0.85rem;
-  color: #999;
+  color: var(--text-muted);
   font-weight: 500;
 }
 
 .last-message {
   font-size: 0.95rem;
-  color: #666;
+  color: var(--secondary-text-color);
   margin: 0;
   line-height: 1.4;
   display: -webkit-box;
@@ -1148,24 +1150,24 @@ onUnmounted(() => {
 .options-btn {
   background: none;
   border: none;
-  color: #999;
+  color: var(--text-muted);
   cursor: pointer;
   padding: 0.5rem;
   transition: color 0.2s ease;
 }
 
 .options-btn:hover {
-  color: #3D8D7A;
+  color: var(--accent-color);
 }
 
 .options-menu {
   position: absolute;
   top: 100%;
   right: 0;
-  background-color: white;
-  border: 1px solid #e0e0e0;
+  background-color: var(--card-background);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 24px var(--shadow-medium);
   padding: 0.5rem;
   display: flex;
   flex-direction: column;
@@ -1179,24 +1181,24 @@ onUnmounted(() => {
     align-items: center;
     gap: 0.75rem;
     padding: 0.75rem 1rem;
-    color: #555;
+    color: var(--primary-text-color);
     text-decoration: none;
     border-radius: 8px;
     transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .options-menu a:hover {
-    background-color: #f0f7f4;
-    color: #3D8D7A;
+    background-color: var(--bg-accent);
+    color: var(--accent-color);
 }
 
 .options-menu a.delete-option {
-    color: #ff6b6b;
+    color: var(--error-color);
 }
 
 .options-menu a.delete-option:hover {
-    background-color: rgba(255, 107, 107, 0.1);
-    color: #ff6b6b;
+    background-color: var(--error-bg);
+    color: var(--error-color);
 }
 
 .notification-filters {
@@ -1207,23 +1209,23 @@ onUnmounted(() => {
 .filter-btn {
   padding: 0.5rem 1rem;
   background: transparent;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--border-color);
   border-radius: 12px;
-  color: #777;
+  color: var(--secondary-text-color);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .filter-btn:hover {
-  background: #f0f0f0;
+  background: var(--bg-accent);
 }
 
 .filter-btn.active {
-  background: #3D8D7A;
-  border-color: #3D8D7A;
+  background: var(--accent-color);
+  border-color: var(--accent-color);
   color: white;
-  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.2);
+  box-shadow: 0 4px 12px var(--shadow-light);
 }
 
 .notification-header {
@@ -1234,8 +1236,8 @@ onUnmounted(() => {
 }
 
 .notification-icon {
-  color: #3D8D7A;
-  background: rgba(61, 141, 122, 0.1);
+  color: var(--accent-color);
+  background: var(--action-btn-bg);
   padding: 8px;
   border-radius: 12px;
 }

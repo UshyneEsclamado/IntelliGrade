@@ -14,12 +14,5 @@ app.use(pinia)
 // Use Vue Router for navigation
 app.use(router)
 
-// Initialize theme store after Pinia is set up
-import { useThemeStore } from './stores/theme.ts'
-console.log('Main.ts - Initializing theme store...')
-const themeStore = useThemeStore()
-themeStore.initDarkMode()
-console.log('Main.ts - Theme store initialized')
-
 // Mount the Vue app to the DOM
 app.mount('#app')

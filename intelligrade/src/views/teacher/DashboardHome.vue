@@ -297,22 +297,7 @@ export default {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-/* CSS Variables for consistent theming */
-:root {
-  --bg-primary: linear-gradient(135deg, #FBFFE4 0%, #B3D8A8 50%, #A3D1C6 100%);
-  --bg-secondary: rgba(255, 255, 255, 0.85);
-  --bg-card: rgba(255, 255, 255, 0.9);
-  --bg-accent: rgba(251, 255, 228, 0.7);
-  --bg-accent-hover: rgba(251, 255, 228, 0.9);
-  --text-accent: #3D8D7A;
-  --text-secondary: #666;
-  --text-muted: #777;
-  --border-color: rgba(61, 141, 122, 0.15);
-  --shadow-light: rgba(61, 141, 122, 0.05);
-  --shadow-medium: rgba(61, 141, 122, 0.1);
-  --shadow-strong: rgba(61, 141, 122, 0.2);
-}
-
+/* Using global CSS variables from main.css */
 .home-container {
   padding: 2rem;
   max-width: 1200px;
