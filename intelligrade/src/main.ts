@@ -4,27 +4,22 @@ import { createPinia } from 'pinia'  // Import Pinia for state management
 import App from './App.vue'  // Import the root App component
 import router from './router'  // Import the router configuration
 
-// Initialize dark mode from localStorage on app start
-const initializeDarkMode = () => {
-  const savedTheme = localStorage.getItem('darkMode');
-  if (savedTheme === 'true') {
-    document.documentElement.classList.add('dark');
-  } else {
-    document.documentElement.classList.remove('dark');
-  }
-};
-
-// Initialize dark mode immediately
-initializeDarkMode();
-
 // Create a Vue app instance
 const app = createApp(App)
 
 // Use Pinia for state management
-app.use(createPinia())
+const pinia = createPinia()
+app.use(pinia)
 
 // Use Vue Router for navigation
 app.use(router)
+
+// Initialize theme store after Pinia is set up
+import { useThemeStore } from './stores/theme.ts'
+console.log('Main.ts - Initializing theme store...')
+const themeStore = useThemeStore()
+themeStore.initDarkMode()
+console.log('Main.ts - Theme store initialized')
 
 // Mount the Vue app to the DOM
 app.mount('#app')

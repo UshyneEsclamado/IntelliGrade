@@ -54,7 +54,10 @@
         </router-link>
       </nav>
       
-      <button @click="handleLogout" class="logout-btn">
+      <button @click="showLogoutModal" class="logout-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M16,17V14H9V10H16V7L21,12L16,17M14,2A2,2 0 0,1 16,4V6H14V4H5V20H14V18H16V20A2,2 0 0,1 14,22H5A2,2 0 0,1 3,20V4A2,2 0 0,1 5,2H14Z" />
+        </svg>
         <span>Logout</span>
       </button>
     </aside>
@@ -62,22 +65,47 @@
     <main class="main-content">
       <router-view></router-view>
     </main>
+
+    <!-- Logout Confirmation Modal -->
+    <div v-if="isLogoutModalVisible" class="modal-overlay" @click="hideLogoutModal">
+      <div class="modal-container" @click.stop>
+        <div class="modal-header">
+          <div class="modal-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9,12L11,14.4L15,9.6M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2Z" />
+            </svg>
+          </div>
+          <h3 class="modal-title">Confirm Logout</h3>
+          <p class="modal-message">Are you sure you want to logout from your account?</p>
+        </div>
+        
+        <div class="modal-actions">
+          <button @click="hideLogoutModal" class="btn-cancel">
+            Cancel
+          </button>
+          <button @click="confirmLogout" class="btn-confirm">
+            Yes, Logout
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { supabase } from '../supabase';
+import { supabase } from '../supabase.js';
 import { useRouter } from 'vue-router';
-import { useDarkMode } from '../composables/useDarkMode';
+import { useThemeStore } from '../stores/theme.ts';
 
 const router = useRouter();
+const themeStore = useThemeStore();
 const profileData = ref({
   full_name: '',
   bio: '',
   profile: ''
 });
-const { isDarkMode } = useDarkMode();
+const isLogoutModalVisible = ref(false);
 
 const fetchUserProfile = async () => {
   try {
@@ -126,15 +154,33 @@ const fetchUserProfile = async () => {
   }
 };
 
-const handleLogout = async () => {
+const showLogoutModal = () => {
+  isLogoutModalVisible.value = true;
+};
+
+const hideLogoutModal = () => {
+  isLogoutModalVisible.value = false;
+};
+
+const confirmLogout = async () => {
+  // Hide modal first
+  isLogoutModalVisible.value = false;
+  
   try {
     const { error } = await supabase.auth.signOut();
     if (error) {
       throw error;
     }
+    
+    // Clear any local storage data
+    localStorage.removeItem('userProfile');
+    
+    console.log('User logged out');
     router.push('/login');
   } catch (err) {
     console.error('Logout error:', err);
+    // Still redirect even if there's an error
+    router.push('/login');
   }
 };
 
@@ -166,7 +212,7 @@ onMounted(() => {
   right: 0;
   bottom: 0;
   font-family: 'Inter', sans-serif;
-  background: linear-gradient(135deg, #FBFFE4 0%, #B3D8A8 50%, #A3D1C6 100%);
+  background: var(--bg-primary);
 }
 
 .dashboard-container::before {
@@ -177,24 +223,24 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   background: 
-    radial-gradient(circle at 20% 80%, rgba(61, 141, 122, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(179, 216, 168, 0.15) 0%, transparent 50%),
-    radial-gradient(circle at 50% 50%, rgba(163, 209, 198, 0.08) 0%, transparent 50%);
+    radial-gradient(circle at 20% 80%, rgba(61, 141, 122, 0.02) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(179, 216, 168, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(163, 209, 198, 0.01) 0%, transparent 50%);
   z-index: 0;
   pointer-events: none;
 }
 
 .sidebar {
   width: 300px;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--card-background);
   backdrop-filter: blur(20px);
-  border-right: 1px solid rgba(61, 141, 122, 0.1);
+  border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   padding: 2.5rem 1.5rem;
   box-shadow: 
-    0 8px 32px rgba(61, 141, 122, 0.1),
-    0 0 0 1px rgba(255, 255, 255, 0.2);
+    0 8px 32px var(--shadow-medium),
+    0 0 0 1px var(--border-color);
   overflow-y: auto;
   flex-shrink: 0;
   position: relative;
@@ -204,8 +250,8 @@ onMounted(() => {
 .user-info {
   margin-bottom: 2.5rem;
   padding-bottom: 2rem;
-  border-bottom: 1px solid rgba(61, 141, 122, 0.15);
-  background: rgba(251, 255, 228, 0.3);
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-accent);
   border-radius: 20px;
   padding: 2rem 1.5rem;
   display: flex;
@@ -223,32 +269,32 @@ onMounted(() => {
   height: 80px;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid #3D8D7A;
-  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.3);
+  border: 3px solid var(--accent-color);
+  box-shadow: 0 8px 32px var(--shadow-strong);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .profile-pic:hover {
   transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 12px 40px rgba(61, 141, 122, 0.4);
+  box-shadow: 0 12px 40px var(--shadow-strong);
 }
 
 .profile-pic-placeholder {
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  background: var(--accent-color);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.3);
+  box-shadow: 0 8px 32px var(--shadow-strong);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .profile-pic-placeholder:hover {
   transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 12px 40px rgba(61, 141, 122, 0.4);
+  box-shadow: 0 12px 40px var(--shadow-strong);
 }
 
 .profile-pic-placeholder svg {
@@ -263,18 +309,18 @@ onMounted(() => {
 .user-info h3 {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #3D8D7A;
+  color: var(--accent-color);
   margin-bottom: 0.5rem;
-  text-shadow: 0 1px 2px rgba(61, 141, 122, 0.1);
+  text-shadow: 0 1px 2px var(--shadow-light);
 }
 
 .user-info .role {
   font-size: 0.875rem;
-  color: #777;
+  color: var(--text-muted);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  background: rgba(61, 141, 122, 0.1);
+  background: var(--bg-accent);
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
   display: inline-block;
@@ -283,14 +329,14 @@ onMounted(() => {
 
 .user-info .bio {
   font-size: 0.875rem;
-  color: #666;
+  color: var(--text-secondary);
   font-style: italic;
   line-height: 1.4;
   margin-top: 0.5rem;
   padding: 0.5rem;
-  background: rgba(61, 141, 122, 0.05);
+  background: var(--bg-accent);
   border-radius: 8px;
-  border-left: 3px solid #3D8D7A;
+  border-left: 3px solid var(--accent-color);
 }
 
 .nav-links {
@@ -305,18 +351,21 @@ onMounted(() => {
   align-items: center;
   padding: 1rem 1.25rem;
   border-radius: 16px;
-  color: #3D8D7A;
+  color: var(--accent-color);
   text-decoration: none;
   font-weight: 600;
   font-size: 0.95rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: rgba(251, 255, 228, 0.5);
-  border: 1px solid rgba(61, 141, 122, 0.1);
+  background: var(--bg-accent);
+  border: 1px solid var(--border-color);
   cursor: pointer;
   width: 100%;
   text-align: left;
   position: relative;
   overflow: hidden;
+  margin: 0;
+  box-shadow: none;
+  line-height: 1;
 }
 
 .nav-item::before {
@@ -335,7 +384,7 @@ onMounted(() => {
   margin-right: 1rem;
   width: 22px;
   height: 22px;
-  fill: #3D8D7A;
+  fill: var(--accent-color);
   transition: all 0.3s ease;
   position: relative;
   z-index: 1;
@@ -347,9 +396,9 @@ onMounted(() => {
 }
 
 .nav-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(61, 141, 122, 0.15);
-  border-color: rgba(61, 141, 122, 0.2);
+  transform: none;
+  box-shadow: 0 2px 8px var(--shadow-light);
+  border-color: var(--border-color);
 }
 
 .nav-item:hover::before {
@@ -357,67 +406,83 @@ onMounted(() => {
 }
 
 .nav-item:hover svg {
-  transform: scale(1.1);
+  transform: none;
 }
 
 .nav-item.router-link-exact-active {
-  background: linear-gradient(135deg, rgba(61, 141, 122, 0.1) 0%, rgba(163, 209, 198, 0.15) 100%);
-  border-color: rgba(61, 141, 122, 0.2);
-  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.1);
+  background: rgba(95, 179, 160, 0.12);
+  border-color: rgba(95, 179, 160, 0.3);
+  box-shadow: 0 2px 8px rgba(95, 179, 160, 0.1);
+  color: var(--accent-color);
+  transform: none;
 }
 
 .nav-item.router-link-exact-active svg {
-  fill: #3D8D7A;
-  transform: scale(1.1);
+  fill: var(--accent-color);
+  transform: none;
+}
+
+.nav-item.router-link-exact-active span {
+  color: var(--accent-color);
+  font-weight: 600;
+}
+
+/* Dark mode active state */
+:root.dark .nav-item.router-link-exact-active {
+  background: rgba(95, 179, 160, 0.15);
+  border-color: rgba(95, 179, 160, 0.35);
+  box-shadow: 0 2px 8px rgba(95, 179, 160, 0.15);
 }
 
 .logout-btn {
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  color: white;
-  padding: 1rem 1.5rem;
-  border: none;
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.25rem;
   border-radius: 16px;
-  cursor: pointer;
+  color: var(--text-inverse);
+  text-decoration: none;
   font-weight: 600;
   font-size: 0.95rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-top: 0.75rem;
-  margin-bottom: 0.75rem;
-  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.2);
+  background: var(--accent-color);
+  border: 1px solid var(--accent-color);
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
   position: relative;
   overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1; 
-  width: 100%;
+  margin-top: 0.75rem;
+  box-shadow: none;
+  line-height: 1;
+  gap: 1rem;
+  justify-content: flex-start;
+  box-sizing: border-box;
 }
 
-.logout-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #A3D1C6 0%, #3D8D7A 100%);
-  transition: left 0.3s ease;
-  z-index: 0;
+.logout-btn svg {
+  width: 22px;
+  height: 22px;
+  fill: var(--text-inverse);
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
 }
 
 .logout-btn span {
   position: relative;
   z-index: 1;
-  display: inline-block; 
 }
 
 .logout-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 16px 48px rgba(61, 141, 122, 0.3);
+  background: var(--accent-hover);
+  color: var(--text-inverse);
+  border-color: var(--accent-hover);
+  transform: none;
+  box-shadow: 0 2px 8px var(--shadow-light);
 }
 
-.logout-btn:hover::before {
-  left: 0;
+.logout-btn:hover svg {
+  transform: none;
 }
 
 .main-content {
@@ -427,6 +492,171 @@ onMounted(() => {
   min-width: 0;
   position: relative;
   z-index: 1;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modal-container {
+  background: var(--card-background);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 2.5rem;
+  max-width: 450px;
+  width: 90%;
+  box-shadow: 
+    0 20px 60px var(--shadow-strong),
+    0 0 0 1px var(--border-color);
+  border: 1px solid var(--border-color);
+  animation: modalSlideIn 0.3s ease-out;
+  text-align: center;
+}
+
+/* Dark mode styles for modal */
+:root.dark .modal-container {
+  background: rgba(30, 35, 34, 0.95);
+  border: 1px solid rgba(95, 179, 160, 0.2);
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(95, 179, 160, 0.1);
+}
+
+:root.dark .modal-title {
+  color: var(--text-primary);
+}
+
+:root.dark .modal-message {
+  color: var(--text-secondary);
+}
+
+.modal-header {
+  margin-bottom: 2rem;
+}
+
+.modal-icon {
+  width: 80px;
+  height: 80px;
+  background: var(--accent-color);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  color: white;
+  box-shadow: 0 8px 32px var(--shadow-strong);
+}
+
+.modal-icon svg {
+  width: 48px;
+  height: 48px;
+}
+
+.modal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent-color);
+  margin-bottom: 0.75rem;
+}
+
+.modal-message {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 0;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.btn-cancel,
+.btn-confirm {
+  padding: 0.875rem 2rem;
+  border: none;
+  border-radius: 16px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 120px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-cancel {
+  background: var(--bg-accent);
+  color: var(--accent-color);
+  border: 2px solid var(--border-color);
+}
+
+.btn-cancel:hover {
+  background: var(--bg-accent-hover);
+  border-color: var(--accent-color);
+  transform: none;
+  box-shadow: 0 2px 8px var(--shadow-light);
+}
+
+.btn-confirm {
+  background: var(--accent-color);
+  color: var(--text-inverse);
+  box-shadow: 0 2px 8px var(--shadow-medium);
+  transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.btn-confirm:hover {
+  background: var(--accent-hover);
+  color: var(--text-inverse);
+  box-shadow: 0 4px 12px var(--shadow-medium);
+  transform: none;
+}
+
+/* Dark mode styles for modal buttons */
+:root.dark .btn-cancel {
+  background: rgba(95, 179, 160, 0.1);
+  color: var(--accent-color);
+  border: 2px solid rgba(95, 179, 160, 0.3);
+}
+
+:root.dark .btn-cancel:hover {
+  background: rgba(95, 179, 160, 0.2);
+  border-color: var(--accent-color);
+}
+
+:root.dark .btn-confirm {
+  background: var(--accent-color);
+  color: white;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalSlideIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(-30px) scale(0.95); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0) scale(1); 
+  }
 }
 
 /*
@@ -446,7 +676,7 @@ onMounted(() => {
     justify-content: space-between;
     padding: 1.5rem;
     border-right: none;
-    border-bottom: 1px solid rgba(61, 141, 122, 0.1);
+    border-bottom: 1px solid var(--border-color);
     position: sticky;
     top: 0;
     z-index: 10;
@@ -461,7 +691,7 @@ onMounted(() => {
     text-align: left;
     margin-bottom: 0;
     padding: 1rem 1.5rem;
-    background: rgba(251, 255, 228, 0.5);
+    background: var(--bg-accent);
     border-radius: 16px;
   }
   
@@ -509,6 +739,20 @@ onMounted(() => {
     overflow-y: auto;
     height: calc(100vh - 100px);
   }
+
+  .modal-container {
+    padding: 2rem;
+    margin: 1rem;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+  }
+  
+  .btn-cancel,
+  .btn-confirm {
+    width: 100%;
+  }
 }
 
 @media (max-width: 480px) {
@@ -539,11 +783,29 @@ onMounted(() => {
     padding: 0.6rem 1rem;
     font-size: 0.8rem;
   }
+
+  .modal-container {
+    padding: 1.5rem;
+  }
+  
+  .modal-icon {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .modal-icon svg {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .modal-title {
+    font-size: 1.25rem;
+  }
 }
 </style>
 
 <style>
-/* These global styles should be added to your main CSS file or App.vue */
+/* Global styles - same as student dashboard */
 * {
   margin: 0;
   padding: 0;
