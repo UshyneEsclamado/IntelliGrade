@@ -65,7 +65,7 @@
               <div class="setting-item">
                 <span>Dark Mode</span>
                 <label class="switch">
-                  <input type="checkbox" v-model="isDarkMode" @change="handleDarkModeToggle">
+                  <input type="checkbox" v-model="isDarkMode">
                   <span class="slider round"></span>
                 </label>
               </div>
@@ -285,10 +285,10 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { supabase } from '../../supabase.js';
-import { useThemeStore } from '../../stores/theme';
+import { useThemeStore } from '../../stores/theme.ts';
 
 // ===== THEME MANAGEMENT =====
 const themeStore = useThemeStore();
@@ -300,10 +300,6 @@ const isDarkMode = computed({
     }
   }
 });
-
-const handleDarkModeToggle = () => {
-  themeStore.toggleDarkMode();
-};
 
 // ===== APP PREFERENCES =====
 const notificationsEnabled = ref(false);
