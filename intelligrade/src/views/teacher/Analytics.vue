@@ -697,6 +697,8 @@ export default {
   padding: 2rem;
   max-width: 1400px;
   margin: 0 auto;
+  background: var(--bg-primary);
+  color: var(--primary-text-color);
 }
 
 .header-section {
@@ -709,12 +711,12 @@ export default {
 .page-title {
   font-size: 2rem;
   font-weight: bold;
-  color: #1f2937;
+  color: var(--primary-text-color);
   margin: 0;
 }
 
 .page-subtitle {
-  color: #6b7280;
+  color: var(--secondary-text-color);
   margin: 0.5rem 0 0 0;
 }
 
@@ -726,13 +728,14 @@ export default {
 
 .section-filter {
   padding: 0.5rem 1rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-color);
   border-radius: 0.5rem;
-  background: white;
+  background: var(--input-bg);
+  color: var(--primary-text-color);
 }
 
 .export-btn {
-  background: #10b981;
+  background: var(--success-color);
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -746,7 +749,7 @@ export default {
 }
 
 .export-btn:hover {
-  background: #059669;
+  background: var(--accent-hover);
 }
 
 .overview-grid {
@@ -757,20 +760,21 @@ export default {
 }
 
 .overview-card {
-  background: white;
+  background: var(--card-background);
   border-radius: 1rem;
   padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px var(--shadow-light);
   display: flex;
   align-items: center;
   gap: 1rem;
+  border: 1px solid var(--card-border-color);
 }
 
 .card-icon {
   width: 4rem;
   height: 4rem;
   border-radius: 1rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--accent-color) 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -781,12 +785,12 @@ export default {
 .card-content h3 {
   font-size: 2rem;
   font-weight: bold;
-  color: #1f2937;
+  color: var(--primary-text-color);
   margin: 0;
 }
 
 .card-content p {
-  color: #6b7280;
+  color: var(--secondary-text-color);
   margin: 0.25rem 0 0.5rem 0;
   font-size: 0.875rem;
   font-weight: 500;
@@ -801,15 +805,15 @@ export default {
 }
 
 .trend.positive {
-  color: #10b981;
+  color: var(--success-color);
 }
 
 .trend.negative {
-  color: #ef4444;
+  color: var(--error-color);
 }
 
 .info {
-  color: #6b7280;
+  color: var(--secondary-text-color);
   font-size: 0.75rem;
 }
 
@@ -827,14 +831,15 @@ export default {
 }
 
 .chart-container {
-  background: white;
+  background: var(--card-background);
   border-radius: 1rem;
   padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px var(--shadow-light);
+  border: 1px solid var(--card-border-color);
 }
 
 .chart-container h3 {
-  color: #1f2937;
+  color: var(--primary-text-color);
   font-size: 1.25rem;
   margin: 0 0 1rem 0;
 }
@@ -847,9 +852,9 @@ export default {
 
 .period-btn {
   padding: 0.5rem 1rem;
-  border: 1px solid #e5e7eb;
-  background: white;
-  color: #6b7280;
+  border: 1px solid var(--border-color);
+  background: var(--card-background);
+  color: var(--secondary-text-color);
   border-radius: 0.5rem;
   cursor: pointer;
   font-size: 0.875rem;
@@ -857,28 +862,29 @@ export default {
 }
 
 .period-btn.active {
-  background: #667eea;
+  background: var(--accent-color);
   color: white;
-  border-color: #667eea;
+  border-color: var(--accent-color);
 }
 
 .performance-table-section {
-  background: white;
+  background: var(--card-background);
   border-radius: 1rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px var(--shadow-light);
+  border: 1px solid var(--card-border-color);
   overflow: hidden;
 }
 
 .table-header {
   padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
 .table-header h3 {
-  color: #1f2937;
+  color: var(--primary-text-color);
   margin: 0;
 }
 
@@ -890,16 +896,19 @@ export default {
 
 .search-input {
   padding: 0.5rem 1rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-color);
   border-radius: 0.5rem;
+  background: var(--input-bg);
+  color: var(--primary-text-color);
   width: 200px;
 }
 
 .sort-select {
   padding: 0.5rem 1rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-color);
+  background: var(--input-bg);
+  color: var(--primary-text-color);
   border-radius: 0.5rem;
-  background: white;
 }
 
 .table-wrapper {
@@ -915,13 +924,13 @@ export default {
 .performance-table td {
   padding: 1rem;
   text-align: left;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .performance-table th {
-  background: #f9fafb;
+  background: var(--bg-accent);
   font-weight: 600;
-  color: #374151;
+  color: var(--primary-text-color);
   font-size: 0.875rem;
 }
 
@@ -951,7 +960,7 @@ export default {
 .avatar-placeholder {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--accent-color) 0%, #764ba2 100%);
   color: white;
   display: flex;
   align-items: center;
@@ -962,12 +971,12 @@ export default {
 
 .student-name {
   font-weight: 500;
-  color: #1f2937;
+  color: var(--primary-text-color);
 }
 
 .student-id {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--secondary-text-color);
 }
 
 .score-cell {
@@ -976,13 +985,13 @@ export default {
 
 .score-value {
   font-weight: 600;
-  color: #1f2937;
+  color: var(--primary-text-color);
 }
 
 .score-bar {
   width: 100%;
   height: 4px;
-  background: #e5e7eb;
+  background: var(--border-color);
   border-radius: 2px;
   margin-top: 0.25rem;
   overflow: hidden;
@@ -995,11 +1004,11 @@ export default {
 }
 
 .score-fill.excellent {
-  background: #10b981;
+  background: var(--success-color);
 }
 
 .score-fill.good {
-  background: #3b82f6;
+  background: var(--accent-color);
 }
 
 .score-fill.satisfactory {
@@ -1007,7 +1016,7 @@ export default {
 }
 
 .score-fill.needs-improvement {
-  background: #ef4444;
+  background: var(--error-color);
 }
 
 .score-badge {
@@ -1018,13 +1027,13 @@ export default {
 }
 
 .score-badge.excellent {
-  background: #d1fae5;
-  color: #065f46;
+  background: var(--success-bg);
+  color: var(--success-color);
 }
 
 .score-badge.good {
-  background: #dbeafe;
-  color: #1e40af;
+  background: var(--bg-accent);
+  color: var(--accent-color);
 }
 
 .score-badge.satisfactory {
@@ -1033,8 +1042,8 @@ export default {
 }
 
 .score-badge.needs-improvement {
-  background: #fecaca;
-  color: #991b1b;
+  background: var(--error-bg);
+  color: var(--error-color);
 }
 
 .improvement-badge {
@@ -1049,13 +1058,13 @@ export default {
 }
 
 .improvement-badge.positive {
-  background: #d1fae5;
-  color: #065f46;
+  background: var(--success-bg);
+  color: var(--success-color);
 }
 
 .improvement-badge.negative {
-  background: #fecaca;
-  color: #991b1b;
+  background: var(--error-bg);
+  color: var(--error-color);
 }
 
 .status-badge {
@@ -1066,13 +1075,13 @@ export default {
 }
 
 .status-badge.excellent {
-  background: #d1fae5;
-  color: #065f46;
+  background: var(--success-bg);
+  color: var(--success-color);
 }
 
 .status-badge.good {
-  background: #dbeafe;
-  color: #1e40af;
+  background: var(--bg-accent);
+  color: var(--accent-color);
 }
 
 .status-badge.satisfactory {
@@ -1081,8 +1090,8 @@ export default {
 }
 
 .status-badge.warning {
-  background: #fecaca;
-  color: #991b1b;
+  background: var(--error-bg);
+  color: var(--error-color);
 }
 
 .actions-cell {

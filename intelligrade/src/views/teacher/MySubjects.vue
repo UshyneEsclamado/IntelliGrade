@@ -745,6 +745,10 @@ onMounted(() => {
   padding: 2rem;
   max-width: 1400px;
   margin: 0 auto;
+  background: var(--bg-primary);
+  min-height: 100vh;
+  color: var(--primary-text-color);
+  transition: all 0.3s ease;
 }
 
 .page-header {

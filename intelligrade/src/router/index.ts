@@ -73,7 +73,7 @@ const router = createRouter({
     {
       path: '/teacher',
       component: TeacherDashboard,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, requiresTeacher: true },
       children: [
         {
           path: '',
@@ -147,6 +147,27 @@ router.beforeEach(async (to, from, next) => {
         if (error || profile?.role !== 'student') {
           // Redirect to student dashboard if not a student
           next('/student-dashboard')
+          return
+        }
+      } catch (error) {
+        console.error('Error checking user role:', error)
+        next('/login')
+        return
+      }
+    }
+
+    // Check if route requires teacher role
+    if (to.meta.requiresTeacher) {
+      try {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single()
+
+        if (error || profile?.role !== 'teacher') {
+          // Redirect to login if not a teacher
+          next('/login')
           return
         }
       } catch (error) {

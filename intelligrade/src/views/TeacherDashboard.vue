@@ -96,10 +96,8 @@
 import { ref, onMounted } from 'vue';
 import { supabase } from '../supabase.js';
 import { useRouter } from 'vue-router';
-import { useThemeStore } from '../stores/theme.ts';
 
 const router = useRouter();
-const themeStore = useThemeStore();
 const profileData = ref({
   full_name: '',
   bio: '',
@@ -154,6 +152,17 @@ const fetchUserProfile = async () => {
   }
 };
 
+const initializeDarkMode = () => {
+  const savedTheme = localStorage.getItem('darkMode');
+  if (savedTheme === 'true') {
+    document.documentElement.classList.add('dark');
+    document.body.classList.add('dark-mode');
+  } else {
+    document.documentElement.classList.remove('dark');
+    document.body.classList.remove('dark-mode');
+  }
+};
+
 const showLogoutModal = () => {
   isLogoutModalVisible.value = true;
 };
@@ -186,6 +195,7 @@ const confirmLogout = async () => {
 
 onMounted(() => {
   fetchUserProfile();
+  initializeDarkMode();
 });
 </script>
 
