@@ -287,8 +287,8 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { supabase } from '../supabase';
-import { useThemeStore } from '../stores/theme';
+import { supabase } from '../../supabase.js';
+import { useThemeStore } from '../../stores/theme';
 
 // ===== THEME MANAGEMENT =====
 const themeStore = useThemeStore();

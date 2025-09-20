@@ -10,19 +10,15 @@ import SignupStudent from '@/views/SignupStudent.vue'
 import RoleSelection from '@/views/RoleSelection.vue'
 import StudentDashboard from '@/views/StudentDashboard.vue'
 import TeacherDashboard from '@/views/TeacherDashboard.vue'
-import JoinClassAuth from '@/views/JoinClassAuth.vue'
+import JoinSection from '@/views/student/JoinSection.vue'
 
 // Teacher Dashboard children components
 import DashboardHome from '@/views/teacher/DashboardHome.vue'
 import MySubjects from '@/views/teacher/MySubjects.vue'
-import MessagesPage from '@/views/MessagesPage.vue'
+import MessagesPage from '@/views/teacher/MessagesPage.vue'
 import AssessmentResults from '@/views/teacher/AssessmentResults.vue'
-import CreateQuiz from '@/views/teacher/CreateQuiz.vue'
-import SettingsPage from '@/views/SettingsPage.vue'
+import SettingsPage from '@/views/teacher/SettingsPage.vue'
 import UploadAssessment from '@/components/UploadAssessment.vue'
-
-// Import the Sections Page (corrected path)
-import Sections from '@/views/teacher/Sections.vue'  // Your Sections component
 
 // Create Analytics component (you'll need to create this)
 import Analytics from '@/views/teacher/Analytics.vue'
@@ -41,34 +37,34 @@ const router = createRouter({
     // Join Class Routes (Manual Entry from Login) - Updated flow
     {
       path: '/join-class',
-      name: 'JoinClassAuth',
-      component: JoinClassAuth
+      name: 'JoinClass',
+      component: JoinSection
     },
     // Updated: Direct flow to section code entry (no class code entry step)
     {
       path: '/join-class/section-code',
       name: 'SectionCode',
-      component: () => import('@/views/SectionCode.vue'),
+      component: () => import('@/views/teacher/SectionCode.vue'),
       meta: { requiresAuth: true, requiresStudent: true }
     },
     {
       path: '/join-class/select-section',
       name: 'SectionSelection',
-      component: () => import('@/views/SectionSelection.vue'),
+      component: () => import('@/views/teacher/SectionSelection.vue'),
       meta: { requiresAuth: true, requiresStudent: true }
     },
 
     // Link-based joining routes (Fixed to match teacher-generated URLs)
     {
       path: '/join-class/:classCode',
-      name: 'JoinClass',
-      component: JoinClassAuth,
+      name: 'JoinClassWithCode',
+      component: JoinSection,
       props: true
     },
     {
       path: '/join-section/:classCode/:sectionCode',
       name: 'JoinSpecificSection',
-      component: JoinClassAuth,
+      component: JoinSection,
       props: true,
       meta: { skipSectionSelection: true }
     },
@@ -94,12 +90,6 @@ const router = createRouter({
           component: MySubjects
         },
         {
-          path: 'sections',  // Sections route
-          name: 'Sections',
-          component: Sections,
-          meta: { requiresAuth: true }
-        },
-        {
           path: 'messages',
           name: 'MessagesPage',
           component: MessagesPage
@@ -113,20 +103,6 @@ const router = createRouter({
           path: 'assessments/:id/results',
           name: 'AssessmentResults',
           component: AssessmentResults,
-          props: true
-        },
-        // Updated Create Quiz route - general quiz creation without requiring subjectId
-        {
-          path: 'create-quiz',
-          name: 'CreateQuizGeneral',
-          component: CreateQuiz,
-          meta: { requiresAuth: true }
-        },
-        // Keep the old route for backward compatibility (with subject ID)
-        {
-          path: 'create-quiz/:subjectId',
-          name: 'CreateQuiz',
-          component: CreateQuiz,
           props: true
         },
         // Upload Assessment route

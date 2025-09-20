@@ -161,7 +161,7 @@
 </template>
 
 <script>
-import { supabase } from '@/supabase';
+import { supabase } from '../../supabase.js';
 
 export default {
   name: 'TeacherHome',
