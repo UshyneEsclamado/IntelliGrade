@@ -25,33 +25,11 @@
           <span>Home</span>
         </router-link>
 
-        <router-link to="/teacher/upload-assessment" class="nav-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z M12,12L16,16H13V19H11V16H8L12,12Z" />
-          </svg>
-          <span>Upload Assessment</span>
-        </router-link>
-
-        <!-- Updated Create Quiz link - no subject ID needed for general quiz creation -->
-        <router-link to="/teacher/create-quiz" class="nav-item">
+        <router-link to="/teacher/subjects" class="nav-item">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M19,3A2,2 0 0,1 21,5V19A2,2 0 0,1 19,21H5A2,2 0 0,1 3,19V5A2,2 0 0,1 5,3H19M19,19V5H5V19H19M16.5,16.25L19,14L16.5,11.75V13.5H10V14.5H16.5V16.25M7.5,7.75L5,10L7.5,12.25V10.5H14V9.5H7.5V7.75Z" />
           </svg>
-          <span>Create Quiz</span>
-        </router-link>
-
-        <router-link to="/teacher/subjects" class="nav-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M5,19V5H19V19H5M12,7A2,2 0 0,1 14,9A2,2 0 0,1 12,11A2,2 0 0,1 10,9A2,2 0 0,1 12,7M16,15H8V14C8,12.67 10.67,12 12,12C13.33,12 16,12.67 16,14V15Z" />
-          </svg>
           <span>My Subjects</span>
-        </router-link>
-
-        <router-link to="/teacher/sections" class="nav-item">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M16,4C16.88,4 17.67,4.38 18.12,5H20A2,2 0 0,1 22,7V19A2,2 0 0,1 20,21H4A2,2 0 0,1 2,19V7A2,2 0 0,1 4,5H5.88C6.33,4.38 7.12,4 8,4H16M16,6H8A1,1 0 0,0 7,7V8H17V7A1,1 0 0,0 16,6M4,9V19H20V9H4M6,11H10V13H6V11M12,11H18V13H12V11M6,15H8V17H6V15M10,15H18V17H10V15Z" />
-          </svg>
-          <span>Sections</span>
         </router-link>
 
         <router-link to="/teacher/analytics" class="nav-item">

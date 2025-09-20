@@ -249,7 +249,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { supabase } from '../../supabase'
+import { supabase } from '../../supabase.js'
 
 // Router
 const router = useRouter()

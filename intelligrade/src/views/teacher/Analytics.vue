@@ -322,7 +322,7 @@
 
 <script>
 import { ref, onMounted, computed, nextTick } from 'vue'
-import { supabase } from '@/supabase'
+import { supabase } from '../../supabase.js'
 
 export default {
   name: 'AnalyticsView',

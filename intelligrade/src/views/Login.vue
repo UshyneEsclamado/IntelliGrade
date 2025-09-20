@@ -198,36 +198,17 @@
           <router-link to="/role-selection" class="signup-link">Sign up here</router-link>
         </div>
 
-        <div class="divider-section">
-          <div class="divider">
-            <span>OR</span>
-          </div>
-        </div>
-
-        <div class="join-class-section">
-          <button 
-            type="button"
-            class="join-class-btn"
-            @click="handleJoinClass"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,16.5L6.5,12L7.91,10.59L11,13.67L16.59,8.09L18,9.5L11,16.5Z"/>
-            </svg>
-            Join a Class
-          </button>
-          <p class="join-class-description">Join a class with a code from your teacher</p>
-        </div>
       </div>
       
-      <!-- IntelliGrade Logo Space - Right Side -->
-      <div class="logo-space">
+      <!-- IntelliGrade Logo Space - Right Side (matches signup background style) -->
+      <div class="logo-space logo-align">
         <div class="intelligrade-branding">
           <div class="logo-container">
-            <div class="logo-image-container">
+            <div class="logo-image-container large-logo">
               <img 
                 src="@/assets/New IntelliGrade Logo Way BG 3.png"
                 alt="IntelliGrade Logo" 
-                class="logo-image"
+                class="logo-image large-logo-img"
               />
             </div>
             <p class="brand-tagline">Grading made easy with fast, accurate, and hassle-free results</p>
@@ -436,13 +417,16 @@ export default {
   max-height: 90vh;
 }
 
-.logo-space {
+
+.logo-space.logo-align {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
   max-width: 450px;
   height: 100%;
+  /* Align logo vertically with wordings */
+  margin-top: 0;
 }
 
 .intelligrade-branding {
@@ -466,9 +450,10 @@ export default {
   align-items: center;
 }
 
-.logo-image-container {
-  width: 300px;
-  height: 300px;
+
+.logo-image-container.large-logo {
+  width: 340px;
+  height: 340px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -477,14 +462,14 @@ export default {
   margin-bottom: 0.75rem;
 }
 
-.logo-image-container:hover {
+.logo-image-container.large-logo:hover {
   filter: drop-shadow(0 20px 50px rgba(74, 155, 142, 0.4));
   transform: scale(1.05);
 }
 
-.logo-image {
-  width: 280px;
-  height: 280px;
+.logo-image.large-logo-img {
+  width: 320px;
+  height: 320px;
   object-fit: contain;
   animation: gentleFloat 8s ease-in-out infinite;
   background: transparent;
@@ -850,17 +835,17 @@ input::placeholder {
     max-height: 95vh;
   }
   
-  .logo-space {
+  .logo-space.logo-align {
     order: -1;
     max-width: 100%;
   }
   
-  .logo-image-container {
+  .logo-image-container.large-logo {
     width: 250px;
     height: 250px;
   }
   
-  .logo-image {
+  .logo-image.large-logo-img {
     width: 230px;
     height: 230px;
   }
@@ -927,12 +912,12 @@ input::placeholder {
     font-size: 0.6rem;
   }
   
-  .logo-image-container {
+  .logo-image-container.large-logo {
     width: 200px;
     height: 200px;
   }
   
-  .logo-image {
+  .logo-image.large-logo-img {
     width: 180px;
     height: 180px;
   }
@@ -949,12 +934,12 @@ input::placeholder {
 }
 
 @media (max-width: 480px) {
-  .logo-image-container {
+  .logo-image-container.large-logo {
     width: 160px;
     height: 160px;
   }
   
-  .logo-image {
+  .logo-image.large-logo-img {
     width: 140px;
     height: 140px;
   }
