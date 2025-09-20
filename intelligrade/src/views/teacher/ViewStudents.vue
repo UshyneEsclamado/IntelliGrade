@@ -1,39 +1,67 @@
 <template>
   <div class="page-container">
     <div class="main-wrapper">
-      <!-- Header Section -->
-      <div class="hero-header card-box">
+      <!-- Enhanced Header Section -->
+      <section class="section-header-card">
+        <div class="floating-shapes">
+          <div class="shape shape-1"></div>
+          <div class="shape shape-2"></div>
+          <div class="shape shape-3"></div>
+          <div class="shape shape-4"></div>
+        </div>
+        
         <div class="header-content">
           <button @click="goBack" class="back-button">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M10 19l-7-7 7-7m-7 7h18"></path>
             </svg>
             Back to My Subjects
           </button>
           
-          <div class="section-header">
+          <div class="hero-header">
             <h1>{{ sectionName }} Students</h1>
-            <div class="section-info">
-              <div class="info-badge subject">
-                <span class="label">Subject:</span>
+            <p class="hero-subtitle">Manage students and track their progress in this section</p>
+          </div>
+          
+          <div class="section-info">
+            <div class="info-badge subject">
+              <div class="icon">📚</div>
+              <div class="text">
+                <span class="label">Subject</span>
                 <span class="value">{{ subjectName }} (Grade {{ gradeLevel }})</span>
               </div>
-              <div class="info-badge section">
-                <span class="label">Section:</span>
+            </div>
+            <div class="info-badge section">
+              <div class="icon">👥</div>
+              <div class="text">
+                <span class="label">Section</span>
                 <span class="value">{{ sectionName }}</span>
               </div>
-              <div class="info-badge code">
-                <span class="label">Section Code:</span>
+            </div>
+            <div class="info-badge code">
+              <div class="icon">🔑</div>
+              <div class="text">
+                <span class="label">Section Code</span>
                 <span class="value">{{ sectionCode }}</span>
+              </div>
+            </div>
+            <div class="info-badge students">
+              <div class="icon">👤</div>
+              <div class="text">
+                <span class="label">Students</span>
+                <span class="value">{{ students.length }}</span>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       <!-- Quick Actions -->
-      <div class="quick-actions card-box">
-        <h2>Section Management</h2>
+      <section class="content-card">
+        <div class="card-header">
+          <h3>Section Management</h3>
+          <p class="card-subtitle">Quick actions for managing this section</p>
+        </div>
         <div class="action-buttons">
           <button @click="navigateToCreateQuiz" class="action-btn create-quiz">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -63,16 +91,23 @@
             Reports & Analytics
           </button>
         </div>
-      </div>
+      </section>
 
       <!-- Students List -->
-      <div class="students-section card-box">
-        <div class="students-header">
+      <section class="content-card">
+        <div class="card-header">
           <div class="header-info">
-            <h2>Enrolled Students ({{ students.length }})</h2>
+            <h3>Enrolled Students</h3>
+            <p class="card-subtitle">{{ students.length }} students enrolled in this section</p>
             <div class="students-stats">
-              <span class="stat">Active: {{ activeStudents }}</span>
-              <span class="stat">Recent Activity: {{ recentlyActive }}</span>
+              <div class="stat-item">
+                <span class="stat-label">Active:</span>
+                <span class="stat-value">{{ activeStudents }}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Recent Activity:</span>
+                <span class="stat-value">{{ recentlyActive }}</span>
+              </div>
             </div>
           </div>
           
@@ -187,7 +222,7 @@
         <div v-else class="no-results">
           <p>No students found matching "{{ searchQuery }}"</p>
         </div>
-      </div>
+      </section>
     </div>
 
     <!-- Add Student Modal -->
@@ -244,7 +279,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { supabase } from '../../supabase.js'
@@ -499,13 +534,12 @@ onMounted(() => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
+/* Enhanced Student Folder Design Pattern */
 .page-container {
-  padding: 2rem 5%;
-  font-family: 'Inter', sans-serif;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f0f9f6 0%, #e8f5f0 100%);
+  background: var(--body-background);
+  padding: 2rem 5%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
 }
 
 .main-wrapper {

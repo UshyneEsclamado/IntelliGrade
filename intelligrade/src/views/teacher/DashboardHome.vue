@@ -423,14 +423,14 @@ export default {
 .section-header-icon {
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  background: linear-gradient(135deg, var(--accent-color) 0%, #A3D1C6 100%);
   border-radius: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
   box-shadow: 
-    0 12px 24px rgba(61, 141, 122, 0.2),
+    0 12px 24px var(--shadow-light),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
   transition: all 0.3s ease;
 }
@@ -450,7 +450,7 @@ export default {
   font-weight: 800;
   color: var(--text-accent);
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  background: linear-gradient(135deg, var(--accent-color) 0%, #A3D1C6 100%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -530,11 +530,11 @@ export default {
 }
 
 .stat-icon.classes {
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  background: linear-gradient(135deg, var(--accent-color) 0%, #A3D1C6 100%);
 }
 
 .stat-icon.graded {
-  background: linear-gradient(135deg, #B3D8A8 0%, #3D8D7A 100%);
+  background: linear-gradient(135deg, #B3D8A8 0%, var(--accent-color) 100%);
 }
 
 .stat-icon.pending {
@@ -632,7 +632,7 @@ export default {
 }
 
 .grade-btn {
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  background: linear-gradient(135deg, var(--accent-color) 0%, #A3D1C6 100%);
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -641,12 +641,12 @@ export default {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.2);
+  box-shadow: 0 4px 16px var(--shadow-light);
 }
 
 .grade-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(61, 141, 122, 0.3);
+  box-shadow: 0 8px 24px var(--shadow-medium);
 }
 
 .empty-state {
