@@ -200,16 +200,10 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* ... (keeping all your existing styles) ... */
-/*
- * Imported fonts
- */
+/* Imported fonts */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-/*
- * Styles for the dashboard layout (sidebar, main content)
- * Updated for full screen coverage with beautiful design
- */
+/* Dashboard layout - perfectly fitted */
 .dashboard-container {
   display: flex;
   height: 100vh;
@@ -240,43 +234,46 @@ onMounted(() => {
   pointer-events: none;
 }
 
+/* PERFECTLY FITTED SIDEBAR */
 .sidebar {
   width: 300px;
+  height: 100vh;
   background: var(--card-background);
   backdrop-filter: blur(20px);
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  padding: 2.5rem 1.5rem;
+  padding: 1.75rem 1.25rem;
   box-shadow: 
     0 8px 32px var(--shadow-medium),
     0 0 0 1px var(--border-color);
-  overflow-y: auto;
+  overflow: hidden;
   flex-shrink: 0;
   position: relative;
   z-index: 1;
+  justify-content: space-between;
 }
 
+/* COMPACT USER INFO */
 .user-info {
-  margin-bottom: 2.5rem;
-  padding-bottom: 2rem;
-  border-bottom: 1px solid var(--border-color);
   background: var(--bg-accent);
-  border-radius: 20px;
-  padding: 2rem 1.5rem;
+  border-radius: 16px;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
+  flex-shrink: 0;
+  margin-bottom: 0;
 }
 
 .profile-pic-container {
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .profile-pic {
-  width: 80px;
-  height: 80px;
+  width: 65px;
+  height: 65px;
   border-radius: 50%;
   object-fit: cover;
   border: 3px solid var(--accent-color);
@@ -290,8 +287,8 @@ onMounted(() => {
 }
 
 .profile-pic-placeholder {
-  width: 80px;
-  height: 80px;
+  width: 65px;
+  height: 65px;
   background: var(--accent-color);
   border-radius: 50%;
   display: flex;
@@ -308,8 +305,8 @@ onMounted(() => {
 }
 
 .profile-pic-placeholder svg {
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
 }
 
 .user-details {
@@ -317,54 +314,57 @@ onMounted(() => {
 }
 
 .user-info h3 {
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: 700;
   color: var(--accent-color);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
   text-shadow: 0 1px 2px var(--shadow-light);
 }
 
 .user-info .role {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   background: var(--bg-accent);
-  padding: 0.25rem 0.75rem;
+  padding: 0.2rem 0.6rem;
   border-radius: 12px;
   display: inline-block;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
 }
 
 .user-info .bio {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
   font-style: italic;
-  line-height: 1.4;
-  margin-top: 0.5rem;
-  padding: 0.5rem;
+  line-height: 1.35;
+  margin-top: 0.4rem;
+  padding: 0.4rem;
   background: var(--bg-accent);
   border-radius: 8px;
   border-left: 3px solid var(--accent-color);
 }
 
+/* PERFECTLY DISTRIBUTED NAVIGATION */
 .nav-links {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  flex: 1;
+  justify-content: space-between;
+  padding: 1.25rem 0;
+  min-height: 280px; /* Ensure minimum height for proper distribution */
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  padding: 1rem 1.25rem;
-  border-radius: 16px;
+  padding: 1rem 1.2rem;
+  border-radius: 14px;
   color: var(--accent-color);
   text-decoration: none;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: var(--bg-accent);
   border: 1px solid var(--border-color);
@@ -376,6 +376,7 @@ onMounted(() => {
   margin: 0;
   box-shadow: none;
   line-height: 1;
+  flex-shrink: 0;
 }
 
 .nav-item::before {
@@ -391,9 +392,9 @@ onMounted(() => {
 }
 
 .nav-item svg {
-  margin-right: 1rem;
-  width: 22px;
-  height: 22px;
+  margin-right: 0.9rem;
+  width: 20px;
+  height: 20px;
   fill: var(--accent-color);
   transition: all 0.3s ease;
   position: relative;
@@ -444,15 +445,16 @@ onMounted(() => {
   box-shadow: 0 2px 8px rgba(95, 179, 160, 0.15);
 }
 
+/* BOTTOM POSITIONED LOGOUT BUTTON */
 .logout-btn {
   display: flex;
   align-items: center;
-  padding: 1rem 1.25rem;
-  border-radius: 16px;
+  padding: 1rem 1.2rem;
+  border-radius: 14px;
   color: var(--text-inverse);
   text-decoration: none;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: var(--accent-color);
   border: 1px solid var(--accent-color);
@@ -461,17 +463,18 @@ onMounted(() => {
   text-align: left;
   position: relative;
   overflow: hidden;
-  margin-top: 0.75rem;
   box-shadow: none;
   line-height: 1;
-  gap: 1rem;
+  gap: 0.9rem;
   justify-content: flex-start;
   box-sizing: border-box;
+  flex-shrink: 0;
+  margin-top: 0; /* No margin needed since we're using space-between */
 }
 
 .logout-btn svg {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   fill: var(--text-inverse);
   transition: all 0.3s ease;
   position: relative;
@@ -669,9 +672,7 @@ onMounted(() => {
   }
 }
 
-/*
- * Responsive styles for the layout
- */
+/* Responsive styles for the layout */
 @media (max-width: 768px) {
   .dashboard-container {
     flex-direction: column;
@@ -730,7 +731,7 @@ onMounted(() => {
   }
   
   .user-info .bio {
-    display: none; /* Hide bio on mobile to save space */
+    display: none;
   }
   
   .nav-links {
