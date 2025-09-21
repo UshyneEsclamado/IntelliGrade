@@ -219,31 +219,43 @@
     </div>
   </div>
 </template>
-
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { supabase } from '../../supabase.js'; // Adjust path as needed
+import { supabase } from '../../supabase'; // Adjust path as needed
 
 const router = useRouter();
 const route = useRoute();
 
+// Interface definitions
+interface Choice {
+  text: string;
+}
+
+interface Question {
+  text: string;
+  type: 'multiple-choice' | 'true-false' | 'short-answer';
+  choices: Choice[];
+  correctAnswer: number | string;
+  points: number;
+}
+
 // Get data passed from MySubjects.vue
-const subjectId = ref(route.params.subjectId);
-const sectionId = ref(route.params.sectionId);
-const subjectName = ref(route.query.subjectName || '');
-const sectionName = ref(route.query.sectionName || '');
-const gradeLevel = ref(route.query.gradeLevel || '');
-const classCode = ref(route.query.classCode || '');
-const sectionCode = ref(route.query.sectionCode || '');
+const subjectId = ref(route.params.subjectId as string);
+const sectionId = ref(route.params.sectionId as string);
+const subjectName = ref((route.query.subjectName as string) || '');
+const sectionName = ref((route.query.sectionName as string) || '');
+const gradeLevel = ref((route.query.gradeLevel as string) || '');
+const classCode = ref((route.query.classCode as string) || '');
+const sectionCode = ref((route.query.sectionCode as string) || '');
 
 // Quiz form data
 const quizTitle = ref('');
-const timeLimit = ref(60);
-const totalPoints = ref(100);
+const timeLimit = ref<number>(60);
+const totalPoints = ref<number>(100);
 const isSubmitting = ref(false);
 
-const questions = ref([
+const questions = ref<Question[]>([
   {
     text: '',
     type: 'multiple-choice',
@@ -258,7 +270,7 @@ const questions = ref([
 
 // Computed total points from all questions
 const calculatedTotalPoints = computed(() => {
-  return questions.value.reduce((total, question) => total + (parseInt(question.points) || 0), 0);
+  return questions.value.reduce((total, question) => total + (question.points || 0), 0);
 });
 
 const addQuestion = () => {
@@ -274,7 +286,7 @@ const addQuestion = () => {
   });
 };
 
-const removeQuestion = (index) => {
+const removeQuestion = (index: number) => {
   if (questions.value.length > 1) {
     questions.value.splice(index, 1);
   } else {
@@ -282,7 +294,7 @@ const removeQuestion = (index) => {
   }
 };
 
-const updateQuestionType = (question) => {
+const updateQuestionType = (question: Question) => {
   if (question.type === 'multiple-choice') {
     question.choices = [{ text: '' }, { text: '' }];
     question.correctAnswer = 0;
@@ -295,23 +307,23 @@ const updateQuestionType = (question) => {
   }
 };
 
-const addChoice = (question) => {
+const addChoice = (question: Question) => {
   if (question.choices.length < 6) {
     question.choices.push({ text: '' });
   }
 };
 
-const removeChoice = (question, choiceIndex) => {
+const removeChoice = (question: Question, choiceIndex: number) => {
   if (question.choices.length > 2) {
     question.choices.splice(choiceIndex, 1);
     // Adjust correct answer if needed
-    if (question.correctAnswer >= question.choices.length) {
+    if (typeof question.correctAnswer === 'number' && question.correctAnswer >= question.choices.length) {
       question.correctAnswer = question.choices.length - 1;
     }
   }
 };
 
-const validateQuiz = () => {
+const validateQuiz = (): boolean => {
   if (!quizTitle.value.trim()) {
     alert('Please enter a quiz title.');
     return false;
@@ -345,7 +357,7 @@ const validateQuiz = () => {
         return false;
       }
     } else if (question.type === 'short-answer') {
-      if (!question.correctAnswer.trim()) {
+      if (!String(question.correctAnswer).trim()) {
         alert(`Please enter the expected answer for question ${i + 1}.`);
         return false;
       }
@@ -382,7 +394,7 @@ const submitQuiz = async () => {
         question_type: question.type,
         choices: question.type === 'multiple-choice' ? question.choices.map(c => c.text.trim()) : null,
         correct_answer: question.correctAnswer,
-        points: parseInt(question.points) || 5
+        points: question.points || 5
       })),
       status: 'draft', // Can be 'draft', 'published', 'archived'
       created_at: new Date().toISOString()
@@ -429,7 +441,7 @@ const submitQuiz = async () => {
     // Navigate back to MySubjects
     router.push({ name: 'MySubjects' });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating quiz:', error);
     alert(`Error creating quiz: ${error.message}`);
   } finally {
@@ -455,7 +467,6 @@ onMounted(() => {
   });
 });
 </script>
-
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
