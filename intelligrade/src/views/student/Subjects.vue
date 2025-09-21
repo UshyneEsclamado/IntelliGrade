@@ -283,24 +283,23 @@ export default {
         this.loadingMessage = 'Loading subjects...'
         this.isLoading = true
 
-        // Fetch student enrollments with subject, section, and teacher details
+        // Fetch student enrollments with section and subject details
         const { data: enrollments, error } = await supabase
-          .from('student_enrollments')
+          .from('enrollments')
           .select(`
             id,
-            enrolled_at,
+            created_at,
+            section_id,
             sections!inner(
               id,
               name,
               section_code,
+              class_id,
               subjects!inner(
                 id,
                 name,
                 grade_level,
-                teachers!inner(
-                  id,
-                  name
-                )
+                teacher_id
               )
             )
           `)
@@ -310,6 +309,8 @@ export default {
           console.error('Database error:', error)
           throw error
         }
+
+        console.log('Fetched enrollments:', enrollments)
 
         // For each enrollment, get real-time quiz data and grades
         const subjectsWithRealTimeData = await Promise.all(
@@ -385,7 +386,7 @@ export default {
                 name: enrollment.sections.subjects.name,
                 code: enrollment.sections.section_code,
                 section: enrollment.sections.name,
-                instructor: enrollment.sections.subjects.teachers.name || 'Unknown',
+                instructor: 'Teacher', // Simplified since we're not using teachers table
                 color: this.generateSubjectColor(enrollment.sections.subjects.name),
                 status: 'active',
                 completedQuizzes,
@@ -404,7 +405,7 @@ export default {
                 name: enrollment.sections.subjects.name,
                 code: enrollment.sections.section_code,
                 section: enrollment.sections.name,
-                instructor: enrollment.sections.subjects.teachers.name || 'Unknown',
+                instructor: 'Teacher', // Simplified since we're not using teachers table
                 color: this.generateSubjectColor(enrollment.sections.subjects.name),
                 status: 'active',
                 completedQuizzes: 0,
@@ -420,6 +421,7 @@ export default {
         )
 
         this.subjects = subjectsWithRealTimeData
+        console.log('Processed subjects:', this.subjects)
 
       } catch (error) {
         console.error('Error fetching subjects:', error)
@@ -445,22 +447,28 @@ export default {
       if (!this.joinForm.sectionCode) return
 
       try {
-        // Look up section by section code
+        console.log('Validating section code:', this.joinForm.sectionCode.toUpperCase())
+
+        // Look up section by section code with proper joins
         const { data: section, error } = await supabase
           .from('sections')
           .select(`
             id,
             name,
             section_code,
-            subjects!inner(
+            class_id,
+            subjects!class_id(
               id,
               name,
               grade_level,
-              teachers(name)
+              teacher_id
             )
           `)
           .eq('section_code', this.joinForm.sectionCode.toUpperCase())
           .single()
+
+        console.log('Section validation result:', section)
+        console.log('Section validation error:', error)
 
         if (error || !section) {
           this.joinError = 'Invalid section code. Please check with your teacher.'
@@ -471,11 +479,13 @@ export default {
         // Check if already enrolled
         const { data: { user } } = await supabase.auth.getUser()
         const { data: existingEnrollment } = await supabase
-          .from('student_enrollments')
+          .from('enrollments')
           .select('id')
           .eq('student_id', user.id)
           .eq('section_id', section.id)
           .single()
+
+        console.log('Existing enrollment check:', existingEnrollment)
 
         if (existingEnrollment) {
           this.joinError = 'You are already enrolled in this class.'
@@ -489,11 +499,13 @@ export default {
           name: section.subjects.name,
           code: section.section_code,
           section: section.name,
-          instructor: section.subjects.teachers.name,
+          instructor: 'Teacher', // Simplified since we removed teachers join
           grade_level: section.subjects.grade_level,
           color: this.generateSubjectColor(section.subjects.name)
         }
         this.joinError = ''
+
+        console.log('Preview subject:', this.previewSubject)
 
       } catch (error) {
         console.error('Error validating section code:', error)
@@ -512,12 +524,27 @@ export default {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) throw new Error('Please login to join a class')
 
+        console.log('Starting join process for user:', user.id)
+        console.log('Section code:', this.joinForm.sectionCode.toUpperCase())
+
         // Validate section code again
         const { data: section, error: sectionError } = await supabase
           .from('sections')
-          .select('id, subjects(name)')
+          .select(`
+            id, 
+            name,
+            section_code,
+            class_id,
+            subjects!class_id(
+              id,
+              name
+            )
+          `)
           .eq('section_code', this.joinForm.sectionCode.toUpperCase())
           .single()
+
+        console.log('Section found for join:', section)
+        console.log('Section error:', sectionError)
 
         if (sectionError || !section) {
           throw new Error('Invalid section code. Please check with your teacher.')
@@ -525,7 +552,7 @@ export default {
 
         // Check for existing enrollment
         const { data: existingEnrollment } = await supabase
-          .from('student_enrollments')
+          .from('enrollments')
           .select('id')
           .eq('student_id', user.id)
           .eq('section_id', section.id)
@@ -535,13 +562,21 @@ export default {
           throw new Error('You are already enrolled in this class.')
         }
 
-        // Create enrollment
-        const { error: enrollmentError } = await supabase
-          .from('student_enrollments')
+        console.log('Creating enrollment for section:', section.id)
+
+        // Create enrollment with both section_id and class_id
+        const { data: newEnrollment, error: enrollmentError } = await supabase
+          .from('enrollments')
           .insert([{
             student_id: user.id,
-            section_id: section.id
+            section_id: section.id,
+            class_id: section.class_id
           }])
+          .select()
+          .single()
+
+        console.log('Enrollment created:', newEnrollment)
+        console.log('Enrollment error:', enrollmentError)
 
         if (enrollmentError) throw enrollmentError
 
