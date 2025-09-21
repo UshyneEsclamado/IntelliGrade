@@ -18,6 +18,12 @@
           <span class="stat-number">{{ totalSubjects }}</span>
           <span class="stat-label">Total Subjects</span>
         </div>
+        <button @click="showJoinModal = true" class="join-class-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+          </svg>
+          Join Class
+        </button>
       </div>
     </div>
 
@@ -67,20 +73,65 @@
           <h3 class="subject-title">{{ subject.name }}</h3>
           <p class="subject-code">{{ subject.code }}</p>
           <p class="subject-instructor">{{ subject.instructor }}</p>
+          <p class="subject-section">Section: {{ subject.section }}</p>
         </div>
         
         <div class="subject-stats compact">
           <div class="stat">
-            <span class="stat-value">{{ subject.assessments }}</span>
-            <span class="stat-text">Assessments</span>
+            <span class="stat-value">{{ subject.completedQuizzes }}</span>
+            <span class="stat-text">Completed</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">{{ subject.availableQuizzes }}</span>
+            <span class="stat-text">Available</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">{{ subject.currentGrade || '--' }}</span>
+            <span class="stat-text">Grade</span>
           </div>
         </div>
         <div class="subject-actions compact">
-          <button class="action-btn primary" @click.stop="viewAssessments(subject)">
+          <!-- Dynamic Quiz Button -->
+          <button 
+            v-if="subject.availableQuizzes > 0"
+            class="action-btn primary pulse" 
+            @click.stop="takeQuiz(subject)"
+            :title="`${subject.availableQuizzes} quiz${subject.availableQuizzes > 1 ? 'es' : ''} available`"
+          >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
             </svg>
-            Assess
+            Take Quiz ({{ subject.availableQuizzes }})
+          </button>
+          
+          <button 
+            v-else-if="subject.completedQuizzes > 0"
+            class="action-btn completed"
+            @click.stop="viewCompletedQuizzes(subject)"
+            disabled
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
+            </svg>
+            All Quizzes Completed
+          </button>
+          
+          <button 
+            v-else
+            class="action-btn disabled"
+            disabled
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17Z" />
+            </svg>
+            No Quizzes Yet
+          </button>
+
+          <button class="action-btn secondary" @click.stop="viewGrades(subject)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M19,19H5V5H19V19M17,12H7V10H17V12M15,16H7V14H15V16M17,8H7V6H17V8Z" />
+            </svg>
+            Grades
           </button>
         </div>
       </div>
@@ -94,25 +145,105 @@
         </svg>
       </div>
       <h3>No subjects found</h3>
-      <p>Try adjusting your search or filter criteria</p>
+      <p>{{ searchQuery || activeFilter !== 'all' ? 'Try adjusting your search or filter criteria' : 'Join your first class to get started' }}</p>
+      <button v-if="!searchQuery && activeFilter === 'all'" @click="showJoinModal = true" class="join-first-btn">
+        Join Your First Class
+      </button>
+    </div>
+
+    <!-- Join Class Modal -->
+    <div v-if="showJoinModal" class="modal-overlay" @click="closeJoinModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h2>Join a Class</h2>
+          <button @click="closeJoinModal" class="close-btn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+            </svg>
+          </button>
+        </div>
+
+        <form @submit.prevent="joinClass" class="join-form">
+          <div class="form-group">
+            <label for="sectionCode">Section Code</label>
+            <div class="input-with-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z" />
+              </svg>
+              <input
+                id="sectionCode"
+                v-model="joinForm.sectionCode"
+                type="text"
+                placeholder="Enter section code (e.g., MAT7-A01234B)"
+                required
+                :class="{ 'error': joinError }"
+                @input="clearJoinError"
+              />
+            </div>
+            <small class="form-help">Ask your teacher for the section code to join their class</small>
+            <div v-if="joinError" class="error-message">{{ joinError }}</div>
+          </div>
+
+          <div v-if="previewSubject" class="subject-preview">
+            <h3>Class Preview</h3>
+            <div class="preview-card">
+              <div class="preview-icon" :style="{ background: previewSubject.color }">
+                {{ previewSubject.code.substring(0, 2) }}
+              </div>
+              <div class="preview-info">
+                <h4>{{ previewSubject.name }}</h4>
+                <p>Grade {{ previewSubject.grade_level }}</p>
+                <p>Section: {{ previewSubject.section }}</p>
+                <p>Instructor: {{ previewSubject.instructor }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" @click="closeJoinModal" class="cancel-btn">Cancel</button>
+            <button type="submit" :disabled="isJoining || !joinForm.sectionCode" class="join-btn">
+              {{ isJoining ? 'Joining...' : 'Join Class' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div v-if="isLoading" class="loading-overlay">
+      <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <p>{{ loadingMessage }}</p>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
+import { supabase } from '../../supabase.js'
+
 export default {
-  name: 'Subjects',
+  name: 'StudentSubjects',
   data() {
     return {
       searchQuery: '',
       activeFilter: 'all',
+      showJoinModal: false,
+      isJoining: false,
+      isLoading: false,
+      loadingMessage: '',
+      joinError: '',
+      previewSubject: null,
       filters: [
         { key: 'all', label: 'All Subjects' },
         { key: 'active', label: 'Active' },
         { key: 'completed', label: 'Completed' },
         { key: 'pending', label: 'Pending' }
       ],
-      subjects: [],
+      subjects: [], // Real-time data from Supabase only
+      joinForm: {
+        sectionCode: ''
+      },
       pollingInterval: null,
     };
   },
@@ -143,29 +274,376 @@ export default {
   methods: {
     async fetchSubjects() {
       try {
-        const response = await fetch('/api/subjects');
-        if (!response.ok) throw new Error('Failed to fetch subjects');
-        const data = await response.json();
-        this.subjects = data;
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+          console.log('No user found')
+          return
+        }
+
+        this.loadingMessage = 'Loading subjects...'
+        this.isLoading = true
+
+        // Fetch student enrollments with subject, section, and teacher details
+        const { data: enrollments, error } = await supabase
+          .from('student_enrollments')
+          .select(`
+            id,
+            enrolled_at,
+            sections!inner(
+              id,
+              name,
+              section_code,
+              subjects!inner(
+                id,
+                name,
+                grade_level,
+                teachers!inner(
+                  id,
+                  name
+                )
+              )
+            )
+          `)
+          .eq('student_id', user.id)
+
+        if (error) {
+          console.error('Database error:', error)
+          throw error
+        }
+
+        // For each enrollment, get real-time quiz data and grades
+        const subjectsWithRealTimeData = await Promise.all(
+          enrollments.map(async (enrollment) => {
+            const sectionId = enrollment.sections.id
+            const subjectId = enrollment.sections.subjects.id
+
+            try {
+              // Get real-time quiz counts
+              const { data: quizData, error: quizError } = await supabase
+                .from('quizzes')
+                .select(`
+                  id,
+                  title,
+                  is_published,
+                  due_date,
+                  created_at,
+                  student_quiz_attempts!left(
+                    id,
+                    completed_at,
+                    score
+                  )
+                `)
+                .eq('section_id', sectionId)
+                .eq('student_quiz_attempts.student_id', user.id)
+
+              if (quizError) console.warn('Quiz data error:', quizError)
+
+              // Calculate real-time stats
+              const totalQuizzes = quizData?.length || 0
+              const completedQuizzes = quizData?.filter(quiz => 
+                quiz.student_quiz_attempts?.length > 0 && 
+                quiz.student_quiz_attempts[0].completed_at
+              ).length || 0
+              
+              const availableQuizzes = quizData?.filter(quiz => 
+                quiz.is_published && 
+                new Date(quiz.due_date) > new Date() &&
+                (!quiz.student_quiz_attempts?.length || !quiz.student_quiz_attempts[0].completed_at)
+              ).length || 0
+
+              // Calculate current grade from completed quizzes
+              const completedAttempts = quizData?.filter(quiz => 
+                quiz.student_quiz_attempts?.length > 0 && 
+                quiz.student_quiz_attempts[0].completed_at && 
+                quiz.student_quiz_attempts[0].score !== null
+              ) || []
+
+              let currentGrade = null
+              let overallScore = null
+
+              if (completedAttempts.length > 0) {
+                const totalScore = completedAttempts.reduce((sum, quiz) => 
+                  sum + (quiz.student_quiz_attempts[0].score || 0), 0)
+                overallScore = Math.round((totalScore / completedAttempts.length) * 100) / 100
+
+                // Convert to letter grade
+                if (overallScore >= 95) currentGrade = 'A+'
+                else if (overallScore >= 90) currentGrade = 'A'
+                else if (overallScore >= 87) currentGrade = 'A-'
+                else if (overallScore >= 83) currentGrade = 'B+'
+                else if (overallScore >= 80) currentGrade = 'B'
+                else if (overallScore >= 77) currentGrade = 'B-'
+                else if (overallScore >= 73) currentGrade = 'C+'
+                else if (overallScore >= 70) currentGrade = 'C'
+                else if (overallScore >= 67) currentGrade = 'C-'
+                else if (overallScore >= 60) currentGrade = 'D'
+                else currentGrade = 'F'
+              }
+
+              return {
+                id: subjectId,
+                name: enrollment.sections.subjects.name,
+                code: enrollment.sections.section_code,
+                section: enrollment.sections.name,
+                instructor: enrollment.sections.subjects.teachers.name || 'Unknown',
+                color: this.generateSubjectColor(enrollment.sections.subjects.name),
+                status: 'active',
+                completedQuizzes,
+                availableQuizzes,
+                totalQuizzes,
+                currentGrade,
+                overallScore,
+                enrollmentId: enrollment.id,
+                sectionId: sectionId
+              }
+            } catch (err) {
+              console.warn(`Error processing subject ${enrollment.sections.subjects.name}:`, err)
+              // Return basic data if detailed stats fail
+              return {
+                id: subjectId,
+                name: enrollment.sections.subjects.name,
+                code: enrollment.sections.section_code,
+                section: enrollment.sections.name,
+                instructor: enrollment.sections.subjects.teachers.name || 'Unknown',
+                color: this.generateSubjectColor(enrollment.sections.subjects.name),
+                status: 'active',
+                completedQuizzes: 0,
+                availableQuizzes: 0,
+                totalQuizzes: 0,
+                currentGrade: null,
+                overallScore: null,
+                enrollmentId: enrollment.id,
+                sectionId: sectionId
+              }
+            }
+          })
+        )
+
+        this.subjects = subjectsWithRealTimeData
+
       } catch (error) {
-        console.error('Error fetching subjects:', error);
+        console.error('Error fetching subjects:', error)
+        this.subjects = [] // Clear subjects on error
+        
+        // Show user-friendly error
+        alert(`Failed to load subjects: ${error.message}`)
+      } finally {
+        this.isLoading = false
       }
     },
+
+    generateSubjectColor(subjectName) {
+      const colors = ['#3D8D7A', '#6366f1', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981']
+      const hash = subjectName.split('').reduce((a, b) => {
+        a = ((a << 5) - a) + b.charCodeAt(0)
+        return a & a
+      }, 0)
+      return colors[Math.abs(hash) % colors.length]
+    },
+
+    async validateSectionCode() {
+      if (!this.joinForm.sectionCode) return
+
+      try {
+        // Look up section by section code
+        const { data: section, error } = await supabase
+          .from('sections')
+          .select(`
+            id,
+            name,
+            section_code,
+            subjects!inner(
+              id,
+              name,
+              grade_level,
+              teachers(name)
+            )
+          `)
+          .eq('section_code', this.joinForm.sectionCode.toUpperCase())
+          .single()
+
+        if (error || !section) {
+          this.joinError = 'Invalid section code. Please check with your teacher.'
+          this.previewSubject = null
+          return
+        }
+
+        // Check if already enrolled
+        const { data: { user } } = await supabase.auth.getUser()
+        const { data: existingEnrollment } = await supabase
+          .from('student_enrollments')
+          .select('id')
+          .eq('student_id', user.id)
+          .eq('section_id', section.id)
+          .single()
+
+        if (existingEnrollment) {
+          this.joinError = 'You are already enrolled in this class.'
+          this.previewSubject = null
+          return
+        }
+
+        // Show preview
+        this.previewSubject = {
+          id: section.subjects.id,
+          name: section.subjects.name,
+          code: section.section_code,
+          section: section.name,
+          instructor: section.subjects.teachers.name,
+          grade_level: section.subjects.grade_level,
+          color: this.generateSubjectColor(section.subjects.name)
+        }
+        this.joinError = ''
+
+      } catch (error) {
+        console.error('Error validating section code:', error)
+        this.joinError = 'Error validating section code. Please try again.'
+        this.previewSubject = null
+      }
+    },
+
+    async joinClass() {
+      if (!this.joinForm.sectionCode) return
+
+      this.isJoining = true
+      this.joinError = ''
+
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) throw new Error('Please login to join a class')
+
+        // Validate section code again
+        const { data: section, error: sectionError } = await supabase
+          .from('sections')
+          .select('id, subjects(name)')
+          .eq('section_code', this.joinForm.sectionCode.toUpperCase())
+          .single()
+
+        if (sectionError || !section) {
+          throw new Error('Invalid section code. Please check with your teacher.')
+        }
+
+        // Check for existing enrollment
+        const { data: existingEnrollment } = await supabase
+          .from('student_enrollments')
+          .select('id')
+          .eq('student_id', user.id)
+          .eq('section_id', section.id)
+          .single()
+
+        if (existingEnrollment) {
+          throw new Error('You are already enrolled in this class.')
+        }
+
+        // Create enrollment
+        const { error: enrollmentError } = await supabase
+          .from('student_enrollments')
+          .insert([{
+            student_id: user.id,
+            section_id: section.id
+          }])
+
+        if (enrollmentError) throw enrollmentError
+
+        // Update section student count
+        const { error: updateError } = await supabase.rpc('increment_student_count', {
+          section_id: section.id
+        })
+
+        if (updateError) console.warn('Failed to update student count:', updateError)
+
+        // Success
+        await this.fetchSubjects()
+        this.closeJoinModal()
+        alert(`Successfully joined ${section.subjects.name}!`)
+
+      } catch (error) {
+        console.error('Error joining class:', error)
+        this.joinError = error.message
+      } finally {
+        this.isJoining = false
+      }
+    },
+
+    clearJoinError() {
+      this.joinError = ''
+      this.previewSubject = null
+      // Add debounced validation
+      clearTimeout(this.validationTimeout)
+      this.validationTimeout = setTimeout(() => {
+        if (this.joinForm.sectionCode.length >= 8) {
+          this.validateSectionCode()
+        }
+      }, 500)
+    },
+
+    closeJoinModal() {
+      this.showJoinModal = false
+      this.joinForm.sectionCode = ''
+      this.joinError = ''
+      this.previewSubject = null
+    },
+
     viewSubjectDetails(subject) {
-      console.log('Viewing subject details:', subject);
+      console.log('Viewing subject details:', subject)
       // Navigate to subject details page
     },
-    viewAssessments(subject) {
-      console.log('Viewing assessments for:', subject);
-      // Navigate to assessments for this subject
-    }
+
+    takeQuiz(subject) {
+      // Navigate to available quiz for this subject/section
+      this.$router.push({
+        name: 'TakeQuiz',
+        params: {
+          subjectId: subject.id,
+          sectionId: subject.sectionId
+        },
+        query: {
+          subjectName: subject.name,
+          sectionName: subject.section,
+          availableQuizzes: subject.availableQuizzes
+        }
+      })
+    },
+
+    viewCompletedQuizzes(subject) {
+      // Navigate to completed quizzes view
+      this.$router.push({
+        name: 'CompletedQuizzes',
+        params: {
+          subjectId: subject.id,
+          sectionId: subject.sectionId
+        },
+        query: {
+          subjectName: subject.name
+        }
+      })
+    },
+
+    viewGrades(subject) {
+      // Navigate to comprehensive grades view
+      this.$router.push({
+        name: 'StudentGrades',
+        params: {
+          subjectId: subject.id,
+          sectionId: subject.sectionId
+        },
+        query: {
+          subjectName: subject.name,
+          sectionName: subject.section,
+          instructor: subject.instructor,
+          currentGrade: subject.currentGrade,
+          overallScore: subject.overallScore
+        }
+      })
+    },
   },
   mounted() {
     this.fetchSubjects();
-    this.pollingInterval = setInterval(this.fetchSubjects, 5000);
+    this.pollingInterval = setInterval(this.fetchSubjects, 30000); // Poll every 30 seconds
   },
   beforeUnmount() {
     if (this.pollingInterval) clearInterval(this.pollingInterval);
+    if (this.validationTimeout) clearTimeout(this.validationTimeout);
   }
 };
 </script>
@@ -182,7 +660,6 @@ export default {
   min-height: 100vh;
 }
 
-
 /* Modern section header card style (shared with dashboard/settings) */
 .section-header-card {
   display: flex;
@@ -197,6 +674,7 @@ export default {
   gap: 2.2rem;
   justify-content: space-between;
 }
+
 .minimal-header-card {
   border-radius: 28px;
   box-shadow: 0 8px 32px 0 var(--shadow-strong);
@@ -206,6 +684,7 @@ export default {
   min-height: 170px;
   gap: 3.5rem;
 }
+
 .minimal-header-icon {
   width: 88px;
   height: 88px;
@@ -217,6 +696,7 @@ export default {
   color: #fff;
   box-shadow: none;
 }
+
 .minimal-header-title {
   font-size: 2.5rem;
   font-weight: 700;
@@ -224,45 +704,24 @@ export default {
   margin-bottom: 0.12rem;
   letter-spacing: -0.01em;
 }
+
 .minimal-header-sub {
   font-size: 1.25rem;
   color: var(--text-secondary);
   font-weight: 400;
   margin-bottom: 0;
 }
+
 .section-header-left {
   display: flex;
   align-items: center;
   gap: 1.5rem;
 }
-.section-header-icon {
-  width: 56px;
-  height: 56px;
-  background: linear-gradient(135deg, #4dbb98 0%, #33806b 100%);
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  box-shadow: 0 2px 8px 0 rgba(61, 141, 122, 0.10);
-}
-.section-header-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 0.18rem;
-  letter-spacing: -0.01em;
-}
-.section-header-sub {
-  font-size: 1.08rem;
-  color: var(--text-secondary);
-  font-weight: 400;
-  margin-bottom: 0;
-}
+
 .section-header-stats {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 2rem;
 }
 
 .stat-item {
@@ -285,6 +744,27 @@ export default {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-top: 0.5rem;
+}
+
+.join-class-btn {
+  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  font-family: 'Inter', sans-serif;
+}
+
+.join-class-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(61, 141, 122, 0.3);
 }
 
 .controls-section {
@@ -366,10 +846,9 @@ export default {
   box-shadow: 0 4px 16px rgba(61, 141, 122, 0.2);
 }
 
-
 .subjects-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.2rem;
   margin-bottom: 1.2rem;
 }
@@ -378,16 +857,14 @@ export default {
   background: var(--bg-card-translucent);
   backdrop-filter: blur(20px);
   border-radius: 18px;
-  padding: 1.1rem 1rem 1.2rem 1rem;
+  padding: 1.5rem;
   box-shadow: 0 4px 16px var(--shadow-light);
   border: 1px solid var(--border-color-light);
   transition: all 0.2s ease;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  min-width: 0;
-  min-height: 0;
+  gap: 1.2rem;
 }
 
 .subject-card:hover {
@@ -454,7 +931,7 @@ export default {
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--text-muted);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.3rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -462,23 +939,28 @@ export default {
 .subject-instructor {
   font-size: 1rem;
   color: var(--text-secondary);
+  margin: 0 0 0.3rem 0;
+}
+
+.subject-section {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
   margin: 0;
+  font-weight: 600;
 }
 
 .subject-stats {
   background: var(--bg-stats);
   border-radius: 16px;
   padding: 1.5rem;
-}
-
-.stat-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  justify-content: space-around;
   gap: 1rem;
 }
 
 .stat {
   text-align: center;
+  flex: 1;
 }
 
 .stat-value {
@@ -500,7 +982,7 @@ export default {
 
 .subject-actions {
   display: flex;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .action-btn {
@@ -536,9 +1018,33 @@ export default {
   border: 1px solid var(--border-color-light);
 }
 
-.action-btn.secondary:hover {
-  background: var(--bg-hover);
-  transform: translateY(-2px);
+.action-btn.primary.pulse {
+  animation: pulse-glow 2s infinite;
+}
+
+@keyframes pulse-glow {
+  0% { box-shadow: 0 4px 16px rgba(61, 141, 122, 0.2); }
+  50% { box-shadow: 0 4px 20px rgba(61, 141, 122, 0.4), 0 0 20px rgba(61, 141, 122, 0.3); }
+  100% { box-shadow: 0 4px 16px rgba(61, 141, 122, 0.2); }
+}
+
+.action-btn.completed {
+  background: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  cursor: default;
+}
+
+.action-btn.disabled {
+  background: rgba(107, 114, 128, 0.1);
+  color: #9ca3af;
+  border: 1px solid rgba(107, 114, 128, 0.2);
+  cursor: not-allowed;
+}
+
+.action-btn.disabled:hover {
+  transform: none;
+  background: rgba(107, 114, 128, 0.1);
 }
 
 .empty-state {
@@ -573,51 +1079,338 @@ export default {
 .empty-state p {
   color: var(--text-secondary);
   font-size: 1rem;
+  margin: 0 0 2rem 0;
+}
+
+.join-first-btn {
+  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  font-family: 'Inter', sans-serif;
+}
+
+.join-first-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(61, 141, 122, 0.3);
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 2rem;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 20px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem 2rem 1rem;
+  border-bottom: 1px solid rgba(61, 141, 122, 0.1);
+}
+
+.modal-header h2 {
+  color: #3D8D7A;
+  font-size: 1.5rem;
+  font-weight: 700;
   margin: 0;
 }
 
+.close-btn {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0.5rem;
+  border-radius: 8px;
+}
+
+.close-btn:hover {
+  color: #3D8D7A;
+  background: rgba(61, 141, 122, 0.1);
+}
+
+.join-form {
+  padding: 2rem;
+}
+
+.form-group {
+  margin-bottom: 2rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.75rem;
+  color: #3D8D7A;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-icon svg {
+  position: absolute;
+  left: 1rem;
+  color: #3D8D7A;
+  z-index: 1;
+}
+
+.input-with-icon input {
+  width: 100%;
+  padding: 1rem 1rem 1rem 3rem;
+  border: 2px solid rgba(61, 141, 122, 0.1);
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.input-with-icon input:focus {
+  outline: none;
+  border-color: #3D8D7A;
+  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
+}
+
+.input-with-icon input.error {
+  border-color: #ef4444;
+}
+
+.form-help {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.error-message {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.subject-preview {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: rgba(251, 255, 228, 0.5);
+  border-radius: 16px;
+  border: 1px solid rgba(61, 141, 122, 0.1);
+}
+
+.subject-preview h3 {
+  color: #3D8D7A;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.preview-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: white;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(61, 141, 122, 0.1);
+}
+
+.preview-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.preview-info h4 {
+  color: #3D8D7A;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.preview-info p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin: 0.1rem 0;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+}
+
+.cancel-btn {
+  background: transparent;
+  color: #666;
+  border: 2px solid #ddd;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.cancel-btn:hover {
+  border-color: #3D8D7A;
+  color: #3D8D7A;
+}
+
+.join-btn {
+  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.join-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(61, 141, 122, 0.3);
+}
+
+.join-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Loading Styles */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+}
+
+.loading-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(61, 141, 122, 0.1);
+  border-left: 4px solid #3D8D7A;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
   .subjects-container {
     padding: 1rem;
   }
-  
-  .page-header {
+
+  .minimal-header-card {
     flex-direction: column;
     text-align: center;
-    gap: 2rem;
     padding: 2rem;
+    gap: 1.5rem;
   }
-  
-  .header-content {
+
+  .section-header-stats {
     flex-direction: column;
-    text-align: center;
+    gap: 1rem;
   }
-  
-  .page-title {
-    font-size: 2rem;
-  }
-  
+
   .controls-section {
     flex-direction: column;
     gap: 1.5rem;
   }
-  
+
   .search-box {
     min-width: auto;
     width: 100%;
   }
-  
+
   .filter-tabs {
     flex-wrap: wrap;
     justify-content: center;
   }
-  
+
   .subjects-grid {
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
-  
+
   .subject-actions {
+    flex-direction: column;
+  }
+
+  .modal-overlay {
+    padding: 1rem;
+  }
+
+  .preview-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.75rem;
+  }
+
+  .modal-actions {
     flex-direction: column;
   }
 }
