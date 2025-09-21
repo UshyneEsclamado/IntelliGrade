@@ -39,9 +39,10 @@
             <span class="stat-number">{{ subject.sections?.length || 0 }}</span>
             <span class="stat-label">Sections</span>
           </div>
-          <div class="stat">
+          <div class="stat clickable-stat" @click="viewStudentRoster(subject)">
             <span class="stat-number">{{ getTotalStudents(subject) }}</span>
             <span class="stat-label">Students</span>
+            <small class="view-hint">Click to view roster</small>
           </div>
           <div class="stat">
             <span class="stat-number">{{ subject.grade_level }}</span>
@@ -236,6 +237,80 @@
       </div>
     </div>
 
+    <!-- Student Roster Modal -->
+    <div v-if="showStudentRosterModal && currentStudentRoster" class="modal-overlay" @click="closeStudentRosterModal">
+      <div class="modal-content student-roster-modal" @click.stop>
+        <div class="modal-header">
+          <div>
+            <h2>{{ currentStudentRoster.subject.name }} - Student Roster</h2>
+            <p class="roster-subtitle">
+              Grade {{ currentStudentRoster.subject.grade_level }} | 
+              Total: {{ currentStudentRoster.totalActualStudents }} Students
+            </p>
+          </div>
+          <button @click="closeStudentRosterModal" class="close-btn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="roster-content">
+          <div v-if="Object.keys(currentStudentRoster.studentsBySection).length === 0" class="no-students">
+            <div class="empty-icon">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M16 4C18.2 4 20 5.8 20 8S18.2 12 16 12 12 10.2 12 8 13.8 4 16 4M16 14C20.4 14 24 15.8 24 18V20H8V18C8 15.8 11.6 14 16 14M12.5 11.5C12.8 10.9 13 10.2 13 9.5C13 8.1 12.6 6.8 11.9 5.7C10.8 4.6 9.4 4 8 4S5.2 4.6 4.1 5.7C3.4 6.8 3 8.1 3 9.5S3.4 12.2 4.1 13.3C5.2 14.4 6.6 15 8 15C8.8 15 9.5 14.8 10.1 14.5C9.4 15.4 9 16.6 9 18V20H1V18C1 15.8 4.6 14 9 14C10.5 14 11.8 14.3 12.5 14.8V11.5Z" />
+              </svg>
+            </div>
+            <h3>No Students Enrolled</h3>
+            <p>Students haven't joined any sections yet.</p>
+          </div>
+
+          <div v-else class="sections-roster">
+            <div v-for="(sectionData, sectionKey) in currentStudentRoster.studentsBySection" :key="sectionKey" class="section-roster">
+              <div class="section-roster-header">
+                <h3>{{ sectionData.section.name }}</h3>
+                <div class="section-details">
+                  <span class="section-code">{{ sectionData.section.section_code }}</span>
+                  <span class="student-count">{{ sectionData.students.length }} student{{ sectionData.students.length !== 1 ? 's' : '' }}</span>
+                </div>
+              </div>
+
+              <div class="students-table">
+                <div class="table-header">
+                  <div class="col-id">Student ID</div>
+                  <div class="col-name">Name</div>
+                  <div class="col-email">Email</div>
+                  <div class="col-grade">Grade</div>
+                  <div class="col-date">Enrolled</div>
+                </div>
+                
+                <div class="table-body">
+                  <div v-for="student in sectionData.students" :key="student.id" class="student-row">
+                    <div class="col-id">{{ student.student_id }}</div>
+                    <div class="col-name">{{ student.first_name }} {{ student.last_name }}</div>
+                    <div class="col-email">{{ student.email }}</div>
+                    <div class="col-grade">{{ student.grade_level }}</div>
+                    <div class="col-date">{{ formatEnrollmentDate(student.enrollment_date) }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="roster-actions">
+          <button @click="exportStudentRoster" class="export-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+            </svg>
+            Export List
+          </button>
+          <button @click="closeStudentRosterModal" class="close-roster-btn">Close</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Loading Overlay -->
     <div v-if="isLoading" class="loading-overlay">
       <div class="loading-content">
@@ -257,6 +332,8 @@ const router = useRouter()
 // State
 const subjects = ref([])
 const showCreateModal = ref(false)
+const showStudentRosterModal = ref(false)
+const currentStudentRoster = ref(null)
 const isEditing = ref(false)
 const isLoading = ref(false)
 const loadingMessage = ref('')
@@ -320,7 +397,7 @@ const fetchSubjects = async () => {
 
     console.log('Fetching subjects for teacher:', user.id)
 
-    // Fetch subjects with sections using the new schema
+    // Fetch subjects with sections
     const { data: subjectsData, error: subjectsError } = await supabase
       .from('subjects')
       .select(`
@@ -348,6 +425,44 @@ const fetchSubjects = async () => {
     }
 
     console.log('Fetched subjects data:', subjectsData)
+
+    // Get actual enrollment counts for each subject
+    if (subjectsData && subjectsData.length > 0) {
+      for (let subject of subjectsData) {
+        if (subject.sections && subject.sections.length > 0) {
+          const sectionIds = subject.sections.map(s => s.id)
+          
+          // Get actual enrollment count
+          const { count, error: countError } = await supabase
+            .from('enrollments')
+            .select('*', { count: 'exact', head: true })
+            .in('section_id', sectionIds)
+
+          if (!countError) {
+            subject.actualStudentCount = count || 0
+          } else {
+            subject.actualStudentCount = 0
+          }
+
+          // Also get count per section
+          for (let section of subject.sections) {
+            const { count: sectionCount, error: sectionCountError } = await supabase
+              .from('enrollments')
+              .select('*', { count: 'exact', head: true })
+              .eq('section_id', section.id)
+
+            if (!sectionCountError) {
+              section.actualStudentCount = sectionCount || 0
+            } else {
+              section.actualStudentCount = 0
+            }
+          }
+        } else {
+          subject.actualStudentCount = 0
+        }
+      }
+    }
+
     console.log('Previous subjects count:', subjects.value.length)
     
     // Force reactivity update
@@ -362,6 +477,303 @@ const fetchSubjects = async () => {
   } catch (error) {
     console.error('Error in fetchSubjects:', error)
     alert(`Database Error: ${error.message}\n\nPlease check your database setup.`)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Updated getTotalStudents to use actual count
+const getTotalStudents = (subject) => {
+  // Use the actualStudentCount we calculated in fetchSubjects
+  return subject.actualStudentCount || 0
+}
+
+// Enhanced viewStudentRoster function with correct enrollment mapping
+const viewStudentRoster = async (subject) => {
+  try {
+    isLoading.value = true
+    loadingMessage.value = 'Loading student roster...'
+    
+    console.log('=== DEBUGGING STUDENT ROSTER ===')
+    console.log('Subject:', subject)
+    
+    // Get all sections for this subject
+    const { data: sections, error: sectionsError } = await supabase
+      .from('sections')
+      .select('*')
+      .eq('class_id', subject.id)
+
+    if (sectionsError) {
+      console.error('Error fetching sections:', sectionsError)
+      throw sectionsError
+    }
+
+    console.log('Sections found:', sections)
+
+    if (!sections || sections.length === 0) {
+      currentStudentRoster.value = {
+        subject,
+        studentsBySection: {},
+        totalActualStudents: 0
+      }
+      showStudentRosterModal.value = true
+      return
+    }
+
+    // Get all enrollments for these sections
+    const sectionIds = sections.map(s => s.id)
+    console.log('Section IDs:', sectionIds)
+    
+    const { data: enrollments, error: enrollmentsError } = await supabase
+      .from('enrollments')
+      .select('*')
+      .in('section_id', sectionIds)
+
+    if (enrollmentsError) {
+      console.error('Error fetching enrollments:', enrollmentsError)
+      throw enrollmentsError
+    }
+
+    console.log('Enrollments found:', enrollments)
+
+    // Get student details - enrollments.student_id is likely auth_user_id from profiles
+    let studentDetails = []
+    if (enrollments && enrollments.length > 0) {
+      const studentIds = enrollments.map(e => e.student_id)
+      console.log('Student IDs to fetch (UUIDs):', studentIds)
+      
+      // Method 1: Try profiles table using auth_user_id (most likely match)
+      console.log('Trying profiles table with auth_user_id...')
+      try {
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('*')
+          .in('auth_user_id', studentIds)
+
+        console.log('Profiles table (auth_user_id) response:', { data: profilesData, error: profilesError })
+
+        if (!profilesError && profilesData && profilesData.length > 0) {
+          studentDetails = profilesData.map(profile => ({
+            id: profile.auth_user_id, // Use auth_user_id as the main ID for matching
+            student_id: profile.student_id || profile.auth_user_id,
+            first_name: profile.full_name ? profile.full_name.split(' ')[0] : 'Unknown',
+            last_name: profile.full_name ? profile.full_name.split(' ').slice(1).join(' ') : 'Student',
+            email: profile.email || 'N/A',
+            grade_level: profile.course_year || 'N/A',
+            role: profile.role || 'N/A'
+          }))
+          console.log('✅ Students found in profiles table via auth_user_id:', studentDetails)
+        }
+      } catch (profilesError) {
+        console.log('❌ Profiles table (auth_user_id) error:', profilesError)
+      }
+
+      // Method 2: If no match with auth_user_id, try profiles table with id
+      if (studentDetails.length === 0) {
+        console.log('Trying profiles table with id...')
+        try {
+          const { data: profilesData, error: profilesError } = await supabase
+            .from('profiles')
+            .select('*')
+            .in('id', studentIds)
+
+          console.log('Profiles table (id) response:', { data: profilesData, error: profilesError })
+
+          if (!profilesError && profilesData && profilesData.length > 0) {
+            studentDetails = profilesData.map(profile => ({
+              id: profile.id,
+              student_id: profile.student_id || profile.id,
+              first_name: profile.full_name ? profile.full_name.split(' ')[0] : 'Unknown',
+              last_name: profile.full_name ? profile.full_name.split(' ').slice(1).join(' ') : 'Student',
+              email: profile.email || 'N/A',
+              grade_level: profile.course_year || 'N/A',
+              role: profile.role || 'N/A'
+            }))
+            console.log('✅ Students found in profiles table via id:', studentDetails)
+          }
+        } catch (profilesError) {
+          console.log('❌ Profiles table (id) error:', profilesError)
+        }
+      }
+
+      // Method 3: Try students table (less likely but worth checking)
+      if (studentDetails.length === 0) {
+        console.log('Trying students table...')
+        try {
+          const { data: studentsData, error: studentsError } = await supabase
+            .from('students')
+            .select('*')
+            .in('id', studentIds)
+
+          console.log('Students table response:', { data: studentsData, error: studentsError })
+          
+          if (!studentsError && studentsData && studentsData.length > 0) {
+            studentDetails = studentsData.map(student => ({
+              id: student.id,
+              student_id: student.student_id || student.id,
+              first_name: student.first_name || 'Unknown',
+              last_name: student.last_name || 'Student',
+              email: student.email || 'N/A',
+              grade_level: student.grade_level?.toString() || 'N/A'
+            }))
+            console.log('✅ Students found in students table:', studentDetails)
+          }
+        } catch (studentsTableError) {
+          console.log('❌ Students table error:', studentsTableError)
+        }
+      }
+
+      // Method 4: Try to find students via profile_id relationship
+      if (studentDetails.length === 0) {
+        console.log('Trying to find students via profile relationship...')
+        try {
+          // First get profiles by auth_user_id, then get students by profile_id
+          const { data: profilesData, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, auth_user_id, full_name, email, student_id, course_year, role')
+            .in('auth_user_id', studentIds)
+
+          if (!profilesError && profilesData && profilesData.length > 0) {
+            console.log('Found profiles, now looking for students:', profilesData)
+            
+            const profileIds = profilesData.map(p => p.id)
+            const { data: studentsData, error: studentsError } = await supabase
+              .from('students')
+              .select('*')
+              .in('profile_id', profileIds)
+
+            if (!studentsError && studentsData && studentsData.length > 0) {
+              // Merge student and profile data
+              studentDetails = studentsData.map(student => {
+                const profile = profilesData.find(p => p.id === student.profile_id)
+                return {
+                  id: profile?.auth_user_id || student.id,
+                  student_id: student.student_id || profile?.student_id || student.id,
+                  first_name: student.first_name || (profile?.full_name ? profile.full_name.split(' ')[0] : 'Unknown'),
+                  last_name: student.last_name || (profile?.full_name ? profile.full_name.split(' ').slice(1).join(' ') : 'Student'),
+                  email: student.email || profile?.email || 'N/A',
+                  grade_level: student.grade_level?.toString() || profile?.course_year || 'N/A',
+                  role: profile?.role || 'N/A'
+                }
+              })
+              console.log('✅ Students found via profile relationship:', studentDetails)
+            }
+          }
+        } catch (relationError) {
+          console.log('❌ Profile relationship error:', relationError)
+        }
+      }
+
+      console.log('Final student details:', studentDetails)
+    }
+
+    // Group students by section
+    const studentsBySection = {}
+    let totalActualStudents = 0
+    
+    // Create section groups
+    sections.forEach(section => {
+      const sectionKey = `${section.name} (${section.section_code})`
+      studentsBySection[sectionKey] = {
+        section: section,
+        students: []
+      }
+    })
+
+    // Add students to their respective sections
+    enrollments?.forEach(enrollment => {
+      const section = sections.find(s => s.id === enrollment.section_id)
+      const student = studentDetails.find(s => s.id === enrollment.student_id)
+      
+      console.log('Processing enrollment:', {
+        enrollment_id: enrollment.id,
+        student_id: enrollment.student_id,
+        section_id: enrollment.section_id,
+        found_student: student,
+        found_section: section
+      })
+      
+      if (section) {
+        const sectionKey = `${section.name} (${section.section_code})`
+        
+        if (student) {
+          console.log('✅ Adding student with data:', student)
+          studentsBySection[sectionKey].students.push({
+            ...student,
+            enrollment_date: enrollment.created_at,
+            enrollment_id: enrollment.id
+          })
+        } else {
+          console.log('❌ No student data found, creating placeholder')
+          // Show more detailed placeholder for debugging
+          const shortId = enrollment.student_id.toString().substring(0, 8)
+          studentsBySection[sectionKey].students.push({
+            id: enrollment.student_id,
+            student_id: `Missing-${shortId}`,
+            first_name: 'Data',
+            last_name: 'Not Found',
+            email: `student-${shortId}@unknown.com`,
+            grade_level: 'N/A',
+            enrollment_date: enrollment.created_at,
+            enrollment_id: enrollment.id,
+            debug_note: 'Student data not found in any table'
+          })
+        }
+        totalActualStudents++
+      }
+    })
+
+    console.log('Final studentsBySection:', studentsBySection)
+    console.log('Total actual students:', totalActualStudents)
+
+    // Sort students within each section by last name
+    Object.keys(studentsBySection).forEach(sectionKey => {
+      studentsBySection[sectionKey].students.sort((a, b) => 
+        (a.last_name || '').localeCompare(b.last_name || '')
+      )
+    })
+
+    // Store for modal display
+    currentStudentRoster.value = {
+      subject,
+      studentsBySection,
+      totalActualStudents
+    }
+    
+    showStudentRosterModal.value = true
+
+  } catch (error) {
+    console.error('Error viewing student roster:', error)
+    
+    // Show basic roster with section info even if student details fail
+    const basicRoster = {
+      subject,
+      studentsBySection: {},
+      totalActualStudents: 0
+    }
+    
+    // Try to at least show sections
+    try {
+      const { data: sections } = await supabase
+        .from('sections')
+        .select('*')
+        .eq('class_id', subject.id)
+      
+      sections?.forEach(section => {
+        const sectionKey = `${section.name} (${section.section_code})`
+        basicRoster.studentsBySection[sectionKey] = {
+          section: section,
+          students: []
+        }
+      })
+    } catch (sectionsError) {
+      console.error('Could not even fetch sections:', sectionsError)
+    }
+    
+    currentStudentRoster.value = basicRoster
+    showStudentRosterModal.value = true
+    
+    alert(`Unable to load complete student roster: ${error.message}\n\nShowing available section information. Please ensure you have proper database tables set up.`)
   } finally {
     isLoading.value = false
   }
@@ -619,11 +1031,6 @@ const deleteSubject = async (subjectId) => {
   }
 }
 
-const getTotalStudents = (subject) => {
-  if (!subject.sections) return 0
-  return subject.sections.reduce((total, section) => total + (section.student_count || 0), 0)
-}
-
 const closeModal = () => {
   showCreateModal.value = false
   isEditing.value = false
@@ -637,9 +1044,98 @@ const closeModal = () => {
   }
 }
 
-// Force refresh function for debugging
+const closeStudentRosterModal = () => {
+  showStudentRosterModal.value = false
+  currentStudentRoster.value = null
+}
+
+const formatEnrollmentDate = (dateString) => {
+  if (!dateString) return 'N/A'
+  const date = new Date(dateString)
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  })
+}
+
+const exportStudentRoster = () => {
+  if (!currentStudentRoster.value) return
+  
+  // Create CSV content
+  let csvContent = `Subject: ${currentStudentRoster.value.subject.name} (Grade ${currentStudentRoster.value.subject.grade_level})\n`
+  csvContent += `Total Students: ${currentStudentRoster.value.totalActualStudents}\n\n`
+  
+  Object.keys(currentStudentRoster.value.studentsBySection).forEach(sectionKey => {
+    const sectionData = currentStudentRoster.value.studentsBySection[sectionKey]
+    csvContent += `Section: ${sectionData.section.name} (${sectionData.section.section_code})\n`
+    csvContent += `Student ID,First Name,Last Name,Email,Grade,Enrollment Date\n`
+    
+    sectionData.students.forEach(student => {
+      csvContent += `"${student.student_id}","${student.first_name}","${student.last_name}","${student.email}","${student.grade_level}","${formatEnrollmentDate(student.enrollment_date)}"\n`
+    })
+    csvContent += `\n`
+  })
+  
+  // Download CSV
+  const blob = new Blob([csvContent], { type: 'text/csv' })
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${currentStudentRoster.value.subject.name}_Student_Roster.csv`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  window.URL.revokeObjectURL(url)
+}
+
+// Debug function to check database structure
+const debugDatabaseStructure = async () => {
+  console.log('=== DATABASE STRUCTURE DEBUG ===')
+  
+  const tablesToCheck = ['students', 'profiles', 'users', 'auth.users']
+  
+  for (const tableName of tablesToCheck) {
+    try {
+      console.log(`Checking table: ${tableName}`)
+      const { data, error, count } = await supabase
+        .from(tableName)
+        .select('*', { count: 'exact' })
+        .limit(1)
+      
+      if (error) {
+        console.log(`❌ Table ${tableName} error:`, error.message)
+      } else {
+        console.log(`✅ Table ${tableName} exists with ${count} total records`)
+        if (data && data.length > 0) {
+          console.log(`Sample record from ${tableName}:`, data[0])
+          console.log(`Columns in ${tableName}:`, Object.keys(data[0]))
+        }
+      }
+    } catch (err) {
+      console.log(`❌ Exception checking table ${tableName}:`, err)
+    }
+  }
+  
+  // Also check what's in enrollments
+  try {
+    const { data: enrollmentsData, error } = await supabase
+      .from('enrollments')
+      .select('*')
+      .limit(5)
+    
+    if (!error && enrollmentsData) {
+      console.log('Sample enrollments data:', enrollmentsData)
+    }
+  } catch (err) {
+    console.log('Error checking enrollments:', err)
+  }
+}
+
+// Force refresh function for debugging (updated)
 const forceRefresh = async () => {
   console.log('Force refreshing subjects...')
+  await debugDatabaseStructure() // Add database debugging
   await fetchSubjects()
 }
 
@@ -647,157 +1143,10 @@ const forceRefresh = async () => {
 onMounted(async () => {
   console.log('Component mounted, fetching subjects...')
   await fetchSubjects()
-  
-  // Set up periodic refresh for debugging (remove in production)
-  // setInterval(() => {
-  //   console.log('Auto-refresh check - current subjects:', subjects.value.length)
-  // }, 5000)
 })
 </script>
 
 <style scoped>
-/* Enhanced Section Styles */
-.enhanced-section {
-  background: white;
-  border: 2px solid rgba(61, 141, 122, 0.1);
-  border-radius: 16px;
-  padding: 1.5rem;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.05);
-}
-
-.enhanced-section:hover {
-  border-color: rgba(61, 141, 122, 0.3);
-  box-shadow: 0 8px 24px rgba(61, 141, 122, 0.15);
-  transform: translateY(-2px);
-}
-
-.section-header-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.section-code-display {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  background: rgba(61, 141, 122, 0.05);
-  border-radius: 10px;
-  border: 1px solid rgba(61, 141, 122, 0.1);
-}
-
-.code-label {
-  font-weight: 600;
-  color: #3D8D7A;
-  font-size: 0.9rem;
-}
-
-.section-code {
-  font-family: 'Courier New', monospace;
-  font-weight: 700;
-  color: #3D8D7A;
-  font-size: 1.1rem;
-  background: white;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  border: 1px solid rgba(61, 141, 122, 0.2);
-  flex: 1;
-}
-
-.copy-code-btn {
-  background: #3D8D7A;
-  color: white;
-  border: none;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  transition: all 0.3s ease;
-}
-
-.copy-code-btn:hover {
-  background: #2a6b5f;
-  transform: scale(1.05);
-}
-
-.section-stats-info {
-  margin-bottom: 1rem;
-}
-
-.section-actions {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.section-action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.85rem;
-  transition: all 0.3s ease;
-  text-align: center;
-  min-height: 44px;
-}
-
-.create-quiz {
-  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
-  color: white;
-}
-
-.create-quiz:hover {
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
-}
-
-.view-quizzes {
-  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
-  color: white;
-}
-
-.view-quizzes:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
-}
-
-.manage-grades {
-  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
-  color: white;
-}
-
-.manage-grades:hover {
-  background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
-}
-
-.generate-reports {
-  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
-  color: white;
-}
-
-.generate-reports:hover {
-  background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
-}
-
 /* Base Styles */
 .subjects-page {
   padding: 2rem;
@@ -941,56 +1290,258 @@ onMounted(async () => {
   font-size: 2rem;
   font-weight: 800;
   color: #3D8D7A;
+  margin-bottom: 0.5rem;
 }
 
 .stat-label {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: #666;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
   font-weight: 600;
 }
 
+/* Clickable Student Stats */
+.clickable-stat {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  flex-shrink: 0;
+  padding: 0.5rem;
+  position: relative;
+}
+
+.clickable-stat:hover {
+  background: rgba(61, 141, 122, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.2);
+}
+
+.clickable-stat .stat-number {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #3D8D7A;
+  margin-bottom: 0.25rem;
+  transition: all 0.3s ease;
+}
+
+.clickable-stat:hover .stat-number {
+  transform: scale(1.1);
+}
+
+.clickable-stat .stat-label {
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.view-hint {
+  display: block;
+  color: #3D8D7A;
+  font-size: 0.7rem;
+  margin-top: 0.2rem;
+  font-weight: 500;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.clickable-stat:hover .view-hint {
+  opacity: 1;
+}
+
 .sections-list {
-  margin-bottom: 1.5rem;
+  margin-top: 1.5rem;
 }
 
 .sections-list h4 {
   color: #3D8D7A;
+  font-size: 1.2rem;
+  font-weight: 700;
   margin-bottom: 1rem;
-  font-size: 1.1rem;
-  font-weight: 600;
 }
 
 .sections {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .section-item {
+  padding: 1rem;
+  background: rgba(163, 209, 198, 0.1);
+  border-radius: 12px;
+  border: 1px solid rgba(61, 141, 122, 0.2);
+}
+
+/* Enhanced Section Styles */
+.enhanced-section {
+  background: white;
+  border: 2px solid rgba(61, 141, 122, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.05);
+}
+
+.enhanced-section:hover {
+  border-color: rgba(61, 141, 122, 0.3);
+  box-shadow: 0 8px 24px rgba(61, 141, 122, 0.15);
+  transform: translateY(-2px);
+}
+
+.section-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.section-code-display {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(61, 141, 122, 0.05);
+  border-radius: 10px;
+  border: 1px solid rgba(61, 141, 122, 0.1);
+}
+
+.code-label {
+  font-weight: 600;
+  color: #3D8D7A;
+  font-size: 0.9rem;
+}
+
+.section-code {
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  color: #3D8D7A;
+  font-size: 1.1rem;
+  background: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid rgba(61, 141, 122, 0.2);
+  flex: 1;
+}
+
+.copy-code-btn {
+  background: #3D8D7A;
+  color: white;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.copy-code-btn:hover {
+  background: #2a6b5f;
+  transform: scale(1.05);
+}
+
+.section-info {
   width: 100%;
 }
 
 .section-name {
-  font-weight: 700;
+  font-weight: 600;
   color: #3D8D7A;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   margin-bottom: 0.5rem;
+  display: block;
+}
+
+.section-stats-info {
+  margin-bottom: 1rem;
 }
 
 .student-count {
   color: #666;
   font-size: 0.9rem;
-  font-weight: 500;
 }
 
+.section-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.section-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+  text-align: center;
+  min-height: 44px;
+}
+
+.create-quiz {
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  color: white;
+}
+
+.create-quiz:hover {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.view-quizzes {
+  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+  color: white;
+}
+
+.view-quizzes:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.manage-grades {
+  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+  color: white;
+}
+
+.manage-grades:hover {
+  background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+}
+
+.generate-reports {
+  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+  color: white;
+}
+
+.generate-reports:hover {
+  background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+}
+
+/* Empty State */
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.1);
+  color: #666;
 }
 
 .empty-icon {
@@ -1000,15 +1551,14 @@ onMounted(async () => {
 
 .empty-state h3 {
   color: #3D8D7A;
-  font-size: 2rem;
-  margin-bottom: 1rem;
+  font-size: 1.5rem;
   font-weight: 700;
+  margin-bottom: 1rem;
 }
 
 .empty-state p {
-  color: #666;
-  margin-bottom: 2rem;
   font-size: 1.1rem;
+  margin-bottom: 2rem;
 }
 
 .create-first-btn {
@@ -1019,8 +1569,8 @@ onMounted(async () => {
   border-radius: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
   font-size: 1rem;
+  transition: all 0.3s ease;
 }
 
 .create-first-btn:hover {
@@ -1041,58 +1591,74 @@ onMounted(async () => {
   justify-content: center;
   z-index: 1000;
   padding: 2rem;
+  backdrop-filter: blur(4px);
 }
 
 .modal-content {
   background: white;
   border-radius: 20px;
+  padding: 2rem;
   max-width: 600px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  position: relative;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 2rem 2rem 1rem;
-  border-bottom: 1px solid rgba(61, 141, 122, 0.1);
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid rgba(61, 141, 122, 0.1);
 }
 
 .modal-header h2 {
   color: #3D8D7A;
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   font-weight: 700;
+  margin: 0;
 }
 
 .close-btn {
-  background: none;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
   border: none;
-  color: #666;
+  padding: 0.5rem;
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.3s ease;
-  padding: 0.5rem;
-  border-radius: 8px;
 }
 
 .close-btn:hover {
-  color: #3D8D7A;
-  background: rgba(61, 141, 122, 0.1);
+  background: rgba(239, 68, 68, 0.2);
+  transform: scale(1.1);
 }
 
 .subject-form {
-  padding: 2rem;
+  width: 100%;
 }
 
 .step-content {
-  min-height: 300px;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .step-title {
   color: #3D8D7A;
-  font-size: 1.25rem;
+  font-size: 1.4rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
 }
@@ -1103,25 +1669,25 @@ onMounted(async () => {
 }
 
 .form-group {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 0.75rem;
-  color: #3D8D7A;
   font-weight: 600;
-  font-size: 1rem;
+  color: #3D8D7A;
+  margin-bottom: 0.5rem;
 }
 
 .form-group input,
 .form-group select {
   width: 100%;
-  padding: 1rem;
-  border: 2px solid rgba(61, 141, 122, 0.1);
-  border-radius: 12px;
+  padding: 0.75rem;
+  border: 2px solid rgba(61, 141, 122, 0.2);
+  border-radius: 10px;
   font-size: 1rem;
   transition: all 0.3s ease;
+  background: white;
 }
 
 .form-group input:focus,
@@ -1134,16 +1700,22 @@ onMounted(async () => {
 .sections-setup {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 1rem;
+  background: rgba(251, 255, 228, 0.3);
+  border-radius: 12px;
+  border: 1px solid rgba(61, 141, 122, 0.1);
 }
 
 .section-setup-item {
   display: flex;
   align-items: flex-start;
   gap: 1rem;
-  padding: 1.5rem;
-  background: rgba(251, 255, 228, 0.5);
-  border-radius: 12px;
+  padding: 1rem;
+  background: white;
+  border-radius: 10px;
   border: 1px solid rgba(61, 141, 122, 0.1);
 }
 
@@ -1156,7 +1728,8 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 0.9rem;
   flex-shrink: 0;
 }
 
@@ -1239,6 +1812,7 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   z-index: 1100;
+  backdrop-filter: blur(4px);
 }
 
 .loading-content {
@@ -1247,6 +1821,13 @@ onMounted(async () => {
   border-radius: 16px;
   text-align: center;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  min-width: 200px;
+}
+
+.loading-content p {
+  color: #3D8D7A;
+  font-weight: 600;
+  margin: 0;
 }
 
 .loading-spinner {
@@ -1265,8 +1846,230 @@ onMounted(async () => {
   }
 }
 
+/* Student Roster Modal */
+.student-roster-modal {
+  max-width: 90vw;
+  width: 1200px;
+  max-height: 90vh;
+}
+
+.roster-subtitle {
+  color: #666;
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}
+
+.roster-content {
+  padding: 1.5rem;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.no-students {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #666;
+}
+
+.no-students .empty-icon {
+  color: #A3D1C6;
+  margin-bottom: 1rem;
+}
+
+.no-students h3 {
+  color: #3D8D7A;
+  margin-bottom: 0.5rem;
+}
+
+.sections-roster {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.section-roster {
+  background: rgba(251, 255, 228, 0.3);
+  border: 1px solid rgba(61, 141, 122, 0.1);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.section-roster-header {
+  background: rgba(61, 141, 122, 0.1);
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(61, 141, 122, 0.1);
+}
+
+.section-roster-header h3 {
+  color: #3D8D7A;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.section-details {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.students-table {
+  background: white;
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 120px 200px 250px 80px 120px;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: rgba(61, 141, 122, 0.05);
+  border-bottom: 2px solid rgba(61, 141, 122, 0.1);
+  font-weight: 700;
+  color: #3D8D7A;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.table-body {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.student-row {
+  display: grid;
+  grid-template-columns: 120px 200px 250px 80px 120px;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(61, 141, 122, 0.1);
+  transition: all 0.2s ease;
+}
+
+.student-row:hover {
+  background: rgba(61, 141, 122, 0.05);
+}
+
+.student-row:last-child {
+  border-bottom: none;
+}
+
+.col-id {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: #3D8D7A;
+  font-size: 0.9rem;
+}
+
+.col-name {
+  font-weight: 600;
+  color: #333;
+}
+
+.col-email {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.col-grade {
+  text-align: center;
+  font-weight: 600;
+  color: #3D8D7A;
+}
+
+.col-date {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.roster-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-top: 1px solid rgba(61, 141, 122, 0.1);
+  background: rgba(251, 255, 228, 0.2);
+}
+
+.export-btn {
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.export-btn:hover {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.close-roster-btn {
+  background: transparent;
+  color: #666;
+  border: 2px solid #ddd;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.close-roster-btn:hover {
+  border-color: #3D8D7A;
+  color: #3D8D7A;
+}
+
+/* Error handling styles */
+.error-message {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #dc2626;
+  padding: 1rem;
+  border-radius: 10px;
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.error-message h3 {
+  margin: 0 0 0.5rem 0;
+  font-weight: 600;
+}
+
+.error-message p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
 /* Responsive Design */
+@media (max-width: 1024px) {
+  .subjects-grid {
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  }
+  
+  .student-roster-modal {
+    width: 95vw;
+    max-width: none;
+  }
+  
+  .table-header,
+  .student-row {
+    grid-template-columns: 100px 180px 200px 70px 100px;
+    font-size: 0.85rem;
+  }
+}
+
 @media (max-width: 768px) {
+  .subjects-page {
+    padding: 1rem;
+  }
+  
   .subjects-grid {
     grid-template-columns: 1fr;
   }
@@ -1274,6 +2077,15 @@ onMounted(async () => {
   .page-header {
     flex-direction: column;
     align-items: stretch;
+  }
+  
+  .header-content h1 {
+    font-size: 2rem;
+  }
+  
+  .create-btn {
+    justify-content: center;
+    width: 100%;
   }
   
   .subject-stats {
@@ -1288,10 +2100,60 @@ onMounted(async () => {
     padding: 1rem;
   }
   
+  .modal-content {
+    padding: 1.5rem;
+  }
+  
   .section-code-display {
     flex-direction: column;
     align-items: stretch;
     gap: 0.5rem;
+  }
+  
+  .table-header,
+  .student-row {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    padding: 1rem;
+  }
+  
+  .table-header {
+    display: none;
+  }
+  
+  .student-row {
+    display: block;
+    border-bottom: 2px solid rgba(61, 141, 122, 0.1);
+    margin-bottom: 0.5rem;
+  }
+  
+  .student-row > div {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.25rem 0;
+    border-bottom: 1px solid rgba(61, 141, 122, 0.05);
+  }
+  
+  .student-row > div:before {
+    content: attr(class);
+    font-weight: 600;
+    color: #3D8D7A;
+    text-transform: capitalize;
+  }
+  
+  .col-id:before { content: "Student ID: "; }
+  .col-name:before { content: "Name: "; }
+  .col-email:before { content: "Email: "; }
+  .col-grade:before { content: "Grade: "; }
+  .col-date:before { content: "Enrolled: "; }
+  
+  .section-setup-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .section-number {
+    align-self: flex-start;
   }
 }
 </style>
