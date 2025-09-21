@@ -20,7 +20,12 @@ import AssessmentResults from '@/views/teacher/AssessmentResults.vue'
 import SettingsPage from '@/views/teacher/SettingsPage.vue'
 import UploadAssessment from '@/components/UploadAssessment.vue'
 
-// Create Analytics component (you'll need to create this)
+// Quiz Management components
+import CreateQuiz from '@/views/teacher/CreateQuiz.vue'
+import ViewQuizzes from '@/views/teacher/ViewQuizzes.vue'
+import Reports from '@/views/teacher/Reports.vue'
+
+// Analytics component
 import Analytics from '@/views/teacher/Analytics.vue'
 
 const router = createRouter({
@@ -111,12 +116,34 @@ const router = createRouter({
           name: 'UploadAssessment',
           component: UploadAssessment,
         },
-        // New Analytics route
+        // Analytics route
         {
           path: 'analytics',
           name: 'Analytics',
           component: Analytics,
           meta: { requiresAuth: true }
+        },
+        // Quiz Management Routes - Complete Implementation
+        {
+          path: 'quiz/create/:subjectId/:sectionId',
+          name: 'CreateQuiz',
+          component: CreateQuiz,
+          props: true,
+          meta: { requiresAuth: true, requiresTeacher: true }
+        },
+        {
+          path: 'quiz/view/:subjectId/:sectionId',
+          name: 'ViewQuizzes',
+          component: ViewQuizzes,
+          props: true,
+          meta: { requiresAuth: true, requiresTeacher: true }
+        },
+        {
+          path: 'reports/:subjectId/:sectionId',
+          name: 'Reports',
+          component: Reports,
+          props: true,
+          meta: { requiresAuth: true, requiresTeacher: true }
         }
       ]
     }

@@ -247,7 +247,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '../../supabase.js'
 
@@ -318,16 +318,25 @@ const fetchSubjects = async () => {
     loadingMessage.value = 'Loading subjects...'
     isLoading.value = true
 
+    console.log('Fetching subjects for teacher:', user.id)
+
+    // Fetch subjects with sections using the new schema
     const { data: subjectsData, error: subjectsError } = await supabase
       .from('subjects')
       .select(`
-        *,
+        id,
+        name,
+        grade_level,
+        teacher_id,
+        created_at,
+        updated_at,
         sections(
           id,
           name,
           section_code,
           student_count,
-          created_at
+          created_at,
+          updated_at
         )
       `)
       .eq('teacher_id', user.id)
@@ -335,18 +344,24 @@ const fetchSubjects = async () => {
 
     if (subjectsError) {
       console.error('Error fetching subjects:', subjectsError)
-      if (subjectsError.code === 'PGRST116') {
-        throw new Error('Subjects table does not exist. Please create the subjects table first.')
-      }
       throw subjectsError
     }
 
-    subjects.value = subjectsData || []
-    console.log('Fetched subjects:', subjects.value)
+    console.log('Fetched subjects data:', subjectsData)
+    console.log('Previous subjects count:', subjects.value.length)
+    
+    // Force reactivity update
+    subjects.value = [...(subjectsData || [])]
+    
+    console.log('Updated subjects count:', subjects.value.length)
+    console.log('Updated subjects array:', subjects.value)
+
+    // Force Vue to re-render
+    await nextTick()
 
   } catch (error) {
     console.error('Error in fetchSubjects:', error)
-    alert(`Database Error: ${error.message}\n\nPlease ensure the subjects table is created in your Supabase database.`)
+    alert(`Database Error: ${error.message}\n\nPlease check your database setup.`)
   } finally {
     isLoading.value = false
   }
@@ -383,6 +398,7 @@ const copyCode = async (code, codeId) => {
     setTimeout(() => {
       copiedCodeId.value = null
     }, 2000)
+    console.log('Copied section code:', code)
   } catch (err) {
     console.error('Failed to copy code:', err)
     // Fallback for older browsers
@@ -416,7 +432,10 @@ const saveSubject = async () => {
       throw new Error('Please login to continue')
     }
 
-    // Prepare subject data (remove class_code since we're not using it)
+    console.log('Starting subject save process...')
+    console.log('Form data:', formData.value)
+
+    // Prepare subject data
     const subjectData = {
       name: formData.value.name,
       grade_level: parseInt(formData.value.grade_level),
@@ -437,6 +456,8 @@ const saveSubject = async () => {
       if (updateError) throw updateError
       subjectId = currentSubjectId.value
 
+      console.log('Updated subject:', updatedSubject)
+
       // Delete existing sections for this subject
       const { error: deleteError } = await supabase
         .from('sections')
@@ -455,6 +476,7 @@ const saveSubject = async () => {
 
       if (insertError) throw insertError
       subjectId = newSubject.id
+      console.log('Created new subject:', newSubject)
     }
 
     // Create sections with unique section codes
@@ -468,6 +490,8 @@ const saveSubject = async () => {
       let isSectionUnique = false
       let sectionAttempts = 0
 
+      console.log(`Processing section ${i + 1}:`, section.name)
+
       // Ensure section code is unique
       while (!isSectionUnique && sectionAttempts < maxAttempts) {
         const subjectPrefix = formData.value.name.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, '') || 'SUB'
@@ -476,7 +500,9 @@ const saveSubject = async () => {
         const uniqueTimestamp = (baseTimestamp + i + sectionAttempts).toString().slice(-5)
         const randomSuffix = Math.random().toString(36).substring(2, 3).toUpperCase()
         
-        sectionCode = `${subjectPrefix}${gradeLevel}${cleanSectionName}${uniqueTimestamp}${randomSuffix}`
+        sectionCode = `${subjectPrefix}${gradeLevel}-${cleanSectionName}${uniqueTimestamp}${randomSuffix}`
+        
+        console.log('Generated section code:', sectionCode)
         
         // Check if section code already exists
         const { data: existingSection, error: sectionCheckError } = await supabase
@@ -492,6 +518,9 @@ const saveSubject = async () => {
 
         if (!existingSection) {
           isSectionUnique = true
+          console.log('Section code is unique:', sectionCode)
+        } else {
+          console.log('Section code exists, generating new one...')
         }
         
         sectionAttempts++
@@ -509,17 +538,30 @@ const saveSubject = async () => {
       })
     }
 
+    console.log('Sections to insert:', sectionsToInsert)
+
     // Insert all sections
     const { data: insertedSections, error: sectionsError } = await supabase
       .from('sections')
       .insert(sectionsToInsert)
       .select()
 
-    if (sectionsError) throw sectionsError
+    if (sectionsError) {
+      console.error('Error inserting sections:', sectionsError)
+      throw sectionsError
+    }
 
-    // Refresh subjects list
-    await fetchSubjects()
+    console.log('Inserted sections:', insertedSections)
+
+    // Close modal first
     closeModal()
+
+    // Force refresh subjects list with delay to ensure database consistency
+    console.log('Subject saved successfully, refreshing list...')
+    setTimeout(async () => {
+      await fetchSubjects()
+      console.log('Subjects list refreshed after creation')
+    }, 500)
 
     // Show success message with all section codes
     const sectionCodes = insertedSections.map(s => `${s.name}: ${s.section_code}`).join('\n')
@@ -556,6 +598,9 @@ const deleteSubject = async (subjectId) => {
   loadingMessage.value = 'Deleting subject...'
 
   try {
+    console.log('Deleting subject:', subjectId)
+
+    // Delete subject (CASCADE will handle sections and enrollments)
     const { error } = await supabase
       .from('subjects')
       .delete()
@@ -563,6 +608,7 @@ const deleteSubject = async (subjectId) => {
 
     if (error) throw error
 
+    console.log('Subject deleted successfully, refreshing list...')
     await fetchSubjects()
     alert(`Subject "${subject?.name}" deleted successfully!`)
   } catch (error) {
@@ -591,9 +637,21 @@ const closeModal = () => {
   }
 }
 
+// Force refresh function for debugging
+const forceRefresh = async () => {
+  console.log('Force refreshing subjects...')
+  await fetchSubjects()
+}
+
 // Lifecycle
-onMounted(() => {
-  fetchSubjects()
+onMounted(async () => {
+  console.log('Component mounted, fetching subjects...')
+  await fetchSubjects()
+  
+  // Set up periodic refresh for debugging (remove in production)
+  // setInterval(() => {
+  //   console.log('Auto-refresh check - current subjects:', subjects.value.length)
+  // }, 5000)
 })
 </script>
 
