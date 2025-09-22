@@ -3,95 +3,9 @@
     <div class="geometric-shapes"></div>
     <div class="floating-elements">
       <!-- Educational floating elements with proper animations -->
-      <!-- LEFT SIDE - Around Logo/Tagline -->
-      <!-- Document symbols -->
-      <div class="floating-element element-1">
-        <svg width="35" height="35" viewBox="0 0 24 24" fill="#4A9B8E">
-          <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3M19 19H5V5H19V19M17 17H7V15H17V17M17 13H7V11H17V13M17 9H7V7H17V9Z"/>
-        </svg>
-      </div>
-      
-      <!-- Education/School symbols -->
-      <div class="floating-element element-2">
-        <svg width="33" height="33" viewBox="0 0 24 24" fill="#4A9B8E">
-          <path d="M12 3L1 9L12 15L21 10.09V17H23V9L12 3M5 13.18V17.18L12 21L19 17.18V13.18L12 17L5 13.18Z"/>
-        </svg>
-      </div>
-      
-      <!-- Search symbols -->
-      <div class="floating-element element-3">
-        <svg width="30" height="30" viewBox="0 0 24 24" fill="#4A9B8E">
-          <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
-        </svg>
-      </div>
-      
-      <!-- Star symbols -->
-      <div class="floating-element element-4">
-        <svg width="38" height="38" viewBox="0 0 24 24" fill="#4A9B8E">
-          <path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z"/>
-        </svg>
-      </div>
-      
-      <!-- Calendar symbols -->
-      <div class="floating-element element-5">
-        <svg width="33" height="33" viewBox="0 0 24 24" fill="#4A9B8E">
-          <path d="M19,19H5V8H19M16,1V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3H18V1M17,12H12V17H17V12Z"/>
-        </svg>
-      </div>
-      
-      <!-- Chat/Message symbols -->
-      <div class="floating-element element-6">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="#4A9B8E">
-          <path d="M20,2H4A2,2 0 0,0 2,4V16A2,2 0 0,0 4,18H18L22,22V4A2,2 0 0,0 20,2M6,9H18V11H6M4,6H20V8H4M6,12H16V14H6"/>
-        </svg>
-      </div>
-
-      <!-- RIGHT SIDE - Around Signup Form -->
-      <!-- Document symbols (duplicate) -->
-      <div class="floating-element element-13">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="#4A9B8E">
-          <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3M19 19H5V5H19V19M17 17H7V15H17V17M17 13H7V11H17V13M17 9H7V7H17V9Z"/>
-        </svg>
-      </div>
-      
-      <!-- Education/School symbols (duplicate) -->
-      <div class="floating-element element-14">
-        <svg width="29" height="29" viewBox="0 0 24 24" fill="#4A9B8E">
-          <path d="M12 3L1 9L12 15L21 10.09V17H23V9L12 3M5 13.18V17.18L12 21L19 17.18V13.18L12 17L5 13.18Z"/>
-        </svg>
-      </div>
-      
-      <!-- Search symbols (duplicate) -->
-      <div class="floating-element element-15">
-        <svg width="34" height="34" viewBox="0 0 24 24" fill="#4A9B8E">
-          <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
-        </svg>
-      </div>
-      
-      <!-- Star symbols (duplicate) -->
-      <div class="floating-element element-16">
-        <svg width="31" height="31" viewBox="0 0 24 24" fill="#4A9B8E">
-          <path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z"/>
-        </svg>
-      </div>
-      
-      <!-- Calculator symbols -->
-      <div class="floating-element element-8">
-        <svg width="34" height="34" viewBox="0 0 24 24" fill="#4A9B8E">
-          <path d="M9,11H7V9H9V11M13,11H11V9H13V11M17,11H15V9H17V11M19,3H18V1H16V1H6V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.9 20.1,3 19,3M19,19H5V8H19V19M9,15H7V13H9V15M13,15H11V13H13V15M17,15H15V13H17V15M9,17H7V19H9V17M13,19H11V17H13V19M17,19H15V17H17V19Z"/>
-        </svg>
-      </div>
-      
-      <!-- User symbols -->
-      <div class="floating-element element-9">
-        <svg width="29" height="29" viewBox="0 0 24 24" fill="#4A9B8E">
-          <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M7.07,18.28C7.5,17.38 10.12,16.5 12,16.5C13.88,16.5 16.5,17.38 16.93,18.28C15.57,19.36 13.86,20 12,20C10.14,20 8.43,19.36 7.07,18.28M18.36,16.83C16.93,15.09 13.46,14.5 12,14.5C10.54,14.5 7.07,15.09 5.64,16.83C4.62,15.5 4,13.82 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,13.82 19.38,15.5 18.36,16.83M12,6C10.06,6 8.5,7.56 8.5,9.5C8.5,11.44 10.06,13 12,13C13.94,13 15.5,11.44 15.5,9.5C15.5,7.56 13.94,6 12,6M12,11A1.5,1.5 0 0,1 10.5,9.5A1.5,1.5 0 0,1 12,8A1.5,1.5 0 0,1 13.5,9.5A1.5,1.5 0 0,1 12,11Z"/>
-        </svg>
-      </div>
     </div>
-    
+
     <div class="auth-container">
-      <!-- IntelliGrade Logo Space - Left Side -->
       <div class="logo-space">
         <div class="intelligrade-branding">
           <div class="logo-container">
@@ -106,8 +20,7 @@
           </div>
         </div>
       </div>
-      
-      <!-- Signup Box - Right Side -->
+
       <div class="auth-box">
         <div class="logo-section">
           <div class="user-icon">
@@ -120,7 +33,6 @@
         </div>
 
         <form @submit.prevent="handleSignup" class="signup-form">
-          <!-- Error Display -->
           <div v-if="error" class="error-display">
             <div class="error-icon">⚠️</div>
             <p>{{ error }}</p>
@@ -186,18 +98,22 @@
             </div>
           </div>
 
+          <!-- Grade Level Dropdown with the same design as inputs -->
           <div class="form-group">
-            <label>Course/Year</label>
+            <label>Grade Level</label>
             <div class="input-wrapper">
               <svg class="input-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 3L1 9L12 15L21 10.09V17H23V9L12 3M5 13.18V17.18L12 21L19 17.18V13.18L12 17L5 13.18Z"/>
+                <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
               </svg>
-              <input 
-                type="text" 
-                placeholder="Enter your course and year" 
-                v-model="courseYear"
-                required
-              />
+              <!-- Drop down styled like an input field -->
+              <select v-model="gradeLevel" required class="styled-select">
+                <option value="7">Grade 7</option>
+                <option value="8">Grade 8</option>
+                <option value="9">Grade 9</option>
+                <option value="10">Grade 10</option>
+                <option value="11">Grade 11</option>
+                <option value="12">Grade 12</option>
+              </select>
             </div>
           </div>
 
@@ -233,14 +149,14 @@ export default {
       email: "",
       password: "",
       studentId: "",
-      courseYear: "",
+      gradeLevel: "",
       error: "",
       isLoading: false
     };
   },
   methods: {
     async handleSignup() {
-      if (!this.fullName || !this.email || !this.password || !this.studentId || !this.courseYear) {
+      if (!this.fullName || !this.email || !this.password || !this.studentId || !this.gradeLevel) {
         this.error = "Please fill in all fields.";
         return;
       }
@@ -259,26 +175,38 @@ export default {
           throw authError;
         }
 
-        // Step 2: Insert additional user profile data into the "profiles" table
         const user = authData.user;
+        
+        // Step 2: Insert into profiles table with new structure
         const { error: profileError } = await supabase
-          .from("profiles")
-          .insert([
-            {
-              id: user.id,
-              full_name: this.fullName,
-              role: "student", // Automatically set the role to 'student'
-              student_id: this.studentId,
-              course_year: this.courseYear,
-            },
-          ]);
+          .from('profiles')
+          .insert([{
+            id: user.id,
+            auth_user_id: user.id,
+            full_name: this.fullName,
+            email: this.email,
+            role: 'student',
+          }]);
 
         if (profileError) {
-          // If profile insertion fails, you might want to handle it or show an error
           throw profileError;
         }
 
-        // Step 3: Redirect to the student dashboard on success
+        // Step 3: Insert student-specific details into student_details table
+        const { error: studentError } = await supabase
+          .from('student_details')
+          .insert([{
+            profile_id: user.id,
+            student_id: this.studentId,
+            grade_level: parseInt(this.gradeLevel), // Convert to integer
+            enrollment_status: 'active'
+          }]);
+
+        if (studentError) {
+          throw studentError;
+        }
+
+        // Step 4: Redirect to the student dashboard on success
         this.$router.push("/student-dashboard");
         
       } catch (err) {
@@ -872,5 +800,78 @@ input::placeholder {
   .form-group {
     margin-bottom: 0.8rem;
   }
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: rgba(61, 141, 122, 0.5);
+  z-index: 1;
+}
+
+input, select {
+  width: 100%;
+  padding: 0.7rem 0.7rem 0.7rem 2.25rem;
+  font-size: 0.85rem;
+  border: 2px solid rgba(61, 141, 122, 0.2);
+  border-radius: 9px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.8);
+  color: #3D8D7A;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+input:focus, select:focus {
+  border-color: rgba(61, 141, 122, 0.5);
+  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
+  background: white;
+}
+
+input::placeholder, select::placeholder {
+  color: rgba(61, 141, 122, 0.4);
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+/* Same button styles */
+.signup-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  color: white;
+  padding: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  box-shadow: 0 4px 15px rgba(61, 141, 122, 0.2);
+}
+
+.signup-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.loading-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 </style>

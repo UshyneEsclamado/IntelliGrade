@@ -259,7 +259,7 @@
           <div v-if="Object.keys(currentStudentRoster.studentsBySection).length === 0" class="no-students">
             <div class="empty-icon">
               <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M16 4C18.2 4 20 5.8 20 8S18.2 12 16 12 12 10.2 12 8 13.8 4 16 4M16 14C20.4 14 24 15.8 24 18V20H8V18C8 15.8 11.6 14 16 14M12.5 11.5C12.8 10.9 13 10.2 13 9.5C13 8.1 12.6 6.8 11.9 5.7C10.8 4.6 9.4 4 8 4S5.2 4.6 4.1 5.7C3.4 6.8 3 8.1 3 9.5S3.4 12.2 4.1 13.3C5.2 14.4 6.6 15 8 15C8.8 15 9.5 14.8 10.1 14.5C9.4 15.4 9 16.6 9 18V20H1V18C1 15.8 4.6 14 9 14C10.5 14 11.8 14.3 12.5 14.8V11.5Z" />
+                <path d="M16 4C18.2 4 20 5.8 20 8S18.2 12 16 12 12 10.2 12 8 13.8 4 16 4M16 14C20.4 14 24 15.8 24 18V20H8V18C8 15.8 11.6 14 16 14C10.5 14 9.2 14.3 8.5 14.8V11.5Z" />
               </svg>
             </div>
             <h3>No Students Enrolled</h3>
@@ -536,142 +536,107 @@ const viewStudentRoster = async (subject) => {
 
     console.log('Enrollments found:', enrollments)
 
-    // Get student details - enrollments.student_id is likely auth_user_id from profiles
+    // Get student details from the student_details table
     let studentDetails = []
     if (enrollments && enrollments.length > 0) {
-      const studentIds = enrollments.map(e => e.student_id)
-      console.log('Student IDs to fetch (UUIDs):', studentIds)
+      const studentIds = [...new Set(enrollments.map(e => e.student_id))]
+      console.log('Unique Student IDs to fetch:', studentIds)
       
-      // Method 1: Try profiles table using auth_user_id (most likely match)
-      console.log('Trying profiles table with auth_user_id...')
-      try {
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
+      // Method 1: Try with profile_id matching auth user IDs
+      let { data: studentDetailsData, error: studentDetailsError } = await supabase
+        .from('student_details')
+        .select(`
+          *,
+          profiles!student_details_profile_id_fkey (
+            full_name,
+            email,
+            role
+          )
+        `)
+        .in('profile_id', studentIds)
+
+      console.log('Method 1 - Student details by profile_id:', { data: studentDetailsData, error: studentDetailsError })
+
+      // Method 2: If Method 1 fails, try joining differently
+      if (studentDetailsError || !studentDetailsData || studentDetailsData.length === 0) {
+        console.log('Trying method 2 - direct student_details lookup')
+        
+        // Try getting student_details and then joining with profiles
+        const { data: allStudentDetails, error: error2 } = await supabase
+          .from('student_details')
           .select('*')
-          .in('auth_user_id', studentIds)
-
-        console.log('Profiles table (auth_user_id) response:', { data: profilesData, error: profilesError })
-
-        if (!profilesError && profilesData && profilesData.length > 0) {
-          studentDetails = profilesData.map(profile => ({
-            id: profile.auth_user_id, // Use auth_user_id as the main ID for matching
-            student_id: profile.student_id || profile.auth_user_id,
-            first_name: profile.full_name ? profile.full_name.split(' ')[0] : 'Unknown',
-            last_name: profile.full_name ? profile.full_name.split(' ').slice(1).join(' ') : 'Student',
-            email: profile.email || 'N/A',
-            grade_level: profile.course_year || 'N/A',
-            role: profile.role || 'N/A'
-          }))
-          console.log('✅ Students found in profiles table via auth_user_id:', studentDetails)
-        }
-      } catch (profilesError) {
-        console.log('❌ Profiles table (auth_user_id) error:', profilesError)
-      }
-
-      // Method 2: If no match with auth_user_id, try profiles table with id
-      if (studentDetails.length === 0) {
-        console.log('Trying profiles table with id...')
-        try {
-          const { data: profilesData, error: profilesError } = await supabase
-            .from('profiles')
-            .select('*')
-            .in('id', studentIds)
-
-          console.log('Profiles table (id) response:', { data: profilesData, error: profilesError })
-
-          if (!profilesError && profilesData && profilesData.length > 0) {
-            studentDetails = profilesData.map(profile => ({
-              id: profile.id,
-              student_id: profile.student_id || profile.id,
-              first_name: profile.full_name ? profile.full_name.split(' ')[0] : 'Unknown',
-              last_name: profile.full_name ? profile.full_name.split(' ').slice(1).join(' ') : 'Student',
-              email: profile.email || 'N/A',
-              grade_level: profile.course_year || 'N/A',
-              role: profile.role || 'N/A'
-            }))
-            console.log('✅ Students found in profiles table via id:', studentDetails)
-          }
-        } catch (profilesError) {
-          console.log('❌ Profiles table (id) error:', profilesError)
-        }
-      }
-
-      // Method 3: Try students table (less likely but worth checking)
-      if (studentDetails.length === 0) {
-        console.log('Trying students table...')
-        try {
-          const { data: studentsData, error: studentsError } = await supabase
-            .from('students')
-            .select('*')
-            .in('id', studentIds)
-
-          console.log('Students table response:', { data: studentsData, error: studentsError })
+        
+        console.log('All student_details records:', allStudentDetails)
+        
+        if (!error2 && allStudentDetails) {
+          // Filter by profile_id
+          studentDetailsData = allStudentDetails.filter(detail => 
+            studentIds.includes(detail.profile_id)
+          )
           
-          if (!studentsError && studentsData && studentsData.length > 0) {
-            studentDetails = studentsData.map(student => ({
-              id: student.id,
-              student_id: student.student_id || student.id,
-              first_name: student.first_name || 'Unknown',
-              last_name: student.last_name || 'Student',
-              email: student.email || 'N/A',
-              grade_level: student.grade_level?.toString() || 'N/A'
-            }))
-            console.log('✅ Students found in students table:', studentDetails)
-          }
-        } catch (studentsTableError) {
-          console.log('❌ Students table error:', studentsTableError)
-        }
-      }
-
-      // Method 4: Try to find students via profile_id relationship
-      if (studentDetails.length === 0) {
-        console.log('Trying to find students via profile relationship...')
-        try {
-          // First get profiles by auth_user_id, then get students by profile_id
-          const { data: profilesData, error: profilesError } = await supabase
-            .from('profiles')
-            .select('id, auth_user_id, full_name, email, student_id, course_year, role')
-            .in('auth_user_id', studentIds)
-
-          if (!profilesError && profilesData && profilesData.length > 0) {
-            console.log('Found profiles, now looking for students:', profilesData)
-            
-            const profileIds = profilesData.map(p => p.id)
-            const { data: studentsData, error: studentsError } = await supabase
-              .from('students')
+          // Get corresponding profiles
+          if (studentDetailsData.length > 0) {
+            const profileIds = studentDetailsData.map(d => d.profile_id)
+            const { data: profilesData, error: profilesError } = await supabase
+              .from('profiles')
               .select('*')
-              .in('profile_id', profileIds)
-
-            if (!studentsError && studentsData && studentsData.length > 0) {
-              // Merge student and profile data
-              studentDetails = studentsData.map(student => {
-                const profile = profilesData.find(p => p.id === student.profile_id)
-                return {
-                  id: profile?.auth_user_id || student.id,
-                  student_id: student.student_id || profile?.student_id || student.id,
-                  first_name: student.first_name || (profile?.full_name ? profile.full_name.split(' ')[0] : 'Unknown'),
-                  last_name: student.last_name || (profile?.full_name ? profile.full_name.split(' ').slice(1).join(' ') : 'Student'),
-                  email: student.email || profile?.email || 'N/A',
-                  grade_level: student.grade_level?.toString() || profile?.course_year || 'N/A',
-                  role: profile?.role || 'N/A'
-                }
-              })
-              console.log('✅ Students found via profile relationship:', studentDetails)
-            }
+              .in('auth_user_id', profileIds)
+            
+            console.log('Profiles data:', profilesData)
+            
+            // Merge the data
+            studentDetailsData = studentDetailsData.map(detail => ({
+              ...detail,
+              profiles: profilesData?.find(p => p.auth_user_id === detail.profile_id) || null
+            }))
           }
-        } catch (relationError) {
-          console.log('❌ Profile relationship error:', relationError)
         }
       }
 
-      console.log('Final student details:', studentDetails)
+      console.log('Final studentDetailsData:', studentDetailsData)
+
+      // Process the found student details
+      if (studentDetailsData && studentDetailsData.length > 0) {
+        studentDetails = studentDetailsData.map(detail => {
+          const profile = detail.profiles
+          return {
+            id: detail.profile_id,
+            student_id: detail.student_id || `STU${detail.profile_id.toString().substring(0, 8)}`,
+            first_name: profile?.full_name ? profile.full_name.split(' ')[0] : 'Unknown',
+            last_name: profile?.full_name ? profile.full_name.split(' ').slice(1).join(' ') || 'Student' : 'Student',
+            email: profile?.email || 'N/A',
+            grade_level: detail.grade_level || detail.course_year || subject.grade_level || 'N/A',
+            course_year: detail.course_year,
+            enrollment_status: detail.enrollment_status,
+            role: profile?.role || 'student',
+            student_details_id: detail.id
+          }
+        })
+        
+        console.log('✅ Processed student details:', studentDetails)
+      } else {
+        console.log('❌ No student details found')
+        
+        // Create debug placeholders
+        studentDetails = studentIds.map(studentId => ({
+          id: studentId,
+          student_id: `DEBUG-${studentId.toString().substring(0, 8)}`,
+          first_name: 'No Details',
+          last_name: 'Found',
+          email: `debug-${studentId}@missing.com`,
+          grade_level: 'N/A',
+          role: 'student',
+          isMissingData: true,
+          debug_student_id: studentId
+        }))
+      }
     }
 
     // Group students by section
     const studentsBySection = {}
     let totalActualStudents = 0
     
-    // Create section groups
+    // Initialize section groups
     sections.forEach(section => {
       const sectionKey = `${section.name} (${section.section_code})`
       studentsBySection[sectionKey] = {
@@ -681,44 +646,36 @@ const viewStudentRoster = async (subject) => {
     })
 
     // Add students to their respective sections
+    const processedStudentIds = new Set()
+    
     enrollments?.forEach(enrollment => {
       const section = sections.find(s => s.id === enrollment.section_id)
-      const student = studentDetails.find(s => s.id === enrollment.student_id)
+      const student = studentDetails.find(s => 
+        s.id === enrollment.student_id || 
+        s.debug_student_id === enrollment.student_id
+      )
+      
+      // Skip duplicates
+      const studentSectionKey = `${enrollment.student_id}-${enrollment.section_id}`
+      if (processedStudentIds.has(studentSectionKey)) {
+        return
+      }
+      processedStudentIds.add(studentSectionKey)
       
       console.log('Processing enrollment:', {
-        enrollment_id: enrollment.id,
-        student_id: enrollment.student_id,
+        enrollment_student_id: enrollment.student_id,
         section_id: enrollment.section_id,
-        found_student: student,
-        found_section: section
+        found_student: student?.first_name + ' ' + student?.last_name,
+        found_section: section?.name
       })
       
-      if (section) {
+      if (section && student) {
         const sectionKey = `${section.name} (${section.section_code})`
-        
-        if (student) {
-          console.log('✅ Adding student with data:', student)
-          studentsBySection[sectionKey].students.push({
-            ...student,
-            enrollment_date: enrollment.created_at,
-            enrollment_id: enrollment.id
-          })
-        } else {
-          console.log('❌ No student data found, creating placeholder')
-          // Show more detailed placeholder for debugging
-          const shortId = enrollment.student_id.toString().substring(0, 8)
-          studentsBySection[sectionKey].students.push({
-            id: enrollment.student_id,
-            student_id: `Missing-${shortId}`,
-            first_name: 'Data',
-            last_name: 'Not Found',
-            email: `student-${shortId}@unknown.com`,
-            grade_level: 'N/A',
-            enrollment_date: enrollment.created_at,
-            enrollment_id: enrollment.id,
-            debug_note: 'Student data not found in any table'
-          })
-        }
+        studentsBySection[sectionKey].students.push({
+          ...student,
+          enrollment_date: enrollment.created_at,
+          enrollment_id: enrollment.id
+        })
         totalActualStudents++
       }
     })
@@ -726,14 +683,13 @@ const viewStudentRoster = async (subject) => {
     console.log('Final studentsBySection:', studentsBySection)
     console.log('Total actual students:', totalActualStudents)
 
-    // Sort students within each section by last name
+    // Sort students within each section
     Object.keys(studentsBySection).forEach(sectionKey => {
       studentsBySection[sectionKey].students.sort((a, b) => 
         (a.last_name || '').localeCompare(b.last_name || '')
       )
     })
 
-    // Store for modal display
     currentStudentRoster.value = {
       subject,
       studentsBySection,
@@ -744,36 +700,7 @@ const viewStudentRoster = async (subject) => {
 
   } catch (error) {
     console.error('Error viewing student roster:', error)
-    
-    // Show basic roster with section info even if student details fail
-    const basicRoster = {
-      subject,
-      studentsBySection: {},
-      totalActualStudents: 0
-    }
-    
-    // Try to at least show sections
-    try {
-      const { data: sections } = await supabase
-        .from('sections')
-        .select('*')
-        .eq('class_id', subject.id)
-      
-      sections?.forEach(section => {
-        const sectionKey = `${section.name} (${section.section_code})`
-        basicRoster.studentsBySection[sectionKey] = {
-          section: section,
-          students: []
-        }
-      })
-    } catch (sectionsError) {
-      console.error('Could not even fetch sections:', sectionsError)
-    }
-    
-    currentStudentRoster.value = basicRoster
-    showStudentRosterModal.value = true
-    
-    alert(`Unable to load complete student roster: ${error.message}\n\nShowing available section information. Please ensure you have proper database tables set up.`)
+    alert(`Unable to load student roster: ${error.message}`)
   } finally {
     isLoading.value = false
   }

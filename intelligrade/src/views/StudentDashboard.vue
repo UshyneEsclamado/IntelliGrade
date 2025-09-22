@@ -10,11 +10,37 @@
           </div>
         </div>
         <div class="user-details">
-          <h3 v-if="!isLoading">{{ fullName }}</h3>
-          <h3 v-else class="loading-text">Loading...</h3>
-          <p class="role">Student</p>
-          <p v-if="!isLoading && studentId" class="student-id">ID: {{ studentId }}</p>
-          <p v-if="!isLoading && courseYear" class="course-year">{{ courseYear }}</p>
+          <!-- Fixed: Better loading and fallback states -->
+          <h3 v-if="isLoading" class="loading-text">
+            <span class="loading-spinner"></span>
+            Loading...
+          </h3>
+          <h3 v-else-if="userProfile.fullName" class="user-name">
+            {{ userProfile.fullName }}
+          </h3>
+          <h3 v-else class="no-name-text">
+            Name not available
+          </h3>
+          
+          <p class="role">STUDENT</p>
+          
+          <!-- Fixed: Better grade display -->
+          <p v-if="!isLoading && userProfile.grade" class="grade">
+            GRADE {{ userProfile.grade }}
+          </p>
+          <p v-else-if="!isLoading" class="grade grade-missing">
+            GRADE NOT SET
+          </p>
+          <div v-else class="grade-skeleton"></div>
+          
+          <!-- Fixed: Better student ID display -->
+          <p v-if="!isLoading && userProfile.studentId" class="student-id">
+            STUDENT ID: {{ userProfile.studentId }}
+          </p>
+          <p v-else-if="!isLoading" class="student-id student-id-missing">
+            STUDENT ID: NOT SET
+          </p>
+          <div v-else class="student-id-skeleton"></div>
         </div>
       </div>
 
@@ -108,7 +134,6 @@
     </div>
   </div>
 </template>
-
 <script>
 import Home from './student/Home.vue';
 import Subjects from './student/Subjects.vue';
@@ -121,12 +146,18 @@ export default {
   name: 'StudentDashboard',
   data() {
     return {
-      fullName: 'Loading...',
-      studentId: '',
-      courseYear: '',
+      userProfile: {
+        fullName: null,
+        studentId: null,
+        grade: null,
+        role: null,
+      },
       currentView: 'home',
       isLogoutModalVisible: false,
       isLoading: true,
+      profileSubscription: null,
+      retryCount: 0,
+      maxRetries: 3
     };
   },
   computed: {
@@ -149,56 +180,178 @@ export default {
   },
   async mounted() {
     await this.loadUserProfile();
+    this.setupProfileSubscription();
     this.initializeDarkMode();
+  },
+  beforeUnmount() {
+    if (this.profileSubscription) {
+      this.profileSubscription.unsubscribe();
+    }
   },
   methods: {
     async loadUserProfile() {
       try {
+        this.isLoading = true;
+        
         // Get the current user from Supabase auth
         const { data: { user }, error: authError } = await supabase.auth.getUser();
+        console.log('Current user:', user);
         
         if (authError || !user) {
           console.error('Auth error:', authError);
-          // Redirect to login if not authenticated
-          this.$router.push('/login');
+          this.handleAuthError();
           return;
         }
 
-        // Fetch the user profile from the profiles table
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('full_name, student_id, course_year, role')
-          .eq('id', user.id)
-          .single();
+        // Fetch user profile from students table (not profiles)
+        await this.fetchStudentProfile(user.id);
 
-        if (profileError) {
-          console.error('Profile error:', profileError);
-          this.fullName = 'Student';
-          return;
-        }
-
-        if (profile) {
-          this.fullName = profile.full_name || 'Student';
-          this.studentId = profile.student_id || '';
-          this.courseYear = profile.course_year || '';
-          
-          // Verify this is actually a student
-          if (profile.role !== 'student') {
-            console.warn('User is not a student');
-            this.$router.push('/login');
-            return;
-          }
-        }
       } catch (error) {
         console.error('Error loading user profile:', error);
-        this.fullName = 'Student';
+        this.handleProfileError();
       } finally {
         this.isLoading = false;
       }
     },
+
+    async fetchStudentProfile(userId) {
+      try {
+        console.log(`Fetching student profile for user ID: ${userId}`);
+        
+        // Query the profiles table - ADD student_id to the SELECT
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, auth_user_id, full_name, email, role, grade_level, student_id, created_at, updated_at') // Added student_id here
+          .eq('auth_user_id', userId)
+          .eq('role', 'student')
+          .single();
+
+        console.log('Profile data:', profile);
+        console.log('Profile error:', profileError);
+
+        if (profileError) {
+          if (profileError.code === 'PGRST116') {
+            console.warn('No student profile found for user');
+            this.handleMissingStudentRecord(userId);
+            return;
+          }
+          throw profileError;
+        }
+
+        if (profile) {
+          this.updateUserProfile(profile);
+        } else {
+          console.warn('No profile data returned');
+          this.handleMissingStudentRecord(userId);
+        }
+
+      } catch (error) {
+        console.error('Error fetching student profile:', error);
+        throw error;
+      }
+    },
+
+    updateUserProfile(profile) {
+      this.userProfile = {
+        fullName: profile.full_name || 'Name not available',
+        studentId: this.formatStudentId(profile), // Better student ID formatting
+        grade: profile.grade_level || null, // Remove 'Grade not set', let template handle it
+        role: profile.role || 'student'
+      };
+      
+      console.log('Student profile updated:', this.userProfile);
+    },
+
+    // Add this new method to format student ID properly
+    formatStudentId(profile) {
+      // If there's a specific student_id field, use it
+      if (profile.student_id) {
+        return profile.student_id;
+      }
+      
+      // Otherwise, create a readable student ID from the profile ID
+      if (profile.id) {
+        // Take first 8 characters of UUID and make it look like a student ID
+        const shortId = profile.id.substring(0, 8).toUpperCase();
+        return `STU-${shortId}`;
+      }
+      
+      return 'Not Set';
+    },
+
+    async handleMissingStudentRecord(userId) {
+      try {
+        // Get user email from auth
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        this.userProfile = {
+          fullName: user?.email?.split('@')[0] || 'Student',
+          studentId: 'Not set - Please complete signup',
+          grade: 'Not set - Please complete signup',
+          role: 'student'
+        };
+        
+        console.log('Using fallback profile:', this.userProfile);
+        
+        // Optionally redirect to complete profile
+        // this.$router.push('/signup-student');
+      } catch (error) {
+        console.error('Error handling missing student record:', error);
+        this.handleProfileError();
+      }
+    },
+
+    handleAuthError() {
+      this.userProfile = {
+        fullName: 'Authentication Error',
+        studentId: null,
+        grade: null,
+        role: null
+      };
+      setTimeout(() => {
+        this.$router.push('/login');
+      }, 2000);
+    },
+
+    handleProfileError() {
+      this.userProfile = {
+        fullName: 'Profile Load Error',
+        studentId: 'Error loading data',
+        grade: 'Error loading data',
+        role: null
+      };
+    },
+
+    setupProfileSubscription() {
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) {
+          console.log('Setting up profile subscription...');
+          this.profileSubscription = supabase
+            .channel('profile_changes')
+            .on(
+              'postgres_changes',
+              {
+                event: '*',
+                schema: 'public',
+                table: 'profiles', // Changed from 'students' to 'profiles'
+                filter: `auth_user_id=eq.${user.id}` // Use auth_user_id instead of id
+              },
+              (payload) => {
+                console.log('Profile updated via subscription:', payload);
+                if (payload.new) {
+                  this.updateUserProfile(payload.new);
+                }
+              }
+            )
+            .subscribe();
+        }
+      });
+    },
+
     navigateTo(view) {
       this.currentView = view;
     },
+
     initializeDarkMode() {
       const savedTheme = localStorage.getItem('darkMode');
       if (savedTheme === 'true') {
@@ -207,39 +360,42 @@ export default {
         document.documentElement.classList.remove('dark');
       }
     },
+
     showLogoutModal() {
       this.isLogoutModalVisible = true;
     },
+
     hideLogoutModal() {
       this.isLogoutModalVisible = false;
     },
+
     async confirmLogout() {
-      // Hide modal first
       this.isLogoutModalVisible = false;
       
       try {
-        // Sign out from Supabase
+        if (this.profileSubscription) {
+          this.profileSubscription.unsubscribe();
+        }
+        
         const { error } = await supabase.auth.signOut();
         if (error) {
           console.error('Logout error:', error);
         }
         
-        // Clear any local storage data
         localStorage.removeItem('userProfile');
+        localStorage.removeItem('darkMode');
         
         console.log('User logged out');
-        
-        // Navigate to Landing page
         this.$router.push('/');
       } catch (error) {
         console.error('Error during logout:', error);
-        // Still redirect even if there's an error
         this.$router.push('/');
       }
     },
   },
 };
 </script>
+
 
 <style scoped>
 /*
@@ -248,7 +404,7 @@ export default {
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 /*
- * Student Dashboard Styles - Matching Teacher Dashboard Design & Color Palette
+ * Student Dashboard Styles - Enhanced with better loading states
  */
 .dashboard-container {
   display: flex;
@@ -281,29 +437,29 @@ export default {
 }
 
 .sidebar {
-  width: 300px;
+  width: 280px;
   background: var(--card-background);
   backdrop-filter: blur(20px);
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  padding: 2.5rem 1.5rem;
+  padding: 1.5rem 1rem;
   box-shadow: 
     0 8px 32px var(--shadow-medium),
     0 0 0 1px var(--border-color);
-  overflow-y: auto;
+  overflow-y: hidden;
   flex-shrink: 0;
   position: relative;
   z-index: 1;
 }
 
 .user-info {
-  margin-bottom: 2.5rem;
-  padding-bottom: 2rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
   border-bottom: 1px solid var(--border-color);
   background: var(--bg-accent);
-  border-radius: 20px;
-  padding: 2rem 1.5rem;
+  border-radius: 16px;
+  padding: 1.5rem 1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -311,30 +467,25 @@ export default {
 }
 
 .profile-pic-container {
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .profile-pic-placeholder {
-  width: 80px;
-  height: 80px;
+  width: 60px;
+  height: 60px;
   background: var(--accent-color);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 8px 32px var(--shadow-strong);
+  box-shadow: 0 4px 16px var(--shadow-strong);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.profile-pic-placeholder:hover {
-  transform: none;
-  box-shadow: 0 8px 32px var(--shadow-strong);
-}
-
 .profile-pic-placeholder svg {
-  width: 48px;
-  height: 48px;
+  width: 32px;
+  height: 32px;
 }
 
 .user-details {
@@ -342,55 +493,136 @@ export default {
 }
 
 .user-info h3 {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--accent-color);
   margin-bottom: 0.5rem;
+  word-break: break-word;
+  line-height: 1.2;
+  min-height: 1.5rem;
 }
 
-.user-info .role {
-  font-size: 0.875rem;
-  color: var(--text-muted);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  background: var(--bg-accent);
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  display: inline-block;
-  margin-bottom: 0.25rem;
-}
-
-.user-info .student-id,
-.user-info .course-year {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-  margin-bottom: 0.15rem;
-  opacity: 0.8;
+.user-name {
+  color: var(--accent-color);
+  font-weight: 700;
 }
 
 .loading-text {
   color: var(--text-secondary);
   opacity: 0.7;
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border-color);
+  border-top: 2px solid var(--accent-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.no-name-text {
+  color: var(--text-muted);
+  opacity: 0.6;
+  font-style: italic;
+  font-weight: 500;
+}
+
+.user-info .role {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--bg-accent);
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.user-info .grade {
+  font-size: 0.75rem;
+  color: var(--accent-color);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+  word-break: break-word;
+  min-height: 1rem;
+}
+
+.grade-missing {
+  color: var(--text-muted) !important;
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.grade-skeleton,
+.student-id-skeleton {
+  height: 1rem;
+  background: var(--border-color);
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.student-id-skeleton {
+  height: 0.8rem;
+  width: 80%;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.user-info .student-id {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 0;
+  opacity: 0.8;
+  word-break: break-word;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  min-height: 0.8rem;
+}
+
+.student-id-missing {
+  color: var(--text-muted) !important;
+  opacity: 0.6;
+  font-style: italic;
 }
 
 .nav-links {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
+  justify-content: center;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  padding: 1rem 1.25rem;
-  border-radius: 16px;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
   color: var(--accent-color);
   text-decoration: none;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: var(--bg-accent);
   border: 1px solid var(--border-color);
@@ -417,9 +649,9 @@ export default {
 }
 
 .nav-item svg {
-  margin-right: 1rem;
-  width: 22px;
-  height: 22px;
+  margin-right: 0.75rem;
+  width: 18px;
+  height: 18px;
   fill: #3D8D7A;
   transition: all 0.3s ease;
   position: relative;
@@ -441,10 +673,6 @@ export default {
   left: 0;
 }
 
-.nav-item:hover svg {
-  transform: none;
-}
-
 .nav-item.is-active {
   background: rgba(95, 179, 160, 0.12);
   border-color: rgba(95, 179, 160, 0.3);
@@ -455,7 +683,6 @@ export default {
 
 .nav-item.is-active svg {
   fill: var(--accent-color);
-  transform: none;
 }
 
 .nav-item.is-active span {
@@ -463,7 +690,6 @@ export default {
   font-weight: 600;
 }
 
-/* Dark mode active state */
 :root.dark .nav-item.is-active {
   background: rgba(95, 179, 160, 0.15);
   border-color: rgba(95, 179, 160, 0.35);
@@ -473,12 +699,12 @@ export default {
 .logout-btn {
   display: flex;
   align-items: center;
-  padding: 1rem 1.25rem;
-  border-radius: 16px;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
   color: var(--text-inverse);
   text-decoration: none;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: var(--accent-color);
   border: 1px solid var(--accent-color);
@@ -487,23 +713,18 @@ export default {
   text-align: left;
   position: relative;
   overflow: hidden;
-  margin-top: 0.75rem;
+  margin-top: 0.5rem;
   box-shadow: none;
   line-height: 1;
-  gap: 1rem;
+  gap: 0.75rem;
   justify-content: flex-start;
   box-sizing: border-box;
 }
 
 .logout-btn svg {
-  width: 22px;
-  height: 22px;
-  margin-right: 1rem;
-}
-
-.logout-btn span {
-  position: relative;
-  z-index: 1;
+  width: 18px;
+  height: 18px;
+  margin-right: 0.75rem;
 }
 
 .logout-btn:hover {
@@ -512,51 +733,6 @@ export default {
   border-color: var(--accent-hover);
   transform: none;
   box-shadow: 0 2px 8px rgba(24, 60, 46, 0.1);
-}
-
-.logout-btn:hover svg {
-  transform: none;
-}
-
-.logout-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, rgba(179, 216, 168, 0.3) 0%, rgba(163, 209, 198, 0.2) 100%);
-  transition: left 0.3s ease;
-  z-index: 0;
-}
-
-.logout-btn svg {
-  margin-right: 1rem;
-  width: 22px;
-  height: 22px;
-  fill: #3D8D7A;
-  transition: all 0.3s ease;
-  position: relative;
-  z-index: 1;
-}
-
-.logout-btn span {
-  position: relative;
-  z-index: 1;
-}
-
-.logout-btn:hover {
-  transform: none;
-  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.08);
-  border-color: rgba(61, 141, 122, 0.15);
-}
-
-.logout-btn:hover::before {
-  left: 0;
-}
-
-.logout-btn:hover svg {
-  transform: none;
 }
 
 .main-content {
@@ -599,21 +775,12 @@ export default {
   text-align: center;
 }
 
-/* Dark mode styles for modal */
 :root.dark .modal-container {
   background: rgba(30, 35, 34, 0.95);
   border: 1px solid rgba(95, 179, 160, 0.2);
   box-shadow: 
     0 20px 60px rgba(0, 0, 0, 0.4),
     0 0 0 1px rgba(95, 179, 160, 0.1);
-}
-
-:root.dark .modal-title {
-  color: var(--text-primary);
-}
-
-:root.dark .modal-message {
-  color: var(--text-secondary);
 }
 
 .modal-header {
@@ -689,7 +856,6 @@ export default {
   background: var(--accent-color);
   color: var(--text-inverse);
   box-shadow: 0 2px 8px var(--shadow-medium);
-  transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
 }
 
 .btn-confirm:hover {
@@ -699,7 +865,6 @@ export default {
   transform: none;
 }
 
-/* Dark mode styles for modal buttons */
 :root.dark .btn-cancel {
   background: rgba(95, 179, 160, 0.1);
   color: var(--accent-color);
@@ -714,6 +879,14 @@ export default {
 :root.dark .btn-confirm {
   background: var(--accent-color);
   color: white;
+}
+
+:root.dark .modal-title {
+  color: var(--text-primary);
+}
+
+:root.dark .modal-message {
+  color: var(--text-secondary);
 }
 
 /* Animations */
@@ -793,6 +966,15 @@ export default {
     padding: 0.2rem 0.5rem;
   }
   
+  .user-info .grade {
+    font-size: 0.7rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  .user-info .student-id {
+    font-size: 0.65rem;
+  }
+  
   .nav-links {
     display: none;
   }
@@ -849,6 +1031,19 @@ export default {
     font-size: 1rem;
   }
   
+  .user-info .role {
+    font-size: 0.7rem;
+    padding: 0.15rem 0.4rem;
+  }
+  
+  .user-info .grade {
+    font-size: 0.65rem;
+  }
+  
+  .user-info .student-id {
+    font-size: 0.6rem;
+  }
+  
   .logout-btn {
     padding: 0.6rem 1rem;
     font-size: 0.8rem;
@@ -891,5 +1086,62 @@ html, body {
 #app {
   height: 100%;
   width: 100%;
+}
+
+/* CSS Variables for consistent theming */
+:root {
+  /* Light mode colors */
+  --bg-primary: #fefefe;
+  --bg-secondary: #f8faf9;
+  --bg-accent: rgba(251, 255, 228, 0.6);
+  --bg-accent-hover: rgba(251, 255, 228, 0.8);
+  
+  --card-background: rgba(255, 255, 255, 0.8);
+  --card-background-hover: rgba(255, 255, 255, 0.9);
+  
+  --accent-color: #3D8D7A;
+  --accent-hover: #2A6B5B;
+  --accent-light: #5FB3A0;
+  --accent-lighter: #A3D1C6;
+  
+  --text-primary: #1a1a1a;
+  --text-secondary: #4a4a4a;
+  --text-muted: #7a7a7a;
+  --text-inverse: #ffffff;
+  
+  --border-color: rgba(61, 141, 122, 0.12);
+  --border-hover: rgba(61, 141, 122, 0.2);
+  
+  --shadow-light: rgba(61, 141, 122, 0.05);
+  --shadow-medium: rgba(61, 141, 122, 0.1);
+  --shadow-strong: rgba(61, 141, 122, 0.2);
+}
+
+/* Dark mode colors */
+:root.dark {
+  --bg-primary: #0f1211;
+  --bg-secondary: #1a1f1e;
+  --bg-accent: rgba(30, 35, 34, 0.6);
+  --bg-accent-hover: rgba(30, 35, 34, 0.8);
+  
+  --card-background: rgba(30, 35, 34, 0.8);
+  --card-background-hover: rgba(30, 35, 34, 0.9);
+  
+  --accent-color: #5FB3A0;
+  --accent-hover: #4A9085;
+  --accent-light: #7BC4B5;
+  --accent-lighter: #A3D1C6;
+  
+  --text-primary: #f0f0f0;
+  --text-secondary: #c0c0c0;
+  --text-muted: #909090;
+  --text-inverse: #ffffff;
+  
+  --border-color: rgba(95, 179, 160, 0.15);
+  --border-hover: rgba(95, 179, 160, 0.25);
+  
+  --shadow-light: rgba(0, 0, 0, 0.1);
+  --shadow-medium: rgba(0, 0, 0, 0.2);
+  --shadow-strong: rgba(0, 0, 0, 0.3);
 }
 </style>

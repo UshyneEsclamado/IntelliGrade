@@ -252,10 +252,11 @@ export default {
           throw authError;
         }
 
+        // Query the new profiles table structure
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("role")
-          .eq("id", authData.user.id)
+          .eq("auth_user_id", authData.user.id)
           .single();
 
         if (profileError) {

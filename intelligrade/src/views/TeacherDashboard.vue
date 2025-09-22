@@ -11,9 +11,8 @@
           </div>
         </div>
         <div class="user-details">
-          <h3>{{ profileData.full_name || 'Loading...' }}</h3>
-          <p class="role">Teacher</p>
-          <p v-if="profileData.bio" class="bio">{{ profileData.bio }}</p>
+          <h3>{{ profileData.full_name || 'Ana Rose' }}</h3>
+          <p class="role">TEACHER</p>
         </div>
       </div>
 
@@ -100,7 +99,6 @@ import { useRouter } from 'vue-router';
 const router = useRouter();
 const profileData = ref({
   full_name: '',
-  bio: '',
   profile: ''
 });
 const isLogoutModalVisible = ref(false);
@@ -113,27 +111,25 @@ const fetchUserProfile = async () => {
       return;
     }
 
-    // Fetch all profile fields including profile picture and bio
+    // Fetch profile fields (removed bio from query)
     const { data: profile, error } = await supabase
       .from('profiles')
-      .select('full_name, bio, profile')
+      .select('full_name, profile')
       .eq('id', user.id)
       .single();
 
     if (error) {
       console.warn('Profile not found, using defaults:', error);
-      // Set default values if profile doesn't exist
+      // Set default values if profile doesn't exist - use full_name from profiles, not email
       profileData.value = {
-        full_name: user.email || 'User',
-        bio: '',
+        full_name: 'Ana Rose', // Default fallback name instead of email
         profile: ''
       };
       return;
     }
 
     profileData.value = {
-      full_name: profile.full_name || user.email || 'User',
-      bio: profile.bio || '',
+      full_name: profile.full_name || 'Ana Rose', // Use full_name from profile or fallback
       profile: profile.profile || ''
     };
   } catch (err) {
@@ -142,8 +138,7 @@ const fetchUserProfile = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       profileData.value = {
-        full_name: user.email || 'User',
-        bio: '',
+        full_name: 'Ana Rose', // Default name instead of email
         profile: ''
       };
     } else {
@@ -331,19 +326,7 @@ onMounted(() => {
   padding: 0.2rem 0.6rem;
   border-radius: 12px;
   display: inline-block;
-  margin-bottom: 0.4rem;
-}
-
-.user-info .bio {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  font-style: italic;
-  line-height: 1.35;
-  margin-top: 0.4rem;
-  padding: 0.4rem;
-  background: var(--bg-accent);
-  border-radius: 8px;
-  border-left: 3px solid var(--accent-color);
+  margin-bottom: 0;
 }
 
 /* PERFECTLY DISTRIBUTED NAVIGATION */
@@ -728,10 +711,6 @@ onMounted(() => {
   .user-info .role {
     font-size: 0.75rem;
     padding: 0.2rem 0.5rem;
-  }
-  
-  .user-info .bio {
-    display: none;
   }
   
   .nav-links {
