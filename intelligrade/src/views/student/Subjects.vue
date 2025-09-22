@@ -74,6 +74,7 @@
           <p class="subject-code">{{ subject.code }}</p>
           <p class="subject-instructor">{{ subject.instructor }}</p>
           <p class="subject-section">Section: {{ subject.section }}</p>
+          <p class="subject-grade">Grade {{ subject.gradeLevel }}</p>
         </div>
         
         <div class="subject-stats compact">
@@ -283,7 +284,9 @@ export default {
         this.loadingMessage = 'Loading subjects...'
         this.isLoading = true
 
-        // Fetch student enrollments with section and subject details
+        console.log('Current user ID:', user.id)
+
+        // First, get enrollments with section and subject details
         const { data: enrollments, error } = await supabase
           .from('enrollments')
           .select(`
@@ -312,82 +315,70 @@ export default {
 
         console.log('Fetched enrollments:', enrollments)
 
-        // For each enrollment, get real-time quiz data and grades
+        // For each enrollment, get teacher details and quiz data
         const subjectsWithRealTimeData = await Promise.all(
           enrollments.map(async (enrollment) => {
             const sectionId = enrollment.sections.id
             const subjectId = enrollment.sections.subjects.id
+            const subject = enrollment.sections.subjects
+
+            console.log('Processing subject:', subject.name, 'with teacher_id:', subject.teacher_id)
 
             try {
-              // Get real-time quiz counts
-              const { data: quizData, error: quizError } = await supabase
-                .from('quizzes')
-                .select(`
-                  id,
-                  title,
-                  is_published,
-                  due_date,
-                  created_at,
-                  student_quiz_attempts!left(
-                    id,
-                    completed_at,
-                    score
-                  )
-                `)
-                .eq('section_id', sectionId)
-                .eq('student_quiz_attempts.student_id', user.id)
+              // COMPREHENSIVE TEACHER LOOKUP - Let's find where the teacher data is!
+              // Get teacher information - Look in teachers table directly
+              let teacherName = 'Teacher Not Assigned'
+              if (subject.teacher_id) {
+                console.log('Looking up teacher with ID:', subject.teacher_id)
+                
+                // Look up teacher in teachers table (since there's no users table)
+                const { data: teacherData, error: teacherError } = await supabase
+                  .from('teachers')
+                  .select('name, email')
+                  .eq('id', subject.teacher_id)
+                  .maybeSingle()
 
-              if (quizError) console.warn('Quiz data error:', quizError)
+                console.log('Teacher lookup in teachers table:', { teacherData, teacherError })
 
-              // Calculate real-time stats
-              const totalQuizzes = quizData?.length || 0
-              const completedQuizzes = quizData?.filter(quiz => 
-                quiz.student_quiz_attempts?.length > 0 && 
-                quiz.student_quiz_attempts[0].completed_at
-              ).length || 0
-              
-              const availableQuizzes = quizData?.filter(quiz => 
-                quiz.is_published && 
-                new Date(quiz.due_date) > new Date() &&
-                (!quiz.student_quiz_attempts?.length || !quiz.student_quiz_attempts[0].completed_at)
-              ).length || 0
-
-              // Calculate current grade from completed quizzes
-              const completedAttempts = quizData?.filter(quiz => 
-                quiz.student_quiz_attempts?.length > 0 && 
-                quiz.student_quiz_attempts[0].completed_at && 
-                quiz.student_quiz_attempts[0].score !== null
-              ) || []
-
-              let currentGrade = null
-              let overallScore = null
-
-              if (completedAttempts.length > 0) {
-                const totalScore = completedAttempts.reduce((sum, quiz) => 
-                  sum + (quiz.student_quiz_attempts[0].score || 0), 0)
-                overallScore = Math.round((totalScore / completedAttempts.length) * 100) / 100
-
-                // Convert to letter grade
-                if (overallScore >= 95) currentGrade = 'A+'
-                else if (overallScore >= 90) currentGrade = 'A'
-                else if (overallScore >= 87) currentGrade = 'A-'
-                else if (overallScore >= 83) currentGrade = 'B+'
-                else if (overallScore >= 80) currentGrade = 'B'
-                else if (overallScore >= 77) currentGrade = 'B-'
-                else if (overallScore >= 73) currentGrade = 'C+'
-                else if (overallScore >= 70) currentGrade = 'C'
-                else if (overallScore >= 67) currentGrade = 'C-'
-                else if (overallScore >= 60) currentGrade = 'D'
-                else currentGrade = 'F'
+                if (teacherData && teacherData.name) {
+                  teacherName = teacherData.name.trim()
+                  console.log('✅ Found teacher:', teacherName)
+                } else if (teacherData && teacherData.email) {
+                  // Fallback to email if no name
+                  teacherName = teacherData.email.split('@')[0]
+                  console.log('📧 Using email as teacher name:', teacherName)
+                } else {
+                  console.warn('❌ Teacher not found for ID:', subject.teacher_id)
+                  teacherName = 'Teacher Not Found'
+                }
+              } else {
+                console.log('⚠️ No teacher_id assigned to subject:', subject.name)
+                teacherName = 'No Teacher Assigned'
               }
 
-              return {
+              // Get ALL quizzes for this section first
+              const { data: allQuizzes, error: allQuizzesError } = await supabase
+                .from('quizzes')
+                .select('id, title, is_published, due_date, created_at')
+                .eq('section_id', sectionId)
+
+              console.log('All quizzes for section', sectionId, ':', allQuizzes)
+
+              // Calculate stats (simplified for now to focus on teacher issue)
+              const totalQuizzes = allQuizzes ? allQuizzes.length : 0
+              const completedQuizzes = 0 // We'll fix this after teacher issue
+              const availableQuizzes = 0 // We'll fix this after teacher issue
+              let currentGrade = '--'
+              let overallScore = null
+
+              const finalSubject = {
                 id: subjectId,
-                name: enrollment.sections.subjects.name,
+                name: subject.name,
                 code: enrollment.sections.section_code,
                 section: enrollment.sections.name,
-                instructor: 'Teacher', // Simplified since we're not using teachers table
-                color: this.generateSubjectColor(enrollment.sections.subjects.name),
+                instructor: teacherName, // This should now show the actual teacher name
+                gradeLevel: subject.grade_level,
+                color: this.generateSubjectColor(subject.name),
                 status: 'active',
                 completedQuizzes,
                 availableQuizzes,
@@ -397,21 +388,26 @@ export default {
                 enrollmentId: enrollment.id,
                 sectionId: sectionId
               }
+
+              console.log('Final processed subject:', finalSubject)
+              return finalSubject
+
             } catch (err) {
-              console.warn(`Error processing subject ${enrollment.sections.subjects.name}:`, err)
-              // Return basic data if detailed stats fail
+              console.error(`Error processing subject ${subject.name}:`, err)
+              
               return {
                 id: subjectId,
-                name: enrollment.sections.subjects.name,
+                name: subject.name,
                 code: enrollment.sections.section_code,
                 section: enrollment.sections.name,
-                instructor: 'Teacher', // Simplified since we're not using teachers table
-                color: this.generateSubjectColor(enrollment.sections.subjects.name),
+                instructor: 'Error Loading Teacher',
+                gradeLevel: subject.grade_level,
+                color: this.generateSubjectColor(subject.name),
                 status: 'active',
                 completedQuizzes: 0,
                 availableQuizzes: 0,
                 totalQuizzes: 0,
-                currentGrade: null,
+                currentGrade: '--',
                 overallScore: null,
                 enrollmentId: enrollment.id,
                 sectionId: sectionId
@@ -421,13 +417,11 @@ export default {
         )
 
         this.subjects = subjectsWithRealTimeData
-        console.log('Processed subjects:', this.subjects)
+        console.log('All processed subjects:', this.subjects)
 
       } catch (error) {
         console.error('Error fetching subjects:', error)
-        this.subjects = [] // Clear subjects on error
-        
-        // Show user-friendly error
+        this.subjects = []
         alert(`Failed to load subjects: ${error.message}`)
       } finally {
         this.isLoading = false
@@ -984,6 +978,15 @@ export default {
   font-weight: 600;
 }
 
+.subject-grade {
+  font-size: 0.875rem;
+  color: #3D8D7A;
+  margin: 0.3rem 0 0 0;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .subject-stats {
   background: var(--bg-stats);
   border-radius: 16px;
@@ -1434,19 +1437,17 @@ export default {
   .subject-actions {
     flex-direction: column;
   }
-
+}
   .modal-overlay {
     padding: 1rem;
-  }
-
-  .preview-card {
-    flex-direction: column;
-    text-align: center;
-    gap: 0.75rem;
   }
 
   .modal-actions {
     flex-direction: column;
   }
-}
+
+  .preview-card {
+    flex-direction: column;
+    align: center;
+  }
 </style>

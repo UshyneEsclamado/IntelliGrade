@@ -7,7 +7,7 @@
     </div>
     
     <div class="main-wrapper">
-      <!-- Header Section (Uniform Card Style) -->
+      <!-- Header Section -->
       <div class="section-header-card">
         <div class="section-header-left">
           <div class="section-header-icon">
@@ -17,7 +17,7 @@
           </div>
           <div>
             <div class="section-header-title">Messages & Notifications</div>
-            <div class="section-header-sub">View and manage your messages and announcements</div>
+            <div class="section-header-sub">Chat with your enrolled teachers and view announcements</div>
           </div>
         </div>
       </div>
@@ -26,14 +26,14 @@
         <div class="card-box content-card">
           <div class="tabs">
             <button 
-              :class="['tab-btn', { 'active': currentTab === 'messages' }]"
-              @click="currentTab = 'messages'"
+              :class="['tab-btn', { 'active': currentTab === 'teachers' }]"
+              @click="currentTab = 'teachers'"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                <polyline points="22,6 12,13 2,6"/>
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
               </svg>
-              Messages
+              My Teachers
             </button>
             <button 
               :class="['tab-btn', { 'active': currentTab === 'notifications' }]"
@@ -43,103 +43,81 @@
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
                 <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
               </svg>
-              Notifications
-            </button>
-            <button 
-              :class="['tab-btn', { 'active': currentTab === 'archived' }]"
-              @click="currentTab = 'archived'"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 20 10 14 10"/>
-                <path d="M4 22h16a2 2 0 0 0 2-2V7.94a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12.06a2 2 0 0 0 2 2z"/>
-                <line x1="14" y1="2" x2="14" y2="10"/>
-              </svg>
-              Archived
+              Class Announcements
             </button>
           </div>
 
-          <div v-if="currentTab === 'messages'" class="tab-content">
+          <!-- Teachers Tab -->
+          <div v-if="currentTab === 'teachers'" class="tab-content">
             <div class="section-actions">
               <div class="search-bar">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
                   <circle cx="11" cy="11" r="8"></circle>
                   <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
-                <input type="text" v-model="searchQuery" placeholder="Search conversations..." class="search-input" />
+                <input type="text" v-model="searchQuery" placeholder="Search teachers or subjects..." class="search-input" />
               </div>
-              <button class="action-btn" @click="markAllAsRead">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20,6 9,17 4,12"/>
-                </svg>
-                Mark all read
-              </button>
+              <div class="filter-section">
+                <select v-model="selectedSubject" class="subject-filter">
+                  <option value="">All Subjects</option>
+                  <option v-for="subject in enrolledSubjects" :key="subject.id" :value="subject.id">
+                    {{ subject.name }}
+                  </option>
+                </select>
+              </div>
             </div>
-            
-            <div v-if="filteredConversations.length === 0" class="empty-state">
+
+            <!-- Enrolled Teachers by Subject -->
+            <div v-if="filteredTeachers.length === 0" class="empty-state">
               <div class="empty-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-                  <line x1="9" y1="9" x2="9.01" y2="9"/>
-                  <line x1="15" y1="9" x2="15.01" y2="9"/>
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
                 </svg>
               </div>
-              <p>No messages found</p>
-              <span class="empty-subtext">Try searching for another name or check back later.</span>
+              <p>No teachers found</p>
+              <span class="empty-subtext">Teachers from your enrolled subjects will appear here.</span>
             </div>
-            
-            <div v-else class="conversation-list">
-              <div 
-                v-for="convo in filteredConversations" 
-                :key="convo.id" 
-               :class="[
-    'conversation-item', 
-    { 'unread': !convo.read, 'menu-open': activeMessageMenu === convo.id }
-  ]"
-  @click.stop="openConversationModal(convo)"
-              >
-                <div class="sender-info">
-                  <div class="sender-avatar">
-                    <span>{{ convo.sender[0] }}</span>
-                  </div>
-                  <div class="message-content">
-                    <div class="message-header">
-                      <p class="sender-name">{{ convo.sender }}</p>
-                      <div class="message-indicators">
-                        <span v-if="!convo.read" class="unread-dot"></span>
-                        <span class="message-time">{{ convo.time }}</span>
+
+            <div v-else class="teachers-by-subject">
+              <div v-for="subject in groupedTeachers" :key="subject.id" class="subject-group">
+                <div class="subject-header">
+                  <h3 class="subject-name">{{ subject.name }}</h3>
+                  <span class="subject-code">{{ subject.code }}</span>
+                </div>
+                
+                <div class="teachers-list">
+                  <div 
+                    v-for="teacher in subject.teachers" 
+                    :key="teacher.id"
+                    :class="['teacher-item', { 'has-unread': teacher.unread_count > 0 }]"
+                    @click="startChatWithTeacher(teacher)"
+                  >
+                    <div class="teacher-info">
+                      <div class="teacher-avatar">
+                        <span>{{ teacher.name?.[0] || 'T' }}</span>
+                      </div>
+                      <div class="teacher-details">
+                        <h4 class="teacher-name">{{ teacher.name }}</h4>
+                        <p class="last-message">{{ teacher.last_message || 'Start a conversation' }}</p>
                       </div>
                     </div>
-                    <p class="last-message">{{ convo.lastMessage }}</p>
-                  </div>
-                </div>
-                <div class="message-options-container">
-                    <button class="options-btn" @click.stop="toggleMessageMenu(convo.id)">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="1"></circle>
-                        <circle cx="19" cy="12" r="1"></circle>
-                        <circle cx="5" cy="12" r="1"></circle>
-                      </svg>
-                    </button>
-                    <div v-if="activeMessageMenu === convo.id" class="options-menu">
-                        <a href="#" @click.stop.prevent="toggleReadStatus(convo.id)">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12A10 10 0 0 1 12 2a10 10 0 0 0 0 20c3.2 0 6.2-1.3 8.4-3.5L14 14.5V12a2 2 0 1 1 4 0v2.5l6 6c-2.2 2.2-5.4 3.5-8.8 3.5A10 10 0 0 1 2 12a10 10 0 0 1 20 0z"/></svg>
-                            {{ convo.read ? 'Mark as Unread' : 'Mark as Read' }}
-                        </a>
-                        <a href="#" @click.stop.prevent="archiveMessage(convo.id)">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v3m18 0h-16c-1.1 0-2 .9-2 2v7c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-8-3v4m-4 0v-4"/></svg>
-                            Archive
-                        </a>
-                        <a href="#" @click.stop.prevent="deleteMessage(convo.id)" class="delete-option">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                            Delete
-                        </a>
+                    <div class="message-status">
+                      <span v-if="teacher.unread_count > 0" class="unread-badge">{{ teacher.unread_count }}</span>
+                      <span class="last-time">{{ formatTime(teacher.last_message_time) }}</span>
+                      <div class="chat-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                      </div>
                     </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
+          <!-- Notifications Tab -->
           <div v-else-if="currentTab === 'notifications'" class="tab-content">
             <div class="section-actions">
               <div class="notification-filters">
@@ -156,53 +134,56 @@
                   Unread
                 </button>
                 <button 
-                  :class="['filter-btn', { 'active': currentFilter === 'important' }]"
-                  @click="currentFilter = 'important'"
+                  :class="['filter-btn', { 'active': currentFilter === 'class' }]"
+                  @click="currentFilter = 'class'"
                 >
-                  Important
+                  Class Announcements
                 </button>
               </div>
               <button class="action-btn" @click="clearNotifications">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="3,6 5,6 21,6"/>
-                  <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"/>
+                  <polyline points="20,6 9,17 4,12"/>
                 </svg>
-                Clear all
+                Mark all read
               </button>
             </div>
             
             <div v-if="filteredNotifications.length === 0" class="empty-state">
               <div class="empty-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-                  <line x1="9" y1="9" x2="9.01" y2="9"/>
-                  <line x1="15" y1="9" x2="15.01" y2="9"/>
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
                 </svg>
               </div>
-              <p>No notifications found</p>
-              <span class="empty-subtext">You're all up to date with announcements and updates.</span>
+              <p>No announcements found</p>
+              <span class="empty-subtext">Class announcements and notifications will appear here.</span>
             </div>
             
             <div v-else class="notification-list">
               <div 
                 v-for="notif in filteredNotifications" 
                 :key="notif.id" 
-                :class="['notification-item', {'unread': !notif.read, 'important': notif.important}]"
+                :class="['notification-item', {'unread': !notif.read, 'class-announcement': notif.type === 'class'}]"
                 @click="openNotificationModal(notif)"
-
-                
               >
                 <div class="notification-header">
-                  <span class="notification-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <line x1="12" y1="16" x2="12" y2="12"></line>
-                      <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
-                  </span>
+                  <div class="notification-source">
+                    <span class="notification-icon">
+                      <svg v-if="notif.type === 'class'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                      </svg>
+                      <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                      </svg>
+                    </span>
+                    <div class="source-info">
+                      <span class="source-name">{{ notif.from_teacher || 'System' }}</span>
+                      <span class="source-subject">{{ notif.subject_name || 'General' }}</span>
+                    </div>
+                  </div>
                   <div class="notification-indicators">
-                    <div v-if="notif.important" class="priority-dot"></div>
                     <span v-if="!notif.read" class="unread-label">New</span>
                   </div>
                 </div>
@@ -211,79 +192,7 @@
                   <p class="notif-body">{{ notif.body }}</p>
                 </div>
                 <div class="notification-footer">
-                  <span class="notif-timestamp">{{ notif.time }}</span>
-                  <button class="dismiss-btn" @click.stop="dismissNotification(notif.id)">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <line x1="18" y1="6" x2="6" y2="18"/>
-                      <line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div v-else-if="currentTab === 'archived'" class="tab-content">
-            <div class="section-actions">
-                <p class="section-title">Archived Messages</p>
-                <button class="action-btn" @click="unarchiveAll">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 8V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v3m18 0h-16c-1.1 0-2 .9-2 2v7c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-8-3v4m-4 0v-4"/>
-                  </svg>
-                  Unarchive all
-                </button>
-            </div>
-            <div v-if="archivedConversations.length === 0" class="empty-state">
-              <div class="empty-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-                  <line x1="9" y1="9" x2="9.01" y2="9"/>
-                  <line x1="15" y1="9" x2="15.01" y2="9"/>
-                </svg>
-              </div>
-              <p>No archived messages</p>
-              <span class="empty-subtext">Archived conversations will appear here.</span>
-            </div>
-            <div v-else class="conversation-list">
-              <div 
-                v-for="convo in archivedConversations" 
-                :key="convo.id" 
-                class="conversation-item"
-                @click.stop="openConversationModal(convo)"
-              >
-                <div class="sender-info">
-                  <div class="sender-avatar">
-                    <span>{{ convo.sender[0] }}</span>
-                  </div>
-                  <div class="message-content">
-                    <div class="message-header">
-                      <p class="sender-name">{{ convo.sender }}</p>
-                      <div class="message-indicators">
-                        <span class="message-time">{{ convo.time }}</span>
-                      </div>
-                    </div>
-                    <p class="last-message">{{ convo.lastMessage }}</p>
-                  </div>
-                </div>
-                <div class="message-options-container">
-                    <button class="options-btn" @click.stop="toggleMessageMenu(convo.id)">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="1"></circle>
-                        <circle cx="19" cy="12" r="1"></circle>
-                        <circle cx="5" cy="12" r="1"></circle>
-                      </svg>
-                    </button>
-                    <div v-if="activeMessageMenu === convo.id" class="options-menu">
-                        <a href="#" @click.stop.prevent="unarchiveMessage(convo.id)">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
-                            Unarchive
-                        </a>
-                        <a href="#" @click.stop.prevent="deleteArchived(convo.id)" class="delete-option">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                            Delete
-                        </a>
-                    </div>
+                  <span class="notif-timestamp">{{ formatTime(notif.created_at) }}</span>
                 </div>
               </div>
             </div>
@@ -292,26 +201,30 @@
       </section>
     </div>
 
+    <!-- Chat Modal -->
     <div v-if="isModalOpen" class="modal-overlay" @click.self="closeModal">
       <div class="modal-content">
         <div class="modal-header">
           <button @click="closeModal" class="close-btn">&times;</button>
           <div class="header-info">
-            <div class="sender-avatar">
-              <span>{{ activeConversation.sender[0] }}</span>
+            <div class="teacher-avatar">
+              <span>{{ activeTeacher?.name?.[0] || 'T' }}</span>
             </div>
-            <h2 class="modal-title">{{ activeConversation.sender }}</h2>
+            <div class="header-details">
+              <h2 class="modal-title">{{ activeTeacher?.name }}</h2>
+              <span class="subject-info">{{ activeTeacher?.subject_name }}</span>
+            </div>
           </div>
         </div>
         <div class="modal-body">
           <div class="messages-container" ref="messagesContainer">
             <div 
-              v-for="message in activeConversation.messages" 
+              v-for="message in currentMessages" 
               :key="message.id" 
-              :class="['message-bubble', { 'sent': message.sender === 'You', 'received': message.sender !== 'You' }]"
+              :class="['message-bubble', { 'sent': message.sender_id === currentUser.id, 'received': message.sender_id !== currentUser.id }]"
             >
-              <p class="message-text">{{ message.text }}</p>
-              <span class="message-time">{{ message.time }}</span>
+              <p class="message-text">{{ message.content }}</p>
+              <span class="message-time">{{ formatTime(message.created_at) }}</span>
             </div>
           </div>
         </div>
@@ -321,7 +234,7 @@
               type="text" 
               v-model="newMessage" 
               @keyup.enter="sendMessage" 
-              placeholder="Type your message..." 
+              placeholder="Type your message to your teacher..." 
               class="message-input"
             />
             <button class="send-btn" @click="sendMessage">
@@ -338,217 +251,296 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue';
-import { useMessaging } from '@/composables/useMessaging.js';
+import { ref, computed, onMounted } from 'vue'
+import { useMessaging } from '@/composables/useMessaging.js'
+import { supabase } from '@/supabase.js'
 
-const currentTab = ref('messages');
-const currentFilter = ref('all');
-const searchQuery = ref('');
-const activeMessageMenu = ref(null);
-const isModalOpen = ref(false);
-const activeConversation = ref(null);
-const newMessage = ref('');
-const messagesContainer = ref(null);
+// State management
+const currentTab = ref('teachers')
+const currentFilter = ref('all')
+const searchQuery = ref('')
+const selectedSubject = ref('')
+const isModalOpen = ref(false)
+const activeTeacher = ref(null)
+const newMessage = ref('')
+const messagesContainer = ref(null)
 
-// Use the messaging composable
-const {
-  conversations,
-  notifications,
-  archivedConversations,
-  unreadCount,
-  isConnected,
-  currentUser,
-  fetchConversations,
-  fetchConversationMessages,
-  sendMessage: sendMessageAPI,
-  markMessagesAsRead,
-  fetchUsers,
-  fetchNotifications
-} = useMessaging();
+// Data
+const enrolledSubjects = ref([])
+const enrolledTeachers = ref([])
+const notifications = ref([])
+const currentMessages = ref([])
+const currentUser = ref({ id: 1, name: 'Student' }) // Get from auth
 
-const filteredConversations = computed(() => {
-  const query = searchQuery.value.toLowerCase();
-  if (!query) {
-    return conversations.value;
+// Computed properties
+const filteredTeachers = computed(() => {
+  let teachers = enrolledTeachers.value
+  
+  if (selectedSubject.value) {
+    teachers = teachers.filter(t => t.subject_id === selectedSubject.value)
   }
-  return conversations.value.filter(convo =>
-    convo.sender.toLowerCase().includes(query) ||
-    convo.lastMessage.toLowerCase().includes(query)
-  );
-});
+  
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    teachers = teachers.filter(t => 
+      t.name.toLowerCase().includes(query) ||
+      t.subject_name.toLowerCase().includes(query)
+    )
+  }
+  
+  return teachers
+})
+
+const groupedTeachers = computed(() => {
+  const subjects = {}
+  
+  filteredTeachers.value.forEach(teacher => {
+    const subjectId = teacher.subject_id
+    if (!subjects[subjectId]) {
+      subjects[subjectId] = {
+        id: subjectId,
+        name: teacher.subject_name,
+        code: teacher.subject_code,
+        teachers: []
+      }
+    }
+    subjects[subjectId].teachers.push(teacher)
+  })
+  
+  return Object.values(subjects)
+})
 
 const filteredNotifications = computed(() => {
+  let notifs = notifications.value
+  
   if (currentFilter.value === 'unread') {
-    return notifications.value.filter(notif => !notif.read);
-  } else if (currentFilter.value === 'important') {
-    return notifications.value.filter(notif => notif.important);
-  } else {
-    return notifications.value;
-  }
-});
-
-const toggleMessageMenu = (id) => {
-  activeMessageMenu.value = activeMessageMenu.value === id ? null : id;
-};
-
-const toggleReadStatus = (id) => {
-  const convo = conversations.value.find(c => c.id === id);
-  if (convo) {
-    convo.read = !convo.read;
-  }
-  activeMessageMenu.value = null;
-};
-
-const archiveMessage = (id) => {
-  const convoToArchive = conversations.value.find(convo => convo.id === id);
-  if (convoToArchive) {
-    archivedConversations.value.unshift(convoToArchive);
-    conversations.value = conversations.value.filter(convo => convo.id !== id);
-  }
-  activeMessageMenu.value = null;
-};
-
-const unarchiveMessage = (id) => {
-  const convoToUnarchive = archivedConversations.value.find(convo => convo.id === id);
-  if (convoToUnarchive) {
-    conversations.value.unshift(convoToUnarchive);
-    archivedConversations.value = archivedConversations.value.filter(convo => convo.id !== id);
-  }
-  activeMessageMenu.value = null;
-};
-
-const unarchiveAll = () => {
-  conversations.value.unshift(...archivedConversations.value);
-  archivedConversations.value = [];
-  activeMessageMenu.value = null;
-};
-
-const deleteMessage = (id) => {
-  if (confirm('Are you sure you want to delete this message? This action cannot be undone.')) {
-    conversations.value = conversations.value.filter(convo => convo.id !== id);
-    console.log(`Deleted message with ID: ${id}`);
-  }
-  activeMessageMenu.value = null;
-};
-
-const deleteArchived = (id) => {
-  if (confirm('Are you sure you want to permanently delete this archived message?')) {
-    archivedConversations.value = archivedConversations.value.filter(convo => convo.id !== id);
-    console.log(`Permanently deleted archived message with ID: ${id}`);
-  }
-  activeMessageMenu.value = null;
-};
-
-const markAllAsRead = () => {
-  conversations.value = conversations.value.map(convo => ({ ...convo, read: true }));
-};
-
-const clearNotifications = () => {
-  notifications.value = [];
-};
-
-const openConversationModal = async (convo) => {
-  activeConversation.value = convo;
-  isModalOpen.value = true;
-  convo.read = true;
-  
-  // Fetch messages for this conversation if not already loaded
-  if (!convo.messages || convo.messages.length === 0) {
-    try {
-      const messages = await fetchConversationMessages(convo.id);
-      convo.messages = messages;
-    } catch (error) {
-      console.error('Failed to load messages:', error);
-    }
+    notifs = notifs.filter(n => !n.read)
+  } else if (currentFilter.value === 'class') {
+    notifs = notifs.filter(n => n.type === 'class')
   }
   
-  // Mark messages as read
-  markMessagesAsRead(convo.id);
-  
-  // Wait for the modal to render, then scroll to the bottom
-  nextTick(() => {
-    if (messagesContainer.value) {
-      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-    }
-  });
-};
+  return notifs
+})
 
-const closeModal = () => {
-  isModalOpen.value = false;
-  activeConversation.value = null;
-  newMessage.value = '';
-  activeMessageMenu.value = null;
-};
-
-const sendMessage = async () => {
-  if (newMessage.value.trim() === '' || !activeConversation.value) return;
-
-  const messageText = newMessage.value.trim();
-  const conversation = activeConversation.value;
-  
-  // Find receiver ID (the other participant in conversation)
-  const receiverId = getOtherParticipantId(conversation);
-  
+// Methods
+const loadEnrolledSubjectsAndTeachers = async () => {
   try {
-    // Add message optimistically to UI
-    const optimisticMessage = {
-      id: Date.now(), // Temporary ID
-      text: messageText,
-      sender: 'You',
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser()
     
-    if (!conversation.messages) conversation.messages = [];
-    conversation.messages.push(optimisticMessage);
-    conversation.lastMessage = messageText;
-    newMessage.value = '';
+    // Get enrolled subjects for the current student
+    const { data: enrollments, error: enrollmentError } = await supabase
+      .from('enrollments')
+      .select(`
+        subject_id,
+        subjects (
+          id,
+          name,
+          code,
+          teacher_id,
+          profiles!subjects_teacher_id_fkey (
+            id,
+            full_name,
+            email
+          )
+        )
+      `)
+      .eq('student_id', user.id)
     
-    // Scroll to bottom
-    nextTick(() => {
-      if (messagesContainer.value) {
-        messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-      }
-    });
+    if (enrollmentError) throw enrollmentError
     
-    // Send message via API
-    await sendMessageAPI(conversation.id, receiverId, messageText);
+    // Process enrollments to get subjects and teachers
+    const subjects = []
+    const teachers = []
+    
+    enrollments.forEach(enrollment => {
+      const subject = enrollment.subjects
+      
+      subjects.push({
+        id: subject.id,
+        name: subject.name,
+        code: subject.code
+      })
+      
+      teachers.push({
+        id: subject.profiles.id,
+        name: subject.profiles.full_name,
+        email: subject.profiles.email,
+        subject_id: subject.id,
+        subject_name: subject.name,
+        subject_code: subject.code,
+        unread_count: 0,
+        last_message: null,
+        last_message_time: null
+      })
+    })
+    
+    enrolledSubjects.value = subjects
+    enrolledTeachers.value = teachers
+    
+    // Load message counts and last messages
+    await loadMessageInfo()
     
   } catch (error) {
-    console.error('Failed to send message:', error);
-    // Remove optimistic message on error
-    if (conversation.messages) {
-      conversation.messages = conversation.messages.filter(msg => msg.id !== optimisticMessage.id);
-    }
+    console.error('Error loading enrolled data:', error)
   }
-};
+}
 
-const getOtherParticipantId = (conversation) => {
-  // This would need to be determined based on conversation structure
-  // For now, we'll need to store participant IDs in the conversation object
-  return conversation.otherParticipantId || 1; // Fallback
-};
+const loadMessageInfo = async () => {
+  try {
+    // For each teacher, get the latest conversation info
+    for (const teacher of enrolledTeachers.value) {
+      const { data: conversation } = await supabase
+        .from('conversations')
+        .select(`
+          id,
+          updated_at,
+          messages (
+            content,
+            created_at,
+            read
+          )
+        `)
+        .or(`and(participant1_id.eq.${currentUser.value.id},participant2_id.eq.${teacher.id}),and(participant1_id.eq.${teacher.id},participant2_id.eq.${currentUser.value.id})`)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .single()
+      
+      if (conversation) {
+        teacher.last_message = conversation.messages[0]?.content
+        teacher.last_message_time = conversation.messages[0]?.created_at
+        teacher.unread_count = conversation.messages.filter(m => !m.read).length
+      }
+    }
+  } catch (error) {
+    console.error('Error loading message info:', error)
+  }
+}
+
+const loadNotifications = async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    // Get notifications for enrolled subjects
+    const { data, error } = await supabase
+      .from('notifications')
+      .select(`
+        *,
+        subjects (name),
+        profiles!notifications_from_teacher_id_fkey (full_name)
+      `)
+      .eq('student_id', user.id)
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    
+    notifications.value = data.map(notif => ({
+      ...notif,
+      subject_name: notif.subjects?.name,
+      from_teacher: notif.profiles?.full_name
+    }))
+    
+  } catch (error) {
+    console.error('Error loading notifications:', error)
+  }
+}
+
+const startChatWithTeacher = async (teacher) => {
+  activeTeacher.value = teacher
+  isModalOpen.value = true
+  
+  // Load messages for this conversation
+  await loadConversationMessages(teacher.id)
+}
+
+const loadConversationMessages = async (teacherId) => {
+  try {
+    // Find or create conversation
+    const { data: conversation, error: convError } = await supabase
+      .from('conversations')
+      .select('id')
+      .or(`and(participant1_id.eq.${currentUser.value.id},participant2_id.eq.${teacherId}),and(participant1_id.eq.${teacherId},participant2_id.eq.${currentUser.value.id})`)
+      .single()
+    
+    let conversationId
+    
+    if (conversation) {
+      conversationId = conversation.id
+    } else {
+      // Create new conversation
+      const { data: newConv, error: createError } = await supabase
+        .from('conversations')
+        .insert({
+          participant1_id: currentUser.value.id,
+          participant2_id: teacherId,
+          created_at: new Date().toISOString()
+        })
+        .select('id')
+        .single()
+      
+      if (createError) throw createError
+      conversationId = newConv.id
+    }
+    
+    // Load messages
+    const { data: messages, error: msgError } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: true })
+    
+    if (msgError) throw msgError
+    
+    currentMessages.value = messages
+    
+  } catch (error) {
+    console.error('Error loading messages:', error)
+  }
+}
+
+const sendMessage = async () => {
+  if (!newMessage.value.trim() || !activeTeacher.value) return
+  
+  const messageText = newMessage.value.trim()
+  newMessage.value = ''
+  
+  try {
+    // Implementation for sending message
+    console.log(`Sending message to ${activeTeacher.value.name}: ${messageText}`)
+    // Add to supabase messages table
+  } catch (error) {
+    console.error('Error sending message:', error)
+  }
+}
+
+const closeModal = () => {
+  isModalOpen.value = false
+  activeTeacher.value = null
+  currentMessages.value = []
+}
 
 const openNotificationModal = (notif) => {
-  console.log('Opening notification modal for:', notif);
-  notif.read = true;
-};
+  notif.read = true
+  // Handle notification opening
+}
 
-const dismissNotification = (id) => {
-  notifications.value = notifications.value.filter(notif => notif.id !== id);
-};
+const clearNotifications = () => {
+  notifications.value.forEach(n => n.read = true)
+}
 
+const formatTime = (dateString) => {
+  if (!dateString) return ''
+  return new Date(dateString).toLocaleString()
+}
+
+// Lifecycle
 onMounted(() => {
-  // Close menu when clicking outside
-  window.addEventListener('click', (e) => {
-    if (!e.target.closest('.message-options-container') && activeMessageMenu.value) {
-      activeMessageMenu.value = null;
-    }
-  });
-});
+  loadEnrolledSubjectsAndTeachers()
+  loadNotifications()
+})
 </script>
 
 <style scoped>
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 /* Main Page Styling */
@@ -1181,7 +1173,7 @@ onMounted(() => {
   gap: 1rem;
 }
 
-.modal-header .sender-avatar {
+.modal-header .teacher-avatar {
   background: rgba(255, 255, 255, 0.3);
   width: 48px;
   height: 48px;
@@ -1274,7 +1266,6 @@ onMounted(() => {
   box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
 }
 
-
 .send-btn {
   background: #3D8D7A;
   color: var(--text-inverse);
@@ -1294,55 +1285,191 @@ onMounted(() => {
   transform: scale(1.05);
 }
 
-/* Responsive Styles */
-@media (max-width: 768px) {
-  .page-container {
-    padding: 1rem;
-  }
-  
-  .card-box {
-    padding: 1.5rem;
-    border-radius: 20px;
-  }
-  
-  .hero-header h1 {
-    font-size: 2rem;
-  }
-  
-  .header-icon {
-    width: 64px;
-    height: 64px;
-  }
-  
-  .tab-btn {
-    padding: 0.5rem 1rem;
-  }
-
-  .section-actions {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
-  }
-  
-  .search-bar {
-    max-width: none;
-  }
-  
-  .conversation-item,
-  .notification-item {
-    padding: 1rem;
-  }
-  
-  .sender-avatar {
-    width: 48px;
-    height: 48px;
-  }
+/* Add new styles for the updated layout */
+.subject-filter {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  min-width: 150px;
 }
 
-@media (max-width: 480px) {
-  .last-message {
-    -webkit-line-clamp: 1;
-    line-clamp: 1;
-  }
+.teachers-by-subject {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
-</style> 
+
+.subject-group {
+  background: var(--bg-accent);
+  border-radius: 20px;
+  padding: 1.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.subject-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.subject-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-accent);
+  margin: 0;
+}
+
+.subject-code {
+  background: var(--text-accent);
+  color: var(--text-inverse);
+  padding: 0.25rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.teachers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.teacher-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.teacher-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px var(--shadow-medium);
+  border-color: var(--border-color-hover);
+}
+
+.teacher-item.has-unread {
+  border-left: 4px solid var(--text-accent);
+  background: var(--bg-unread);
+}
+
+.teacher-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.teacher-avatar {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #A3D1C6 0%, #B3D8A8 100%);
+  color: var(--text-accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.2rem;
+  box-shadow: 0 4px 12px var(--shadow-light);
+}
+
+.teacher-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.teacher-name {
+  font-weight: 700;
+  color: var(--text-accent);
+  margin: 0 0 0.25rem 0;
+  font-size: 1.1rem;
+}
+
+.message-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.unread-badge {
+  background: var(--text-accent);
+  color: var(--text-inverse);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.last-time {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.chat-icon {
+  color: var(--text-accent);
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.teacher-item:hover .chat-icon {
+  opacity: 1;
+}
+
+.notification-source {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.source-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.source-name {
+  font-weight: 600;
+  color: var(--text-accent);
+  font-size: 0.9rem;
+}
+
+.source-subject {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.notification-item.class-announcement {
+  border-left: 4px solid #4A9B8E;
+  background: linear-gradient(135deg, rgba(74, 155, 142, 0.05) 0%, var(--bg-card) 100%);
+}
+
+.header-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.subject-info {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+}
+
+/* Keep existing styles and add these new ones */
+/* ... (keep all the existing styles from the original file) ... */
+</style>

@@ -221,7 +221,7 @@ export default {
       confirmPassword: '',
       isLoading: false,
       error: null,
-      role: 'teacher'
+      role: 'teacher' // You'll want to make this dynamic later
     }
   },
   methods: {
@@ -249,11 +249,15 @@ export default {
         }
 
         const user = authData.user;
+        
+        // Insert into profiles table with new structure
         const { error: profileError } = await supabase
           .from('profiles')
           .insert([{
             id: user.id,
+            auth_user_id: user.id,
             full_name: this.fullName,
+            email: this.email,
             role: this.role,
           }])
 
@@ -261,8 +265,39 @@ export default {
           throw profileError
         }
 
-        // FIX: Redirect to the correct dashboard based on role
-        this.$router.push('/teacher/dashboard')
+        // Create role-specific detail record
+        if (this.role === 'teacher') {
+          const { error: teacherError } = await supabase
+            .from('teacher_details')
+            .insert([{
+              profile_id: user.id,
+              // Add other teacher-specific fields as needed
+            }])
+          
+          if (teacherError) {
+            console.error('Teacher details error:', teacherError);
+            // Don't throw here, profile is already created
+          }
+        } else if (this.role === 'student') {
+          const { error: studentError } = await supabase
+            .from('student_details')
+            .insert([{
+              profile_id: user.id,
+              // Add other student-specific fields as needed
+            }])
+          
+          if (studentError) {
+            console.error('Student details error:', studentError);
+            // Don't throw here, profile is already created
+          }
+        }
+
+        // Redirect based on role
+        if (this.role === 'teacher') {
+          this.$router.push('/teacher/dashboard')
+        } else {
+          this.$router.push('/student-dashboard')
+        }
         
       } catch (err) {
         console.error('Signup error:', err);
