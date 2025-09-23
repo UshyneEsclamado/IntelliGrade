@@ -1,6 +1,16 @@
 <template>
   <div class="auth-wrapper">
     <div class="geometric-shapes"></div>
+    
+    <!-- Background logo with blur effect -->
+    <div class="background-logo">
+      <img 
+        src="@/assets/New IntelliGrade Logo Way BG.png"
+        alt="Background Logo" 
+        class="bg-logo-image"
+      />
+    </div>
+    
     <div class="floating-elements">
       <!-- Educational floating elements with proper animations -->
       <!-- LEFT SIDE - Around Login Form -->
@@ -252,11 +262,10 @@ export default {
           throw authError;
         }
 
-        // Query the new profiles table structure
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("role")
-          .eq("auth_user_id", authData.user.id)
+          .eq("id", authData.user.id)
           .single();
 
         if (profileError) {
@@ -345,6 +354,32 @@ export default {
     radial-gradient(circle at 85% 75%, rgba(255,255,255,0.15) 0, transparent 200px),
     radial-gradient(circle at 50% 50%, rgba(255,255,255,0.08) 0, transparent 300px);
   animation: floatShapes 20s ease-in-out infinite;
+}
+
+/* Background logo with blur effect */
+.background-logo {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.bg-logo-image {
+  width: 800px;
+  height: 800px;
+  object-fit: contain;
+  opacity: 0.18;
+  filter: blur(0.5px);
+  animation: logoFloat 20s ease-in-out infinite;
+  transform-origin: center;
 }
 
 /* Educational floating elements with proper animations */
@@ -766,6 +801,21 @@ input::placeholder {
 }
 
 /* Enhanced animations */
+@keyframes logoFloat {
+  0%, 100% {
+    transform: translateY(0px) scale(1) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-15px) scale(1.01) rotate(0.5deg);
+  }
+  50% {
+    transform: translateY(-30px) scale(1.02) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-15px) scale(1.01) rotate(-0.5deg);
+  }
+}
+
 @keyframes educationalFloat {
   0%, 100% { 
     transform: translateY(0px) translateX(0px) rotate(0deg); 

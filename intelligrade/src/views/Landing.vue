@@ -272,8 +272,8 @@ onUnmounted(() => {
   width: 800px;
   height: 800px;
   object-fit: contain;
-  opacity: 0.08;
-  filter: blur(1px);
+  opacity: 0.18;
+  filter: blur(0.5px);
   animation: logoFloat 20s ease-in-out infinite;
   transform-origin: center;
 }
@@ -767,7 +767,7 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 20px;
-  padding: 2rem;
+  padding: 1.2rem 1rem;
   transition: all 0.5s ease;
   position: relative;
   overflow: hidden;
@@ -855,24 +855,24 @@ onUnmounted(() => {
 }
 
 .feature-content h3 {
-  color: white;
-  font-size: 1.3rem;
-  font-weight: 700;
-  margin-bottom: 0.8rem;
+  color: #39645a;
+  font-size: 1.1rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
   position: relative;
-  z-index: 1;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  z-index: 2;
+  text-shadow: 0 2px 10px rgba(255,255,255,0.7), 0 2px 6px rgba(0,0,0,0.25);
 }
 
 .feature-content p {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.95rem;
-  line-height: 1.6;
+  color: #2d4a39;
+  font-size: 0.92rem;
+  line-height: 1.5;
   margin: 0;
   position: relative;
-  z-index: 1;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-  font-weight: 400;
+  z-index: 2;
+  text-shadow: 0 1px 8px rgba(255,255,255,0.7), 0 1px 4px rgba(0,0,0,0.2);
+  font-weight: 500;
 }
 
 /* Enhanced Animations */
@@ -1056,19 +1056,19 @@ onUnmounted(() => {
   }
   
   .features-grid {
-    grid-template-columns: 1fr;
-    max-width: 100%;
-    gap: 1.2rem;
-  }
-
-  .feature-card {
-    padding: 1.5rem;
-  }
-
-  /* Hide some floating elements on mobile */
-  .element-4, .element-5, .element-6 {
-    display: none;
-  }
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #B3D8A8 0%, #4A9B8E 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    transition: all 0.4s ease;
+    backdrop-filter: blur(6px);
+    color: #39645a;
+    position: relative;
+    overflow: hidden;
 
   .bg-logo-image {
     width: 600px;
@@ -1132,5 +1132,6 @@ onUnmounted(() => {
     opacity: 0.04;
     filter: blur(1px);
   }
+}
 }
 </style>
