@@ -195,7 +195,7 @@
                 <h4>{{ previewSubject.name }}</h4>
                 <p>Grade {{ previewSubject.grade_level }}</p>
                 <p>Section: {{ previewSubject.section }}</p>
-                <p>Instructor: {{ previewSubject.instructor }}</p>
+                <p>Teacher: {{ previewSubject.instructor }}</p>  <!-- CHANGED from "Instructor:" to "Teacher:" -->
               </div>
             </div>
           </div>
@@ -219,6 +219,7 @@
     </div>
   </div>
 </template>
+
 
 <script>
 import { supabase } from '../../supabase.js'
@@ -246,6 +247,7 @@ export default {
         sectionCode: ''
       },
       pollingInterval: null,
+      validationTimeout: null,
     };
   },
   computed: {
@@ -273,20 +275,68 @@ export default {
     }
   },
   methods: {
-    async fetchSubjects() {
+    // Unified teacher lookup function
+    async getTeacherName(teacherId) {
+      if (!teacherId) {
+        console.log('No teacher ID provided');
+        return 'No Teacher Assigned';
+      }
+
       try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
-          console.log('No user found')
-          return
+        console.log('Looking up teacher with ID:', teacherId);
+        
+        // Look up teacher in profiles table using auth_user_id
+        const { data: teacherProfile, error: profileError } = await supabase
+          .from('profiles')
+          .select('full_name, email')
+          .eq('auth_user_id', teacherId)
+          .eq('role', 'teacher')
+          .single();
+
+        if (profileError) {
+          console.warn('Teacher profile lookup error:', profileError);
+          return 'Teacher Not Found';
         }
 
-        this.loadingMessage = 'Loading subjects...'
-        this.isLoading = true
+        if (teacherProfile) {
+          if (teacherProfile.full_name && teacherProfile.full_name.trim()) {
+            const teacherName = teacherProfile.full_name.trim();
+            console.log('✅ Found teacher from profiles:', teacherName);
+            return teacherName;
+          } else if (teacherProfile.email) {
+            // Extract name from email if no full name
+            const emailPart = teacherProfile.email.split('@')[0];
+            const teacherName = emailPart.replace(/[._-]/g, ' ')
+                                        .replace(/\b\w/g, l => l.toUpperCase());
+            console.log('📧 Extracted teacher name from email:', teacherName);
+            return teacherName;
+          }
+        }
+        
+        console.warn('❌ Teacher profile not found for ID:', teacherId);
+        return 'Teacher Not Available';
 
-        console.log('Current user ID:', user.id)
+      } catch (error) {
+        console.error('Error in getTeacherName:', error);
+        return 'Error Loading Teacher';
+      }
+    },
 
-        // First, get enrollments with section and subject details
+    async fetchSubjects() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          console.log('No user found');
+          this.subjects = [];
+          return;
+        }
+
+        this.loadingMessage = 'Loading subjects...';
+        this.isLoading = true;
+
+        console.log('Current user ID:', user.id);
+
+        // Get enrollments with section and subject details
         const { data: enrollments, error } = await supabase
           .from('enrollments')
           .select(`
@@ -306,77 +356,94 @@ export default {
               )
             )
           `)
-          .eq('student_id', user.id)
+          .eq('student_id', user.id);
 
         if (error) {
-          console.error('Database error:', error)
-          throw error
+          console.error('Database error:', error);
+          throw error;
         }
 
-        console.log('Fetched enrollments:', enrollments)
+        console.log('Fetched enrollments:', enrollments);
 
-        // For each enrollment, get teacher details and quiz data
+        if (!enrollments || enrollments.length === 0) {
+          console.log('No enrollments found');
+          this.subjects = [];
+          return;
+        }
+
+        // Process each enrollment
         const subjectsWithRealTimeData = await Promise.all(
           enrollments.map(async (enrollment) => {
-            const sectionId = enrollment.sections.id
-            const subjectId = enrollment.sections.subjects.id
-            const subject = enrollment.sections.subjects
-
-            console.log('Processing subject:', subject.name, 'with teacher_id:', subject.teacher_id)
-
             try {
-              // COMPREHENSIVE TEACHER LOOKUP - Let's find where the teacher data is!
-              // Get teacher information - Look in teachers table directly
-              let teacherName = 'Teacher Not Assigned'
-              if (subject.teacher_id) {
-                console.log('Looking up teacher with ID:', subject.teacher_id)
-                
-                // Look up teacher in teachers table (since there's no users table)
-                const { data: teacherData, error: teacherError } = await supabase
-                  .from('teachers')
-                  .select('name, email')
-                  .eq('id', subject.teacher_id)
-                  .maybeSingle()
+              const sectionId = enrollment.sections.id;
+              const subjectId = enrollment.sections.subjects.id;
+              const subject = enrollment.sections.subjects;
 
-                console.log('Teacher lookup in teachers table:', { teacherData, teacherError })
+              console.log('Processing subject:', subject.name, 'with teacher_id:', subject.teacher_id);
 
-                if (teacherData && teacherData.name) {
-                  teacherName = teacherData.name.trim()
-                  console.log('✅ Found teacher:', teacherName)
-                } else if (teacherData && teacherData.email) {
-                  // Fallback to email if no name
-                  teacherName = teacherData.email.split('@')[0]
-                  console.log('📧 Using email as teacher name:', teacherName)
-                } else {
-                  console.warn('❌ Teacher not found for ID:', subject.teacher_id)
-                  teacherName = 'Teacher Not Found'
-                }
-              } else {
-                console.log('⚠️ No teacher_id assigned to subject:', subject.name)
-                teacherName = 'No Teacher Assigned'
-              }
+              // Get teacher name using unified function
+              const teacherName = await this.getTeacherName(subject.teacher_id);
 
-              // Get ALL quizzes for this section first
+              // Get quiz statistics
               const { data: allQuizzes, error: allQuizzesError } = await supabase
                 .from('quizzes')
                 .select('id, title, is_published, due_date, created_at')
-                .eq('section_id', sectionId)
+                .eq('section_id', sectionId);
 
-              console.log('All quizzes for section', sectionId, ':', allQuizzes)
+              if (allQuizzesError) {
+                console.warn('Error fetching quizzes:', allQuizzesError);
+              }
 
-              // Calculate stats (simplified for now to focus on teacher issue)
-              const totalQuizzes = allQuizzes ? allQuizzes.length : 0
-              const completedQuizzes = 0 // We'll fix this after teacher issue
-              const availableQuizzes = 0 // We'll fix this after teacher issue
-              let currentGrade = '--'
-              let overallScore = null
+              // Get completed quizzes by this student
+              const quizIds = allQuizzes?.map(q => q.id) || [];
+              let completedQuizResults = [];
+              
+              if (quizIds.length > 0) {
+                const { data: results, error: completedError } = await supabase
+                  .from('quiz_results')
+                  .select('quiz_id, score, submitted_at')
+                  .eq('student_id', user.id)
+                  .in('quiz_id', quizIds);
+
+                if (completedError) {
+                  console.warn('Error fetching completed quizzes:', completedError);
+                } else {
+                  completedQuizResults = results || [];
+                }
+              }
+
+              // Calculate quiz statistics
+              const totalQuizzes = allQuizzes ? allQuizzes.length : 0;
+              const completedQuizzes = completedQuizResults.length;
+              const publishedQuizzes = allQuizzes ? allQuizzes.filter(q => q.is_published).length : 0;
+              const availableQuizzes = Math.max(0, publishedQuizzes - completedQuizzes);
+
+              // Calculate grade
+              let currentGrade = '--';
+              let overallScore = null;
+              
+              if (completedQuizResults.length > 0) {
+                const totalScore = completedQuizResults.reduce((sum, result) => sum + result.score, 0);
+                overallScore = totalScore / completedQuizResults.length;
+                
+                // Convert to letter grade
+                if (overallScore >= 95) currentGrade = 'A+';
+                else if (overallScore >= 90) currentGrade = 'A';
+                else if (overallScore >= 85) currentGrade = 'B+';
+                else if (overallScore >= 80) currentGrade = 'B';
+                else if (overallScore >= 75) currentGrade = 'C+';
+                else if (overallScore >= 70) currentGrade = 'C';
+                else if (overallScore >= 65) currentGrade = 'D+';
+                else if (overallScore >= 60) currentGrade = 'D';
+                else currentGrade = 'F';
+              }
 
               const finalSubject = {
                 id: subjectId,
                 name: subject.name,
                 code: enrollment.sections.section_code,
                 section: enrollment.sections.name,
-                instructor: teacherName, // This should now show the actual teacher name
+                instructor: teacherName,
                 gradeLevel: subject.grade_level,
                 color: this.generateSubjectColor(subject.name),
                 status: 'active',
@@ -387,22 +454,23 @@ export default {
                 overallScore,
                 enrollmentId: enrollment.id,
                 sectionId: sectionId
-              }
+              };
 
-              console.log('Final processed subject:', finalSubject)
-              return finalSubject
+              console.log('Final processed subject:', finalSubject);
+              return finalSubject;
 
             } catch (err) {
-              console.error(`Error processing subject ${subject.name}:`, err)
+              console.error(`Error processing enrollment ${enrollment.id}:`, err);
               
+              // Return a fallback subject with error state
               return {
-                id: subjectId,
-                name: subject.name,
-                code: enrollment.sections.section_code,
-                section: enrollment.sections.name,
+                id: enrollment.sections?.subjects?.id || `error-${enrollment.id}`,
+                name: enrollment.sections?.subjects?.name || 'Error Loading Subject',
+                code: enrollment.sections?.section_code || 'ERROR',
+                section: enrollment.sections?.name || 'Unknown Section',
                 instructor: 'Error Loading Teacher',
-                gradeLevel: subject.grade_level,
-                color: this.generateSubjectColor(subject.name),
+                gradeLevel: enrollment.sections?.subjects?.grade_level || 'N/A',
+                color: this.generateSubjectColor('error'),
                 status: 'active',
                 completedQuizzes: 0,
                 availableQuizzes: 0,
@@ -410,38 +478,45 @@ export default {
                 currentGrade: '--',
                 overallScore: null,
                 enrollmentId: enrollment.id,
-                sectionId: sectionId
-              }
+                sectionId: enrollment.sections?.id || null
+              };
             }
           })
-        )
+        );
 
-        this.subjects = subjectsWithRealTimeData
-        console.log('All processed subjects:', this.subjects)
+        // Filter out any null results
+        this.subjects = subjectsWithRealTimeData.filter(subject => subject !== null);
+        console.log('All processed subjects:', this.subjects);
 
       } catch (error) {
-        console.error('Error fetching subjects:', error)
-        this.subjects = []
-        alert(`Failed to load subjects: ${error.message}`)
+        console.error('Error fetching subjects:', error);
+        this.subjects = [];
+        
+        // Show user-friendly error message
+        const errorMessage = error.message || 'Unknown error occurred';
+        alert(`Failed to load subjects: ${errorMessage}`);
       } finally {
-        this.isLoading = false
+        this.isLoading = false;
       }
     },
 
     generateSubjectColor(subjectName) {
-      const colors = ['#3D8D7A', '#6366f1', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981']
+      const colors = ['#3D8D7A', '#6366f1', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981'];
       const hash = subjectName.split('').reduce((a, b) => {
-        a = ((a << 5) - a) + b.charCodeAt(0)
-        return a & a
-      }, 0)
-      return colors[Math.abs(hash) % colors.length]
+        a = ((a << 5) - a) + b.charCodeAt(0);
+        return a & a;
+      }, 0);
+      return colors[Math.abs(hash) % colors.length];
     },
 
     async validateSectionCode() {
-      if (!this.joinForm.sectionCode) return
+      if (!this.joinForm.sectionCode || this.joinForm.sectionCode.length < 8) {
+        this.previewSubject = null;
+        return;
+      }
 
       try {
-        console.log('Validating section code:', this.joinForm.sectionCode.toUpperCase())
+        console.log('Validating section code:', this.joinForm.sectionCode.toUpperCase());
 
         // Look up section by section code with proper joins
         const { data: section, error } = await supabase
@@ -459,69 +534,76 @@ export default {
             )
           `)
           .eq('section_code', this.joinForm.sectionCode.toUpperCase())
-          .single()
+          .single();
 
-        console.log('Section validation result:', section)
-        console.log('Section validation error:', error)
+        console.log('Section validation result:', section);
+        console.log('Section validation error:', error);
 
         if (error || !section) {
-          this.joinError = 'Invalid section code. Please check with your teacher.'
-          this.previewSubject = null
-          return
+          this.joinError = 'Invalid section code. Please check with your teacher.';
+          this.previewSubject = null;
+          return;
         }
 
         // Check if already enrolled
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          this.joinError = 'Please login to join a class.';
+          this.previewSubject = null;
+          return;
+        }
+
         const { data: existingEnrollment } = await supabase
           .from('enrollments')
           .select('id')
           .eq('student_id', user.id)
           .eq('section_id', section.id)
-          .single()
-
-        console.log('Existing enrollment check:', existingEnrollment)
+          .single();
 
         if (existingEnrollment) {
-          this.joinError = 'You are already enrolled in this class.'
-          this.previewSubject = null
-          return
+          this.joinError = 'You are already enrolled in this class.';
+          this.previewSubject = null;
+          return;
         }
 
-        // Show preview
+        // Get teacher information using unified function
+        const teacherName = await this.getTeacherName(section.subjects.teacher_id);
+
+        // Show preview with actual teacher name
         this.previewSubject = {
           id: section.subjects.id,
           name: section.subjects.name,
           code: section.section_code,
           section: section.name,
-          instructor: 'Teacher', // Simplified since we removed teachers join
+          instructor: teacherName,
           grade_level: section.subjects.grade_level,
           color: this.generateSubjectColor(section.subjects.name)
-        }
-        this.joinError = ''
+        };
+        this.joinError = '';
 
-        console.log('Preview subject:', this.previewSubject)
+        console.log('Final preview subject with teacher:', this.previewSubject);
 
       } catch (error) {
-        console.error('Error validating section code:', error)
-        this.joinError = 'Error validating section code. Please try again.'
-        this.previewSubject = null
+        console.error('Error validating section code:', error);
+        this.joinError = 'Error validating section code. Please try again.';
+        this.previewSubject = null;
       }
     },
 
     async joinClass() {
-      if (!this.joinForm.sectionCode) return
+      if (!this.joinForm.sectionCode) return;
 
-      this.isJoining = true
-      this.joinError = ''
+      this.isJoining = true;
+      this.joinError = '';
 
       try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) throw new Error('Please login to join a class')
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Please login to join a class');
 
-        console.log('Starting join process for user:', user.id)
-        console.log('Section code:', this.joinForm.sectionCode.toUpperCase())
+        console.log('Starting join process for user:', user.id);
+        console.log('Section code:', this.joinForm.sectionCode.toUpperCase());
 
-        // Validate section code again
+        // Validate section code again (ensure consistency)
         const { data: section, error: sectionError } = await supabase
           .from('sections')
           .select(`
@@ -531,32 +613,33 @@ export default {
             class_id,
             subjects!class_id(
               id,
-              name
+              name,
+              teacher_id
             )
           `)
           .eq('section_code', this.joinForm.sectionCode.toUpperCase())
-          .single()
+          .single();
 
-        console.log('Section found for join:', section)
-        console.log('Section error:', sectionError)
+        console.log('Section found for join:', section);
+        console.log('Section error:', sectionError);
 
         if (sectionError || !section) {
-          throw new Error('Invalid section code. Please check with your teacher.')
+          throw new Error('Invalid section code. Please check with your teacher.');
         }
 
-        // Check for existing enrollment
+        // Check for existing enrollment again
         const { data: existingEnrollment } = await supabase
           .from('enrollments')
           .select('id')
           .eq('student_id', user.id)
           .eq('section_id', section.id)
-          .single()
+          .single();
 
         if (existingEnrollment) {
-          throw new Error('You are already enrolled in this class.')
+          throw new Error('You are already enrolled in this class.');
         }
 
-        console.log('Creating enrollment for section:', section.id)
+        console.log('Creating enrollment for section:', section.id);
 
         // Create enrollment with both section_id and class_id
         const { data: newEnrollment, error: enrollmentError } = await supabase
@@ -567,54 +650,68 @@ export default {
             class_id: section.class_id
           }])
           .select()
-          .single()
+          .single();
 
-        console.log('Enrollment created:', newEnrollment)
-        console.log('Enrollment error:', enrollmentError)
+        console.log('Enrollment created:', newEnrollment);
+        console.log('Enrollment error:', enrollmentError);
 
-        if (enrollmentError) throw enrollmentError
+        if (enrollmentError) throw enrollmentError;
 
-        // Update section student count
-        const { error: updateError } = await supabase.rpc('increment_student_count', {
-          section_id: section.id
-        })
+        // Update section student count (optional, handle gracefully)
+        try {
+          await supabase.rpc('increment_student_count', {
+            section_id: section.id
+          });
+        } catch (updateError) {
+          console.warn('Failed to update student count:', updateError);
+          // Don't fail the enrollment for this
+        }
 
-        if (updateError) console.warn('Failed to update student count:', updateError)
+        // Close modal first
+        this.closeJoinModal();
 
-        // Success
-        await this.fetchSubjects()
-        this.closeJoinModal()
-        alert(`Successfully joined ${section.subjects.name}!`)
+        // Show success message
+        alert(`Successfully joined ${section.subjects.name}!`);
+
+        // Refresh subjects data to show new enrollment
+        await this.fetchSubjects();
 
       } catch (error) {
-        console.error('Error joining class:', error)
-        this.joinError = error.message
+        console.error('Error joining class:', error);
+        this.joinError = error.message;
       } finally {
-        this.isJoining = false
+        this.isJoining = false;
       }
     },
 
     clearJoinError() {
-      this.joinError = ''
-      this.previewSubject = null
+      this.joinError = '';
+      this.previewSubject = null;
+      
       // Add debounced validation
-      clearTimeout(this.validationTimeout)
+      clearTimeout(this.validationTimeout);
       this.validationTimeout = setTimeout(() => {
         if (this.joinForm.sectionCode.length >= 8) {
-          this.validateSectionCode()
+          this.validateSectionCode();
         }
-      }, 500)
+      }, 500);
     },
 
     closeJoinModal() {
-      this.showJoinModal = false
-      this.joinForm.sectionCode = ''
-      this.joinError = ''
-      this.previewSubject = null
+      this.showJoinModal = false;
+      this.joinForm.sectionCode = '';
+      this.joinError = '';
+      this.previewSubject = null;
+      
+      // Clear any pending validation
+      if (this.validationTimeout) {
+        clearTimeout(this.validationTimeout);
+        this.validationTimeout = null;
+      }
     },
 
     viewSubjectDetails(subject) {
-      console.log('Viewing subject details:', subject)
+      console.log('Viewing subject details:', subject);
       // Navigate to subject details page
     },
 
@@ -631,7 +728,7 @@ export default {
           sectionName: subject.section,
           availableQuizzes: subject.availableQuizzes
         }
-      })
+      });
     },
 
     viewCompletedQuizzes(subject) {
@@ -645,7 +742,7 @@ export default {
         query: {
           subjectName: subject.name
         }
-      })
+      });
     },
 
     viewGrades(subject) {
@@ -663,16 +760,23 @@ export default {
           currentGrade: subject.currentGrade,
           overallScore: subject.overallScore
         }
-      })
+      });
     },
   },
-  mounted() {
-    this.fetchSubjects();
+  async mounted() {
+    // Initial load
+    await this.fetchSubjects();
+    
+    // Set up polling for updates
     this.pollingInterval = setInterval(this.fetchSubjects, 30000); // Poll every 30 seconds
   },
   beforeUnmount() {
-    if (this.pollingInterval) clearInterval(this.pollingInterval);
-    if (this.validationTimeout) clearTimeout(this.validationTimeout);
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+    }
+    if (this.validationTimeout) {
+      clearTimeout(this.validationTimeout);
+    }
   }
 };
 </script>

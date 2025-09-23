@@ -103,7 +103,7 @@
                     title="Grade Management"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M19,19H5V5H19V19M17,12H7V10H17V12M15,16H7V14H15V16M17,8H7V6H17V8Z" />
+                      <path d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M19,19H5V5H19V19Z" />
                     </svg>
                     Grades
                   </button>
@@ -383,7 +383,7 @@ const generateReports = (subject, section) => {
   alert(`Generate Reports for:\nSubject: ${subject.name}\nSection: ${section.name}\n\nThis feature will show analytics and performance reports for this section.`)
 }
 
-// CORE METHODS
+// CORRECTED fetchSubjects function - Fixed student counting bug
 const fetchSubjects = async () => {
   try {
     const { data: { user } } = await supabase.auth.getUser()
@@ -426,52 +426,46 @@ const fetchSubjects = async () => {
 
     console.log('Fetched subjects data:', subjectsData)
 
-    // Get actual enrollment counts for each subject
+    // CORRECTED: Get ACTUAL enrollment counts for each subject and section INDIVIDUALLY
     if (subjectsData && subjectsData.length > 0) {
       for (let subject of subjectsData) {
         if (subject.sections && subject.sections.length > 0) {
-          const sectionIds = subject.sections.map(s => s.id)
+          // Get actual count per section FIRST, then sum for total
+          let totalStudentsForSubject = 0
           
-          // Get actual enrollment count
-          const { count, error: countError } = await supabase
-            .from('enrollments')
-            .select('*', { count: 'exact', head: true })
-            .in('section_id', sectionIds)
-
-          if (!countError) {
-            subject.actualStudentCount = count || 0
-          } else {
-            subject.actualStudentCount = 0
-          }
-
-          // Also get count per section
           for (let section of subject.sections) {
             const { count: sectionCount, error: sectionCountError } = await supabase
               .from('enrollments')
               .select('*', { count: 'exact', head: true })
-              .eq('section_id', section.id)
+              .eq('section_id', section.id)  // FIXED: Only count enrollments for THIS specific section
+
+            console.log(`Section ${section.name} (${section.id}) enrollment count:`, sectionCount)
 
             if (!sectionCountError) {
               section.actualStudentCount = sectionCount || 0
+              section.student_count = sectionCount || 0
+              totalStudentsForSubject += sectionCount || 0
             } else {
+              console.error('Error getting section count:', sectionCountError)
               section.actualStudentCount = 0
+              section.student_count = 0
             }
           }
+          
+          // Set the total for the subject
+          subject.actualStudentCount = totalStudentsForSubject
+          
+          console.log(`Subject "${subject.name}" total students: ${totalStudentsForSubject}`)
         } else {
           subject.actualStudentCount = 0
         }
       }
     }
 
-    console.log('Previous subjects count:', subjects.value.length)
-    
-    // Force reactivity update
-    subjects.value = [...(subjectsData || [])]
-    
-    console.log('Updated subjects count:', subjects.value.length)
-    console.log('Updated subjects array:', subjects.value)
+    console.log('Updated subjects with actual counts:', subjectsData)
 
-    // Force Vue to re-render
+    // Update subjects array
+    subjects.value = [...(subjectsData || [])]
     await nextTick()
 
   } catch (error) {
@@ -482,13 +476,78 @@ const fetchSubjects = async () => {
   }
 }
 
-// Updated getTotalStudents to use actual count
+// Fixed getTotalStudents to use actual count
 const getTotalStudents = (subject) => {
-  // Use the actualStudentCount we calculated in fetchSubjects
   return subject.actualStudentCount || 0
 }
 
-// Enhanced viewStudentRoster function with correct enrollment mapping
+// DEBUGGING FUNCTION - Add this temporarily
+const debugStudentData = async (subject) => {
+  console.log('=== DEBUGGING STUDENT DATA ===')
+  
+  // 1. Get sections
+  const { data: sections, error: sectionsError } = await supabase
+    .from('sections')
+    .select('*')
+    .eq('class_id', subject.id)
+  
+  console.log('Sections:', sections)
+  console.log('Sections Error:', sectionsError)
+  
+  if (!sections || sections.length === 0) return
+  
+  // 2. Get enrollments
+  const sectionIds = sections.map(s => s.id)
+  const { data: enrollments, error: enrollmentsError } = await supabase
+    .from('enrollments')
+    .select('*')
+    .in('section_id', sectionIds)
+  
+  console.log('Enrollments:', enrollments)
+  console.log('Enrollments Error:', enrollmentsError)
+  console.log('Student IDs from enrollments:', enrollments?.map(e => e.student_id))
+  
+  if (!enrollments || enrollments.length === 0) return
+  
+  // 3. Check what field names exist in enrollments table
+  console.log('Enrollment fields:', Object.keys(enrollments[0]))
+  
+  // 4. Get all student profiles to see the structure
+  const { data: allProfiles, error: allProfilesError } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('role', 'student')
+  
+  console.log('All student profiles:', allProfiles)
+  console.log('Profile fields:', allProfiles?.[0] ? Object.keys(allProfiles[0]) : 'No profiles found')
+  console.log('All Profiles Error:', allProfilesError)
+  
+  // 5. Try different approaches to match students
+  if (enrollments.length > 0 && allProfiles?.length > 0) {
+    const enrollmentStudentId = enrollments[0].student_id
+    console.log('First enrollment student_id:', enrollmentStudentId)
+    
+    // Try matching different fields
+    const matchByAuthUserId = allProfiles.find(p => p.auth_user_id === enrollmentStudentId)
+    const matchById = allProfiles.find(p => p.id === enrollmentStudentId)
+    const matchByStudentId = allProfiles.find(p => p.student_id === enrollmentStudentId)
+    
+    console.log('Match by auth_user_id:', matchByAuthUserId)
+    console.log('Match by id:', matchById)
+    console.log('Match by student_id:', matchByStudentId)
+  }
+  
+  // 6. Check student_details table
+  const { data: studentDetails, error: studentDetailsError } = await supabase
+    .from('student_details')
+    .select('*')
+  
+  console.log('Student details:', studentDetails)
+  console.log('Student details fields:', studentDetails?.[0] ? Object.keys(studentDetails[0]) : 'No student details')
+  console.log('Student Details Error:', studentDetailsError)
+}
+
+// CORRECTED viewStudentRoster function based on actual database structure
 const viewStudentRoster = async (subject) => {
   try {
     isLoading.value = true
@@ -503,12 +562,9 @@ const viewStudentRoster = async (subject) => {
       .select('*')
       .eq('class_id', subject.id)
 
-    if (sectionsError) {
-      console.error('Error fetching sections:', sectionsError)
-      throw sectionsError
-    }
-
+    console.log('1. SECTIONS QUERY:')
     console.log('Sections found:', sections)
+    console.log('Sections error:', sectionsError)
 
     if (!sections || sections.length === 0) {
       currentStudentRoster.value = {
@@ -522,121 +578,97 @@ const viewStudentRoster = async (subject) => {
 
     // Get all enrollments for these sections
     const sectionIds = sections.map(s => s.id)
-    console.log('Section IDs:', sectionIds)
+    console.log('2. SECTION IDs:', sectionIds)
     
     const { data: enrollments, error: enrollmentsError } = await supabase
       .from('enrollments')
       .select('*')
       .in('section_id', sectionIds)
 
-    if (enrollmentsError) {
-      console.error('Error fetching enrollments:', enrollmentsError)
-      throw enrollmentsError
-    }
-
+    console.log('3. ENROLLMENTS QUERY:')
     console.log('Enrollments found:', enrollments)
+    console.log('Enrollments error:', enrollmentsError)
 
-    // Get student details from the student_details table
-    let studentDetails = []
-    if (enrollments && enrollments.length > 0) {
-      const studentIds = [...new Set(enrollments.map(e => e.student_id))]
-      console.log('Unique Student IDs to fetch:', studentIds)
-      
-      // Method 1: Try with profile_id matching auth user IDs
-      let { data: studentDetailsData, error: studentDetailsError } = await supabase
-        .from('student_details')
-        .select(`
-          *,
-          profiles!student_details_profile_id_fkey (
-            full_name,
-            email,
-            role
-          )
-        `)
-        .in('profile_id', studentIds)
-
-      console.log('Method 1 - Student details by profile_id:', { data: studentDetailsData, error: studentDetailsError })
-
-      // Method 2: If Method 1 fails, try joining differently
-      if (studentDetailsError || !studentDetailsData || studentDetailsData.length === 0) {
-        console.log('Trying method 2 - direct student_details lookup')
-        
-        // Try getting student_details and then joining with profiles
-        const { data: allStudentDetails, error: error2 } = await supabase
-          .from('student_details')
-          .select('*')
-        
-        console.log('All student_details records:', allStudentDetails)
-        
-        if (!error2 && allStudentDetails) {
-          // Filter by profile_id
-          studentDetailsData = allStudentDetails.filter(detail => 
-            studentIds.includes(detail.profile_id)
-          )
-          
-          // Get corresponding profiles
-          if (studentDetailsData.length > 0) {
-            const profileIds = studentDetailsData.map(d => d.profile_id)
-            const { data: profilesData, error: profilesError } = await supabase
-              .from('profiles')
-              .select('*')
-              .in('auth_user_id', profileIds)
-            
-            console.log('Profiles data:', profilesData)
-            
-            // Merge the data
-            studentDetailsData = studentDetailsData.map(detail => ({
-              ...detail,
-              profiles: profilesData?.find(p => p.auth_user_id === detail.profile_id) || null
-            }))
-          }
+    if (!enrollments || enrollments.length === 0) {
+      console.log('No enrollments found')
+      // No students enrolled
+      const studentsBySection = {}
+      sections.forEach(section => {
+        const sectionKey = `${section.name} (${section.section_code})`
+        studentsBySection[sectionKey] = {
+          section: section,
+          students: []
         }
-      }
+      })
 
-      console.log('Final studentDetailsData:', studentDetailsData)
-
-      // Process the found student details
-      if (studentDetailsData && studentDetailsData.length > 0) {
-        studentDetails = studentDetailsData.map(detail => {
-          const profile = detail.profiles
-          return {
-            id: detail.profile_id,
-            student_id: detail.student_id || `STU${detail.profile_id.toString().substring(0, 8)}`,
-            first_name: profile?.full_name ? profile.full_name.split(' ')[0] : 'Unknown',
-            last_name: profile?.full_name ? profile.full_name.split(' ').slice(1).join(' ') || 'Student' : 'Student',
-            email: profile?.email || 'N/A',
-            grade_level: detail.grade_level || detail.course_year || subject.grade_level || 'N/A',
-            course_year: detail.course_year,
-            enrollment_status: detail.enrollment_status,
-            role: profile?.role || 'student',
-            student_details_id: detail.id
-          }
-        })
-        
-        console.log('✅ Processed student details:', studentDetails)
-      } else {
-        console.log('❌ No student details found')
-        
-        // Create debug placeholders
-        studentDetails = studentIds.map(studentId => ({
-          id: studentId,
-          student_id: `DEBUG-${studentId.toString().substring(0, 8)}`,
-          first_name: 'No Details',
-          last_name: 'Found',
-          email: `debug-${studentId}@missing.com`,
-          grade_level: 'N/A',
-          role: 'student',
-          isMissingData: true,
-          debug_student_id: studentId
-        }))
+      currentStudentRoster.value = {
+        subject,
+        studentsBySection,
+        totalActualStudents: 0
       }
+      showStudentRosterModal.value = true
+      return
     }
 
-    // Group students by section
+    // Get unique student IDs from enrollments
+    const studentIds = [...new Set(enrollments.map(e => e.student_id))]
+    console.log('4. UNIQUE STUDENT IDs FROM ENROLLMENTS:', studentIds)
+
+    // Let's check what's actually in the profiles table
+    const { data: allProfiles, error: allProfilesError } = await supabase
+      .from('profiles')
+      .select('*')
+
+    console.log('5. ALL PROFILES IN DATABASE:')
+    console.log('All profiles:', allProfiles)
+    console.log('All profiles error:', allProfilesError)
+
+    // Now let's try to match - check what auth_user_id values exist
+    if (allProfiles && allProfiles.length > 0) {
+      console.log('6. PROFILE MATCHING ANALYSIS:')
+      allProfiles.forEach((profile, index) => {
+        console.log(`Profile ${index + 1}:`, {
+          id: profile.id,
+          auth_user_id: profile.auth_user_id,
+          full_name: profile.full_name,
+          email: profile.email,
+          role: profile.role,
+          student_id: profile.student_id
+        })
+      })
+
+      console.log('7. CHECKING MATCHES:')
+      studentIds.forEach(enrollmentStudentId => {
+        const matchByAuthUserId = allProfiles.find(p => p.auth_user_id === enrollmentStudentId)
+        const matchById = allProfiles.find(p => p.id === enrollmentStudentId)
+        
+        console.log(`For enrollment student_id "${enrollmentStudentId}":`)
+        console.log('  Match by auth_user_id:', matchByAuthUserId ? 'FOUND' : 'NOT FOUND')
+        console.log('  Match by id:', matchById ? 'FOUND' : 'NOT FOUND')
+        
+        if (matchByAuthUserId) {
+          console.log('  -> Matched profile:', matchByAuthUserId)
+        }
+        if (matchById) {
+          console.log('  -> Matched profile by ID:', matchById)
+        }
+      })
+    }
+
+    // Let's also check student_details
+    const { data: allStudentDetails, error: studentDetailsError } = await supabase
+      .from('student_details')
+      .select('*')
+
+    console.log('8. ALL STUDENT DETAILS:')
+    console.log('Student details:', allStudentDetails)
+    console.log('Student details error:', studentDetailsError)
+
+    // For now, let's just create the roster with the enrollment data we have
     const studentsBySection = {}
     let totalActualStudents = 0
     
-    // Initialize section groups
+    // Initialize sections
     sections.forEach(section => {
       const sectionKey = `${section.name} (${section.section_code})`
       studentsBySection[sectionKey] = {
@@ -645,50 +677,45 @@ const viewStudentRoster = async (subject) => {
       }
     })
 
-    // Add students to their respective sections
-    const processedStudentIds = new Set()
-    
-    enrollments?.forEach(enrollment => {
+    // Process enrollments
+    enrollments.forEach(enrollment => {
       const section = sections.find(s => s.id === enrollment.section_id)
-      const student = studentDetails.find(s => 
-        s.id === enrollment.student_id || 
-        s.debug_student_id === enrollment.student_id
+      if (!section) return
+
+      // Try to find profile
+      const profile = allProfiles?.find(p => 
+        p.auth_user_id === enrollment.student_id || p.id === enrollment.student_id
       )
       
-      // Skip duplicates
-      const studentSectionKey = `${enrollment.student_id}-${enrollment.section_id}`
-      if (processedStudentIds.has(studentSectionKey)) {
-        return
+      const studentData = {
+        id: enrollment.student_id,
+        student_id: profile?.student_id || `MISSING-${enrollment.student_id.substring(0, 8)}`,
+        first_name: profile?.full_name?.split(' ')[0] || 'Student Profile',
+        last_name: profile?.full_name?.split(' ').slice(1).join(' ') || 'Not Found',
+        email: profile?.email || `missing-${enrollment.student_id.substring(0, 8)}@system.local`,
+        grade_level: profile?.grade_level || subject.grade_level || 'N/A',
+        enrollment_date: enrollment.created_at,
+        enrollment_id: enrollment.id,
+        profileFound: !!profile,
+        detailsFound: false,
+        // Debug info
+        debug: {
+          enrollmentStudentId: enrollment.student_id,
+          profileMatch: profile ? 'Found' : 'Not Found',
+          matchedBy: profile ? (profile.auth_user_id === enrollment.student_id ? 'auth_user_id' : 'id') : 'None'
+        }
       }
-      processedStudentIds.add(studentSectionKey)
-      
-      console.log('Processing enrollment:', {
-        enrollment_student_id: enrollment.student_id,
-        section_id: enrollment.section_id,
-        found_student: student?.first_name + ' ' + student?.last_name,
-        found_section: section?.name
-      })
-      
-      if (section && student) {
-        const sectionKey = `${section.name} (${section.section_code})`
-        studentsBySection[sectionKey].students.push({
-          ...student,
-          enrollment_date: enrollment.created_at,
-          enrollment_id: enrollment.id
-        })
-        totalActualStudents++
-      }
+
+      const sectionKey = `${section.name} (${section.section_code})`
+      studentsBySection[sectionKey].students.push(studentData)
+      totalActualStudents++
+
+      console.log('9. PROCESSED STUDENT:', studentData)
     })
 
-    console.log('Final studentsBySection:', studentsBySection)
-    console.log('Total actual students:', totalActualStudents)
-
-    // Sort students within each section
-    Object.keys(studentsBySection).forEach(sectionKey => {
-      studentsBySection[sectionKey].students.sort((a, b) => 
-        (a.last_name || '').localeCompare(b.last_name || '')
-      )
-    })
+    console.log('10. FINAL RESULT:')
+    console.log('Total students processed:', totalActualStudents)
+    console.log('Students by section:', studentsBySection)
 
     currentStudentRoster.value = {
       subject,
@@ -1016,53 +1043,9 @@ const exportStudentRoster = () => {
   window.URL.revokeObjectURL(url)
 }
 
-// Debug function to check database structure
-const debugDatabaseStructure = async () => {
-  console.log('=== DATABASE STRUCTURE DEBUG ===')
-  
-  const tablesToCheck = ['students', 'profiles', 'users', 'auth.users']
-  
-  for (const tableName of tablesToCheck) {
-    try {
-      console.log(`Checking table: ${tableName}`)
-      const { data, error, count } = await supabase
-        .from(tableName)
-        .select('*', { count: 'exact' })
-        .limit(1)
-      
-      if (error) {
-        console.log(`❌ Table ${tableName} error:`, error.message)
-      } else {
-        console.log(`✅ Table ${tableName} exists with ${count} total records`)
-        if (data && data.length > 0) {
-          console.log(`Sample record from ${tableName}:`, data[0])
-          console.log(`Columns in ${tableName}:`, Object.keys(data[0]))
-        }
-      }
-    } catch (err) {
-      console.log(`❌ Exception checking table ${tableName}:`, err)
-    }
-  }
-  
-  // Also check what's in enrollments
-  try {
-    const { data: enrollmentsData, error } = await supabase
-      .from('enrollments')
-      .select('*')
-      .limit(5)
-    
-    if (!error && enrollmentsData) {
-      console.log('Sample enrollments data:', enrollmentsData)
-    }
-  } catch (err) {
-    console.log('Error checking enrollments:', err)
-  }
-}
-
-// Force refresh function for debugging (updated)
+// Force refresh function for debugging
 const forceRefresh = async () => {
   console.log('Force refreshing subjects...')
-  await debugDatabaseStructure() // Add database debugging
   await fetchSubjects()
 }
 
@@ -2058,7 +2041,7 @@ onMounted(async () => {
     display: flex;
     justify-content: space-between;
     padding: 0.25rem 0;
-    border-bottom: 1px solid rgba(61, 141, 122, 0.05);
+       border-bottom: 1px solid rgba(61, 141, 122, 0.05);
   }
   
   .student-row > div:before {
@@ -2073,6 +2056,8 @@ onMounted(async () => {
   .col-email:before { content: "Email: "; }
   .col-grade:before { content: "Grade: "; }
   .col-date:before { content: "Enrolled: "; }
+  
+  
   
   .section-setup-item {
     flex-direction: column;
