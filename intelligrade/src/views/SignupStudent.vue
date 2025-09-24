@@ -150,14 +150,120 @@ export default {
       password: "",
       studentId: "",
       gradeLevel: "",
+      showPassword: false,
       error: "",
-      isLoading: false
+      isLoading: false,
+      passwordStrength: {
+        score: 0,
+        checks: {
+          length: false,
+          uppercase: false,
+          lowercase: false,
+          number: false,
+          symbol: false,
+          noCommon: false
+        }
+      },
+      emailValidation: {
+        isValid: false,
+        warning: '',
+        suggestion: ''
+      }
     };
   },
+  watch: {
+    password: {
+      handler(newPassword) {
+        this.checkPasswordStrength(newPassword);
+      },
+      immediate: true
+    },
+    email: {
+      handler(newEmail) {
+        this.validateEmailRealTime(newEmail);
+      },
+      immediate: true
+    }
+  },
   methods: {
+    togglePasswordVisibility() {
+      this.showPassword = !this.showPassword;
+    },
+
+    checkPasswordStrength(password) {
+      const checks = {
+        length: password.length >= 10,
+        uppercase: /[A-Z]/.test(password),
+        lowercase: /[a-z]/.test(password),
+        number: /\d/.test(password),
+        symbol: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+        noCommon: !['password', '123456789', 'qwerty', 'admin', 'password123'].some(common => 
+          password.toLowerCase().includes(common)
+        )
+      };
+      
+      const score = Object.values(checks).filter(Boolean).length;
+      this.passwordStrength = { score, checks };
+    },
+
+    getPasswordStrengthText() {
+      if (this.passwordStrength.score < 3) return 'Weak';
+      if (this.passwordStrength.score < 5) return 'Medium';
+      return 'Strong';
+    },
+
+    getPasswordStrengthColor() {
+      if (this.passwordStrength.score < 3) return '#dc2626';
+      if (this.passwordStrength.score < 5) return '#f59e0b';
+      return '#10b981';
+    },
+
+    validateEmailRealTime(email) {
+      if (!email) {
+        this.emailValidation = { isValid: false, warning: '', suggestion: '' };
+        return;
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        this.emailValidation = { 
+          isValid: false, 
+          warning: 'Invalid email format', 
+          suggestion: '' 
+        };
+        return;
+      }
+
+      // Check for common typos
+      const commonDomains = {
+        'gmial.com': 'gmail.com',
+        'gmai.com': 'gmail.com',
+        'yahooo.com': 'yahoo.com',
+        'hotmial.com': 'hotmail.com',
+        'outlok.com': 'outlook.com'
+      };
+
+      const domain = email.split('@')[1];
+      if (commonDomains[domain]) {
+        this.emailValidation = {
+          isValid: true,
+          warning: 'Possible typo detected',
+          suggestion: `Did you mean ${email.replace(domain, commonDomains[domain])}?`
+        };
+        return;
+      }
+
+      this.emailValidation = { isValid: true, warning: '', suggestion: '' };
+    },
+
     async handleSignup() {
       if (!this.fullName || !this.email || !this.password || !this.studentId || !this.gradeLevel) {
         this.error = "Please fill in all fields.";
+        return;
+      }
+
+      if (this.passwordStrength.score < 6) {
+        this.error = 'Password does not meet security requirements.';
         return;
       }
 
@@ -165,49 +271,34 @@ export default {
       this.error = "";
 
       try {
-        // Step 1: Sign up the user with email and password
+        // Use Supabase Auth with email confirmation
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: this.email,
           password: this.password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/email-verified`,
+            data: {
+              full_name: this.fullName,
+              role: 'student',
+              student_id: this.studentId,
+              grade_level: this.gradeLevel
+            }
+          }
         });
 
         if (authError) {
           throw authError;
         }
 
-        const user = authData.user;
+        // Show success message - don't redirect yet
+        this.error = "Account created! Please check your email and click the verification link to complete registration.";
         
-        // Step 2: Insert into profiles table with new structure
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([{
-            id: user.id,
-            auth_user_id: user.id,
-            full_name: this.fullName,
-            email: this.email,
-            role: 'student',
-          }]);
-
-        if (profileError) {
-          throw profileError;
-        }
-
-        // Step 3: Insert student-specific details into student_details table
-        const { error: studentError } = await supabase
-          .from('student_details')
-          .insert([{
-            profile_id: user.id,
-            student_id: this.studentId,
-            grade_level: parseInt(this.gradeLevel), // Convert to integer
-            enrollment_status: 'active'
-          }]);
-
-        if (studentError) {
-          throw studentError;
-        }
-
-        // Step 4: Redirect to the student dashboard on success
-        this.$router.push("/student-dashboard");
+        // Clear form
+        this.fullName = "";
+        this.email = "";
+        this.password = "";
+        this.studentId = "";
+        this.gradeLevel = "";
         
       } catch (err) {
         console.error("Signup error:", err);
@@ -873,5 +964,76 @@ input::placeholder, select::placeholder {
   border-top: 2px solid white;
   border-radius: 50%;
   animation: spin 1s linear infinite;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(61, 141, 122, 0.5);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  z-index: 2;
+}
+
+.password-toggle:hover {
+  color: rgba(61, 141, 122, 0.8);
+}
+
+.password-strength {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(61, 141, 122, 0.05);
+  border-radius: 6px;
+  font-size: 0.75rem;
+}
+
+.strength-meter {
+  display: flex;
+  gap: 0.25rem;
+  margin: 0.25rem 0;
+}
+
+.strength-bar {
+  height: 4px;
+  flex: 1;
+  background: rgba(61, 141, 122, 0.1);
+  border-radius: 2px;
+}
+
+.strength-bar.active {
+  background: var(--strength-color);
+}
+
+.strength-checks {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0 0;
+}
+
+.strength-checks li {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0.1rem 0;
+}
+
+.email-warning {
+  margin-top: 0.3rem;
+  padding: 0.4rem;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: 6px;
+  font-size: 0.7rem;
+  color: #92400e;
+}
+
+.email-suggestion {
+  color: #1d4ed8;
+  cursor: pointer;
+  text-decoration: underline;
 }
 </style>

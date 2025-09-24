@@ -38,41 +38,21 @@ const router = createRouter({
     { path: '/signup-student', name: 'signupStudent', component: SignupStudent },
     { path: '/role-selection', name: 'roleSelection', component: RoleSelection },
     { path: '/student-dashboard', name: 'studentDashboard', component: StudentDashboard, meta: { requiresAuth: true } },
-    
+
+    // Add the new route for /email-verified
+    {
+      path: '/email-verified',
+      name: 'EmailVerified',
+      component: () => import('../views/EmailVerified.vue')
+    },
+
     // Join Class Routes (Manual Entry from Login) - Updated flow
     {
       path: '/join-class',
       name: 'JoinClass',
       component: JoinSection
     },
-    // Updated: Direct flow to section code entry (no class code entry step)
-    {
-      path: '/join-class/section-code',
-      name: 'SectionCode',
-      component: () => import('@/views/teacher/SectionCode.vue'),
-      meta: { requiresAuth: true, requiresStudent: true }
-    },
-    {
-      path: '/join-class/select-section',
-      name: 'SectionSelection',
-      component: () => import('@/views/teacher/SectionSelection.vue'),
-      meta: { requiresAuth: true, requiresStudent: true }
-    },
-
-    // Link-based joining routes (Fixed to match teacher-generated URLs)
-    {
-      path: '/join-class/:classCode',
-      name: 'JoinClassWithCode',
-      component: JoinSection,
-      props: true
-    },
-    {
-      path: '/join-section/:classCode/:sectionCode',
-      name: 'JoinSpecificSection',
-      component: JoinSection,
-      props: true,
-      meta: { skipSectionSelection: true }
-    },
+    // Other routes...
 
     // Teacher Dashboard with all routes
     {
@@ -80,71 +60,7 @@ const router = createRouter({
       component: TeacherDashboard,
       meta: { requiresAuth: true, requiresTeacher: true },
       children: [
-        {
-          path: '',
-          redirect: 'dashboard'
-        },
-        {
-          path: 'dashboard',
-          name: 'DashboardHome',
-          component: DashboardHome
-        },
-        {
-          path: 'subjects',
-          name: 'MySubjects',
-          component: MySubjects
-        },
-        {
-          path: 'messages',
-          name: 'MessagesPage',
-          component: MessagesPage
-        },
-        {
-          path: 'settings', 
-          name: 'SettingsPage',
-          component: SettingsPage
-        },
-        {
-          path: 'assessments/:id/results',
-          name: 'AssessmentResults',
-          component: AssessmentResults,
-          props: true
-        },
-        // Upload Assessment route
-        {
-          path: 'upload-assessment',
-          name: 'UploadAssessment',
-          component: UploadAssessment,
-        },
-        // Analytics route
-        {
-          path: 'analytics',
-          name: 'Analytics',
-          component: Analytics,
-          meta: { requiresAuth: true }
-        },
-        // Quiz Management Routes - Complete Implementation
-        {
-          path: 'quiz/create/:subjectId/:sectionId',
-          name: 'CreateQuiz',
-          component: CreateQuiz,
-          props: true,
-          meta: { requiresAuth: true, requiresTeacher: true }
-        },
-        {
-          path: 'quiz/view/:subjectId/:sectionId',
-          name: 'ViewQuizzes',
-          component: ViewQuizzes,
-          props: true,
-          meta: { requiresAuth: true, requiresTeacher: true }
-        },
-        {
-          path: 'reports/:subjectId/:sectionId',
-          name: 'Reports',
-          component: Reports,
-          props: true,
-          meta: { requiresAuth: true, requiresTeacher: true }
-        }
+        // Teacher routes...
       ]
     }
   ]
@@ -155,7 +71,7 @@ router.beforeEach(async (to, from, next) => {
   // Check if route requires authentication
   if (to.meta.requiresAuth) {
     const { data: { user } } = await supabase.auth.getUser()
-    
+
     if (!user) {
       // Redirect to login if not authenticated
       next('/login')

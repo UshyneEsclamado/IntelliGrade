@@ -242,7 +242,7 @@ export default {
         { key: 'completed', label: 'Completed' },
         { key: 'pending', label: 'Pending' }
       ],
-      subjects: [], // Real-time data from Supabase only
+      subjects: [],
       joinForm: {
         sectionCode: ''
       },
@@ -275,45 +275,165 @@ export default {
     }
   },
   methods: {
-    // Unified teacher lookup function
+    // Auto-linking utility methods
+    parseSubjectFromCode(sectionCode) {
+      const code = sectionCode.toUpperCase();
+      if (code.startsWith('SCI')) return 'Science';
+      if (code.startsWith('MATH')) return 'Mathematics';
+      if (code.startsWith('ENG')) return 'English';
+      if (code.startsWith('FIL')) return 'Filipino';
+      if (code.startsWith('HIST')) return 'History';
+      if (code.startsWith('PE')) return 'Physical Education';
+      if (code.startsWith('ART')) return 'Arts';
+      if (code.startsWith('MUS')) return 'Music';
+      return 'General';
+    },
+
+    parseGradeFromCode(sectionCode) {
+      const match = sectionCode.match(/(\d+)/);
+      return match ? parseInt(match[1]) : 7; // Default to grade 7
+    },
+
+    async findOrCreateSubject(subjectName, gradeLevel, teacherId) {
+      try {
+        // First, try to find existing subject
+        let { data: subject, error: findError } = await supabase
+          .from('subjects')
+          .select('id, name, grade_level, teacher_id')
+          .eq('name', subjectName)
+          .eq('grade_level', gradeLevel)
+          .eq('teacher_id', teacherId)
+          .single();
+
+        // If found, return it
+        if (subject && !findError) {
+          console.log('Found existing subject:', subject);
+          return subject;
+        }
+
+        // If not found, create new subject
+        console.log('Creating new subject:', { subjectName, gradeLevel, teacherId });
+        
+        const { data: newSubject, error: createError } = await supabase
+          .from('subjects')
+          .insert([{
+            name: subjectName,
+            grade_level: gradeLevel,
+            teacher_id: teacherId
+          }])
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('Error creating subject:', createError);
+          throw createError;
+        }
+
+        console.log('Created new subject:', newSubject);
+        return newSubject;
+
+      } catch (error) {
+        console.error('Error in findOrCreateSubject:', error);
+        throw error;
+      }
+    },
+
+    async autoLinkSection(section) {
+      try {
+        console.log('Auto-linking section:', section.section_code);
+
+        // Parse subject info from section code
+        const subjectName = this.parseSubjectFromCode(section.section_code);
+        const gradeLevel = this.parseGradeFromCode(section.section_code);
+
+        console.log('Parsed subject info:', { subjectName, gradeLevel });
+
+        // Find existing subject that matches
+        const { data: matchingSubject, error: findError } = await supabase
+          .from('subjects')
+          .select('id, name, grade_level, teacher_id')
+          .eq('name', subjectName)
+          .eq('grade_level', gradeLevel)
+          .single();
+
+        if (findError || !matchingSubject) {
+          console.log('No matching subject found for auto-linking');
+          return section; // Return original section unchanged
+        }
+
+        console.log('Found matching subject for auto-linking:', matchingSubject);
+
+        // Update the section to link to the found subject
+        const { data: updatedSection, error: updateError } = await supabase
+          .from('sections')
+          .update({ class_id: matchingSubject.id })
+          .eq('id', section.id)
+          .select(`
+            id,
+            name,
+            section_code,
+            class_id,
+            subjects!class_id(
+              id,
+              name,
+              grade_level,
+              teacher_id,
+              teacher_details!teacher_id(
+                id,
+                profiles!profile_id(
+                  full_name,
+                  email
+                )
+              )
+            )
+          `)
+          .single();
+
+        if (updateError) {
+          console.error('Error updating section link:', updateError);
+          return section; // Return original section unchanged
+        }
+
+        console.log('Successfully auto-linked section:', updatedSection);
+        return updatedSection;
+
+      } catch (error) {
+        console.error('Error in autoLinkSection:', error);
+        return section; // Return original section unchanged
+      }
+    },
+
+    // Fixed teacher lookup method
     async getTeacherName(teacherId) {
       if (!teacherId) {
-        console.log('No teacher ID provided');
         return 'No Teacher Assigned';
       }
 
       try {
-        console.log('Looking up teacher with ID:', teacherId);
-        
-        // Look up teacher in profiles table using auth_user_id
-        const { data: teacherProfile, error: profileError } = await supabase
-          .from('profiles')
-          .select('full_name, email')
-          .eq('auth_user_id', teacherId)
-          .eq('role', 'teacher')
+        const { data: teacherData, error } = await supabase
+          .from('teacher_details')
+          .select(`
+            id,
+            profiles!profile_id(
+              full_name,
+              email
+            )
+          `)
+          .eq('id', teacherId)
           .single();
 
-        if (profileError) {
-          console.warn('Teacher profile lookup error:', profileError);
-          return 'Teacher Not Found';
-        }
-
-        if (teacherProfile) {
-          if (teacherProfile.full_name && teacherProfile.full_name.trim()) {
-            const teacherName = teacherProfile.full_name.trim();
-            console.log('✅ Found teacher from profiles:', teacherName);
-            return teacherName;
-          } else if (teacherProfile.email) {
-            // Extract name from email if no full name
-            const emailPart = teacherProfile.email.split('@')[0];
-            const teacherName = emailPart.replace(/[._-]/g, ' ')
-                                        .replace(/\b\w/g, l => l.toUpperCase());
-            console.log('📧 Extracted teacher name from email:', teacherName);
-            return teacherName;
+        if (!error && teacherData && teacherData.profiles) {
+          if (teacherData.profiles.full_name && teacherData.profiles.full_name.trim()) {
+            return teacherData.profiles.full_name.trim();
+          }
+          
+          if (teacherData.profiles.email) {
+            const emailPart = teacherData.profiles.email.split('@')[0];
+            return emailPart.replace(/[._-]/g, ' ')
+                            .replace(/\b\w/g, l => l.toUpperCase());
           }
         }
         
-        console.warn('❌ Teacher profile not found for ID:', teacherId);
         return 'Teacher Not Available';
 
       } catch (error) {
@@ -322,100 +442,145 @@ export default {
       }
     },
 
+    // Enhanced fetchSubjects with auto-linking
     async fetchSubjects() {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          console.log('No user found');
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError || !user) {
           this.subjects = [];
           return;
         }
 
-        this.loadingMessage = 'Loading subjects...';
+        this.loadingMessage = 'Loading your subjects...';
         this.isLoading = true;
 
-        console.log('Current user ID:', user.id);
-
-        // Get enrollments with section and subject details
+        // Fetch enrollments with enhanced error handling
         const { data: enrollments, error } = await supabase
           .from('enrollments')
           .select(`
             id,
             created_at,
             section_id,
-            sections!inner(
+            class_id,
+            sections!section_id(
               id,
               name,
               section_code,
               class_id,
-              subjects!inner(
+              created_at
+            ),
+            subjects!class_id(
+              id,
+              name,
+              grade_level,
+              teacher_id,
+              created_at,
+              teacher_details!teacher_id(
                 id,
-                name,
-                grade_level,
-                teacher_id
+                profiles!profile_id(
+                  full_name,
+                  email
+                )
               )
             )
           `)
           .eq('student_id', user.id);
 
         if (error) {
-          console.error('Database error:', error);
+          console.error('Database error fetching enrollments:', error);
           throw error;
         }
 
-        console.log('Fetched enrollments:', enrollments);
-
         if (!enrollments || enrollments.length === 0) {
-          console.log('No enrollments found');
           this.subjects = [];
           return;
         }
 
-        // Process each enrollment
+        // Process enrollments with auto-linking
         const subjectsWithRealTimeData = await Promise.all(
           enrollments.map(async (enrollment) => {
             try {
-              const sectionId = enrollment.sections.id;
-              const subjectId = enrollment.sections.subjects.id;
-              const subject = enrollment.sections.subjects;
-
-              console.log('Processing subject:', subject.name, 'with teacher_id:', subject.teacher_id);
-
-              // Get teacher name using unified function
-              const teacherName = await this.getTeacherName(subject.teacher_id);
-
-              // Get quiz statistics
-              const { data: allQuizzes, error: allQuizzesError } = await supabase
-                .from('quizzes')
-                .select('id, title, is_published, due_date, created_at')
-                .eq('section_id', sectionId);
-
-              if (allQuizzesError) {
-                console.warn('Error fetching quizzes:', allQuizzesError);
+              if (!enrollment.sections) {
+                console.warn('Missing sections data for enrollment:', enrollment.id);
+                return null;
               }
 
-              // Get completed quizzes by this student
-              const quizIds = allQuizzes?.map(q => q.id) || [];
-              let completedQuizResults = [];
-              
-              if (quizIds.length > 0) {
-                const { data: results, error: completedError } = await supabase
-                  .from('quiz_results')
-                  .select('quiz_id, score, submitted_at')
-                  .eq('student_id', user.id)
-                  .in('quiz_id', quizIds);
+              let section = enrollment.sections;
+              let subject = enrollment.subjects;
 
-                if (completedError) {
-                  console.warn('Error fetching completed quizzes:', completedError);
+              // Auto-link if no subject is found
+              if (!subject && section) {
+                console.log('No subject linked, attempting auto-link for section:', section.section_code);
+                const linkedSection = await this.autoLinkSection(section);
+                
+                if (linkedSection && linkedSection.subjects) {
+                  section = linkedSection;
+                  subject = linkedSection.subjects;
+                  console.log('Auto-linking successful');
                 } else {
-                  completedQuizResults = results || [];
+                  console.warn('Auto-linking failed for section:', section.section_code);
+                  return null;
                 }
               }
 
-              // Calculate quiz statistics
-              const totalQuizzes = allQuizzes ? allQuizzes.length : 0;
+              if (!subject) {
+                console.warn('No subject available after auto-linking attempt');
+                return null;
+              }
+
+              const sectionId = section.id;
+              const subjectId = subject.id;
+
+              // Get teacher name
+              let teacherName = 'Teacher Not Available';
+              
+              if (subject.teacher_details && subject.teacher_details.profiles) {
+                const profileData = subject.teacher_details.profiles;
+                if (profileData.full_name && profileData.full_name.trim()) {
+                  teacherName = profileData.full_name.trim();
+                } else if (profileData.email) {
+                  const emailPart = profileData.email.split('@')[0];
+                  teacherName = emailPart.replace(/[._-]/g, ' ')
+                                      .replace(/\b\w/g, l => l.toUpperCase());
+                }
+              }
+
+              // Get quiz statistics
+              let allQuizzes = [];
+              try {
+                const { data: quizData } = await supabase
+                  .from('quizzes')
+                  .select('id, title, is_published, due_date, created_at')
+                  .eq('section_id', sectionId);
+                allQuizzes = quizData || [];
+              } catch (quizError) {
+                console.warn('Quiz fetch failed:', quizError);
+              }
+
+              // Get completed quizzes
+              const quizIds = allQuizzes.map(q => q.id);
+              let completedQuizResults = [];
+              
+              if (quizIds.length > 0) {
+                try {
+                  const { data: results } = await supabase
+                    .from('quiz_results')
+                    .select('quiz_id, score, submitted_at')
+                    .eq('student_id', user.id)
+                    .in('quiz_id', quizIds);
+                  completedQuizResults = results || [];
+                } catch (completedError) {
+                  console.warn('Completed quiz fetch failed:', completedError);
+                }
+              }
+
+              // Calculate statistics
+              const totalQuizzes = allQuizzes.length;
               const completedQuizzes = completedQuizResults.length;
-              const publishedQuizzes = allQuizzes ? allQuizzes.filter(q => q.is_published).length : 0;
+              const publishedQuizzes = allQuizzes.filter(q => q.is_published).length;
               const availableQuizzes = Math.max(0, publishedQuizzes - completedQuizzes);
 
               // Calculate grade
@@ -423,10 +588,9 @@ export default {
               let overallScore = null;
               
               if (completedQuizResults.length > 0) {
-                const totalScore = completedQuizResults.reduce((sum, result) => sum + result.score, 0);
+                const totalScore = completedQuizResults.reduce((sum, result) => sum + (result.score || 0), 0);
                 overallScore = totalScore / completedQuizResults.length;
                 
-                // Convert to letter grade
                 if (overallScore >= 95) currentGrade = 'A+';
                 else if (overallScore >= 90) currentGrade = 'A';
                 else if (overallScore >= 85) currentGrade = 'B+';
@@ -438,14 +602,14 @@ export default {
                 else currentGrade = 'F';
               }
 
-              const finalSubject = {
+              return {
                 id: subjectId,
-                name: subject.name,
-                code: enrollment.sections.section_code,
-                section: enrollment.sections.name,
-                instructor: teacherName,
-                gradeLevel: subject.grade_level,
-                color: this.generateSubjectColor(subject.name),
+                name: subject.name || 'Unknown Subject',
+                code: section.section_code || 'NO-CODE',
+                section: section.name || 'Unknown Section',
+                instructor: `Teacher: ${teacherName}`,
+                gradeLevel: subject.grade_level || 'N/A',
+                color: this.generateSubjectColor(subject.name || 'default'),
                 status: 'active',
                 completedQuizzes,
                 availableQuizzes,
@@ -456,45 +620,18 @@ export default {
                 sectionId: sectionId
               };
 
-              console.log('Final processed subject:', finalSubject);
-              return finalSubject;
-
             } catch (err) {
               console.error(`Error processing enrollment ${enrollment.id}:`, err);
-              
-              // Return a fallback subject with error state
-              return {
-                id: enrollment.sections?.subjects?.id || `error-${enrollment.id}`,
-                name: enrollment.sections?.subjects?.name || 'Error Loading Subject',
-                code: enrollment.sections?.section_code || 'ERROR',
-                section: enrollment.sections?.name || 'Unknown Section',
-                instructor: 'Error Loading Teacher',
-                gradeLevel: enrollment.sections?.subjects?.grade_level || 'N/A',
-                color: this.generateSubjectColor('error'),
-                status: 'active',
-                completedQuizzes: 0,
-                availableQuizzes: 0,
-                totalQuizzes: 0,
-                currentGrade: '--',
-                overallScore: null,
-                enrollmentId: enrollment.id,
-                sectionId: enrollment.sections?.id || null
-              };
+              return null;
             }
           })
         );
 
-        // Filter out any null results
         this.subjects = subjectsWithRealTimeData.filter(subject => subject !== null);
-        console.log('All processed subjects:', this.subjects);
 
       } catch (error) {
         console.error('Error fetching subjects:', error);
         this.subjects = [];
-        
-        // Show user-friendly error message
-        const errorMessage = error.message || 'Unknown error occurred';
-        alert(`Failed to load subjects: ${errorMessage}`);
       } finally {
         this.isLoading = false;
       }
@@ -509,6 +646,7 @@ export default {
       return colors[Math.abs(hash) % colors.length];
     },
 
+    // Enhanced validateSectionCode with auto-linking
     async validateSectionCode() {
       if (!this.joinForm.sectionCode || this.joinForm.sectionCode.length < 8) {
         this.previewSubject = null;
@@ -516,10 +654,11 @@ export default {
       }
 
       try {
-        console.log('Validating section code:', this.joinForm.sectionCode.toUpperCase());
+        const searchCode = this.joinForm.sectionCode.trim().toUpperCase();
+        console.log('Validating section code:', searchCode);
 
-        // Look up section by section code with proper joins
-        const { data: section, error } = await supabase
+        // First, find the section
+        const { data: section, error: sectionError } = await supabase
           .from('sections')
           .select(`
             id,
@@ -530,19 +669,37 @@ export default {
               id,
               name,
               grade_level,
-              teacher_id
+              teacher_id,
+              teacher_details!teacher_id(
+                id,
+                profiles!profile_id(
+                  full_name,
+                  email
+                )
+              )
             )
           `)
-          .eq('section_code', this.joinForm.sectionCode.toUpperCase())
+          .eq('section_code', searchCode)
           .single();
 
-        console.log('Section validation result:', section);
-        console.log('Section validation error:', error);
-
-        if (error || !section) {
+        if (sectionError || !section) {
           this.joinError = 'Invalid section code. Please check with your teacher.';
           this.previewSubject = null;
           return;
+        }
+
+        let linkedSection = section;
+        
+        // Auto-link if no subject is found
+        if (!section.subjects) {
+          console.log('No subject linked, attempting auto-link...');
+          linkedSection = await this.autoLinkSection(section);
+          
+          if (!linkedSection || !linkedSection.subjects) {
+            this.joinError = 'Section found but could not link to subject. Please contact your teacher.';
+            this.previewSubject = null;
+            return;
+          }
         }
 
         // Check if already enrolled
@@ -557,8 +714,8 @@ export default {
           .from('enrollments')
           .select('id')
           .eq('student_id', user.id)
-          .eq('section_id', section.id)
-          .single();
+          .eq('section_id', linkedSection.id)
+          .maybeSingle();
 
         if (existingEnrollment) {
           this.joinError = 'You are already enrolled in this class.';
@@ -566,22 +723,31 @@ export default {
           return;
         }
 
-        // Get teacher information using unified function
-        const teacherName = await this.getTeacherName(section.subjects.teacher_id);
+        // Get teacher name
+        let teacherName = 'Teacher Not Available';
+        
+        if (linkedSection.subjects.teacher_details && linkedSection.subjects.teacher_details.profiles) {
+          const profileData = linkedSection.subjects.teacher_details.profiles;
+          if (profileData.full_name && profileData.full_name.trim()) {
+            teacherName = profileData.full_name.trim();
+          } else if (profileData.email) {
+            const emailPart = profileData.email.split('@')[0];
+            teacherName = emailPart.replace(/[._-]/g, ' ')
+                                  .replace(/\b\w/g, l => l.toUpperCase());
+          }
+        }
 
-        // Show preview with actual teacher name
+        // Show preview
         this.previewSubject = {
-          id: section.subjects.id,
-          name: section.subjects.name,
-          code: section.section_code,
-          section: section.name,
+          id: linkedSection.subjects.id,
+          name: linkedSection.subjects.name,
+          code: linkedSection.section_code,
+          section: linkedSection.name,
           instructor: teacherName,
-          grade_level: section.subjects.grade_level,
-          color: this.generateSubjectColor(section.subjects.name)
+          grade_level: linkedSection.subjects.grade_level,
+          color: this.generateSubjectColor(linkedSection.subjects.name)
         };
         this.joinError = '';
-
-        console.log('Final preview subject with teacher:', this.previewSubject);
 
       } catch (error) {
         console.error('Error validating section code:', error);
@@ -590,6 +756,7 @@ export default {
       }
     },
 
+    // Enhanced joinClass with auto-linking
     async joinClass() {
       if (!this.joinForm.sectionCode) return;
 
@@ -600,11 +767,11 @@ export default {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Please login to join a class');
 
-        console.log('Starting join process for user:', user.id);
-        console.log('Section code:', this.joinForm.sectionCode.toUpperCase());
+        const searchCode = this.joinForm.sectionCode.trim().toUpperCase();
+        console.log('Starting join process for section:', searchCode);
 
-        // Validate section code again (ensure consistency)
-        const { data: section, error: sectionError } = await supabase
+        // Find and potentially auto-link section
+        let { data: section, error: sectionError } = await supabase
           .from('sections')
           .select(`
             id, 
@@ -617,31 +784,34 @@ export default {
               teacher_id
             )
           `)
-          .eq('section_code', this.joinForm.sectionCode.toUpperCase())
+          .eq('section_code', searchCode)
           .single();
-
-        console.log('Section found for join:', section);
-        console.log('Section error:', sectionError);
 
         if (sectionError || !section) {
           throw new Error('Invalid section code. Please check with your teacher.');
         }
 
-        // Check for existing enrollment again
+        // Auto-link if needed
+        if (!section.subjects) {
+          section = await this.autoLinkSection(section);
+          if (!section || !section.subjects) {
+            throw new Error('Could not link section to subject. Please contact your teacher.');
+          }
+        }
+
+        // Check for existing enrollment
         const { data: existingEnrollment } = await supabase
           .from('enrollments')
           .select('id')
           .eq('student_id', user.id)
           .eq('section_id', section.id)
-          .single();
+          .maybeSingle();
 
         if (existingEnrollment) {
           throw new Error('You are already enrolled in this class.');
         }
 
-        console.log('Creating enrollment for section:', section.id);
-
-        // Create enrollment with both section_id and class_id
+        // Create enrollment
         const { data: newEnrollment, error: enrollmentError } = await supabase
           .from('enrollments')
           .insert([{
@@ -652,28 +822,11 @@ export default {
           .select()
           .single();
 
-        console.log('Enrollment created:', newEnrollment);
-        console.log('Enrollment error:', enrollmentError);
-
         if (enrollmentError) throw enrollmentError;
 
-        // Update section student count (optional, handle gracefully)
-        try {
-          await supabase.rpc('increment_student_count', {
-            section_id: section.id
-          });
-        } catch (updateError) {
-          console.warn('Failed to update student count:', updateError);
-          // Don't fail the enrollment for this
-        }
-
-        // Close modal first
+        // Close modal and refresh
         this.closeJoinModal();
-
-        // Show success message
         alert(`Successfully joined ${section.subjects.name}!`);
-
-        // Refresh subjects data to show new enrollment
         await this.fetchSubjects();
 
       } catch (error) {
@@ -688,7 +841,6 @@ export default {
       this.joinError = '';
       this.previewSubject = null;
       
-      // Add debounced validation
       clearTimeout(this.validationTimeout);
       this.validationTimeout = setTimeout(() => {
         if (this.joinForm.sectionCode.length >= 8) {
@@ -703,7 +855,6 @@ export default {
       this.joinError = '';
       this.previewSubject = null;
       
-      // Clear any pending validation
       if (this.validationTimeout) {
         clearTimeout(this.validationTimeout);
         this.validationTimeout = null;
@@ -712,11 +863,9 @@ export default {
 
     viewSubjectDetails(subject) {
       console.log('Viewing subject details:', subject);
-      // Navigate to subject details page
     },
 
     takeQuiz(subject) {
-      // Navigate to available quiz for this subject/section
       this.$router.push({
         name: 'TakeQuiz',
         params: {
@@ -732,7 +881,6 @@ export default {
     },
 
     viewCompletedQuizzes(subject) {
-      // Navigate to completed quizzes view
       this.$router.push({
         name: 'CompletedQuizzes',
         params: {
@@ -746,7 +894,6 @@ export default {
     },
 
     viewGrades(subject) {
-      // Navigate to comprehensive grades view
       this.$router.push({
         name: 'StudentGrades',
         params: {
@@ -763,13 +910,45 @@ export default {
       });
     },
   },
+
   async mounted() {
-    // Initial load
-    await this.fetchSubjects();
+    let retryCount = 0;
+    const maxRetries = 5;
     
-    // Set up polling for updates
-    this.pollingInterval = setInterval(this.fetchSubjects, 30000); // Poll every 30 seconds
+    const loadWithRetry = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user && retryCount < maxRetries) {
+        retryCount++;
+        setTimeout(loadWithRetry, 1000);
+        return;
+      }
+      
+      if (!user) {
+        console.error('Failed to get authenticated user after retries');
+        return;
+      }
+      
+      await this.fetchSubjects();
+      
+      // Set up polling every 30 seconds
+      this.pollingInterval = setInterval(() => {
+        this.fetchSubjects();
+      }, 30000);
+    };
+
+    await loadWithRetry();
+    
+    // Auth state listener
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        await this.fetchSubjects();
+      } else if (event === 'SIGNED_OUT') {
+        this.subjects = [];
+      }
+    });
   },
+
   beforeUnmount() {
     if (this.pollingInterval) {
       clearInterval(this.pollingInterval);
