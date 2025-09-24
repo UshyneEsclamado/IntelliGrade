@@ -212,45 +212,200 @@
 import { supabase } from '../supabase'
 
 export default {
-  name: 'Signup',
+  name: 'TeacherSignup',
   data() {
     return {
       fullName: '',
       email: '',
       password: '',
       confirmPassword: '',
+      showPassword: false,
+      showConfirmPassword: false,
       isLoading: false,
       error: null,
-      role: 'teacher' // You'll want to make this dynamic later
+      role: 'teacher',
+      passwordStrength: {
+        score: 0,
+        checks: {
+          length: false,
+          uppercase: false,
+          lowercase: false,
+          number: false,
+          symbol: false,
+          noCommon: false
+        }
+      },
+      emailValidation: {
+        isValid: false,
+        warning: '',
+        suggestion: ''
+      }
+    }
+  },
+  watch: {
+    password: {
+      handler(newPassword) {
+        this.checkPasswordStrength(newPassword);
+      },
+      immediate: true
+    },
+    email: {
+      handler(newEmail) {
+        this.validateEmailRealTime(newEmail);
+      },
+      immediate: true
     }
   },
   methods: {
-    async handleSignup() {
-      if (!this.fullName || !this.email || !this.password || !this.confirmPassword) {
-        this.error = 'Please fill in all fields.'
-        return
-      }
-      if (this.password !== this.confirmPassword) {
-        this.error = 'Passwords do not match.'
-        return
-      }
+    togglePasswordVisibility() {
+      this.showPassword = !this.showPassword;
+    },
+
+    toggleConfirmPasswordVisibility() {
+      this.showConfirmPassword = !this.showConfirmPassword;
+    },
+
+    checkPasswordStrength(password) {
+      const checks = {
+        length: password.length >= 10,
+        uppercase: /[A-Z]/.test(password),
+        lowercase: /[a-z]/.test(password),
+        number: /\d/.test(password),
+        symbol: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+        noCommon: !['password', '123456789', 'qwerty', 'admin', 'password123'].some(common => 
+          password.toLowerCase().includes(common)
+        )
+      };
       
-      this.isLoading = true
-      this.error = null
+      const score = Object.values(checks).filter(Boolean).length;
+      
+      this.passwordStrength = { score, checks };
+    },
+
+    getPasswordStrengthText() {
+      if (this.passwordStrength.score < 3) return 'Weak';
+      if (this.passwordStrength.score < 5) return 'Medium';
+      return 'Strong';
+    },
+
+    getPasswordStrengthColor() {
+      if (this.passwordStrength.score < 3) return '#dc2626';
+      if (this.passwordStrength.score < 5) return '#f59e0b';
+      return '#10b981';
+    },
+
+    validateEmailRealTime(email) {
+      if (!email) {
+        this.emailValidation = { isValid: false, warning: '', suggestion: '' };
+        return;
+      }
+
+      // Basic format check
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        this.emailValidation = { 
+          isValid: false, 
+          warning: 'Invalid email format', 
+          suggestion: '' 
+        };
+        return;
+      }
+
+      // Check for common typos
+      const commonDomains = {
+        'gmial.com': 'gmail.com',
+        'gmai.com': 'gmail.com',
+        'yahooo.com': 'yahoo.com',
+        'hotmial.com': 'hotmail.com',
+        'outlok.com': 'outlook.com'
+      };
+
+      const domain = email.split('@')[1];
+      if (commonDomains[domain]) {
+        this.emailValidation = {
+          isValid: true,
+          warning: 'Possible typo detected',
+          suggestion: `Did you mean ${email.replace(domain, commonDomains[domain])}?`
+        };
+        return;
+      }
+
+      // Check for disposable email services
+      const disposableDomains = [
+        '10minutemail.com', 'guerrillamail.com', 'mailinator.com',
+        'tempmail.org', 'throwaway.email'
+      ];
+
+      if (disposableDomains.includes(domain)) {
+        this.emailValidation = {
+          isValid: true,
+          warning: 'Temporary email detected',
+          suggestion: 'Consider using a permanent email address'
+        };
+        return;
+      }
+
+      this.emailValidation = { isValid: true, warning: '', suggestion: '' };
+    },
+
+    async sendVerificationEmail(userId, email) {
+      const token = this.generateVerificationToken();
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24);
+
+      // Store verification token
+      await supabase
+        .from("profiles")
+        .update({
+          verification_token: token,
+          token_expires_at: expiresAt.toISOString()
+        })
+        .eq("id", userId);
+
+      // Here you would integrate with your email service
+      console.log(`Verification email sent to ${email} with token: ${token}`);
+      
+      // For now, just show success message
+      this.error = "Account created! Please check your email for verification link.";
+    },
+
+    generateVerificationToken() {
+      return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    },
+
+    async handleSignup() {
+      // Validation
+      if (!this.fullName || !this.email || !this.password || !this.confirmPassword) {
+        this.error = 'Please fill in all fields.';
+        return;
+      }
+
+      if (this.password !== this.confirmPassword) {
+        this.error = 'Passwords do not match.';
+        return;
+      }
+
+      if (this.passwordStrength.score < 6) {
+        this.error = 'Password does not meet security requirements.';
+        return;
+      }
+
+      this.isLoading = true;
+      this.error = null;
 
       try {
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: this.email,
           password: this.password,
-        })
+        });
 
         if (authError) {
-          throw authError
+          throw authError;
         }
 
         const user = authData.user;
         
-        // Insert into profiles table with new structure
+        // Insert into profiles table
         const { error: profileError } = await supabase
           .from('profiles')
           .insert([{
@@ -259,51 +414,24 @@ export default {
             full_name: this.fullName,
             email: this.email,
             role: this.role,
-          }])
+            email_verified: false,
+            password_changed_at: new Date().toISOString()
+          }]);
 
         if (profileError) {
-          throw profileError
+          throw profileError;
         }
 
-        // Create role-specific detail record
-        if (this.role === 'teacher') {
-          const { error: teacherError } = await supabase
-            .from('teacher_details')
-            .insert([{
-              profile_id: user.id,
-              // Add other teacher-specific fields as needed
-            }])
-          
-          if (teacherError) {
-            console.error('Teacher details error:', teacherError);
-            // Don't throw here, profile is already created
-          }
-        } else if (this.role === 'student') {
-          const { error: studentError } = await supabase
-            .from('student_details')
-            .insert([{
-              profile_id: user.id,
-              // Add other student-specific fields as needed
-            }])
-          
-          if (studentError) {
-            console.error('Student details error:', studentError);
-            // Don't throw here, profile is already created
-          }
-        }
+        // Send verification email
+        await this.sendVerificationEmail(user.id, this.email);
 
-        // Redirect based on role
-        if (this.role === 'teacher') {
-          this.$router.push('/teacher/dashboard')
-        } else {
-          this.$router.push('/student-dashboard')
-        }
+        // Don't redirect immediately - wait for email verification
         
       } catch (err) {
         console.error('Signup error:', err);
         this.error = err.message || 'An unexpected error occurred during signup.';
       } finally {
-        this.isLoading = false
+        this.isLoading = false;
       }
     }
   }
@@ -890,5 +1018,76 @@ input::placeholder {
   .form-group {
     margin-bottom: 0.8rem;
   }
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(61, 141, 122, 0.5);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  z-index: 2;
+}
+
+.password-toggle:hover {
+  color: rgba(61, 141, 122, 0.8);
+}
+
+.password-strength {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(61, 141, 122, 0.05);
+  border-radius: 6px;
+  font-size: 0.75rem;
+}
+
+.strength-meter {
+  display: flex;
+  gap: 0.25rem;
+  margin: 0.25rem 0;
+}
+
+.strength-bar {
+  height: 4px;
+  flex: 1;
+  background: rgba(61, 141, 122, 0.1);
+  border-radius: 2px;
+}
+
+.strength-bar.active {
+  background: var(--strength-color);
+}
+
+.strength-checks {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0 0;
+}
+
+.strength-checks li {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0.1rem 0;
+}
+
+.email-warning {
+  margin-top: 0.3rem;
+  padding: 0.4rem;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: 6px;
+  font-size: 0.7rem;
+  color: #92400e;
+}
+
+.email-suggestion {
+  color: #1d4ed8;
+  cursor: pointer;
+  text-decoration: underline;
 }
 </style>

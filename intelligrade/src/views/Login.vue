@@ -1012,4 +1012,21 @@ input::placeholder {
     padding: 1rem;
   }
 }
+
+.password-toggle {
+  position: absolute;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(61, 141, 122, 0.5);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  z-index: 2;
+}
+
+.password-toggle:hover {
+  color: rgba(61, 141, 122, 0.8);
+}
 </style>
