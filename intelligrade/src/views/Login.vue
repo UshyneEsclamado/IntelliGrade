@@ -178,11 +178,30 @@
                 <path d="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"/>
               </svg>
               <input 
-                type="password"
+                :type="showPassword ? 'text' : 'password'"
                 placeholder="Enter your password" 
                 v-model="password"
                 required
               />
+              <button 
+                type="button" 
+                class="password-toggle"
+                @click="togglePasswordVisibility"
+                tabindex="-1"
+              >
+                <svg v-if="!showPassword" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/>
+                </svg>
+                <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M11.83,9L15,12.16C15,12.11 15,12.05 15,12A3,3 0 0,0 12,9C11.94,9 11.89,9 11.83,9M7.53,9.8L9.08,11.35C9.03,11.56 9,11.77 9,12A3,3 0 0,0 12,15C12.22,15 12.44,14.97 12.65,14.92L14.2,16.47C13.53,16.8 12.79,17 12,17A5,5 0 0,1 7,12C7,11.21 7.2,10.47 7.53,9.8M2,4.27L4.28,6.55L4.73,7C3.08,8.3 1.78,10 1,12C2.73,16.39 7,19.5 12,19.5C13.55,19.5 15.03,19.2 16.38,18.66L16.81,19.09L19.73,22L21,20.73L3.27,3M12,7A5,5 0 0,1 17,12C17,12.64 16.87,13.26 16.64,13.82L19.57,16.75C21.07,15.5 22.27,13.86 23,12C21.27,7.61 17,4.5 12,4.5C10.6,4.5 9.26,4.75 8,5.2L10.17,7.35C10.76,7.13 11.37,7 12,7Z"/>
+                </svg>
+              </button>
+            </div>
+            <!-- Password Error Messages -->
+            <div v-if="passwordErrors.length > 0 && password.length > 0" class="password-errors">
+              <ul>
+                <li v-for="error in passwordErrors" :key="error" class="error-item">{{ error }}</li>
+              </ul>
             </div>
           </div>
 
@@ -233,16 +252,47 @@
 import { supabase } from "../supabase.js";
 
 export default {
-  name: "Login",
+  name: "LoginView",
   data() {
     return {
       email: "",
       password: "",
       isLoading: false,
       error: null,
+      showPassword: false,
+      passwordErrors: [],
     };
   },
+  watch: {
+    password(newPassword) {
+      this.validatePassword(newPassword);
+    }
+  },
   methods: {
+    togglePasswordVisibility() {
+      this.showPassword = !this.showPassword;
+    },
+    
+    validatePassword(password) {
+      this.passwordErrors = [];
+
+      if (password.length < 10) {
+        this.passwordErrors.push("Password must be at least 10 characters long");
+      }
+
+      if (!/[A-Z]/.test(password)) {
+        this.passwordErrors.push("Password must contain at least one uppercase letter");
+      }
+
+      if (!/[0-9]/.test(password)) {
+        this.passwordErrors.push("Password must contain at least one number");
+      }
+
+      if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+        this.passwordErrors.push("Password must contain at least one symbol");
+      }
+    },
+
     async handleLogin() {
       if (!this.email || !this.password) {
         this.error = "Please enter both email and password.";
@@ -281,7 +331,19 @@ export default {
         }
       } catch (err) {
         console.error("Login error:", err);
-        this.error = err.message || "Login failed. Please check your credentials.";
+        
+        // Specific error messages based on error type
+        if (err.message.includes("Invalid login credentials") || err.message.includes("invalid_grant")) {
+          this.error = "Incorrect password. Please check your password and try again.";
+        } else if (err.message.includes("User not found") || err.message.includes("user_not_found")) {
+          this.error = "Account does not exist. Please check your email or sign up for a new account.";
+        } else if (err.message.includes("Email not confirmed")) {
+          this.error = "Please verify your email address before logging in.";
+        } else if (err.message.includes("Too many requests")) {
+          this.error = "Too many login attempts. Please wait a few minutes before trying again.";
+        } else {
+          this.error = "Login failed. Please check your credentials and try again.";
+        }
       } finally {
         this.isLoading = false;
       }
@@ -617,6 +679,66 @@ input::placeholder {
   color: rgba(61, 141, 122, 0.4);
   font-size: 0.8rem;
   font-weight: 400;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  color: rgba(61, 141, 122, 0.6);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.password-toggle:hover {
+  color: #3D8D7A;
+  background: rgba(61, 141, 122, 0.1);
+}
+
+.password-toggle:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(61, 141, 122, 0.2);
+}
+
+.password-errors {
+  margin-top: 0.5rem;
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 6px;
+  padding: 0.5rem;
+}
+
+.password-errors ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.password-errors .error-item {
+  color: #dc2626;
+  font-size: 0.7rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.password-errors .error-item:last-child {
+  margin-bottom: 0;
+}
+
+.password-errors .error-item::before {
+  content: "•";
+  color: #dc2626;
+  font-weight: bold;
 }
 
 .error-display {
@@ -1011,22 +1133,5 @@ input::placeholder {
   .auth-box {
     padding: 1rem;
   }
-}
-
-.password-toggle {
-  position: absolute;
-  right: 0.75rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: rgba(61, 141, 122, 0.5);
-  padding: 0;
-  display: flex;
-  align-items: center;
-  z-index: 2;
-}
-
-.password-toggle:hover {
-  color: rgba(61, 141, 122, 0.8);
 }
 </style>
