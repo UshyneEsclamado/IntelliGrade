@@ -163,11 +163,47 @@
                 <path d="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"/>
               </svg>
               <input 
-                type="password" 
+                :type="showPassword ? 'text' : 'password'" 
                 placeholder="Create a password" 
                 v-model="password"
                 required
               />
+              <button 
+                type="button" 
+                class="password-toggle"
+                @click="togglePasswordVisibility"
+                tabindex="-1"
+              >
+                <svg v-if="!showPassword" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/>
+                </svg>
+                <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M11.83,9L15,12.16C15,12.11 15,12.05 15,12A3,3 0 0,0 12,9C11.94,9 11.89,9 11.83,9M7.53,9.8L9.08,11.35C9.03,11.56 9,11.77 9,12A3,3 0 0,0 12,15C12.22,15 12.44,14.97 12.65,14.92L14.2,16.47C13.53,16.8 12.79,17 12,17A5,5 0 0,1 7,12C7,11.21 7.2,10.47 7.53,9.8M2,4.27L4.28,6.55L4.73,7C3.08,8.3 1.78,10 1,12C2.73,16.39 7,19.5 12,19.5C13.55,19.5 15.03,19.2 16.38,18.66L16.81,19.09L19.73,22L21,20.73L3.27,3M12,7A5,5 0 0,1 17,12C17,12.64 16.87,13.26 16.64,13.82L19.57,16.75C21.07,15.5 22.27,13.86 23,12C21.27,7.61 17,4.5 12,4.5C10.6,4.5 9.26,4.75 8,5.2L10.17,7.35C10.76,7.13 11.37,7 12,7Z"/>
+                </svg>
+              </button>
+            </div>
+            <!-- Password Strength Indicator -->
+            <div v-if="password.length > 0" class="password-strength">
+              <div class="strength-bar">
+                <div 
+                  class="strength-fill" 
+                  :class="'strength-' + passwordStrength"
+                  :style="{ width: (passwordStrength / 4) * 100 + '%' }"
+                ></div>
+              </div>
+              <div class="strength-text">
+                <span v-if="passwordStrength === 0" class="weak">Very Weak</span>
+                <span v-else-if="passwordStrength === 1" class="weak">Weak</span>
+                <span v-else-if="passwordStrength === 2" class="fair">Fair</span>
+                <span v-else-if="passwordStrength === 3" class="good">Good</span>
+                <span v-else class="strong">Strong</span>
+              </div>
+            </div>
+            <!-- Password Error Messages -->
+            <div v-if="passwordErrors.length > 0 && password.length > 0" class="password-errors">
+              <ul>
+                <li v-for="error in passwordErrors" :key="error" class="error-item">{{ error }}</li>
+              </ul>
             </div>
           </div>
 
@@ -178,11 +214,24 @@
                 <path d="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"/>
               </svg>
               <input 
-                type="password" 
+                :type="showConfirmPassword ? 'text' : 'password'" 
                 placeholder="Confirm your password" 
                 v-model="confirmPassword"
                 required
               />
+              <button 
+                type="button" 
+                class="password-toggle"
+                @click="toggleConfirmPasswordVisibility"
+                tabindex="-1"
+              >
+                <svg v-if="!showConfirmPassword" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/>
+                </svg>
+                <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M11.83,9L15,12.16C15,12.11 15,12.05 15,12A3,3 0 0,0 12,9C11.94,9 11.89,9 11.83,9M7.53,9.8L9.08,11.35C9.03,11.56 9,11.77 9,12A3,3 0 0,0 12,15C12.22,15 12.44,14.97 12.65,14.92L14.2,16.47C13.53,16.8 12.79,17 12,17A5,5 0 0,1 7,12C7,11.21 7.2,10.47 7.53,9.8M2,4.27L4.28,6.55L4.73,7C3.08,8.3 1.78,10 1,12C2.73,16.39 7,19.5 12,19.5C13.55,19.5 15.03,19.2 16.38,18.66L16.81,19.09L19.73,22L21,20.73L3.27,3M12,7A5,5 0 0,1 17,12C17,12.64 16.87,13.26 16.64,13.82L19.57,16.75C21.07,15.5 22.27,13.86 23,12C21.27,7.61 17,4.5 12,4.5C10.6,4.5 9.26,4.75 8,5.2L10.17,7.35C10.76,7.13 11.37,7 12,7Z"/>
+                </svg>
+              </button>
             </div>
           </div>
 
@@ -212,200 +261,93 @@
 import { supabase } from '../supabase'
 
 export default {
-  name: 'TeacherSignup',
+  name: 'Signup',
   data() {
     return {
       fullName: '',
       email: '',
       password: '',
       confirmPassword: '',
-      showPassword: false,
-      showConfirmPassword: false,
       isLoading: false,
       error: null,
-      role: 'teacher',
-      passwordStrength: {
-        score: 0,
-        checks: {
-          length: false,
-          uppercase: false,
-          lowercase: false,
-          number: false,
-          symbol: false,
-          noCommon: false
-        }
-      },
-      emailValidation: {
-        isValid: false,
-        warning: '',
-        suggestion: ''
-      }
+      role: 'teacher', // You'll want to make this dynamic later
+      showPassword: false,
+      showConfirmPassword: false,
+      passwordStrength: 0,
+      passwordErrors: []
     }
   },
   watch: {
-    password: {
-      handler(newPassword) {
-        this.checkPasswordStrength(newPassword);
-      },
-      immediate: true
-    },
-    email: {
-      handler(newEmail) {
-        this.validateEmailRealTime(newEmail);
-      },
-      immediate: true
+    password(newPassword) {
+      this.validatePassword(newPassword);
     }
   },
   methods: {
     togglePasswordVisibility() {
       this.showPassword = !this.showPassword;
     },
-
+    
     toggleConfirmPasswordVisibility() {
       this.showConfirmPassword = !this.showConfirmPassword;
     },
+    
+    validatePassword(password) {
+      this.passwordErrors = [];
+      let strength = 0;
 
-    checkPasswordStrength(password) {
-      const checks = {
-        length: password.length >= 10,
-        uppercase: /[A-Z]/.test(password),
-        lowercase: /[a-z]/.test(password),
-        number: /\d/.test(password),
-        symbol: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
-        noCommon: !['password', '123456789', 'qwerty', 'admin', 'password123'].some(common => 
-          password.toLowerCase().includes(common)
-        )
-      };
-      
-      const score = Object.values(checks).filter(Boolean).length;
-      
-      this.passwordStrength = { score, checks };
-    },
-
-    getPasswordStrengthText() {
-      if (this.passwordStrength.score < 3) return 'Weak';
-      if (this.passwordStrength.score < 5) return 'Medium';
-      return 'Strong';
-    },
-
-    getPasswordStrengthColor() {
-      if (this.passwordStrength.score < 3) return '#dc2626';
-      if (this.passwordStrength.score < 5) return '#f59e0b';
-      return '#10b981';
-    },
-
-    validateEmailRealTime(email) {
-      if (!email) {
-        this.emailValidation = { isValid: false, warning: '', suggestion: '' };
-        return;
+      if (password.length < 10) {
+        this.passwordErrors.push("Password must be at least 10 characters long");
+      } else {
+        strength += 1;
       }
 
-      // Basic format check
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        this.emailValidation = { 
-          isValid: false, 
-          warning: 'Invalid email format', 
-          suggestion: '' 
-        };
-        return;
+      if (!/[A-Z]/.test(password)) {
+        this.passwordErrors.push("Password must contain at least one uppercase letter");
+      } else {
+        strength += 1;
       }
 
-      // Check for common typos
-      const commonDomains = {
-        'gmial.com': 'gmail.com',
-        'gmai.com': 'gmail.com',
-        'yahooo.com': 'yahoo.com',
-        'hotmial.com': 'hotmail.com',
-        'outlok.com': 'outlook.com'
-      };
-
-      const domain = email.split('@')[1];
-      if (commonDomains[domain]) {
-        this.emailValidation = {
-          isValid: true,
-          warning: 'Possible typo detected',
-          suggestion: `Did you mean ${email.replace(domain, commonDomains[domain])}?`
-        };
-        return;
+      if (!/[0-9]/.test(password)) {
+        this.passwordErrors.push("Password must contain at least one number");
+      } else {
+        strength += 1;
       }
 
-      // Check for disposable email services
-      const disposableDomains = [
-        '10minutemail.com', 'guerrillamail.com', 'mailinator.com',
-        'tempmail.org', 'throwaway.email'
-      ];
-
-      if (disposableDomains.includes(domain)) {
-        this.emailValidation = {
-          isValid: true,
-          warning: 'Temporary email detected',
-          suggestion: 'Consider using a permanent email address'
-        };
-        return;
+      if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+        this.passwordErrors.push("Password must contain at least one symbol");
+      } else {
+        strength += 1;
       }
 
-      this.emailValidation = { isValid: true, warning: '', suggestion: '' };
-    },
-
-    async sendVerificationEmail(userId, email) {
-      const token = this.generateVerificationToken();
-      const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + 24);
-
-      // Store verification token
-      await supabase
-        .from("profiles")
-        .update({
-          verification_token: token,
-          token_expires_at: expiresAt.toISOString()
-        })
-        .eq("id", userId);
-
-      // Here you would integrate with your email service
-      console.log(`Verification email sent to ${email} with token: ${token}`);
-      
-      // For now, just show success message
-      this.error = "Account created! Please check your email for verification link.";
-    },
-
-    generateVerificationToken() {
-      return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      this.passwordStrength = strength;
     },
 
     async handleSignup() {
-      // Validation
       if (!this.fullName || !this.email || !this.password || !this.confirmPassword) {
-        this.error = 'Please fill in all fields.';
-        return;
+        this.error = 'Please fill in all fields.'
+        return
       }
-
       if (this.password !== this.confirmPassword) {
-        this.error = 'Passwords do not match.';
-        return;
+        this.error = 'Passwords do not match.'
+        return
       }
-
-      if (this.passwordStrength.score < 6) {
-        this.error = 'Password does not meet security requirements.';
-        return;
-      }
-
-      this.isLoading = true;
-      this.error = null;
+      
+      this.isLoading = true
+      this.error = null
 
       try {
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: this.email,
           password: this.password,
-        });
+        })
 
         if (authError) {
-          throw authError;
+          throw authError
         }
 
         const user = authData.user;
         
-        // Insert into profiles table
+        // Insert into profiles table with new structure
         const { error: profileError } = await supabase
           .from('profiles')
           .insert([{
@@ -414,24 +356,51 @@ export default {
             full_name: this.fullName,
             email: this.email,
             role: this.role,
-            email_verified: false,
-            password_changed_at: new Date().toISOString()
-          }]);
+          }])
 
         if (profileError) {
-          throw profileError;
+          throw profileError
         }
 
-        // Send verification email
-        await this.sendVerificationEmail(user.id, this.email);
+        // Create role-specific detail record
+        if (this.role === 'teacher') {
+          const { error: teacherError } = await supabase
+            .from('teacher_details')
+            .insert([{
+              profile_id: user.id,
+              // Add other teacher-specific fields as needed
+            }])
+          
+          if (teacherError) {
+            console.error('Teacher details error:', teacherError);
+            // Don't throw here, profile is already created
+          }
+        } else if (this.role === 'student') {
+          const { error: studentError } = await supabase
+            .from('student_details')
+            .insert([{
+              profile_id: user.id,
+              // Add other student-specific fields as needed
+            }])
+          
+          if (studentError) {
+            console.error('Student details error:', studentError);
+            // Don't throw here, profile is already created
+          }
+        }
 
-        // Don't redirect immediately - wait for email verification
+        // Redirect based on role
+        if (this.role === 'teacher') {
+          this.$router.push('/teacher/dashboard')
+        } else {
+          this.$router.push('/student-dashboard')
+        }
         
       } catch (err) {
         console.error('Signup error:', err);
         this.error = err.message || 'An unexpected error occurred during signup.';
       } finally {
-        this.isLoading = false;
+        this.isLoading = false
       }
     }
   }
@@ -455,11 +424,12 @@ export default {
   height: 100vh;
   background: transparent !important;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 1rem;
+  padding: 0.5rem;
   font-family: 'Inter', sans-serif;
-  overflow: hidden;
+  overflow-y: scroll;
+  overflow-x: hidden;
 }
 
 .geometric-shapes {
@@ -532,12 +502,13 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2.5rem;
+  gap: 2rem;
   width: 100%;
   max-width: 1100px;
-  height: 90vh;
+  min-height: 100vh;
   z-index: 10;
   position: relative;
+  padding: 1rem 0;
 }
 
 .logo-space {
@@ -618,7 +589,7 @@ export default {
 .auth-box {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
-  padding: 1.5rem;
+  padding: 1.25rem;
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 
@@ -633,12 +604,11 @@ export default {
   flex-direction: column;
   justify-content: center;
   height: fit-content;
-  max-height: 90vh;
-  overflow-y: auto;
+  overflow-y: visible;
 }
 
 .logo-section {
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .user-icon {
@@ -675,7 +645,7 @@ h1 {
 }
 
 .form-group {
-  margin-bottom: 0.9rem;
+  margin-bottom: 0.75rem;
 }
 
 .form-group label {
@@ -702,7 +672,7 @@ h1 {
 
 input {
   width: 100%;
-  padding: 0.7rem 0.7rem 0.7rem 2.25rem;
+  padding: 0.65rem 0.65rem 0.65rem 2.1rem;
   font-size: 0.85rem;
   border: 2px solid rgba(61, 141, 122, 0.2);
   border-radius: 9px;
@@ -752,7 +722,7 @@ input::placeholder {
   width: 100%;
   background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
   color: white;
-  padding: 0.75rem;
+  padding: 0.65rem;
   font-size: 0.85rem;
   font-weight: 600;
   border: none;
@@ -763,7 +733,7 @@ input::placeholder {
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  margin-top: 0.5rem;
+  margin-top: 0.4rem;
   box-shadow: 0 4px 15px rgba(61, 141, 122, 0.2);
 }
 
@@ -891,8 +861,8 @@ input::placeholder {
   .auth-container {
     flex-direction: column;
     gap: 1.25rem;
-    height: auto;
-    max-height: 95vh;
+    min-height: auto;
+    padding: 1rem 0;
   }
   
   .logo-space {
@@ -924,6 +894,7 @@ input::placeholder {
   .auth-wrapper {
     padding: 0.75rem;
     overflow-y: auto;
+    align-items: flex-start;
   }
   
   .auth-box {
@@ -1020,74 +991,160 @@ input::placeholder {
   }
 }
 
+/* Password Security Styles */
 .password-toggle {
   position: absolute;
   right: 0.75rem;
   background: none;
   border: none;
+  color: rgba(61, 141, 122, 0.6);
   cursor: pointer;
-  color: rgba(61, 141, 122, 0.5);
   padding: 0;
   display: flex;
   align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
   z-index: 2;
+  border-radius: 4px;
+  width: 32px;
+  height: 32px;
 }
 
 .password-toggle:hover {
-  color: rgba(61, 141, 122, 0.8);
+  color: #3D8D7A;
+  background-color: rgba(61, 141, 122, 0.1);
 }
 
 .password-strength {
   margin-top: 0.5rem;
-  padding: 0.5rem;
-  background: rgba(61, 141, 122, 0.05);
-  border-radius: 6px;
-  font-size: 0.75rem;
-}
-
-.strength-meter {
-  display: flex;
-  gap: 0.25rem;
-  margin: 0.25rem 0;
 }
 
 .strength-bar {
+  width: 100%;
   height: 4px;
-  flex: 1;
-  background: rgba(61, 141, 122, 0.1);
+  background-color: rgba(61, 141, 122, 0.15);
   border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 0.3rem;
 }
 
-.strength-bar.active {
-  background: var(--strength-color);
+.strength-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: all 0.4s ease;
 }
 
-.strength-checks {
+.strength-0 {
+  background: linear-gradient(90deg, #ef4444, #f87171);
+  width: 25%;
+}
+
+.strength-1 {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  width: 50%;
+}
+
+.strength-2 {
+  background: linear-gradient(90deg, #eab308, #facc15);
+  width: 75%;
+}
+
+.strength-3 {
+  background: linear-gradient(90deg, #22c55e, #4ade80);
+  width: 100%;
+}
+
+.strength-4 {
+  background: linear-gradient(90deg, #16a34a, #22c55e);
+  width: 100%;
+}
+
+.strength-text {
+  display: flex;
+  justify-content: flex-end;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.strength-text .weak {
+  color: #dc2626;
+}
+
+.strength-text .fair {
+  color: #d97706;
+}
+
+.strength-text .good {
+  color: #16a34a;
+}
+
+.strength-text .strong {
+  color: #15803d;
+}
+
+.password-errors {
+  margin-top: 0.4rem;
+}
+
+.password-errors ul {
   list-style: none;
   padding: 0;
-  margin: 0.5rem 0 0 0;
+  margin: 0;
 }
 
-.strength-checks li {
+.password-errors .error-item {
+  color: #dc2626;
+  font-size: 0.7rem;
+  font-weight: 500;
+  margin-bottom: 0.2rem;
+  padding: 0.3rem 0.5rem;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 4px;
+  border-left: 3px solid #ef4444;
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  margin: 0.1rem 0;
 }
 
-.email-warning {
-  margin-top: 0.3rem;
-  padding: 0.4rem;
-  background: rgba(251, 191, 36, 0.1);
-  border: 1px solid rgba(251, 191, 36, 0.3);
-  border-radius: 6px;
-  font-size: 0.7rem;
-  color: #92400e;
+.password-errors .error-item::before {
+  content: "⚠";
+  margin-right: 0.4rem;
+  color: #dc2626;
+  font-weight: bold;
 }
 
-.email-suggestion {
-  color: #1d4ed8;
-  cursor: pointer;
-  text-decoration: underline;
+/* Responsive adjustments for password toggle */
+@media (max-width: 768px) {
+  .password-toggle {
+    width: 28px;
+    height: 28px;
+    right: 0.6rem;
+  }
+  
+  .password-toggle svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .password-toggle {
+    width: 24px;
+    height: 24px;
+    right: 0.5rem;
+  }
+  
+  .password-toggle svg {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .strength-text {
+    font-size: 0.7rem;
+  }
+  
+  .password-errors .error-item {
+    font-size: 0.65rem;
+    padding: 0.25rem 0.4rem;
+  }
 }
 </style>
