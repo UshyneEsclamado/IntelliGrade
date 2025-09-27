@@ -16,7 +16,7 @@
             </svg>
           </div>
           <div>
-            <div class="section-header-title">Messages & Notifications</div>
+          <div class="section-header-title">Messages</div>
             <div class="section-header-sub">Chat with your enrolled teachers and view announcements</div>
           </div>
         </div>
