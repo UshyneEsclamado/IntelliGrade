@@ -144,42 +144,135 @@ export default {
       pendingAssessments: 0,
       recentAssessments: [],
       pollInterval: null,
-      isLoadingName: true
+      isLoadingName: true,
+      userId: null,
+      profileId: null
     };
   },
   methods: {
     async loadStudentProfile() {
       try {
+        this.isLoadingName = true;
+        
         // Get the current user from Supabase auth
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         
         if (authError || !user) {
-          console.error('Auth error:', authError);
+          console.error('Auth error in Home component:', authError);
           this.studentName = 'Student';
-          this.isLoadingName = false;
           return;
         }
 
-        // Fetch the user profile from the profiles table
+        this.userId = user.id;
+        console.log('Loading profile for user:', user.id);
+
+        // First, get the profile using auth_user_id (the correct foreign key)
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('full_name')
-          .eq('id', user.id)
+          .select('id, full_name, email, role')
+          .eq('auth_user_id', user.id)  // This is the correct foreign key
           .single();
 
         if (profileError) {
-          console.error('Profile error:', profileError);
+          console.error('Profile error in Home component:', profileError);
+          
+          if (profileError.code === 'PGRST116') {
+            console.warn('No profile found for user in Home component');
+            this.studentName = user.email?.split('@')[0] || 'Student';
+            return;
+          }
+          
           this.studentName = 'Student';
-        } else if (profile) {
-          this.studentName = profile.full_name || 'Student';
+          return;
         }
+
+        console.log('Profile found in Home component:', profile);
+        this.profileId = profile.id;
+
+        // Verify this is a student
+        if (profile.role !== 'student') {
+          console.warn('User is not a student in Home component');
+          this.studentName = profile.full_name || 'User';
+          return;
+        }
+
+        // Now get the student-specific data using profile_id
+        const { data: studentData, error: studentError } = await supabase
+          .from('students')
+          .select('student_id, grade_level, full_name, email')
+          .eq('profile_id', profile.id)
+          .single();
+
+        if (studentError) {
+          console.warn('Student data error in Home component:', studentError);
+          // Use profile name as fallback
+          this.studentName = profile.full_name || 'Student';
+          return;
+        }
+
+        console.log('Student data found in Home component:', studentData);
+        
+        // Use the most complete name available
+        this.studentName = studentData.full_name || profile.full_name || 'Student';
+        
+        // Load additional dashboard data
+        await this.loadDashboardStats();
+
       } catch (error) {
-        console.error('Error loading student profile:', error);
+        console.error('Error loading student profile in Home component:', error);
         this.studentName = 'Student';
       } finally {
         this.isLoadingName = false;
       }
     },
+
+    async loadDashboardStats() {
+      try {
+        if (!this.profileId) {
+          console.warn('No profile ID available for dashboard stats');
+          return;
+        }
+
+        // Get student's enrolled subjects count using the student_dashboard view
+        const { data: enrollments, error: enrollmentError } = await supabase
+          .from('student_dashboard')
+          .select('subject_id')
+          .eq('student_id', this.profileId);
+
+        if (enrollmentError) {
+          console.error('Error loading enrollment stats:', enrollmentError);
+        } else {
+          this.totalSubjects = enrollments?.length || 0;
+          console.log('Total subjects:', this.totalSubjects);
+        }
+
+        // For now, set pending assessments to a placeholder
+        // This would be replaced with actual assessment data from your system
+        this.pendingAssessments = 0;
+
+        // Load recent assessments (placeholder data for now)
+        this.recentAssessments = [
+          {
+            id: 1,
+            title: 'Mathematics Quiz',
+            subject: 'Algebra',
+            dueDate: new Date(Date.now() + 86400000), // Tomorrow
+            status: 'pending'
+          },
+          {
+            id: 2,
+            title: 'Science Project',
+            subject: 'Biology',
+            dueDate: new Date(Date.now() + 259200000), // 3 days
+            status: 'in-progress'
+          }
+        ];
+
+      } catch (error) {
+        console.error('Error loading dashboard stats:', error);
+      }
+    },
+
     formatDate(date) {
       if (!date) return '';
       const d = typeof date === 'string' ? new Date(date) : date;
@@ -188,48 +281,96 @@ export default {
         day: 'numeric'
       });
     },
+
     navigateToSubjects() {
       this.$parent.navigateTo('subjects');
     },
+
     navigateToCalendar() {
       this.$parent.navigateTo('calendar');
     },
+
     navigateToMessages() {
       this.$parent.navigateTo('messages');
     },
+
     navigateToSettings() {
       this.$parent.navigateTo('settings');
     },
-    async fetchDashboardData() {
-      try {
-        // Replace with your actual backend API endpoints
-        const statsRes = await fetch('/api/student/dashboard-stats');
-        const stats = await statsRes.json();
-        this.studentName = stats.studentName || 'Student Juan';
-        this.totalSubjects = stats.totalSubjects || 0;
-        this.pendingAssessments = stats.pendingAssessments || 0;
 
-        const assessmentsRes = await fetch('/api/student/recent-assessments');
-        const assessments = await assessmentsRes.json();
-        this.recentAssessments = Array.isArray(assessments)
-          ? assessments.map(a => ({
-              ...a,
-              dueDate: a.dueDate ? new Date(a.dueDate) : null
-            }))
-          : [];
-      } catch (err) {
-        // Optionally handle error
-        // console.error('Failed to fetch dashboard data', err);
-      }
+    async fetchDashboardData() {
+      // This method is kept for backward compatibility
+      // The actual data loading is now handled by loadStudentProfile and loadDashboardStats
+      console.log('Dashboard data refresh triggered');
+    },
+
+    setupRealtimeSubscriptions() {
+      if (!this.userId) return;
+
+      // Subscribe to profile changes
+      const profileSubscription = supabase
+        .channel('home_profile_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'profiles',
+            filter: `auth_user_id=eq.${this.userId}`
+          },
+          (payload) => {
+            console.log('Profile updated in Home component:', payload);
+            this.loadStudentProfile();
+          }
+        )
+        .subscribe();
+
+      // Subscribe to student record changes
+      const studentSubscription = supabase
+        .channel('home_student_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'students'
+          },
+          (payload) => {
+            console.log('Student data updated in Home component:', payload);
+            this.loadStudentProfile();
+          }
+        )
+        .subscribe();
+
+      // Store subscriptions for cleanup
+      this.subscriptions = [profileSubscription, studentSubscription];
     }
   },
+
   async mounted() {
+    console.log('Home component mounted');
     await this.loadStudentProfile();
-    this.fetchDashboardData();
-    this.pollInterval = setInterval(this.fetchDashboardData, 5000);
+    this.setupRealtimeSubscriptions();
+    
+    // Set up polling for dashboard data (reduced frequency)
+    this.pollInterval = setInterval(() => {
+      this.loadDashboardStats();
+    }, 30000); // Every 30 seconds instead of 5
   },
+
   beforeDestroy() {
-    if (this.pollInterval) clearInterval(this.pollInterval);
+    console.log('Home component being destroyed');
+    
+    if (this.pollInterval) {
+      clearInterval(this.pollInterval);
+    }
+    
+    // Clean up subscriptions
+    if (this.subscriptions) {
+      this.subscriptions.forEach(subscription => {
+        subscription.unsubscribe();
+      });
+    }
   }
 };
 </script>

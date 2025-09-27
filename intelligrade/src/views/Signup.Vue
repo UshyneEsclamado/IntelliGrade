@@ -2,87 +2,66 @@
   <div class="auth-wrapper">
     <div class="geometric-shapes"></div>
     <div class="floating-elements">
-      <!-- Educational floating elements with proper animations -->
-      <!-- LEFT SIDE - Around Logo/Tagline -->
-      <!-- Document symbols -->
       <div class="floating-element element-1">
         <svg width="35" height="35" viewBox="0 0 24 24" fill="#4A9B8E">
           <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3M19 19H5V5H19V19M17 17H7V15H17V17M17 13H7V11H17V13M17 9H7V7H17V9Z"/>
         </svg>
       </div>
       
-      <!-- Education/School symbols -->
       <div class="floating-element element-2">
         <svg width="33" height="33" viewBox="0 0 24 24" fill="#4A9B8E">
           <path d="M12 3L1 9L12 15L21 10.09V17H23V9L12 3M5 13.18V17.18L12 21L19 17.18V13.18L12 17L5 13.18Z"/>
         </svg>
       </div>
       
-      <!-- Search symbols -->
       <div class="floating-element element-3">
         <svg width="30" height="30" viewBox="0 0 24 24" fill="#4A9B8E">
           <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
         </svg>
       </div>
       
-      <!-- Star symbols -->
       <div class="floating-element element-4">
         <svg width="38" height="38" viewBox="0 0 24 24" fill="#4A9B8E">
           <path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z"/>
         </svg>
       </div>
       
-      <!-- Calendar symbols -->
       <div class="floating-element element-5">
         <svg width="33" height="33" viewBox="0 0 24 24" fill="#4A9B8E">
           <path d="M19,19H5V8H19M16,1V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3H18V1M17,12H12V17H17V12Z"/>
         </svg>
       </div>
       
-      <!-- Chat/Message symbols -->
-      <div class="floating-element element-6">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="#4A9B8E">
-          <path d="M20,2H4A2,2 0 0,0 2,4V16A2,2 0 0,0 4,18H18L22,22V4A2,2 0 0,0 20,2M6,9H18V11H6M4,6H20V8H4M6,12H16V14H6"/>
-        </svg>
-      </div>
-
-      <!-- RIGHT SIDE - Around Signup Form -->
-      <!-- Document symbols (duplicate) -->
       <div class="floating-element element-13">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="#4A9B8E">
           <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3M19 19H5V5H19V19M17 17H7V15H17V17M17 13H7V11H17V13M17 9H7V7H17V9Z"/>
         </svg>
       </div>
       
-      <!-- Education/School symbols (duplicate) -->
       <div class="floating-element element-14">
         <svg width="29" height="29" viewBox="0 0 24 24" fill="#4A9B8E">
           <path d="M12 3L1 9L12 15L21 10.09V17H23V9L12 3M5 13.18V17.18L12 21L19 17.18V13.18L12 17L5 13.18Z"/>
         </svg>
       </div>
       
-      <!-- Search symbols (duplicate) -->
       <div class="floating-element element-15">
         <svg width="34" height="34" viewBox="0 0 24 24" fill="#4A9B8E">
           <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
         </svg>
       </div>
       
-      <!-- Star symbols (duplicate) -->
       <div class="floating-element element-16">
         <svg width="31" height="31" viewBox="0 0 24 24" fill="#4A9B8E">
           <path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z"/>
         </svg>
       </div>
       
-      <!-- Calculator symbols -->
       <div class="floating-element element-8">
         <svg width="34" height="34" viewBox="0 0 24 24" fill="#4A9B8E">
           <path d="M9,11H7V9H9V11M13,11H11V9H13V11M17,11H15V9H17V11M19,3H18V1H16V1H6V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.9 20.1,3 19,3M19,19H5V8H19V19M9,15H7V13H9V15M13,15H11V13H13V15M17,15H15V13H17V15M9,17H7V19H9V17M13,19H11V17H13V19M17,19H15V17H17V19Z"/>
         </svg>
       </div>
       
-      <!-- User symbols -->
       <div class="floating-element element-9">
         <svg width="29" height="29" viewBox="0 0 24 24" fill="#4A9B8E">
           <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M7.07,18.28C7.5,17.38 10.12,16.5 12,16.5C13.88,16.5 16.5,17.38 16.93,18.28C15.57,19.36 13.86,20 12,20C10.14,20 8.43,19.36 7.07,18.28M18.36,16.83C16.93,15.09 13.46,14.5 12,14.5C10.54,14.5 7.07,15.09 5.64,16.83C4.62,15.5 4,13.82 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,13.82 19.38,15.5 18.36,16.83M12,6C10.06,6 8.5,7.56 8.5,9.5C8.5,11.44 10.06,13 12,13C13.94,13 15.5,11.44 15.5,9.5C15.5,7.56 13.94,6 12,6M12,11A1.5,1.5 0 0,1 10.5,9.5A1.5,1.5 0 0,1 12,8A1.5,1.5 0 0,1 13.5,9.5A1.5,1.5 0 0,1 12,11Z"/>
@@ -91,7 +70,6 @@
     </div>
     
     <div class="auth-container">
-      <!-- IntelliGrade Logo Space - Left Side -->
       <div class="logo-space">
         <div class="intelligrade-branding">
           <div class="logo-container">
@@ -107,7 +85,6 @@
         </div>
       </div>
       
-      <!-- Signup Box - Right Side -->
       <div class="auth-box">
         <div class="logo-section">
           <div class="user-icon">
@@ -119,8 +96,12 @@
           <p class="subtitle">Create your teacher account</p>
         </div>
 
-        <form @submit.prevent="handleSignup" class="signup-form">
-          <!-- Error Display -->
+        <div v-if="signupSuccess" class="success-display">
+          <div class="success-icon">✅</div>
+          <p>{{ successMessage }}</p>
+        </div>
+
+        <form @submit.prevent="handleSignup" class="signup-form" v-if="!signupSuccess">
           <div v-if="error" class="error-display">
             <div class="error-icon">⚠️</div>
             <p>{{ error }}</p>
@@ -182,7 +163,6 @@
                 </svg>
               </button>
             </div>
-            <!-- Password Strength Indicator -->
             <div v-if="password.length > 0" class="password-strength">
               <div class="strength-bar">
                 <div 
@@ -199,7 +179,6 @@
                 <span v-else class="strong">Strong</span>
               </div>
             </div>
-            <!-- Password Error Messages -->
             <div v-if="passwordErrors.length > 0 && password.length > 0" class="password-errors">
               <ul>
                 <li v-for="error in passwordErrors" :key="error" class="error-item">{{ error }}</li>
@@ -261,7 +240,7 @@
 import { supabase } from '../supabase'
 
 export default {
-  name: 'Signup',
+  name: 'TeacherSignup',
   data() {
     return {
       fullName: '',
@@ -270,11 +249,13 @@ export default {
       confirmPassword: '',
       isLoading: false,
       error: null,
-      role: 'teacher', // You'll want to make this dynamic later
+      role: 'teacher', // This is hardcoded for the teacher signup form
       showPassword: false,
       showConfirmPassword: false,
       passwordStrength: 0,
-      passwordErrors: []
+      passwordErrors: [],
+      signupSuccess: false,
+      successMessage: ''
     }
   },
   watch: {
@@ -295,26 +276,30 @@ export default {
       this.passwordErrors = [];
       let strength = 0;
 
+      // Rule 1: Length
       if (password.length < 10) {
-        this.passwordErrors.push("Password must be at least 10 characters long");
+        this.passwordErrors.push("Password must be at least 10 characters long.");
       } else {
         strength += 1;
       }
 
+      // Rule 2: Uppercase letter
       if (!/[A-Z]/.test(password)) {
-        this.passwordErrors.push("Password must contain at least one uppercase letter");
+        this.passwordErrors.push("Password must contain at least one uppercase letter.");
       } else {
         strength += 1;
       }
 
+      // Rule 3: Number
       if (!/[0-9]/.test(password)) {
-        this.passwordErrors.push("Password must contain at least one number");
+        this.passwordErrors.push("Password must contain at least one number.");
       } else {
         strength += 1;
       }
 
+      // Rule 4: Symbol
       if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
-        this.passwordErrors.push("Password must contain at least one symbol");
+        this.passwordErrors.push("Password must contain at least one symbol.");
       } else {
         strength += 1;
       }
@@ -323,89 +308,130 @@ export default {
     },
 
     async handleSignup() {
+      // Clear previous errors
+      this.error = null;
+
+      // Step 1: Basic validation
       if (!this.fullName || !this.email || !this.password || !this.confirmPassword) {
-        this.error = 'Please fill in all fields.'
-        return
-      }
-      if (this.password !== this.confirmPassword) {
-        this.error = 'Passwords do not match.'
-        return
+        this.error = 'Please fill in all fields.';
+        return;
       }
       
-      this.isLoading = true
-      this.error = null
+      if (this.password !== this.confirmPassword) {
+        this.error = 'Passwords do not match.';
+        return;
+      }
+
+      // Step 2: Check for password policy errors
+      if (this.passwordErrors.length > 0) {
+        this.error = 'Your password does not meet the security policy. Please fix the issues listed below the password field.';
+        return;
+      }
+      
+      this.isLoading = true;
 
       try {
+        console.log('=== TEACHER SIGNUP ATTEMPT ===');
+        console.log('Full Name:', this.fullName);
+        console.log('Email:', this.email);
+        console.log('Role:', this.role);
+
+        // Step 3: Create Supabase Auth user first
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: this.email,
           password: this.password,
-        })
+          options: {
+            emailRedirectTo: `${window.location.origin}/email-verified`,
+            data: {
+              full_name: this.fullName,
+              role: this.role
+            }
+          }
+        });
 
         if (authError) {
-          throw authError
+          console.error('❌ Auth signup error:', authError);
+          throw authError;
         }
 
-        const user = authData.user;
+        // Check if a user object was returned
+        if (!authData.user) {
+          throw new Error("Signup was not successful, please try again.");
+        }
+
+        console.log('✅ Supabase auth user created:', authData.user.id);
+
+        // Step 4: Use the database function to complete signup
+        // This will create both profile and teacher records automatically
+        const { data: completionResult, error: completionError } = await supabase.rpc('complete_user_signup', {
+          p_auth_user_id: authData.user.id,
+          p_full_name: this.fullName,
+          p_email: this.email,
+          p_role: this.role,
+          p_grade_level: null // Teachers don't need grade level
+        });
+
+        if (completionError) {
+          console.error('❌ Signup completion error:', completionError);
+          // Clean up auth user if database setup fails
+          await supabase.auth.signOut();
+          throw new Error(`Failed to complete signup: ${completionError.message}`);
+        }
+
+        // Check if the function returned an error
+        if (!completionResult.success) {
+          console.error('❌ Signup function error:', completionResult.error);
+          // Clean up auth user if database setup fails
+          await supabase.auth.signOut();
+          throw new Error(completionResult.error);
+        }
+
+        console.log('✅ Teacher signup completed successfully:', completionResult.user_info);
+
+        // Step 5: Show success message
+        this.signupSuccess = true;
+        this.successMessage = `🎉 Teacher account created successfully! Please check your email (${this.email}) and click the confirmation link to verify your account before signing in.`;
+
+        // Clear form fields for security
+        this.fullName = '';
+        this.email = '';
+        this.password = '';
+        this.confirmPassword = '';
+        this.passwordStrength = 0;
+        this.passwordErrors = [];
         
-        // Insert into profiles table with new structure
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([{
-            id: user.id,
-            auth_user_id: user.id,
-            full_name: this.fullName,
-            email: this.email,
-            role: this.role,
-          }])
-
-        if (profileError) {
-          throw profileError
-        }
-
-        // Create role-specific detail record
-        if (this.role === 'teacher') {
-          const { error: teacherError } = await supabase
-            .from('teacher_details')
-            .insert([{
-              profile_id: user.id,
-              // Add other teacher-specific fields as needed
-            }])
-          
-          if (teacherError) {
-            console.error('Teacher details error:', teacherError);
-            // Don't throw here, profile is already created
-          }
-        } else if (this.role === 'student') {
-          const { error: studentError } = await supabase
-            .from('student_details')
-            .insert([{
-              profile_id: user.id,
-              // Add other student-specific fields as needed
-            }])
-          
-          if (studentError) {
-            console.error('Student details error:', studentError);
-            // Don't throw here, profile is already created
-          }
-        }
-
-        // Redirect based on role
-        if (this.role === 'teacher') {
-          this.$router.push('/teacher/dashboard')
-        } else {
-          this.$router.push('/student-dashboard')
-        }
+        // Auto-redirect to login after 8 seconds
+        setTimeout(() => {
+          this.$router.push('/login');
+        }, 8000);
         
       } catch (err) {
-        console.error('Signup error:', err);
-        this.error = err.message || 'An unexpected error occurred during signup.';
+        console.error('❌ Teacher Signup Error:', err);
+        
+        // Handle specific error cases
+        if (err.message?.includes('already registered') || err.message?.includes('User already registered')) {
+          this.error = 'An account with this email already exists. Please try logging in instead.';
+        } else if (err.message?.includes('Email already exists')) {
+          this.error = 'An account with this email already exists. Please use a different email or try logging in.';
+        } else if (err.message?.includes('Password should be at least')) {
+          this.error = 'Password must be at least 6 characters long.';
+        } else if (err.message?.includes('Invalid email')) {
+          this.error = 'Please enter a valid email address.';
+        } else if (err.message?.includes('Email rate limit exceeded')) {
+          this.error = 'Too many signup attempts. Please wait a few minutes and try again.';
+        } else if (err.message?.includes('Failed to')) {
+          this.error = err.message;
+        } else {
+          this.error = err.message || 'An unexpected error occurred during signup. Please try again.';
+        }
       } finally {
-        this.isLoading = false
+        this.isLoading = false;
       }
     }
   }
 }
 </script>
+
 
 <style scoped>
 * { 
@@ -546,7 +572,8 @@ export default {
   height: 300px;
   display: flex;
   align-items: center;
-        .login-link {
+
+  .login-link {
           color: #3D8D7A;
           text-decoration: none;
           font-weight: 600;
@@ -716,6 +743,31 @@ input::placeholder {
   font-size: 0.75rem;
   margin: 0;
   font-weight: 500;
+}
+
+.success-display {
+  background: rgba(34, 197, 94, 0.1);
+  border: 2px solid rgba(34, 197, 94, 0.2);
+  border-radius: 9px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.success-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.success-display p {
+  color: #16a34a;
+  font-size: 0.85rem;
+  margin: 0;
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .signup-btn {

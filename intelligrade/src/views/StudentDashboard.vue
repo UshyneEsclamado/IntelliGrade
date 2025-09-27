@@ -134,6 +134,8 @@
     </div>
   </div>
 </template>
+
+
 <script>
 import Home from './student/Home.vue';
 import Subjects from './student/Subjects.vue';
@@ -150,6 +152,7 @@ export default {
         fullName: null,
         studentId: null,
         grade: null,
+        email: null,
         role: null,
       },
       currentView: 'home',
@@ -203,7 +206,7 @@ export default {
           return;
         }
 
-        // Fetch user profile from students table (not profiles)
+        // Fetch student profile using the new database structure
         await this.fetchStudentProfile(user.id);
 
       } catch (error) {
@@ -218,12 +221,11 @@ export default {
       try {
         console.log(`Fetching student profile for user ID: ${userId}`);
         
-        // Query the profiles table - ADD student_id to the SELECT
+        // First, get profile data and verify role
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('id, auth_user_id, full_name, email, role, grade_level, student_id, created_at, updated_at') // Added student_id here
+          .select('id, full_name, email, role')
           .eq('auth_user_id', userId)
-          .eq('role', 'student')
           .single();
 
         console.log('Profile data:', profile);
@@ -231,19 +233,73 @@ export default {
 
         if (profileError) {
           if (profileError.code === 'PGRST116') {
-            console.warn('No student profile found for user');
-            this.handleMissingStudentRecord(userId);
+            console.warn('No profile found for user');
+            await this.handleMissingStudentRecord(userId);
             return;
           }
           throw profileError;
         }
 
-        if (profile) {
-          this.updateUserProfile(profile);
-        } else {
-          console.warn('No profile data returned');
-          this.handleMissingStudentRecord(userId);
+        // Verify user is a student
+        if (profile.role !== 'student') {
+          console.warn('Access denied: User is not a student');
+          this.$router.push('/login');
+          return;
         }
+
+        console.log('Profile data from DB:', profile);
+
+        // Now fetch student-specific data with better error handling
+        const { data: studentData, error: studentError } = await supabase
+          .from('students')
+          .select('student_id, grade_level, full_name, email')
+          .eq('profile_id', profile.id)
+          .single();
+
+        console.log('Student data query result:', { studentData, studentError });
+
+        if (studentError) {
+          console.warn('Student data fetch error:', studentError);
+          
+          // Check if it's a missing record (no rows returned)
+          if (studentError.code === 'PGRST116') {
+            console.log('No student record found, creating one...');
+            await this.createMissingStudentRecord(profile);
+            return;
+          }
+          
+          // For other errors, use profile data as fallback with generated student ID
+          const tempStudentId = await this.generateStudentId(profile.id);
+          this.userProfile = {
+            fullName: profile.full_name || 'Student',
+            email: profile.email || '',
+            studentId: tempStudentId,
+            grade: null,
+            role: profile.role
+          };
+          return;
+        }
+
+        console.log('Student data from DB:', studentData);
+        
+        // Check if student_id is missing and generate one if needed
+        let finalStudentId = studentData.student_id;
+        if (!finalStudentId) {
+          console.log('Student ID missing, generating new one...');
+          finalStudentId = await this.generateStudentId(profile.id);
+          await this.updateStudentId(profile.id, finalStudentId);
+        }
+        
+        // Combine profile and student data - ensure student_id is always visible
+        this.userProfile = {
+          fullName: studentData.full_name || profile.full_name || 'Student',
+          email: studentData.email || profile.email || '',
+          studentId: finalStudentId,
+          grade: studentData.grade_level || null,
+          role: profile.role
+        };
+        
+        console.log('Final profile data set:', this.userProfile);
 
       } catch (error) {
         console.error('Error fetching student profile:', error);
@@ -251,32 +307,108 @@ export default {
       }
     },
 
-    updateUserProfile(profile) {
-      this.userProfile = {
-        fullName: profile.full_name || 'Name not available',
-        studentId: this.formatStudentId(profile), // Better student ID formatting
-        grade: profile.grade_level || null, // Remove 'Grade not set', let template handle it
-        role: profile.role || 'student'
-      };
-      
-      console.log('Student profile updated:', this.userProfile);
+    async generateStudentId(profileId) {
+      try {
+        // Generate a student ID using current year + last 6 chars of profile ID + random 2 digits
+        const year = new Date().getFullYear();
+        const shortId = profileId.slice(-6).toUpperCase();
+        const random = Math.floor(Math.random() * 99).toString().padStart(2, '0');
+        const studentId = `${year}${shortId}${random}`;
+        
+        // Check if this ID already exists, if so, generate a new one
+        const { data: existingStudent } = await supabase
+          .from('students')
+          .select('student_id')
+          .eq('student_id', studentId)
+          .single();
+        
+        if (existingStudent) {
+          // If ID exists, recursively generate a new one
+          return await this.generateStudentId(profileId);
+        }
+        
+        console.log('Generated student ID:', studentId);
+        return studentId;
+      } catch (error) {
+        console.error('Error generating student ID:', error);
+        // Fallback to a simpler format if there's an error
+        return `ST${Date.now().toString().slice(-8)}`;
+      }
     },
 
-    // Add this new method to format student ID properly
-    formatStudentId(profile) {
-      // If there's a specific student_id field, use it
-      if (profile.student_id) {
-        return profile.student_id;
+    async createMissingStudentRecord(profile) {
+      try {
+        console.log('Creating missing student record for profile:', profile.id);
+        
+        const newStudentId = await this.generateStudentId(profile.id);
+        const defaultGrade = 7; // Default to grade 7, user can update later
+        
+        const { data, error } = await supabase
+          .from('students')
+          .insert([{
+            profile_id: profile.id,
+            student_id: newStudentId,
+            full_name: profile.full_name,
+            email: profile.email,
+            grade_level: defaultGrade,
+            is_active: true
+          }])
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error creating student record:', error);
+          // Use fallback data even if creation fails
+          this.userProfile = {
+            fullName: profile.full_name || 'Student',
+            email: profile.email || '',
+            studentId: newStudentId,
+            grade: defaultGrade,
+            role: profile.role
+          };
+          return;
+        }
+
+        console.log('Created student record:', data);
+        
+        // Update the user profile with the new data
+        this.userProfile = {
+          fullName: data.full_name,
+          email: data.email,
+          studentId: data.student_id,
+          grade: data.grade_level,
+          role: profile.role
+        };
+        
+      } catch (error) {
+        console.error('Error in createMissingStudentRecord:', error);
+        // Ensure we still set a profile even if record creation fails
+        const tempStudentId = await this.generateStudentId(profile.id);
+        this.userProfile = {
+          fullName: profile.full_name || 'Student',
+          email: profile.email || '',
+          studentId: tempStudentId,
+          grade: null,
+          role: profile.role
+        };
       }
-      
-      // Otherwise, create a readable student ID from the profile ID
-      if (profile.id) {
-        // Take first 8 characters of UUID and make it look like a student ID
-        const shortId = profile.id.substring(0, 8).toUpperCase();
-        return `STU-${shortId}`;
+    },
+
+    async updateStudentId(profileId, studentId) {
+      try {
+        const { error } = await supabase
+          .from('students')
+          .update({ student_id: studentId })
+          .eq('profile_id', profileId);
+
+        if (error) {
+          console.error('Error updating student ID:', error);
+        } else {
+          console.log('Student ID updated successfully:', studentId);
+        }
+      } catch (error) {
+        console.error('Error in updateStudentId:', error);
       }
-      
-      return 'Not Set';
     },
 
     async handleMissingStudentRecord(userId) {
@@ -284,17 +416,19 @@ export default {
         // Get user email from auth
         const { data: { user } } = await supabase.auth.getUser();
         
+        // Create a temporary student ID
+        const tempStudentId = await this.generateStudentId(userId);
+        
         this.userProfile = {
-          fullName: user?.email?.split('@')[0] || 'Student',
-          studentId: 'Not set - Please complete signup',
-          grade: 'Not set - Please complete signup',
+          fullName: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Student',
+          email: user?.email || '',
+          studentId: tempStudentId,
+          grade: null,
           role: 'student'
         };
         
-        console.log('Using fallback profile:', this.userProfile);
+        console.log('Using fallback profile with temp ID:', this.userProfile);
         
-        // Optionally redirect to complete profile
-        // this.$router.push('/signup-student');
       } catch (error) {
         console.error('Error handling missing student record:', error);
         this.handleProfileError();
@@ -304,7 +438,8 @@ export default {
     handleAuthError() {
       this.userProfile = {
         fullName: 'Authentication Error',
-        studentId: null,
+        email: '',
+        studentId: 'AUTH_ERROR',
         grade: null,
         role: null
       };
@@ -316,8 +451,9 @@ export default {
     handleProfileError() {
       this.userProfile = {
         fullName: 'Profile Load Error',
-        studentId: 'Error loading data',
-        grade: 'Error loading data',
+        email: 'Error loading data',
+        studentId: 'ERROR_LOADING',
+        grade: null,
         role: null
       };
     },
@@ -326,24 +462,50 @@ export default {
       supabase.auth.getUser().then(({ data: { user } }) => {
         if (user) {
           console.log('Setting up profile subscription...');
-          this.profileSubscription = supabase
+          
+          // Subscribe to profiles table changes
+          const profilesSubscription = supabase
             .channel('profile_changes')
             .on(
               'postgres_changes',
               {
                 event: '*',
                 schema: 'public',
-                table: 'profiles', // Changed from 'students' to 'profiles'
-                filter: `auth_user_id=eq.${user.id}` // Use auth_user_id instead of id
+                table: 'profiles',
+                filter: `auth_user_id=eq.${user.id}`
               },
               (payload) => {
                 console.log('Profile updated via subscription:', payload);
                 if (payload.new) {
-                  this.updateUserProfile(payload.new);
+                  this.loadUserProfile(); // Reload full profile data
                 }
               }
             )
             .subscribe();
+
+          // Subscribe to students table changes
+          const studentsSubscription = supabase
+            .channel('student_changes')
+            .on(
+              'postgres_changes',
+              {
+                event: '*',
+                schema: 'public',
+                table: 'students'
+              },
+              (payload) => {
+                console.log('Student data updated via subscription:', payload);
+                this.loadUserProfile(); // Reload full profile data
+              }
+            )
+            .subscribe();
+
+          this.profileSubscription = {
+            unsubscribe: () => {
+              profilesSubscription.unsubscribe();
+              studentsSubscription.unsubscribe();
+            }
+          };
         }
       });
     },
@@ -395,7 +557,6 @@ export default {
   },
 };
 </script>
-
 
 <style scoped>
 /*

@@ -190,7 +190,9 @@ export default {
       isLoading: false,
       showPassword: false,
       passwordStrength: 0,
-      passwordErrors: []
+      passwordErrors: [],
+      signupSuccess: false,
+      successMessage: ""
     };
   },
   watch: {
@@ -235,62 +237,153 @@ export default {
     },
 
     async handleSignup() {
+      // Clear previous errors
+      this.error = "";
+
+      // Step 1: Basic validation
       if (!this.fullName || !this.email || !this.password || !this.studentId || !this.gradeLevel) {
         this.error = "Please fill in all fields.";
         return;
       }
 
+      // Step 2: Check for password policy errors
+      if (this.passwordErrors.length > 0) {
+        this.error = 'Your password does not meet the security policy. Please fix the issues listed below the password field.';
+        return;
+      }
+
+      // Step 3: Validate grade level
+      const gradeNum = parseInt(this.gradeLevel);
+      if (gradeNum < 7 || gradeNum > 12) {
+        this.error = "Grade level must be between 7 and 12.";
+        return;
+      }
+
       this.isLoading = true;
-      this.error = "";
 
       try {
-        // Step 1: Sign up the user with email and password
+        console.log('=== STUDENT SIGNUP ATTEMPT ===');
+        console.log('Full Name:', this.fullName);
+        console.log('Email:', this.email);
+        console.log('Student ID:', this.studentId);
+        console.log('Grade Level:', gradeNum);
+
+        // Step 4: Check if student ID is already taken (separate check before auth)
+        const { data: existingStudent, error: checkError } = await supabase
+          .from('students')
+          .select('student_id')
+          .eq('student_id', this.studentId)
+          .single();
+
+        if (!checkError && existingStudent) {
+          throw new Error('Student ID already exists. Please use a different Student ID.');
+        }
+
+        // Step 5: Create Supabase Auth user first
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: this.email,
           password: this.password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/email-verified`,
+            data: {
+              full_name: this.fullName,
+              role: 'student'
+            }
+          }
         });
 
         if (authError) {
+          console.error('❌ Auth signup error:', authError);
           throw authError;
         }
 
-        const user = authData.user;
+        // Check if a user object was returned
+        if (!authData.user) {
+          throw new Error("Signup was not successful, please try again.");
+        }
+
+        console.log('✅ Supabase auth user created:', authData.user.id);
+
+        // Step 6: Use the database function to complete signup
+        // This will create both profile and student records automatically
+        const { data: completionResult, error: completionError } = await supabase.rpc('complete_user_signup', {
+          p_auth_user_id: authData.user.id,
+          p_full_name: this.fullName,
+          p_email: this.email,
+          p_role: 'student',
+          p_grade_level: gradeNum
+        });
+
+        if (completionError) {
+          console.error('❌ Signup completion error:', completionError);
+          // Clean up auth user if database setup fails
+          await supabase.auth.signOut();
+          throw new Error(`Failed to complete signup: ${completionError.message}`);
+        }
+
+        // Check if the function returned an error
+        if (!completionResult.success) {
+          console.error('❌ Signup function error:', completionResult.error);
+          // Clean up auth user if database setup fails
+          await supabase.auth.signOut();
+          throw new Error(completionResult.error);
+        }
+
+        console.log('✅ Student signup completed successfully:', completionResult.user_info);
+
+        // Step 7: Update the student record with custom student_id
+        // Since the trigger created a default student_id, we need to update it
+        const studentId = completionResult.user_info.user_id;
+        const { error: updateError } = await supabase
+          .from('students')
+          .update({ student_id: this.studentId })
+          .eq('id', studentId);
+
+        if (updateError) {
+          console.error('❌ Student ID update error:', updateError);
+          // This is not critical enough to fail the entire signup
+          console.warn('Student account created but custom student ID may not have been set properly');
+        }
+
+        // Step 8: Show success message
+        this.signupSuccess = true;
+        this.successMessage = `🎉 Student account created successfully! Please check your email (${this.email}) and click the confirmation link to verify your account before signing in.`;
+
+        // Clear form fields for security
+        this.fullName = '';
+        this.email = '';
+        this.password = '';
+        this.studentId = '';
+        this.gradeLevel = '';
+        this.passwordStrength = 0;
+        this.passwordErrors = [];
         
-        // Step 2: Insert into profiles table with new structure
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([{
-            id: user.id,
-            auth_user_id: user.id,
-            full_name: this.fullName,
-            email: this.email,
-            role: 'student',
-          }]);
-
-        if (profileError) {
-          throw profileError;
-        }
-
-        // Step 3: Insert student-specific details into student_details table
-        const { error: studentError } = await supabase
-          .from('student_details')
-          .insert([{
-            profile_id: user.id,
-            student_id: this.studentId,
-            grade_level: parseInt(this.gradeLevel), // Convert to integer
-            enrollment_status: 'active'
-          }]);
-
-        if (studentError) {
-          throw studentError;
-        }
-
-        // Step 4: Redirect to the student dashboard on success
-        this.$router.push("/student-dashboard");
+        // Auto-redirect to login after 8 seconds
+        setTimeout(() => {
+          this.$router.push('/login');
+        }, 8000);
         
       } catch (err) {
-        console.error("Signup error:", err);
-        this.error = err.message || "An unexpected error occurred during signup.";
+        console.error("❌ Student Signup error:", err);
+        
+        // Handle specific error cases
+        if (err.message?.includes('already registered') || err.message?.includes('User already registered')) {
+          this.error = 'An account with this email already exists. Please try logging in instead.';
+        } else if (err.message?.includes('Email already exists')) {
+          this.error = 'An account with this email already exists. Please use a different email or try logging in.';
+        } else if (err.message?.includes('Student ID already exists')) {
+          this.error = 'Student ID already exists. Please use a different Student ID.';
+        } else if (err.message?.includes('Password should be at least')) {
+          this.error = 'Password must be at least 6 characters long.';
+        } else if (err.message?.includes('Invalid email')) {
+          this.error = 'Please enter a valid email address.';
+        } else if (err.message?.includes('Email rate limit exceeded')) {
+          this.error = 'Too many signup attempts. Please wait a few minutes and try again.';
+        } else if (err.message?.includes('Failed to')) {
+          this.error = err.message;
+        } else {
+          this.error = err.message || "An unexpected error occurred during signup.";
+        }
       } finally {
         this.isLoading = false;
       }
