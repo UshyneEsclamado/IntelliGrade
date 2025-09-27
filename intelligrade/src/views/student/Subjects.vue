@@ -57,15 +57,56 @@
       <div 
         v-for="subject in filteredSubjects" 
         :key="subject.id" 
-        class="subject-card"
+        :class="[
+          'subject-card',
+          { 'favorite-card': favoriteSubjects.has(subject.id) },
+          { 'archived-card': archivedSubjects.has(subject.id) }
+        ]"
         @click="viewSubjectDetails(subject)"
       >
         <div class="subject-header">
-          <div class="subject-icon" :style="{ background: subject.color }">
-            <span>{{ subject.code.substring(0, 2) }}</span>
+          <div class="subject-header-left">
+            <div class="subject-icon" :style="{ background: subject.color }">
+              <span>{{ subject.code.substring(0, 2) }}</span>
+            </div>
+            <div class="subject-status">
+              <span :class="['status-badge', subject.status]">{{ subject.status }}</span>
+            </div>
           </div>
-          <div class="subject-status">
-            <span :class="['status-badge', subject.status]">{{ subject.status }}</span>
+          <div class="subject-header-right">
+            <!-- Star/Favorite Button -->
+            <button 
+              @click.stop="toggleFavorite(subject.id)"
+              :class="['star-btn', { 'favorited': favoriteSubjects.has(subject.id) }]"
+              :title="favoriteSubjects.has(subject.id) ? 'Remove from favorites' : 'Add to favorites'"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" :fill="favoriteSubjects.has(subject.id) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2">
+                <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2"></polygon>
+              </svg>
+            </button>
+            <!-- Options Menu -->
+            <div class="options-menu" :ref="`options-${subject.id}`">
+              <button 
+                @click.stop="toggleOptionsMenu(subject.id)"
+                class="options-btn"
+                :title="'More options'"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12,16A2,2 0 0,1 14,18A2,2 0 0,1 12,20A2,2 0 0,1 10,18A2,2 0 0,1 12,16M12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12A2,2 0 0,1 12,10M12,4A2,2 0 0,1 14,6A2,2 0 0,1 12,8A2,2 0 0,1 10,6A2,2 0 0,1 12,4Z" />
+                </svg>
+              </button>
+              <div v-if="subject.showOptions" class="options-dropdown" @click.stop>
+                <button 
+                  @click.stop="toggleArchive(subject.id)"
+                  class="dropdown-item"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3,3H21V6.5H20V19A2,2 0 0,1 18,21H6A2,2 0 0,1 4,19V6.5H3V3M6.5,6.5V18.5H17.5V6.5H6.5M8,8V16.5H9.5V8H8M14.5,8V16.5H16V8H14.5Z" />
+                  </svg>
+                  {{ archivedSubjects.has(subject.id) ? 'Unarchive' : 'Archive' }}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
         
@@ -238,9 +279,11 @@ export default {
       previewSubject: null,
       filters: [
         { key: 'all', label: 'All Subjects' },
+        { key: 'favorites', label: 'Favorites' },
         { key: 'active', label: 'Active' },
         { key: 'completed', label: 'Completed' },
-        { key: 'pending', label: 'Pending' }
+        { key: 'pending', label: 'Pending' },
+        { key: 'archived', label: 'Archived' }
       ],
       subjects: [],
       joinForm: {
@@ -250,6 +293,9 @@ export default {
       validationTimeout: null,
       currentUser: null,
       studentInfo: null,
+      // Favorite and Archive functionality
+      favoriteSubjects: new Set(),
+      archivedSubjects: new Set(),
     };
   },
   computed: {
@@ -259,8 +305,18 @@ export default {
     filteredSubjects() {
       let filtered = this.subjects;
       
-      // Filter by status
-      if (this.activeFilter !== 'all') {
+      // Filter by favorites/archive status first
+      if (this.activeFilter === 'favorites') {
+        filtered = filtered.filter(subject => this.favoriteSubjects.has(subject.id));
+      } else if (this.activeFilter === 'archived') {
+        filtered = filtered.filter(subject => this.archivedSubjects.has(subject.id));
+      } else {
+        // For all other filters, exclude archived subjects
+        filtered = filtered.filter(subject => !this.archivedSubjects.has(subject.id));
+      }
+      
+      // Filter by status (only if not favorites or archived filter)
+      if (this.activeFilter !== 'all' && this.activeFilter !== 'favorites' && this.activeFilter !== 'archived') {
         filtered = filtered.filter(subject => subject.status === this.activeFilter);
       }
       
@@ -271,6 +327,17 @@ export default {
           subject.code.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
           subject.instructor.toLowerCase().includes(this.searchQuery.toLowerCase())
         );
+      }
+      
+      // Sort favorites to the top (except when viewing archived)
+      if (this.activeFilter !== 'archived') {
+        filtered.sort((a, b) => {
+          const aIsFavorite = this.favoriteSubjects.has(a.id);
+          const bIsFavorite = this.favoriteSubjects.has(b.id);
+          if (aIsFavorite && !bIsFavorite) return -1;
+          if (!aIsFavorite && bIsFavorite) return 1;
+          return 0;
+        });
       }
       
       return filtered;
@@ -499,6 +566,12 @@ export default {
         )
 
         const newSubjects = subjectsWithStats.filter(subject => subject !== null)
+        
+        // Initialize showOptions property for each subject
+        newSubjects.forEach(subject => {
+          subject.showOptions = false;
+        });
+        
         this.subjects = [...newSubjects] // Force reactivity update
         
         console.log('Successfully updated subjects:', this.subjects.length, 'subjects loaded')
@@ -898,6 +971,99 @@ export default {
         }
       })
     },
+
+    // Favorite and Archive functionality methods
+    toggleFavorite(subjectId) {
+      if (this.favoriteSubjects.has(subjectId)) {
+        this.favoriteSubjects.delete(subjectId);
+      } else {
+        this.favoriteSubjects.add(subjectId);
+      }
+      this.saveUserPreferences();
+    },
+
+    toggleArchive(subjectId) {
+      if (this.archivedSubjects.has(subjectId)) {
+        this.archivedSubjects.delete(subjectId);
+      } else {
+        this.archivedSubjects.add(subjectId);
+        // Remove from favorites if archiving
+        this.favoriteSubjects.delete(subjectId);
+      }
+      this.saveUserPreferences();
+      this.closeAllOptionsMenus();
+    },
+
+    toggleOptionsMenu(subjectId) {
+      // Close all other menus first
+      this.subjects.forEach(subject => {
+        if (subject.id !== subjectId) {
+          subject.showOptions = false;
+        }
+      });
+      
+      // Toggle current menu
+      const subject = this.subjects.find(s => s.id === subjectId);
+      if (subject) {
+        subject.showOptions = !subject.showOptions;
+      }
+    },
+
+    closeAllOptionsMenus() {
+      this.subjects.forEach(subject => {
+        subject.showOptions = false;
+      });
+    },
+
+    // localStorage persistence methods
+    getUserStorageKey(key) {
+      const userId = this.currentUser?.id || 'anonymous';
+      return `intelligrade_${key}_${userId}`;
+    },
+
+    saveUserPreferences() {
+      try {
+        localStorage.setItem(
+          this.getUserStorageKey('favorites'),
+          JSON.stringify(Array.from(this.favoriteSubjects))
+        );
+        localStorage.setItem(
+          this.getUserStorageKey('archived'),
+          JSON.stringify(Array.from(this.archivedSubjects))
+        );
+      } catch (error) {
+        console.warn('Failed to save user preferences:', error);
+      }
+    },
+
+    loadUserPreferences() {
+      try {
+        const favoritesData = localStorage.getItem(this.getUserStorageKey('favorites'));
+        const archivedData = localStorage.getItem(this.getUserStorageKey('archived'));
+        
+        if (favoritesData) {
+          this.favoriteSubjects = new Set(JSON.parse(favoritesData));
+        }
+        if (archivedData) {
+          this.archivedSubjects = new Set(JSON.parse(archivedData));
+        }
+      } catch (error) {
+        console.warn('Failed to load user preferences:', error);
+        this.favoriteSubjects = new Set();
+        this.archivedSubjects = new Set();
+      }
+    },
+
+    clearUserPreferences() {
+      try {
+        localStorage.removeItem(this.getUserStorageKey('favorites'));
+        localStorage.removeItem(this.getUserStorageKey('archived'));
+        this.favoriteSubjects = new Set();
+        this.archivedSubjects = new Set();
+      } catch (error) {
+        console.warn('Failed to clear user preferences:', error);
+      }
+    },
   },
 
   async mounted() {
@@ -910,6 +1076,9 @@ export default {
         console.log('Auth initialization failed')
         return
       }
+
+      // Load user preferences after authentication
+      this.loadUserPreferences()
       
       await this.fetchSubjects()
       
@@ -919,6 +1088,9 @@ export default {
       }, 30000)
       
       console.log('Component initialization complete')
+      
+      // Add click listener to close menus when clicking outside
+      document.addEventListener('click', this.closeAllOptionsMenus)
       
     } catch (error) {
       console.error('Component mount error:', error)
@@ -949,12 +1121,18 @@ export default {
     if (this.validationTimeout) {
       clearTimeout(this.validationTimeout)
     }
+    // Clean up event listeners
+    document.removeEventListener('click', this.closeAllOptionsMenus)
   }
 }
 </script>
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --bg-card-muted: rgba(var(--bg-card-rgb, 255, 255, 255), 0.6);
+}
 
 .subjects-container {
   padding: 2rem;
@@ -1137,6 +1315,26 @@ export default {
   font-weight: 600;
   color: var(--text-primary);
   font-family: 'Inter', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-count {
+  background: rgba(61, 141, 122, 0.2);
+  color: #3D8D7A;
+  border-radius: 10px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  min-width: 1.5rem;
+  text-align: center;
+  line-height: 1;
+}
+
+.filter-tab.active .filter-count {
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
 }
 
 .filter-tab:hover {
@@ -1177,10 +1375,157 @@ export default {
   box-shadow: 0 16px 48px var(--shadow-medium);
 }
 
+/* Favorite Card Styling */
+.subject-card.favorite-card {
+  border: 1.5px solid rgba(255, 193, 7, 0.3);
+  background: var(--bg-card-translucent);
+  position: relative;
+}
+
+.subject-card.favorite-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.02) 0%, rgba(255, 193, 7, 0.05) 100%);
+  border-radius: 18px;
+  pointer-events: none;
+}
+
+.subject-card.favorite-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px var(--shadow-medium), 0 0 0 1px rgba(255, 193, 7, 0.1);
+}
+
+/* Archived Card Styling */
+.subject-card.archived-card {
+  opacity: 0.7;
+  background: var(--bg-card-muted);
+}
+
+.subject-card.archived-card .subject-title,
+.subject-card.archived-card .subject-instructor,
+.subject-card.archived-card .subject-section {
+  color: var(--text-muted);
+}
+
+/* Star/Favorite Button Styles */
+.star-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.star-btn:hover {
+  background: rgba(255, 193, 7, 0.1);
+  color: #f59e0b;
+  transform: scale(1.1);
+}
+
+.star-btn.favorited {
+  color: #f59e0b;
+}
+
+.star-btn.favorited:hover {
+  background: rgba(255, 193, 7, 0.2);
+  transform: scale(1.1);
+}
+
+/* Options Menu Styles */
+.options-menu {
+  position: relative;
+}
+
+.options-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.options-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.options-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color-light);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px var(--shadow-medium);
+  padding: 0.5rem 0;
+  z-index: 10;
+  min-width: 140px;
+  backdrop-filter: blur(20px);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: left;
+}
+
+.dropdown-item:hover {
+  background: var(--bg-hover);
+  color: #3D8D7A;
+}
+
+
+
+
+
 .subject-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+}
+
+.subject-header-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.subject-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.subject-actions-top {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .subject-icon {
@@ -1724,6 +2069,6 @@ export default {
 
   .preview-card {
     flex-direction: column;
-    align: center;
+    align-items: center;
   }
 </style>
