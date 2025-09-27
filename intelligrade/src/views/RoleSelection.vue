@@ -148,7 +148,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
+  padding: 0.5rem;
   font-family: 'Inter', sans-serif;
   overflow: hidden;
 }
@@ -305,7 +305,7 @@ export default {
 .auth-box {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
-  padding: 1.5rem;
+  padding: 1.25rem;
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 
@@ -409,13 +409,13 @@ export default {
 
 /* Logo section styles */
 .logo-section {
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .logo {
   width: 100px;
   height: auto;
-  margin: 0 auto 0.75rem;
+  margin: 0 auto 0.6rem;
   display: block;
   filter: 
     drop-shadow(0 10px 30px rgba(61, 141, 122, 0.2))
@@ -455,7 +455,7 @@ h1 {
   color: #3D8D7A;
   font-size: 1.5rem;
   font-weight: 700;
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.25rem;
   letter-spacing: -0.5px;
   background: linear-gradient(135deg, #3D8D7A 0%, #4A9B8E 100%);
   -webkit-background-clip: text;
@@ -484,15 +484,15 @@ h1::after {
   opacity: 0.8;
   font-weight: 500;
   line-height: 1.5;
-  margin-bottom: 10px;
+  margin-bottom: 0.6rem;
 }
 
 /* Button styles */
 .buttons {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  margin: 1rem auto;
+  gap: 0.6rem;
+  margin: 0.8rem auto;
   max-width: 380px;
 }
 
@@ -500,7 +500,7 @@ h1::after {
   width: 100%;
   background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
   color: white;
-  padding: 0.75rem 1rem;
+  padding: 0.65rem 0.9rem;
   font-size: 0.9rem;
   font-weight: 600;
   border: none;
@@ -576,8 +576,8 @@ h1::after {
 
 /* Login section styles */
 .login-section {
-  margin-top: 1rem;
-  padding-top: 1rem;
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
   border-top: 1px solid rgba(61, 141, 122, 0.15);
 }
 
@@ -587,7 +587,7 @@ h1::after {
   text-decoration: none;
   font-weight: 600;
   transition: all 0.3s ease;
-  padding: 0.5rem 1rem;
+  padding: 0.45rem 0.9rem;
   border-radius: 8px;
   border: 2px solid transparent;
   background: rgba(61, 141, 122, 0.05);
@@ -651,21 +651,21 @@ h1::after {
 /* Responsive styles */
 @media (max-width: 768px) {
   .auth-wrapper {
-    padding: 0.75rem;
+    padding: 0.5rem;
     overflow-y: auto;
   }
   
   .auth-box {
-    padding: 1.25rem;
+    padding: 1rem;
     max-width: 350px;
     height: auto;
     max-height: none;
-    margin: 15px;
+    margin: 10px;
   }
 
   .logo {
     width: 80px;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
   }
 
   .floating-element {
@@ -686,7 +686,7 @@ h1::after {
 
   .role-btn {
     font-size: 0.85rem;
-    padding: 0.65rem;
+    padding: 0.6rem;
   }
 
   .btn-icon {
@@ -696,6 +696,7 @@ h1::after {
 
   .login-link {
     font-size: 0.75rem;
+    padding: 0.4rem 0.8rem;
   }
 
   /* Hide some duplicate elements on mobile to reduce clutter */

@@ -1,6 +1,6 @@
 <template>
   <div class="home-container">
-    <!-- Compact Header Section -->
+    <!-- Compact Header Section with Bell Icon Dropdown -->
     <div class="section-header-card">
       <div class="header-bg-decoration"></div>
       <div class="floating-shapes">
@@ -8,7 +8,6 @@
         <div class="shape shape-2"></div>
         <div class="shape shape-3"></div>
       </div>
-      
       <div class="section-header-content">
         <div class="section-header-left">
           <div class="section-header-icon">
@@ -26,10 +25,26 @@
             <div class="section-header-description">Manage your classes, grade assessments, and track student progress</div>
           </div>
         </div>
-        
-        <div class="header-badge">
-          <div class="badge-content">
-            <div class="badge-text">Active Teacher</div>
+        <div class="header-actions">
+          <!-- Bell Icon Dropdown (improved positioning) -->
+          <div class="notif-bell-wrapper">
+            <button class="notif-bell-btn" @click="toggleNotifDropdown" aria-label="Notifications">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4DBB98" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 16v-5a6 6 0 0 0-12 0v5a2 2 0 0 1-2 2h16a2 2 0 0 1-2-2z"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                <circle cx="12" cy="7" r="4" fill="#4DBB98" opacity="0.15"/>
+              </svg>
+              <span v-if="notifications.length" class="notif-bell-dot"></span>
+            </button>
+            <div v-if="showNotifDropdown" class="notif-dropdown">
+              <div class="notif-dropdown-header">Notifications</div>
+              <div v-if="notifications.length === 0" class="notif-dropdown-empty">No notifications yet.</div>
+              <div v-for="notif in notifications" :key="notif.id" class="notif-dropdown-item">
+                <div class="notif-title">{{ notif.title }}</div>
+                <div class="notif-body">{{ notif.body }}</div>
+                <div class="notif-date">{{ notif.date }}</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -171,19 +186,23 @@ export default {
       gradedToday: 0,
       pendingReviews: 0,
       assessmentsToGrade: [],
+      notifications: [],
       pollInterval: null,
       isLoadingName: true,
       userId: null,
       profileId: null,
-      teacherId: null
+      teacherId: null,
+      showNotifDropdown: false
     };
   },
   methods: {
+    toggleNotifDropdown() {
+      this.showNotifDropdown = !this.showNotifDropdown;
+    },
     async loadTeacherProfile() {
       try {
         this.isLoadingName = true;
         
-        // Get the current user from Supabase auth
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         
         if (authError || !user) {
@@ -195,11 +214,10 @@ export default {
         this.userId = user.id;
         console.log('Loading teacher profile for user:', user.id);
 
-        // First, get the profile using auth_user_id (the correct foreign key)
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('id, full_name, email, role')
-          .eq('auth_user_id', user.id)  // This is the correct foreign key
+          .eq('auth_user_id', user.id)
           .single();
 
         if (profileError) {
@@ -218,14 +236,12 @@ export default {
         console.log('Profile found in Teacher Home:', profile);
         this.profileId = profile.id;
 
-        // Verify this is a teacher
         if (profile.role !== 'teacher') {
           console.warn('User is not a teacher in Teacher Home');
           this.$router.push('/login');
           return;
         }
 
-        // Now get the teacher-specific data using profile_id
         const { data: teacherData, error: teacherError } = await supabase
           .from('teachers')
           .select('id, employee_id, full_name, email, department, is_active')
@@ -241,7 +257,6 @@ export default {
             return;
           }
           
-          // Use profile name as fallback
           this.fullName = profile.full_name || 'Teacher';
           return;
         }
@@ -249,10 +264,8 @@ export default {
         console.log('Teacher data found in Teacher Home:', teacherData);
         this.teacherId = teacherData.id;
         
-        // Use the most complete name available
         this.fullName = teacherData.full_name || profile.full_name || 'Teacher';
         
-        // Load dashboard statistics
         await this.loadDashboardStats();
 
       } catch (error) {
@@ -267,7 +280,6 @@ export default {
       try {
         console.log('Creating missing teacher record for profile:', profile.id);
         
-        // Generate employee ID
         const employeeId = await this.generateEmployeeId(profile.id);
         
         const { data, error } = await supabase
@@ -301,13 +313,11 @@ export default {
 
     async generateEmployeeId(profileId) {
       try {
-        // Generate an employee ID using current year + last 6 chars of profile ID + random 2 digits
         const year = new Date().getFullYear();
         const shortId = profileId.slice(-6).toUpperCase();
         const random = Math.floor(Math.random() * 99).toString().padStart(2, '0');
         const employeeId = `T${year}${shortId}${random}`;
         
-        // Check if this ID already exists, if so, generate a new one
         const { data: existingTeacher } = await supabase
           .from('teachers')
           .select('employee_id')
@@ -315,7 +325,6 @@ export default {
           .single();
         
         if (existingTeacher) {
-          // If ID exists, recursively generate a new one
           return await this.generateEmployeeId(profileId);
         }
         
@@ -323,7 +332,6 @@ export default {
         return employeeId;
       } catch (error) {
         console.error('Error generating employee ID:', error);
-        // Fallback to a simpler format if there's an error
         return `T${Date.now().toString().slice(-8)}`;
       }
     },
@@ -332,14 +340,12 @@ export default {
       try {
         if (!this.teacherId) {
           console.warn('No teacher ID available for dashboard stats');
-          // Set default values
           this.totalClasses = 0;
           this.gradedToday = 0;
           this.pendingReviews = 0;
           return;
         }
 
-        // Get teacher's subjects and sections count using the teacher_dashboard view
         const { data: subjects, error: subjectsError } = await supabase
           .from('teacher_dashboard')
           .select('subject_id')
@@ -348,23 +354,18 @@ export default {
         if (subjectsError) {
           console.error('Error loading teacher subjects:', subjectsError);
         } else {
-          // Count unique subjects
           const uniqueSubjects = new Set(subjects?.map(s => s.subject_id) || []);
           this.totalClasses = uniqueSubjects.size;
           console.log('Total classes:', this.totalClasses);
         }
 
-        // For now, set other stats to placeholder values
-        // These would be replaced with actual assessment/grading data from your system
         this.gradedToday = 0;
         this.pendingReviews = 0;
 
-        // Load assessments to grade (placeholder for now)
         await this.loadAssessmentsToGrade();
 
       } catch (error) {
         console.error('Error loading dashboard stats:', error);
-        // Set default values on error
         this.totalClasses = 0;
         this.gradedToday = 0;
         this.pendingReviews = 0;
@@ -373,7 +374,6 @@ export default {
 
     async loadAssessmentsToGrade() {
       try {
-        // This is placeholder data - replace with actual assessment system integration
         this.assessmentsToGrade = [
           { 
             id: 1, 
@@ -391,7 +391,6 @@ export default {
           }
         ];
 
-        // Update pending reviews count
         this.pendingReviews = this.assessmentsToGrade.length;
 
       } catch (error) {
@@ -401,29 +400,23 @@ export default {
     },
 
     async fetchDashboardStats() {
-      // Legacy method - keeping for backward compatibility
-      // Actual data loading now happens in loadDashboardStats
       console.log('Dashboard stats refresh triggered');
       await this.loadDashboardStats();
     },
 
     async fetchAssessmentsToGrade() {
-      // Legacy method - keeping for backward compatibility
       await this.loadAssessmentsToGrade();
     },
 
     gradeAssessment(assessment) {
       console.log('Grading assessment:', assessment.title);
-      // Navigate to grading interface - implement based on your routing setup
     },
 
     navigateToClasses() {
-      // Navigate to teacher's classes - implement based on your routing setup
-      this.$parent.navigateTo('subjects'); // Assuming subjects view shows classes
+      this.$parent.navigateTo('subjects');
     },
 
     navigateToGradebook() {
-      // Navigate to gradebook - implement based on your routing setup
       console.log('Navigate to gradebook');
     },
 
@@ -434,10 +427,43 @@ export default {
       ]);
     },
 
+    async loadNotifications() {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', this.userId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (!error && data) {
+        this.notifications = data.map(n => ({
+          id: n.id,
+          title: n.title,
+          body: n.body,
+          date: n.created_at ? new Date(n.created_at).toLocaleString() : ''
+        }));
+      }
+    },
+
     setupRealtimeSubscriptions() {
       if (!this.userId) return;
 
-      // Subscribe to profile changes
+      const notifSubscription = supabase
+        .channel('teacher_home_notifications')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${this.userId}`
+          },
+          (payload) => {
+            console.log('Notification update:', payload);
+            this.loadNotifications();
+          }
+        )
+        .subscribe();
+
       const profileSubscription = supabase
         .channel('teacher_home_profile_changes')
         .on(
@@ -455,7 +481,6 @@ export default {
         )
         .subscribe();
 
-      // Subscribe to teacher record changes
       const teacherSubscription = supabase
         .channel('teacher_home_teacher_changes')
         .on(
@@ -472,7 +497,6 @@ export default {
         )
         .subscribe();
 
-      // Subscribe to subjects/sections changes for stats
       const subjectsSubscription = supabase
         .channel('teacher_home_subjects_changes')
         .on(
@@ -489,20 +513,19 @@ export default {
         )
         .subscribe();
 
-      // Store subscriptions for cleanup
-      this.subscriptions = [profileSubscription, teacherSubscription, subjectsSubscription];
+      this.subscriptions = [notifSubscription, profileSubscription, teacherSubscription, subjectsSubscription];
     }
   },
 
   async mounted() {
     console.log('Teacher Home component mounted');
     await this.loadTeacherProfile();
+    await this.loadNotifications();
     this.setupRealtimeSubscriptions();
-    
-    // Set up polling for dashboard data (reduced frequency)
     this.pollInterval = setInterval(() => {
       this.fetchAllData();
-    }, 30000); // Every 30 seconds
+      this.loadNotifications();
+    }, 30000);
   },
 
   beforeDestroy() {
@@ -512,7 +535,6 @@ export default {
       clearInterval(this.pollInterval);
     }
     
-    // Clean up subscriptions
     if (this.subscriptions) {
       this.subscriptions.forEach(subscription => {
         subscription.unsubscribe();
@@ -525,7 +547,7 @@ export default {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-/* OPTIMIZED CONTAINER - Perfect screen fit */
+/* Fix the main container to not clip dropdowns */
 .home-container {
   padding: 1.25rem;
   max-width: 100%;
@@ -535,6 +557,7 @@ export default {
   height: 100vh;
   overflow-y: auto;
   box-sizing: border-box;
+  position: relative; /* Add relative positioning */
 }
 
 .home-container::before {
@@ -552,7 +575,7 @@ export default {
   pointer-events: none;
 }
 
-/* COMPACT HEADER - Reduced size */
+/* Fix the header card positioning to not interfere */
 .section-header-card {
   position: relative;
   background: var(--bg-secondary);
@@ -566,8 +589,9 @@ export default {
     0 8px 16px var(--shadow-light),
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
   border: 2px solid var(--border-color);
-  overflow: hidden;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: visible; /* Make sure overflow is visible */
+  z-index: 1; /* Lower z-index than notification */
 }
 
 .section-header-card:hover {
@@ -699,29 +723,201 @@ export default {
   opacity: 0.9;
 }
 
-.header-badge {
-  background: rgba(77, 187, 152, 0.1);
-  border: 2px solid rgba(77, 187, 152, 0.2);
-  border-radius: 16px;
-  padding: 0.75rem 1rem;
-  backdrop-filter: blur(10px);
-}
-
-.badge-content {
+/* Ensure header actions don't clip the dropdown */
+.header-actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 1.25rem;
+  position: relative;
+  z-index: 9999; /* High z-index for the actions container */
 }
 
-.badge-text {
-  font-size: 0.8rem;
+/* Fix the notification wrapper positioning */
+.notif-bell-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  z-index: 9999; /* Increase base z-index */
+}
+
+.notif-bell-btn {
+  background: var(--bg-accent);
+  border: 2px solid var(--accent-color);
+  cursor: pointer;
+  position: relative;
+  padding: 0.25rem;
+  border-radius: 50%;
+  transition: background 0.2s, box-shadow 0.2s;
+  outline: none;
+  box-shadow: 0 2px 8px var(--shadow-light);
+}
+
+.notif-bell-btn:focus {
+  box-shadow: 0 0 0 3px var(--accent-color);
+}
+
+.notif-bell-btn:hover {
+  background: var(--accent-hover);
+}
+
+.notif-bell-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  background: #ff4757;
+  border-radius: 50%;
+  border: 2px solid white;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Ensure the dropdown has the highest z-index */
+.notif-dropdown {
+  position: absolute;
+  top: 56px;
+  right: 0;
+  min-width: 320px;
+  max-width: 400px;
+  max-height: 350px;
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: 0 20px 64px rgba(0, 0, 0, 0.2), 0 8px 24px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 999999; /* Super high z-index to ensure it's on top */
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  backdrop-filter: blur(30px);
+  transform-origin: top right;
+  animation: dropdownSlide 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  /* Prevent the dropdown from being clipped */
+  will-change: transform;
+  isolation: isolate;
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.notif-dropdown::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  right: 25px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid var(--border-color);
+  z-index: 1;
+}
+
+.notif-dropdown::after {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: 26px;
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-bottom: 7px solid var(--bg-secondary);
+  z-index: 2;
+}
+
+.notif-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.notif-dropdown::-webkit-scrollbar-track {
+  background: var(--bg-accent);
+  border-radius: 10px;
+}
+
+.notif-dropdown::-webkit-scrollbar-thumb {
+  background: var(--accent-color);
+  border-radius: 10px;
+  opacity: 0.7;
+}
+
+.notif-dropdown::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-hover);
+  opacity: 1;
+}
+
+.notif-dropdown-header {
+  font-weight: 700;
+  color: var(--text-accent);
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.notif-dropdown-empty {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 2rem 1rem;
+  font-style: italic;
+}
+
+.notif-dropdown-item {
+  background: var(--bg-accent);
+  border-radius: 12px;
+  padding: 0.875rem;
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.notif-dropdown-item:hover {
+  background: var(--bg-accent-hover);
+  transform: translateX(2px);
+  border-color: var(--accent-color);
+}
+
+.notif-title {
   font-weight: 600;
   color: var(--text-accent);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: 0.95rem;
+  line-height: 1.3;
 }
 
-/* COMPACT STATS GRID */
+.notif-body {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.notif-date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  align-self: flex-end;
+  margin-top: 0.25rem;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -786,13 +982,12 @@ export default {
   margin-top: 0.25rem;
 }
 
-/* OPTIMIZED CONTENT GRID */
 .content-grid {
   display: grid;
   grid-template-columns: 1.8fr 1fr;
   gap: 1.5rem;
   height: calc(100vh - 420px);
-  min-height: 350px; /* Increased minimum height */
+  min-height: 350px;
 }
 
 .content-card {
@@ -827,7 +1022,6 @@ export default {
   font-size: 0.875rem;
 }
 
-/* SCROLLABLE ASSESSMENT LIST */
 .assessment-list {
   display: flex;
   flex-direction: column;
@@ -838,7 +1032,6 @@ export default {
   margin-right: -0.5rem;
 }
 
-/* Custom Scrollbar Styling */
 .assessment-list::-webkit-scrollbar {
   width: 6px;
 }
@@ -921,7 +1114,6 @@ export default {
   font-size: 0.9rem;
 }
 
-/* SCROLLABLE QUICK LINKS */
 .quick-links-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -933,7 +1125,6 @@ export default {
   align-content: start;
 }
 
-/* Custom Scrollbar for Quick Links */
 .quick-links-grid::-webkit-scrollbar {
   width: 6px;
 }
@@ -971,7 +1162,7 @@ export default {
   text-align: center;
   font-size: 0.85rem;
   height: fit-content;
-  min-height: 80px; /* Ensure consistent button height */
+  min-height: 80px;
 }
 
 .quick-link-btn:hover {
@@ -989,7 +1180,6 @@ export default {
   margin-top: 0.2rem;
 }
 
-/* RESPONSIVE OPTIMIZATIONS */
 @media (max-width: 1200px) {
   .home-container {
     padding: 1rem;
@@ -1006,40 +1196,54 @@ export default {
   }
 }
 
-@media (max-width: 768px) {
-  .home-container {
-    padding: 0.75rem;
-    height: auto;
+  @media (max-width: 768px) {
+    .notif-dropdown {
+      position: fixed; /* Use fixed positioning on mobile */
+      top: auto;
+      bottom: 20px; /* Position from bottom */
+      right: 0.75rem;
+      left: 0.75rem;
+      min-width: auto;
+      max-width: none;
+      max-height: 300px;
+      z-index: 999999;
+      transform-origin: center bottom;
+    }
+    /* Remove the arrow on mobile since it's positioned differently */
+    .notif-dropdown::before,
+    .notif-dropdown::after {
+      display: none;
+    }
+    /* Alternative: Keep it at top but with better positioning */
+    .notif-dropdown.top-positioned {
+      position: fixed;
+      top: 120px;
+      bottom: auto;
+      transform-origin: top center;
+    }
+    .notif-dropdown.top-positioned::before {
+      display: block;
+      right: 40px;
+    }
+    .notif-dropdown.top-positioned::after {
+      display: block;
+      right: 41px;
+    }
   }
-  
-  .section-header-card {
-    padding: 1.5rem;
-    min-height: 100px;
-  }
-  
-  .section-header-left {
-    flex-direction: column;
-    text-align: center;
-    gap: 1rem;
-  }
-  
-  .section-header-content {
-    flex-direction: column;
-    gap: 1.5rem;
-  }
-  
-  .section-header-title {
-    font-size: 1.5rem;
-  }
-  
-  .quick-links-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .assessment-item {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.75rem;
-  }
+
+/* Add a backdrop overlay to prevent interaction with other elements */
+.notif-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 99999; /* Just below dropdown */
+  background: transparent;
+  display: none;
+}
+
+.notif-backdrop.active {
+  display: block;
 }
 </style>
