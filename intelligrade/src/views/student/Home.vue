@@ -28,9 +28,42 @@
           </div>
         </div>
         
-        <div class="header-badge">
-          <div class="badge-content">
-            <div class="badge-text">Active Student</div>
+        <div class="header-actions">
+          <!-- Active Student Badge -->
+          <div class="header-badge" :class="{ 'active-student': isActive, 'inactive-student': !isActive }">
+            <div class="badge-content">
+              <div class="badge-icon" v-if="isActive">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,16.5L18,9.5L16.59,8.09L11,13.67L7.91,10.59L6.5,12L11,16.5Z" />
+                </svg>
+              </div>
+              <div class="badge-icon" v-else>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z" />
+                </svg>
+              </div>
+              <div class="badge-text">{{ isActive ? 'Active Student' : 'Inactive Student' }}</div>
+            </div>
+          </div>
+          
+          <!-- Bell Icon Dropdown -->
+          <div class="notif-bell-wrapper">
+            <button class="notif-bell-btn" @click="toggleNotifDropdown" aria-label="Notifications">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4DBB98" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 16v-5a6 6 0 0 0-12 0v5a2 2 0 0 1-2 2h16a2 2 0 0 1-2-2z"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+              </svg>
+              <span v-if="notifications.length" class="notif-bell-dot"></span>
+            </button>
+            <div v-if="showNotifDropdown" class="notif-dropdown">
+              <div class="notif-dropdown-header">Notifications</div>
+              <div v-if="notifications.length === 0" class="notif-dropdown-empty">No notifications yet.</div>
+              <div v-for="notif in notifications" :key="notif.id" class="notif-dropdown-item">
+                <div class="notif-title">{{ notif.title }}</div>
+                <div class="notif-body">{{ notif.body }}</div>
+                <div class="notif-date">{{ notif.date }}</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -132,24 +165,110 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import { supabase } from '../../supabase.js';
 
 export default {
-  name: 'Home',
+  name: 'StudentHome',
   data() {
     return {
       studentName: 'Student', // Default fallback
       totalSubjects: 0,
       pendingAssessments: 0,
       recentAssessments: [],
+      notifications: [],
       pollInterval: null,
       isLoadingName: true,
       userId: null,
-      profileId: null
+      profileId: null,
+      showNotifDropdown: false,
+      subscriptions: [],
+      isActive: false
     };
   },
   methods: {
+    toggleNotifDropdown() {
+      this.showNotifDropdown = !this.showNotifDropdown;
+    },
+
+    async loadNotifications() {
+      if (!this.userId) return;
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', this.userId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (!error && data) {
+        this.notifications = data.map(n => ({
+          id: n.id,
+          title: n.title,
+          body: n.body,
+          date: n.created_at ? new Date(n.created_at).toLocaleString() : ''
+        }));
+      }
+    },
+
+    setupRealtimeSubscriptions() {
+      if (!this.userId) return;
+
+      // Notifications subscription
+      const notifSubscription = supabase
+        .channel('student_home_notifications')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${this.userId}`
+          },
+          (payload) => {
+            console.log('Notification update:', payload);
+            this.loadNotifications();
+          }
+        )
+        .subscribe();
+
+      // Subscribe to profile changes
+      const profileSubscription = supabase
+        .channel('home_profile_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'profiles',
+            filter: `auth_user_id=eq.${this.userId}`
+          },
+          (payload) => {
+            console.log('Profile updated in Home component:', payload);
+            this.loadStudentProfile();
+          }
+        )
+        .subscribe();
+
+      // Subscribe to student record changes
+      const studentSubscription = supabase
+        .channel('home_student_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'students'
+          },
+          (payload) => {
+            console.log('Student data updated in Home component:', payload);
+            this.loadStudentProfile();
+          }
+        )
+        .subscribe();
+
+      // Store all subscriptions for cleanup
+      this.subscriptions = [notifSubscription, profileSubscription, studentSubscription];
+    },
+
     async loadStudentProfile() {
       try {
         this.isLoadingName = true;
@@ -199,7 +318,7 @@ export default {
         // Now get the student-specific data using profile_id
         const { data: studentData, error: studentError } = await supabase
           .from('students')
-          .select('student_id, grade_level, full_name, email')
+          .select('student_id, grade_level, full_name, email, is_active')
           .eq('profile_id', profile.id)
           .single();
 
@@ -211,6 +330,14 @@ export default {
         }
 
         console.log('Student data found in Home component:', studentData);
+        
+        // Set the active status
+        this.isActive = studentData.is_active || false;
+        console.log('Student active status:', this.isActive);
+        
+        if (!studentData.is_active) {
+          console.warn('Student account is not active');
+        }
         
         // Use the most complete name available
         this.studentName = studentData.full_name || profile.full_name || 'Student';
@@ -302,63 +429,23 @@ export default {
       // This method is kept for backward compatibility
       // The actual data loading is now handled by loadStudentProfile and loadDashboardStats
       console.log('Dashboard data refresh triggered');
-    },
-
-    setupRealtimeSubscriptions() {
-      if (!this.userId) return;
-
-      // Subscribe to profile changes
-      const profileSubscription = supabase
-        .channel('home_profile_changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'profiles',
-            filter: `auth_user_id=eq.${this.userId}`
-          },
-          (payload) => {
-            console.log('Profile updated in Home component:', payload);
-            this.loadStudentProfile();
-          }
-        )
-        .subscribe();
-
-      // Subscribe to student record changes
-      const studentSubscription = supabase
-        .channel('home_student_changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'students'
-          },
-          (payload) => {
-            console.log('Student data updated in Home component:', payload);
-            this.loadStudentProfile();
-          }
-        )
-        .subscribe();
-
-      // Store subscriptions for cleanup
-      this.subscriptions = [profileSubscription, studentSubscription];
     }
   },
 
   async mounted() {
     console.log('Home component mounted');
     await this.loadStudentProfile();
+    await this.loadNotifications();
     this.setupRealtimeSubscriptions();
     
-    // Set up polling for dashboard data (reduced frequency)
+    // Set up polling for dashboard data and notifications
     this.pollInterval = setInterval(() => {
       this.loadDashboardStats();
-    }, 30000); // Every 30 seconds instead of 5
+      this.loadNotifications();
+    }, 30000); // Every 30 seconds
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     console.log('Home component being destroyed');
     
     if (this.pollInterval) {
@@ -390,18 +477,20 @@ export default {
 /* Enhanced Header Design */
 .section-header-card {
   position: relative;
-  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
-  border-radius: 32px;
-  padding: 3.5rem;
-  margin-bottom: 2.5rem;
-  min-height: 180px;
+  background: var(--bg-secondary);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  min-height: 120px;
   box-shadow: 
-    0 24px 48px var(--shadow-medium),
-    0 12px 24px var(--shadow-light),
+    0 16px 32px var(--shadow-medium),
+    0 8px 16px var(--shadow-light),
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
   border: 2px solid var(--border-color);
-  overflow: hidden;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: visible;
+  z-index: 1;
 }
 
 .section-header-card:hover {
@@ -479,20 +568,20 @@ export default {
 .section-header-left {
   display: flex;
   align-items: center;
-  gap: 2.5rem;
+  gap: 1.5rem;
 }
 
 .section-header-icon {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, #4dbb98 0%, #33806b 100%);
-  border-radius: 24px;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, var(--accent-color) 0%, #A3D1C6 100%);
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
   box-shadow: 
-    0 12px 24px rgba(61, 141, 122, 0.2),
+    0 8px 16px var(--shadow-light),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
   transition: all 0.3s ease;
 }
@@ -504,30 +593,30 @@ export default {
 .header-text {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.25rem;
 }
 
 .section-header-title {
-  font-size: 2.5rem;
+  font-size: 1.75rem;
   font-weight: 800;
   color: var(--text-accent);
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #33806b 0%, #4dbb98 100%);
+  background: linear-gradient(135deg, var(--accent-color) 0%, #A3D1C6 100%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.1rem;
 }
 
 .section-header-subtitle {
-  font-size: 1.25rem;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--text-secondary);
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.1rem;
 }
 
 .section-header-description {
-  font-size: 1rem;
+  font-size: 0.875rem;
   color: var(--text-muted);
   font-weight: 400;
   opacity: 0.9;
@@ -539,24 +628,253 @@ export default {
   border-radius: 20px;
   padding: 1rem 1.5rem;
   backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.header-badge.active-student {
+  background: rgba(77, 187, 152, 0.15);
+  border-color: rgba(77, 187, 152, 0.4);
+  box-shadow: 0 4px 12px rgba(77, 187, 152, 0.2);
+}
+
+.header-badge.inactive-student {
+  background: rgba(255, 71, 87, 0.1);
+  border-color: rgba(255, 71, 87, 0.3);
+  box-shadow: 0 4px 12px rgba(255, 71, 87, 0.2);
+}
+
+.header-badge.active-student .badge-text {
+  color: #33806b;
+  font-weight: 700;
+}
+
+.header-badge.inactive-student .badge-text {
+  color: #e74c3c;
+  font-weight: 700;
+}
+
+.header-badge .badge-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-badge.active-student .badge-icon {
+  color: #33806b;
+}
+
+.header-badge.inactive-student .badge-icon {
+  color: #e74c3c;
 }
 
 .badge-content {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .badge-icon {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
 }
 
 .badge-text {
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-accent);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
+}
+
+/* Notification Bell Styles */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  position: relative;
+  z-index: 9999;
+}
+
+.notif-bell-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  z-index: 9999;
+}
+
+.notif-bell-btn {
+  background: var(--bg-accent);
+  border: 2px solid var(--accent-color);
+  cursor: pointer;
+  position: relative;
+  padding: 0.25rem;
+  border-radius: 50%;
+  transition: background 0.2s, box-shadow 0.2s;
+  outline: none;
+  box-shadow: 0 2px 8px var(--shadow-light);
+}
+
+.notif-bell-btn:focus {
+  box-shadow: 0 0 0 3px var(--accent-color);
+}
+
+.notif-bell-btn:hover {
+  background: var(--accent-hover);
+}
+
+.notif-bell-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  background: #ff4757;
+  border-radius: 50%;
+  border: 2px solid white;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.notif-dropdown {
+  position: absolute;
+  top: 56px;
+  right: 0;
+  min-width: 320px;
+  max-width: 400px;
+  max-height: 350px;
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: 0 20px 64px rgba(0, 0, 0, 0.2), 0 8px 24px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 999999;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  backdrop-filter: blur(30px);
+  transform-origin: top right;
+  animation: dropdownSlide 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  will-change: transform;
+  isolation: isolate;
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.notif-dropdown::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  right: 25px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid var(--border-color);
+  z-index: 1;
+}
+
+.notif-dropdown::after {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: 26px;
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-bottom: 7px solid var(--bg-secondary);
+  z-index: 2;
+}
+
+.notif-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.notif-dropdown::-webkit-scrollbar-track {
+  background: var(--bg-accent);
+  border-radius: 10px;
+}
+
+.notif-dropdown::-webkit-scrollbar-thumb {
+  background: var(--accent-color);
+  border-radius: 10px;
+  opacity: 0.7;
+}
+
+.notif-dropdown::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-hover);
+  opacity: 1;
+}
+
+.notif-dropdown-header {
+  font-weight: 700;
+  color: var(--text-accent);
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.notif-dropdown-empty {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 2rem 1rem;
+  font-style: italic;
+}
+
+.notif-dropdown-item {
+  background: var(--bg-accent);
+  border-radius: 12px;
+  padding: 0.875rem;
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.notif-dropdown-item:hover {
+  background: var(--bg-accent-hover);
+  transform: translateX(2px);
+  border-color: var(--accent-color);
+}
+
+.notif-title {
+  font-weight: 600;
+  color: var(--text-accent);
+  font-size: 0.95rem;
+  line-height: 1.3;
+}
+
+.notif-body {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.notif-date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  align-self: flex-end;
+  margin-top: 0.25rem;
 }
 
 /* Rest of the styles remain the same */
