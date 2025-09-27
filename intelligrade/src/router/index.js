@@ -1,0 +1,242 @@
+import { createRouter, createWebHistory } from 'vue-router'
+import { supabase } from '../supabase.js'
+
+// Import views that actually exist
+import Login from '../views/Login.vue'
+import RoleSelection from '../views/RoleSelection.vue'
+import EmailVerified from '../views/EmailVerified.vue'
+import Signup from '../views/Signup.vue'
+import SignupStudent from '../views/SignupStudent.vue'
+import Landing from '../views/Landing.vue'
+import Intro from '../views/Intro.vue'
+
+// Dashboard views
+import TeacherDashboard from '../views/TeacherDashboard.vue'
+import StudentDashboard from '../views/StudentDashboard.vue'
+
+// Teacher subfolder components that actually exist
+import Analytics from '../views/teacher/Analytics.vue'
+import AssessmentRes from '../views/teacher/AssessmentResults.vue'
+import ClassCodeEntry from '../views/teacher/ClassCodeEntry.vue'
+import CreateQuiz from '../views/teacher/CreateQuiz.vue'
+import DashboardHome from '../views/teacher/DashboardHome.vue'
+import GradeManagement from '../views/teacher/GradeManagement.vue'
+import MessagesPage from '../views/teacher/MessagesPage.vue'
+import MySubjects from '../views/teacher/MySubjects.vue'
+import Reports from '../views/teacher/Reports.vue'
+import SectionCode from '../views/teacher/SectionCode.vue'
+import Sections from '../views/teacher/Sections.vue'
+import SectionSelection from '../views/teacher/SectionSelection.vue'
+import SettingsPage from '../views/teacher/SettingsPage.vue'
+import ViewQuizzes from '../views/teacher/ViewQuizzes.vue'
+import ViewStudents from '../views/teacher/ViewStudents.vue'
+
+const routes = [
+  {
+    path: '/',
+    name: 'Landing',
+    component: Landing
+  },
+  {
+    path: '/intro',
+    name: 'Intro',
+    component: Intro
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    component: Login
+  },
+  {
+    path: '/signup',
+    name: 'Signup',
+    component: Signup
+  },
+  {
+    path: '/signup-student',
+    name: 'SignupStudent',
+    component: SignupStudent
+  },
+  {
+    path: '/role-selection',
+    name: 'RoleSelection',
+    component: RoleSelection
+  },
+  {
+    path: '/email-verified',
+    name: 'EmailVerified',
+    component: EmailVerified
+  },
+  // Teacher Dashboard Routes
+  {
+    path: '/teacher',
+    name: 'TeacherLayout',
+    component: TeacherDashboard,
+    meta: { requiresAuth: true, role: 'teacher' },
+    children: [
+      {
+        path: '',
+        redirect: 'dashboard'
+      },
+      {
+        path: 'dashboard',
+        name: 'TeacherDashboardHome',
+        component: DashboardHome
+      },
+      {
+        path: 'subjects',
+        name: 'MySubjects',
+        component: MySubjects
+      },
+      {
+        path: 'analytics',
+        name: 'Analytics',
+        component: Analytics
+      },
+      {
+        path: 'messages',
+        name: 'MessagesPage',
+        component: MessagesPage
+      },
+      {
+        path: 'settings',
+        name: 'SettingsPage',
+        component: SettingsPage
+      },
+      {
+        path: 'assessment-results',
+        name: 'AssessmentRes',
+        component: AssessmentRes
+      },
+      {
+        path: 'class-code-entry',
+        name: 'ClassCodeEntry',
+        component: ClassCodeEntry
+      },
+      {
+        path: 'create-quiz',
+        name: 'CreateQuiz',
+        component: CreateQuiz
+      },
+      {
+        path: 'grade-management',
+        name: 'GradeManagement',
+        component: GradeManagement
+      },
+      {
+        path: 'reports',
+        name: 'Reports',
+        component: Reports
+      },
+      {
+        path: 'section-code',
+        name: 'SectionCode',
+        component: SectionCode
+      },
+      {
+        path: 'sections',
+        name: 'Sections',
+        component: Sections
+      },
+      {
+        path: 'section-selection',
+        name: 'SectionSelection',
+        component: SectionSelection
+      },
+      {
+        path: 'view-quizzes',
+        name: 'ViewQuizzes',
+        component: ViewQuizzes
+      },
+      {
+        path: 'view-students',
+        name: 'ViewStudents',
+        component: ViewStudents
+      }
+    ]
+  },
+  // Student Dashboard Route
+  {
+    path: '/student-dashboard',
+    name: 'StudentDashboard',
+    component: StudentDashboard,
+    meta: { requiresAuth: true, role: 'student' }
+  },
+  // Catch-all redirect
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/'
+  }
+]
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes
+})
+
+// Navigation guard
+router.beforeEach(async (to, from, next) => {
+  console.log('=== ROUTER NAVIGATION ===')
+  console.log('Going to:', to.path)
+  console.log('Coming from:', from.path)
+  console.log('Route meta:', to.meta)
+  
+  if (to.meta.requiresAuth) {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession()
+      
+      if (error || !session) {
+        console.log('❌ No valid session, redirecting to login')
+        next('/login')
+        return
+      }
+
+      console.log('✅ Valid session found for user:', session.user.email)
+
+      // Check user role if required
+      if (to.meta.role) {
+        console.log('Checking user role requirement:', to.meta.role)
+        
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('auth_user_id', session.user.id)
+          .single()
+
+        if (profileError) {
+          console.error('Profile fetch error:', profileError)
+          next('/login')
+          return
+        }
+
+        console.log('User profile role:', profile?.role)
+
+        if (!profile || profile.role !== to.meta.role) {
+          console.log('❌ Role mismatch or no profile')
+          if (profile?.role === 'student') {
+            console.log('Redirecting to student dashboard')
+            next('/student-dashboard')
+          } else if (profile?.role === 'teacher') {
+            console.log('Redirecting to teacher dashboard')
+            next('/teacher/dashboard')
+          } else {
+            console.log('No valid role, redirecting to login')
+            next('/login')
+          }
+          return
+        }
+      }
+      
+      console.log('✅ Authorization successful, proceeding to:', to.path)
+      next()
+    } catch (error) {
+      console.error('Auth check error:', error)
+      next('/login')
+    }
+  } else {
+    console.log('✅ No auth required, proceeding to:', to.path)
+    next()
+  }
+})
+
+export default router

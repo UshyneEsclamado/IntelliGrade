@@ -11,7 +11,7 @@
           </div>
         </div>
         <div class="user-details">
-          <h3>{{ profileData.full_name || 'Ana Rose' }}</h3>
+          <h3>{{ profileData.full_name }}</h3>
           <p class="role">TEACHER</p>
         </div>
       </div>
@@ -98,52 +98,90 @@ import { useRouter } from 'vue-router';
 
 const router = useRouter();
 const profileData = ref({
-  full_name: '',
-  profile: ''
+  full_name: 'Loading...',
+  email: '',
+  department: '',
+  employee_id: '',
+  role: ''
 });
 const isLogoutModalVisible = ref(false);
 
 const fetchUserProfile = async () => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      console.error('Auth error:', authError);
       router.push('/login');
       return;
     }
 
-    // Fetch profile fields (removed bio from query)
-    const { data: profile, error } = await supabase
+    console.log('Authenticated user:', user.id, user.email);
+
+    // First, get profile data and verify role
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('full_name, profile')
-      .eq('id', user.id)
+      .select('id, full_name, email, role')
+      .eq('auth_user_id', user.id)
       .single();
 
-    if (error) {
-      console.warn('Profile not found, using defaults:', error);
-      // Set default values if profile doesn't exist - use full_name from profiles, not email
+    if (profileError) {
+      console.warn('Profile fetch error:', profileError);
+      router.push('/login');
+      return;
+    }
+
+    // Verify user is a teacher
+    if (profile.role !== 'teacher') {
+      console.warn('Access denied: User is not a teacher');
+      router.push('/login');
+      return;
+    }
+
+    console.log('Profile data from DB:', profile);
+
+    // Now fetch teacher-specific data
+    const { data: teacherData, error: teacherError } = await supabase
+      .from('teachers')
+      .select('employee_id, department, full_name, email')
+      .eq('profile_id', profile.id)
+      .single();
+
+    if (teacherError) {
+      console.warn('Teacher data fetch error:', teacherError);
+      // Use profile data as fallback
       profileData.value = {
-        full_name: 'Ana Rose', // Default fallback name instead of email
-        profile: ''
+        full_name: profile.full_name || 'Teacher',
+        email: profile.email || '',
+        department: '',
+        employee_id: '',
+        role: profile.role
       };
       return;
     }
 
+    console.log('Teacher data from DB:', teacherData);
+    
+    // Combine profile and teacher data
     profileData.value = {
-      full_name: profile.full_name || 'Ana Rose', // Use full_name from profile or fallback
-      profile: profile.profile || ''
+      full_name: teacherData.full_name || profile.full_name || 'Teacher',
+      email: teacherData.email || profile.email || '',
+      department: teacherData.department || '',
+      employee_id: teacherData.employee_id || '',
+      role: profile.role
     };
+    
+    console.log('Final profile data set:', profileData.value);
+    
   } catch (err) {
-    console.error('Error fetching user profile:', err);
-    // Don't redirect to login on profile fetch error, just use defaults
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      profileData.value = {
-        full_name: 'Ana Rose', // Default name instead of email
-        profile: ''
-      };
-    } else {
-      router.push('/login');
-    }
+    console.error('Unexpected error fetching user profile:', err);
+    profileData.value = {
+      full_name: 'Teacher',
+      email: '',
+      department: '',
+      employee_id: '',
+      role: 'teacher'
+    };
   }
 };
 
@@ -178,8 +216,9 @@ const confirmLogout = async () => {
     
     // Clear any local storage data
     localStorage.removeItem('userProfile');
+    localStorage.removeItem('darkMode');
     
-    console.log('User logged out');
+    console.log('User logged out successfully');
     router.push('/login');
   } catch (err) {
     console.error('Logout error:', err);
@@ -188,9 +227,24 @@ const confirmLogout = async () => {
   }
 };
 
-onMounted(() => {
-  fetchUserProfile();
+// Watch for auth state changes in real-time
+const setupAuthListener = () => {
+  supabase.auth.onAuthStateChange(async (event, session) => {
+    console.log('Auth state changed:', event, session?.user?.email);
+    
+    if (event === 'SIGNED_OUT' || !session) {
+      router.push('/login');
+    } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+      // Refetch profile data when user signs in or token refreshes
+      await fetchUserProfile();
+    }
+  });
+};
+
+onMounted(async () => {
   initializeDarkMode();
+  setupAuthListener();
+  await fetchUserProfile();
 });
 </script>
 

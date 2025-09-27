@@ -172,110 +172,351 @@ export default {
       pendingReviews: 0,
       assessmentsToGrade: [],
       pollInterval: null,
-      isLoadingName: true
+      isLoadingName: true,
+      userId: null,
+      profileId: null,
+      teacherId: null
     };
   },
   methods: {
     async loadTeacherProfile() {
       try {
+        this.isLoadingName = true;
+        
+        // Get the current user from Supabase auth
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         
         if (authError || !user) {
-          console.error('Auth error:', authError);
+          console.error('Auth error in Teacher Home:', authError);
           this.$router.push('/login');
           return;
         }
 
+        this.userId = user.id;
+        console.log('Loading teacher profile for user:', user.id);
+
+        // First, get the profile using auth_user_id (the correct foreign key)
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('full_name')
-          .eq('id', user.id)
+          .select('id, full_name, email, role')
+          .eq('auth_user_id', user.id)  // This is the correct foreign key
           .single();
 
         if (profileError) {
-          console.error('Profile error:', profileError);
+          console.error('Profile error in Teacher Home:', profileError);
+          
+          if (profileError.code === 'PGRST116') {
+            console.warn('No profile found for user in Teacher Home');
+            this.fullName = user.email?.split('@')[0] || 'Teacher';
+            return;
+          }
+          
           this.fullName = 'Teacher';
-        } else if (profile) {
-          this.fullName = profile.full_name || 'Teacher';
+          return;
         }
+
+        console.log('Profile found in Teacher Home:', profile);
+        this.profileId = profile.id;
+
+        // Verify this is a teacher
+        if (profile.role !== 'teacher') {
+          console.warn('User is not a teacher in Teacher Home');
+          this.$router.push('/login');
+          return;
+        }
+
+        // Now get the teacher-specific data using profile_id
+        const { data: teacherData, error: teacherError } = await supabase
+          .from('teachers')
+          .select('id, employee_id, full_name, email, department, is_active')
+          .eq('profile_id', profile.id)
+          .single();
+
+        if (teacherError) {
+          console.warn('Teacher data error in Teacher Home:', teacherError);
+          
+          if (teacherError.code === 'PGRST116') {
+            console.log('No teacher record found, creating one...');
+            await this.createMissingTeacherRecord(profile);
+            return;
+          }
+          
+          // Use profile name as fallback
+          this.fullName = profile.full_name || 'Teacher';
+          return;
+        }
+
+        console.log('Teacher data found in Teacher Home:', teacherData);
+        this.teacherId = teacherData.id;
+        
+        // Use the most complete name available
+        this.fullName = teacherData.full_name || profile.full_name || 'Teacher';
+        
+        // Load dashboard statistics
+        await this.loadDashboardStats();
+
       } catch (error) {
-        console.error('Error loading teacher profile:', error);
+        console.error('Error loading teacher profile in Teacher Home:', error);
         this.fullName = 'Teacher';
       } finally {
         this.isLoadingName = false;
       }
     },
 
-    async fetchDashboardStats() {
+    async createMissingTeacherRecord(profile) {
       try {
-        const response = await fetch('/api/teacher/dashboard-stats');
-        if (response.ok) {
-          const stats = await response.json();
-          this.totalClasses = stats.totalClasses || 3;
-          this.gradedToday = stats.gradedToday || 5;
-          this.pendingReviews = stats.pendingReviews || 8;
-        } else {
-          this.totalClasses = 3;
-          this.gradedToday = 5;
-          this.pendingReviews = 8;
+        console.log('Creating missing teacher record for profile:', profile.id);
+        
+        // Generate employee ID
+        const employeeId = await this.generateEmployeeId(profile.id);
+        
+        const { data, error } = await supabase
+          .from('teachers')
+          .insert([{
+            profile_id: profile.id,
+            employee_id: employeeId,
+            full_name: profile.full_name,
+            email: profile.email,
+            department: 'General',
+            is_active: true
+          }])
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error creating teacher record:', error);
+          this.fullName = profile.full_name || 'Teacher';
+          return;
         }
-      } catch (err) {
-        console.log('Using sample data for dashboard stats');
-        this.totalClasses = 3;
-        this.gradedToday = 5;
-        this.pendingReviews = 8;
+
+        console.log('Created teacher record:', data);
+        this.teacherId = data.id;
+        this.fullName = data.full_name;
+        
+      } catch (error) {
+        console.error('Error in createMissingTeacherRecord:', error);
+        this.fullName = profile.full_name || 'Teacher';
       }
     },
 
-    async fetchAssessmentsToGrade() {
+    async generateEmployeeId(profileId) {
       try {
-        const response = await fetch('/api/teacher/assessments-to-grade');
-        if (response.ok) {
-          const assessments = await response.json();
-          this.assessmentsToGrade = Array.isArray(assessments) ? assessments : [];
-        } else {
-          this.assessmentsToGrade = [
-            { id: 1, title: 'Algebra Quiz 1', className: 'Math 101', studentsSubmitted: 15, totalStudents: 20 },
-            { id: 2, title: 'Science Test 2', className: 'Science 101', studentsSubmitted: 22, totalStudents: 25 },
-          ];
+        // Generate an employee ID using current year + last 6 chars of profile ID + random 2 digits
+        const year = new Date().getFullYear();
+        const shortId = profileId.slice(-6).toUpperCase();
+        const random = Math.floor(Math.random() * 99).toString().padStart(2, '0');
+        const employeeId = `T${year}${shortId}${random}`;
+        
+        // Check if this ID already exists, if so, generate a new one
+        const { data: existingTeacher } = await supabase
+          .from('teachers')
+          .select('employee_id')
+          .eq('employee_id', employeeId)
+          .single();
+        
+        if (existingTeacher) {
+          // If ID exists, recursively generate a new one
+          return await this.generateEmployeeId(profileId);
         }
-      } catch (err) {
-        console.log('Using sample data for assessments');
-        this.assessmentsToGrade = [
-          { id: 1, title: 'Algebra Quiz 1', className: 'Math 101', studentsSubmitted: 15, totalStudents: 20 },
-          { id: 2, title: 'Science Test 2', className: 'Science 101', studentsSubmitted: 22, totalStudents: 25 },
-        ];
+        
+        console.log('Generated employee ID:', employeeId);
+        return employeeId;
+      } catch (error) {
+        console.error('Error generating employee ID:', error);
+        // Fallback to a simpler format if there's an error
+        return `T${Date.now().toString().slice(-8)}`;
       }
+    },
+
+    async loadDashboardStats() {
+      try {
+        if (!this.teacherId) {
+          console.warn('No teacher ID available for dashboard stats');
+          // Set default values
+          this.totalClasses = 0;
+          this.gradedToday = 0;
+          this.pendingReviews = 0;
+          return;
+        }
+
+        // Get teacher's subjects and sections count using the teacher_dashboard view
+        const { data: subjects, error: subjectsError } = await supabase
+          .from('teacher_dashboard')
+          .select('subject_id')
+          .eq('teacher_id', this.teacherId);
+
+        if (subjectsError) {
+          console.error('Error loading teacher subjects:', subjectsError);
+        } else {
+          // Count unique subjects
+          const uniqueSubjects = new Set(subjects?.map(s => s.subject_id) || []);
+          this.totalClasses = uniqueSubjects.size;
+          console.log('Total classes:', this.totalClasses);
+        }
+
+        // For now, set other stats to placeholder values
+        // These would be replaced with actual assessment/grading data from your system
+        this.gradedToday = 0;
+        this.pendingReviews = 0;
+
+        // Load assessments to grade (placeholder for now)
+        await this.loadAssessmentsToGrade();
+
+      } catch (error) {
+        console.error('Error loading dashboard stats:', error);
+        // Set default values on error
+        this.totalClasses = 0;
+        this.gradedToday = 0;
+        this.pendingReviews = 0;
+      }
+    },
+
+    async loadAssessmentsToGrade() {
+      try {
+        // This is placeholder data - replace with actual assessment system integration
+        this.assessmentsToGrade = [
+          { 
+            id: 1, 
+            title: 'Mathematics Quiz 1', 
+            className: 'Grade 7 Math', 
+            studentsSubmitted: 15, 
+            totalStudents: 20 
+          },
+          { 
+            id: 2, 
+            title: 'Science Test', 
+            className: 'Grade 8 Science', 
+            studentsSubmitted: 18, 
+            totalStudents: 22 
+          }
+        ];
+
+        // Update pending reviews count
+        this.pendingReviews = this.assessmentsToGrade.length;
+
+      } catch (error) {
+        console.error('Error loading assessments to grade:', error);
+        this.assessmentsToGrade = [];
+      }
+    },
+
+    async fetchDashboardStats() {
+      // Legacy method - keeping for backward compatibility
+      // Actual data loading now happens in loadDashboardStats
+      console.log('Dashboard stats refresh triggered');
+      await this.loadDashboardStats();
+    },
+
+    async fetchAssessmentsToGrade() {
+      // Legacy method - keeping for backward compatibility
+      await this.loadAssessmentsToGrade();
     },
 
     gradeAssessment(assessment) {
       console.log('Grading assessment:', assessment.title);
+      // Navigate to grading interface - implement based on your routing setup
     },
 
     navigateToClasses() {
-      console.log('Navigate to classes');
+      // Navigate to teacher's classes - implement based on your routing setup
+      this.$parent.navigateTo('subjects'); // Assuming subjects view shows classes
     },
 
     navigateToGradebook() {
+      // Navigate to gradebook - implement based on your routing setup
       console.log('Navigate to gradebook');
     },
 
     async fetchAllData() {
       await Promise.all([
-        this.fetchDashboardStats(),
-        this.fetchAssessmentsToGrade()
+        this.loadDashboardStats(),
+        this.loadAssessmentsToGrade()
       ]);
+    },
+
+    setupRealtimeSubscriptions() {
+      if (!this.userId) return;
+
+      // Subscribe to profile changes
+      const profileSubscription = supabase
+        .channel('teacher_home_profile_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'profiles',
+            filter: `auth_user_id=eq.${this.userId}`
+          },
+          (payload) => {
+            console.log('Profile updated in Teacher Home:', payload);
+            this.loadTeacherProfile();
+          }
+        )
+        .subscribe();
+
+      // Subscribe to teacher record changes
+      const teacherSubscription = supabase
+        .channel('teacher_home_teacher_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'teachers'
+          },
+          (payload) => {
+            console.log('Teacher data updated in Teacher Home:', payload);
+            this.loadTeacherProfile();
+          }
+        )
+        .subscribe();
+
+      // Subscribe to subjects/sections changes for stats
+      const subjectsSubscription = supabase
+        .channel('teacher_home_subjects_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'subjects'
+          },
+          (payload) => {
+            console.log('Subjects updated in Teacher Home:', payload);
+            this.loadDashboardStats();
+          }
+        )
+        .subscribe();
+
+      // Store subscriptions for cleanup
+      this.subscriptions = [profileSubscription, teacherSubscription, subjectsSubscription];
     }
   },
+
   async mounted() {
+    console.log('Teacher Home component mounted');
     await this.loadTeacherProfile();
-    await this.fetchAllData();
+    this.setupRealtimeSubscriptions();
     
-    this.pollInterval = setInterval(this.fetchAllData, 30000);
+    // Set up polling for dashboard data (reduced frequency)
+    this.pollInterval = setInterval(() => {
+      this.fetchAllData();
+    }, 30000); // Every 30 seconds
   },
+
   beforeDestroy() {
+    console.log('Teacher Home component being destroyed');
+    
     if (this.pollInterval) {
       clearInterval(this.pollInterval);
+    }
+    
+    // Clean up subscriptions
+    if (this.subscriptions) {
+      this.subscriptions.forEach(subscription => {
+        subscription.unsubscribe();
+      });
     }
   }
 };

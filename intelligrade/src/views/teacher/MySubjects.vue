@@ -181,6 +181,16 @@
             </div>
 
             <div class="form-group">
+              <label for="description">Description (Optional)</label>
+              <textarea
+                id="description"
+                v-model="formData.description"
+                placeholder="Brief description of the subject"
+                rows="3"
+              ></textarea>
+            </div>
+
+            <div class="form-group">
               <label for="numberOfSections">Number of Sections *</label>
               <select id="numberOfSections" v-model="formData.number_of_sections" required @change="generateSections">
                 <option value="">Select Number of Sections</option>
@@ -202,7 +212,7 @@
           <!-- Step 2: Section Setup -->
           <div v-if="currentStep === 2" class="step-content">
             <h3 class="step-title">Step 2: Setup Sections</h3>
-            <p class="step-subtitle">Customize section names and unique codes will be generated</p>
+            <p class="step-subtitle">Customize section names and unique codes will be generated automatically</p>
 
             <div class="sections-setup">
               <div v-for="(section, index) in formData.sections" :key="index" class="section-setup-item">
@@ -216,7 +226,15 @@
                     :placeholder="`Section ${index + 1}`"
                     required
                   />
-                  <small class="section-code-preview">Code will be: {{ generateSectionCode(section.name || `Section ${index + 1}`, index) }}</small>
+                  <input
+                    v-model="section.max_students"
+                    type="number"
+                    min="1"
+                    max="50"
+                    placeholder="Max students (default: 40)"
+                    style="margin-top: 0.5rem;"
+                  />
+                  <small class="section-code-preview">Code will be generated automatically</small>
                 </div>
               </div>
             </div>
@@ -288,7 +306,7 @@
                 <div class="table-body">
                   <div v-for="student in sectionData.students" :key="student.id" class="student-row">
                     <div class="col-id">{{ student.student_id }}</div>
-                    <div class="col-name">{{ student.first_name }} {{ student.last_name }}</div>
+                    <div class="col-name">{{ student.full_name }}</div>
                     <div class="col-email">{{ student.email }}</div>
                     <div class="col-grade">{{ student.grade_level }}</div>
                     <div class="col-date">{{ formatEnrollmentDate(student.enrollment_date) }}</div>
@@ -322,7 +340,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, nextTick, watch } from 'vue'
+import { ref, onMounted, computed, nextTick, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '../../supabase.js'
 
@@ -341,11 +359,15 @@ const currentSubjectId = ref(null)
 const currentStep = ref(1)
 const copiedCodeId = ref(null)
 const currentUser = ref(null)
+const teacherInfo = ref(null)
+const authListener = ref(null)
+const isInitialized = ref(false)
 
 // Form data
 const formData = ref({
   name: '',
   grade_level: '',
+  description: '',
   number_of_sections: '',
   sections: []
 })
@@ -355,55 +377,109 @@ const canProceedToStep2 = computed(() => {
   return formData.value.name && formData.value.grade_level && formData.value.number_of_sections
 })
 
-// Authentication helper functions
-const getCurrentUser = async () => {
+// Initialize authentication with new database structure
+const initializeAuth = async () => {
   try {
-    const { data: { user }, error } = await supabase.auth.getUser()
-    if (error) {
-      console.error('Error getting user:', error)
-      throw error
+    console.log('Initializing authentication...')
+    
+    // Get current session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    
+    if (sessionError) {
+      console.error('Session error:', sessionError)
+      throw sessionError
     }
-    if (!user) {
-      console.log('No authenticated user found')
+    
+    if (!session?.user) {
+      console.log('No active session found')
       await router.push('/login')
-      return null
+      return false
     }
-    currentUser.value = user
-    return user
-  } catch (error) {
-    console.error('Authentication error:', error)
-    await router.push('/login')
-    return null
-  }
-}
+    
+    console.log('Session found for user:', session.user.id)
+    currentUser.value = session.user
+    
+    // Get profile info first
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, role, full_name, email')
+      .eq('auth_user_id', session.user.id)
+      .single()
+    
+    if (profileError) {
+      console.error('Error getting profile:', profileError)
+      
+      if (profileError.code === 'PGRST116') {
+        console.log('No profile found')
+        alert('User profile not found. Please contact support.')
+        await router.push('/login')
+        return false
+      }
+      throw profileError
+    }
 
-const checkAuthAndRedirect = async () => {
-  const user = await getCurrentUser()
-  if (!user) {
-    console.log('User not authenticated, redirecting to login')
+    if (!profile) {
+      console.log('No profile data returned')
+      alert('User profile not found. Please contact support.')
+      await router.push('/login')
+      return false
+    }
+
+    if (profile.role !== 'teacher') {
+      console.log('User is not a teacher:', profile.role)
+      alert('Access denied. Teacher account required.')
+      await router.push('/login')
+      return false
+    }
+
+    // Now get the teacher record using the profile_id
+    const { data: teacher, error: teacherError } = await supabase
+      .from('teachers')
+      .select('*')
+      .eq('profile_id', profile.id)
+      .eq('is_active', true)
+      .single()
+
+    if (teacherError) {
+      console.error('Error getting teacher info:', teacherError)
+      
+      if (teacherError.code === 'PGRST116') {
+        console.log('No teacher record found')
+        alert('Teacher record not found. Please contact support.')
+        await router.push('/login')
+        return false
+      }
+      throw teacherError
+    }
+
+    teacherInfo.value = teacher
+    console.log('Teacher info loaded:', teacherInfo.value.id)
+    return true
+
+  } catch (error) {
+    console.error('Authentication initialization error:', error)
+    alert(`Authentication error: ${error.message}`)
+    await router.push('/login')
     return false
   }
-  return true
 }
 
-// Watch for auth state changes
+// Setup auth state listener
 const setupAuthListener = () => {
-  supabase.auth.onAuthStateChange(async (event, session) => {
-    console.log('Auth state changed:', event, session?.user?.id)
+  if (authListener.value) {
+    authListener.value.data.subscription.unsubscribe()
+  }
+  
+  authListener.value = supabase.auth.onAuthStateChange(async (event, session) => {
+    console.log('Auth state change:', event, session?.user?.id)
     
-    if (event === 'SIGNED_OUT' || !session) {
-      console.log('User signed out or session expired')
+    if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
+      console.log('User signed out or token refresh failed')
       currentUser.value = null
+      teacherInfo.value = null
       subjects.value = []
+      isInitialized.value = false
       await router.push('/login')
-      return
-    }
-    
-    if (event === 'SIGNED_IN' && session?.user) {
-      console.log('User signed in:', session.user.id)
-      currentUser.value = session.user
-      // Refresh subjects after sign in
-      await fetchSubjects()
     }
   })
 }
@@ -437,56 +513,55 @@ const generateReports = (subject, section) => {
   alert(`Generate Reports for:\nSubject: ${subject.name}\nSection: ${section.name}\n\nThis feature will show analytics and performance reports for this section.`)
 }
 
-// IMPROVED fetchSubjects function with better error handling and auth checks
+// Fetch subjects with new database structure
 const fetchSubjects = async (retryCount = 0) => {
-  const maxRetries = 3
+  const maxRetries = 2
   
   try {
-    // First check authentication
-    const user = await getCurrentUser()
-    if (!user) {
-      console.log('No user found during fetchSubjects')
+    if (!teacherInfo.value?.id) {
+      console.log('No teacher info available, skipping fetch')
       return
     }
 
-    isLoading.value = true
-    loadingMessage.value = 'Loading subjects...'
+    if (retryCount === 0) {
+      isLoading.value = true
+      loadingMessage.value = 'Loading subjects...'
+    }
 
-    console.log('Fetching subjects for teacher:', user.id)
+    console.log('Fetching subjects for teacher:', teacherInfo.value.id)
 
-    // Add delay to ensure database consistency
     if (retryCount > 0) {
       await new Promise(resolve => setTimeout(resolve, 1000 * retryCount))
     }
 
-    // Fetch subjects with sections using improved query
+    // Fetch subjects with sections using the new schema
     const { data: subjectsData, error: subjectsError } = await supabase
       .from('subjects')
       .select(`
         id,
         name,
         grade_level,
-        teacher_id,
+        description,
+        is_active,
         created_at,
-        updated_at,
-        sections(
+        sections (
           id,
           name,
           section_code,
-          student_count,
-          created_at,
-          updated_at
+          max_students,
+          is_active
         )
       `)
-      .eq('teacher_id', user.id)
-      .order('created_at', { ascending: false })
+      .eq('teacher_id', teacherInfo.value.id)
+      .eq('is_active', true)
+      .order('name')
 
     if (subjectsError) {
       console.error('Error fetching subjects:', subjectsError)
       
-      // Check if it's an auth error
       if (subjectsError.code === 'PGRST301' || subjectsError.message?.includes('JWT')) {
-        console.log('Authentication error detected, refreshing session')
+        console.log('JWT error in fetch, trying to refresh session')
+        
         const { error: refreshError } = await supabase.auth.refreshSession()
         if (refreshError) {
           console.error('Session refresh failed:', refreshError)
@@ -494,7 +569,6 @@ const fetchSubjects = async (retryCount = 0) => {
           return
         }
         
-        // Retry once after refresh
         if (retryCount < maxRetries) {
           console.log('Retrying fetch after session refresh')
           return await fetchSubjects(retryCount + 1)
@@ -504,202 +578,187 @@ const fetchSubjects = async (retryCount = 0) => {
       throw subjectsError
     }
 
-    console.log('Raw subjects data:', subjectsData)
+    console.log('Subjects data:', subjectsData)
 
-    // Handle empty results
-    if (!subjectsData || subjectsData.length === 0) {
-      console.log('No subjects found for user:', user.id)
-      subjects.value = []
-      return
-    }
+    // Process subjects data and get enrollment counts
+    const processedSubjects = []
 
-    // Process subjects and get actual enrollment counts
-    for (let subject of subjectsData) {
-      let totalStudentsForSubject = 0
-      
-      if (subject.sections && subject.sections.length > 0) {
-        for (let section of subject.sections) {
-          try {
-            const { count: sectionCount, error: sectionCountError } = await supabase
-              .from('enrollments')
-              .select('*', { count: 'exact', head: true })
-              .eq('section_id', section.id)
+    if (subjectsData && subjectsData.length > 0) {
+      for (const subject of subjectsData) {
+        const processedSubject = {
+          id: subject.id,
+          name: subject.name,
+          grade_level: subject.grade_level,
+          description: subject.description,
+          is_active: subject.is_active,
+          sections: [],
+          actualStudentCount: 0
+        }
 
-            if (!sectionCountError && sectionCount !== null) {
-              section.actualStudentCount = sectionCount
-              section.student_count = sectionCount
-              totalStudentsForSubject += sectionCount
-            } else {
-              console.error('Error getting section count:', sectionCountError)
-              section.actualStudentCount = 0
-              section.student_count = 0
+        // Process sections and get enrollment counts
+        if (subject.sections && subject.sections.length > 0) {
+          for (const section of subject.sections) {
+            if (section.is_active) {
+              // Get enrollment count for this section
+              const { count: enrollmentCount, error: countError } = await supabase
+                .from('enrollments')
+                .select('id', { count: 'exact' })
+                .eq('section_id', section.id)
+                .eq('status', 'active')
+
+              if (countError) {
+                console.error('Error getting enrollment count:', countError)
+              }
+
+              const studentCount = enrollmentCount || 0
+
+              processedSubject.sections.push({
+                id: section.id,
+                name: section.name,
+                section_code: section.section_code,
+                max_students: section.max_students,
+                student_count: studentCount,
+                actualStudentCount: studentCount,
+                is_active: section.is_active
+              })
+
+              processedSubject.actualStudentCount += studentCount
             }
-          } catch (countError) {
-            console.error('Error counting enrollments for section:', section.id, countError)
-            section.actualStudentCount = 0
-            section.student_count = 0
           }
         }
+
+        processedSubjects.push(processedSubject)
       }
-      
-      subject.actualStudentCount = totalStudentsForSubject
-      console.log(`Subject "${subject.name}" has ${totalStudentsForSubject} total students`)
     }
 
-    // Update subjects with proper reactivity
-    subjects.value = [...subjectsData]
-    console.log('Updated subjects array:', subjects.value)
+    subjects.value = [...processedSubjects]
+    console.log('Updated subjects array:', subjects.value.length, 'subjects')
 
     await nextTick()
 
   } catch (error) {
     console.error('Error in fetchSubjects:', error)
     
-    // Handle specific error types
     if (error.code === 'PGRST301' || error.message?.includes('JWT')) {
       console.log('JWT/Auth error in fetchSubjects, redirecting to login')
       await router.push('/login')
       return
     }
     
-    // Retry logic for network errors
     if (retryCount < maxRetries && (error.code === 'PGRST000' || error.message?.includes('network'))) {
       console.log(`Network error, retrying... (${retryCount + 1}/${maxRetries})`)
       return await fetchSubjects(retryCount + 1)
     }
     
-    // Show user-friendly error
     const errorMsg = `Unable to load subjects: ${error.message}\n\nPlease try refreshing the page or contact support if the problem persists.`
     alert(errorMsg)
   } finally {
-    isLoading.value = false
+    if (retryCount === 0) {
+      isLoading.value = false
+    }
   }
 }
 
-// Fixed getTotalStudents to use actual count
 const getTotalStudents = (subject) => {
   return subject.actualStudentCount || 0
 }
 
-// IMPROVED viewStudentRoster function with better error handling
+// View student roster with new schema
 const viewStudentRoster = async (subject) => {
   try {
-    // Check authentication first
-    const user = await getCurrentUser()
-    if (!user) return
+    if (!teacherInfo.value) {
+      console.log('No teacher info available')
+      return
+    }
 
     isLoading.value = true
     loadingMessage.value = 'Loading student roster...'
     
-    console.log('Loading student roster for subject:', subject.id)
-    
-    // Get all sections for this subject
-    const { data: sections, error: sectionsError } = await supabase
+    console.log('🔍 Loading student roster for subject:', subject.id)
+    console.log('🔍 Teacher ID:', teacherInfo.value.id)
+
+    // Use the new comprehensive view
+    const { data: rosterData, error: rosterError } = await supabase
+      .from('teacher_student_roster')
+      .select('*')
+      .eq('subject_id', subject.id)
+      .eq('teacher_id', teacherInfo.value.id)
+
+    if (rosterError) {
+      console.error('❌ Error fetching roster data:', rosterError)
+      throw rosterError
+    }
+
+    console.log('📊 Raw roster data from view:', rosterData)
+    console.log('📊 Number of enrolled students found:', rosterData?.length || 0)
+
+    // Get all sections for this subject (even empty ones)
+    const { data: allSections, error: sectionsError } = await supabase
       .from('sections')
       .select('*')
-      .eq('class_id', subject.id)
+      .eq('subject_id', subject.id)
+      .eq('is_active', true)
 
     if (sectionsError) {
-      console.error('Error fetching sections:', sectionsError)
+      console.error('❌ Error fetching sections:', sectionsError)
       throw sectionsError
     }
 
-    console.log('Found sections:', sections)
+    console.log('📚 All sections for subject:', allSections)
 
-    if (!sections || sections.length === 0) {
-      currentStudentRoster.value = {
-        subject,
-        studentsBySection: {},
-        totalActualStudents: 0
-      }
-      showStudentRosterModal.value = true
-      return
-    }
+    // Process the data
+    const studentsBySection = {}
+    let totalActualStudents = 0
 
-    // Get all enrollments for these sections
-    const sectionIds = sections.map(s => s.id)
-    const { data: enrollments, error: enrollmentsError } = await supabase
-      .from('enrollments')
-      .select('*')
-      .in('section_id', sectionIds)
-
-    if (enrollmentsError) {
-      console.error('Error fetching enrollments:', enrollmentsError)
-      throw enrollmentsError
-    }
-
-    console.log('Found enrollments:', enrollments)
-
-    if (!enrollments || enrollments.length === 0) {
-      // No students enrolled
-      const studentsBySection = {}
-      sections.forEach(section => {
+    // Initialize all sections (including empty ones)
+    if (allSections && allSections.length > 0) {
+      allSections.forEach(section => {
         const sectionKey = `${section.name} (${section.section_code})`
         studentsBySection[sectionKey] = {
           section: section,
           students: []
         }
       })
-
-      currentStudentRoster.value = {
-        subject,
-        studentsBySection,
-        totalActualStudents: 0
-      }
-      showStudentRosterModal.value = true
-      return
     }
 
-    // Get student profiles
-    const studentIds = [...new Set(enrollments.map(e => e.student_id))]
-    const { data: profiles, error: profilesError } = await supabase
-      .from('profiles')
-      .select('*')
-      .in('auth_user_id', studentIds)
+    // Add students to their respective sections
+    if (rosterData && rosterData.length > 0) {
+      rosterData.forEach(enrollment => {
+        const studentInfo = {
+          id: enrollment.student_id,
+          student_id: enrollment.student_number || 'N/A',
+          full_name: enrollment.student_name,
+          email: enrollment.student_email,
+          grade_level: enrollment.student_grade,
+          enrollment_date: enrollment.enrolled_at
+        }
 
-    if (profilesError) {
-      console.error('Error fetching profiles:', profilesError)
-      throw profilesError
+        const sectionKey = `${enrollment.section_name} (${enrollment.section_code})`
+        
+        // Make sure the section exists in our structure
+        if (!studentsBySection[sectionKey]) {
+          studentsBySection[sectionKey] = {
+            section: {
+              id: enrollment.section_id,
+              name: enrollment.section_name,
+              section_code: enrollment.section_code,
+              max_students: enrollment.max_students
+            },
+            students: []
+          }
+        }
+
+        studentsBySection[sectionKey].students.push(studentInfo)
+        totalActualStudents++
+        
+        console.log(`✅ Added student ${enrollment.student_name} to section ${sectionKey}`)
+      })
     }
 
-    console.log('Found profiles:', profiles)
-
-    // Process student data
-    const studentsBySection = {}
-    let totalActualStudents = 0
-    
-    // Initialize sections
-    sections.forEach(section => {
-      const sectionKey = `${section.name} (${section.section_code})`
-      studentsBySection[sectionKey] = {
-        section: section,
-        students: []
-      }
-    })
-
-    // Process enrollments
-    enrollments.forEach(enrollment => {
-      const section = sections.find(s => s.id === enrollment.section_id)
-      if (!section) return
-
-      // Find matching profile
-      const profile = profiles?.find(p => p.auth_user_id === enrollment.student_id)
-      
-      const studentData = {
-        id: enrollment.student_id,
-        student_id: profile?.student_id || `STU-${enrollment.student_id.substring(0, 8)}`,
-        first_name: profile?.full_name?.split(' ')[0] || 'Student',
-        last_name: profile?.full_name?.split(' ').slice(1).join(' ') || 'Profile Missing',
-        email: profile?.email || `student-${enrollment.student_id.substring(0, 8)}@missing.edu`,
-        grade_level: profile?.grade_level || subject.grade_level || 'N/A',
-        enrollment_date: enrollment.created_at,
-        profileFound: !!profile
-      }
-
-      const sectionKey = `${section.name} (${section.section_code})`
-      studentsBySection[sectionKey].students.push(studentData)
-      totalActualStudents++
-    })
+    console.log('📋 Final processed data:')
+    console.log('- Total sections:', Object.keys(studentsBySection).length)
+    console.log('- Total students:', totalActualStudents)
+    console.log('- Students by section:', studentsBySection)
 
     currentStudentRoster.value = {
       subject,
@@ -710,7 +769,13 @@ const viewStudentRoster = async (subject) => {
     showStudentRosterModal.value = true
 
   } catch (error) {
-    console.error('Error viewing student roster:', error)
+    console.error('❌ Error viewing student roster:', error)
+    
+    if (error.code === 'PGRST301' || error.message?.includes('JWT')) {
+      await router.push('/login')
+      return
+    }
+    
     alert(`Unable to load student roster: ${error.message}`)
   } finally {
     isLoading.value = false
@@ -724,21 +789,9 @@ const generateSections = () => {
   for (let i = 1; i <= numSections; i++) {
     formData.value.sections.push({
       name: `Section ${i}`,
-      section_code: ''
+      max_students: 40
     })
   }
-}
-
-const generateSectionCode = (sectionName, index = 0) => {
-  if (!formData.value.name || !formData.value.grade_level) return 'CODE-PREVIEW'
-  
-  const subjectPrefix = formData.value.name.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, '') || 'SUB'
-  const gradeLevel = formData.value.grade_level
-  const cleanSectionName = sectionName.replace(/[^a-zA-Z0-9]/g, '').substring(0, 1).toUpperCase() || 'S'
-  const timestamp = Date.now().toString().slice(-4)
-  const indexSuffix = String(index + 1).padStart(2, '0')
-  
-  return `${subjectPrefix}${gradeLevel}-${cleanSectionName}${indexSuffix}${timestamp}`
 }
 
 const copyCode = async (code, codeId) => {
@@ -751,7 +804,6 @@ const copyCode = async (code, codeId) => {
     console.log('Copied section code:', code)
   } catch (err) {
     console.error('Failed to copy code:', err)
-    // Fallback for older browsers
     const textArea = document.createElement('textarea')
     textArea.value = code
     document.body.appendChild(textArea)
@@ -772,12 +824,10 @@ const nextStep = () => {
   }
 }
 
-// IMPROVED saveSubject function with better error handling and session management
+// Save subject with new database structure
 const saveSubject = async () => {
   try {
-    // Check authentication first
-    const user = await getCurrentUser()
-    if (!user) {
+    if (!teacherInfo.value?.id) {
       alert('Please login to continue')
       return
     }
@@ -785,14 +835,15 @@ const saveSubject = async () => {
     isLoading.value = true
     loadingMessage.value = isEditing.value ? 'Updating subject...' : 'Creating subject...'
 
-    console.log('Starting subject save process for user:', user.id)
-    console.log('Form data:', formData.value)
+    console.log('Starting subject save process for teacher:', teacherInfo.value.id)
 
     // Prepare subject data
     const subjectData = {
       name: formData.value.name,
       grade_level: parseInt(formData.value.grade_level),
-      teacher_id: user.id
+      teacher_id: teacherInfo.value.id,
+      description: formData.value.description || null,
+      is_active: true
     }
 
     let subjectId
@@ -803,7 +854,7 @@ const saveSubject = async () => {
         .from('subjects')
         .update(subjectData)
         .eq('id', currentSubjectId.value)
-        .eq('teacher_id', user.id) // Extra security check
+        .eq('teacher_id', teacherInfo.value.id)
         .select()
         .single()
 
@@ -819,7 +870,7 @@ const saveSubject = async () => {
       const { error: deleteError } = await supabase
         .from('sections')
         .delete()
-        .eq('class_id', subjectId)
+        .eq('subject_id', subjectId)
 
       if (deleteError) {
         console.error('Delete sections error:', deleteError)
@@ -843,63 +894,31 @@ const saveSubject = async () => {
       console.log('Created new subject:', newSubject)
     }
 
-    // Create sections with unique section codes
+    // Create sections with generated codes
     const sectionsToInsert = []
-    const baseTimestamp = Date.now()
-    const maxAttempts = 10
+    const createdSectionCodes = []
     
+    // Generate section codes first
     for (let i = 0; i < formData.value.sections.length; i++) {
       const section = formData.value.sections[i]
-      let sectionCode
-      let isSectionUnique = false
-      let sectionAttempts = 0
-
-      console.log(`Processing section ${i + 1}:`, section.name)
-
-      // Ensure section code is unique
-      while (!isSectionUnique && sectionAttempts < maxAttempts) {
-        const subjectPrefix = formData.value.name.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, '') || 'SUB'
-        const gradeLevel = formData.value.grade_level
-        const cleanSectionName = section.name.replace(/[^a-zA-Z0-9]/g, '').substring(0, 1).toUpperCase() || 'S'
-        const uniqueTimestamp = (baseTimestamp + i + sectionAttempts).toString().slice(-5)
-        const randomSuffix = Math.random().toString(36).substring(2, 3).toUpperCase()
-        
-        sectionCode = `${subjectPrefix}${gradeLevel}-${cleanSectionName}${uniqueTimestamp}${randomSuffix}`
-        
-        console.log('Generated section code:', sectionCode)
-        
-        // Check if section code already exists
-        const { data: existingSection, error: sectionCheckError } = await supabase
-          .from('sections')
-          .select('section_code')
-          .eq('section_code', sectionCode)
-          .maybeSingle()
-
-        if (sectionCheckError) {
-          console.error('Error checking section code uniqueness:', sectionCheckError)
-          throw sectionCheckError
-        }
-
-        if (!existingSection) {
-          isSectionUnique = true
-          console.log('Section code is unique:', sectionCode)
-        } else {
-          console.log('Section code exists, generating new one...')
-        }
-        
-        sectionAttempts++
-      }
-
-      if (!isSectionUnique) {
-        throw new Error(`Could not generate unique section code for ${section.name}. Please try again.`)
-      }
-
+      
+      // Simple section code generation (fallback method)
+      const subjectPrefix = formData.value.name.substring(0, 4).toUpperCase().replace(/[^A-Z]/g, '')
+      const year = new Date().getFullYear()
+      const timestamp = Date.now().toString().slice(-6) // Use 6 digits for more uniqueness
+      const sectionCode = `${subjectPrefix}${formData.value.grade_level}-${year}-${timestamp}${String(i + 1).padStart(2, '0')}`
+// 
+//       console.log(`Generated section code for ${section.name}:`, sectionCode)
+//       
       sectionsToInsert.push({
-        class_id: subjectId,
+        subject_id: subjectId,
         name: section.name,
         section_code: sectionCode,
-        student_count: 0
+        max_students: parseInt(section.max_students) || 40,
+        is_active: true
       })
+      
+      createdSectionCodes.push(`${section.name}: ${sectionCode}`)
     }
 
     console.log('Sections to insert:', sectionsToInsert)
@@ -915,50 +934,59 @@ const saveSubject = async () => {
       throw sectionsError
     }
 
-    console.log('Inserted sections:', insertedSections)
+    console.log('Successfully inserted sections:', insertedSections)
 
-    // Close modal first
     closeModal()
 
     // Success message with section codes
-    const sectionCodes = insertedSections.map(s => `${s.name}: ${s.section_code}`).join('\n')
-    alert(`Subject "${formData.value.name}" ${isEditing.value ? 'updated' : 'created'} successfully!\n\nSection Codes:\n${sectionCodes}\n\nShare these codes with your students to join their respective sections.`)
+    const sectionCodesText = createdSectionCodes.join('\n')
+    alert(`Subject "${formData.value.name}" ${isEditing.value ? 'updated' : 'created'} successfully!\n\nSection Codes:\n${sectionCodesText}\n\nShare these codes with your students so they can join their respective sections.`)
 
-    // Force refresh subjects list with delay to ensure database consistency
     console.log('Subject saved successfully, refreshing list...')
-    setTimeout(async () => {
-      await fetchSubjects()
-      console.log('Subjects list refreshed after creation')
-    }, 1000)
+    await fetchSubjects()
 
   } catch (error) {
     console.error('Error saving subject:', error)
     
-    // Handle auth errors
     if (error.code === 'PGRST301' || error.message?.includes('JWT')) {
       alert('Your session has expired. Please log in again.')
       await router.push('/login')
       return
     }
     
-    alert(`Error ${isEditing.value ? 'updating' : 'creating'} subject:\n\n${error.message}`)
+    // More specific error handling
+    let errorMessage = `Error ${isEditing.value ? 'updating' : 'creating'} subject:\n\n`
+    
+    if (error.message?.includes('duplicate key')) {
+      errorMessage += 'A section with this code already exists. Please try again.'
+    } else if (error.message?.includes('foreign key')) {
+      errorMessage += 'Invalid teacher or subject reference. Please refresh and try again.'
+    } else if (error.message?.includes('null value')) {
+      errorMessage += 'Missing required information. Please check all fields are filled.'
+    } else {
+      errorMessage += error.message || 'An unexpected error occurred.'
+    }
+    
+    alert(errorMessage)
   } finally {
     isLoading.value = false
   }
 }
 
-const editSubject = async (subject) => {
-  // Check authentication first
-  const user = await getCurrentUser()
-  if (!user) return
+const editSubject = (subject) => {
+  if (!teacherInfo.value) return
 
   isEditing.value = true
   currentSubjectId.value = subject.id
   formData.value = {
     name: subject.name,
     grade_level: subject.grade_level.toString(),
+    description: subject.description || '',
     number_of_sections: subject.sections?.length.toString() || '1',
-    sections: subject.sections?.map(s => ({ name: s.name, section_code: s.section_code })) || []
+    sections: subject.sections?.map(s => ({ 
+      name: s.name, 
+      max_students: s.max_students || 40 
+    })) || []
   }
   showCreateModal.value = true
   currentStep.value = 1
@@ -966,9 +994,7 @@ const editSubject = async (subject) => {
 
 const deleteSubject = async (subjectId) => {
   try {
-    // Check authentication first
-    const user = await getCurrentUser()
-    if (!user) return
+    if (!teacherInfo.value) return
 
     const subject = subjects.value.find(s => s.id === subjectId)
     if (!confirm(`Are you sure you want to delete "${subject?.name}"?\n\nThis will permanently remove:\n• All sections (${subject?.sections?.length || 0} sections)\n• All enrolled students\n• All class data\n\nThis action cannot be undone.`)) {
@@ -980,12 +1006,11 @@ const deleteSubject = async (subjectId) => {
 
     console.log('Deleting subject:', subjectId)
 
-    // Delete subject (CASCADE will handle sections and enrollments)
     const { error } = await supabase
       .from('subjects')
       .delete()
       .eq('id', subjectId)
-      .eq('teacher_id', user.id) // Extra security check
+      .eq('teacher_id', teacherInfo.value.id)
 
     if (error) {
       console.error('Delete subject error:', error)
@@ -998,7 +1023,6 @@ const deleteSubject = async (subjectId) => {
   } catch (error) {
     console.error('Error deleting subject:', error)
     
-    // Handle auth errors
     if (error.code === 'PGRST301' || error.message?.includes('JWT')) {
       alert('Your session has expired. Please log in again.')
       await router.push('/login')
@@ -1019,6 +1043,7 @@ const closeModal = () => {
   formData.value = {
     name: '',
     grade_level: '',
+    description: '',
     number_of_sections: '',
     sections: []
   }
@@ -1031,123 +1056,83 @@ const closeStudentRosterModal = () => {
 
 const formatEnrollmentDate = (dateString) => {
   if (!dateString) return 'N/A'
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
+  try {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+  } catch {
+    return 'Invalid Date'
+  }
 }
 
 const exportStudentRoster = () => {
   if (!currentStudentRoster.value) return
   
-  // Create CSV content
-  let csvContent = `Subject: ${currentStudentRoster.value.subject.name} (Grade ${currentStudentRoster.value.subject.grade_level})\n`
-  csvContent += `Total Students: ${currentStudentRoster.value.totalActualStudents}\n\n`
-  
-  Object.keys(currentStudentRoster.value.studentsBySection).forEach(sectionKey => {
-    const sectionData = currentStudentRoster.value.studentsBySection[sectionKey]
-    csvContent += `Section: ${sectionData.section.name} (${sectionData.section.section_code})\n`
-    csvContent += `Student ID,First Name,Last Name,Email,Grade,Enrollment Date\n`
-    
-    sectionData.students.forEach(student => {
-      csvContent += `"${student.student_id}","${student.first_name}","${student.last_name}","${student.email}","${student.grade_level}","${formatEnrollmentDate(student.enrollment_date)}"\n`
-    })
-    csvContent += `\n`
-  })
-  
-  // Download CSV
-  const blob = new Blob([csvContent], { type: 'text/csv' })
-  const url = window.URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `${currentStudentRoster.value.subject.name}_Student_Roster.csv`
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  window.URL.revokeObjectURL(url)
-}
-
-// Manual refresh function for debugging
-const forceRefresh = async () => {
-  console.log('Force refreshing subjects...')
-  await fetchSubjects()
-}
-
-// Add this debug function temporarily
-const debugDatabaseConnection = async () => {
-  console.log('=== DEBUG DATABASE CONNECTION ===')
-  
   try {
-    // 1. Check current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    console.log('Current User:', user)
-    console.log('User Error:', userError)
+    let csvContent = `Subject: ${currentStudentRoster.value.subject.name} (Grade ${currentStudentRoster.value.subject.grade_level})\n`
+    csvContent += `Total Students: ${currentStudentRoster.value.totalActualStudents}\n\n`
     
-    if (!user) {
-      console.log('❌ No user found - this is the problem!')
-      return
-    }
-    
-    // 2. Test basic connection
-    const { data: testData, error: testError } = await supabase
-      .from('subjects')
-      .select('count(*)')
-      .limit(1)
-    
-    console.log('Database Test Query:', testData)
-    console.log('Database Test Error:', testError)
-    
-    // 3. Check subjects for this user
-    const { data: subjects, error: subjectsError } = await supabase
-      .from('subjects')
-      .select('*')
-      .eq('teacher_id', user.id)
-    
-    console.log('User Subjects:', subjects)
-    console.log('Subjects Error:', subjectsError)
-    
-    // 4. Check all subjects (to see if data exists but with wrong teacher_id)
-    const { data: allSubjects, error: allSubjectsError } = await supabase
-      .from('subjects')
-      .select('id, name, teacher_id')
-      .limit(10)
-    
-    console.log('All Subjects (first 10):', allSubjects)
-    console.log('All Subjects Error:', allSubjectsError)
-    
-    // 5. Check sections
-    if (subjects && subjects.length > 0) {
-      const { data: sections, error: sectionsError } = await supabase
-        .from('sections')
-        .select('*')
-        .eq('class_id', subjects[0].id)
+    Object.keys(currentStudentRoster.value.studentsBySection).forEach(sectionKey => {
+      const sectionData = currentStudentRoster.value.studentsBySection[sectionKey]
+      csvContent += `Section: ${sectionData.section.name} (${sectionData.section.section_code})\n`
+      csvContent += `Student ID,Full Name,Email,Grade,Enrollment Date\n`
       
-      console.log('Sections for first subject:', sections)
-      console.log('Sections Error:', sectionsError)
-    }
+      sectionData.students.forEach(student => {
+        csvContent += `"${student.student_id}","${student.full_name}","${student.email}","${student.grade_level}","${formatEnrollmentDate(student.enrollment_date)}"\n`
+      })
+      csvContent += `\n`
+    })
     
+    const blob = new Blob([csvContent], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${currentStudentRoster.value.subject.name}_Student_Roster.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+    
+    console.log('Exported student roster successfully')
   } catch (error) {
-    console.error('Debug error:', error)
+    console.error('Error exporting roster:', error)
+    alert('Error exporting roster. Please try again.')
   }
-  
-  console.log('=== END DEBUG ===')
 }
 
 // Lifecycle
 onMounted(async () => {
-  console.log('Component mounted, setting up authentication and fetching subjects...')
+  console.log('Component mounted - My Subjects page')
   
-  // Setup auth listener first
-  setupAuthListener()
-  
-  // Check if user is authenticated
-  const isAuthenticated = await checkAuthAndRedirect()
-  if (!isAuthenticated) return
-  
-  // Fetch subjects
-  await fetchSubjects()
+  try {
+    const authSuccess = await initializeAuth()
+    
+    if (!authSuccess) {
+      console.log('Auth initialization failed')
+      return
+    }
+    
+    setupAuthListener()
+    isInitialized.value = true
+    await fetchSubjects()
+    
+    console.log('Component initialization complete')
+    
+  } catch (error) {
+    console.error('Component mount error:', error)
+    await router.push('/login')
+  }
+})
+
+onUnmounted(() => {
+  console.log('Component unmounting - cleaning up')
+  if (authListener.value) {
+    authListener.value.data.subscription.unsubscribe()
+    authListener.value = null
+  }
 })
 </script>
 
@@ -2148,6 +2133,7 @@ onMounted(async () => {
   
   .col-id:before { content: "Student ID: "; }
   .col-name:before { content: "Name: "; }
+
   .col-email:before { content: "Email: "; }
   .col-grade:before { content: "Grade: "; }
   .col-date:before { content: "Enrolled: "; }

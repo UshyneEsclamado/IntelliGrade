@@ -17,7 +17,7 @@
             </svg>
           </div>
           <h1 class="page-title">Class Messaging Center</h1>
-          <p class="page-subtitle">Communicate with your enrolled students and send class announcements.</p>
+          <p class="page-subtitle">Communicate with your enrolled students and send section announcements.</p>
         </div>
       </div>
 
@@ -58,14 +58,14 @@
                   <circle cx="11" cy="11" r="8"></circle>
                   <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
-                <input type="text" v-model="searchQuery" placeholder="Search students or subjects..." class="search-input" />
+                <input type="text" v-model="searchQuery" placeholder="Search students or sections..." class="search-input" />
               </div>
               <div class="action-buttons">
                 <div class="filter-section">
-                  <select v-model="selectedSubject" class="subject-filter">
-                    <option value="">All Classes</option>
-                    <option v-for="subject in mySubjects" :key="subject.id" :value="subject.id">
-                      {{ subject.name }} ({{ subject.code }})
+                  <select v-model="selectedSection" class="section-filter">
+                    <option value="">All Sections</option>
+                    <option v-for="section in mySections" :key="section.id" :value="section.id">
+                      {{ section.name }}
                     </option>
                   </select>
                 </div>
@@ -78,7 +78,7 @@
               </div>
             </div>
             
-            <!-- Students grouped by subject -->
+            <!-- Students grouped by section -->
             <div v-if="groupedStudents.length === 0" class="empty-state">
               <div class="empty-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -87,21 +87,21 @@
                 </svg>
               </div>
               <p>No enrolled students found</p>
-              <span class="empty-subtext">Students who join your classes will appear here.</span>
+              <span class="empty-subtext">Students who join your sections will appear here.</span>
             </div>
 
-            <div v-else class="students-by-subject">
-              <div v-for="subject in groupedStudents" :key="subject.id" class="subject-group">
-                <div class="subject-header">
-                  <div class="subject-info">
-                    <h3 class="subject-name">{{ subject.name }}</h3>
-                    <span class="subject-code">{{ subject.code }}</span>
+            <div v-else class="students-by-section">
+              <div v-for="section in groupedStudents" :key="section.id" class="section-group">
+                <div class="section-header">
+                  <div class="section-info">
+                    <h3 class="section-name">{{ section.name }}</h3>
+                    <span class="section-code">{{ section.code }}</span>
                   </div>
-                  <div class="subject-actions">
-                    <span class="student-count">{{ subject.students.length }} students</span>
+                  <div class="section-actions">
+                    <span class="student-count">{{ section.students.length }} students</span>
                     <button 
                       class="broadcast-btn" 
-                      @click="openBroadcastModal(); broadcastSubject = subject.id"
+                      @click="openBroadcastModal(); broadcastSection = section.id"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M3 11l18-5v12L3 14v-3z"/>
@@ -113,8 +113,8 @@
                 
                 <div class="students-list">
                   <div 
-                    v-for="student in subject.students" 
-                    :key="student.id"
+                    v-for="student in section.students" 
+                    :key="`${student.id}-${section.id}`"
                     :class="['student-item', { 'has-unread': student.unread_count > 0 }]"
                     @click="startChatWithStudent(student)"
                   >
@@ -147,17 +147,17 @@
           <div v-else-if="currentTab === 'broadcast'" class="tab-content">
             <div class="broadcast-section">
               <div class="broadcast-header">
-                <h3>Send Class Announcement</h3>
-                <p>Send a message to all students in selected classes</p>
+                <h3>Send Section Announcement</h3>
+                <p>Send a message to all students in a selected section</p>
               </div>
               
               <div class="broadcast-form">
                 <div class="form-group">
-                  <label>Select Subject</label>
-                  <select v-model="broadcastSubject" class="form-control">
-                    <option value="">Choose a subject</option>
-                    <option v-for="subject in mySubjects" :key="subject.id" :value="subject.id">
-                      {{ subject.name }} ({{ subject.code }})
+                  <label>Select Section</label>
+                  <select v-model="broadcastSection" class="form-control">
+                    <option value="">Choose a section</option>
+                    <option v-for="section in mySections" :key="section.id" :value="section.id">
+                      {{ section.name }}
                     </option>
                   </select>
                 </div>
@@ -166,7 +166,7 @@
                   <label>Message</label>
                   <textarea 
                     v-model="broadcastMessage" 
-                    placeholder="Type your class announcement here..."
+                    placeholder="Type your section announcement here..."
                     class="form-control message-textarea"
                     rows="6"
                   ></textarea>
@@ -176,12 +176,12 @@
                   <button 
                     class="broadcast-send-btn"
                     @click="sendBroadcastMessage"
-                    :disabled="!broadcastMessage.trim() || !broadcastSubject"
+                    :disabled="!broadcastMessage.trim() || !broadcastSection"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M3 11l18-5v12L3 14v-3z"/>
                     </svg>
-                    Send to All Students
+                    Send to Section Students
                   </button>
                 </div>
               </div>
@@ -202,7 +202,7 @@
             </div>
             <div class="header-details">
               <h2 class="modal-title">{{ activeConversation?.name || 'Student' }}</h2>
-              <span class="subject-info">{{ activeConversation?.subject_name }}</span>
+              <span class="section-info">{{ activeConversation?.subject_name }}</span>
             </div>
           </div>
         </div>
@@ -216,6 +216,9 @@
               <p class="message-text">{{ message.content }}</p>
               <span class="message-time">{{ formatTime(message.created_at) }}</span>
             </div>
+            <div v-if="currentMessages.length === 0" class="no-messages">
+              <p>No messages yet. Start the conversation!</p>
+            </div>
           </div>
         </div>
         <div class="modal-footer">
@@ -227,7 +230,7 @@
               placeholder="Type your message to the student..." 
               class="message-input"
             />
-            <button class="send-btn" @click="handleSendMessage">
+            <button class="send-btn" @click="handleSendMessage" :disabled="!newMessage.trim()">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="22" y1="2" x2="11" y2="13"></line>
                 <polygon points="22 2 15.46 22 11 13 2 9.54 22 2"></polygon>
@@ -243,16 +246,16 @@
       <div class="modal-content">
         <div class="modal-header">
           <button @click="closeBroadcastModal" class="close-btn">&times;</button>
-          <h2 class="modal-title">Send Class Announcement</h2>
+          <h2 class="modal-title">Send Section Announcement</h2>
         </div>
         <div class="modal-body">
           <div class="broadcast-form">
             <div class="form-group">
-              <label>Select Subject</label>
-              <select v-model="broadcastSubject" class="form-control">
-                <option value="">Choose a subject</option>
-                <option v-for="subject in mySubjects" :key="subject.id" :value="subject.id">
-                  {{ subject.name }} ({{ subject.code }})
+              <label>Select Section</label>
+              <select v-model="broadcastSection" class="form-control">
+                <option value="">Choose a section</option>
+                <option v-for="section in mySections" :key="section.id" :value="section.id">
+                  {{ section.name }}
                 </option>
               </select>
             </div>
@@ -261,7 +264,7 @@
               <label>Message</label>
               <textarea 
                 v-model="broadcastMessage" 
-                placeholder="Type your class announcement here..."
+                placeholder="Type your section announcement here..."
                 class="form-control message-textarea"
                 rows="6"
               ></textarea>
@@ -272,21 +275,28 @@
           <button 
             class="broadcast-send-btn"
             @click="sendBroadcastMessage"
-            :disabled="!broadcastMessage.trim() || !broadcastSubject"
+            :disabled="!broadcastMessage.trim() || !broadcastSection"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M3 11l18-5v12L3 14v-3z"/>
             </svg>
-            Send to All Students
+            Send to Section Students
           </button>
         </div>
       </div>
     </div>
+
+    <!-- Loading Overlay -->
+    <div v-if="isLoading" class="loading-overlay">
+      <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <p>Loading messages...</p>
+      </div>
+    </div>
   </div>
 </template>
-
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase.js'
 
@@ -296,15 +306,21 @@ const router = useRouter()
 // STATE MANAGEMENT
 // ================================
 
-// User data - REPLACE THIS SECTION
+// User authentication
 const currentUser = ref(null)
 
 const getCurrentUser = async () => {
   try {
     const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      await router.push('/login')
+      return null
+    }
+    currentUser.value = user
     return user
   } catch (error) {
     console.error('Error getting current user:', error)
+    await router.push('/login')
     return null
   }
 }
@@ -313,10 +329,11 @@ const getCurrentUser = async () => {
 const currentTab = ref('students')
 const isModalOpen = ref(false)
 const isBroadcastModalOpen = ref(false)
+const isLoading = ref(false)
 
 // Search and Filter
 const searchQuery = ref('')
-const selectedSubject = ref('')
+const selectedSection = ref('') // Changed from selectedSubject to selectedSection
 
 // Chat State
 const selectedChat = ref(null)
@@ -326,11 +343,10 @@ const messagesContainer = ref(null)
 
 // Broadcast State
 const broadcastMessage = ref('')
-const selectedStudents = ref([])
-const broadcastSubject = ref('')
+const broadcastSection = ref('') // Changed from broadcastSubject to broadcastSection
 
 // Data
-const mySubjects = ref([])
+const mySections = ref([]) // Changed from mySubjects to mySections
 const enrolledStudents = ref([])
 const currentMessages = ref([])
 
@@ -341,38 +357,45 @@ const currentMessages = ref([])
 const filteredStudents = computed(() => {
   let students = enrolledStudents.value
   
-  if (selectedSubject.value) {
-    students = students.filter(s => s.subject_id === selectedSubject.value)
+  // Filter by selected section instead of subject
+  if (selectedSection.value) {
+    students = students.filter(s => s.section_id === selectedSection.value)
   }
   
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     students = students.filter(s => 
-      s.name.toLowerCase().includes(query) ||
-      s.subject_name.toLowerCase().includes(query)
+      s.student_name.toLowerCase().includes(query) ||
+      s.subject_name.toLowerCase().includes(query) ||
+      s.section_name.toLowerCase().includes(query)
     )
   }
   
   return students
 })
 
+// Updated grouping logic: Group by section instead of subject
 const groupedStudents = computed(() => {
-  const subjects = {}
+  const sections = {}
   
   filteredStudents.value.forEach(student => {
-    const subjectId = student.subject_id
-    if (!subjects[subjectId]) {
-      subjects[subjectId] = {
-        id: subjectId,
-        name: student.subject_name,
-        code: student.subject_code,
+    const sectionKey = student.section_id // Use section_id as key
+    if (!sections[sectionKey]) {
+      sections[sectionKey] = {
+        id: student.section_id,
+        subject_id: student.subject_id,
+        name: `${student.subject_name} - ${student.section_name}`, // Show "Filipino - Section A"
+        code: student.section_code,
+        section_name: student.section_name,
+        subject_name: student.subject_name,
+        grade_level: student.grade_level,
         students: []
       }
     }
-    subjects[subjectId].students.push(student)
+    sections[sectionKey].students.push(student)
   })
   
-  return Object.values(subjects)
+  return Object.values(sections)
 })
 
 // ================================
@@ -381,199 +404,151 @@ const groupedStudents = computed(() => {
 
 const loadMySubjectsAndStudents = async () => {
   try {
-    // Use the currentUser.value instead of getting user again
     if (!currentUser.value) {
       console.error('No authenticated user')
       return
     }
     
-    console.log('Current teacher ID:', currentUser.value.id)
+    isLoading.value = true
+    console.log('Loading subjects and students for teacher:', currentUser.value.id)
     
-    // Get subjects taught by current teacher
-    const { data: subjects, error: subjectsError } = await supabase
-      .from('subjects')
-      .select('id, name, grade_level')
+    // Use the teacher_contacts view we created earlier
+    const { data: contacts, error: contactsError } = await supabase
+      .from('teacher_contacts')
+      .select('*')
       .eq('teacher_id', currentUser.value.id)
     
-    if (subjectsError) {
-      console.error('Error fetching subjects:', subjectsError)
-      throw subjectsError
+    if (contactsError) {
+      console.error('Error fetching teacher contacts:', contactsError)
+      throw contactsError
     }
     
-    console.log('Teacher subjects:', subjects)
-    mySubjects.value = subjects || []
+    console.log('Teacher contacts found:', contacts)
     
-    if (!subjects || subjects.length === 0) {
-      console.log('No subjects found for teacher')
+    if (!contacts || contacts.length === 0) {
+      console.log('No enrolled students found')
+      enrolledStudents.value = []
+      mySections.value = []
       return
     }
     
-    // Get sections for these subjects
-    const subjectIds = subjects.map(s => s.id)
-    const { data: sections, error: sectionsError } = await supabase
-      .from('sections')
-      .select('id, name, section_code, class_id')
-      .in('class_id', subjectIds)
+    // Process the contacts data
+    enrolledStudents.value = contacts.map(contact => ({
+      id: contact.student_id,
+      student_name: contact.student_name,
+      student_email: contact.student_email,
+      student_number: contact.student_number,
+      subject_id: contact.subject_id,
+      subject_name: contact.subject_name,
+      section_id: contact.section_id,
+      section_name: contact.section_name,
+      section_code: contact.section_code,
+      grade_level: contact.grade_level,
+      enrolled_date: contact.enrolled_date,
+      last_message_date: contact.last_message_date,
+      unread_count: contact.unread_count || 0,
+      // For display purposes
+      name: contact.student_name,
+      email: contact.student_email,
+      last_message: null, // We'll load this separately if needed
+      last_message_time: contact.last_message_date
+    }))
     
-    if (sectionsError) {
-      console.error('Error fetching sections:', sectionsError)
-      throw sectionsError
-    }
-    
-    console.log('Sections found:', sections)
-    
-    if (!sections || sections.length === 0) {
-      console.log('No sections found')
-      return
-    }
-    
-    // Get enrollments for these sections
-    const sectionIds = sections.map(s => s.id)
-    const { data: enrollments, error: enrollmentError } = await supabase
-      .from('enrollments')
-      .select(`
-        student_id,
-        section_id,
-        created_at
-      `)
-      .in('section_id', sectionIds)
-    
-    if (enrollmentError) {
-      console.error('Error fetching enrollments:', enrollmentError)
-      throw enrollmentError
-    }
-    
-    console.log('Enrollments found:', enrollments)
-    
-    if (!enrollments || enrollments.length === 0) {
-      console.log('No enrollments found')
-      return
-    }
-    
-    // Get student details
-    const studentIds = enrollments.map(e => e.student_id)
-    const { data: students, error: studentsError } = await supabase
-      .from('profiles')
-      .select('id, full_name, email')
-      .in('id', studentIds)
-    
-    if (studentsError) {
-      console.error('Error fetching students:', studentsError)
-      throw studentsError
-    }
-    
-    console.log('Students found:', students)
-    
-    // Process enrollments to get students with their subjects
-    const processedStudents = enrollments.map(enrollment => {
-      const student = students.find(s => s.id === enrollment.student_id)
-      const section = sections.find(s => s.id === enrollment.section_id)
-      const subject = subjects.find(s => s.id === section?.class_id)
-      
-      return {
-        id: student?.id,
-        name: student?.full_name || 'Unknown Student',
-        email: student?.email || 'No email',
-        subject_id: subject?.id,
-        subject_name: subject?.name || 'Unknown Subject',
-        subject_code: section?.section_code || 'No Code',
-        section_name: section?.name || 'Unknown Section',
-        unread_count: 0,
-        last_message: null,
-        last_message_time: null
+    // Extract unique SECTIONS for the filter dropdown (not subjects)
+    const sectionsMap = new Map()
+    contacts.forEach(contact => {
+      if (!sectionsMap.has(contact.section_id)) {
+        sectionsMap.set(contact.section_id, {
+          id: contact.section_id,
+          name: `${contact.subject_name} - ${contact.section_name}`,
+          code: contact.section_code,
+          subject_name: contact.subject_name,
+          section_name: contact.section_name,
+          grade_level: contact.grade_level
+        })
       }
-    }).filter(student => student.id) // Filter out any students that weren't found
+    })
     
-    enrolledStudents.value = processedStudents
-    console.log('Processed students:', processedStudents)
+    mySections.value = Array.from(sectionsMap.values())
     
-    // Load message counts and last messages
-    await loadMessageInfo()
+    console.log('Processed students:', enrolledStudents.value)
+    console.log('Processed sections:', mySections.value)
     
   } catch (error) {
     console.error('Error loading subjects and students:', error)
     alert('Error loading messaging data. Please check the console for details.')
+  } finally {
+    isLoading.value = false
   }
 }
 
-const loadMessageInfo = async () => {
-  // Load conversation info for each enrolled student
+const loadConversationMessages = async (studentId, sectionId) => {
   try {
     if (!currentUser.value) return
     
-    for (const student of enrolledStudents.value) {
-      const { data: conversation } = await supabase
-        .from('conversations')
-        .select(`
-          id,
-          updated_at,
-          messages (
-            content,
-            created_at,
-            is_read
-          )
-        `)
-        .or(`and(participant1_id.eq.${currentUser.value.id},participant2_id.eq.${student.id}),and(participant1_id.eq.${student.id},participant2_id.eq.${currentUser.value.id})`)
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .single()
-      
-      if (conversation && conversation.messages && conversation.messages.length > 0) {
-        student.last_message = conversation.messages[0]?.content
-        student.last_message_time = conversation.messages[0]?.created_at
-        student.unread_count = conversation.messages.filter(m => !m.is_read && m.sender_id !== currentUser.value.id).length
+    console.log('Loading messages between teacher and student:', { 
+      teacherId: currentUser.value.id, 
+      studentId, 
+      sectionId 
+    })
+    
+    // Load messages using the teacher_messages view
+    const { data: messages, error: messagesError } = await supabase
+      .from('teacher_messages')
+      .select('*')
+      .eq('section_id', sectionId)
+      .or(`and(sender_id.eq.${currentUser.value.id},recipient_id.eq.${studentId}),and(sender_id.eq.${studentId},recipient_id.eq.${currentUser.value.id})`)
+      .order('sent_at', { ascending: true })
+    
+    if (messagesError) {
+      console.error('Error loading messages:', messagesError)
+      throw messagesError
+    }
+    
+    console.log('Messages loaded:', messages)
+    
+    // Format messages for display
+    currentMessages.value = (messages || []).map(msg => ({
+      id: msg.id,
+      sender_id: msg.sender_id,
+      recipient_id: msg.recipient_id,
+      content: msg.message_text,
+      created_at: msg.sent_at,
+      is_read: msg.is_read,
+      message_type: msg.message_type,
+      sender_name: msg.sender_name,
+      recipient_name: msg.recipient_name
+    }))
+    
+    // Mark messages as read
+    if (messages && messages.length > 0) {
+      await markConversationAsRead(sectionId, studentId)
+    }
+    
+  } catch (error) {
+    console.error('Error loading conversation messages:', error)
+  }
+}
+
+const markConversationAsRead = async (sectionId, studentId) => {
+  try {
+    const { error } = await supabase.rpc('mark_conversation_read', {
+      p_section_id: sectionId,
+      p_other_user_id: studentId,
+      p_current_user_id: currentUser.value.id
+    })
+    
+    if (error) {
+      console.error('Error marking conversation as read:', error)
+    } else {
+      // Update local unread count
+      const student = enrolledStudents.value.find(s => s.id === studentId && s.section_id === sectionId)
+      if (student) {
+        student.unread_count = 0
       }
     }
   } catch (error) {
-    console.error('Error loading message info:', error)
-  }
-}
-
-const loadConversationMessages = async (studentId) => {
-  try {
-    if (!currentUser.value) return
-    
-    // Find or create conversation
-    const { data: conversation, error: convError } = await supabase
-      .from('conversations')
-      .select('id')
-      .or(`and(participant1_id.eq.${currentUser.value.id},participant2_id.eq.${studentId}),and(participant1_id.eq.${studentId},participant2_id.eq.${currentUser.value.id})`)
-      .single()
-    
-    let conversationId
-    
-    if (conversation) {
-      conversationId = conversation.id
-    } else {
-      // Create new conversation
-      const { data: newConv, error: createError } = await supabase
-        .from('conversations')
-        .insert({
-          participant1_id: currentUser.value.id,
-          participant2_id: studentId,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .select('id')
-        .single()
-      
-      if (createError) throw createError
-      conversationId = newConv.id
-    }
-    
-    // Load messages
-    const { data: messages, error: msgError } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true })
-    
-    if (msgError) throw msgError
-    
-    currentMessages.value = messages || []
-    
-  } catch (error) {
-    console.error('Error loading messages:', error)
+    console.error('Error marking conversation as read:', error)
   }
 }
 
@@ -582,75 +557,96 @@ const loadConversationMessages = async (studentId) => {
 // ================================
 
 const startChatWithStudent = async (student) => {
-  activeConversation.value = student
+  console.log('Starting chat with student:', student)
+  
+  activeConversation.value = {
+    ...student,
+    name: student.student_name || student.name,
+    email: student.student_email || student.email,
+    subject_name: student.subject_name // Include section context in modal
+  }
+  
   selectedChat.value = student
   isModalOpen.value = true
   
   // Load messages for this conversation
-  await loadConversationMessages(student.id)
+  await loadConversationMessages(student.id, student.section_id)
+  
+  // Scroll to bottom of messages
+  await nextTick()
+  if (messagesContainer.value) {
+    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+  }
 }
 
 const handleSendMessage = async () => {
   if (!newMessage.value.trim() || !activeConversation.value || !currentUser.value) return
   
   const messageText = newMessage.value.trim()
+  const tempMessage = {
+    id: 'temp-' + Date.now(),
+    sender_id: currentUser.value.id,
+    recipient_id: activeConversation.value.id,
+    content: messageText,
+    created_at: new Date().toISOString(),
+    is_read: false,
+    message_type: 'direct'
+  }
+  
+  // Add temporary message to display
+  currentMessages.value.push(tempMessage)
   newMessage.value = ''
   
+  // Scroll to bottom
+  await nextTick()
+  if (messagesContainer.value) {
+    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+  }
+  
   try {
-    // Find or get conversation ID
-    let conversationId
-    const { data: conversation } = await supabase
-      .from('conversations')
-      .select('id')
-      .or(`and(participant1_id.eq.${currentUser.value.id},participant2_id.eq.${activeConversation.value.id}),and(participant1_id.eq.${activeConversation.value.id},participant2_id.eq.${currentUser.value.id})`)
-      .single()
-    
-    if (conversation) {
-      conversationId = conversation.id
-    } else {
-      // Create new conversation
-      const { data: newConv, error: createError } = await supabase
-        .from('conversations')
-        .insert({
-          participant1_id: currentUser.value.id,
-          participant2_id: activeConversation.value.id,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .select('id')
-        .single()
-      
-      if (createError) throw createError
-      conversationId = newConv.id
-    }
-    
-    // Send the message
-    const { data: newMsg, error: msgError } = await supabase
+    // Send the message to the database
+    const { data: sentMessage, error: sendError } = await supabase
       .from('messages')
       .insert({
-        conversation_id: conversationId,
+        section_id: activeConversation.value.section_id,
         sender_id: currentUser.value.id,
-        receiver_id: activeConversation.value.id,
-        content: messageText,
-        created_at: new Date().toISOString(),
-        is_read: false
+        recipient_id: activeConversation.value.id,
+        message_text: messageText,
+        message_type: 'direct'
       })
-      .select('*')
+      .select()
       .single()
     
-    if (msgError) throw msgError
+    if (sendError) {
+      console.error('Error sending message:', sendError)
+      throw sendError
+    }
     
-    // Add message to current conversation
-    currentMessages.value.push(newMsg)
+    console.log('Message sent successfully:', sentMessage)
     
-    // Update conversation timestamp
-    await supabase
-      .from('conversations')
-      .update({ updated_at: new Date().toISOString() })
-      .eq('id', conversationId)
+    // Replace temporary message with real message
+    const tempIndex = currentMessages.value.findIndex(m => m.id === tempMessage.id)
+    if (tempIndex !== -1) {
+      currentMessages.value[tempIndex] = {
+        id: sentMessage.id,
+        sender_id: sentMessage.sender_id,
+        recipient_id: sentMessage.recipient_id,
+        content: sentMessage.message_text,
+        created_at: sentMessage.sent_at,
+        is_read: sentMessage.is_read,
+        message_type: sentMessage.message_type
+      }
+    }
     
   } catch (error) {
     console.error('Failed to send message:', error)
+    
+    // Remove temporary message on error
+    const tempIndex = currentMessages.value.findIndex(m => m.id === tempMessage.id)
+    if (tempIndex !== -1) {
+      currentMessages.value.splice(tempIndex, 1)
+    }
+    
     alert('Failed to send message. Please try again.')
   }
 }
@@ -668,48 +664,55 @@ const closeModal = () => {
 
 const openBroadcastModal = () => {
   isBroadcastModalOpen.value = true
-  selectedStudents.value = []
   broadcastMessage.value = ''
-  broadcastSubject.value = ''
+  broadcastSection.value = '' // Changed from broadcastSubject
 }
 
 const closeBroadcastModal = () => {
   isBroadcastModalOpen.value = false
-  selectedStudents.value = []
   broadcastMessage.value = ''
-  broadcastSubject.value = ''
+  broadcastSection.value = ''
 }
 
+// Updated broadcast logic to work with individual sections
 const sendBroadcastMessage = async () => {
-  if (!broadcastMessage.value.trim() || !broadcastSubject.value || !currentUser.value) return
+  if (!broadcastMessage.value.trim() || !broadcastSection.value || !currentUser.value) return
   
   try {
-    // Get all students in the selected subject
-    const subjectStudents = enrolledStudents.value
-      .filter(s => s.subject_id === broadcastSubject.value)
-      .map(s => s.id)
+    isLoading.value = true
     
-    // Send notification to each student
-    for (const studentId of subjectStudents) {
-      await supabase
-        .from('notifications')
-        .insert({
-          student_id: studentId,
-          from_teacher_id: currentUser.value.id,
-          subject_id: broadcastSubject.value,
-          title: 'Class Announcement',
-          body: broadcastMessage.value.trim(),
-          type: 'class',
-          created_at: new Date().toISOString()
-        })
+    // Send broadcast message to the specific section only
+    const { data: sentMessage, error: sendError } = await supabase
+      .from('messages')
+      .insert({
+        section_id: broadcastSection.value, // Specific section ID
+        sender_id: currentUser.value.id,
+        recipient_id: null, // null for broadcast
+        message_text: broadcastMessage.value.trim(),
+        message_type: 'announcement'
+      })
+      .select()
+      .single()
+    
+    if (sendError) {
+      console.error('Error sending broadcast message:', sendError)
+      throw sendError
     }
     
+    console.log('Broadcast message sent successfully:', sentMessage)
+    
+    // Get section info for confirmation message
+    const selectedSectionInfo = mySections.value.find(s => s.id === broadcastSection.value)
+    const sectionName = selectedSectionInfo ? selectedSectionInfo.name : 'Selected Section'
+    
     closeBroadcastModal()
-    alert('Broadcast message sent successfully!')
+    alert(`Broadcast message sent successfully to all students in ${sectionName}!`)
     
   } catch (error) {
     console.error('Error sending broadcast message:', error)
     alert('Failed to send broadcast message. Please try again.')
+  } finally {
+    isLoading.value = false
   }
 }
 
@@ -717,29 +720,88 @@ const sendBroadcastMessage = async () => {
 // UTILITY METHODS
 // ================================
 
-const markAllAsRead = () => {
-  enrolledStudents.value.forEach(student => student.unread_count = 0)
+const markAllAsRead = async () => {
+  try {
+    if (!currentUser.value) return
+    
+    // This would mark all messages sent to the teacher as read
+    const { error } = await supabase
+      .from('messages')
+      .update({ 
+        is_read: true, 
+        read_at: new Date().toISOString() 
+      })
+      .eq('recipient_id', currentUser.value.id)
+      .eq('is_read', false)
+    
+    if (error) {
+      console.error('Error marking all messages as read:', error)
+      return
+    }
+    
+    // Update local state
+    enrolledStudents.value.forEach(student => {
+      student.unread_count = 0
+    })
+    
+  } catch (error) {
+    console.error('Error marking all as read:', error)
+  }
 }
 
 const formatTime = (dateString) => {
   if (!dateString) return ''
-  return new Date(dateString).toLocaleString()
+  
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffMs = now - date
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  
+  if (diffDays === 0) {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  } else if (diffDays === 1) {
+    return 'Yesterday'
+  } else if (diffDays < 7) {
+    return date.toLocaleDateString([], { weekday: 'short' })
+  } else {
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric' })
+  }
 }
 
 // ================================
-// LIFECYCLE HOOKS - REPLACE THIS SECTION
+// AUTHENTICATION & LIFECYCLE
 // ================================
 
+const setupAuthListener = () => {
+  supabase.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_OUT' || !session) {
+      currentUser.value = null
+      enrolledStudents.value = []
+      mySections.value = []
+      await router.push('/login')
+      return
+    }
+    
+    if (event === 'SIGNED_IN' && session?.user) {
+      currentUser.value = session.user
+      await loadMySubjectsAndStudents()
+    }
+  })
+}
+
 onMounted(async () => {
-  const user = await getCurrentUser()
-  currentUser.value = user
+  console.log('Teacher messages component mounted')
   
+  // Setup auth listener
+  setupAuthListener()
+  
+  // Get current user and load data
+  const user = await getCurrentUser()
   if (user) {
-    console.log('Authenticated user found:', user)
+    console.log('Authenticated user found:', user.email)
     await loadMySubjectsAndStudents()
   } else {
     console.error('No authenticated user found')
-    router.push('/auth/login') // Redirect to login if no user
   }
 })
 </script>

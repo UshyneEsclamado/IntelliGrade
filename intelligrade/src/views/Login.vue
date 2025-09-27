@@ -102,7 +102,7 @@
       <!-- Calculator symbols -->
       <div class="floating-element element-8">
         <svg width="34" height="34" viewBox="0 0 24 24" fill="#4A9B8E">
-          <path d="M9,11H7V9H9V11M13,11H11V9H13V11M17,11H15V9H17V11M19,3H18V1H16V1H6V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.9 20.1,3 19,3M19,19H5V8H19V19M9,15H7V13H9V15M13,15H11V13H13V15M17,15H15V13H17V15M9,17H7V19H9V17M13,19H11V17H13V19M17,19H15V17H17V19Z"/>
+          <path d="M9,11H7V9H9V11M13,11H11V9H13V11M17,11H15V9H17V11M19,3H18V1H16V1H6V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.9 20.1,3 19,3H18V1M17,12H12V17H17V12Z"/>
         </svg>
       </div>
       <div class="floating-element element-19">
@@ -303,46 +303,65 @@ export default {
       this.error = null;
 
       try {
+        console.log('=== SIMPLE LOGIN TEST ===');
+        
+        // Step 1: Auth login
         const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
           email: this.email,
           password: this.password,
         });
 
         if (authError) {
-          throw authError;
+          console.error('Auth failed:', authError);
+          throw new Error('Invalid email or password');
         }
 
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", authData.user.id)
+        console.log('Auth success! User ID:', authData.user.id);
+
+        // Step 2: Get profile directly (no RPC function)
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, role, email')
+          .eq('auth_user_id', authData.user.id)
           .single();
 
-        if (profileError) {
-          throw profileError;
+        console.log('Profile lookup:', { profile, profileError });
+
+        if (profileError || !profile) {
+          await supabase.auth.signOut();
+          throw new Error('Account setup incomplete');
         }
 
-        if (profileData.role === "student") {
-          this.$router.push("/student-dashboard");
-        } else if (profileData.role === "teacher") {
-          this.$router.push("/teacher/dashboard");
+        console.log('Profile found:', profile);
+        console.log('User role:', profile.role);
+
+        // Step 3: Simple redirect
+        if (profile.role === 'student') {
+          console.log('Redirecting to student dashboard...');
+          this.$router.push('/student-dashboard');
+        } else if (profile.role === 'teacher') {
+          console.log('Redirecting to teacher dashboard...');
+          this.$router.push('/teacher/dashboard');
         } else {
-          this.$router.push("/");
+          console.log('Unknown role, redirecting to home...');
+          this.$router.push('/');
         }
+
       } catch (err) {
-        console.error("Login error:", err);
+        console.error('Login error:', err);
         
-        // Specific error messages based on error type
-        if (err.message.includes("Invalid login credentials") || err.message.includes("invalid_grant")) {
-          this.error = "Incorrect password. Please check your password and try again.";
-        } else if (err.message.includes("User not found") || err.message.includes("user_not_found")) {
-          this.error = "Account does not exist. Please check your email or sign up for a new account.";
-        } else if (err.message.includes("Email not confirmed")) {
-          this.error = "Please verify your email address before logging in.";
-        } else if (err.message.includes("Too many requests")) {
-          this.error = "Too many login attempts. Please wait a few minutes before trying again.";
+        // Enhanced error handling
+        if (err.message?.includes("Invalid login credentials") || 
+            err.message?.includes("Invalid email or password")) {
+          this.error = "Invalid email or password. Please check your credentials and try again.";
+        } else if (err.message?.includes("Email not confirmed")) {
+          this.error = "Please verify your email address before logging in. Check your inbox for the verification link.";
+        } else if (err.message?.includes("Account setup incomplete")) {
+          this.error = "Account setup incomplete. Please complete your registration.";
+        } else if (err.message?.includes("Network request failed")) {
+          this.error = "Network error. Please check your connection and try again.";
         } else {
-          this.error = "Login failed. Please check your credentials and try again.";
+          this.error = err.message || "Login failed. Please try again.";
         }
       } finally {
         this.isLoading = false;
