@@ -1,56 +1,78 @@
 <template>
   <div class="page-container" :class="{ 'dark-mode': isDarkMode }">
     <div class="main-wrapper">
-      <!-- Header Section -->
-      <div class="hero-header card-box">
-        <div class="header-content">
-          <button @click="goBack" class="back-button">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M10 19l-7-7 7-7m-7 7h18"></path>
-            </svg>
-            Back to Section
-          </button>
-          
-          <div class="section-header">
-            <h1>{{ sectionName }} Gradebook</h1>
-            <div class="grade-summary">
-              <div class="summary-item">
-                <span class="label">Students:</span>
-                <span class="value">{{ students.length }}</span>
-              </div>
-              <div class="summary-item">
-                <span class="label">Quizzes:</span>
-                <span class="value">{{ quizzes.length }}</span>
-              </div>
-              <div class="summary-item">
-                <span class="label">Class Average:</span>
-                <span class="value">{{ classAverage }}%</span>
-              </div>
+      <!-- Enhanced Header Section -->
+      <div class="section-header-card">
+        <div class="header-bg-decoration"></div>
+        <div class="floating-shapes">
+          <div class="shape shape-1"></div>
+          <div class="shape shape-2"></div>
+          <div class="shape shape-3"></div>
+        </div>
+        
+        <div class="section-header-content">
+          <div class="section-header-left">
+            <div class="section-header-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12,2A2,2 0 0,1 14,4V8H17A1,1 0 0,1 18,9V19A3,3 0 0,1 15,22H9A3,3 0 0,1 6,19V9A1,1 0 0,1 7,8H10V4A2,2 0 0,1 12,2M12,4V8H12V4M8,10V19A1,1 0 0,0 9,20H15A1,1 0 0,0 16,19V10H8Z" />
+              </svg>
+            </div>
+            <div class="header-text">
+              <div class="section-header-title">Grade Management</div>
+              <div class="section-header-subtitle">{{ sectionName || 'Section' }}</div>
+              <div class="section-header-description">Manage student grades and track academic progress</div>
             </div>
           </div>
-        </div>
-      </div>
-
-      <!-- Grade Controls -->
-      <div class="controls-section card-box">
-        <div class="controls-header">
-          <h2>Grade Management</h2>
-          <div class="control-buttons">
-            <button @click="exportGrades" class="control-btn export">
+          
+          <div class="header-actions">
+            <button @click="exportGrades" class="create-quiz-btn">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
               </svg>
               Export Grades
             </button>
-            
-            <button @click="showGradeSettings = true" class="control-btn settings">
+            <button @click="goBack" class="back-button">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" />
+                <path d="M10 19l-7-7 7-7m-7 7h18"></path>
               </svg>
-              Grade Settings
+              Back to Subjects
             </button>
           </div>
         </div>
+      </div>
+
+      <!-- Main Controls Section -->
+      <div class="controls-section">
+        <div class="controls-card">
+          <div class="floating-shapes">
+            <div class="floating-shape shape-1"></div>
+            <div class="floating-shape shape-2"></div>
+          </div>
+          <div class="controls-content">
+            <div class="controls-header">
+              <h2>Grade Management</h2>
+              <div class="control-buttons">
+                <button @click="exportGrades" class="control-btn export">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                </svg>
+                Export Grades
+              </button>
+              
+              <button @click="showGradeSettings = true" class="control-btn settings">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" />
+                </svg>
+                Grade Settings
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="main-wrapper">
 
         <div class="filters-section">
           <div class="filter-group">
@@ -58,7 +80,7 @@
             <select v-model="filterBy">
               <option value="all">All Students</option>
               <option value="passed">Passed (≥60%)</option>
-              <option value="failed">Failed (<60%)</option>
+              <option value="failed">Failed (&lt;60%)</option>
               <option value="no-submissions">No Submissions</option>
             </select>
           </div>
@@ -243,6 +265,7 @@
         </div>
       </div>
     </div>
+    </div> <!-- End main-wrapper -->
 
     <!-- Loading Overlay -->
     <div v-if="isLoading" class="loading-overlay">
@@ -251,10 +274,9 @@
         <p>{{ loadingMessage }}</p>
       </div>
     </div>
-  </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { supabase } from '../../supabase'
@@ -487,11 +509,15 @@ const formatDate = (dateString) => {
 }
 
 // Actions
-const goBack = () => {
-  router.push({
-    name: 'ViewStudents',
-    params: { subjectId: subjectId.value, sectionId: sectionId.value }
-  })
+const goBack = async () => {
+  try {
+    await router.push({
+      name: 'ViewStudents',
+      params: { subjectId: subjectId.value, sectionId: sectionId.value }
+    })
+  } catch (error) {
+    console.error('Navigation error:', error)
+  }
 }
 
 const exportGrades = () => {
@@ -535,6 +561,350 @@ onMounted(() => {
 .main-wrapper {
   max-width: 1600px;
   margin: 0 auto;
+}
+
+/* Enhanced Header Section - Matching ViewQuizzes.vue */
+.section-header-card {
+  position: relative;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%);
+  backdrop-filter: blur(20px);
+  border-radius: 32px;
+  padding: 3.5rem;
+  margin-bottom: 2.5rem;
+  min-height: 180px;
+  box-shadow: 
+    0 24px 48px rgba(0, 0, 0, 0.1),
+    0 12px 24px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.section-header-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 32px 64px rgba(0, 0, 0, 0.12),
+    0 16px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.header-bg-decoration {
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 120%;
+  height: 200%;
+  background: radial-gradient(ellipse at center, rgba(79, 70, 229, 0.08) 0%, transparent 70%);
+  z-index: 1;
+}
+
+.section-header-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.section-header-left {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.section-header-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(79, 70, 229, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.section-header-icon:hover {
+  transform: translateY(-2px);
+}
+
+.header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.section-header-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #10b981;
+  margin-bottom: 0.25rem;
+  letter-spacing: -0.025em;
+}
+
+.section-header-subtitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.section-header-description {
+  font-size: 0.9rem;
+  color: #94a3b8;
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.create-quiz-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 0.875rem 1.5rem;
+  border-radius: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+}
+
+.create-quiz-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(16, 185, 129, 0.4);
+}
+
+.shape {
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(79, 70, 229, 0.05) 100%);
+}
+
+.shape-1 {
+  width: 100px;
+  height: 100px;
+  top: -20px;
+  right: 15%;
+  animation: float 6s ease-in-out infinite;
+}
+
+.shape-2 {
+  width: 60px;
+  height: 60px;
+  bottom: -10px;
+  right: 25%;
+  animation: float 8s ease-in-out infinite reverse;
+}
+
+.shape-3 {
+  width: 80px;
+  height: 80px;
+  top: 50%;
+  right: 5%;
+  animation: float 7s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(10deg); }
+}
+
+/* Floating shapes animation */
+.floating-shapes {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.shape {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.6;
+  animation: float-shape 8s ease-in-out infinite;
+}
+
+.shape.shape-1 {
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, rgba(61, 141, 122, 0.1), rgba(163, 209, 198, 0.1));
+  top: -60px;
+  right: -60px;
+  animation-delay: 0s;
+}
+
+.shape.shape-2 {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+  bottom: -40px;
+  left: 10%;
+  animation-delay: 2s;
+}
+
+.shape.shape-3 {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.1));
+  top: 20%;
+  left: -30px;
+  animation-delay: 4s;
+}
+
+.shape.shape-4 {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(124, 58, 237, 0.1));
+  top: 60%;
+  right: 15%;
+  animation-delay: 6s;
+}
+
+@keyframes float-shape {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-20px) rotate(180deg);
+    opacity: 0.8;
+  }
+}
+
+/* Header content */
+.header-content {
+  position: relative;
+  z-index: 2;
+}
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(75, 85, 99, 0.1);
+  border: 1px solid rgba(75, 85, 99, 0.2);
+  color: var(--secondary-text-color);
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: 2rem;
+  text-decoration: none;
+}
+
+.back-button:hover {
+  color: var(--primary-color-dark);
+  transform: translateX(-5px);
+  box-shadow: 0 4px 12px rgba(75, 85, 99, 0.2);
+}
+
+.hero-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.hero-header h1 {
+  font-size: 3rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 1rem 0;
+  letter-spacing: -1px;
+}
+
+.hero-subtitle {
+  font-size: 1.25rem;
+  color: var(--secondary-text-color);
+  font-weight: 500;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Section info badges */
+.section-info {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.info-badge {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(61, 141, 122, 0.1);
+  border-radius: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 140px;
+}
+
+.info-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(61, 141, 122, 0.12);
+}
+
+.info-badge.gradebook {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.info-badge.students {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.info-badge.quizzes {
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.info-badge.average {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.info-badge .icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.info-badge .text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.info-badge .label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--secondary-text-color);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-badge .value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--primary-text-color);
 }
 
 .card-box {
@@ -652,11 +1022,167 @@ onMounted(() => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+/* Modern Controls Section */
+.controls-section {
+  margin-bottom: 2rem;
+}
+
+.controls-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(61, 141, 122, 0.1);
+  border-radius: 24px;
+  padding: 2.5rem;
+  overflow: hidden;
+  box-shadow: 
+    0 8px 32px rgba(61, 141, 122, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.floating-shapes {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.floating-shape {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.1;
+  animation: float 6s ease-in-out infinite;
+}
+
+.floating-shape.shape-1 {
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  top: -60px;
+  right: -60px;
+  animation-delay: 0s;
+}
+
+.floating-shape.shape-2 {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #10b981, #10b981);
+  bottom: -40px;
+  left: 20%;
+  animation-delay: 2s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(180deg); }
+}
+
+.controls-content {
+  position: relative;
+  z-index: 2;
+}
+
+.controls-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.controls-header h2 {
+  color: #3D8D7A;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.control-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.control-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1.75rem;
+  border: none;
+  border-radius: 16px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.control-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.control-btn:hover::before {
+  left: 100%;
+}
+
+.control-btn.export {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(99, 102, 241, 0.1));
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.control-btn.export:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(99, 102, 241, 0.15));
+  border-color: rgba(59, 130, 246, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.25);
+}
+
+.control-btn.settings {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(168, 85, 247, 0.1));
+  color: #8b5cf6;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.control-btn.settings:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(168, 85, 247, 0.15));
+  border-color: rgba(139, 92, 246, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.25);
+}
+
+.control-btn svg {
+  transition: transform 0.3s ease;
+}
+
+.control-btn:hover svg {
+  transform: scale(1.1);
+}
+
+/* Enhanced Filters Section */
 .filters-section {
   display: flex;
   gap: 2rem;
   align-items: end;
   flex-wrap: wrap;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  padding: 1.5rem 2rem;
+  border-radius: 20px;
+  border: 1px solid rgba(61, 141, 122, 0.1);
+  margin-bottom: 1.5rem;
 }
 
 .filter-group {
@@ -667,131 +1193,200 @@ onMounted(() => {
 
 .filter-group label {
   font-weight: 600;
-  color: #444;
+  color: #3D8D7A;
   font-size: 0.9rem;
+  letter-spacing: -0.2px;
 }
 
 .filter-group select {
-  padding: 0.75rem 1rem;
+  padding: 0.875rem 1.25rem;
   border: 2px solid rgba(61, 141, 122, 0.1);
-  border-radius: 12px;
+  border-radius: 16px;
   font-size: 1rem;
-  background: white;
-  min-width: 180px;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  min-width: 200px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.filter-group select:focus {
+  outline: none;
+  border-color: rgba(61, 141, 122, 0.3);
+  box-shadow: 0 0 0 4px rgba(61, 141, 122, 0.1);
+  transform: translateY(-1px);
+}
+
+.filter-group select:hover {
+  border-color: rgba(61, 141, 122, 0.2);
+  background: rgba(255, 255, 255, 1);
 }
 
 .search-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   flex: 1;
   min-width: 250px;
 }
 
 .search-input {
-  width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 0.875rem 1.25rem;
   border: 2px solid rgba(61, 141, 122, 0.1);
-  border-radius: 12px;
+  border-radius: 16px;
   font-size: 1rem;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.search-input:focus,
-.filter-group select:focus {
+.search-input:focus {
   outline: none;
-  border-color: #3D8D7A;
-  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
+  border-color: rgba(61, 141, 122, 0.3);
+  box-shadow: 0 0 0 4px rgba(61, 141, 122, 0.1);
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 1);
+}
+
+.search-input::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+/* Enhanced Table Container and Gradebook Table */
+.gradebook-section {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(61, 141, 122, 0.1);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 
+    0 8px 32px rgba(61, 141, 122, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
 }
 
 .table-container {
   overflow-x: auto;
-  border-radius: 16px;
-  border: 2px solid rgba(61, 141, 122, 0.1);
+  border-radius: 0;
+  border: none;
 }
 
 .gradebook-table {
   width: 100%;
   border-collapse: collapse;
   min-width: 800px;
+  font-family: 'Inter', sans-serif;
 }
 
 .gradebook-table th {
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  background: linear-gradient(135deg, #3D8D7A 0%, #2c6b5c 100%);
   color: white;
-  padding: 1.5rem 1rem;
+  padding: 1.75rem 1.25rem;
   text-align: left;
   font-weight: 700;
-  border-bottom: 2px solid rgba(61, 141, 122, 0.2);
+  font-size: 0.95rem;
+  letter-spacing: -0.2px;
+  border: none;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.gradebook-table th:first-child {
+  border-top-left-radius: 0;
+}
+
+.gradebook-table th:last-child {
+  border-top-right-radius: 0;
+}
+
+.gradebook-table tbody tr {
+  transition: all 0.2s ease;
+  border-bottom: 1px solid rgba(61, 141, 122, 0.08);
+}
+
+.gradebook-table tbody tr:hover {
+  background: rgba(61, 141, 122, 0.02);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.08);
+}
+
+.gradebook-table tbody tr:last-child {
+  border-bottom: none;
 }
 
 .gradebook-table td {
-  padding: 1rem;
-  border-bottom: 1px solid rgba(61, 141, 122, 0.1);
+  padding: 1.25rem 1.25rem;
+  border: none;
   vertical-align: middle;
+  font-weight: 500;
 }
 
 .student-column {
-  min-width: 250px;
-  max-width: 250px;
+  min-width: 280px;
+  max-width: 280px;
 }
 
 .quiz-column {
-  min-width: 120px;
-  max-width: 120px;
+  min-width: 140px;
+  max-width: 140px;
   text-align: center;
 }
 
 .average-column {
-  min-width: 150px;
-  max-width: 150px;
+  min-width: 160px;
+  max-width: 160px;
 }
 
 .actions-column {
-  min-width: 100px;
-  max-width: 100px;
+  min-width: 120px;
+  max-width: 120px;
 }
 
+/* Enhanced Quiz Header */
 .quiz-header {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.5rem;
   text-align: center;
 }
 
 .quiz-title {
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 700;
+  letter-spacing: -0.2px;
 }
 
 .quiz-points,
 .quiz-date {
   font-size: 0.75rem;
-  opacity: 0.9;
+  opacity: 0.85;
+  font-weight: 500;
 }
 
-.student-row:nth-child(even) {
-  background: rgba(251, 255, 228, 0.3);
-}
-
-.student-row:hover {
-  background: rgba(61, 141, 122, 0.05);
-}
-
+/* Enhanced Student Details */
 .student-details {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .student-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  width: 45px;
+  height: 45px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #3D8D7A 0%, #2c6b5c 100%);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   flex-shrink: 0;
+  box-shadow: 0 3px 8px rgba(61, 141, 122, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 .student-text {
@@ -799,8 +1394,10 @@ onMounted(() => {
 }
 
 .student-name {
-  font-weight: 600;
+  font-weight: 700;
   color: #3D8D7A;
+  font-size: 1rem;
+  letter-spacing: -0.2px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -821,45 +1418,103 @@ onMounted(() => {
   gap: 0.5rem;
 }
 
+.student-id {
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* Enhanced Grade Input Fields */
 .grade-input {
-  width: 60px;
-  padding: 0.5rem;
-  border: 2px solid transparent;
-  border-radius: 8px;
+  width: 70px;
+  padding: 0.625rem 0.5rem;
+  border: 2px solid rgba(61, 141, 122, 0.1);
+  border-radius: 12px;
   text-align: center;
-  font-weight: 600;
-  font-size: 0.9rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(5px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .grade-input:focus {
   outline: none;
-  border-color: #3D8D7A;
+  border-color: rgba(61, 141, 122, 0.4);
+  box-shadow: 0 0 0 4px rgba(61, 141, 122, 0.1);
+  transform: scale(1.05);
+  background: rgba(255, 255, 255, 1);
 }
 
+.grade-input:hover {
+  border-color: rgba(61, 141, 122, 0.2);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+/* Enhanced Grade Color Classes */
 .grade-input.grade-a {
-  background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+  color: #059669;
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.grade-input.grade-a:focus {
+  border-color: rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
 }
 
 .grade-input.grade-b {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.1));
+  color: #2563eb;
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.grade-input.grade-b:focus {
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
 }
 
 .grade-input.grade-c {
-  background: rgba(245, 158, 11, 0.1);
-  color: #f59e0b;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
+  color: #d97706;
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.grade-input.grade-c:focus {
+  border-color: rgba(245, 158, 11, 0.4);
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
 }
 
 .grade-input.grade-d {
   background: rgba(249, 115, 22, 0.1);
-  color: #f97316;
+.grade-input.grade-c:focus {
+  border-color: rgba(245, 158, 11, 0.4);
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
+}
+
+.grade-input.grade-d {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(234, 88, 12, 0.1));
+  color: #ea580c;
+  border-color: rgba(249, 115, 22, 0.2);
+}
+
+.grade-input.grade-d:focus {
+  border-color: rgba(249, 115, 22, 0.4);
+  box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1);
 }
 
 .grade-input.grade-f {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1));
+  color: #dc2626;
+  border-color: rgba(239, 68, 68, 0.2);
 }
+
+.grade-input.grade-f:focus {
+  border-color: rgba(239, 68, 68, 0.4);
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+}
+
+/* Enhanced Grade Display */
 
 .grade-percentage {
   font-size: 0.75rem;
@@ -1202,6 +1857,70 @@ onMounted(() => {
   color: var(--primary-text-color);
 }
 
+/* Enhanced Header Dark Mode */
+.dark-mode .section-header-card {
+  background: rgba(17, 24, 39, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.2),
+    0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode .back-button {
+  background: rgba(75, 85, 99, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .back-button:hover {
+  color: var(--accent-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .hero-header h1 {
+  background: linear-gradient(135deg, var(--accent-color) 0%, #34d399 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dark-mode .hero-subtitle {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .info-badge {
+  background: rgba(17, 24, 39, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dark-mode .info-badge.gradebook {
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.dark-mode .info-badge.students {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.dark-mode .info-badge.quizzes {
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.dark-mode .info-badge.average {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.dark-mode .info-badge .label {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .info-badge .value {
+  color: var(--primary-text-color);
+}
+
 .dark-mode .hero-header {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
@@ -1362,5 +2081,450 @@ onMounted(() => {
 
 .dark-mode .empty-state h3 {
   color: var(--primary-text-color);
+}
+
+/* Additional Dark Mode Styles for Modern Components */
+.dark-mode .controls-card {
+  background: rgba(17, 24, 39, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.25),
+    0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.dark-mode .controls-header h2 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .control-btn.export {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(99, 102, 241, 0.15));
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #60a5fa;
+}
+
+.dark-mode .control-btn.export:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(99, 102, 241, 0.2));
+  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+}
+
+.dark-mode .control-btn.settings {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(168, 85, 247, 0.15));
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  color: #a78bfa;
+}
+
+.dark-mode .control-btn.settings:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(168, 85, 247, 0.2));
+  border-color: rgba(139, 92, 246, 0.4);
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
+}
+
+.dark-mode .filters-section {
+  background: rgba(17, 24, 39, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dark-mode .filter-group label {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .filter-group select {
+  background: rgba(17, 24, 39, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .filter-group select:focus {
+  border-color: rgba(61, 141, 122, 0.4);
+  box-shadow: 0 0 0 4px rgba(61, 141, 122, 0.15);
+  background: rgba(17, 24, 39, 1);
+}
+
+.dark-mode .filter-group select:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(17, 24, 39, 1);
+}
+
+.dark-mode .search-input {
+  background: rgba(17, 24, 39, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .search-input:focus {
+  border-color: rgba(61, 141, 122, 0.4);
+  box-shadow: 0 0 0 4px rgba(61, 141, 122, 0.15);
+  background: rgba(17, 24, 39, 1);
+}
+
+.dark-mode .search-input::placeholder {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .gradebook-section {
+  background: rgba(17, 24, 39, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.25),
+    0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.dark-mode .gradebook-table th {
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .gradebook-table tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dark-mode .gradebook-table tbody tr:hover {
+  background: rgba(31, 41, 55, 0.6);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .student-email {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .student-avatar {
+  background: linear-gradient(135deg, var(--accent-color) 0%, #2563eb 100%);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .grade-input {
+  background: rgba(17, 24, 39, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .grade-input:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(17, 24, 39, 0.95);
+}
+
+.dark-mode .grade-input:focus {
+  border-color: rgba(61, 141, 122, 0.4);
+  box-shadow: 0 0 0 4px rgba(61, 141, 122, 0.15);
+  background: rgba(17, 24, 39, 1);
+}
+
+.dark-mode .grade-input.grade-a {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #34d399;
+}
+
+.dark-mode .grade-input.grade-a:focus {
+  border-color: rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+}
+
+.dark-mode .grade-input.grade-b {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #60a5fa;
+}
+
+.dark-mode .grade-input.grade-b:focus {
+  border-color: rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+}
+
+.dark-mode .grade-input.grade-c {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+}
+
+.dark-mode .grade-input.grade-c:focus {
+  border-color: rgba(245, 158, 11, 0.5);
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
+}
+
+.dark-mode .grade-input.grade-d {
+  background: rgba(249, 115, 22, 0.15);
+  border-color: rgba(249, 115, 22, 0.3);
+  color: #fb923c;
+}
+
+.dark-mode .grade-input.grade-d:focus {
+  border-color: rgba(249, 115, 22, 0.5);
+  box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.2);
+}
+
+.dark-mode .grade-input.grade-f {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+.dark-mode .grade-input.grade-f:focus {
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+}
+
+.dark-mode .average-score.grade-a { color: #34d399; }
+.dark-mode .average-score.grade-b { color: #60a5fa; }
+.dark-mode .average-score.grade-c { color: #fbbf24; }
+.dark-mode .average-score.grade-d { color: #fb923c; }
+.dark-mode .average-score.grade-f { color: #f87171; }
+.dark-mode .average-score.no-grade { color: var(--secondary-text-color); }
+
+.dark-mode .progress-bar {
+  background: rgba(75, 85, 99, 0.3);
+}
+
+.dark-mode .progress-fill.grade-a { background: #34d399; }
+.dark-mode .progress-fill.grade-b { background: #60a5fa; }
+.dark-mode .progress-fill.grade-c { background: #fbbf24; }
+.dark-mode .progress-fill.grade-d { background: #fb923c; }
+.dark-mode .progress-fill.grade-f { background: #f87171; }
+
+.dark-mode .action-btn.view {
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #60a5fa;
+}
+
+.dark-mode .action-btn.message {
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  color: #a78bfa;
+}
+
+.dark-mode .action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .modal-content {
+  background: rgba(17, 24, 39, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 20px 50px rgba(0, 0, 0, 0.5),
+    0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .modal-header h2 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .close-btn {
+  background: rgba(75, 85, 99, 0.2);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .close-btn:hover {
+  background: #ef4444;
+  color: white;
+}
+
+.dark-mode .setting-group h3 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .scale-item label,
+.dark-mode .option-item label {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .scale-item input {
+  background: rgba(17, 24, 39, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .cancel-btn {
+  background: rgba(75, 85, 99, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .cancel-btn:hover {
+  background: rgba(75, 85, 99, 0.3);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.dark-mode .save-btn {
+  background: linear-gradient(135deg, var(--accent-color), #2563eb);
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
+}
+
+.dark-mode .save-btn:hover {
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+}
+
+.dark-mode .loading-content {
+  background: rgba(17, 24, 39, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--primary-text-color);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.dark-mode .loading-spinner {
+  border: 4px solid rgba(59, 130, 246, 0.2);
+  border-top: 4px solid var(--accent-color);
+}
+
+/* Summary Item Dark Mode */
+.dark-mode .summary-item {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.dark-mode .summary-item .label {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .summary-item .value {
+  color: #34d399;
+}
+
+/* End of comprehensive dark mode styles */
+
+/* Floating shapes for hero section */
+.floating-shape {
+  position: absolute;
+  opacity: 0.5;
+  animation: float 6s ease-in-out infinite;
+  z-index: 0;
+}
+
+.floating-shape:nth-child(1) {
+  top: 10%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.floating-shape:nth-child(2) {
+  top: 20%;
+  right: 20%;
+  animation-delay: 2s;
+}
+
+.floating-shape:nth-child(3) {
+  bottom: 30%;
+  left: 15%;
+  animation-delay: 4s;
+}
+
+.floating-shape:nth-child(4) {
+  bottom: 20%;
+  right: 10%;
+  animation-delay: 1s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+    opacity: 0.4;
+  }
+  33% {
+    transform: translateY(-20px) rotate(5deg);
+    opacity: 0.6;
+  }
+  66% {
+    transform: translateY(10px) rotate(-3deg);
+    opacity: 0.3;
+  }
+}
+
+/* Hero header styles */
+.hero-header {
+  position: relative;
+  text-align: center;
+  padding: 3rem 0;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.05));
+  border-radius: 24px;
+  margin-bottom: 2rem;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.hero-header h1 {
+  font-size: 3.5rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0 0 1rem 0;
+  letter-spacing: -0.025em;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-header p {
+  font-size: 1.25rem;
+  color: rgba(71, 85, 105, 0.8);
+  margin: 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* Info badges */
+.info-badges {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
+
+.info-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.75rem 1.25rem;
+  border-radius: 50px;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  backdrop-filter: blur(10px);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #475569;
+  transition: all 0.3s ease;
+}
+
+.info-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.info-badge svg {
+  width: 16px;
+  height: 16px;
+  color: #6366f1;
+}
+
+/* Dark mode hero styles */
+.dark-mode .hero-header {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.1));
+  border-color: rgba(99, 102, 241, 0.2);
+}
+
+.dark-mode .hero-header p {
+  color: rgba(203, 213, 225, 0.8);
+}
+
+.dark-mode .info-badge {
+  background: rgba(30, 41, 59, 0.9);
+  color: #e2e8f0;
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.dark-mode .info-badge:hover {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+/* End of dark mode styles */
 }
 </style>

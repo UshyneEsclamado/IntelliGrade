@@ -1,5 +1,5 @@
 <template>
-  <div class="home-container">
+  <div class="home-container" :class="{ 'dark-mode': isDarkMode }">
     <!-- Compact Header Section with Bell Icon Dropdown -->
     <div class="section-header-card">
       <div class="header-bg-decoration"></div>

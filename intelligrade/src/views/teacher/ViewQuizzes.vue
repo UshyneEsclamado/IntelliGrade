@@ -6,6 +6,7 @@
       <div class="floating-shapes">
         <div class="shape shape-1"></div>
         <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
       </div>
       
       <div class="section-header-content">
@@ -285,20 +286,24 @@ const viewQuizDetails = async (quiz) => {
   }
 }
 
-const editQuiz = (quiz) => {
+const editQuiz = async (quiz) => {
   // Navigate to edit quiz (you'll need to create this route)
-  router.push({
-    name: 'EditQuiz',
-    params: { quizId: quiz.id },
-    query: {
-      subjectId: subjectId.value,
-      sectionId: sectionId.value,
-      subjectName: subjectName.value,
-      sectionName: sectionName.value,
-      gradeLevel: gradeLevel.value,
-      sectionCode: sectionCode.value
-    }
-  })
+  try {
+    await router.push({
+      name: 'EditQuiz',
+      params: { quizId: quiz.id },
+      query: {
+        subjectId: subjectId.value,
+        sectionId: sectionId.value,
+        subjectName: subjectName.value,
+        sectionName: sectionName.value,
+        gradeLevel: gradeLevel.value,
+        sectionCode: sectionCode.value
+      }
+    })
+  } catch (error) {
+    console.error('Navigation error:', error)
+  }
 }
 
 const toggleQuizStatus = async (quiz) => {
@@ -339,24 +344,32 @@ const deleteQuiz = async (quiz) => {
   }
 }
 
-const navigateToCreateQuiz = () => {
-  router.push({
-    name: 'CreateQuiz',
-    params: {
-      subjectId: subjectId.value,
-      sectionId: sectionId.value
-    },
-    query: {
-      subjectName: subjectName.value,
-      sectionName: sectionName.value,
-      gradeLevel: gradeLevel.value,
-      sectionCode: sectionCode.value
-    }
-  })
+const navigateToCreateQuiz = async () => {
+  try {
+    await router.push({
+      name: 'CreateQuiz',
+      params: {
+        subjectId: subjectId.value,
+        sectionId: sectionId.value
+      },
+      query: {
+        subjectName: subjectName.value,
+        sectionName: sectionName.value,
+        gradeLevel: gradeLevel.value,
+        sectionCode: sectionCode.value
+      }
+    })
+  } catch (error) {
+    console.error('Navigation error:', error)
+  }
 }
 
-const goBack = () => {
-  router.push({ name: 'MySubjects' })
+const goBack = async () => {
+  try {
+    await router.push({ name: 'MySubjects' })
+  } catch (error) {
+    console.error('Navigation error:', error)
+  }
 }
 
 const closeModal = () => {
@@ -395,22 +408,92 @@ onMounted(() => {
   padding: 2rem;
   max-width: 1400px;
   margin: 0 auto;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg-primary);
   min-height: 100vh;
+  color: var(--primary-text-color);
+  transition: all 0.3s ease;
 }
 
 /* Enhanced Header Design */
 .section-header-card {
   position: relative;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%);
+  backdrop-filter: blur(20px);
   border-radius: 32px;
-  padding: 3rem;
+  padding: 3.5rem;
   margin-bottom: 2.5rem;
-  min-height: 160px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  min-height: 180px;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.05),
+    0 8px 32px rgba(0, 0, 0, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.section-header-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 32px 80px rgba(0, 0, 0, 0.08),
+    0 12px 40px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.header-bg-decoration {
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 120%;
+  height: 200%;
+  background: radial-gradient(ellipse at center, rgba(79, 70, 229, 0.08) 0%, transparent 70%);
+  z-index: 1;
+}
+
+.floating-shapes {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.shape {
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%);
+}
+
+.shape-1 {
+  width: 120px;
+  height: 120px;
+  top: -30px;
+  right: 10%;
+  animation: float 6s ease-in-out infinite;
+}
+
+.shape-2 {
+  width: 80px;
+  height: 80px;
+  bottom: -20px;
+  right: 25%;
+  animation: float 8s ease-in-out infinite reverse;
+}
+
+.shape-3 {
+  width: 60px;
+  height: 60px;
+  top: 50%;
+  right: 5%;
+  animation: float 7s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(10deg); }
 }
 
 .header-bg-decoration {
@@ -472,19 +555,24 @@ onMounted(() => {
 .section-header-left {
   display: flex;
   align-items: center;
-  gap: 2rem;
+  gap: 2.5rem;
 }
 
 .section-header-icon {
-  width: 70px;
-  height: 70px;
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  border-radius: 20px;
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  box-shadow: 0 8px 24px rgba(61, 141, 122, 0.3);
+  box-shadow: 0 8px 24px rgba(79, 70, 229, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.section-header-icon:hover {
+  transform: translateY(-2px);
 }
 
 .header-text {
@@ -496,8 +584,9 @@ onMounted(() => {
 .section-header-title {
   font-size: 2rem;
   font-weight: 800;
-  color: #3D8D7A;
+  color: #10b981;
   margin-bottom: 0.25rem;
+  letter-spacing: -0.025em;
 }
 
 .section-header-subtitle {
@@ -518,23 +607,46 @@ onMounted(() => {
 }
 
 .create-quiz-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 0.875rem 1.75rem;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.875rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
-  color: white;
-  border: none;
-  padding: 0.875rem 1.5rem;
-  border-radius: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
 }
 
 .create-quiz-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+}
+
+.back-button {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(148, 163, 184, 0.2);
+  color: #64748b;
+  padding: 0.875rem 1.75rem;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.back-button:hover {
+  background: rgba(148, 163, 184, 0.1);
+  border-color: rgba(148, 163, 184, 0.3);
+  transform: translateY(-1px);
 }
 
 .back-button {
@@ -559,11 +671,16 @@ onMounted(() => {
 }
 
 .main-wrapper {
-  background: white;
-  border-radius: 24px;
-  padding: 2rem;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 32px;
+  padding: 3rem;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.05),
+    0 8px 32px rgba(0, 0, 0, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* States */
@@ -576,7 +693,7 @@ onMounted(() => {
   width: 40px;
   height: 40px;
   border: 4px solid rgba(61, 141, 122, 0.1);
-  border-left: 4px solid #3D8D7A;
+  border-left: 4px solid #10b981;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 1rem;
@@ -607,7 +724,7 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
   border: none;
   padding: 1rem 2rem;
@@ -630,18 +747,36 @@ onMounted(() => {
 }
 
 .quiz-card {
-  background: white;
-  border: 2px solid rgba(61, 141, 122, 0.1);
-  border-radius: 20px;
-  padding: 2rem;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(20px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 24px;
+  padding: 2.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.06),
+    0 4px 16px rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.quiz-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #10b981, #059669, #10b981);
+  border-radius: 1.25rem 1.25rem 0 0;
 }
 
 .quiz-card:hover {
-  border-color: rgba(61, 141, 122, 0.3);
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+  border-color: rgba(79, 70, 229, 0.3);
+  transform: translateY(-4px);
+  box-shadow: 
+    0 20px 50px rgba(0, 0, 0, 0.1),
+    0 8px 32px rgba(79, 70, 229, 0.15);
 }
 
 .quiz-header {

@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container">
+  <div class="page-container" :class="{ 'dark-mode': isDarkMode }">
     <div class="main-wrapper">
       <!-- Enhanced Header Section -->
       <section class="section-header-card">
@@ -283,6 +283,10 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { supabase } from '../../supabase.js'
+import { useDarkMode } from '../../composables/useDarkMode.js'
+
+// Dark mode
+const { isDarkMode, initDarkMode } = useDarkMode()
 
 const router = useRouter()
 const route = useRoute()
@@ -402,49 +406,69 @@ const formatDate = (dateString) => {
 }
 
 // Navigation methods
-const goBack = () => {
-  router.push({ name: 'MySubjects' })
+const goBack = async () => {
+  try {
+    await router.push({ name: 'MySubjects' })
+  } catch (error) {
+    console.error('Navigation error:', error)
+  }
 }
 
-const navigateToCreateQuiz = () => {
-  router.push({
-    name: 'CreateQuiz',
-    params: {
-      subjectId: subjectId.value,
-      sectionId: sectionId.value
-    },
-    query: {
-      subjectName: subjectName.value,
-      sectionName: sectionName.value,
-      gradeLevel: gradeLevel.value,
-      classCode: classCode.value,
-      sectionCode: sectionCode.value
-    }
-  })
+const navigateToCreateQuiz = async () => {
+  try {
+    await router.push({
+      name: 'CreateQuiz',
+      params: {
+        subjectId: subjectId.value,
+        sectionId: sectionId.value
+      },
+      query: {
+        subjectName: subjectName.value,
+        sectionName: sectionName.value,
+        gradeLevel: gradeLevel.value,
+        classCode: classCode.value,
+        sectionCode: sectionCode.value
+      }
+    })
+  } catch (error) {
+    console.error('Navigation error:', error)
+  }
 }
 
-const viewQuizzes = () => {
-  router.push({
-    name: 'ViewQuizzes',
-    params: { subjectId: subjectId.value, sectionId: sectionId.value },
-    query: { sectionName: sectionName.value }
-  })
+const viewQuizzes = async () => {
+  try {
+    await router.push({
+      name: 'ViewQuizzes',
+      params: { subjectId: subjectId.value, sectionId: sectionId.value },
+      query: { sectionName: sectionName.value }
+    })
+  } catch (error) {
+    console.error('Navigation error:', error)
+  }
 }
 
-const manageGrades = () => {
-  router.push({
-    name: 'GradeManagement',
-    params: { subjectId: subjectId.value, sectionId: sectionId.value },
-    query: { sectionName: sectionName.value }
-  })
+const manageGrades = async () => {
+  try {
+    await router.push({
+      name: 'GradeManagement',
+      params: { subjectId: subjectId.value, sectionId: sectionId.value },
+      query: { sectionName: sectionName.value }
+    })
+  } catch (error) {
+    console.error('Navigation error:', error)
+  }
 }
 
-const generateReports = () => {
-  router.push({
-    name: 'Reports',
-    params: { subjectId: subjectId.value, sectionId: sectionId.value },
-    query: { sectionName: sectionName.value }
-  })
+const generateReports = async () => {
+  try {
+    await router.push({
+      name: 'Reports',
+      params: { subjectId: subjectId.value, sectionId: sectionId.value },
+      query: { sectionName: sectionName.value }
+    })
+  } catch (error) {
+    console.error('Navigation error:', error)
+  }
 }
 
 // Student actions
@@ -656,7 +680,7 @@ onMounted(() => {
 }
 
 .view-quizzes {
-  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
 }
 
@@ -721,9 +745,9 @@ onMounted(() => {
 }
 
 .export-btn {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.2);
   padding: 0.75rem 1.5rem;
   border-radius: 12px;
   font-weight: 600;
@@ -907,8 +931,8 @@ onMounted(() => {
 }
 
 .student-action-btn.view {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
 }
 
 .student-action-btn.message {
@@ -1175,5 +1199,263 @@ onMounted(() => {
   .student-stats {
     justify-content: space-around;
   }
+}
+
+/* Dark Mode Styles */
+.dark-mode .page-container {
+  background: var(--bg-primary);
+}
+
+.dark-mode .section-header-card {
+  background: rgba(17, 24, 39, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.25),
+    0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.dark-mode .back-button {
+  background: rgba(75, 85, 99, 0.2);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .back-button:hover {
+  color: var(--accent-color);
+}
+
+.dark-mode .hero-header h1 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .hero-subtitle {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .info-badge {
+  background: rgba(17, 24, 39, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dark-mode .info-badge.subject {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.dark-mode .info-badge.section {
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.dark-mode .info-badge.code {
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.dark-mode .info-badge.students {
+  background: rgba(234, 179, 8, 0.15);
+  border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+.dark-mode .info-badge .label {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .info-badge .value {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .content-card {
+  background: rgba(17, 24, 39, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.25),
+    0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.dark-mode .card-header h3 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .card-subtitle {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .action-btn {
+  background: rgba(75, 85, 99, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .action-btn:hover {
+  background: rgba(75, 85, 99, 0.3);
+  color: var(--primary-text-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .action-btn.create-quiz:hover {
+  background: linear-gradient(135deg, var(--accent-color), #2563eb);
+  color: white;
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.dark-mode .students-header h4 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .add-student-btn {
+  background: linear-gradient(135deg, var(--accent-color), #2563eb);
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
+}
+
+.dark-mode .add-student-btn:hover {
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+}
+
+.dark-mode .export-btn {
+  background: rgba(75, 85, 99, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .export-btn:hover {
+  background: rgba(75, 85, 99, 0.3);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .search-input {
+  background: rgba(17, 24, 39, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .search-input:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+  background: rgba(17, 24, 39, 1);
+}
+
+.dark-mode .student-card {
+  background: rgba(17, 24, 39, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dark-mode .student-card:hover {
+  background: rgba(17, 24, 39, 0.95);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .student-name {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .student-id {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .student-email {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .student-status.active {
+  background: rgba(16, 185, 129, 0.15);
+  color: rgba(16, 185, 129, 1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.dark-mode .student-status.inactive {
+  background: rgba(239, 68, 68, 0.15);
+  color: rgba(239, 68, 68, 1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.dark-mode .student-action {
+  background: rgba(75, 85, 99, 0.2);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .student-action:hover {
+  background: rgba(75, 85, 99, 0.3);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .student-action.remove:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.dark-mode .modal {
+  background: rgba(17, 24, 39, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 20px 50px rgba(0, 0, 0, 0.5),
+    0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .modal-header h3 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .close-btn {
+  background: rgba(75, 85, 99, 0.2);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .close-btn:hover {
+  background: #ef4444;
+  color: white;
+}
+
+.dark-mode .form-group label {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .form-group input,
+.dark-mode .form-group select {
+  background: rgba(17, 24, 39, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .form-group input:focus,
+.dark-mode .form-group select:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+  background: rgba(17, 24, 39, 1);
+}
+
+.dark-mode .modal-actions .cancel-btn {
+  background: rgba(75, 85, 99, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .modal-actions .cancel-btn:hover {
+  background: rgba(75, 85, 99, 0.3);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.dark-mode .modal-actions .confirm-btn {
+  background: linear-gradient(135deg, var(--accent-color), #2563eb);
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
+}
+
+.dark-mode .modal-actions .confirm-btn:hover:not(:disabled) {
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+}
+
+.dark-mode .loading-overlay {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.dark-mode .loading-content {
+  background: rgba(17, 24, 39, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--primary-text-color);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.dark-mode .loading-spinner {
+  border: 4px solid rgba(59, 130, 246, 0.2);
+  border-top: 4px solid var(--accent-color);
 }
 </style>

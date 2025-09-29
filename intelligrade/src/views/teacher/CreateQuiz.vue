@@ -2,7 +2,6 @@
   <div class="home-container" :class="{ 'dark-mode': isDarkMode }">
     <!-- Enhanced Header Section -->
     <div class="section-header-card">
-      <!-- Background Decorations -->
       <div class="header-bg-decoration"></div>
       <div class="floating-shapes">
         <div class="shape shape-1"></div>
@@ -13,31 +12,53 @@
       <div class="section-header-content">
         <div class="section-header-left">
           <div class="section-header-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
               <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
             </svg>
           </div>
           <div class="header-text">
             <div class="section-header-title">Create New Quiz</div>
             <div class="section-header-subtitle">{{ subjectName }} (Grade {{ gradeLevel }})</div>
-            <div class="section-header-description">Design an assessment for {{ sectionName }} - {{ sectionCode }}</div>
+            <div class="section-header-description">{{ sectionName }} - {{ sectionCode }}</div>
           </div>
         </div>
         
-        <button @click="goBack" class="back-button" type="button">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M10 19l-7-7 7-7m-7 7h18"></path>
-          </svg>
-          Back to Subjects
-        </button>
+        <div class="header-actions">
+          <button @click="previewQuiz" class="create-quiz-btn" :disabled="questions.length === 0 || !quizTitle.trim()">
+            <svg v-if="isPreviewing" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="spinner">
+              <path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z" />
+            </svg>
+            <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
+            </svg>
+            {{ isPreviewing ? 'Previewing...' : 'Preview Quiz' }}
+          </button>
+          <button @click="goBack" class="back-button">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M10 19l-7-7 7-7m-7 7h18"></path>
+            </svg>
+            Back to Subjects
+          </button>
+        </div>
       </div>
     </div>
 
     <div class="main-wrapper">
-      <form @submit.prevent="submitQuiz" class="content-card">
+      <form @submit.prevent="submitQuiz" class="content-card enhanced-card">
+        <div class="card-floating-shapes">
+          <div class="card-shape shape-1"></div>
+          <div class="card-shape shape-2"></div>
+        </div>
         <div class="card-header">
-          <h3>Quiz Details</h3>
-          <p class="card-subtitle">Set up your assessment parameters and add questions</p>
+          <div class="card-header-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M9,17H7V10H9V17M13,17H11V7H13V17M17,17H15V13H17V17Z" />
+            </svg>
+          </div>
+          <div class="card-header-content">
+            <h3>Quiz Details</h3>
+            <p class="card-subtitle">Set up your assessment parameters and add questions</p>
+          </div>
         </div>
         
         <div class="form-content">
@@ -80,10 +101,20 @@
           </div>
         </div>
 
-        <div class="questions-section">
+        <div class="questions-section enhanced-questions">
           <div class="questions-header">
-            <h3>Questions ({{ questions.length }})</h3>
-            <button type="button" class="add-question-btn" @click="addQuestion">
+            <div class="questions-header-content">
+              <div class="questions-header-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12,3C13.73,3 15.13,4.39 15.13,6.13C15.13,7.86 13.73,9.26 12,9.26C10.27,9.26 8.87,7.86 8.87,6.13C8.87,4.39 10.27,3 12,3M7,9H17V10C17,11.19 16.19,12 15,12H13.5V13.5C13.5,14.33 12.83,15 12,15C11.17,15 10.5,14.33 10.5,13.5V12H9C7.81,12 7,11.19 7,10V9M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20Z" />
+                </svg>
+              </div>
+              <div class="questions-header-text">
+                <h3>Questions ({{ questions.length }})</h3>
+                <p>Build your assessment with various question types</p>
+              </div>
+            </div>
+            <button type="button" class="add-question-btn enhanced-btn" @click="addQuestion">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
               </svg>
@@ -237,7 +268,7 @@
               display: flex !important;
               align-items: center !important;
               gap: 0.5rem !important;
-              background: linear-gradient(135deg, #059669 0%, #34d399 100%) !important;
+              background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
               color: white !important;
               border: none !important;
               padding: 1rem 2rem !important;
@@ -246,7 +277,7 @@
               font-weight: 600 !important;
               cursor: pointer !important;
               transition: all 0.3s ease !important;
-              box-shadow: 0 8px 32px rgba(5, 150, 105, 0.2) !important;
+              box-shadow: 0 8px 32px rgba(61, 141, 122, 0.2) !important;
               min-height: 48px !important;
               min-width: 150px !important;
               position: relative !important;
@@ -307,6 +338,7 @@ const quizTitle = ref('');
 const timeLimit = ref<number>(60);
 const totalPoints = ref<number>(100);
 const isSubmitting = ref(false);
+const isPreviewing = ref(false);
 
 const questions = ref<Question[]>([
   {
@@ -796,8 +828,40 @@ const submitQuiz = async () => {
   }
 };
 
-const goBack = () => {
-  router.push({ name: 'MySubjects' });
+const previewQuiz = async () => {
+  isPreviewing.value = true;
+  try {
+    // Simulate a preview generation delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Create a preview data object
+    const previewData = {
+      title: quizTitle.value,
+      timeLimit: timeLimit.value,
+      totalPoints: calculatedTotalPoints.value,
+      questionCount: questions.value.length,
+      questions: questions.value.filter(q => q.text.trim() !== '')
+    };
+    
+    console.log('Quiz Preview:', previewData);
+    
+    // Here you could open a modal or navigate to a preview page
+    alert(`Quiz Preview:\n\nTitle: ${previewData.title}\nQuestions: ${previewData.questionCount}\nTotal Points: ${previewData.totalPoints}\nTime Limit: ${previewData.timeLimit} minutes`);
+    
+  } catch (error) {
+    console.error('Preview error:', error);
+    alert('Error generating preview. Please try again.');
+  } finally {
+    isPreviewing.value = false;
+  }
+};
+
+const goBack = async () => {
+  try {
+    await router.push({ name: 'MySubjects' });
+  } catch (error) {
+    console.error('Navigation error:', error);
+  }
 };
 
 onMounted(() => {
@@ -833,16 +897,17 @@ onMounted(() => {
 /* Enhanced Header Design */
 .section-header-card {
   position: relative;
-  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%);
+  backdrop-filter: blur(20px);
   border-radius: 32px;
   padding: 3.5rem;
   margin-bottom: 2.5rem;
   min-height: 180px;
   box-shadow: 
-    0 24px 48px var(--shadow-medium),
-    0 12px 24px var(--shadow-light),
+    0 24px 48px rgba(0, 0, 0, 0.1),
+    0 12px 24px rgba(0, 0, 0, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  border: 2px solid var(--border-color);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   overflow: hidden;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -850,8 +915,8 @@ onMounted(() => {
 .section-header-card:hover {
   transform: translateY(-2px);
   box-shadow: 
-    0 32px 64px var(--shadow-strong),
-    0 16px 32px var(--shadow-medium),
+    0 32px 64px rgba(0, 0, 0, 0.12),
+    0 16px 32px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
@@ -861,7 +926,7 @@ onMounted(() => {
   right: -20%;
   width: 120%;
   height: 200%;
-  background: radial-gradient(ellipse at center, rgba(77, 187, 152, 0.08) 0%, transparent 70%);
+  background: radial-gradient(ellipse at center, rgba(16, 185, 129, 0.08) 0%, transparent 70%);
   z-index: 1;
 }
 
@@ -878,7 +943,7 @@ onMounted(() => {
 .shape {
   position: absolute;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(77, 187, 152, 0.1) 0%, rgba(51, 128, 107, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%);
 }
 
 .shape-1 {
@@ -928,7 +993,7 @@ onMounted(() => {
 .section-header-icon {
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, var(--accent-color) 0%, #A3D1C6 100%);
+  background: linear-gradient(135deg, var(--accent-color) 0%, var(--primary-color-light) 100%);
   border-radius: 24px;
   display: flex;
   align-items: center;
@@ -951,41 +1016,40 @@ onMounted(() => {
 }
 
 .section-header-title {
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: 800;
-  color: var(--text-accent);
-  letter-spacing: -0.02em;
-  background: linear-gradient(135deg, var(--accent-color) 0%, #A3D1C6 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #10b981;
   margin-bottom: 0.25rem;
+  letter-spacing: -0.025em;
 }
 
 .section-header-subtitle {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 600;
-  color: var(--text-secondary);
-  margin-bottom: 0.25rem;
+  color: #64748b;
 }
 
 .section-header-description {
-  font-size: 1rem;
-  color: var(--text-muted);
-  font-weight: 400;
-  opacity: 0.9;
+  font-size: 0.9rem;
+  color: #94a3b8;
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
 }
 
 .back-button {
-  background: var(--action-btn-bg);
-  border: 2px solid var(--border-color);
-  border-radius: 20px;
-  padding: 1rem 1.5rem;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(203, 213, 225, 0.5);
+  border-radius: 16px;
+  padding: 0.875rem 1.5rem;
   backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: var(--action-btn-color);
+  color: #64748b;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -993,9 +1057,74 @@ onMounted(() => {
 }
 
 .back-button:hover {
+  background: rgba(255, 255, 255, 0.95);
   transform: translateY(-2px);
-  box-shadow: 0 8px 16px var(--shadow-light);
-  background: var(--bg-accent-hover);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+/* Create Quiz Button */
+.create-quiz-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 0.875rem 1.5rem;
+  border-radius: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+}
+
+.create-quiz-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(16, 185, 129, 0.4);
+}
+
+.create-quiz-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.create-quiz-btn .spinner {
+  animation: spin 1s linear infinite;
+}
+
+/* Export/Preview Button */
+.export-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, var(--accent-color) 0%, var(--primary-color-light) 100%);
+  color: white;
+  border: none;
+  padding: 0.875rem 1.5rem;
+  border-radius: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 24px var(--primary-color-alpha);
+}
+
+.export-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px var(--primary-color-alpha);
+}
+
+.export-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.export-btn .spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* Content Cards */
@@ -1020,17 +1149,104 @@ onMounted(() => {
     0 0 0 1px rgba(255, 255, 255, 0.4);
 }
 
+/* Enhanced Card Design */
+.enhanced-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(61, 141, 122, 0.1);
+  border-radius: 24px;
+  padding: 2.5rem;
+  overflow: hidden;
+  box-shadow: 
+    0 8px 32px rgba(61, 141, 122, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.enhanced-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 
+    0 12px 48px rgba(61, 141, 122, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+.card-floating-shapes {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.card-shape {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.08;
+  animation: floatCard 4s ease-in-out infinite;
+}
+
+.card-shape.shape-1 {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, var(--accent-color), var(--primary-color-light));
+  top: -30px;
+  right: -30px;
+  animation-delay: 0s;
+}
+
+.card-shape.shape-2 {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, var(--primary-color-light), var(--success-color));
+  bottom: -20px;
+  left: -20px;
+  animation-delay: 2s;
+}
+
+@keyframes floatCard {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-15px) scale(1.05); }
+}
+
 .card-header {
-  margin-bottom: 2rem;
-  text-align: center;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+  text-align: left;
+}
+
+.card-header-icon {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, var(--accent-color), var(--primary-color-dark));
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
+  transition: all 0.3s ease;
+}
+
+.card-header-icon:hover {
+  transform: scale(1.05);
+}
+
+.card-header-content {
+  flex: 1;
 }
 
 .card-header h3 {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  color: var(--primary-text-color);
-  margin: 0;
-  margin-bottom: 0.5rem;
+  color: var(--accent-color);
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.3px;
 }
 
 .card-subtitle {
@@ -1077,8 +1293,8 @@ onMounted(() => {
 }
 
 .info-badge.code {
-  background: rgba(139, 92, 246, 0.1);
-  border: 1px solid rgba(139, 92, 246, 0.2);
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 .info-badge .label {
@@ -1089,6 +1305,219 @@ onMounted(() => {
 .info-badge .value {
   font-weight: 700;
   color: var(--primary-text-color);
+}
+
+/* Enhanced Card Styles */
+.enhanced-card {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 20px;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.05),
+    0 2px 6px rgba(0, 0, 0, 0.03);
+  backdrop-filter: blur(8px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  position: relative;
+}
+
+.enhanced-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* Card floating shapes */
+.card-floating-shapes {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.card-floating-shapes::before,
+.card-floating-shapes::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1));
+  animation: float-shape 6s ease-in-out infinite;
+}
+
+.card-floating-shapes::before {
+  width: 60px;
+  height: 60px;
+  top: -30px;
+  right: -30px;
+  animation-delay: -2s;
+}
+
+.card-floating-shapes::after {
+  width: 80px;
+  height: 80px;
+  bottom: -40px;
+  left: -40px;
+  animation-delay: -4s;
+}
+
+/* Card Header with Icon */
+.card-header-icon {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.card-header-icon .icon {
+  width: 24px;
+  height: 24px;
+  color: var(--primary-color);
+  flex-shrink: 0;
+}
+
+.card-header-icon h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--primary-text-color);
+}
+
+/* Enhanced Questions Section */
+.enhanced-questions {
+  gap: 1.5rem;
+}
+
+.enhanced-questions .question-card {
+  background: rgba(249, 250, 251, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  backdrop-filter: blur(4px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.enhanced-questions .question-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Enhanced Add Question Button */
+.add-question-btn {
+  width: 100%;
+  padding: 1rem 2rem;
+  border: 2px dashed rgba(59, 130, 246, 0.3);
+  border-radius: 16px;
+  background: rgba(59, 130, 246, 0.02);
+  color: var(--primary-color);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.add-question-btn:hover {
+  border-color: rgba(59, 130, 246, 0.5);
+  background: rgba(59, 130, 246, 0.05);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.add-question-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(59, 130, 246, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translate(-50%, -50%);
+}
+
+.add-question-btn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Form Input Enhancements */
+.enhanced-card input[type="text"],
+.enhanced-card input[type="number"],
+.enhanced-card textarea,
+.enhanced-card select {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  padding: 0.875rem 1rem;
+  font-size: 0.95rem;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(4px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.enhanced-card input[type="text"]:focus,
+.enhanced-card input[type="number"]:focus,
+.enhanced-card textarea:focus,
+.enhanced-card select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  background: rgba(255, 255, 255, 1);
+}
+
+/* Enhanced Label Styles */
+.enhanced-card label {
+  font-weight: 600;
+  color: var(--secondary-text-color);
+  margin-bottom: 0.5rem;
+  display: block;
+  font-size: 0.9rem;
+}
+
+/* Button Enhancements */
+.enhanced-card .btn-primary {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-color-dark));
+  border: none;
+  border-radius: 12px;
+  padding: 0.875rem 1.75rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.enhanced-card .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+}
+
+.enhanced-card .btn-secondary {
+  background: rgba(107, 114, 128, 0.1);
+  border: 1px solid rgba(107, 114, 128, 0.2);
+  color: var(--secondary-text-color);
+  border-radius: 12px;
+  padding: 0.875rem 1.75rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.enhanced-card .btn-secondary:hover {
+  background: rgba(107, 114, 128, 0.15);
+  transform: translateY(-1px);
 }
 
 .quiz-form {
@@ -1437,7 +1866,7 @@ onMounted(() => {
   }
 }
 
-/* CSS Variables for better theme support - NEW */
+/* CSS Variables - IntelliGrade System Colors */
 :root {
   --bg-primary: #f8fafc;
   --bg-secondary: #f1f5f9;
@@ -1447,24 +1876,25 @@ onMounted(() => {
   --text-accent: #1e293b;
   --text-secondary: #475569;
   --text-muted: #64748b;
-  --primary-text-color: #1f2937;
-  --secondary-text-color: #6b7280;
-  --accent-color: #10b981;
-  --primary-color: #059669;
-  --primary-color-light: #34d399;
-  --primary-color-dark: #047857;
-  --primary-color-alpha: rgba(5, 150, 105, 0.2);
+  --primary-text-color: #0f172a;
+  --secondary-text-color: #64748b;
   --success-color: #10b981;
+  --success-color-dark: #059669;
+  --accent-color: #10b981;
+  --primary-color: #10b981;
+  --primary-color-light: #34d399;
+  --primary-color-dark: #059669;
+  --primary-color-alpha: rgba(16, 185, 129, 0.2);
   --success-color-alpha: rgba(16, 185, 129, 0.2);
-  --error-color: #ef4444;
-  --error-color-dark: #dc2626;
-  --shadow-light: rgba(0, 0, 0, 0.05);
-  --shadow-medium: rgba(0, 0, 0, 0.1);
-  --shadow-strong: rgba(0, 0, 0, 0.15);
-  --action-btn-bg: rgba(255, 255, 255, 0.8);
-  --action-btn-color: #374151;
-  --bg-accent-hover: rgba(255, 255, 255, 0.9);
-  --hover-background: #f9fafb;
+  --error-color: #dc3545;
+  --error-color-dark: #b02a37;
+  --shadow-light: rgba(16, 185, 129, 0.08);
+  --shadow-medium: rgba(16, 185, 129, 0.12);
+  --shadow-strong: rgba(16, 185, 129, 0.18);
+  --action-btn-bg: rgba(248, 255, 254, 0.9);
+  --action-btn-color: #37796b;
+  --bg-accent-hover: rgba(248, 255, 254, 0.95);
+  --hover-background: #f1f8f7;
 }
 
 /* Fixed back button z-index and positioning - NEW */
@@ -1686,6 +2116,15 @@ onMounted(() => {
   color: var(--accent-color);
 }
 
+.dark-mode .export-btn {
+  background: linear-gradient(135deg, var(--accent-color) 0%, var(--primary-color-dark) 100%);
+  box-shadow: 0 8px 24px rgba(61, 141, 122, 0.3);
+}
+
+.dark-mode .export-btn:hover:not(:disabled) {
+  box-shadow: 0 12px 32px rgba(61, 141, 122, 0.4);
+}
+
 .dark-mode .content-card {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -1739,6 +2178,130 @@ onMounted(() => {
 .dark-mode .quiz-settings .settings-grid .setting-card {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
+}
+
+/* Dark Mode Enhanced Card Styles */
+.dark-mode .enhanced-card {
+  background: rgba(31, 41, 55, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.25),
+    0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.dark-mode .enhanced-card:hover {
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+/* Dark Mode Card Floating Shapes */
+.dark-mode .card-floating-shapes::before,
+.dark-mode .card-floating-shapes::after {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(147, 51, 234, 0.15));
+}
+
+/* Dark Mode Card Header */
+.dark-mode .card-header-icon {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dark-mode .card-header-icon h3 {
+  color: var(--primary-text-color);
+}
+
+/* Dark Mode Enhanced Questions */
+.dark-mode .enhanced-questions .question-card {
+  background: rgba(17, 24, 39, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dark-mode .enhanced-questions .question-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Dark Mode Add Question Button */
+.dark-mode .add-question-btn {
+  border: 2px dashed rgba(59, 130, 246, 0.4);
+  background: rgba(59, 130, 246, 0.05);
+  color: var(--accent-color);
+}
+
+.dark-mode .add-question-btn:hover {
+  border-color: rgba(59, 130, 246, 0.6);
+  background: rgba(59, 130, 246, 0.1);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.dark-mode .add-question-btn::before {
+  background: rgba(59, 130, 246, 0.15);
+}
+
+/* Dark Mode Form Input Enhancements */
+.dark-mode .enhanced-card input[type="text"],
+.dark-mode .enhanced-card input[type="number"],
+.dark-mode .enhanced-card textarea,
+.dark-mode .enhanced-card select {
+  background: rgba(17, 24, 39, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .enhanced-card input[type="text"]:focus,
+.dark-mode .enhanced-card input[type="number"]:focus,
+.dark-mode .enhanced-card textarea:focus,
+.dark-mode .enhanced-card select:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  background: rgba(17, 24, 39, 1);
+}
+
+/* Dark Mode Enhanced Label Styles */
+.dark-mode .enhanced-card label {
+  color: var(--secondary-text-color);
+}
+
+/* Dark Mode Button Enhancements */
+.dark-mode .enhanced-card .btn-primary {
+  background: linear-gradient(135deg, var(--accent-color), var(--primary-color-dark));
+}
+
+.dark-mode .enhanced-card .btn-primary:hover {
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.dark-mode .enhanced-card .btn-secondary {
+  background: rgba(75, 85, 99, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .enhanced-card .btn-secondary:hover {
+  background: rgba(75, 85, 99, 0.3);
+}
+
+/* Dark Mode Info Badges */
+.dark-mode .info-badge.subject {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.dark-mode .info-badge.section {
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.dark-mode .info-badge.code {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.dark-mode .info-badge .label {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .info-badge .value {
+  color: var(--primary-text-color);
 }
 
 .dark-mode .setting-card h4 {

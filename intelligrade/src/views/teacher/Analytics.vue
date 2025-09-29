@@ -1,44 +1,76 @@
 <template>
-  <div class="analytics-container">
-    <!-- Header -->
-    <div class="header-section">
-      <div class="header-content">
-        <h1 class="page-title">Student Analytics</h1>
-        <p class="page-subtitle">Monitor and analyze student performance across all assessments</p>
+  <div class="analytics-container" :class="{ 'dark-mode': isDarkMode }">
+    <!-- Enhanced Header Section -->
+    <div class="section-header-card">
+      <div class="header-bg-decoration"></div>
+      <div class="floating-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
       </div>
-      <div class="header-actions">
-        <select v-model="selectedSection" @change="filterBySection" class="section-filter">
-          <option value="">All Sections</option>
-          <option v-for="section in sections" :key="section.id" :value="section.id">
-            {{ section.name }} - {{ section.subject }}
-          </option>
-        </select>
-        <button @click="exportData" class="export-btn">
-          <i class="fas fa-download"></i>
-          Export Data
-        </button>
+      
+      <div class="section-header-content">
+        <div class="section-header-left">
+          <div class="section-header-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z" />
+            </svg>
+          </div>
+          <div class="header-text">
+            <div class="section-header-title">Student Analytics</div>
+            <div class="section-header-subtitle">Performance Insights</div>
+            <div class="section-header-description">Monitor and analyze student performance across all assessments</div>
+          </div>
+        </div>
+        
+        <div class="header-actions">
+          <select v-model="selectedSection" @change="filterBySection" class="section-filter">
+            <option value="">All Sections</option>
+            <option v-for="section in sections" :key="section.id" :value="section.id">
+              {{ section.name }} - {{ section.subject }}
+            </option>
+          </select>
+          <button @click="exportData" class="export-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+            </svg>
+            Export Data
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- Overview Cards -->
+    <!-- Enhanced Overview Cards -->
     <div class="overview-grid">
       <div class="overview-card">
+        <div class="card-floating-shapes">
+          <div class="card-shape shape-1"></div>
+        </div>
         <div class="card-icon">
-          <i class="fas fa-chart-line"></i>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M16,6L18.29,8.29L13.41,13.17L9.41,9.17L2,16.59L3.41,18L9.41,12L13.41,16L19.71,9.71L22,12V6H16Z" />
+          </svg>
         </div>
         <div class="card-content">
           <h3>{{ overallStats.averageScore }}%</h3>
           <p>Overall Average</p>
           <span class="trend" :class="overallStats.trend > 0 ? 'positive' : 'negative'">
-            <i :class="overallStats.trend > 0 ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path :d="overallStats.trend > 0 ? 'M7,14H17V16H7V14M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M7,9H17V11H7V9Z' : 'M7,9H17V11H7V9M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4Z'" />
+            </svg>
             {{ Math.abs(overallStats.trend) }}% from last month
           </span>
         </div>
       </div>
 
       <div class="overview-card">
+        <div class="card-floating-shapes">
+          <div class="card-shape shape-2"></div>
+        </div>
         <div class="card-icon">
-          <i class="fas fa-users"></i>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12,5.5A3.5,3.5 0 0,1 15.5,9A3.5,3.5 0 0,1 12,12.5A3.5,3.5 0 0,1 8.5,9A3.5,3.5 0 0,1 12,5.5M5,8C5.56,8 6.08,8.15 6.53,8.42C6.38,9.85 6.8,11.27 7.66,12.38C7.16,13.34 6.16,14 5,14A3,3 0 0,1 2,11A3,3 0 0,1 5,8M19,8A3,3 0 0,1 22,11A3,3 0 0,1 19,14C17.84,14 16.84,13.34 16.34,12.38C17.2,11.27 17.62,9.85 17.47,8.42C17.92,8.15 18.44,8 19,8M5.5,18.25C5.5,16.18 8.41,14.5 12,14.5C15.59,14.5 18.5,16.18 18.5,18.25V20H5.5V18.25M0,20V18.5C0,17.11 1.89,15.94 4.45,15.6C3.86,16.28 3.5,17.22 3.5,18.25V20H0M24,20H20.5V18.25C20.5,17.22 20.14,16.28 19.55,15.6C22.11,15.94 24,17.11 24,18.5V20Z" />
+          </svg>
         </div>
         <div class="card-content">
           <h3>{{ overallStats.totalStudents }}</h3>
@@ -48,8 +80,13 @@
       </div>
 
       <div class="overview-card">
+        <div class="card-floating-shapes">
+          <div class="card-shape shape-3"></div>
+        </div>
         <div class="card-icon">
-          <i class="fas fa-clipboard-check"></i>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M9,17H7V10H9V17M13,17H11V7H13V17M17,17H15V13H17V17Z" />
+          </svg>
         </div>
         <div class="card-content">
           <h3>{{ overallStats.totalAssessments }}</h3>
@@ -58,9 +95,14 @@
         </div>
       </div>
 
-      <div class="overview-card">
+      <div class="overview-card alert-card">
+        <div class="card-floating-shapes">
+          <div class="card-shape shape-4"></div>
+        </div>
         <div class="card-icon">
-          <i class="fas fa-exclamation-triangle"></i>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z" />
+          </svg>
         </div>
         <div class="card-content">
           <h3>{{ overallStats.studentsNeedingHelp }}</h3>
@@ -320,13 +362,17 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import { ref, onMounted, computed, nextTick } from 'vue'
 import { supabase } from '../../supabase.js'
+import { useDarkMode } from '../../composables/useDarkMode.js'
 
 export default {
   name: 'AnalyticsView',
   setup() {
+    // Dark mode
+    const { isDarkMode, initDarkMode } = useDarkMode()
+    
     const sections = ref([])
     const students = ref([])
     const assessments = ref([])
@@ -646,12 +692,14 @@ export default {
     }
 
     onMounted(async () => {
+      initDarkMode()
       await fetchData()
       await nextTick()
       initializeCharts()
     })
 
     return {
+      isDarkMode,
       sections,
       students,
       assessments,
@@ -693,59 +741,399 @@ export default {
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
 .analytics-container {
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
-  background: var(--bg-primary);
-  color: var(--primary-text-color);
+  padding: 2rem 5%;
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f0f9f6 0%, #e8f5f0 100%);
 }
 
-.header-section {
+/* Enhanced Header Section */
+.section-header-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(61, 141, 122, 0.1);
+  border-radius: 24px;
+  padding: 2.5rem;
+  margin-bottom: 2rem;
+  overflow: hidden;
+  box-shadow: 
+    0 8px 32px rgba(61, 141, 122, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.header-bg-decoration {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 200px;
+  height: 200px;
+  background: linear-gradient(135deg, rgba(61, 141, 122, 0.05), rgba(163, 209, 198, 0.05));
+  border-radius: 50%;
+  transform: translate(50%, -50%);
+  pointer-events: none;
+}
+
+.floating-shapes {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.shape {
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3D8D7A, #A3D1C6);
+  opacity: 0.1;
+  animation: floatBackground 8s ease-in-out infinite;
+}
+
+.shape.shape-1 {
+  width: 80px;
+  height: 80px;
+  top: 20%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.shape.shape-2 {
+  width: 120px;
+  height: 120px;
+  top: 60%;
+  right: 15%;
+  animation-delay: 2s;
+}
+
+.shape.shape-3 {
+  width: 60px;
+  height: 60px;
+  bottom: 20%;
+  left: 70%;
+  animation-delay: 4s;
+}
+
+@keyframes floatBackground {
+  0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.1; }
+  50% { transform: translateY(-30px) rotate(180deg); opacity: 0.15; }
+}
+
+.section-header-content {
+  position: relative;
+  z-index: 2;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 2rem;
 }
 
-.page-title {
+.section-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex: 1;
+}
+
+.section-header-icon {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #3D8D7A, #2c6b5c);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
+}
+
+.header-text {
+  flex: 1;
+}
+
+.section-header-title {
   font-size: 2rem;
-  font-weight: bold;
-  color: var(--primary-text-color);
-  margin: 0;
+  font-weight: 800;
+  color: #3D8D7A;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.5px;
 }
 
-.page-subtitle {
-  color: var(--secondary-text-color);
-  margin: 0.5rem 0 0 0;
+.section-header-subtitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #10b981;
+  margin-bottom: 0.5rem;
+}
+
+.section-header-description {
+  font-size: 0.95rem;
+  color: #6b7280;
+  font-weight: 500;
 }
 
 .header-actions {
   display: flex;
   gap: 1rem;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .section-filter {
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  background: var(--input-bg);
-  color: var(--primary-text-color);
+  padding: 0.875rem 1.25rem;
+  border: 2px solid rgba(61, 141, 122, 0.1);
+  border-radius: 16px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  color: #3D8D7A;
+  min-width: 200px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.section-filter:focus {
+  outline: none;
+  border-color: rgba(61, 141, 122, 0.3);
+  box-shadow: 0 0 0 4px rgba(61, 141, 122, 0.1);
+  transform: translateY(-1px);
 }
 
 .export-btn {
-  background: var(--success-color);
+  background: linear-gradient(135deg, #10b981, #059669);
   color: white;
   border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
+  padding: 0.875rem 1.75rem;
+  border-radius: 16px;
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 0.95rem;
   display: flex;
   align-items: center;
+  gap: 0.75rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.export-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.export-btn:hover::before {
+  left: 100%;
+}
+
+.export-btn:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+}
+
+.export-btn:hover svg {
+  transform: scale(1.1);
+}
+
+/* Enhanced Overview Cards */
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.overview-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(61, 141, 122, 0.1);
+  border-radius: 20px;
+  padding: 2rem 1.5rem;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 
+    0 4px 16px rgba(61, 141, 122, 0.05),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.overview-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 
+    0 12px 32px rgba(61, 141, 122, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
+  border-color: rgba(61, 141, 122, 0.2);
+}
+
+.overview-card.alert-card {
+  border-color: rgba(249, 115, 22, 0.2);
+  background: rgba(255, 255, 255, 0.98);
+}
+
+.overview-card.alert-card:hover {
+  border-color: rgba(249, 115, 22, 0.3);
+  box-shadow: 
+    0 12px 32px rgba(249, 115, 22, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.card-floating-shapes {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.card-shape {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.08;
+  animation: floatCard 4s ease-in-out infinite;
+}
+
+.card-shape.shape-1 {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  top: -20px;
+  right: -20px;
+  animation-delay: 0s;
+}
+
+.card-shape.shape-2 {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  bottom: -30px;
+  left: -30px;
+  animation-delay: 1s;
+}
+
+.card-shape.shape-3 {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  top: 50%;
+  right: -15px;
+  animation-delay: 2s;
+}
+
+.card-shape.shape-4 {
+  width: 70px;
+  height: 70px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  bottom: -25px;
+  right: 20%;
+  animation-delay: 1.5s;
+}
+
+@keyframes floatCard {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-10px) scale(1.1); }
+}
+
+.card-icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #3D8D7A, #2c6b5c);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  margin-bottom: 1.25rem;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.25);
+  transition: all 0.3s ease;
+}
+
+.overview-card:hover .card-icon {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(61, 141, 122, 0.35);
+}
+
+.card-content {
+  position: relative;
+  z-index: 2;
+}
+
+.card-content h3 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #3D8D7A;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.5px;
+}
+
+.card-content p {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 0.75rem 0;
+}
+
+.trend {
+  display: inline-flex;
+  align-items: center;
   gap: 0.5rem;
-  transition: all 0.2s;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.375rem 0.75rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.trend.positive {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.trend.negative {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1));
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.info {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #6b7280;
+  background: rgba(107, 114, 128, 0.1);
+  padding: 0.375rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(107, 114, 128, 0.15);
+}
+
+.warning {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #d97706;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
+  padding: 0.375rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(245, 158, 11, 0.2);
 }
 
 .export-btn:hover {

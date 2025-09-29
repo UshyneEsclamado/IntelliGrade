@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container">
+  <div class="page-container" :class="{ 'dark-mode': isDarkMode }">
     <div class="main-wrapper">
       <!-- Header Section -->
       <div class="hero-header card-box">

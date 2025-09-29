@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container">
+  <div class="page-container" :class="{ 'dark-mode': isDarkMode }">
     <div class="main-wrapper">
       <!-- Enhanced Header Section -->
       <section class="section-header-card">
@@ -152,6 +152,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { useDarkMode } from '../../composables/useDarkMode.js';
+
+// Dark mode
+const { isDarkMode, initDarkMode } = useDarkMode();
 
 // TypeScript interfaces
 interface StudentResult {
@@ -863,5 +867,174 @@ onMounted(() => {
   .results-table td {
     padding: 1rem;
   }
+}
+
+/* Dark Mode Styles */
+.dark-mode .page-container {
+  background: var(--bg-primary);
+}
+
+.dark-mode .section-header-card {
+  background: rgba(17, 24, 39, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.25),
+    0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.dark-mode .back-button {
+  background: rgba(75, 85, 99, 0.2);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .back-button:hover {
+  color: var(--accent-color);
+}
+
+.dark-mode .hero-header h1 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .hero-subtitle {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .info-badge.assessment {
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.dark-mode .info-badge.score {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.dark-mode .info-badge.average {
+  background: rgba(234, 179, 8, 0.15);
+  border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+.dark-mode .info-badge .label {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .info-badge .value {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .content-card {
+  background: rgba(17, 24, 39, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.25),
+    0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.dark-mode .card-header h3 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .card-subtitle {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .results-table {
+  background: rgba(17, 24, 39, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dark-mode .results-table th {
+  background: rgba(31, 41, 55, 0.8);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .results-table td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .table-row:hover {
+  background: rgba(31, 41, 55, 0.6);
+}
+
+.dark-mode .student-avatar {
+  background: var(--accent-color);
+}
+
+.dark-mode .progress-bar {
+  background: rgba(75, 85, 99, 0.3);
+}
+
+.dark-mode .view-details-btn {
+  background: rgba(75, 85, 99, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .view-details-btn:hover {
+  background: rgba(75, 85, 99, 0.3);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .modal-overlay {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.dark-mode .modal-content {
+  background: rgba(17, 24, 39, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 20px 50px rgba(0, 0, 0, 0.5),
+    0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .modal-header h3 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .modal-close-btn {
+  background: rgba(75, 85, 99, 0.2);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .modal-close-btn:hover {
+  background: #ef4444;
+  color: white;
+}
+
+.dark-mode .details-section h4 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .detail-item .label {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .detail-item .value {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .answers-section h5 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .question-analysis {
+  background: rgba(31, 41, 55, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dark-mode .question-text {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .student-answer label,
+.dark-mode .correct-answer label {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .student-answer p,
+.dark-mode .correct-answer p {
+  color: var(--primary-text-color);
 }
 </style>

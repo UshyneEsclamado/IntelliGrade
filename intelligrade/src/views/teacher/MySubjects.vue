@@ -1,25 +1,44 @@
 <template>
   <div class="subjects-page" :class="{ 'dark-mode': isDarkMode }">
-    <div class="page-header">
-      <div class="header-content">
-        <h1>My Subjects</h1>
-        <p class="header-subtitle">Create and manage your class subjects with multiple sections</p>
+    <div class="section-header-card">
+      <div class="header-bg-decoration"></div>
+      <div class="floating-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
       </div>
-      <div class="header-actions">
-        <button @click="toggleDarkMode" class="dark-mode-toggle" :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
-          <svg v-if="isDarkMode" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,2L14.39,5.42C13.65,5.15 12.84,5 12,5C11.16,5 10.35,5.15 9.61,5.42L12,2M3.34,7L7.5,6.65C6.9,7.16 6.36,7.78 5.94,8.5C5.52,9.22 5.25,10 5.11,10.79L3.34,7M3.36,17L5.12,13.23C5.26,14 5.53,14.78 5.95,15.5C6.37,16.22 6.91,16.84 7.51,17.35L3.36,17M20.65,7L18.88,10.79C18.74,10 18.47,9.22 18.05,8.5C17.63,7.78 17.09,7.15 16.49,6.64L20.65,7M20.64,17L16.5,17.36C17.1,16.85 17.64,16.22 18.06,15.5C18.48,14.78 18.75,14 18.89,13.21L20.64,17M12,22L9.59,18.56C10.33,18.83 11.14,19 12,19C12.86,19 13.67,18.83 14.41,18.56L12,22Z" />
-          </svg>
-          <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M17.75,4.09L15.22,6.03L16.13,9.09L13.5,7.28L10.87,9.09L11.78,6.03L9.25,4.09L12.44,4L13.5,1L14.56,4L17.75,4.09M21.25,11L19.61,12.25L20.2,14.23L18.5,13.06L16.8,14.23L17.39,12.25L15.75,11L17.81,10.95L18.5,9L19.19,10.95L21.25,11M18.97,15.95C19.8,15.87 20.69,17.05 20.16,17.8C19.84,18.25 19.5,18.67 19.08,19.07C15.17,23 8.84,23 4.94,19.07C1.03,15.17 1.03,8.83 4.94,4.93C5.34,4.53 5.76,4.17 6.21,3.85C6.96,3.32 8.14,4.21 8.06,5.04C7.79,7.9 8.75,10.87 10.95,13.06C13.14,15.26 16.1,16.22 18.97,15.95M17.33,17.97C14.5,17.81 11.7,16.64 9.53,14.5C7.36,12.31 6.2,9.5 6.04,6.68C3.23,9.82 3.34,14.4 6.35,17.41C9.37,20.43 14,20.54 17.33,17.97Z" />
-          </svg>
-        </button>
-        <button @click="showCreateModal = true" class="create-btn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
-          </svg>
-          Create New Subject
-        </button>
+      
+      <div class="section-header-content">
+        <div class="section-header-left">
+          <div class="section-header-icon">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z" />
+            </svg>
+          </div>
+          
+          <div class="header-text">
+            <h1 class="section-header-title">My Subjects</h1>
+            <p class="section-header-subtitle">Create and manage your class subjects with multiple sections</p>
+            <p class="section-header-description">Organize your classes and track student progress</p>
+          </div>
+        </div>
+        
+        <div class="header-actions">
+          <button @click="toggleDarkMode" class="dark-mode-toggle" :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+            <svg v-if="isDarkMode" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,2L14.39,5.42C13.65,5.15 12.84,5 12,5C11.16,5 10.35,5.15 9.61,5.42L12,2M3.34,7L7.5,6.65C6.9,7.16 6.36,7.78 5.94,8.5C5.52,9.22 5.25,10 5.11,10.79L3.34,7M3.36,17L5.12,13.23C5.26,14 5.53,14.78 5.95,15.5C6.37,16.22 6.91,16.84 7.51,17.35L3.36,17M20.65,7L18.88,10.79C18.74,10 18.47,9.22 18.05,8.5C17.63,7.78 17.09,7.15 16.49,6.64L20.65,7M20.64,17L16.5,17.36C17.1,16.85 17.64,16.22 18.06,15.5C18.48,14.78 18.75,14 18.89,13.21L20.64,17M12,22L9.59,18.56C10.33,18.83 11.14,19 12,19C12.86,19 13.67,18.83 14.41,18.56L12,22Z" />
+            </svg>
+            <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.75,4.09L15.22,6.03L16.13,9.09L13.5,7.28L10.87,9.09L11.78,6.03L9.25,4.09L12.44,4L13.5,1L14.56,4L17.75,4.09M21.25,11L19.61,12.25L20.2,14.23L18.5,13.06L16.8,14.23L17.39,12.25L15.75,11L17.81,10.95L18.5,9L19.19,10.95L21.25,11M18.97,15.95C19.8,15.87 20.69,17.05 20.16,17.8C19.84,18.25 19.5,18.67 19.08,19.07C15.17,23 8.84,23 4.94,19.07C1.03,15.17 1.03,8.83 4.94,4.93C5.34,4.53 5.76,4.17 6.21,3.85C6.96,3.32 8.14,4.21 8.06,5.04C7.79,7.9 8.75,10.87 10.95,13.06C13.14,15.26 16.1,16.22 18.97,15.95M17.33,17.97C14.5,17.81 11.7,16.64 9.53,14.5C7.36,12.31 6.2,9.5 6.04,6.68C3.23,9.82 3.34,14.4 6.35,17.41C9.37,20.43 14,20.54 17.33,17.97Z" />
+            </svg>
+          </button>
+          <button @click="showCreateModal = true" class="create-quiz-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+            </svg>
+            Create New Subject
+          </button>
+        </div>
       </div>
     </div>
 
@@ -75,7 +94,7 @@
                   <div class="section-code-display">
                     <span class="code-label">Section Code:</span>
                     <span class="section-code">{{ section.section_code }}</span>
-                    <button @click="copyCode(section.section_code, section.id)" class="copy-code-btn">
+                    <button @click.stop="copyCode(section.section_code, section.id)" class="copy-code-btn">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z" />
                       </svg>
@@ -91,7 +110,7 @@
                 <!-- Section Action Buttons -->
                 <div class="section-actions">
                   <button 
-                    @click="navigateToCreateQuiz(subject, section)"
+                    @click.stop="navigateToCreateQuiz(subject, section)"
                     class="section-action-btn create-quiz"
                     title="Create Quiz/Assessment"
                   >
@@ -102,7 +121,7 @@
                   </button>
                   
                   <button 
-                    @click="viewQuizzes(subject, section)"
+                    @click.stop="viewQuizzes(subject, section)"
                     class="section-action-btn view-quizzes"
                     title="View Past Quizzes"
                   >
@@ -113,7 +132,7 @@
                   </button>
                   
                   <button 
-                    @click="manageGrades(subject, section)"
+                    @click.stop="manageGrades(subject, section)"
                     class="section-action-btn manage-grades"
                     title="Grade Management"
                   >
@@ -124,7 +143,7 @@
                   </button>
                   
                   <button 
-                    @click="generateReports(subject, section)"
+                    @click.stop="generateReports(subject, section)"
                     class="section-action-btn generate-reports"
                     title="Generate Reports"
                   >
@@ -505,90 +524,110 @@ const setupAuthListener = () => {
 
 // ASSESSMENT METHODS
 // Navigation functions
-const navigateToSections = (subject, section, event) => {
+const navigateToSections = async (subject, section, event) => {
   // Prevent navigation if clicking on buttons or other interactive elements
-  if (event.target.closest('button') || event.target.closest('.copy-code-btn')) {
+  if (event && (event.target.closest('button') || event.target.closest('.copy-code-btn'))) {
     return
   }
   
-  router.push({
-    name: 'Sections',
-    params: {
-      subjectId: subject.id,
-      sectionId: section.id
-    },
-    query: {
-      subjectName: subject.name,
-      sectionName: section.name,
-      gradeLevel: subject.grade_level,
-      sectionCode: section.section_code,
-      studentCount: section.student_count || 0
-    }
-  })
+  try {
+    await router.push({
+      name: 'Sections',
+      params: {
+        subjectId: subject.id,
+        sectionId: section.id
+      },
+      query: {
+        subjectName: subject.name,
+        sectionName: section.name,
+        gradeLevel: subject.grade_level,
+        sectionCode: section.section_code,
+        studentCount: section.student_count || 0
+      }
+    })
+  } catch (error) {
+    console.error('Navigation error:', error)
+  }
 }
 
-const navigateToCreateQuiz = (subject, section) => {
-  router.push({
-    name: 'CreateQuiz',
-    params: {
-      subjectId: subject.id,
-      sectionId: section.id
-    },
-    query: {
-      subjectName: subject.name,
-      sectionName: section.name,
-      gradeLevel: subject.grade_level,
-      sectionCode: section.section_code
-    }
-  })
+const navigateToCreateQuiz = async (subject, section) => {
+  try {
+    await router.push({
+      name: 'CreateQuiz',
+      params: {
+        subjectId: subject.id,
+        sectionId: section.id
+      },
+      query: {
+        subjectName: subject.name,
+        sectionName: section.name,
+        gradeLevel: subject.grade_level,
+        sectionCode: section.section_code
+      }
+    })
+  } catch (error) {
+    console.error('Navigation error:', error)
+  }
 }
 
-const viewQuizzes = (subject, section) => {
-  router.push({
-    name: 'ViewQuizzes',
-    params: {
-      subjectId: subject.id,
-      sectionId: section.id
-    },
-    query: {
-      subjectName: subject.name,
-      sectionName: section.name,
-      gradeLevel: subject.grade_level,
-      sectionCode: section.section_code
-    }
-  })
+const viewQuizzes = async (subject, section) => {
+  try {
+    await router.push({
+      name: 'ViewQuizzes',
+      params: {
+        subjectId: subject.id,
+        sectionId: section.id
+      },
+      query: {
+        subjectName: subject.name,
+        sectionName: section.name,
+        gradeLevel: subject.grade_level,
+        sectionCode: section.section_code
+      }
+    })
+  } catch (error) {
+    console.error('Navigation error:', error)
+  }
 }
 
-const manageGrades = (subject, section) => {
-  router.push({
-    name: 'GradeManagement',
-    params: {
-      subjectId: subject.id,
-      sectionId: section.id
-    },
-    query: {
-      subjectName: subject.name,
-      sectionName: section.name,
-      gradeLevel: subject.grade_level,
-      sectionCode: section.section_code
-    }
-  })
+const manageGrades = async (subject, section) => {
+  try {
+    await router.push({
+      name: 'GradeManagement',
+      params: {
+        subjectId: subject.id,
+        sectionId: section.id
+      },
+      query: {
+        subjectName: subject.name,
+        sectionName: section.name,
+        gradeLevel: subject.grade_level,
+        sectionCode: section.section_code
+      }
+    })
+  } catch (error) {
+    console.error('Navigation error:', error)
+  }
 }
 
-const generateReports = (subject, section) => {
-  router.push({
-    name: 'Reports',
-    params: {
-      subjectId: subject.id,
-      sectionId: section.id
-    },
-    query: {
-      subjectName: subject.name,
-      sectionName: section.name,
-      gradeLevel: subject.grade_level,
-      sectionCode: section.section_code
-    }
-  })
+const generateReports = async (subject, section) => {
+  try {
+    await router.push({
+      name: 'Reports',
+      params: {
+        subjectId: subject.id,
+        sectionId: section.id
+      },
+      query: {
+        subjectName: subject.name,
+        sectionName: section.name,
+        gradeLevel: subject.grade_level,
+        sectionCode: section.section_code
+      }
+    })
+  } catch (error) {
+    console.error('Navigation error:', error)
+  }
 }
 
 // Fetch subjects with new database structure
@@ -1229,45 +1268,96 @@ onUnmounted(() => {
   transition: all 0.3s ease;
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+.section-header-card {
   margin-bottom: 2rem;
-  flex-wrap: wrap;
-  gap: 1rem;
+  position: relative;
+  overflow: hidden;
+  background: rgba(248, 250, 252, 0.9);
+  backdrop-filter: blur(20px);
+  border-radius: 32px;
+  padding: 3.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  min-height: 180px;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.06),
+    0 10px 20px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.header-content h1 {
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: #3D8D7A;
-  margin-bottom: 0.5rem;
+.section-header-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 32px 64px rgba(0, 0, 0, 0.12),
+    0 16px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
-.header-subtitle {
-  color: #666;
-  font-size: 1.1rem;
+.header-bg-decoration {
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 120%;
+  height: 200%;
+  background: radial-gradient(ellipse at center, rgba(16, 185, 129, 0.08) 0%, transparent 70%);
+  z-index: 1;
 }
 
-.create-btn {
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  color: white;
-  border: none;
-  padding: 1rem 2rem;
-  border-radius: 16px;
-  font-weight: 600;
-  cursor: pointer;
+.section-header-content {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  transition: all 0.3s ease;
-  font-size: 1rem;
+  justify-content: space-between;
+  width: 100%;
 }
 
-.create-btn:hover {
+.section-header-left {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.section-header-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.section-header-icon:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(61, 141, 122, 0.3);
+}
+
+.header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.section-header-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #10b981;
+  margin-bottom: 0.25rem;
+  letter-spacing: -0.025em;
+}
+
+.section-header-subtitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.section-header-description {
+  font-size: 0.9rem;
+  color: #94a3b8;
 }
 
 .header-actions {
@@ -1276,9 +1366,74 @@ onUnmounted(() => {
   align-items: center;
 }
 
+.create-quiz-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 0.875rem 1.5rem;
+  border-radius: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+}
+
+.create-quiz-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(16, 185, 129, 0.4);
+}
+
+.floating-shapes {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.shape {
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(79, 70, 229, 0.05) 100%);
+}
+
+.shape-1 {
+  width: 100px;
+  height: 100px;
+  top: -20px;
+  right: 15%;
+  animation: float 6s ease-in-out infinite;
+}
+
+.shape-2 {
+  width: 60px;
+  height: 60px;
+  bottom: -10px;
+  right: 25%;
+  animation: float 8s ease-in-out infinite reverse;
+}
+
+.shape-3 {
+  width: 80px;
+  height: 80px;
+  top: 50%;
+  right: 5%;
+  animation: float 7s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(10deg); }
+}
+
 .dark-mode-toggle {
   background: rgba(255, 255, 255, 0.9);
-  border: 2px solid rgba(61, 141, 122, 0.15);
+  border: 2px solid rgba(79, 70, 229, 0.15);
   border-radius: 12px;
   padding: 0.75rem;
   cursor: pointer;
@@ -1286,15 +1441,15 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #3D8D7A;
+  color: #10b981;
   width: 50px;
   height: 50px;
 }
 
 .dark-mode-toggle:hover {
-  border-color: #3D8D7A;
+  border-color: #10b981;
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(61, 141, 122, 0.2);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.2);
 }
 
 .subjects-grid {
@@ -1307,14 +1462,28 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.95);
   border-radius: 20px;
   padding: 2rem;
-  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.1);
-  border: 1px solid rgba(61, 141, 122, 0.1);
+  box-shadow: 0 8px 32px rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.1);
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.subject-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #10b981, #059669, #047857);
+  border-radius: 20px 20px 0 0;
 }
 
 .subject-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 16px 48px rgba(61, 141, 122, 0.2);
+  box-shadow: 0 16px 48px rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.3);
 }
 
 .subject-header {
@@ -1325,14 +1494,14 @@ onUnmounted(() => {
 }
 
 .subject-info h3 {
-  color: #3D8D7A;
+  color: #10b981;
   font-size: 1.5rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
 }
 
 .grade-level {
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
   padding: 0.3rem 1rem;
   border-radius: 20px;
@@ -1356,8 +1525,8 @@ onUnmounted(() => {
 }
 
 .action-btn.edit {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
 }
 
 .action-btn.delete {
@@ -1387,7 +1556,7 @@ onUnmounted(() => {
   display: block;
   font-size: 2rem;
   font-weight: 800;
-  color: #3D8D7A;
+  color: #10b981;
   margin-bottom: 0.5rem;
 }
 
@@ -1413,15 +1582,15 @@ onUnmounted(() => {
 }
 
 .clickable-stat:hover {
-  background: rgba(61, 141, 122, 0.1);
+  background: rgba(79, 70, 229, 0.1);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.2);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
 }
 
 .clickable-stat .stat-number {
   font-size: 2rem;
   font-weight: 800;
-  color: #3D8D7A;
+  color: #10b981;
   margin-bottom: 0.25rem;
   transition: all 0.3s ease;
 }
@@ -1439,7 +1608,7 @@ onUnmounted(() => {
 
 .view-hint {
   display: block;
-  color: #3D8D7A;
+  color: #10b981;
   font-size: 0.7rem;
   margin-top: 0.2rem;
   font-weight: 500;
@@ -1457,7 +1626,7 @@ onUnmounted(() => {
 }
 
 .sections-list h4 {
-  color: #3D8D7A;
+  color: #10b981;
   font-size: 1.2rem;
   font-weight: 700;
   margin-bottom: 1rem;
@@ -1473,28 +1642,28 @@ onUnmounted(() => {
   padding: 1rem;
   background: rgba(163, 209, 198, 0.1);
   border-radius: 12px;
-  border: 1px solid rgba(61, 141, 122, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 /* Enhanced Section Styles */
 .enhanced-section {
   background: white;
-  border: 2px solid rgba(61, 141, 122, 0.1);
+  border: 2px solid rgba(16, 185, 129, 0.1);
   border-radius: 16px;
   padding: 1.5rem;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.05);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.05);
 }
 
 .enhanced-section:hover {
-  border-color: rgba(61, 141, 122, 0.3);
-  box-shadow: 0 8px 24px rgba(61, 141, 122, 0.15);
+  border-color: rgba(16, 185, 129, 0.3);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
   transform: translateY(-2px);
 }
 
 .enhanced-section:hover .click-hint {
   opacity: 1;
-  color: #3D8D7A;
+  color: #10b981;
   font-weight: 500;
 }
 
@@ -1510,31 +1679,31 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem;
-  background: rgba(61, 141, 122, 0.05);
+  background: rgba(79, 70, 229, 0.05);
   border-radius: 10px;
-  border: 1px solid rgba(61, 141, 122, 0.1);
+  border: 1px solid rgba(79, 70, 229, 0.1);
 }
 
 .code-label {
   font-weight: 600;
-  color: #3D8D7A;
+  color: #10b981;
   font-size: 0.9rem;
 }
 
 .section-code {
   font-family: 'Courier New', monospace;
   font-weight: 700;
-  color: #3D8D7A;
+  color: #10b981;
   font-size: 1.1rem;
   background: white;
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
-  border: 1px solid rgba(61, 141, 122, 0.2);
+  border: 1px solid rgba(79, 70, 229, 0.2);
   flex: 1;
 }
 
 .copy-code-btn {
-  background: #3D8D7A;
+  background: #10b981;
   color: white;
   border: none;
   padding: 0.5rem 0.75rem;
@@ -1559,7 +1728,7 @@ onUnmounted(() => {
 
 .section-name {
   font-weight: 600;
-  color: #3D8D7A;
+  color: #10b981;
   font-size: 1.1rem;
   margin-bottom: 0.5rem;
   display: block;
@@ -1578,7 +1747,7 @@ onUnmounted(() => {
 }
 
 .click-hint {
-  color: #3D8D7A;
+  color: #10b981;
   font-size: 0.8rem;
   font-style: italic;
   opacity: 0.7;
@@ -1620,14 +1789,14 @@ onUnmounted(() => {
 }
 
 .view-quizzes {
-  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
 }
 
 .view-quizzes:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
 }
 
 .manage-grades {
@@ -1647,7 +1816,7 @@ onUnmounted(() => {
 }
 
 .generate-reports:hover {
-  background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #059669 0%, #8b5cf6 100%);
   transform: translateY(-1px);
   box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
 }
@@ -1665,7 +1834,7 @@ onUnmounted(() => {
 }
 
 .empty-state h3 {
-  color: #3D8D7A;
+  color: #10b981;
   font-size: 1.5rem;
   font-weight: 700;
   margin-bottom: 1rem;
@@ -1677,7 +1846,7 @@ onUnmounted(() => {
 }
 
 .create-first-btn {
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
   border: none;
   padding: 1rem 2rem;
@@ -1727,11 +1896,11 @@ onUnmounted(() => {
   align-items: flex-start;
   margin-bottom: 2rem;
   padding-bottom: 1rem;
-  border-bottom: 2px solid rgba(61, 141, 122, 0.1);
+  border-bottom: 2px solid rgba(79, 70, 229, 0.1);
 }
 
 .modal-header h2 {
-  color: #3D8D7A;
+  color: #10b981;
   font-size: 1.8rem;
   font-weight: 700;
   margin: 0;
@@ -1772,7 +1941,7 @@ onUnmounted(() => {
 }
 
 .step-title {
-  color: #3D8D7A;
+  color: #10b981;
   font-size: 1.4rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
@@ -1790,7 +1959,7 @@ onUnmounted(() => {
 .form-group label {
   display: block;
   font-weight: 600;
-  color: #3D8D7A;
+  color: #10b981;
   margin-bottom: 0.5rem;
 }
 

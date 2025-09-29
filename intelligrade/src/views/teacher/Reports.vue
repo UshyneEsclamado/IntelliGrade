@@ -633,8 +633,12 @@ const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString()
 }
 
-const goBack = () => {
-  router.push({ name: 'MySubjects' })
+const goBack = async () => {
+  try {
+    await router.push({ name: 'MySubjects' })
+  } catch (error) {
+    console.error('Navigation error:', error)
+  }
 }
 
 // Lifecycle
@@ -659,14 +663,27 @@ onMounted(() => {
 /* Enhanced Header Design */
 .section-header-card {
   position: relative;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%);
+  backdrop-filter: blur(20px);
   border-radius: 32px;
-  padding: 3rem;
+  padding: 3.5rem;
   margin-bottom: 2.5rem;
-  min-height: 160px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  min-height: 180px;
+  box-shadow: 
+    0 24px 48px rgba(0, 0, 0, 0.1),
+    0 12px 24px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.section-header-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 32px 64px rgba(0, 0, 0, 0.12),
+    0 16px 32px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .header-bg-decoration {
@@ -675,7 +692,7 @@ onMounted(() => {
   right: -20%;
   width: 120%;
   height: 200%;
-  background: radial-gradient(ellipse at center, rgba(139, 92, 246, 0.08) 0%, transparent 70%);
+  background: radial-gradient(ellipse at center, rgba(16, 185, 129, 0.08) 0%, transparent 70%);
   z-index: 1;
 }
 
@@ -692,7 +709,7 @@ onMounted(() => {
 .shape {
   position: absolute;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(167, 139, 250, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%);
 }
 
 .shape-1 {
@@ -740,15 +757,16 @@ onMounted(() => {
 }
 
 .section-header-icon {
-  width: 70px;
-  height: 70px;
-  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
-  border-radius: 20px;
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .header-text {
@@ -760,8 +778,9 @@ onMounted(() => {
 .section-header-title {
   font-size: 2rem;
   font-weight: 800;
-  color: #8b5cf6;
+  color: #10b981;
   margin-bottom: 0.25rem;
+  letter-spacing: -0.025em;
 }
 
 .section-header-subtitle {
@@ -785,7 +804,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
   border: none;
   padding: 0.875rem 1.5rem;
@@ -793,12 +812,12 @@ onMounted(() => {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.3);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
 }
 
 .export-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(245, 158, 11, 0.4);
+  box-shadow: 0 12px 32px rgba(16, 185, 129, 0.4);
 }
 
 .export-btn:disabled {
@@ -844,8 +863,8 @@ onMounted(() => {
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid rgba(139, 92, 246, 0.1);
-  border-left: 4px solid #8b5cf6;
+  border: 4px solid rgba(16, 185, 129, 0.1);
+  border-left: 4px solid #10b981;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 1rem;
@@ -877,7 +896,7 @@ onMounted(() => {
 }
 
 .retry-btn {
-  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
   border: none;
   padding: 1rem 2rem;
@@ -889,7 +908,7 @@ onMounted(() => {
 
 .retry-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 12px 32px rgba(16, 185, 129, 0.3);
 }
 
 /* Summary Cards */
@@ -942,11 +961,11 @@ onMounted(() => {
 }
 
 .completion-rate {
-  border-color: rgba(139, 92, 246, 0.2);
+  border-color: rgba(16, 185, 129, 0.2);
 }
 
 .completion-rate .summary-icon {
-  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
 }
 
 .summary-icon {
@@ -1010,14 +1029,14 @@ onMounted(() => {
 }
 
 .tab-button:hover {
-  background: rgba(139, 92, 246, 0.1);
-  color: #8b5cf6;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
 }
 
 .tab-button.active {
-  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
 .tab-content {
@@ -1089,7 +1108,7 @@ onMounted(() => {
 }
 
 .bar {
-  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   width: 100%;
   border-radius: 4px 4px 0 0;
   transition: all 0.3s ease;
@@ -1122,10 +1141,10 @@ onMounted(() => {
   position: absolute;
   width: 8px;
   height: 8px;
-  background: #8b5cf6;
+  background: #10b981;
   border-radius: 50%;
   border: 2px solid white;
-  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
 .trend-labels {
@@ -1349,7 +1368,7 @@ onMounted(() => {
 }
 
 .action-btn-small {
-  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
   border: none;
   padding: 0.5rem 1rem;
@@ -1362,7 +1381,7 @@ onMounted(() => {
 
 .action-btn-small:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
 .no-results {
@@ -1423,7 +1442,7 @@ onMounted(() => {
   display: block;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #8b5cf6;
+  color: #10b981;
   margin-bottom: 0.25rem;
 }
 

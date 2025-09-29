@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container">
+  <div class="page-container" :class="{ 'dark-mode': isDarkMode }">
     <!-- Background decoration -->
     <div class="bg-decoration">
       <div class="floating-shape shape-1"></div>
@@ -270,6 +270,10 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase.js'
+import { useDarkMode } from '../../composables/useDarkMode.js'
+
+// Dark mode
+const { isDarkMode, initDarkMode } = useDarkMode()
 
 const router = useRouter()
 
