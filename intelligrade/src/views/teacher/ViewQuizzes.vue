@@ -1,5 +1,5 @@
 <template>
-  <div class="view-quizzes-container">
+  <div class="view-quizzes-container" :class="{ 'dark-mode': isDarkMode }">
     <!-- Enhanced Header Section -->
     <div class="section-header-card">
       <div class="header-bg-decoration"></div>
@@ -205,6 +205,10 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { supabase } from '../../supabase.js'
+import { useDarkMode } from '../../composables/useDarkMode.js'
+
+// Dark mode
+const { isDarkMode, initDarkMode } = useDarkMode()
 
 const router = useRouter()
 const route = useRoute()
@@ -379,6 +383,7 @@ const formatQuestionType = (type) => {
 
 // Lifecycle
 onMounted(() => {
+  initDarkMode()
   fetchQuizzes()
 })
 </script>
@@ -1003,5 +1008,192 @@ onMounted(() => {
     flex-direction: column;
     gap: 0.5rem;
   }
+}
+
+/* Dark Mode Styles */
+.view-quizzes-container.dark-mode {
+  background: var(--bg-primary);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .section-header-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .section-header-title {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .section-header-subtitle {
+  color: var(--accent-color);
+}
+
+.dark-mode .section-header-description {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .create-quiz-btn {
+  background: linear-gradient(135deg, var(--accent-color) 0%, #4a9b87 100%);
+}
+
+.dark-mode .back-button {
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .back-button:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.dark-mode .loading-state {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .loading-spinner {
+  border: 4px solid rgba(95, 179, 160, 0.2);
+  border-left: 4px solid var(--accent-color);
+}
+
+.dark-mode .error-state {
+  background: var(--error-bg);
+  border: 1px solid rgba(217, 83, 79, 0.4);
+  color: var(--error-color);
+}
+
+.dark-mode .empty-state {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .empty-state h3 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .quiz-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .quiz-card:hover {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  border-color: var(--accent-color);
+}
+
+.dark-mode .quiz-title {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .quiz-description {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .quiz-meta-item {
+  background: var(--bg-accent);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .quiz-status {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .quiz-actions .quiz-action-btn {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .quiz-actions .quiz-action-btn:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.dark-mode .quiz-actions .quiz-action-btn.primary {
+  background: var(--accent-color);
+  color: white;
+}
+
+.dark-mode .quiz-actions .quiz-action-btn.primary:hover {
+  background: var(--accent-hover);
+}
+
+.dark-mode .quiz-actions .quiz-action-btn.danger {
+  background: var(--error-bg);
+  border-color: var(--error-color);
+  color: var(--error-color);
+}
+
+.dark-mode .quiz-actions .quiz-action-btn.danger:hover {
+  background: rgba(217, 83, 79, 0.3);
+}
+
+.dark-mode .quiz-details-modal {
+  background: var(--bg-secondary);
+}
+
+.dark-mode .modal-overlay {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.dark-mode .modal-header h3 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .modal-close {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.dark-mode .modal-close:hover {
+  background: rgba(239, 68, 68, 0.3);
+}
+
+.dark-mode .quiz-details h4 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .detail-item {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .detail-item strong {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .questions-preview {
+  background: var(--bg-accent);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .questions-preview h4 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .question-preview {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .question-number {
+  background: var(--accent-color);
+}
+
+.dark-mode .question-text {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .question-type {
+  background: var(--bg-accent-hover);
+  color: var(--accent-color);
+}
+
+.dark-mode .question-points {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .loading-questions {
+  color: var(--secondary-text-color);
 }
 </style>

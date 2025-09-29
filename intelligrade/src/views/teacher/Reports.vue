@@ -1,6 +1,6 @@
 
 <template>
-  <div class="reports-container">
+  <div class="reports-container" :class="{ 'dark-mode': isDarkMode }">
     <!-- Enhanced Header Section -->
     <div class="section-header-card">
       <div class="header-bg-decoration"></div>
@@ -393,6 +393,10 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { supabase } from '../../supabase.js'
+import { useDarkMode } from '../../composables/useDarkMode.js'
+
+// Dark mode
+const { isDarkMode, initDarkMode } = useDarkMode()
 
 const router = useRouter()
 const route = useRoute()
@@ -635,6 +639,7 @@ const goBack = () => {
 
 // Lifecycle
 onMounted(() => {
+  initDarkMode()
   fetchReportData()
 })
 </script>
@@ -1661,5 +1666,249 @@ onMounted(() => {
   .tab-buttons {
     flex-wrap: wrap;
   }
+}
+
+/* Dark Mode Styles */
+.reports-container.dark-mode {
+  background: var(--bg-primary);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .section-header-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .section-header-title {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .section-header-subtitle {
+  color: var(--accent-color);
+}
+
+.dark-mode .section-header-description {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .export-btn {
+  background: linear-gradient(135deg, var(--accent-color) 0%, #4a9b87 100%);
+}
+
+.dark-mode .back-button {
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .back-button:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.dark-mode .loading-state {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .loading-spinner {
+  border: 4px solid rgba(95, 179, 160, 0.2);
+  border-left: 4px solid var(--accent-color);
+}
+
+.dark-mode .error-state {
+  background: var(--error-bg);
+  border: 1px solid rgba(217, 83, 79, 0.4);
+  color: var(--error-color);
+}
+
+.dark-mode .empty-state {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .empty-state h3 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .tab-buttons .tab-btn {
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .tab-buttons .tab-btn.active {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: white;
+}
+
+.dark-mode .tab-buttons .tab-btn:hover {
+  border-color: var(--accent-color);
+}
+
+.dark-mode .stats-grid .stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .stats-grid .stat-card:hover {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  border-color: var(--accent-color);
+}
+
+.dark-mode .stat-number {
+  color: var(--accent-color);
+}
+
+.dark-mode .stat-label {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .stat-description {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .chart-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .chart-container h3 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .quiz-reports .quiz-report-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .quiz-reports .quiz-report-card:hover {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  border-color: var(--accent-color);
+}
+
+.dark-mode .quiz-title {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .quiz-description {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .quiz-stats {
+  background: var(--bg-accent);
+}
+
+.dark-mode .quiz-stat-item {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .quiz-stat-value {
+  color: var(--accent-color);
+}
+
+.dark-mode .performance-metrics {
+  background: var(--bg-accent);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .performance-metrics h4 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .metric-item {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .metric-value {
+  color: var(--accent-color);
+}
+
+.dark-mode .student-performance .student-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .student-card:hover {
+  border-color: var(--accent-color);
+}
+
+.dark-mode .student-name {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .student-id {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .student-average {
+  color: var(--accent-color);
+}
+
+.dark-mode .progress-bar {
+  background: var(--bg-accent);
+}
+
+.dark-mode .progress-fill {
+  background: linear-gradient(90deg, var(--accent-color) 0%, #4a9b87 100%);
+}
+
+.dark-mode .detailed-analytics {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .detailed-analytics h4 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .analytics-content {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .data-table {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .data-table th {
+  background: var(--bg-accent);
+  color: var(--primary-text-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dark-mode .data-table td {
+  color: var(--secondary-text-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dark-mode .data-table tr:hover {
+  background: var(--bg-accent);
+}
+
+.dark-mode .export-options {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .export-options h4 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .export-format {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .export-format:hover {
+  border-color: var(--accent-color);
+}
+
+.dark-mode .export-format.selected {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: white;
 }
 </style>
