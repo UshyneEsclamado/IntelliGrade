@@ -1,5 +1,5 @@
 <template>
-  <div class="sections-container">
+  <div class="sections-container" :class="{ 'dark-mode': isDarkMode }">
     <!-- Header -->
     <div class="header-section">
       <div class="header-content">
@@ -514,7 +514,7 @@ export default {
   color: var(--primary-text-color);
   margin: 0;
   letter-spacing: -0.025em;
-  background: linear-gradient(135deg, var(--accent-color), #7c3aed, #db2777);
+  background: linear-gradient(135deg, var(--accent-color), #059669, #db2777);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -533,7 +533,7 @@ export default {
   color: #0f172a;
   margin: 0;
   letter-spacing: -0.025em;
-  background: linear-gradient(135deg, #4f46e5, #7c3aed, #db2777);
+  background: linear-gradient(135deg, #10b981, #059669, #db2777);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -547,7 +547,7 @@ export default {
 }
 
 .create-btn {
-  background: linear-gradient(135deg, var(--accent-color) 0%, #7c3aed 50%, #db2777 100%);
+  background: linear-gradient(135deg, var(--accent-color) 0%, #059669 50%, #db2777 100%);
   color: var(--text-inverse);
   border: none;
   padding: 0.875rem 1.75rem;
@@ -596,7 +596,7 @@ export default {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #4f46e5, #7c3aed, #db2777);
+  background: linear-gradient(90deg, #10b981, #059669, #db2777);
 }
 
 .stat-card:hover {
@@ -608,7 +608,7 @@ export default {
   width: 3.5rem;
   height: 3.5rem;
   border-radius: 1rem;
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 50%, #db2777 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -663,7 +663,7 @@ export default {
 }
 
 .section-subject {
-  color: #4f46e5;
+  color: #10b981;
   font-weight: 600;
   margin: 0.5rem 0 1rem 0;
   font-size: 0.875rem;
@@ -685,7 +685,7 @@ export default {
 }
 
 .meta-item i {
-  color: #4f46e5;
+  color: #10b981;
 }
 
 .section-actions {
@@ -708,12 +708,12 @@ export default {
 
 .view-btn {
   background: rgba(79, 70, 229, 0.1);
-  color: #4f46e5;
+  color: #10b981;
   border: 1px solid rgba(79, 70, 229, 0.2);
 }
 
 .view-btn:hover {
-  background: #4f46e5;
+  background: #10b981;
   color: white;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
@@ -826,7 +826,7 @@ export default {
 .avatar-placeholder {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 50%, #db2777 100%);
   color: white;
   display: flex;
   align-items: center;
@@ -854,7 +854,7 @@ export default {
 
 .student-id {
   font-weight: 600;
-  color: #4f46e5;
+  color: #10b981;
 }
 
 .student-actions {
@@ -876,12 +876,12 @@ export default {
 
 .student-action-btn:not(.remove) {
   background: rgba(79, 70, 229, 0.1);
-  color: #4f46e5;
+  color: #10b981;
   border: 1px solid rgba(79, 70, 229, 0.2);
 }
 
 .student-action-btn:not(.remove):hover {
-  background: #4f46e5;
+  background: #10b981;
   color: white;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
@@ -1039,7 +1039,7 @@ export default {
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #4f46e5;
+  border-color: #10b981;
   box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
   background: rgba(255, 255, 255, 0.95);
 }
@@ -1071,7 +1071,7 @@ export default {
 
 .submit-btn {
   padding: 0.875rem 1.75rem;
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 50%, #db2777 100%);
   color: white;
   border: none;
   border-radius: 0.75rem;
@@ -1110,7 +1110,7 @@ export default {
 
 .search-input:focus {
   outline: none;
-  border-color: #4f46e5;
+  border-color: #10b981;
   box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
   background: rgba(255, 255, 255, 0.95);
 }
@@ -1229,5 +1229,228 @@ export default {
     width: 100%;
     justify-content: center;
   }
+}
+
+/* Dark Mode Styles */
+.dark-mode .sections-container {
+  background: var(--bg-primary);
+}
+
+.dark-mode .header-section {
+  background: rgba(17, 24, 39, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dark-mode .page-title {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .page-subtitle {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .create-btn {
+  background: linear-gradient(135deg, var(--accent-color), #2563eb);
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
+}
+
+.dark-mode .create-btn:hover {
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+}
+
+.dark-mode .stat-card {
+  background: rgba(17, 24, 39, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.25),
+    0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.dark-mode .stat-card:hover {
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.dark-mode .stat-card h3 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .stat-card p {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .section-card {
+  background: rgba(17, 24, 39, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.25),
+    0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.dark-mode .section-card:hover {
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.dark-mode .section-card h3 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .section-card p {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .section-meta .meta-item .label {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .section-meta .meta-item .value {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .section-actions .action-btn {
+  background: rgba(75, 85, 99, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .section-actions .action-btn:hover {
+  background: rgba(75, 85, 99, 0.3);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .section-actions .action-btn.primary {
+  background: linear-gradient(135deg, var(--accent-color), #2563eb);
+  color: white;
+}
+
+.dark-mode .section-actions .action-btn.primary:hover {
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.dark-mode .students-card {
+  background: rgba(31, 41, 55, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dark-mode .students-header h4 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .student-card {
+  background: rgba(17, 24, 39, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dark-mode .student-card:hover {
+  background: rgba(17, 24, 39, 0.95);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .student-info .student-name {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .student-info .student-email {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .student-actions .action-btn.danger:hover {
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+.dark-mode .modal {
+  background: rgba(17, 24, 39, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 20px 50px rgba(0, 0, 0, 0.5),
+    0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .modal-header h2 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .close-btn {
+  background: rgba(75, 85, 99, 0.2);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .close-btn:hover {
+  background: #ef4444;
+  color: white;
+}
+
+.dark-mode .form-group label {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .form-group input,
+.dark-mode .form-group select,
+.dark-mode .form-group textarea {
+  background: rgba(17, 24, 39, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .form-group input:focus,
+.dark-mode .form-group select:focus,
+.dark-mode .form-group textarea:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+  background: rgba(17, 24, 39, 1);
+}
+
+.dark-mode .cancel-btn {
+  background: rgba(75, 85, 99, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .cancel-btn:hover {
+  background: rgba(75, 85, 99, 0.3);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.dark-mode .submit-btn {
+  background: linear-gradient(135deg, var(--accent-color), #2563eb);
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
+}
+
+.dark-mode .submit-btn:hover:not(:disabled) {
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+}
+
+.dark-mode .search-input {
+  background: rgba(17, 24, 39, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .search-input:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+  background: rgba(17, 24, 39, 1);
+}
+
+.dark-mode .student-item {
+  background: rgba(17, 24, 39, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.05);
+}
+
+.dark-mode .student-item:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(17, 24, 39, 0.8);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .enroll-action-btn {
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+}
+
+.dark-mode .enroll-action-btn:hover {
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
 }
 </style>

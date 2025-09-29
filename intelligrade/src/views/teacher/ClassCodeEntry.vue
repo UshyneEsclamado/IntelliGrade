@@ -1,5 +1,5 @@
 <template>
-  <div class="auth-wrapper">
+  <div class="auth-wrapper" :class="{ 'dark-mode': isDarkMode }">
     <div class="geometric-shapes"></div>
     <div class="floating-elements">
       <div class="floating-circle circle-1"></div>
