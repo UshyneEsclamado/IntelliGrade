@@ -21,6 +21,17 @@
         </div>
       </div>
 
+      <!-- Debug Info (remove in production) -->
+      <div v-if="debugMode" class="debug-info card-box" style="margin-bottom: 1rem; padding: 1rem; background: #f0f0f0;">
+        <h4>Debug Info:</h4>
+        <p><strong>Auth User ID:</strong> {{ currentUser?.id || 'None' }}</p>
+        <p><strong>Teacher Profile ID:</strong> {{ teacherProfile?.id || 'None' }}</p>
+        <p><strong>Teacher ID:</strong> {{ currentTeacherId || 'None' }}</p>
+        <p><strong>Teacher Name:</strong> {{ teacherProfile?.full_name || 'None' }}</p>
+        <p><strong>Contacts Count:</strong> {{ studentContacts.length }}</p>
+        <button @click="debugMode = false" style="margin-top: 0.5rem;">Hide Debug</button>
+      </div>
+
       <!-- Main Content -->
       <section class="content-section">
         <div class="card-box content-card">
@@ -48,6 +59,7 @@
               </svg>
               Broadcast Message
             </button>
+            <button @click="debugMode = true" class="debug-btn">Debug</button>
           </div>
 
           <!-- Students Tab -->
@@ -64,8 +76,8 @@
                 <div class="filter-section">
                   <select v-model="selectedSection" class="section-filter">
                     <option value="">All Sections</option>
-                    <option v-for="section in mySections" :key="section.id" :value="section.id">
-                      {{ section.name }}
+                    <option v-for="section in uniqueSections" :key="section.section_id" :value="section.section_id">
+                      {{ section.section_name }} - {{ section.subject_name }}
                     </option>
                   </select>
                 </div>
@@ -88,20 +100,22 @@
               </div>
               <p>No enrolled students found</p>
               <span class="empty-subtext">Students who join your sections will appear here.</span>
+              <button @click="loadTeacherContacts" class="refresh-btn">Refresh Data</button>
             </div>
 
             <div v-else class="students-by-section">
-              <div v-for="section in groupedStudents" :key="section.id" class="section-group">
+              <div v-for="section in groupedStudents" :key="section.section_id" class="section-group">
                 <div class="section-header">
                   <div class="section-info">
-                    <h3 class="section-name">{{ section.name }}</h3>
-                    <span class="section-code">{{ section.code }}</span>
+                    <h3 class="section-name">{{ section.section_name }}</h3>
+                    <span class="section-code">{{ section.section_code }}</span>
+                    <span class="subject-name">{{ section.subject_name }} (Grade {{ section.grade_level }})</span>
                   </div>
                   <div class="section-actions">
                     <span class="student-count">{{ section.students.length }} students</span>
                     <button 
                       class="broadcast-btn" 
-                      @click="openBroadcastModal(); broadcastSection = section.id"
+                      @click="openBroadcastModal(); broadcastSection = section.section_id"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M3 11l18-5v12L3 14v-3z"/>
@@ -114,23 +128,24 @@
                 <div class="students-list">
                   <div 
                     v-for="student in section.students" 
-                    :key="`${student.id}-${section.id}`"
+                    :key="`${student.student_id}-${section.section_id}`"
                     :class="['student-item', { 'has-unread': student.unread_count > 0 }]"
                     @click="startChatWithStudent(student)"
                   >
                     <div class="student-info">
                       <div class="student-avatar">
-                        <span>{{ student.name?.[0] || 'S' }}</span>
+                        <span>{{ student.student_name?.[0] || 'S' }}</span>
                       </div>
                       <div class="student-details">
-                        <h4 class="student-name">{{ student.name }}</h4>
-                        <p class="student-email">{{ student.email }}</p>
-                        <p class="last-message">{{ student.last_message || 'No messages yet' }}</p>
+                        <h4 class="student-name">{{ student.student_name }}</h4>
+                        <p class="student-email">{{ student.student_email }}</p>
+                        <p class="student-grade">Grade {{ student.grade_level }}</p>
+                        <p class="last-message">{{ student.last_message || `Enrolled ${formatDate(student.enrolled_date)}` }}</p>
                       </div>
                     </div>
                     <div class="message-status">
                       <span v-if="student.unread_count > 0" class="unread-badge">{{ student.unread_count }}</span>
-                      <span class="last-time">{{ formatTime(student.last_message_time) }}</span>
+                      <span class="last-time">{{ formatTime(student.last_message_date || student.enrolled_date) }}</span>
                       <div class="chat-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
@@ -156,8 +171,8 @@
                   <label>Select Section</label>
                   <select v-model="broadcastSection" class="form-control">
                     <option value="">Choose a section</option>
-                    <option v-for="section in mySections" :key="section.id" :value="section.id">
-                      {{ section.name }}
+                    <option v-for="section in uniqueSections" :key="section.section_id" :value="section.section_id">
+                      {{ section.section_name }} - {{ section.subject_name }}
                     </option>
                   </select>
                 </div>
@@ -198,10 +213,10 @@
           <button @click="closeModal" class="close-btn">&times;</button>
           <div class="header-info">
             <div class="student-avatar">
-              <span>{{ activeConversation?.name?.[0] || 'S' }}</span>
+              <span>{{ activeConversation?.student_name?.[0] || 'S' }}</span>
             </div>
             <div class="header-details">
-              <h2 class="modal-title">{{ activeConversation?.name || 'Student' }}</h2>
+              <h2 class="modal-title">{{ activeConversation?.student_name || 'Student' }}</h2>
               <span class="section-info">{{ activeConversation?.subject_name }}</span>
             </div>
           </div>
@@ -211,10 +226,10 @@
             <div 
               v-for="message in currentMessages" 
               :key="message.id" 
-              :class="['message-bubble', { 'sent': message.sender_id === currentUser.id, 'received': message.sender_id !== currentUser.id }]"
+              :class="['message-bubble', { 'sent': message.sender_id === currentTeacherId, 'received': message.sender_id !== currentTeacherId }]"
             >
-              <p class="message-text">{{ message.content }}</p>
-              <span class="message-time">{{ formatTime(message.created_at) }}</span>
+              <p class="message-text">{{ message.message_text }}</p>
+              <span class="message-time">{{ formatTime(message.sent_at) }}</span>
             </div>
             <div v-if="currentMessages.length === 0" class="no-messages">
               <p>No messages yet. Start the conversation!</p>
@@ -241,62 +256,18 @@
       </div>
     </div>
 
-    <!-- Broadcast Modal -->
-    <div v-if="isBroadcastModalOpen" class="modal-overlay" @click.self="closeBroadcastModal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button @click="closeBroadcastModal" class="close-btn">&times;</button>
-          <h2 class="modal-title">Send Section Announcement</h2>
-        </div>
-        <div class="modal-body">
-          <div class="broadcast-form">
-            <div class="form-group">
-              <label>Select Section</label>
-              <select v-model="broadcastSection" class="form-control">
-                <option value="">Choose a section</option>
-                <option v-for="section in mySections" :key="section.id" :value="section.id">
-                  {{ section.name }}
-                </option>
-              </select>
-            </div>
-            
-            <div class="form-group">
-              <label>Message</label>
-              <textarea 
-                v-model="broadcastMessage" 
-                placeholder="Type your section announcement here..."
-                class="form-control message-textarea"
-                rows="6"
-              ></textarea>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button 
-            class="broadcast-send-btn"
-            @click="sendBroadcastMessage"
-            :disabled="!broadcastMessage.trim() || !broadcastSection"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M3 11l18-5v12L3 14v-3z"/>
-            </svg>
-            Send to Section Students
-          </button>
-        </div>
-      </div>
-    </div>
-
     <!-- Loading Overlay -->
     <div v-if="isLoading" class="loading-overlay">
       <div class="loading-content">
         <div class="loading-spinner"></div>
-        <p>Loading messages...</p>
+        <p>{{ loadingMessage }}</p>
       </div>
     </div>
   </div>
 </template>
+
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase.js'
 
@@ -308,32 +279,20 @@ const router = useRouter()
 
 // User authentication
 const currentUser = ref(null)
-
-const getCurrentUser = async () => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      await router.push('/login')
-      return null
-    }
-    currentUser.value = user
-    return user
-  } catch (error) {
-    console.error('Error getting current user:', error)
-    await router.push('/login')
-    return null
-  }
-}
+const currentTeacherId = ref(null)
+const teacherProfile = ref(null)
+const debugMode = ref(false)
 
 // UI State
 const currentTab = ref('students')
 const isModalOpen = ref(false)
 const isBroadcastModalOpen = ref(false)
 const isLoading = ref(false)
+const loadingMessage = ref('Loading...')
 
 // Search and Filter
 const searchQuery = ref('')
-const selectedSection = ref('') // Changed from selectedSubject to selectedSection
+const selectedSection = ref('')
 
 // Chat State
 const selectedChat = ref(null)
@@ -343,21 +302,283 @@ const messagesContainer = ref(null)
 
 // Broadcast State
 const broadcastMessage = ref('')
-const broadcastSection = ref('') // Changed from broadcastSubject to broadcastSection
+const broadcastSection = ref('')
 
 // Data
-const mySections = ref([]) // Changed from mySubjects to mySections
-const enrolledStudents = ref([])
+const studentContacts = ref([])
 const currentMessages = ref([])
+
+// ================================
+// AUTHENTICATION FUNCTIONS
+// ================================
+
+const getCurrentUser = async () => {
+  try {
+    loadingMessage.value = 'Checking authentication...'
+    
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    if (sessionError) {
+      console.error('Session error:', sessionError)
+      throw sessionError
+    }
+    
+    if (!session || !session.user) {
+      console.log('No valid session found')
+      await router.push('/login')
+      return null
+    }
+    
+    console.log('Session user:', session.user.id, session.user.email)
+    currentUser.value = session.user
+    
+    loadingMessage.value = 'Loading teacher profile...'
+    
+    // Step 1: Find the profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, auth_user_id, full_name, email, role')
+      .eq('auth_user_id', session.user.id)
+      .eq('role', 'teacher')
+      .single()
+    
+    console.log('Profile lookup result:', { profile, profileError })
+    
+    if (profileError || !profile) {
+      throw new Error(`Teacher profile not found for auth user: ${session.user.id}`)
+    }
+    
+    // Step 2: Get the teacher record
+    const { data: teacher, error: teacherError } = await supabase
+      .from('teachers')
+      .select('*')
+      .eq('profile_id', profile.id)
+      .single()
+    
+    console.log('Teacher lookup result:', { teacher, teacherError })
+    
+    if (teacherError || !teacher) {
+      throw new Error(`Teacher record not found for profile: ${profile.id}`)
+    }
+    
+    if (!teacher.is_active) {
+      throw new Error('Teacher account is not active')
+    }
+    
+    teacherProfile.value = teacher
+    currentTeacherId.value = teacher.id
+    
+    console.log('Teacher authenticated:', {
+      id: teacher.id,
+      name: teacher.full_name,
+      email: teacher.email,
+      active: teacher.is_active
+    })
+    
+    return {
+      authUser: session.user,
+      teacherId: teacher.id,
+      profile: teacher
+    }
+    
+  } catch (error) {
+    console.error('Error getting current user:', error)
+    alert(`Authentication error: ${error.message}`)
+    await router.push('/login')
+    return null
+  }
+}
+
+// ================================
+// DATA LOADING METHODS
+// ================================
+
+const loadTeacherContacts = async () => {
+  try {
+    if (!currentTeacherId.value) {
+      console.error('No teacher ID available')
+      return
+    }
+    
+    isLoading.value = true
+    loadingMessage.value = 'Loading your students...'
+    
+    console.log('Loading contacts for teacher:', currentTeacherId.value)
+    
+    // Always use manual query for now to avoid cache issues
+    console.log('Using manual query to avoid cache issues...')
+    const contacts = await loadContactsManually()
+    
+    console.log('Contacts loaded:', contacts?.length || 0)
+    
+    if (!contacts || contacts.length === 0) {
+      console.log('No students found for this teacher')
+      studentContacts.value = []
+      
+      // Let's also check if teacher has any subjects at all
+      const { data: subjectCheck } = await supabase
+        .from('subjects')
+        .select('id, name')
+        .eq('teacher_id', currentTeacherId.value)
+        .eq('is_active', true)
+      
+      console.log('Teacher has subjects:', subjectCheck?.length || 0)
+      if (subjectCheck && subjectCheck.length > 0) {
+        console.log('Subjects found but no enrolled students')
+      }
+      
+      return
+    }
+    
+    studentContacts.value = contacts
+    
+    // Try to load messaging data if tables exist
+    loadingMessage.value = 'Loading messaging data...'
+    await loadMessagingData()
+    
+  } catch (error) {
+    console.error('Error loading teacher contacts:', error)
+    alert(`Error loading students: ${error.message}`)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const loadContactsManually = async () => {
+  try {
+    console.log('Loading contacts manually for teacher:', currentTeacherId.value)
+    
+    // Step 1: Check what subjects this teacher has
+    const { data: subjects, error: subjectsError } = await supabase
+      .from('subjects')
+      .select('*')
+      .eq('teacher_id', currentTeacherId.value)
+      .eq('is_active', true)
+    
+    console.log('Teacher subjects:', { subjects, subjectsError })
+    
+    if (subjectsError || !subjects || subjects.length === 0) {
+      console.log('No subjects found for teacher')
+      return []
+    }
+    
+    // Step 2: Check what sections exist for these subjects
+    const subjectIds = subjects.map(s => s.id)
+    const { data: sections, error: sectionsError } = await supabase
+      .from('sections')
+      .select('*')
+      .in('subject_id', subjectIds)
+      .eq('is_active', true)
+    
+    console.log('Sections for subjects:', { sections, sectionsError })
+    
+    if (sectionsError || !sections || sections.length === 0) {
+      console.log('No sections found for teacher subjects')
+      return []
+    }
+    
+    // Step 3: Check what enrollments exist for these sections
+    const sectionIds = sections.map(s => s.id)
+    const { data: enrollments, error: enrollmentsError } = await supabase
+      .from('enrollments')
+      .select('*')
+      .in('section_id', sectionIds)
+      .eq('status', 'active')
+    
+    console.log('Enrollments for sections:', { enrollments, enrollmentsError })
+    
+    if (enrollmentsError || !enrollments || enrollments.length === 0) {
+      console.log('No enrollments found for teacher sections')
+      return []
+    }
+    
+    // Step 4: Get student details
+    // TODO: Implement student details loading here, or return an empty array for now
+    return []
+  } catch (error) {
+    console.error('Error loading contacts manually:', error)
+    return []
+  }
+}
+
+const loadMessagingData = async () => {
+  try {
+    // Check if messaging tables exist by trying to query them
+    const { data, error } = await supabase
+      .from('messages')
+      .select('count')
+      .limit(1)
+    
+    if (error && error.code === '42P01') {
+      // Table doesn't exist
+      console.log('Messaging tables not yet created')
+      return
+    }
+    
+    if (error) {
+      console.error('Error checking messages table:', error)
+      return
+    }
+    
+    console.log('Messaging tables exist, loading data...')
+    
+    // Update student unread counts and last messages
+    for (const student of studentContacts.value) {
+      await updateStudentMessagingInfo(student)
+    }
+    
+  } catch (error) {
+    console.error('Error loading messaging data:', error)
+  }
+}
+
+const updateStudentMessagingInfo = async (student) => {
+  try {
+    // Get unread count for this teacher from this student
+    const { count: unreadCount } = await supabase
+      .from('messages')
+      .select('*', { count: 'exact', head: true })
+      .eq('section_id', student.section_id)
+      .eq('sender_id', student.student_id)
+      .eq('recipient_id', currentTeacherId.value)
+      .not('id', 'in', 
+        `(${await supabase
+          .from('message_reads')
+          .select('message_id')
+          .eq('reader_id', currentTeacherId.value)
+          .then(({data}) => data?.map(r => r.message_id).join(',') || '\'\'')
+        })`
+      )
+    
+    student.unread_count = unreadCount || 0
+    
+    // Get last message between teacher and student
+    const { data: lastMessage } = await supabase
+      .from('messages')
+      .select('message_text, sent_at')
+      .eq('section_id', student.section_id)
+      .or(`and(sender_id.eq.${student.student_id},recipient_id.eq.${currentTeacherId.value}),and(sender_id.eq.${currentTeacherId.value},recipient_id.eq.${student.student_id})`)
+      .order('sent_at', { ascending: false })
+      .limit(1)
+      .single()
+    
+    if (lastMessage) {
+      student.last_message = lastMessage.message_text
+      student.last_message_date = lastMessage.sent_at
+    }
+    
+  } catch (error) {
+    console.error('Error updating messaging info for student:', student.student_id, error)
+  }
+}
 
 // ================================
 // COMPUTED PROPERTIES
 // ================================
 
 const filteredStudents = computed(() => {
-  let students = enrolledStudents.value
+  let students = studentContacts.value
   
-  // Filter by selected section instead of subject
+  // Filter by selected section
   if (selectedSection.value) {
     students = students.filter(s => s.section_id === selectedSection.value)
   }
@@ -365,28 +586,26 @@ const filteredStudents = computed(() => {
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     students = students.filter(s => 
-      s.student_name.toLowerCase().includes(query) ||
-      s.subject_name.toLowerCase().includes(query) ||
-      s.section_name.toLowerCase().includes(query)
+      s.student_name?.toLowerCase().includes(query) ||
+      s.subject_name?.toLowerCase().includes(query) ||
+      s.section_name?.toLowerCase().includes(query)
     )
   }
   
   return students
 })
 
-// Updated grouping logic: Group by section instead of subject
 const groupedStudents = computed(() => {
   const sections = {}
   
   filteredStudents.value.forEach(student => {
-    const sectionKey = student.section_id // Use section_id as key
+    const sectionKey = student.section_id
     if (!sections[sectionKey]) {
       sections[sectionKey] = {
-        id: student.section_id,
+        section_id: student.section_id,
         subject_id: student.subject_id,
-        name: `${student.subject_name} - ${student.section_name}`, // Show "Filipino - Section A"
-        code: student.section_code,
         section_name: student.section_name,
+        section_code: student.section_code,
         subject_name: student.subject_name,
         grade_level: student.grade_level,
         students: []
@@ -398,159 +617,24 @@ const groupedStudents = computed(() => {
   return Object.values(sections)
 })
 
-// ================================
-// DATA LOADING METHODS
-// ================================
-
-const loadMySubjectsAndStudents = async () => {
-  try {
-    if (!currentUser.value) {
-      console.error('No authenticated user')
-      return
+const uniqueSections = computed(() => {
+  const sectionsMap = new Map()
+  
+  studentContacts.value.forEach(student => {
+    const key = student.section_id
+    if (!sectionsMap.has(key)) {
+      sectionsMap.set(key, {
+        section_id: student.section_id,
+        section_name: student.section_name,
+        section_code: student.section_code,
+        subject_name: student.subject_name,
+        grade_level: student.grade_level
+      })
     }
-    
-    isLoading.value = true
-    console.log('Loading subjects and students for teacher:', currentUser.value.id)
-    
-    // Use the teacher_contacts view we created earlier
-    const { data: contacts, error: contactsError } = await supabase
-      .from('teacher_contacts')
-      .select('*')
-      .eq('teacher_id', currentUser.value.id)
-    
-    if (contactsError) {
-      console.error('Error fetching teacher contacts:', contactsError)
-      throw contactsError
-    }
-    
-    console.log('Teacher contacts found:', contacts)
-    
-    if (!contacts || contacts.length === 0) {
-      console.log('No enrolled students found')
-      enrolledStudents.value = []
-      mySections.value = []
-      return
-    }
-    
-    // Process the contacts data
-    enrolledStudents.value = contacts.map(contact => ({
-      id: contact.student_id,
-      student_name: contact.student_name,
-      student_email: contact.student_email,
-      student_number: contact.student_number,
-      subject_id: contact.subject_id,
-      subject_name: contact.subject_name,
-      section_id: contact.section_id,
-      section_name: contact.section_name,
-      section_code: contact.section_code,
-      grade_level: contact.grade_level,
-      enrolled_date: contact.enrolled_date,
-      last_message_date: contact.last_message_date,
-      unread_count: contact.unread_count || 0,
-      // For display purposes
-      name: contact.student_name,
-      email: contact.student_email,
-      last_message: null, // We'll load this separately if needed
-      last_message_time: contact.last_message_date
-    }))
-    
-    // Extract unique SECTIONS for the filter dropdown (not subjects)
-    const sectionsMap = new Map()
-    contacts.forEach(contact => {
-      if (!sectionsMap.has(contact.section_id)) {
-        sectionsMap.set(contact.section_id, {
-          id: contact.section_id,
-          name: `${contact.subject_name} - ${contact.section_name}`,
-          code: contact.section_code,
-          subject_name: contact.subject_name,
-          section_name: contact.section_name,
-          grade_level: contact.grade_level
-        })
-      }
-    })
-    
-    mySections.value = Array.from(sectionsMap.values())
-    
-    console.log('Processed students:', enrolledStudents.value)
-    console.log('Processed sections:', mySections.value)
-    
-  } catch (error) {
-    console.error('Error loading subjects and students:', error)
-    alert('Error loading messaging data. Please check the console for details.')
-  } finally {
-    isLoading.value = false
-  }
-}
-
-const loadConversationMessages = async (studentId, sectionId) => {
-  try {
-    if (!currentUser.value) return
-    
-    console.log('Loading messages between teacher and student:', { 
-      teacherId: currentUser.value.id, 
-      studentId, 
-      sectionId 
-    })
-    
-    // Load messages using the teacher_messages view
-    const { data: messages, error: messagesError } = await supabase
-      .from('teacher_messages')
-      .select('*')
-      .eq('section_id', sectionId)
-      .or(`and(sender_id.eq.${currentUser.value.id},recipient_id.eq.${studentId}),and(sender_id.eq.${studentId},recipient_id.eq.${currentUser.value.id})`)
-      .order('sent_at', { ascending: true })
-    
-    if (messagesError) {
-      console.error('Error loading messages:', messagesError)
-      throw messagesError
-    }
-    
-    console.log('Messages loaded:', messages)
-    
-    // Format messages for display
-    currentMessages.value = (messages || []).map(msg => ({
-      id: msg.id,
-      sender_id: msg.sender_id,
-      recipient_id: msg.recipient_id,
-      content: msg.message_text,
-      created_at: msg.sent_at,
-      is_read: msg.is_read,
-      message_type: msg.message_type,
-      sender_name: msg.sender_name,
-      recipient_name: msg.recipient_name
-    }))
-    
-    // Mark messages as read
-    if (messages && messages.length > 0) {
-      await markConversationAsRead(sectionId, studentId)
-    }
-    
-  } catch (error) {
-    console.error('Error loading conversation messages:', error)
-  }
-}
-
-const markConversationAsRead = async (sectionId, studentId) => {
-  try {
-    const { error } = await supabase.rpc('mark_conversation_read', {
-      p_section_id: sectionId,
-      p_other_user_id: studentId,
-      p_current_user_id: currentUser.value.id
-    })
-    
-    if (error) {
-      console.error('Error marking conversation as read:', error)
-    } else {
-      // Update local unread count
-      const student = enrolledStudents.value.find(s => s.id === studentId && s.section_id === sectionId)
-      if (student) {
-        student.unread_count = 0
-      }
-    }
-  } catch (error) {
-    console.error('Error marking conversation as read:', error)
-  }
-}
+  })
+  
+  return Array.from(sectionsMap.values())
+})
 
 // ================================
 // CHAT METHODS
@@ -561,87 +645,111 @@ const startChatWithStudent = async (student) => {
   
   activeConversation.value = {
     ...student,
-    name: student.student_name || student.name,
-    email: student.student_email || student.email,
-    subject_name: student.subject_name // Include section context in modal
+    student_name: student.student_name || student.name
   }
   
   selectedChat.value = student
   isModalOpen.value = true
   
-  // Load messages for this conversation
-  await loadConversationMessages(student.id, student.section_id)
+  await loadConversationMessages(student.student_id, student.section_id)
   
-  // Scroll to bottom of messages
   await nextTick()
-  if (messagesContainer.value) {
-    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+  scrollToBottom()
+}
+
+const loadConversationMessages = async (studentId, sectionId) => {
+  try {
+    if (!currentTeacherId.value) return
+    
+    console.log('Loading messages between teacher and student:', { 
+      teacherId: currentTeacherId.value, 
+      studentId, 
+      sectionId 
+    })
+    
+    // Try to load messages if tables exist
+    const { data: messages, error } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('section_id', sectionId)
+      .or(`and(sender_id.eq.${currentTeacherId.value},recipient_id.eq.${studentId}),and(sender_id.eq.${studentId},recipient_id.eq.${currentTeacherId.value})`)
+      .order('sent_at', { ascending: true })
+    
+    if (error && error.code === '42P01') {
+      // Table doesn't exist
+      currentMessages.value = []
+      return
+    }
+    
+    if (error) {
+      console.error('Error loading messages:', error)
+      currentMessages.value = []
+      return
+    }
+    
+    currentMessages.value = messages || []
+    await markConversationAsRead(sectionId, studentId)
+    
+  } catch (error) {
+    console.error('Error loading conversation messages:', error)
+    currentMessages.value = []
   }
 }
 
 const handleSendMessage = async () => {
-  if (!newMessage.value.trim() || !activeConversation.value || !currentUser.value) return
+  if (!newMessage.value.trim() || !activeConversation.value || !currentTeacherId.value) return
   
   const messageText = newMessage.value.trim()
   const tempMessage = {
     id: 'temp-' + Date.now(),
-    sender_id: currentUser.value.id,
-    recipient_id: activeConversation.value.id,
-    content: messageText,
-    created_at: new Date().toISOString(),
+    sender_id: currentTeacherId.value,
+    recipient_id: activeConversation.value.student_id,
+    message_text: messageText,
+    sent_at: new Date().toISOString(),
     is_read: false,
     message_type: 'direct'
   }
   
-  // Add temporary message to display
   currentMessages.value.push(tempMessage)
   newMessage.value = ''
   
-  // Scroll to bottom
   await nextTick()
-  if (messagesContainer.value) {
-    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
-  }
+  scrollToBottom()
   
-  try {
-    // Send the message to the database
-    const { data: sentMessage, error: sendError } = await supabase
-      .from('messages')
-      .insert({
-        section_id: activeConversation.value.section_id,
-        sender_id: currentUser.value.id,
-        recipient_id: activeConversation.value.id,
-        message_text: messageText,
-        message_type: 'direct'
+      try {
+    const { data: messageId, error: sendError } = await supabase
+      .rpc('send_direct_message', {
+        p_section_id: activeConversation.value.section_id,
+        p_sender_id: currentTeacherId.value,
+        p_recipient_id: activeConversation.value.student_id,
+        p_message_text: messageText
       })
-      .select()
-      .single()
     
     if (sendError) {
-      console.error('Error sending message:', sendError)
-      throw sendError
+      // If function doesn't exist, show placeholder behavior
+      console.log('Messaging system not implemented:', sendError)
+      alert('Messaging system will be available after running the SQL setup script.')
+      
+      // Remove temp message
+      const tempIndex = currentMessages.value.findIndex(m => m.id === tempMessage.id)
+      if (tempIndex !== -1) {
+        currentMessages.value.splice(tempIndex, 1)
+      }
+      return
     }
     
-    console.log('Message sent successfully:', sentMessage)
+    console.log('Message sent successfully with ID:', messageId)
     
-    // Replace temporary message with real message
     const tempIndex = currentMessages.value.findIndex(m => m.id === tempMessage.id)
     if (tempIndex !== -1) {
-      currentMessages.value[tempIndex] = {
-        id: sentMessage.id,
-        sender_id: sentMessage.sender_id,
-        recipient_id: sentMessage.recipient_id,
-        content: sentMessage.message_text,
-        created_at: sentMessage.sent_at,
-        is_read: sentMessage.is_read,
-        message_type: sentMessage.message_type
-      }
+      currentMessages.value[tempIndex].id = messageId
     }
+    
+    await loadTeacherContacts()
     
   } catch (error) {
     console.error('Failed to send message:', error)
     
-    // Remove temporary message on error
     const tempIndex = currentMessages.value.findIndex(m => m.id === tempMessage.id)
     if (tempIndex !== -1) {
       currentMessages.value.splice(tempIndex, 1)
@@ -658,6 +766,27 @@ const closeModal = () => {
   currentMessages.value = []
 }
 
+const markConversationAsRead = async (sectionId, studentId) => {
+  try {
+    const { error } = await supabase.rpc('mark_conversation_read', {
+      p_section_id: sectionId,
+      p_other_user_id: studentId,
+      p_current_user_id: currentTeacherId.value
+    })
+    
+    if (error && error.code !== '42883') { // Ignore function not found error
+      console.error('Error marking conversation as read:', error)
+    } else if (!error) {
+      const student = studentContacts.value.find(s => s.student_id === studentId && s.section_id === sectionId)
+      if (student) {
+        student.unread_count = 0
+      }
+    }
+  } catch (error) {
+    console.error('Error marking conversation as read:', error)
+  }
+}
+
 // ================================
 // BROADCAST METHODS
 // ================================
@@ -665,7 +794,7 @@ const closeModal = () => {
 const openBroadcastModal = () => {
   isBroadcastModalOpen.value = true
   broadcastMessage.value = ''
-  broadcastSection.value = '' // Changed from broadcastSubject
+  broadcastSection.value = ''
 }
 
 const closeBroadcastModal = () => {
@@ -674,39 +803,38 @@ const closeBroadcastModal = () => {
   broadcastSection.value = ''
 }
 
-// Updated broadcast logic to work with individual sections
 const sendBroadcastMessage = async () => {
-  if (!broadcastMessage.value.trim() || !broadcastSection.value || !currentUser.value) return
+  if (!broadcastMessage.value.trim() || !broadcastSection.value || !currentTeacherId.value) return
   
   try {
     isLoading.value = true
+    loadingMessage.value = 'Sending broadcast message...'
     
-    // Send broadcast message to the specific section only
-    const { data: sentMessage, error: sendError } = await supabase
-      .from('messages')
-      .insert({
-        section_id: broadcastSection.value, // Specific section ID
-        sender_id: currentUser.value.id,
-        recipient_id: null, // null for broadcast
-        message_text: broadcastMessage.value.trim(),
-        message_type: 'announcement'
+    const { data: messageId, error: sendError } = await supabase
+      .rpc('send_section_announcement', {
+        p_section_id: broadcastSection.value,
+        p_teacher_id: currentTeacherId.value,
+        p_message_text: broadcastMessage.value.trim()
       })
-      .select()
-      .single()
     
     if (sendError) {
-      console.error('Error sending broadcast message:', sendError)
-      throw sendError
+      console.log('Broadcast messaging system not implemented:', sendError)
+      const selectedSectionInfo = uniqueSections.value.find(s => s.section_id === broadcastSection.value)
+      const sectionName = selectedSectionInfo ? selectedSectionInfo.section_name : 'Selected Section'
+      
+      closeBroadcastModal()
+      alert(`Broadcast message would be sent to all students in ${sectionName}! (Messaging system will be available after running the SQL setup script)`)
+      return
     }
     
-    console.log('Broadcast message sent successfully:', sentMessage)
-    
-    // Get section info for confirmation message
-    const selectedSectionInfo = mySections.value.find(s => s.id === broadcastSection.value)
-    const sectionName = selectedSectionInfo ? selectedSectionInfo.name : 'Selected Section'
-    
+    console.log('Broadcast message sent successfully with ID:', messageId)
     closeBroadcastModal()
+    
+    const selectedSectionInfo = uniqueSections.value.find(s => s.section_id === broadcastSection.value)
+    const sectionName = selectedSectionInfo ? selectedSectionInfo.section_name : 'Selected Section'
     alert(`Broadcast message sent successfully to all students in ${sectionName}!`)
+    
+    await loadTeacherContacts()
     
   } catch (error) {
     console.error('Error sending broadcast message:', error)
@@ -722,30 +850,34 @@ const sendBroadcastMessage = async () => {
 
 const markAllAsRead = async () => {
   try {
-    if (!currentUser.value) return
+    if (!currentTeacherId.value) return
     
-    // This would mark all messages sent to the teacher as read
-    const { error } = await supabase
-      .from('messages')
-      .update({ 
-        is_read: true, 
-        read_at: new Date().toISOString() 
-      })
-      .eq('recipient_id', currentUser.value.id)
-      .eq('is_read', false)
+    const unreadStudents = studentContacts.value.filter(s => s.unread_count > 0)
     
-    if (error) {
-      console.error('Error marking all messages as read:', error)
+    if (unreadStudents.length === 0) {
+      alert('No unread messages to mark as read.')
       return
     }
     
-    // Update local state
-    enrolledStudents.value.forEach(student => {
-      student.unread_count = 0
-    })
+    isLoading.value = true
+    loadingMessage.value = 'Marking messages as read...'
+    
+    for (const student of unreadStudents) {
+      await markConversationAsRead(student.section_id, student.student_id)
+    }
+    
+    await loadTeacherContacts()
     
   } catch (error) {
     console.error('Error marking all as read:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const scrollToBottom = () => {
+  if (messagesContainer.value) {
+    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
   }
 }
 
@@ -768,23 +900,35 @@ const formatTime = (dateString) => {
   }
 }
 
+const formatDate = (dateString) => {
+  if (!dateString) return ''
+  return new Date(dateString).toLocaleDateString()
+}
+
 // ================================
-// AUTHENTICATION & LIFECYCLE
+// LIFECYCLE METHODS
 // ================================
 
 const setupAuthListener = () => {
   supabase.auth.onAuthStateChange(async (event, session) => {
+    console.log('Auth state change:', event)
+    
     if (event === 'SIGNED_OUT' || !session) {
       currentUser.value = null
-      enrolledStudents.value = []
-      mySections.value = []
+      currentTeacherId.value = null
+      teacherProfile.value = null
+      studentContacts.value = []
+      console.log('User signed out, redirecting to login')
       await router.push('/login')
       return
     }
     
     if (event === 'SIGNED_IN' && session?.user) {
-      currentUser.value = session.user
-      await loadMySubjectsAndStudents()
+      console.log('User signed in, loading data')
+      const userData = await getCurrentUser()
+      if (userData) {
+        await loadTeacherContacts()
+      }
     }
   })
 }
@@ -792,17 +936,19 @@ const setupAuthListener = () => {
 onMounted(async () => {
   console.log('Teacher messages component mounted')
   
-  // Setup auth listener
+  // Setup auth listener first
   setupAuthListener()
   
   // Get current user and load data
-  const user = await getCurrentUser()
-  if (user) {
-    console.log('Authenticated user found:', user.email)
-    await loadMySubjectsAndStudents()
-  } else {
-    console.error('No authenticated user found')
+  const userData = await getCurrentUser()
+  if (userData) {
+    console.log('Teacher authenticated:', userData.profile.full_name)
+    await loadTeacherContacts()
   }
+})
+
+onUnmounted(() => {
+  console.log('Teacher messages component unmounted')
 })
 </script>
 
