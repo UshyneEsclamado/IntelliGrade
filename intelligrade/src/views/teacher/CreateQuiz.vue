@@ -1,5 +1,5 @@
 <template>
-  <div class="home-container">
+  <div class="home-container" :class="{ 'dark-mode': isDarkMode }">
     <!-- Enhanced Header Section -->
     <div class="section-header-card">
       <!-- Background Decorations -->
@@ -272,9 +272,13 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { supabase } from '../../supabase'; // Adjust path as needed
+import { useDarkMode } from '../../composables/useDarkMode';
 
 const router = useRouter();
 const route = useRoute();
+
+// Dark mode setup
+const { isDarkMode, initDarkMode } = useDarkMode();
 
 // Interface definitions
 interface Choice {
@@ -797,6 +801,9 @@ const goBack = () => {
 };
 
 onMounted(() => {
+  // Initialize dark mode
+  initDarkMode();
+  
   // Update total points when component mounts
   totalPoints.value = calculatedTotalPoints.value;
   
@@ -1638,5 +1645,312 @@ onMounted(() => {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+/* Dark Mode Styles */
+.home-container.dark-mode {
+  background: var(--bg-primary);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .section-header-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .header-bg-decoration {
+  background: linear-gradient(135deg, var(--accent-color) 0%, rgba(95, 179, 160, 0.3) 100%);
+}
+
+.dark-mode .section-header-title {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .section-header-subtitle {
+  color: var(--accent-color);
+}
+
+.dark-mode .section-header-description {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .back-button {
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .back-button:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.dark-mode .content-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .card-header h3 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .card-subtitle {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .form-group label {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .form-input {
+  background: var(--input-bg);
+  border: 2px solid var(--input-border);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .form-input:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(95, 179, 160, 0.2);
+}
+
+.dark-mode .form-textarea {
+  background: var(--input-bg);
+  border: 2px solid var(--input-border);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .form-textarea:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(95, 179, 160, 0.2);
+}
+
+.dark-mode .form-select {
+  background: var(--input-bg);
+  border: 2px solid var(--input-border);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .form-select:focus {
+  border-color: var(--accent-color);
+}
+
+.dark-mode .quiz-settings .settings-grid .setting-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .setting-card h4 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .setting-description {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .questions-section h3 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .question-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.dark-mode .question-header {
+  background: var(--bg-accent);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dark-mode .question-number {
+  color: var(--accent-color);
+}
+
+.dark-mode .question-type-badge {
+  background: var(--accent-color);
+  color: white;
+}
+
+.dark-mode .delete-question-btn {
+  background: var(--error-bg);
+  border: 1px solid rgba(217, 83, 79, 0.4);
+  color: var(--error-color);
+}
+
+.dark-mode .delete-question-btn:hover {
+  background: rgba(217, 83, 79, 0.2);
+}
+
+.dark-mode .question-content .form-group label {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .question-text-input {
+  background: var(--input-bg);
+  border: 2px solid var(--input-border);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .question-text-input:focus {
+  border-color: var(--accent-color);
+}
+
+.dark-mode .type-selector select {
+  background: var(--input-bg);
+  border: 2px solid var(--input-border);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .choices-container h4 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .choice-item {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .correct-indicator {
+  background: var(--success-bg);
+  border: 1px solid rgba(92, 184, 92, 0.4);
+}
+
+.dark-mode .correct-indicator input[type="radio"]:checked::after {
+  background: var(--success-color);
+}
+
+.dark-mode .choice-input {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .choice-input:focus {
+  border-color: var(--accent-color);
+}
+
+.dark-mode .remove-choice-btn {
+  background: var(--error-bg);
+  border: 1px solid rgba(217, 83, 79, 0.4);
+  color: var(--error-color);
+}
+
+.dark-mode .add-choice-btn {
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .add-choice-btn:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.dark-mode .true-false-container .tf-option {
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .true-false-container .tf-option.selected {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: white;
+}
+
+.dark-mode .short-answer-container .answer-input {
+  background: var(--input-bg);
+  border: 2px solid var(--input-border);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .short-answer-container .answer-input:focus {
+  border-color: var(--accent-color);
+}
+
+.dark-mode .question-points .points-input {
+  background: var(--input-bg);
+  border: 2px solid var(--input-border);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .question-points .points-input:focus {
+  border-color: var(--accent-color);
+}
+
+.dark-mode .add-question-btn {
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .add-question-btn:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.dark-mode .quiz-summary {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .quiz-summary h3 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .summary-item {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dark-mode .summary-item:last-child {
+  border-bottom: none;
+}
+
+.dark-mode .summary-label {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .summary-value {
+  color: var(--accent-color);
+}
+
+.dark-mode .action-buttons .btn {
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .action-buttons .btn:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.dark-mode .action-buttons .btn.primary {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: white;
+}
+
+.dark-mode .action-buttons .btn.primary:hover {
+  background: var(--accent-hover);
+}
+
+.dark-mode .action-buttons .btn.secondary {
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+}
+
+.dark-mode .action-buttons .btn:disabled {
+  background: var(--bg-accent);
+  border-color: var(--border-color);
+  color: var(--secondary-text-color);
+  opacity: 0.5;
+}
+
+.dark-mode .loading-spinner {
+  border: 4px solid rgba(95, 179, 160, 0.2);
+  border-left: 4px solid var(--accent-color);
 }
 </style>

@@ -1,16 +1,26 @@
 <template>
-  <div class="subjects-page">
+  <div class="subjects-page" :class="{ 'dark-mode': isDarkMode }">
     <div class="page-header">
       <div class="header-content">
         <h1>My Subjects</h1>
         <p class="header-subtitle">Create and manage your class subjects with multiple sections</p>
       </div>
-      <button @click="showCreateModal = true" class="create-btn">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
-        </svg>
-        Create New Subject
-      </button>
+      <div class="header-actions">
+        <button @click="toggleDarkMode" class="dark-mode-toggle" :title="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+          <svg v-if="isDarkMode" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,2L14.39,5.42C13.65,5.15 12.84,5 12,5C11.16,5 10.35,5.15 9.61,5.42L12,2M3.34,7L7.5,6.65C6.9,7.16 6.36,7.78 5.94,8.5C5.52,9.22 5.25,10 5.11,10.79L3.34,7M3.36,17L5.12,13.23C5.26,14 5.53,14.78 5.95,15.5C6.37,16.22 6.91,16.84 7.51,17.35L3.36,17M20.65,7L18.88,10.79C18.74,10 18.47,9.22 18.05,8.5C17.63,7.78 17.09,7.15 16.49,6.64L20.65,7M20.64,17L16.5,17.36C17.1,16.85 17.64,16.22 18.06,15.5C18.48,14.78 18.75,14 18.89,13.21L20.64,17M12,22L9.59,18.56C10.33,18.83 11.14,19 12,19C12.86,19 13.67,18.83 14.41,18.56L12,22Z" />
+          </svg>
+          <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17.75,4.09L15.22,6.03L16.13,9.09L13.5,7.28L10.87,9.09L11.78,6.03L9.25,4.09L12.44,4L13.5,1L14.56,4L17.75,4.09M21.25,11L19.61,12.25L20.2,14.23L18.5,13.06L16.8,14.23L17.39,12.25L15.75,11L17.81,10.95L18.5,9L19.19,10.95L21.25,11M18.97,15.95C19.8,15.87 20.69,17.05 20.16,17.8C19.84,18.25 19.5,18.67 19.08,19.07C15.17,23 8.84,23 4.94,19.07C1.03,15.17 1.03,8.83 4.94,4.93C5.34,4.53 5.76,4.17 6.21,3.85C6.96,3.32 8.14,4.21 8.06,5.04C7.79,7.9 8.75,10.87 10.95,13.06C13.14,15.26 16.1,16.22 18.97,15.95M17.33,17.97C14.5,17.81 11.7,16.64 9.53,14.5C7.36,12.31 6.2,9.5 6.04,6.68C3.23,9.82 3.34,14.4 6.35,17.41C9.37,20.43 14,20.54 17.33,17.97Z" />
+          </svg>
+        </button>
+        <button @click="showCreateModal = true" class="create-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+          </svg>
+          Create New Subject
+        </button>
+      </div>
     </div>
 
     <div class="subjects-grid" v-if="subjects.length > 0">
@@ -54,7 +64,11 @@
         <div class="sections-list" v-if="subject.sections && subject.sections.length > 0">
           <h4>Sections & Codes:</h4>
           <div class="sections">
-            <div v-for="section in subject.sections" :key="section.id" class="section-item enhanced-section">
+            <div v-for="section in subject.sections" :key="section.id" 
+                 class="section-item enhanced-section" 
+                 @click="navigateToSections(subject, section, $event)"
+                 :style="{ cursor: 'pointer' }"
+                 title="Click to manage this section">
               <div class="section-info">
                 <div class="section-header-info">
                   <span class="section-name">{{ section.name }}</span>
@@ -71,6 +85,7 @@
                 </div>
                 <div class="section-stats-info">
                   <span class="student-count">{{ section.student_count || 0 }} students enrolled</span>
+                  <span class="click-hint">Click to manage section</span>
                 </div>
                 
                 <!-- Section Action Buttons -->
@@ -343,6 +358,10 @@
 import { ref, onMounted, computed, nextTick, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '../../supabase.js'
+import { useDarkMode } from '../../composables/useDarkMode.js'
+
+// Dark mode
+const { isDarkMode, initDarkMode, toggleDarkMode } = useDarkMode()
 
 // Router
 const router = useRouter()
@@ -485,6 +504,29 @@ const setupAuthListener = () => {
 }
 
 // ASSESSMENT METHODS
+// Navigation functions
+const navigateToSections = (subject, section, event) => {
+  // Prevent navigation if clicking on buttons or other interactive elements
+  if (event.target.closest('button') || event.target.closest('.copy-code-btn')) {
+    return
+  }
+  
+  router.push({
+    name: 'Sections',
+    params: {
+      subjectId: subject.id,
+      sectionId: section.id
+    },
+    query: {
+      subjectName: subject.name,
+      sectionName: section.name,
+      gradeLevel: subject.grade_level,
+      sectionCode: section.section_code,
+      studentCount: section.student_count || 0
+    }
+  })
+}
+
 const navigateToCreateQuiz = (subject, section) => {
   router.push({
     name: 'CreateQuiz',
@@ -502,15 +544,51 @@ const navigateToCreateQuiz = (subject, section) => {
 }
 
 const viewQuizzes = (subject, section) => {
-  alert(`View Quizzes for:\nSubject: ${subject.name}\nSection: ${section.name}\n\nThis feature will show all past quizzes for this section.`)
+  router.push({
+    name: 'ViewQuizzes',
+    params: {
+      subjectId: subject.id,
+      sectionId: section.id
+    },
+    query: {
+      subjectName: subject.name,
+      sectionName: section.name,
+      gradeLevel: subject.grade_level,
+      sectionCode: section.section_code
+    }
+  })
 }
 
 const manageGrades = (subject, section) => {
-  alert(`Grade Management for:\nSubject: ${subject.name}\nSection: ${section.name}\n\nThis feature will show the gradebook for this section.`)
+  router.push({
+    name: 'GradeManagement',
+    params: {
+      subjectId: subject.id,
+      sectionId: section.id
+    },
+    query: {
+      subjectName: subject.name,
+      sectionName: section.name,
+      gradeLevel: subject.grade_level,
+      sectionCode: section.section_code
+    }
+  })
 }
 
 const generateReports = (subject, section) => {
-  alert(`Generate Reports for:\nSubject: ${subject.name}\nSection: ${section.name}\n\nThis feature will show analytics and performance reports for this section.`)
+  router.push({
+    name: 'Reports',
+    params: {
+      subjectId: subject.id,
+      sectionId: section.id
+    },
+    query: {
+      subjectName: subject.name,
+      sectionName: section.name,
+      gradeLevel: subject.grade_level,
+      sectionCode: section.section_code
+    }
+  })
 }
 
 // Fetch subjects with new database structure
@@ -1108,6 +1186,9 @@ onMounted(async () => {
   console.log('Component mounted - My Subjects page')
   
   try {
+    // Initialize dark mode
+    initDarkMode()
+    
     const authSuccess = await initializeAuth()
     
     if (!authSuccess) {
@@ -1187,6 +1268,33 @@ onUnmounted(() => {
 .create-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 32px rgba(61, 141, 122, 0.3);
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.dark-mode-toggle {
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid rgba(61, 141, 122, 0.15);
+  border-radius: 12px;
+  padding: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3D8D7A;
+  width: 50px;
+  height: 50px;
+}
+
+.dark-mode-toggle:hover {
+  border-color: #3D8D7A;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(61, 141, 122, 0.2);
 }
 
 .subjects-grid {
@@ -1384,6 +1492,12 @@ onUnmounted(() => {
   transform: translateY(-2px);
 }
 
+.enhanced-section:hover .click-hint {
+  opacity: 1;
+  color: #3D8D7A;
+  font-weight: 500;
+}
+
 .section-header-info {
   display: flex;
   flex-direction: column;
@@ -1453,11 +1567,22 @@ onUnmounted(() => {
 
 .section-stats-info {
   margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .student-count {
   color: #666;
   font-size: 0.9rem;
+}
+
+.click-hint {
+  color: #3D8D7A;
+  font-size: 0.8rem;
+  font-style: italic;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
 }
 
 .section-actions {
@@ -2037,6 +2162,355 @@ onUnmounted(() => {
   font-size: 0.9rem;
 }
 
+/* Dark Mode Styles */
+.subjects-page.dark-mode {
+  background: var(--bg-primary);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .header-content h1 {
+  color: var(--accent-color);
+}
+
+.dark-mode .header-subtitle {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .create-btn {
+  background: linear-gradient(135deg, var(--accent-color) 0%, #4a9b87 100%);
+}
+
+.dark-mode .dark-mode-toggle {
+  background: var(--bg-card);
+  border-color: var(--border-color);
+  color: var(--accent-color);
+}
+
+.dark-mode .dark-mode-toggle:hover {
+  border-color: var(--accent-color);
+  box-shadow: 0 8px 24px rgba(95, 179, 160, 0.2);
+}
+
+.dark-mode .subject-card {
+  background: var(--card-background);
+  border: 1px solid var(--card-border-color);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .subject-card:hover {
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+}
+
+.dark-mode .subject-info h3 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .grade-level {
+  background: linear-gradient(135deg, var(--accent-color) 0%, #4a9b87 100%);
+}
+
+.dark-mode .action-btn.edit {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+}
+
+.dark-mode .action-btn.delete {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.dark-mode .subject-stats {
+  background: var(--bg-accent);
+}
+
+.dark-mode .stat-number {
+  color: var(--accent-color);
+}
+
+.dark-mode .stat-label {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .clickable-stat:hover {
+  background: var(--bg-accent-hover);
+}
+
+.dark-mode .sections-list h4 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .enhanced-section {
+  background: var(--bg-card);
+  border: 2px solid var(--card-border-color);
+}
+
+.dark-mode .enhanced-section:hover {
+  border-color: var(--accent-color);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .section-name {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .section-code-display {
+  background: var(--bg-accent);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .code-label {
+  color: var(--accent-color);
+}
+
+.dark-mode .section-code {
+  background: var(--bg-secondary);
+  color: var(--accent-color);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .copy-code-btn {
+  background: var(--accent-color);
+}
+
+.dark-mode .copy-code-btn:hover {
+  background: var(--accent-hover);
+}
+
+.dark-mode .student-count {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .click-hint {
+  color: var(--accent-color);
+}
+
+.dark-mode .enhanced-section:hover .click-hint {
+  color: var(--accent-color);
+  opacity: 1;
+}
+
+.dark-mode .empty-state {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .empty-icon {
+  color: var(--accent-color);
+}
+
+.dark-mode .empty-state h3 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .create-first-btn {
+  background: linear-gradient(135deg, var(--accent-color) 0%, #4a9b87 100%);
+}
+
+.dark-mode .modal-overlay {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.dark-mode .modal-content {
+  background: var(--bg-secondary);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.dark-mode .modal-header {
+  border-bottom: 2px solid var(--border-color);
+}
+
+.dark-mode .modal-header h2 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .close-btn {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.dark-mode .close-btn:hover {
+  background: rgba(239, 68, 68, 0.3);
+}
+
+.dark-mode .step-title {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .step-subtitle {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .form-group label {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .form-group input,
+.dark-mode .form-group select,
+.dark-mode .form-group textarea {
+  background: var(--input-bg);
+  border: 2px solid var(--input-border);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .form-group input:focus,
+.dark-mode .form-group select:focus,
+.dark-mode .form-group textarea:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(95, 179, 160, 0.2);
+}
+
+.dark-mode .form-group input::placeholder,
+.dark-mode .form-group textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.dark-mode .sections-setup {
+  background: var(--bg-accent);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .section-setup-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .section-number {
+  background: var(--accent-color);
+}
+
+.dark-mode .section-input label {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .section-code-preview {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .cancel-btn,
+.dark-mode .back-btn {
+  background: transparent;
+  color: var(--secondary-text-color);
+  border: 2px solid var(--border-color);
+}
+
+.dark-mode .cancel-btn:hover,
+.dark-mode .back-btn:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.dark-mode .next-btn,
+.dark-mode .save-btn {
+  background: linear-gradient(135deg, var(--accent-color) 0%, #4a9b87 100%);
+}
+
+.dark-mode .loading-content {
+  background: var(--bg-secondary);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.dark-mode .loading-content p {
+  color: var(--accent-color);
+}
+
+.dark-mode .loading-spinner {
+  border: 4px solid rgba(95, 179, 160, 0.2);
+  border-left: 4px solid var(--accent-color);
+}
+
+.dark-mode .student-roster-modal {
+  background: var(--bg-secondary);
+}
+
+.dark-mode .roster-subtitle {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .no-students {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .no-students .empty-icon {
+  color: var(--accent-color);
+}
+
+.dark-mode .no-students h3 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .section-roster {
+  background: var(--bg-accent);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .section-roster-header {
+  background: var(--bg-accent-hover);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dark-mode .section-roster-header h3 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .students-table {
+  background: var(--bg-card);
+}
+
+.dark-mode .table-header {
+  background: var(--bg-accent);
+  border-bottom: 2px solid var(--border-color);
+  color: var(--accent-color);
+}
+
+.dark-mode .student-row {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dark-mode .student-row:hover {
+  background: var(--bg-accent);
+}
+
+.dark-mode .col-id {
+  color: var(--accent-color);
+}
+
+.dark-mode .col-name {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .col-email {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .col-grade {
+  color: var(--accent-color);
+}
+
+.dark-mode .col-date {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .roster-actions {
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-accent);
+}
+
+.dark-mode .close-roster-btn {
+  background: transparent;
+  color: var(--secondary-text-color);
+  border: 2px solid var(--border-color);
+}
+
+.dark-mode .close-roster-btn:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.dark-mode .error-message {
+  background: var(--error-bg);
+  border: 1px solid rgba(217, 83, 79, 0.4);
+  color: var(--error-color);
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .subjects-grid {
@@ -2138,8 +2612,6 @@ onUnmounted(() => {
   .col-grade:before { content: "Grade: "; }
   .col-date:before { content: "Enrolled: "; }
   
-  
-  
   .section-setup-item {
     flex-direction: column;
     align-items: stretch;
@@ -2147,6 +2619,19 @@ onUnmounted(() => {
   
   .section-number {
     align-self: flex-start;
+  }
+
+  /* Dark mode mobile styles */
+  .dark-mode .student-row {
+    border-bottom: 2px solid var(--border-color);
+  }
+  
+  .dark-mode .student-row > div {
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .dark-mode .student-row > div:before {
+    color: var(--accent-color);
   }
 }
 </style>

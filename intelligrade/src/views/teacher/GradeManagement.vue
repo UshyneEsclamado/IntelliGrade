@@ -1,5 +1,5 @@
 <template>
-  <div class="page-container">
+  <div class="page-container" :class="{ 'dark-mode': isDarkMode }">
     <div class="main-wrapper">
       <!-- Header Section -->
       <div class="hero-header card-box">
@@ -258,6 +258,10 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { supabase } from '../../supabase'
+import { useDarkMode } from '../../composables/useDarkMode.js'
+
+// Dark mode
+const { isDarkMode, initDarkMode } = useDarkMode()
 
 const router = useRouter()
 const route = useRoute()
@@ -513,6 +517,7 @@ const saveGradeSettings = () => {
 
 // Lifecycle
 onMounted(() => {
+  initDarkMode()
   fetchData()
 })
 </script>
@@ -1189,5 +1194,173 @@ onMounted(() => {
   .grade-scale {
     grid-template-columns: 1fr;
   }
+}
+
+/* Dark Mode Styles */
+.page-container.dark-mode {
+  background: var(--bg-primary);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .hero-header {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .back-button {
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .back-button:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.dark-mode .section-header h1 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .summary-item .label {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .summary-item .value {
+  color: var(--accent-color);
+}
+
+.dark-mode .card-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .card-box:hover {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.dark-mode .gradebook-table {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .gradebook-table th {
+  background: var(--bg-accent);
+  color: var(--primary-text-color);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.dark-mode .gradebook-table td {
+  color: var(--secondary-text-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dark-mode .gradebook-table tr:hover {
+  background: var(--bg-accent);
+}
+
+.dark-mode .student-name {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .student-id {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .grade-input {
+  background: var(--input-bg);
+  border: 2px solid var(--input-border);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .grade-input:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(95, 179, 160, 0.2);
+}
+
+.dark-mode .grade-actions .action-btn {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .grade-actions .action-btn:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.dark-mode .grade-actions .action-btn.save {
+  background: var(--accent-color);
+  color: white;
+}
+
+.dark-mode .grade-actions .action-btn.save:hover {
+  background: var(--accent-hover);
+}
+
+.dark-mode .statistics-grid .stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .stat-card h3 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .stat-value {
+  color: var(--accent-color);
+}
+
+.dark-mode .stat-description {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .grade-distribution {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .grade-distribution h3 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .distribution-bar {
+  background: var(--bg-accent);
+}
+
+.dark-mode .distribution-fill {
+  background: linear-gradient(90deg, var(--accent-color) 0%, #4a9b87 100%);
+}
+
+.dark-mode .distribution-label {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .distribution-value {
+  color: var(--accent-color);
+}
+
+.dark-mode .loading-state {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .loading-spinner {
+  border: 4px solid rgba(95, 179, 160, 0.2);
+  border-left: 4px solid var(--accent-color);
+}
+
+.dark-mode .error-state {
+  background: var(--error-bg);
+  border: 1px solid rgba(217, 83, 79, 0.4);
+  color: var(--error-color);
+}
+
+.dark-mode .empty-state {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .empty-state h3 {
+  color: var(--primary-text-color);
 }
 </style>
