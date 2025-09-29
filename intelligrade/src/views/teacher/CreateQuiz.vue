@@ -24,7 +24,7 @@
           </div>
         </div>
         
-        <button @click="goBack" class="back-button">
+        <button @click="goBack" class="back-button" type="button">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M10 19l-7-7 7-7m-7 7h18"></path>
           </svg>
@@ -204,21 +204,70 @@
           </div>
         </div>
         
-        <div class="form-actions">
-          <button type="button" class="cancel-btn" @click="goBack">
+        <!-- Fixed Form Actions with inline styles to ensure visibility -->
+        <div class="form-actions" style="display: flex !important; justify-content: flex-end !important; gap: 1.5rem !important; margin-top: 2rem !important; padding-top: 2rem !important; border-top: 1px solid #e2e8f0 !important; width: 100% !important; position: relative !important; z-index: 100 !important; background: white !important;">
+          <button 
+            type="button" 
+            class="cancel-btn" 
+            @click="goBack"
+            style="
+              display: flex !important;
+              align-items: center !important;
+              background: transparent !important;
+              color: #6b7280 !important;
+              border: 2px solid #d1d5db !important;
+              padding: 1rem 2rem !important;
+              border-radius: 16px !important;
+              font-weight: 600 !important;
+              cursor: pointer !important;
+              transition: all 0.3s ease !important;
+              min-height: 48px !important;
+              visibility: visible !important;
+              opacity: 1 !important;
+            "
+          >
             Cancel
           </button>
-          <button type="submit" class="submit-quiz-btn" :disabled="isSubmitting">
-            <svg v-if="isSubmitting" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="spinner">
+          
+          <button 
+            type="submit" 
+            class="submit-quiz-btn" 
+            :disabled="isSubmitting"
+            style="
+              display: flex !important;
+              align-items: center !important;
+              gap: 0.5rem !important;
+              background: linear-gradient(135deg, #059669 0%, #34d399 100%) !important;
+              color: white !important;
+              border: none !important;
+              padding: 1rem 2rem !important;
+              border-radius: 16px !important;
+              font-size: 1rem !important;
+              font-weight: 600 !important;
+              cursor: pointer !important;
+              transition: all 0.3s ease !important;
+              box-shadow: 0 8px 32px rgba(5, 150, 105, 0.2) !important;
+              min-height: 48px !important;
+              min-width: 150px !important;
+              position: relative !important;
+              z-index: 101 !important;
+              visibility: visible !important;
+              opacity: 1 !important;
+            "
+          >
+            <svg v-if="isSubmitting" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="spinner" style="animation: spin 1s linear infinite;">
               <path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z" />
             </svg>
             {{ isSubmitting ? 'Creating Quiz...' : 'Create Quiz' }}
           </button>
         </div>
+
+
       </form>
     </div>
   </div>
 </template>
+
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
@@ -367,85 +416,379 @@ const validateQuiz = (): boolean => {
   return true;
 };
 
+// Diagnostic Functions
+const testDatabaseTables = async () => {
+  try {
+    console.log('Testing database tables...');
+    
+    // Test quizzes table
+    const { data: quizzesTest, error: quizzesError } = await supabase
+      .from('quizzes')
+      .select('count')
+      .limit(1);
+    
+    if (quizzesError) {
+      console.error('Quizzes table error:', quizzesError);
+      alert(`Quiz tables missing: ${quizzesError.message}`);
+      return false;
+    }
+    
+    // Test quiz_questions table
+    const { data: questionsTest, error: questionsError } = await supabase
+      .from('quiz_questions')
+      .select('count')
+      .limit(1);
+    
+    if (questionsError) {
+      console.error('Quiz_questions table error:', questionsError);
+      alert(`Quiz_questions table missing: ${questionsError.message}`);
+      return false;
+    }
+    
+    alert('All quiz tables exist!');
+    return true;
+    
+  } catch (error: any) {
+    console.error('Database test failed:', error);
+    alert(`Database test failed: ${error.message}`);
+    return false;
+  }
+};
+
+const testAuthentication = async () => {
+  try {
+    console.log('Testing authentication...');
+    
+    // Get current user
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !authData?.user) {
+      alert('Not authenticated');
+      return false;
+    }
+    
+    console.log('User ID:', authData.user.id);
+    
+    // Test teacher lookup
+    const { data: teacherData, error: teacherError } = await supabase
+      .from('teachers')
+      .select(`
+        id,
+        full_name,
+        profile_id,
+        profiles!inner(auth_user_id, role)
+      `)
+      .eq('profiles.auth_user_id', authData.user.id)
+      .eq('profiles.role', 'teacher');
+    
+    if (teacherError) {
+      console.error('Teacher lookup error:', teacherError);
+      alert(`Teacher lookup failed: ${teacherError.message}`);
+      return false;
+    }
+    
+    if (!teacherData || teacherData.length === 0) {
+      alert('No teacher profile found. You may need to be set up as a teacher first.');
+      return false;
+    }
+    
+    console.log('Teacher data:', teacherData);
+    alert(`Authenticated as teacher: ${teacherData[0].full_name}`);
+    return teacherData[0];
+    
+  } catch (error: any) {
+    console.error('Auth test failed:', error);
+    alert(`Auth test failed: ${error.message}`);
+    return false;
+  }
+};
+
+const testSectionAccess = async (teacherId: string) => {
+  try {
+    console.log('Testing section access...');
+    
+    // Check if teacher owns this section
+    const { data: sectionData, error: sectionError } = await supabase
+      .from('sections')
+      .select(`
+        id,
+        name,
+        section_code,
+        subjects!inner(
+          id,
+          name,
+          teacher_id
+        )
+      `)
+      .eq('id', sectionId.value)
+      .eq('subjects.teacher_id', teacherId);
+    
+    if (sectionError) {
+      console.error('Section lookup error:', sectionError);
+      alert(`Section lookup failed: ${sectionError.message}`);
+      return false;
+    }
+    
+    if (!sectionData || sectionData.length === 0) {
+      alert(`No access to section. Section ID: ${sectionId.value}, Teacher ID: ${teacherId}`);
+      return false;
+    }
+    
+    console.log('Section data:', sectionData);
+    alert(`Section access confirmed: ${sectionData[0].name}`);
+    return sectionData[0];
+    
+  } catch (error: any) {
+    console.error('Section test failed:', error);
+    alert(`Section test failed: ${error.message}`);
+    return false;
+  }
+};
+
+const testQuizInsertion = async (teacherId: string, sectionData: any) => {
+  try {
+    console.log('Testing quiz insertion...');
+    
+    const testQuizData = {
+      title: 'Test Quiz - ' + new Date().toISOString(),
+      section_id: sectionId.value,
+      subject_id: sectionData.subjects.id,
+      teacher_id: teacherId,
+      time_limit: 30,
+      total_points: 10,
+      status: 'draft'
+    };
+    
+    console.log('Test quiz data:', testQuizData);
+    
+    const { data: insertedQuiz, error: quizError } = await supabase
+      .from('quizzes')
+      .insert([testQuizData])
+      .select()
+      .single();
+    
+    if (quizError) {
+      console.error('Quiz insertion error:', quizError);
+      alert(`Quiz insertion failed: ${quizError.message}`);
+      return false;
+    }
+    
+    console.log('Quiz inserted:', insertedQuiz);
+    
+    // Clean up test quiz
+    await supabase.from('quizzes').delete().eq('id', insertedQuiz.id);
+    
+    alert('Quiz insertion test successful!');
+    return true;
+    
+  } catch (error: any) {
+    console.error('Quiz insertion test failed:', error);
+    alert(`Quiz insertion test failed: ${error.message}`);
+    return false;
+  }
+};
+
+const runFullDiagnostic = async () => {
+  console.log('=== RUNNING FULL DIAGNOSTIC ===');
+  
+  // Step 1: Test database tables
+  const tablesOk = await testDatabaseTables();
+  if (!tablesOk) return;
+  
+  // Step 2: Test authentication
+  const teacherData = await testAuthentication();
+  if (!teacherData) return;
+  
+  // Step 3: Test section access
+  const sectionData = await testSectionAccess(teacherData.id);
+  if (!sectionData) return;
+  
+  // Step 4: Test quiz insertion
+  const insertionOk = await testQuizInsertion(teacherData.id, sectionData);
+  
+  if (insertionOk) {
+    alert('All tests passed! Your quiz creation should work now.');
+  }
+};
+
+// Main submit function
 const submitQuiz = async () => {
+  console.log('=== QUIZ SUBMISSION STARTED ===');
+  
   if (!validateQuiz()) {
+    console.log('Quiz validation failed');
     return;
   }
 
   isSubmitting.value = true;
 
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    console.log('Step 1: Checking authentication...');
+    
+    // Get current user
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !authData?.user) {
       throw new Error('Please login to continue');
     }
 
-    // Prepare quiz data
-    const quizData = {
+    console.log('Step 2: Getting user profile...');
+    
+    // Get teacher profile using your new schema
+    const { data: teacherData, error: teacherError } = await supabase
+      .from('teachers')
+      .select(`
+        id,
+        full_name,
+        profile_id,
+        profiles!inner(auth_user_id, role)
+      `)
+      .eq('profiles.auth_user_id', authData.user.id)
+      .eq('profiles.role', 'teacher')
+      .single();
+
+    if (teacherError || !teacherData) {
+      console.error('Teacher lookup error:', teacherError);
+      throw new Error('Teacher profile not found. Please contact support.');
+    }
+
+    const teacherId = teacherData.id;
+    console.log('Teacher authenticated:', teacherId);
+
+    console.log('Step 3: Validating section access...');
+    
+    // Verify teacher owns this section
+    const { data: sectionData, error: sectionError } = await supabase
+      .from('sections')
+      .select(`
+        id,
+        name,
+        section_code,
+        subjects!inner(
+          id,
+          name,
+          teacher_id
+        )
+      `)
+      .eq('id', sectionId.value)
+      .eq('subjects.teacher_id', teacherId)
+      .single();
+
+    if (sectionError || !sectionData) {
+      console.error('Section validation error:', sectionError);
+      throw new Error('You do not have permission to create quizzes for this section.');
+    }
+
+    console.log('Section validated:', sectionData);
+
+    console.log('Step 4: Preparing quiz data...');
+    
+    // Prepare quiz data for new schema
+    const quizPayload = {
       title: quizTitle.value.trim(),
-      subject_id: subjectId.value,
       section_id: sectionId.value,
-      teacher_id: user.id,
+      subject_id: sectionData.subjects.id,
+      teacher_id: teacherId,
       time_limit: timeLimit.value || null,
       total_points: calculatedTotalPoints.value,
-      questions: questions.value.map((question, index) => ({
-        question_number: index + 1,
-        question_text: question.text.trim(),
-        question_type: question.type,
-        choices: question.type === 'multiple-choice' ? question.choices.map(c => c.text.trim()) : null,
-        correct_answer: question.correctAnswer,
-        points: question.points || 5
-      })),
-      status: 'draft', // Can be 'draft', 'published', 'archived'
-      created_at: new Date().toISOString()
+      status: 'draft'
     };
 
-    console.log('Submitting quiz data:', quizData);
+    console.log('Quiz payload:', quizPayload);
 
-    // Insert quiz into Supabase (you'll need to create the quizzes table)
+    console.log('Step 5: Inserting quiz...');
+    
+    // Insert quiz
     const { data: insertedQuiz, error: quizError } = await supabase
       .from('quizzes')
-      .insert([{
-        title: quizData.title,
-        subject_id: quizData.subject_id,
-        section_id: quizData.section_id,
-        teacher_id: quizData.teacher_id,
-        time_limit: quizData.time_limit,
-        total_points: quizData.total_points,
-        status: quizData.status
-      }])
+      .insert([quizPayload])
       .select()
       .single();
 
-    if (quizError) throw quizError;
+    if (quizError) {
+      console.error('Quiz insertion error:', quizError);
+      throw new Error(`Failed to create quiz: ${quizError.message}`);
+    }
 
+    console.log('Quiz inserted successfully:', insertedQuiz);
+
+    console.log('Step 6: Preparing questions...');
+    
+    // Prepare questions data for new schema
+    const questionsData = questions.value.map((question, index) => {
+      let correctAnswerValue;
+      let choicesValue = null;
+      
+      if (question.type === 'multiple-choice') {
+        correctAnswerValue = question.correctAnswer.toString();
+        choicesValue = question.choices.map(c => c.text.trim()).filter(text => text.length > 0);
+      } else if (question.type === 'true-false') {
+        correctAnswerValue = question.correctAnswer === 'true' ? 'true' : 'false';
+      } else {
+        correctAnswerValue = String(question.correctAnswer).trim();
+      }
+
+      return {
+        quiz_id: insertedQuiz.id,
+        question_number: index + 1,
+        question_text: question.text.trim(),
+        question_type: question.type,
+        choices: choicesValue,
+        correct_answer: correctAnswerValue,
+        points: parseInt(question.points) || 5
+      };
+    });
+
+    console.log('Questions data prepared:', questionsData);
+
+    console.log('Step 7: Inserting questions...');
+    
     // Insert questions
-    const questionsToInsert = quizData.questions.map(q => ({
-      quiz_id: insertedQuiz.id,
-      question_number: q.question_number,
-      question_text: q.question_text,
-      question_type: q.question_type,
-      choices: q.choices,
-      correct_answer: q.correct_answer,
-      points: q.points
-    }));
-
     const { error: questionsError } = await supabase
       .from('quiz_questions')
-      .insert(questionsToInsert);
+      .insert(questionsData);
 
-    if (questionsError) throw questionsError;
+    if (questionsError) {
+      console.error('Questions insertion error:', questionsError);
+      
+      // Cleanup: delete the quiz if questions failed
+      await supabase.from('quizzes').delete().eq('id', insertedQuiz.id);
+      
+      throw new Error(`Failed to create quiz questions: ${questionsError.message}`);
+    }
 
-    alert(`Quiz "${quizData.title}" created successfully!`);
+    console.log('Questions inserted successfully');
+    console.log('=== QUIZ CREATION COMPLETED ===');
+
+    alert(`Quiz "${quizPayload.title}" created successfully!`);
     
-    // Navigate back to MySubjects
-    router.push({ name: 'MySubjects' });
-
+    // Navigate back
+    console.log('Navigating back to MySubjects...');
+    await router.push({ name: 'MySubjects' });
+    
   } catch (error: any) {
-    console.error('Error creating quiz:', error);
-    alert(`Error creating quiz: ${error.message}`);
+    console.error('=== QUIZ CREATION FAILED ===');
+    console.error('Error details:', error);
+    
+    let errorMessage = 'Failed to create quiz. ';
+    
+    if (error.message.includes('Teacher profile not found')) {
+      errorMessage += 'Your account is not properly set up as a teacher. Please contact support.';
+    } else if (error.message.includes('permission')) {
+      errorMessage += 'You do not have permission to create quizzes for this section.';
+    } else if (error.message.includes('auth')) {
+      errorMessage += 'Please log in again.';
+    } else if (error.message.includes('network') || error.message.includes('fetch')) {
+      errorMessage += 'Please check your internet connection.';
+    } else {
+      errorMessage += error.message || 'Unknown error occurred.';
+    }
+    
+    alert(errorMessage);
+    
   } finally {
     isSubmitting.value = false;
+    console.log('Quiz submission process completed');
   }
 };
 
@@ -467,6 +810,7 @@ onMounted(() => {
   });
 });
 </script>
+
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
@@ -1084,5 +1428,215 @@ onMounted(() => {
     flex-direction: column;
     gap: 1rem;
   }
+}
+
+/* CSS Variables for better theme support - NEW */
+:root {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #f1f5f9;
+  --card-background: #ffffff;
+  --card-border-color: #e2e8f0;
+  --border-color: #d1d5db;
+  --text-accent: #1e293b;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --primary-text-color: #1f2937;
+  --secondary-text-color: #6b7280;
+  --accent-color: #10b981;
+  --primary-color: #059669;
+  --primary-color-light: #34d399;
+  --primary-color-dark: #047857;
+  --primary-color-alpha: rgba(5, 150, 105, 0.2);
+  --success-color: #10b981;
+  --success-color-alpha: rgba(16, 185, 129, 0.2);
+  --error-color: #ef4444;
+  --error-color-dark: #dc2626;
+  --shadow-light: rgba(0, 0, 0, 0.05);
+  --shadow-medium: rgba(0, 0, 0, 0.1);
+  --shadow-strong: rgba(0, 0, 0, 0.15);
+  --action-btn-bg: rgba(255, 255, 255, 0.8);
+  --action-btn-color: #374151;
+  --bg-accent-hover: rgba(255, 255, 255, 0.9);
+  --hover-background: #f9fafb;
+}
+
+/* Fixed back button z-index and positioning - NEW */
+.back-button {
+  z-index: 10;
+  position: relative;
+}
+
+/* Fixed main wrapper width - NEW */
+.main-wrapper {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Fixed content card width - NEW */
+.content-card {
+  width: 100%;
+}
+
+/* Fixed form content width - NEW */
+.form-content {
+  width: 100%;
+}
+
+/* Additional incomplete styles from original that needed completion */
+.choices-section label {
+  display: block;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  color: var(--primary-text-color);
+}
+
+.choices-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.choice-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.choice-item input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary-color);
+}
+
+.choice-input {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background: var(--card-background);
+  color: var(--primary-text-color);
+}
+
+.remove-choice-btn {
+  background: var(--error-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.add-choice-btn {
+  background: var(--primary-color-light);
+  color: var(--primary-color);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.add-choice-btn:hover {
+  background: var(--primary-color-dark);
+  color: white;
+}
+
+.true-false-section,
+.radio-group {
+  margin-top: 1rem;
+}
+
+.radio-group {
+  display: flex;
+  gap: 2rem;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--primary-text-color);
+}
+
+.radio-option input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary-color);
+}
+
+.points-input {
+  max-width: 120px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.cancel-btn {
+  background: transparent;
+  color: var(--secondary-text-color);
+  border: 2px solid var(--border-color);
+  padding: 1rem 2rem;
+  border-radius: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.cancel-btn:hover {
+  background: var(--hover-background);
+  border-color: var(--secondary-text-color);
+}
+
+.submit-quiz-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-light) 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 8px 32px var(--primary-color-alpha);
+}
+
+.submit-quiz-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 48px var(--primary-color-alpha);
+}
+
+.submit-quiz-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 </style>

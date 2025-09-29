@@ -3,7 +3,7 @@
     <aside class="sidebar">
       <div class="user-info">
         <div class="profile-pic-container">
-          <img v-if="profileData.profile" :src="profileData.profile" :alt="profileData.full_name" class="profile-pic">
+          <img v-if="profileData.profile_pic" :src="profileData.profile_pic" :alt="profileData.full_name" class="profile-pic">
           <div v-else class="profile-pic-placeholder">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
@@ -102,7 +102,8 @@ const profileData = ref({
   email: '',
   department: '',
   employee_id: '',
-  role: ''
+  role: 'teacher',
+  profile_pic: null
 });
 const isLogoutModalVisible = ref(false);
 
@@ -131,44 +132,43 @@ const fetchUserProfile = async () => {
       return;
     }
 
+    const userData = { 
+      user_id: profile.id,
+      role: profile.role, 
+      full_name: profile.full_name, 
+      email: profile.email 
+    };
+    
     // Verify user is a teacher
-    if (profile.role !== 'teacher') {
+    if (userData.role !== 'teacher') {
       console.warn('Access denied: User is not a teacher');
       router.push('/login');
       return;
     }
 
-    console.log('Profile data from DB:', profile);
+    console.log('User data from function:', userData);
 
-    // Now fetch teacher-specific data
-    const { data: teacherData, error: teacherError } = await supabase
+    // Get additional teacher details
+    const { data: teacherDetails, error: teacherError } = await supabase
       .from('teachers')
-      .select('employee_id, department, full_name, email')
-      .eq('profile_id', profile.id)
+      .select('employee_id, department')
+      .eq('id', userData.user_id)
       .single();
 
     if (teacherError) {
-      console.warn('Teacher data fetch error:', teacherError);
-      // Use profile data as fallback
-      profileData.value = {
-        full_name: profile.full_name || 'Teacher',
-        email: profile.email || '',
-        department: '',
-        employee_id: '',
-        role: profile.role
-      };
-      return;
+      console.warn('Teacher details fetch error:', teacherError);
     }
 
-    console.log('Teacher data from DB:', teacherData);
+    console.log('Teacher details:', teacherDetails);
     
-    // Combine profile and teacher data
+    // Set profile data
     profileData.value = {
-      full_name: teacherData.full_name || profile.full_name || 'Teacher',
-      email: teacherData.email || profile.email || '',
-      department: teacherData.department || '',
-      employee_id: teacherData.employee_id || '',
-      role: profile.role
+      full_name: userData.full_name || 'Teacher',
+      email: userData.email || '',
+      department: teacherDetails?.department || '',
+      employee_id: teacherDetails?.employee_id || '',
+      role: userData.role,
+      profile_pic: null // You can add profile pic URL field to your database later
     };
     
     console.log('Final profile data set:', profileData.value);
@@ -180,7 +180,8 @@ const fetchUserProfile = async () => {
       email: '',
       department: '',
       employee_id: '',
-      role: 'teacher'
+      role: 'teacher',
+      profile_pic: null
     };
   }
 };
@@ -205,7 +206,6 @@ const hideLogoutModal = () => {
 };
 
 const confirmLogout = async () => {
-  // Hide modal first
   isLogoutModalVisible.value = false;
   
   try {
@@ -214,7 +214,6 @@ const confirmLogout = async () => {
       throw error;
     }
     
-    // Clear any local storage data
     localStorage.removeItem('userProfile');
     localStorage.removeItem('darkMode');
     
@@ -222,12 +221,10 @@ const confirmLogout = async () => {
     router.push('/login');
   } catch (err) {
     console.error('Logout error:', err);
-    // Still redirect even if there's an error
     router.push('/login');
   }
 };
 
-// Watch for auth state changes in real-time
 const setupAuthListener = () => {
   supabase.auth.onAuthStateChange(async (event, session) => {
     console.log('Auth state changed:', event, session?.user?.email);
@@ -235,7 +232,6 @@ const setupAuthListener = () => {
     if (event === 'SIGNED_OUT' || !session) {
       router.push('/login');
     } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-      // Refetch profile data when user signs in or token refreshes
       await fetchUserProfile();
     }
   });

@@ -95,10 +95,11 @@
                   >
                     <div class="teacher-info">
                       <div class="teacher-avatar">
-                        <span>{{ teacher.name?.[0] || 'T' }}</span>
+                        <span>{{ teacher.teacher_name?.[0] || 'T' }}</span>
                       </div>
                       <div class="teacher-details">
-                        <h4 class="teacher-name">{{ teacher.name }}</h4>
+                        <h4 class="teacher-name">{{ teacher.teacher_name }}</h4>
+                        <p class="teacher-email">{{ teacher.email }}</p>
                         <p class="last-message">{{ teacher.last_message || 'Start a conversation' }}</p>
                       </div>
                     </div>
@@ -162,14 +163,14 @@
             <div v-else class="notification-list">
               <div 
                 v-for="notif in filteredNotifications" 
-                :key="notif.id" 
-                :class="['notification-item', {'unread': !notif.read, 'class-announcement': notif.type === 'class'}]"
+                :key="notif.notification_id" 
+                :class="['notification-item', {'unread': !notif.is_read, 'class-announcement': notif.notification_type === 'announcement'}]"
                 @click="openNotificationModal(notif)"
               >
                 <div class="notification-header">
                   <div class="notification-source">
                     <span class="notification-icon">
-                      <svg v-if="notif.type === 'class'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <svg v-if="notif.notification_type === 'announcement'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
                       </svg>
                       <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -179,16 +180,16 @@
                       </svg>
                     </span>
                     <div class="source-info">
-                      <span class="source-name">{{ notif.from_teacher || 'System' }}</span>
+                      <span class="source-name">{{ notif.teacher_name || 'System' }}</span>
                       <span class="source-subject">{{ notif.subject_name || 'General' }}</span>
                     </div>
                   </div>
                   <div class="notification-indicators">
-                    <span v-if="!notif.read" class="unread-label">New</span>
+                    <span v-if="!notif.is_read" class="unread-label">New</span>
                   </div>
                 </div>
                 <div class="notification-content">
-                  <p class="notif-title">{{ notif.title }}</p>
+                  <p class="notif-title">{{ notif.title || notif.body }}</p>
                   <p class="notif-body">{{ notif.body }}</p>
                 </div>
                 <div class="notification-footer">
@@ -208,10 +209,10 @@
           <button @click="closeModal" class="close-btn">&times;</button>
           <div class="header-info">
             <div class="teacher-avatar">
-              <span>{{ activeTeacher?.name?.[0] || 'T' }}</span>
+              <span>{{ activeTeacher?.teacher_name?.[0] || 'T' }}</span>
             </div>
             <div class="header-details">
-              <h2 class="modal-title">{{ activeTeacher?.name }}</h2>
+              <h2 class="modal-title">{{ activeTeacher?.teacher_name }}</h2>
               <span class="subject-info">{{ activeTeacher?.subject_name }}</span>
             </div>
           </div>
@@ -221,10 +222,13 @@
             <div 
               v-for="message in currentMessages" 
               :key="message.id" 
-              :class="['message-bubble', { 'sent': message.sender_id === currentUser.id, 'received': message.sender_id !== currentUser.id }]"
+              :class="['message-bubble', { 'sent': message.sender_id === currentStudentId, 'received': message.sender_id !== currentStudentId }]"
             >
               <p class="message-text">{{ message.content }}</p>
-              <span class="message-time">{{ formatTime(message.created_at) }}</span>
+              <span class="message-time">{{ formatTime(message.sent_at) }}</span>
+            </div>
+            <div v-if="currentMessages.length === 0" class="no-messages">
+              <p>No messages yet. Start the conversation!</p>
             </div>
           </div>
         </div>
@@ -237,7 +241,7 @@
               placeholder="Type your message to your teacher..." 
               class="message-input"
             />
-            <button class="send-btn" @click="sendMessage">
+            <button class="send-btn" @click="sendMessage" :disabled="!newMessage.trim()">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="22" y1="2" x2="11" y2="13"></line>
                 <polygon points="22 2 15.46 22 11 13 2 9.54 22 2"></polygon>
@@ -251,8 +255,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useMessaging } from '@/composables/useMessaging.js'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { supabase } from '@/supabase.js'
 
 // State management
@@ -264,13 +267,18 @@ const isModalOpen = ref(false)
 const activeTeacher = ref(null)
 const newMessage = ref('')
 const messagesContainer = ref(null)
+const isLoading = ref(false)
+
+// Real-time subscriptions
+let messageChannel = null
 
 // Data
 const enrolledSubjects = ref([])
 const enrolledTeachers = ref([])
 const notifications = ref([])
 const currentMessages = ref([])
-const currentUser = ref({ id: 1, name: 'Student' }) // Get from auth
+const currentUser = ref(null)
+const currentStudentId = ref(null)
 
 // Computed properties
 const filteredTeachers = computed(() => {
@@ -283,7 +291,7 @@ const filteredTeachers = computed(() => {
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     teachers = teachers.filter(t => 
-      t.name.toLowerCase().includes(query) ||
+      t.teacher_name.toLowerCase().includes(query) ||
       t.subject_name.toLowerCase().includes(query)
     )
   }
@@ -300,7 +308,7 @@ const groupedTeachers = computed(() => {
       subjects[subjectId] = {
         id: subjectId,
         name: teacher.subject_name,
-        code: teacher.subject_code,
+        code: teacher.section_code,
         teachers: []
       }
     }
@@ -314,202 +322,305 @@ const filteredNotifications = computed(() => {
   let notifs = notifications.value
   
   if (currentFilter.value === 'unread') {
-    notifs = notifs.filter(n => !n.read)
+    notifs = notifs.filter(n => !n.is_read)
   } else if (currentFilter.value === 'class') {
-    notifs = notifs.filter(n => n.type === 'class')
+    notifs = notifs.filter(n => n.notification_type === 'announcement')
   }
   
   return notifs
 })
 
-// Methods
+// Authentication methods
+const getCurrentUser = async () => {
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError) throw authError
+    
+    if (!user) {
+      console.error('No authenticated user found')
+      return null
+    }
+    
+    // Get user profile using the function from our schema  
+    const { data: profile, error: profileError } = await supabase
+      .rpc('get_user_info', { auth_id: user.id })
+    
+    if (profileError) throw profileError
+    
+    if (!profile || profile.length === 0 || profile[0].role !== 'student') {
+      console.error('User is not a student or profile not found')
+      return null
+    }
+    
+    currentUser.value = user
+    currentStudentId.value = profile[0].user_id
+    
+    return { authUser: user, studentId: profile[0].user_id, profile: profile[0] }
+    
+  } catch (error) {
+    console.error('Error getting current user:', error)
+    return null
+  }
+}
+
+// Data loading methods - UPDATED to use new messaging functions
 const loadEnrolledSubjectsAndTeachers = async () => {
   try {
-    // Get current user
-    const { data: { user } } = await supabase.auth.getUser()
+    if (!currentStudentId.value) {
+      console.error('No student ID available')
+      return
+    }
     
-    // Get enrolled subjects for the current student
-    const { data: enrollments, error: enrollmentError } = await supabase
-      .from('enrollments')
-      .select(`
-        subject_id,
-        subjects (
-          id,
-          name,
-          code,
-          teacher_id,
-          profiles!subjects_teacher_id_fkey (
-            id,
-            full_name,
-            email
-          )
-        )
-      `)
-      .eq('student_id', user.id)
+    isLoading.value = true
+    console.log('Loading subjects and teachers for student:', currentStudentId.value)
     
-    if (enrollmentError) throw enrollmentError
+    // UPDATED: Use the new get_student_teachers function instead of student_dashboard view
+    const { data: teachersData, error: teachersError } = await supabase
+      .rpc('get_student_teachers', { student_uuid: currentStudentId.value })
     
-    // Process enrollments to get subjects and teachers
+    if (teachersError) {
+      console.error('Error fetching student teachers:', teachersError)
+      throw teachersError
+    }
+    
+    console.log('Student teachers found:', teachersData)
+    
+    if (!teachersData || teachersData.length === 0) {
+      console.log('No teachers found for this student')
+      enrolledSubjects.value = []
+      enrolledTeachers.value = []
+      return
+    }
+    
+    // SIMPLIFIED: Process the data - the function already returns what we need
     const subjects = []
     const teachers = []
+    const subjectMap = new Map()
     
-    enrollments.forEach(enrollment => {
-      const subject = enrollment.subjects
+    teachersData.forEach(row => {
+      // Add subject if not exists
+      if (!subjectMap.has(row.subject_id)) {
+        subjects.push({
+          id: row.subject_id,
+          name: row.subject_name,
+          code: row.section_code
+        })
+        subjectMap.set(row.subject_id, true)
+      }
       
-      subjects.push({
-        id: subject.id,
-        name: subject.name,
-        code: subject.code
-      })
-      
+      // Add teacher data - matching template expectations
       teachers.push({
-        id: subject.profiles.id,
-        name: subject.profiles.full_name,
-        email: subject.profiles.email,
-        subject_id: subject.id,
-        subject_name: subject.name,
-        subject_code: subject.code,
-        unread_count: 0,
-        last_message: null,
-        last_message_time: null
+        id: row.teacher_id,
+        teacher_name: row.teacher_name,
+        email: row.teacher_email,
+        subject_id: row.subject_id,
+        subject_name: row.subject_name,
+        section_id: row.section_id,
+        section_name: row.section_name,
+        section_code: row.section_code,
+        
+        // UPDATED: Now using real messaging data from the function
+        unread_count: row.unread_count || 0,
+        last_message: row.last_message,
+        last_message_time: row.last_message_time,
+        
+        // Legacy support
+        name: row.teacher_name
       })
     })
     
     enrolledSubjects.value = subjects
     enrolledTeachers.value = teachers
     
-    // Load message counts and last messages
-    await loadMessageInfo()
+    console.log('Processed subjects:', subjects)
+    console.log('Processed teachers:', teachers)
     
   } catch (error) {
     console.error('Error loading enrolled data:', error)
-  }
-}
-
-const loadMessageInfo = async () => {
-  try {
-    // For each teacher, get the latest conversation info
-    for (const teacher of enrolledTeachers.value) {
-      const { data: conversation } = await supabase
-        .from('conversations')
-        .select(`
-          id,
-          updated_at,
-          messages (
-            content,
-            created_at,
-            read
-          )
-        `)
-        .or(`and(participant1_id.eq.${currentUser.value.id},participant2_id.eq.${teacher.id}),and(participant1_id.eq.${teacher.id},participant2_id.eq.${currentUser.value.id})`)
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .single()
-      
-      if (conversation) {
-        teacher.last_message = conversation.messages[0]?.content
-        teacher.last_message_time = conversation.messages[0]?.created_at
-        teacher.unread_count = conversation.messages.filter(m => !m.read).length
-      }
-    }
-  } catch (error) {
-    console.error('Error loading message info:', error)
+    alert('Error loading messaging data. Please check the console for details.')
+  } finally {
+    isLoading.value = false
   }
 }
 
 const loadNotifications = async () => {
   try {
-    const { data: { user } } = await supabase.auth.getUser()
+    if (!currentStudentId.value) return
     
-    // Get notifications for enrolled subjects
-    const { data, error } = await supabase
-      .from('notifications')
-      .select(`
-        *,
-        subjects (name),
-        profiles!notifications_from_teacher_id_fkey (full_name)
-      `)
-      .eq('student_id', user.id)
+    console.log('Loading notifications for student:', currentStudentId.value)
+    
+    // TODO: When you create student_notifications_view, uncomment this:
+    /*
+    const { data: notificationsData, error } = await supabase
+      .from('student_notifications_view')
+      .select('*')
+      .eq('student_id', currentStudentId.value)
       .order('created_at', { ascending: false })
     
     if (error) throw error
     
-    notifications.value = data.map(notif => ({
-      ...notif,
-      subject_name: notif.subjects?.name,
-      from_teacher: notif.profiles?.full_name
-    }))
+    notifications.value = notificationsData || []
+    console.log('Loaded notifications:', notifications.value)
+    */
+    
+    // For now, return empty notifications
+    notifications.value = []
     
   } catch (error) {
     console.error('Error loading notifications:', error)
   }
 }
 
+// Chat methods - UPDATED to use new messaging functions
 const startChatWithTeacher = async (teacher) => {
-  activeTeacher.value = teacher
+  console.log('Starting chat with teacher:', teacher)
+  
+  activeTeacher.value = {
+    ...teacher,
+    id: teacher.id,
+    teacher_name: teacher.teacher_name,
+    subject_name: teacher.subject_name,
+    section_id: teacher.section_id
+  }
+  
   isModalOpen.value = true
   
   // Load messages for this conversation
-  await loadConversationMessages(teacher.id)
+  await loadConversationMessages(teacher.id, teacher.section_id)
+  
+  // Scroll to bottom of messages
+  await nextTick()
+  scrollToBottom()
 }
 
-const loadConversationMessages = async (teacherId) => {
+const loadConversationMessages = async (teacherId, sectionId) => {
   try {
-    // Find or create conversation
-    const { data: conversation, error: convError } = await supabase
-      .from('conversations')
-      .select('id')
-      .or(`and(participant1_id.eq.${currentUser.value.id},participant2_id.eq.${teacherId}),and(participant1_id.eq.${teacherId},participant2_id.eq.${currentUser.value.id})`)
-      .single()
+    if (!currentStudentId.value) return
     
-    let conversationId
+    console.log('Loading messages between student and teacher:', { 
+      studentId: currentStudentId.value, 
+      teacherId, 
+      sectionId 
+    })
     
-    if (conversation) {
-      conversationId = conversation.id
-    } else {
-      // Create new conversation
-      const { data: newConv, error: createError } = await supabase
-        .from('conversations')
-        .insert({
-          participant1_id: currentUser.value.id,
-          participant2_id: teacherId,
-          created_at: new Date().toISOString()
-        })
-        .select('id')
-        .single()
-      
-      if (createError) throw createError
-      conversationId = newConv.id
-    }
+    // UPDATED: Use the new get_conversation_messages function
+    const { data: messages, error } = await supabase
+      .rpc('get_conversation_messages', {
+        section_uuid: sectionId,
+        user1_uuid: currentStudentId.value,
+        user2_uuid: teacherId
+      })
     
-    // Load messages
-    const { data: messages, error: msgError } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('conversation_id', conversationId)
-      .order('created_at', { ascending: true })
+    if (error) throw error
     
-    if (msgError) throw msgError
+    // UPDATED: Map the data to match template expectations - FIXED field names
+    currentMessages.value = (messages || []).map(msg => ({
+      id: msg.id,
+      sender_id: msg.sender_id,
+      recipient_id: msg.recipient_id,
+      content: msg.message_text,
+      sent_at: msg.sent_at,
+      is_read: msg.is_read,
+      message_type: 'direct'
+    }))
     
-    currentMessages.value = messages
+    console.log('Loaded messages:', currentMessages.value)
+    
+    // Mark messages as read
+    await markMessagesAsRead(teacherId, sectionId)
     
   } catch (error) {
-    console.error('Error loading messages:', error)
+    console.error('Error loading conversation messages:', error)
   }
 }
 
 const sendMessage = async () => {
-  if (!newMessage.value.trim() || !activeTeacher.value) return
+  if (!newMessage.value.trim() || !activeTeacher.value || !currentStudentId.value) return
   
   const messageText = newMessage.value.trim()
+  const tempMessage = {
+    id: 'temp-' + Date.now(),
+    sender_id: currentStudentId.value,
+    recipient_id: activeTeacher.value.id,
+    content: messageText,
+    sent_at: new Date().toISOString(),
+    is_read: false,
+    message_type: 'direct'
+  }
+  
+  // Add temporary message to display
+  currentMessages.value.push(tempMessage)
   newMessage.value = ''
   
+  // Scroll to bottom
+  await nextTick()
+  scrollToBottom()
+  
   try {
-    // Implementation for sending message
-    console.log(`Sending message to ${activeTeacher.value.name}: ${messageText}`)
-    // Add to supabase messages table
+    // UPDATED: Use the real send_direct_message function
+    const { data: messageId, error: sendError } = await supabase
+      .rpc('send_direct_message', {
+        p_section_id: activeTeacher.value.section_id,
+        p_sender_id: currentStudentId.value,
+        p_recipient_id: activeTeacher.value.id,
+        p_message_text: messageText
+      })
+    
+    if (sendError) throw sendError
+    
+    console.log('Message sent successfully with ID:', messageId)
+    
+    // Update the temporary message with the real ID
+    const tempIndex = currentMessages.value.findIndex(m => m.id === tempMessage.id)
+    if (tempIndex !== -1) {
+      currentMessages.value[tempIndex].id = messageId
+    }
+    
+    // Refresh the teachers list to update unread counts
+    await loadEnrolledSubjectsAndTeachers()
+    
   } catch (error) {
-    console.error('Error sending message:', error)
+    console.error('Failed to send message:', error)
+    
+    // Remove temporary message on error
+    const tempIndex = currentMessages.value.findIndex(m => m.id === tempMessage.id)
+    if (tempIndex !== -1) {
+      currentMessages.value.splice(tempIndex, 1)
+    }
+    
+    alert('Failed to send message. Please try again.')
+  }
+}
+
+const markMessagesAsRead = async (teacherId, sectionId) => {
+  try {
+    if (!currentStudentId.value) return
+    
+    console.log('Marking messages as read:', { teacherId, sectionId })
+    
+    // UPDATED: Mark unread messages as read
+    const unreadMessages = currentMessages.value.filter(m => 
+      m.sender_id === teacherId && 
+      !m.is_read
+    )
+    
+    for (const message of unreadMessages) {
+      await supabase.rpc('mark_message_read', {
+        p_message_id: message.id,
+        p_reader_id: currentStudentId.value
+      })
+    }
+    
+    // Update local state
+    const teacher = enrolledTeachers.value.find(t => 
+      t.id === teacherId && t.section_id === sectionId
+    )
+    if (teacher) {
+      teacher.unread_count = 0
+    }
+    
+  } catch (error) {
+    console.error('Error marking messages as read:', error)
   }
 }
 
@@ -519,24 +630,181 @@ const closeModal = () => {
   currentMessages.value = []
 }
 
-const openNotificationModal = (notif) => {
-  notif.read = true
-  // Handle notification opening
+// Notification methods
+const openNotificationModal = async (notif) => {
+  try {
+    console.log('Marking notification as read:', notif)
+    
+    // UPDATED: Mark notification as read when clicked
+    await supabase.rpc('mark_message_read', {
+      p_message_id: notif.notification_id,
+      p_reader_id: currentStudentId.value
+    })
+    
+    notif.is_read = true
+    notif.read_at = new Date().toISOString()
+    
+  } catch (error) {
+    console.error('Error marking notification as read:', error)
+  }
 }
 
-const clearNotifications = () => {
-  notifications.value.forEach(n => n.read = true)
+const clearNotifications = async () => {
+  try {
+    if (!currentStudentId.value) return
+    
+    console.log('Marking all notifications as read')
+    
+    // UPDATED: Mark all unread notifications as read
+    const unreadNotifications = notifications.value.filter(n => !n.is_read)
+    
+    for (const notif of unreadNotifications) {
+      await supabase.rpc('mark_message_read', {
+        p_message_id: notif.notification_id,
+        p_reader_id: currentStudentId.value
+      })
+      
+      notif.is_read = true
+      notif.read_at = new Date().toISOString()
+    }
+    
+  } catch (error) {
+    console.error('Error clearing notifications:', error)
+  }
+}
+
+// Real-time methods - UPDATED for new messaging system
+const setupRealTimeSubscriptions = () => {
+  if (!currentStudentId.value) return
+  
+  console.log('Setting up real-time subscriptions for student messages')
+  
+  // UPDATED: Subscribe to messages table changes
+  messageChannel = supabase
+    .channel('student-messages-realtime')
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages'
+      },
+      async (payload) => {
+        console.log('New message received:', payload.new)
+        
+        const newMessageData = payload.new
+        
+        // Check if this message is for this student
+        if (newMessageData.recipient_id === currentStudentId.value || 
+            newMessageData.recipient_id === null) { // Broadcast message
+          
+          // Refresh teachers list to update unread counts
+          await loadEnrolledSubjectsAndTeachers()
+          await loadNotifications()
+          
+          // If chat modal is open and this message is part of the current conversation
+          if (isModalOpen.value && activeTeacher.value && 
+              newMessageData.section_id === activeTeacher.value.section_id &&
+              (newMessageData.sender_id === activeTeacher.value.id || 
+               newMessageData.recipient_id === activeTeacher.value.id)) {
+            
+            // Add the message to the current conversation
+            currentMessages.value.push({
+              id: newMessageData.id,
+              sender_id: newMessageData.sender_id,
+              recipient_id: newMessageData.recipient_id,
+              content: newMessageData.message_text,
+              sent_at: newMessageData.sent_at,
+              is_read: newMessageData.is_read,
+              message_type: newMessageData.message_type
+            })
+            
+            // Auto-scroll to bottom
+            await nextTick()
+            scrollToBottom()
+            
+            // Mark as read if from teacher
+            if (newMessageData.sender_id === activeTeacher.value.id) {
+              await supabase.rpc('mark_message_read', {
+                p_message_id: newMessageData.id,
+                p_reader_id: currentStudentId.value
+              })
+            }
+          }
+        }
+      }
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'messages'
+      },
+      async () => {
+        // Refresh data when messages are updated (e.g., marked as read)
+        await loadEnrolledSubjectsAndTeachers()
+      }
+    )
+    .subscribe()
+}
+
+const cleanupRealTimeSubscriptions = () => {
+  if (messageChannel) {
+    messageChannel.unsubscribe()
+    messageChannel = null
+  }
+}
+
+// Utility methods
+const scrollToBottom = () => {
+  if (messagesContainer.value) {
+    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+  }
 }
 
 const formatTime = (dateString) => {
   if (!dateString) return ''
-  return new Date(dateString).toLocaleString()
+  
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffMs = now - date
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  
+  if (diffDays === 0) {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  } else if (diffDays === 1) {
+    return 'Yesterday'
+  } else if (diffDays < 7) {
+    return date.toLocaleDateString([], { weekday: 'short' })
+  } else {
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric' })
+  }
 }
 
 // Lifecycle
-onMounted(() => {
-  loadEnrolledSubjectsAndTeachers()
-  loadNotifications()
+onMounted(async () => {
+  console.log('Student messages component mounted')
+  
+  const userData = await getCurrentUser()
+  if (userData) {
+    console.log('Student authenticated:', userData.profile.full_name)
+    
+    // Load initial data
+    await Promise.all([
+      loadEnrolledSubjectsAndTeachers(),
+      loadNotifications()
+    ])
+    
+    // Setup real-time subscriptions
+    setupRealTimeSubscriptions()
+  } else {
+    console.error('Authentication failed or user is not a student')
+  }
+})
+
+onUnmounted(() => {
+  cleanupRealTimeSubscriptions()
 })
 </script>
 

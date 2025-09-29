@@ -113,7 +113,7 @@
         <div class="subject-content">
           <h3 class="subject-title">{{ subject.name }}</h3>
           <p class="subject-code">{{ subject.code }}</p>
-          <p class="subject-instructor">{{ subject.instructor }}</p>
+          <p class="subject-instructor">Teacher: {{ subject.instructor }}</p>
           <p class="subject-section">Section: {{ subject.section }}</p>
           <p class="subject-grade">Grade {{ subject.gradeLevel }}</p>
         </div>
