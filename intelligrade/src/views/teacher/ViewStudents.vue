@@ -90,12 +90,6 @@
             
             <!-- Search and Filter -->
             <div class="search-controls">
-              <select v-model="filterStatus" class="filter-select">
-                <option value="all">All Students</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-              
               <div class="search-input">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="search-icon">
                   <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" />
@@ -106,6 +100,18 @@
                   placeholder="Search students by name or email..."
                 >
               </div>
+              
+              <select v-model="filterStatus" class="filter-select">
+                <option value="all">All Students</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+
+              <button @click="showAddStudentModal = true" class="add-student-icon-btn" title="Add Student">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M15 12C17.21 12 19 10.21 19 8S17.21 4 15 4 11 5.79 11 8 12.79 12 15 12M6 10V7H4V10H1V12H4V15H6V12H9V10M15 14C12.33 14 7 15.34 7 18V20H23V18C23 15.34 17.67 14 15 14Z"/>
+                </svg>
+              </button>
             </div>
           </div>
 
@@ -336,8 +342,8 @@ const fetchStudents = async () => {
       enrolled_at: enrollment.created_at,
       last_activity: enrollment.last_activity || enrollment.created_at,
       status: enrollment.status || 'active',
-      quiz_count: 0, // Will be populated by separate query
-      average_grade: null // Will be populated by separate query
+      quiz_count: 0,
+      average_grade: null
     })) || []
 
     console.log('Fetched students:', students.value)
@@ -369,7 +375,6 @@ const formatDate = (dateString: string) => {
   })
 }
 
-// Navigation methods
 const goBack = async () => {
   try {
     await router.push({ name: 'MySubjects' })
@@ -378,7 +383,6 @@ const goBack = async () => {
   }
 }
 
-// Student actions
 const addStudent = async () => {
   if (!newStudentEmail.value) return
 
@@ -386,22 +390,18 @@ const addStudent = async () => {
   loadingMessage.value = 'Adding student...'
 
   try {
-    // This is a simplified version - you'll need to implement proper student management
     console.log('Adding student:', {
       email: newStudentEmail.value,
       name: newStudentName.value,
       sectionId: sectionId.value
     })
 
-    // For now, just show success
     alert(`Student "${newStudentEmail.value}" added successfully!`)
     
-    // Reset form
     newStudentEmail.value = ''
     newStudentName.value = ''
     showAddStudentModal.value = false
     
-    // Refresh students list
     await fetchStudents()
 
   } catch (error: any) {
@@ -413,7 +413,6 @@ const addStudent = async () => {
 }
 
 const viewStudentDetails = (student: any) => {
-  // Navigate to student details page
   console.log('Viewing details for:', student)
   alert(`View details for ${student.full_name} - This feature will be implemented later`)
 }
@@ -432,7 +431,6 @@ const removeStudent = async (student: any) => {
   loadingMessage.value = 'Removing student...'
 
   try {
-    // Remove student from section
     const { error } = await supabase
       .from('section_enrollments')
       .delete()
@@ -456,7 +454,6 @@ const exportStudents = async () => {
   isExporting.value = true
   
   try {
-    // Generate CSV content
     let csvContent = `Subject: ${subjectName.value} (Grade ${gradeLevel.value})\n`
     csvContent += `Section: ${sectionName.value} (${sectionCode.value})\n`
     csvContent += `Total Students: ${students.value.length}\n\n`
@@ -466,7 +463,6 @@ const exportStudents = async () => {
       csvContent += `"${student.id}","${student.full_name}","${student.email}","${student.status}","${formatDate(student.enrolled_at)}","${formatDate(student.last_activity)}","${student.quiz_count || 0}","${student.average_grade || 'N/A'}%"\n`
     })
     
-    // Create and download file
     const blob = new Blob([csvContent], { type: 'text/csv' })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -486,7 +482,6 @@ const exportStudents = async () => {
   }
 }
 
-// Lifecycle
 onMounted(() => {
   fetchStudents()
 })
@@ -511,7 +506,7 @@ onMounted(() => {
   backdrop-filter: blur(20px);
   border-radius: 32px;
   padding: 3.5rem;
-  margin-bottom: 2.5rem;
+  margin-bottom: 3rem;
   min-height: 180px;
   box-shadow: 
     0 24px 48px rgba(0, 0, 0, 0.1),
@@ -737,14 +732,15 @@ onMounted(() => {
 /* Summary Cards */
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  width: 100%;
+  margin-bottom: 3rem;
 }
 
 .summary-card {
-  background: var(--card-background, white);
-  border: 1px solid var(--border-color, #e5e7eb);
+  background: white;
+  border: 1px solid #e5e7eb;
   border-radius: 20px;
   padding: 2rem;
   display: flex;
@@ -800,14 +796,21 @@ onMounted(() => {
   letter-spacing: 0.05em;
 }
 
-/* Sections */
-.actions-section,
+/* Students Section */
 .students-section {
-  background: var(--card-background, white);
-  border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: 24px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
   padding: 2.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  gap: 2rem;
 }
 
 .section-title h3 {
@@ -819,39 +822,8 @@ onMounted(() => {
 
 .section-title p {
   color: #6b7280;
-  margin: 0 0 2rem 0;
+  margin: 0;
   font-size: 1rem;
-}
-
-/* Action Buttons */
-.add-student-icon-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-  color: white;
-  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);
-  flex-shrink: 0;
-}
-
-.add-student-icon-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(5, 150, 105, 0.4);
-}
-
-/* Students Section */
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 2rem;
-  gap: 2rem;
 }
 
 .search-controls {
@@ -1237,6 +1209,34 @@ onMounted(() => {
   cursor: not-allowed;
 }
 
+/* New Add Student Button Styles */
+.add-student-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  color: white;
+  border: none;
+  font-size: 1.5rem;
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.add-student-icon-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 8px 25px rgba(5, 150, 105, 0.4);
+}
+
+.add-student-icon-btn svg {
+  width: 32px;
+  height: 32px;
+  color: white;
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .section-header-content {
@@ -1276,11 +1276,8 @@ onMounted(() => {
   }
 
   .summary-grid {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  }
-
-  .action-buttons {
     grid-template-columns: 1fr;
+    gap: 1.5rem;
   }
 
   .section-header {
@@ -1308,34 +1305,68 @@ onMounted(() => {
 }
 
 /* Dark Mode Styles */
-.dark-mode .students-container {
+.students-container.dark-mode {
   background: var(--bg-primary);
+  color: var(--primary-text-color);
 }
 
 .dark-mode .section-header-card {
-  background: linear-gradient(135deg, rgba(17, 24, 39, 0.95) 0%, rgba(31, 41, 55, 0.9) 100%);
-  border: 2px solid rgba(75, 85, 99, 0.3);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
 }
 
 .dark-mode .section-header-title {
   color: var(--primary-text-color);
 }
 
+.dark-mode .section-header-subtitle {
+  color: var(--accent-color);
+}
+
 .dark-mode .section-header-description {
   color: var(--secondary-text-color);
 }
 
-.dark-mode .back-button {
-  background: rgba(17, 24, 39, 0.9);
-  color: var(--primary-text-color);
-  border-color: rgba(75, 85, 99, 0.3);
+.dark-mode .export-btn {
+  background: linear-gradient(135deg, var(--accent-color) 0%, #4a9b87 100%);
 }
 
-.dark-mode .summary-card,
-.dark-mode .actions-section,
+.dark-mode .back-button {
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .back-button:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.dark-mode .loading-state p {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .loading-spinner {
+  border: 4px solid rgba(95, 179, 160, 0.2);
+  border-top: 4px solid var(--accent-color);
+}
+
+.dark-mode .summary-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .summary-number {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .summary-label {
+  color: var(--secondary-text-color);
+}
+
 .dark-mode .students-section {
-  background: rgba(17, 24, 39, 0.8);
-  border: 1px solid rgba(75, 85, 99, 0.3);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
 }
 
 .dark-mode .section-title h3 {
@@ -1346,13 +1377,9 @@ onMounted(() => {
   color: var(--secondary-text-color);
 }
 
-.dark-mode .summary-number {
-  color: var(--primary-text-color);
-}
-
 .dark-mode .student-card {
-  background: rgba(17, 24, 39, 0.8);
-  border: 1px solid rgba(75, 85, 99, 0.3);
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
 }
 
 .dark-mode .student-card:hover {
@@ -1369,28 +1396,33 @@ onMounted(() => {
 
 .dark-mode .search-input input,
 .dark-mode .filter-select {
-  background: rgba(17, 24, 39, 0.8);
-  border-color: rgba(75, 85, 99, 0.3);
+  background: var(--card-background);
+  border-color: var(--border-color);
   color: var(--primary-text-color);
 }
 
 .dark-mode .search-input input:focus,
 .dark-mode .filter-select:focus {
   border-color: var(--accent-color);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(95, 179, 160, 0.1);
 }
 
 .dark-mode .student-stats {
-  background: rgba(31, 41, 55, 0.5);
+  background: var(--bg-primary);
+}
+
+.dark-mode .empty-state h3,
+.dark-mode .no-results h4 {
+  color: var(--primary-text-color);
 }
 
 .dark-mode .modal-content {
-  background: rgba(17, 24, 39, 0.95);
-  border: 1px solid rgba(75, 85, 99, 0.3);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
 }
 
 .dark-mode .modal-header {
-  border-bottom-color: rgba(75, 85, 99, 0.3);
+  border-bottom-color: var(--border-color);
 }
 
 .dark-mode .modal-header h2 {
@@ -1402,22 +1434,22 @@ onMounted(() => {
 }
 
 .dark-mode .form-group input {
-  background: rgba(17, 24, 39, 0.8);
-  border-color: rgba(75, 85, 99, 0.3);
+  background: var(--card-background);
+  border-color: var(--border-color);
   color: var(--primary-text-color);
 }
 
 .dark-mode .form-group input:focus {
   border-color: var(--accent-color);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(95, 179, 160, 0.1);
 }
 
 .dark-mode .cancel-btn {
-  background: rgba(75, 85, 99, 0.3);
+  background: var(--border-color);
   color: var(--secondary-text-color);
 }
 
 .dark-mode .cancel-btn:hover {
-  background: rgba(75, 85, 99, 0.5);
+  background: var(--card-background);
 }
 </style>
