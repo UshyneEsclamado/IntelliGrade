@@ -341,21 +341,36 @@ const getCurrentUser = async () => {
       return null
     }
     
-    // Get user profile using the function from our schema  
+    // Query profiles table directly - matching your database schema
     const { data: profile, error: profileError } = await supabase
-      .rpc('get_user_info', { auth_id: user.id })
+      .from('profiles')
+      .select('id, auth_user_id, role, full_name, email')
+      .eq('auth_user_id', user.id)
+      .single()
     
     if (profileError) throw profileError
     
-    if (!profile || profile.length === 0 || profile[0].role !== 'student') {
+    if (!profile || profile.role !== 'student') {
       console.error('User is not a student or profile not found')
       return null
     }
     
-    currentUser.value = user
-    currentStudentId.value = profile[0].user_id
+    // Now get the student ID from students table
+    const { data: studentData, error: studentError } = await supabase
+      .from('students')
+      .select('id')
+      .eq('profile_id', profile.id)
+      .single()
     
-    return { authUser: user, studentId: profile[0].user_id, profile: profile[0] }
+    if (studentError) throw studentError
+    
+    currentUser.value = user
+    currentStudentId.value = studentData.id // This is the student UUID, not profile UUID
+    
+    console.log('Student authenticated:', profile.full_name)
+    console.log('Student ID:', studentData.id)
+    
+    return { authUser: user, studentId: studentData.id, profile: profile }
     
   } catch (error) {
     console.error('Error getting current user:', error)

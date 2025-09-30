@@ -303,54 +303,67 @@ export default {
       this.error = null;
 
       try {
-        console.log('=== SIMPLE LOGIN TEST ===');
+        console.log('=== LOGIN ATTEMPT ===');
+        console.log('Email:', this.email);
         
-        // Step 1: Auth login
+        // Step 1: Authenticate with Supabase Auth
         const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
           email: this.email,
           password: this.password,
         });
 
         if (authError) {
-          console.error('Auth failed:', authError);
+          console.error('Auth error:', authError);
           throw new Error('Invalid email or password');
         }
 
-        console.log('Auth success! User ID:', authData.user.id);
+        console.log('✓ Auth successful');
+        console.log('Auth user ID:', authData.user.id);
 
-        // Step 2: Get profile directly (no RPC function)
+        // Step 2: Get user profile from profiles table
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('id, role, email')
+          .select('id, auth_user_id, role, full_name, email')
           .eq('auth_user_id', authData.user.id)
           .single();
 
-        console.log('Profile lookup:', { profile, profileError });
+        console.log('Profile query result:', { profile, profileError });
 
-        if (profileError || !profile) {
+        if (profileError) {
+          console.error('Profile error:', profileError);
           await supabase.auth.signOut();
-          throw new Error('Account setup incomplete');
+          throw new Error('Unable to load user profile. Please contact support.');
         }
 
-        console.log('Profile found:', profile);
-        console.log('User role:', profile.role);
+        if (!profile) {
+          console.error('No profile found for auth user');
+          await supabase.auth.signOut();
+          throw new Error('Account setup incomplete. Please complete your registration.');
+        }
 
-        // Step 3: Simple redirect
+        console.log('✓ Profile loaded');
+        console.log('Profile ID:', profile.id);
+        console.log('User role:', profile.role);
+        console.log('Full name:', profile.full_name);
+
+        // Step 3: Route based on role
         if (profile.role === 'student') {
-          console.log('Redirecting to student dashboard...');
+          console.log('→ Redirecting to student dashboard');
           this.$router.push('/student-dashboard');
         } else if (profile.role === 'teacher') {
-          console.log('Redirecting to teacher dashboard...');
+          console.log('→ Redirecting to teacher dashboard');
           this.$router.push('/teacher/dashboard');
         } else {
-          console.log('Unknown role, redirecting to home...');
-          this.$router.push('/');
+          console.warn('Unknown role:', profile.role);
+          await supabase.auth.signOut();
+          throw new Error('Invalid user role. Please contact support.');
         }
 
       } catch (err) {
-        console.error('Login error:', err);
+        console.error('=== LOGIN FAILED ===');
+        console.error('Error details:', err);
         
-        // Enhanced error handling
+        // Enhanced error messages
         if (err.message?.includes("Invalid login credentials") || 
             err.message?.includes("Invalid email or password")) {
           this.error = "Invalid email or password. Please check your credentials and try again.";
@@ -358,6 +371,10 @@ export default {
           this.error = "Please verify your email address before logging in. Check your inbox for the verification link.";
         } else if (err.message?.includes("Account setup incomplete")) {
           this.error = "Account setup incomplete. Please complete your registration.";
+        } else if (err.message?.includes("Invalid user role")) {
+          this.error = "Invalid user role. Please contact support.";
+        } else if (err.message?.includes("Unable to load user profile")) {
+          this.error = "Unable to load user profile. Please contact support.";
         } else if (err.message?.includes("Network request failed")) {
           this.error = "Network error. Please check your connection and try again.";
         } else {
