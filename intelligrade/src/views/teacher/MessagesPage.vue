@@ -408,36 +408,56 @@ const loadTeacherContacts = async () => {
     
     console.log('Loading contacts for teacher:', currentTeacherId.value)
     
-    // Always use manual query for now to avoid cache issues
-    console.log('Using manual query to avoid cache issues...')
-    const contacts = await loadContactsManually()
+    // FIXED: Query the teacher_contacts VIEW correctly
+    const { data: contacts, error: contactsError } = await supabase
+      .from('teacher_contacts')
+      .select('*')
+      .eq('teacher_id', currentTeacherId.value)
+      .order('subject_name', { ascending: true })
+      .order('section_name', { ascending: true })
+      .order('student_name', { ascending: true })
     
-    console.log('Contacts loaded:', contacts?.length || 0)
+    if (contactsError) {
+      console.error('Error loading from teacher_contacts view:', contactsError)
+      
+      // If view doesn't exist or has issues, try manual query
+      console.log('Falling back to manual query...')
+      const manualContacts = await loadContactsManually()
+      studentContacts.value = manualContacts || []
+      return
+    }
+    
+    console.log('Contacts loaded from view:', contacts?.length || 0)
     
     if (!contacts || contacts.length === 0) {
       console.log('No students found for this teacher')
       studentContacts.value = []
       
-      // Let's also check if teacher has any subjects at all
-      const { data: subjectCheck } = await supabase
-        .from('subjects')
-        .select('id, name')
-        .eq('teacher_id', currentTeacherId.value)
-        .eq('is_active', true)
-      
-      console.log('Teacher has subjects:', subjectCheck?.length || 0)
-      if (subjectCheck && subjectCheck.length > 0) {
-        console.log('Subjects found but no enrolled students')
-      }
-      
+      // Debug: Check if teacher has subjects and sections
+      await debugTeacherData()
       return
     }
     
-    studentContacts.value = contacts
+    // Map the view data to match UI expectations
+    const mappedContacts = contacts.map(contact => ({
+      student_id: contact.student_id,
+      student_name: contact.student_name,
+      student_email: contact.student_email,
+      student_number: contact.student_number,
+      grade_level: contact.grade_level,
+      subject_id: contact.subject_id,
+      subject_name: contact.subject_name,
+      section_id: contact.section_id,
+      section_name: contact.section_name,
+      section_code: contact.section_code,
+      enrolled_date: contact.enrolled_date,
+      last_message_date: contact.last_message_date,
+      last_message: contact.last_message || `Enrolled ${formatDate(contact.enrolled_date)}`,
+      unread_count: contact.unread_count || 0
+    }))
     
-    // Try to load messaging data if tables exist
-    loadingMessage.value = 'Loading messaging data...'
-    await loadMessagingData()
+    studentContacts.value = mappedContacts
+    console.log('Mapped contacts:', mappedContacts.length)
     
   } catch (error) {
     console.error('Error loading teacher contacts:', error)
@@ -451,109 +471,180 @@ const loadContactsManually = async () => {
   try {
     console.log('Loading contacts manually for teacher:', currentTeacherId.value)
     
-    // Step 1: Check what subjects this teacher has
-    const { data: subjects, error: subjectsError } = await supabase
-      .from('subjects')
-      .select('*')
-      .eq('teacher_id', currentTeacherId.value)
-      .eq('is_active', true)
-    
-    console.log('Teacher subjects:', { subjects, subjectsError })
-    
-    if (subjectsError || !subjects || subjects.length === 0) {
-      console.log('No subjects found for teacher')
-      return []
-    }
-    
-    // Step 2: Check what sections exist for these subjects
-    const subjectIds = subjects.map(s => s.id)
-    const { data: sections, error: sectionsError } = await supabase
-      .from('sections')
-      .select('*')
-      .in('subject_id', subjectIds)
-      .eq('is_active', true)
-    
-    console.log('Sections for subjects:', { sections, sectionsError })
-    
-    if (sectionsError || !sections || sections.length === 0) {
-      console.log('No sections found for teacher subjects')
-      return []
-    }
-    
-    // Step 3: Check what enrollments exist for these sections
-    const sectionIds = sections.map(s => s.id)
-    const { data: enrollments, error: enrollmentsError } = await supabase
+    // Query: Join all tables to get complete student contact information
+    const { data: contacts, error } = await supabase
       .from('enrollments')
-      .select('*')
-      .in('section_id', sectionIds)
+      .select(`
+        enrolled_at,
+        section_id,
+        students:student_id (
+          id,
+          full_name,
+          email,
+          student_id,
+          grade_level
+        ),
+        sections:section_id (
+          id,
+          name,
+          section_code,
+          subjects:subject_id (
+            id,
+            name,
+            teacher_id
+          )
+        )
+      `)
       .eq('status', 'active')
+      .eq('sections.subjects.teacher_id', currentTeacherId.value)
+      .eq('sections.is_active', true)
+      .eq('students.is_active', true)
     
-    console.log('Enrollments for sections:', { enrollments, enrollmentsError })
-    
-    if (enrollmentsError || !enrollments || enrollments.length === 0) {
-      console.log('No enrollments found for teacher sections')
+    if (error) {
+      console.error('Manual query error:', error)
       return []
     }
     
-    // Step 4: Get student details
-    // TODO: Implement student details loading here, or return an empty array for now
-    return []
+    if (!contacts || contacts.length === 0) {
+      console.log('No enrollments found in manual query')
+      return []
+    }
+    
+    console.log('Manual query raw results:', contacts.length)
+    
+    // Transform the nested data structure
+    const transformedContacts = contacts
+      .filter(enrollment => {
+        // Filter out any null nested objects
+        return enrollment.students && 
+               enrollment.sections && 
+               enrollment.sections.subjects &&
+               enrollment.sections.subjects.teacher_id === currentTeacherId.value
+      })
+      .map(enrollment => ({
+        student_id: enrollment.students.id,
+        student_name: enrollment.students.full_name,
+        student_email: enrollment.students.email,
+        student_number: enrollment.students.student_id,
+        grade_level: enrollment.students.grade_level,
+        subject_id: enrollment.sections.subjects.id,
+        subject_name: enrollment.sections.subjects.name,
+        section_id: enrollment.sections.id,
+        section_name: enrollment.sections.name,
+        section_code: enrollment.sections.section_code,
+        enrolled_date: enrollment.enrolled_at,
+        last_message_date: null,
+        last_message: `Enrolled ${formatDate(enrollment.enrolled_at)}`,
+        unread_count: 0
+      }))
+    
+    console.log('Transformed contacts:', transformedContacts.length)
+    
+    // Try to load messaging data for each contact
+    for (const contact of transformedContacts) {
+      await updateStudentMessagingInfo(contact)
+    }
+    
+    return transformedContacts
+    
   } catch (error) {
-    console.error('Error loading contacts manually:', error)
+    console.error('Error in manual contact loading:', error)
     return []
   }
 }
 
-const loadMessagingData = async () => {
+const debugTeacherData = async () => {
   try {
-    // Check if messaging tables exist by trying to query them
-    const { data, error } = await supabase
-      .from('messages')
-      .select('count')
-      .limit(1)
+    // Check subjects
+    const { data: subjects } = await supabase
+      .from('subjects')
+      .select('id, name, is_active')
+      .eq('teacher_id', currentTeacherId.value)
     
-    if (error && error.code === '42P01') {
-      // Table doesn't exist
-      console.log('Messaging tables not yet created')
+    console.log('Teacher subjects:', subjects)
+    
+    if (!subjects || subjects.length === 0) {
+      console.log('❌ Teacher has no subjects. Create subjects first!')
       return
     }
     
-    if (error) {
-      console.error('Error checking messages table:', error)
+    // Check sections
+    const subjectIds = subjects.map(s => s.id)
+    const { data: sections } = await supabase
+      .from('sections')
+      .select('id, name, subject_id, is_active')
+      .in('subject_id', subjectIds)
+    
+    console.log('Sections for teacher subjects:', sections)
+    
+    if (!sections || sections.length === 0) {
+      console.log('❌ Subjects have no sections. Create sections for your subjects!')
       return
     }
     
-    console.log('Messaging tables exist, loading data...')
+    // Check enrollments
+    const sectionIds = sections.map(s => s.id)
+    const { data: enrollments } = await supabase
+      .from('enrollments')
+      .select('id, student_id, section_id, status')
+      .in('section_id', sectionIds)
     
-    // Update student unread counts and last messages
-    for (const student of studentContacts.value) {
-      await updateStudentMessagingInfo(student)
+    console.log('Enrollments in sections:', enrollments)
+    
+    if (!enrollments || enrollments.length === 0) {
+      console.log('❌ No students enrolled in your sections yet!')
+      return
+    }
+    
+    // Check students
+    const studentIds = [...new Set(enrollments.map(e => e.student_id))]
+    const { data: students } = await supabase
+      .from('students')
+      .select('id, full_name, is_active')
+      .in('id', studentIds)
+    
+    console.log('Enrolled students:', students)
+    
+    const activeStudents = students?.filter(s => s.is_active)
+    console.log('Active enrolled students:', activeStudents?.length || 0)
+    
+    if (!activeStudents || activeStudents.length === 0) {
+      console.log('❌ Enrolled students are not active!')
     }
     
   } catch (error) {
-    console.error('Error loading messaging data:', error)
+    console.error('Error in debug:', error)
   }
 }
 
 const updateStudentMessagingInfo = async (student) => {
   try {
     // Get unread count for this teacher from this student
-    const { count: unreadCount } = await supabase
+    const { data: unreadMessages } = await supabase
       .from('messages')
-      .select('*', { count: 'exact', head: true })
+      .select('id')
       .eq('section_id', student.section_id)
       .eq('sender_id', student.student_id)
       .eq('recipient_id', currentTeacherId.value)
-      .not('id', 'in', 
-        `(${await supabase
+      .is('recipient_id', currentTeacherId.value)
+    
+    if (unreadMessages) {
+      // Check which messages haven't been read
+      const messageIds = unreadMessages.map(m => m.id)
+      
+      if (messageIds.length > 0) {
+        const { data: readRecords } = await supabase
           .from('message_reads')
           .select('message_id')
+          .in('message_id', messageIds)
           .eq('reader_id', currentTeacherId.value)
-          .then(({data}) => data?.map(r => r.message_id).join(',') || '\'\'')
-        })`
-      )
-    
-    student.unread_count = unreadCount || 0
+        
+        const readMessageIds = new Set(readRecords?.map(r => r.message_id) || [])
+        student.unread_count = messageIds.filter(id => !readMessageIds.has(id)).length
+      } else {
+        student.unread_count = 0
+      }
+    }
     
     // Get last message between teacher and student
     const { data: lastMessage } = await supabase
@@ -571,7 +662,8 @@ const updateStudentMessagingInfo = async (student) => {
     }
     
   } catch (error) {
-    console.error('Error updating messaging info for student:', student.student_id, error)
+    // Silently handle errors - messaging might not be set up yet
+    console.log('Could not load messaging info for student:', student.student_id)
   }
 }
 
@@ -671,19 +763,13 @@ const loadConversationMessages = async (studentId, sectionId) => {
       sectionId 
     })
     
-    // Try to load messages if tables exist
+    // Load messages using the correct query
     const { data: messages, error } = await supabase
       .from('messages')
       .select('*')
       .eq('section_id', sectionId)
       .or(`and(sender_id.eq.${currentTeacherId.value},recipient_id.eq.${studentId}),and(sender_id.eq.${studentId},recipient_id.eq.${currentTeacherId.value})`)
       .order('sent_at', { ascending: true })
-    
-    if (error && error.code === '42P01') {
-      // Table doesn't exist
-      currentMessages.value = []
-      return
-    }
     
     if (error) {
       console.error('Error loading messages:', error)
@@ -692,6 +778,8 @@ const loadConversationMessages = async (studentId, sectionId) => {
     }
     
     currentMessages.value = messages || []
+    console.log('Loaded messages:', messages?.length || 0)
+    
     await markConversationAsRead(sectionId, studentId)
     
   } catch (error) {
@@ -720,7 +808,7 @@ const handleSendMessage = async () => {
   await nextTick()
   scrollToBottom()
   
-      try {
+  try {
     const { data: messageId, error: sendError } = await supabase
       .rpc('send_direct_message', {
         p_section_id: activeConversation.value.section_id,
@@ -730,9 +818,8 @@ const handleSendMessage = async () => {
       })
     
     if (sendError) {
-      // If function doesn't exist, show placeholder behavior
-      console.log('Messaging system not implemented:', sendError)
-      alert('Messaging system will be available after running the SQL setup script.')
+      console.log('Messaging function error:', sendError)
+      alert('Messaging system not fully configured. Please run the messaging SQL script.')
       
       // Remove temp message
       const tempIndex = currentMessages.value.findIndex(m => m.id === tempMessage.id)
@@ -744,6 +831,7 @@ const handleSendMessage = async () => {
     
     console.log('Message sent successfully with ID:', messageId)
     
+    // Update temp message with real ID
     const tempIndex = currentMessages.value.findIndex(m => m.id === tempMessage.id)
     if (tempIndex !== -1) {
       currentMessages.value[tempIndex].id = messageId
@@ -778,7 +866,7 @@ const markConversationAsRead = async (sectionId, studentId) => {
       p_current_user_id: currentTeacherId.value
     })
     
-    if (error && error.code !== '42883') { // Ignore function not found error
+    if (error && error.code !== '42883') {
       console.error('Error marking conversation as read:', error)
     } else if (!error) {
       const student = studentContacts.value.find(s => s.student_id === studentId && s.section_id === sectionId)
@@ -787,7 +875,7 @@ const markConversationAsRead = async (sectionId, studentId) => {
       }
     }
   } catch (error) {
-    console.error('Error marking conversation as read:', error)
+    console.log('Could not mark conversation as read:', error.message)
   }
 }
 
@@ -808,7 +896,10 @@ const closeBroadcastModal = () => {
 }
 
 const sendBroadcastMessage = async () => {
-  if (!broadcastMessage.value.trim() || !broadcastSection.value || !currentTeacherId.value) return
+  if (!broadcastMessage.value.trim() || !broadcastSection.value || !currentTeacherId.value) {
+    alert('Please select a section and enter a message.')
+    return
+  }
   
   try {
     isLoading.value = true
@@ -822,21 +913,26 @@ const sendBroadcastMessage = async () => {
       })
     
     if (sendError) {
-      console.log('Broadcast messaging system not implemented:', sendError)
+      console.log('Broadcast function error:', sendError)
       const selectedSectionInfo = uniqueSections.value.find(s => s.section_id === broadcastSection.value)
       const sectionName = selectedSectionInfo ? selectedSectionInfo.section_name : 'Selected Section'
       
-      closeBroadcastModal()
-      alert(`Broadcast message would be sent to all students in ${sectionName}! (Messaging system will be available after running the SQL setup script)`)
+      alert(`Broadcast messaging not configured. Your message would be sent to all students in ${sectionName}. Please run the messaging SQL script.`)
+      broadcastMessage.value = ''
+      broadcastSection.value = ''
+      currentTab.value = 'students'
       return
     }
     
     console.log('Broadcast message sent successfully with ID:', messageId)
-    closeBroadcastModal()
     
     const selectedSectionInfo = uniqueSections.value.find(s => s.section_id === broadcastSection.value)
     const sectionName = selectedSectionInfo ? selectedSectionInfo.section_name : 'Selected Section'
     alert(`Broadcast message sent successfully to all students in ${sectionName}!`)
+    
+    broadcastMessage.value = ''
+    broadcastSection.value = ''
+    currentTab.value = 'students'
     
     await loadTeacherContacts()
     
@@ -871,6 +967,7 @@ const markAllAsRead = async () => {
     }
     
     await loadTeacherContacts()
+    alert('All messages marked as read!')
     
   } catch (error) {
     console.error('Error marking all as read:', error)
@@ -939,11 +1036,10 @@ const setupAuthListener = () => {
 
 onMounted(async () => {
   console.log('Teacher messages component mounted')
+  initDarkMode()
   
-  // Setup auth listener first
   setupAuthListener()
   
-  // Get current user and load data
   const userData = await getCurrentUser()
   if (userData) {
     console.log('Teacher authenticated:', userData.profile.full_name)
