@@ -134,7 +134,7 @@ const routes = [
         component: SectionCode
       },
       {
-        path: 'sections',
+        path: 'sections/:subjectId/:sectionId',
         name: 'Sections',
         component: Sections
       },

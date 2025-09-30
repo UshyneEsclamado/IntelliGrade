@@ -2360,6 +2360,30 @@ onUnmounted(() => {
   box-shadow: 0 8px 24px rgba(95, 179, 160, 0.2);
 }
 
+.dark-mode .section-header-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .section-header-card:hover {
+  box-shadow: 
+    0 24px 48px rgba(0, 0, 0, 0.4),
+    0 12px 24px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .section-header-title {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .section-header-subtitle {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .section-header-description {
+  color: var(--text-muted);
+}
+
 .dark-mode .subject-card {
   background: var(--card-background);
   border: 1px solid var(--card-border-color);

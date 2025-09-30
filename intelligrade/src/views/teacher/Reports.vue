@@ -847,11 +847,11 @@ onMounted(() => {
 }
 
 .main-wrapper {
-  background: white;
+  background: var(--card-background);
   border-radius: 24px;
   padding: 2rem;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--border-color);
 }
 
 /* States */
@@ -920,7 +920,7 @@ onMounted(() => {
 }
 
 .summary-card {
-  background: white;
+  background: var(--card-background);
   border-radius: 20px;
   padding: 2rem;
   display: flex;
@@ -1068,8 +1068,8 @@ onMounted(() => {
 }
 
 .chart-card {
-  background: white;
-  border: 1px solid rgba(229, 231, 235, 0.8);
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
   border-radius: 20px;
   padding: 2rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
@@ -1169,8 +1169,8 @@ onMounted(() => {
 }
 
 .top-performers, .struggling-students {
-  background: white;
-  border: 1px solid rgba(229, 231, 235, 0.8);
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
   border-radius: 20px;
   padding: 2rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
@@ -1277,8 +1277,8 @@ onMounted(() => {
 }
 
 .students-performance-table {
-  background: white;
-  border: 1px solid rgba(229, 231, 235, 0.8);
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
   border-radius: 20px;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
@@ -1398,8 +1398,8 @@ onMounted(() => {
 }
 
 .quiz-performance-card {
-  background: white;
-  border: 1px solid rgba(229, 231, 235, 0.8);
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
   border-radius: 20px;
   padding: 2rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
@@ -1509,8 +1509,8 @@ onMounted(() => {
 }
 
 .analytics-card {
-  background: white;
-  border: 1px solid rgba(229, 231, 235, 0.8);
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
   border-radius: 20px;
   padding: 2rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
@@ -1735,9 +1735,126 @@ onMounted(() => {
 }
 
 .dark-mode .error-state {
-  background: var(--error-bg);
-  border: 1px solid rgba(217, 83, 79, 0.4);
-  color: var(--error-color);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .error-state h3 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .error-state p {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .retry-btn {
+  background: linear-gradient(135deg, var(--accent-color) 0%, #4a9b87 100%);
+}
+
+.dark-mode .main-wrapper {
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .summary-card {
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .summary-number {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .summary-label {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .chart-card {
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .chart-card h4 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .top-performers,
+.dark-mode .struggling-students {
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .top-performers h4,
+.dark-mode .struggling-students h4 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .performer-name {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .performer-score {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .students-performance-table {
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .table-header {
+  background: var(--bg-secondary);
+}
+
+.dark-mode .header-cell {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .table-row {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dark-mode .table-row:hover {
+  background: var(--bg-secondary);
+}
+
+.dark-mode .table-cell {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .quiz-performance-card {
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .quiz-performance-header h4 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .quiz-date {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .analytics-card {
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .analytics-card h4 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .metric-label {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .metric-value {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .recommendation-text {
+  color: var(--secondary-text-color);
 }
 
 .dark-mode .empty-state {
