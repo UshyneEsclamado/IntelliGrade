@@ -1152,8 +1152,20 @@ onMounted(() => {
 }
 
 .dark-mode .section-header-card {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+  backdrop-filter: blur(20px);
+}
+
+.dark-mode .section-header-card:hover {
+  box-shadow: 
+    0 24px 48px rgba(0, 0, 0, 0.4),
+    0 12px 24px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .header-bg-decoration {
+  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.02) 0%, transparent 70%);
 }
 
 .dark-mode .section-header-title {
@@ -1187,15 +1199,34 @@ onMounted(() => {
   color: var(--secondary-text-color);
 }
 
+/* Add missing main wrapper dark mode styling */
+.dark-mode .main-wrapper {
+  background: var(--card-background) !important;
+  border: 1px solid var(--card-border-color) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+}
+
 .dark-mode .loading-spinner {
   border: 4px solid rgba(95, 179, 160, 0.2);
   border-left: 4px solid var(--accent-color);
 }
 
 .dark-mode .error-state {
-  background: var(--error-bg);
-  border: 1px solid rgba(217, 83, 79, 0.4);
-  color: var(--error-color);
+  background: var(--card-background);
+  border: 1px solid var(--card-border-color);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .error-state h3 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .error-state p {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .retry-btn {
+  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
 }
 
 .dark-mode .empty-state {
@@ -1206,10 +1237,24 @@ onMounted(() => {
   color: var(--primary-text-color);
 }
 
-.dark-mode .quiz-card {
-  background: var(--bg-card);
+.dark-mode .quiz-stats {
+  background: var(--bg-accent);
   border: 1px solid var(--border-color);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .stat-number {
+  color: var(--accent-color);
+}
+
+.dark-mode .stat-label {
+  color: var(--secondary-text-color);
+}
+
+/* Add missing quiz card dark mode styling */
+.dark-mode .quiz-card {
+  background: var(--card-background) !important;
+  border: 1px solid var(--card-border-color) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
 }
 
 .dark-mode .quiz-card:hover {
@@ -1264,16 +1309,43 @@ onMounted(() => {
   background: rgba(217, 83, 79, 0.3);
 }
 
-.dark-mode .quiz-details-modal {
-  background: var(--bg-secondary);
+.dark-mode .modal-content {
+  background: var(--card-background) !important;
+  border: 1px solid var(--card-border-color);
+}
+
+.dark-mode .modal-header {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dark-mode .modal-header h2 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .close-btn {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .close-btn:hover {
+  color: var(--accent-color);
+  background: var(--bg-accent);
 }
 
 .dark-mode .modal-overlay {
   background: rgba(0, 0, 0, 0.8);
 }
 
-.dark-mode .modal-header h3 {
-  color: var(--primary-text-color);
+.dark-mode .stat-item {
+  background: var(--bg-accent);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .stat-value {
+  color: var(--accent-color);
+}
+
+.dark-mode .stat-label {
+  color: var(--secondary-text-color);
 }
 
 .dark-mode .modal-close {
@@ -1330,5 +1402,12 @@ onMounted(() => {
 
 .dark-mode .loading-questions {
   color: var(--secondary-text-color);
+}
+
+/* Add missing dark mode styles for main wrapper */
+.dark-mode .main-wrapper {
+  background: var(--card-background) !important;
+  border: 1px solid var(--card-border-color) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
 }
 </style>

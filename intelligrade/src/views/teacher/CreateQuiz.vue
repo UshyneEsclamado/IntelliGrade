@@ -1,5 +1,5 @@
 <template>
-  <div class="home-container" :class="{ 'dark-mode': isDarkMode }">
+  <div class="subjects-page" :class="{ 'dark-mode': isDarkMode }">
     <!-- Enhanced Header Section -->
     <div class="section-header-card">
       <div class="header-bg-decoration"></div>
@@ -12,10 +12,11 @@
       <div class="section-header-content">
         <div class="section-header-left">
           <div class="section-header-icon">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor">
               <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
             </svg>
           </div>
+          
           <div class="header-text">
             <div class="section-header-title">Create New Quiz</div>
             <div class="section-header-subtitle">{{ subjectName }} (Grade {{ gradeLevel }})</div>
@@ -24,7 +25,7 @@
         </div>
         
         <div class="header-actions">
-          <button @click="previewQuiz" class="create-quiz-btn" :disabled="questions.length === 0 || !quizTitle.trim()">
+          <button @click="previewQuiz" class="export-btn" :disabled="questions.length === 0 || !quizTitle.trim()">
             <svg v-if="isPreviewing" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="spinner">
               <path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z" />
             </svg>
@@ -35,7 +36,7 @@
           </button>
           <button @click="goBack" class="back-button">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M10 19l-7-7 7-7m-7 7h18"></path>
+              <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
             </svg>
             Back to Subjects
           </button>
@@ -235,27 +236,12 @@
           </div>
         </div>
         
-        <!-- Fixed Form Actions with inline styles to ensure visibility -->
-        <div class="form-actions" style="display: flex !important; justify-content: flex-end !important; gap: 1.5rem !important; margin-top: 2rem !important; padding-top: 2rem !important; border-top: 1px solid #e2e8f0 !important; width: 100% !important; position: relative !important; z-index: 100 !important; background: white !important;">
+        <!-- Form Actions -->
+        <div class="form-actions">
           <button 
             type="button" 
             class="cancel-btn" 
             @click="goBack"
-            style="
-              display: flex !important;
-              align-items: center !important;
-              background: transparent !important;
-              color: #6b7280 !important;
-              border: 2px solid #d1d5db !important;
-              padding: 1rem 2rem !important;
-              border-radius: 16px !important;
-              font-weight: 600 !important;
-              cursor: pointer !important;
-              transition: all 0.3s ease !important;
-              min-height: 48px !important;
-              visibility: visible !important;
-              opacity: 1 !important;
-            "
           >
             Cancel
           </button>
@@ -264,29 +250,8 @@
             type="submit" 
             class="submit-quiz-btn" 
             :disabled="isSubmitting"
-            style="
-              display: flex !important;
-              align-items: center !important;
-              gap: 0.5rem !important;
-              background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-              color: white !important;
-              border: none !important;
-              padding: 1rem 2rem !important;
-              border-radius: 16px !important;
-              font-size: 1rem !important;
-              font-weight: 600 !important;
-              cursor: pointer !important;
-              transition: all 0.3s ease !important;
-              box-shadow: 0 8px 32px rgba(61, 141, 122, 0.2) !important;
-              min-height: 48px !important;
-              min-width: 150px !important;
-              position: relative !important;
-              z-index: 101 !important;
-              visibility: visible !important;
-              opacity: 1 !important;
-            "
           >
-            <svg v-if="isSubmitting" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="spinner" style="animation: spin 1s linear infinite;">
+            <svg v-if="isSubmitting" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="spinner">
               <path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z" />
             </svg>
             {{ isSubmitting ? 'Creating Quiz...' : 'Create Quiz' }}
@@ -885,31 +850,33 @@ onMounted(() => {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-.home-container {
+.subjects-page {
   padding: 2rem;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   font-family: 'Inter', sans-serif;
   background: var(--bg-primary);
   min-height: 100vh;
+  color: var(--primary-text-color);
+  transition: all 0.3s ease;
 }
 
 /* Enhanced Header Design */
 .section-header-card {
+  margin-bottom: 2rem;
   position: relative;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%);
+  overflow: hidden;
+  background: rgba(248, 250, 252, 0.9);
   backdrop-filter: blur(20px);
   border-radius: 32px;
   padding: 3.5rem;
-  margin-bottom: 2.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.8);
   min-height: 180px;
   box-shadow: 
-    0 24px 48px rgba(0, 0, 0, 0.1),
-    0 12px 24px rgba(0, 0, 0, 0.08),
+    0 20px 40px rgba(0, 0, 0, 0.06),
+    0 10px 20px rgba(0, 0, 0, 0.04),
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .section-header-card:hover {
@@ -933,38 +900,38 @@ onMounted(() => {
 .floating-shapes {
   position: absolute;
   top: 0;
-  left: 0;
   right: 0;
-  bottom: 0;
-  z-index: 1;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
+  z-index: 1;
 }
 
 .shape {
   position: absolute;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(79, 70, 229, 0.05) 100%);
 }
 
 .shape-1 {
-  width: 120px;
-  height: 120px;
-  top: -30px;
-  right: 10%;
+  width: 100px;
+  height: 100px;
+  top: -20px;
+  right: 15%;
   animation: float 6s ease-in-out infinite;
 }
 
 .shape-2 {
-  width: 80px;
-  height: 80px;
-  bottom: -20px;
+  width: 60px;
+  height: 60px;
+  bottom: -10px;
   right: 25%;
   animation: float 8s ease-in-out infinite reverse;
 }
 
 .shape-3 {
-  width: 60px;
-  height: 60px;
+  width: 80px;
+  height: 80px;
   top: 50%;
   right: 5%;
   animation: float 7s ease-in-out infinite;
@@ -972,7 +939,7 @@ onMounted(() => {
 
 @keyframes float {
   0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-20px) rotate(10deg); }
+  50% { transform: translateY(-15px) rotate(10deg); }
 }
 
 .section-header-content {
@@ -987,32 +954,30 @@ onMounted(() => {
 .section-header-left {
   display: flex;
   align-items: center;
-  gap: 2.5rem;
+  gap: 2rem;
 }
 
 .section-header-icon {
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, var(--accent-color) 0%, var(--primary-color-light) 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   border-radius: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  box-shadow: 
-    0 12px 24px var(--shadow-light),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .section-header-icon:hover {
-  transform: scale(1.05);
+  transform: translateY(-2px);
 }
 
 .header-text {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.3rem;
 }
 
 .section-header-title {
@@ -1139,6 +1104,24 @@ onMounted(() => {
     0 0 0 1px rgba(255, 255, 255, 0.3);
   border: 1px solid var(--card-border-color);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.content-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(ellipse at center, rgba(16, 185, 129, 0.03) 0%, transparent 70%);
+  z-index: 1;
+}
+
+.content-card > * {
+  position: relative;
+  z-index: 2;
 }
 
 .content-card:hover {
@@ -1147,6 +1130,7 @@ onMounted(() => {
     0 25px 70px var(--shadow-medium),
     0 12px 40px var(--shadow-light),
     0 0 0 1px rgba(255, 255, 255, 0.4);
+  border-color: var(--accent-color);
 }
 
 /* Enhanced Card Design */
@@ -2078,19 +2062,26 @@ onMounted(() => {
 }
 
 /* Dark Mode Styles */
-.home-container.dark-mode {
+.subjects-page.dark-mode {
   background: var(--bg-primary);
   color: var(--primary-text-color);
 }
 
 .dark-mode .section-header-card {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+  backdrop-filter: blur(20px);
+}
+
+.dark-mode .section-header-card:hover {
+  box-shadow: 
+    0 24px 48px rgba(0, 0, 0, 0.4),
+    0 12px 24px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .dark-mode .header-bg-decoration {
-  background: linear-gradient(135deg, var(--accent-color) 0%, rgba(95, 179, 160, 0.3) 100%);
+  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.02) 0%, transparent 70%);
 }
 
 .dark-mode .section-header-title {
@@ -2098,7 +2089,7 @@ onMounted(() => {
 }
 
 .dark-mode .section-header-subtitle {
-  color: var(--accent-color);
+  color: var(--secondary-text-color);
 }
 
 .dark-mode .section-header-description {
@@ -2116,9 +2107,20 @@ onMounted(() => {
   color: var(--accent-color);
 }
 
+.dark-mode .section-header-title {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .section-header-subtitle {
+  color: var(--accent-color);
+}
+
+.dark-mode .section-header-description {
+  color: var(--secondary-text-color);
+}
+
 .dark-mode .export-btn {
-  background: linear-gradient(135deg, var(--accent-color) 0%, var(--primary-color-dark) 100%);
-  box-shadow: 0 8px 24px rgba(61, 141, 122, 0.3);
+  background: linear-gradient(135deg, var(--accent-color) 0%, #4a9b87 100%);
 }
 
 .dark-mode .export-btn:hover:not(:disabled) {
@@ -2126,9 +2128,9 @@ onMounted(() => {
 }
 
 .dark-mode .content-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  background: var(--card-background) !important;
+  border: 1px solid var(--card-border-color) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
 }
 
 .dark-mode .card-header h3 {
@@ -2182,17 +2184,15 @@ onMounted(() => {
 
 /* Dark Mode Enhanced Card Styles */
 .dark-mode .enhanced-card {
-  background: rgba(31, 41, 55, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 
-    0 4px 12px rgba(0, 0, 0, 0.25),
-    0 2px 6px rgba(0, 0, 0, 0.15);
+  background: var(--card-background);
+  border: 1px solid var(--card-border-color);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .dark-mode .enhanced-card:hover {
-  box-shadow: 
-    0 8px 25px rgba(0, 0, 0, 0.4),
-    0 4px 12px rgba(0, 0, 0, 0.25);
+  background: var(--bg-card-hover);
+  border-color: var(--accent-color);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
 }
 
 /* Dark Mode Card Floating Shapes */
@@ -2242,8 +2242,8 @@ onMounted(() => {
 .dark-mode .enhanced-card input[type="number"],
 .dark-mode .enhanced-card textarea,
 .dark-mode .enhanced-card select {
-  background: rgba(17, 24, 39, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
   color: var(--primary-text-color);
 }
 
@@ -2252,8 +2252,8 @@ onMounted(() => {
 .dark-mode .enhanced-card textarea:focus,
 .dark-mode .enhanced-card select:focus {
   border-color: var(--accent-color);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-  background: rgba(17, 24, 39, 1);
+  box-shadow: 0 0 0 3px var(--bg-accent);
+  background: var(--input-bg);
 }
 
 /* Dark Mode Enhanced Label Styles */
@@ -2263,37 +2263,39 @@ onMounted(() => {
 
 /* Dark Mode Button Enhancements */
 .dark-mode .enhanced-card .btn-primary {
-  background: linear-gradient(135deg, var(--accent-color), var(--primary-color-dark));
+  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
 }
 
 .dark-mode .enhanced-card .btn-primary:hover {
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, var(--accent-hover) 0%, #4a9b87 100%);
+  box-shadow: 0 6px 20px var(--bg-accent);
 }
 
 .dark-mode .enhanced-card .btn-secondary {
-  background: rgba(75, 85, 99, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--secondary-text-color);
+  background: var(--action-btn-bg);
+  border: 1px solid var(--border-color);
+  color: var(--action-btn-color);
 }
 
 .dark-mode .enhanced-card .btn-secondary:hover {
-  background: rgba(75, 85, 99, 0.3);
+  background: var(--bg-accent-hover);
+  border-color: var(--accent-color);
 }
 
 /* Dark Mode Info Badges */
 .dark-mode .info-badge.subject {
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  background: var(--bg-accent);
+  border: 1px solid var(--accent-color);
 }
 
 .dark-mode .info-badge.section {
-  background: rgba(59, 130, 246, 0.15);
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  background: var(--bg-accent);
+  border: 1px solid var(--accent-color);
 }
 
 .dark-mode .info-badge.code {
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  background: var(--bg-accent);
+  border: 1px solid var(--accent-color);
 }
 
 .dark-mode .info-badge .label {
@@ -2301,7 +2303,34 @@ onMounted(() => {
 }
 
 .dark-mode .info-badge .value {
-  color: var(--primary-text-color);
+  color: var(--accent-color);
+}
+
+/* Dark Mode Form Actions */
+.dark-mode .form-actions {
+  border-top: 1px solid var(--border-color);
+}
+
+.dark-mode .cancel-btn {
+  background: var(--action-btn-bg);
+  color: var(--action-btn-color);
+  border: 2px solid var(--border-color);
+}
+
+.dark-mode .cancel-btn:hover {
+  background: var(--bg-accent-hover);
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.dark-mode .submit-quiz-btn {
+  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
+  box-shadow: 0 8px 32px var(--bg-accent);
+}
+
+.dark-mode .submit-quiz-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--accent-hover) 0%, #4a9b87 100%);
+  box-shadow: 0 16px 48px var(--bg-accent);
 }
 
 .dark-mode .setting-card h4 {
