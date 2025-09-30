@@ -110,6 +110,17 @@
                 <!-- Section Action Buttons -->
                 <div class="section-actions">
                   <button 
+                    @click.stop="viewSectionStudents(subject, section)"
+                    class="section-action-btn view-students"
+                    title="View Students in Section"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M16,4C18.21,4 20,5.79 20,8C20,10.21 18.21,12 16,12C13.79,12 12,10.21 12,8C12,5.79 13.79,4 16,4M16,14C20.42,14 24,15.79 24,18V20H8V18C8,15.79 11.58,14 16,14M6,6C7.1,6 8,6.9 8,8C8,9.1 7.1,10 6,10C4.9,10 4,9.1 4,8C4,6.9 4.9,6 6,6M6,12C8.67,12 12,13.34 12,16V18H0V16C0,13.34 3.33,12 6,12Z" />
+                    </svg>
+                    View Students
+                  </button>
+
+                  <button 
                     @click.stop="navigateToCreateQuiz(subject, section)"
                     class="section-action-btn create-quiz"
                     title="Create Quiz/Assessment"
@@ -614,6 +625,27 @@ const generateReports = async (subject, section) => {
   try {
     await router.push({
       name: 'Reports',
+      params: {
+        subjectId: subject.id,
+        sectionId: section.id
+      },
+      query: {
+        subjectName: subject.name,
+        sectionName: section.name,
+        gradeLevel: subject.grade_level,
+        sectionCode: section.section_code
+      }
+    })
+  } catch (error) {
+    console.error('Navigation error:', error)
+  }
+}
+
+// View students in a specific section
+const viewSectionStudents = async (subject, section) => {
+  try {
+    await router.push({
+      name: 'ViewStudents',
       params: {
         subjectId: subject.id,
         sectionId: section.id
@@ -1786,6 +1818,17 @@ onUnmounted(() => {
   background: linear-gradient(135deg, #059669 0%, #10b981 100%);
   transform: translateY(-1px);
   box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.view-students {
+  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+  color: white;
+}
+
+.view-students:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
 }
 
 .view-quizzes {

@@ -114,17 +114,17 @@ const routes = [
         component: ClassCodeEntry
       },
       {
-        path: 'create-quiz',
+        path: 'create-quiz/:subjectId/:sectionId',
         name: 'CreateQuiz',
         component: CreateQuiz
       },
       {
-        path: 'grade-management',
+        path: 'grade-management/:subjectId/:sectionId',
         name: 'GradeManagement',
         component: GradeManagement
       },
       {
-        path: 'reports',
+        path: 'reports/:subjectId/:sectionId',
         name: 'Reports',
         component: Reports
       },
@@ -144,12 +144,12 @@ const routes = [
         component: SectionSelection
       },
       {
-        path: 'view-quizzes',
+        path: 'view-quizzes/:subjectId/:sectionId',
         name: 'ViewQuizzes',
         component: ViewQuizzes
       },
       {
-        path: 'view-students',
+        path: 'view-students/:subjectId/:sectionId',
         name: 'ViewStudents',
         component: ViewStudents
       }
