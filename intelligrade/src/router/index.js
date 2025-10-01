@@ -25,7 +25,7 @@ import MessagesPage from '../views/teacher/MessagesPage.vue'
 import MySubjects from '../views/teacher/MySubjects.vue'
 import Reports from '../views/teacher/Reports.vue'
 import SectionCode from '../views/teacher/SectionCode.vue'
-import Sections from '../views/teacher/Sections.vue'
+import Assessments from '../views/teacher/Assessments.vue'
 import SectionSelection from '../views/teacher/SectionSelection.vue'
 import SettingsPage from '../views/teacher/SettingsPage.vue'
 import ViewQuizzes from '../views/teacher/ViewQuizzes.vue'
@@ -134,9 +134,9 @@ const routes = [
         component: SectionCode
       },
       {
-        path: 'sections/:subjectId/:sectionId',
-        name: 'Sections',
-        component: Sections
+        path: 'assessments/:subjectId/:sectionId',
+        name: 'Assessments',
+        component: Assessments
       },
       {
         path: 'section-selection',
