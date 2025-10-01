@@ -56,7 +56,7 @@
                 <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
               </svg>
             </button>
-            <button @click="deleteSection(section.section_id)" class="action-btn delete" title="Delete Section">
+            <button @click="openDeleteModal('section', section)" class="action-btn delete" title="Delete Section">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
               </svg>
@@ -368,6 +368,77 @@
       </div>
     </div>
 
+    <!-- Delete Confirmation Modal -->
+    <template v-if="showDeleteModal">
+      <div class="modal-overlay">
+        <div class="modal-card">
+          <div class="modal-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12,2C13.1,2 14,2.9 14,4C14,5.1 13.1,6 12,6C10.9,6 10,5.1 10,4C10,2.9 10.9,2 12,2M21,9V7L15,1H5C3.89,1 3,1.89 3,3V7H9V9H3V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V9M6.5,18L10.5,14L6.5,10L8.5,8L14.5,14L8.5,20L6.5,18Z" />
+            </svg>
+          </div>
+          <h3>Confirm Deletion</h3>
+          <div class="item-details">
+            <p class="item-name">
+              <strong>
+                {{ deleteType === 'subject' ? itemToDelete?.subject_name || itemToDelete?.name : 
+                   `${itemToDelete?.subject_name} - ${itemToDelete?.section_name}` }}
+              </strong>
+            </p>
+            <p class="item-info">
+              {{ deleteType === 'subject' ? 'Subject' : 'Section' }} • 
+              Grade {{ itemToDelete?.grade_level }}
+              <template v-if="deleteType === 'section'">
+                • {{ itemToDelete?.student_count || 0 }} students enrolled
+              </template>
+            </p>
+          </div>
+          <p class="warning-text">
+            This action cannot be undone. All data will be permanently removed.
+          </p>
+          <div class="modal-actions">
+            <button class="btn-cancel" @click="cancelDelete">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+              </svg>
+              Cancel
+            </button>
+            <button class="btn-delete" @click="confirmDelete">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
+              </svg>
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Success/Error Toast Notification -->
+    <transition name="toast">
+      <div v-if="showNotification" class="toast-notification" :class="`toast-${notificationType}`">
+        <div class="toast-content">
+          <div class="toast-icon">
+            <svg v-if="notificationType === 'success'" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,16.5L18,9.5L16.59,8.09L11,13.67L7.41,10.09L6,11.5L11,16.5Z" />
+            </svg>
+            <svg v-else-if="notificationType === 'error'" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,7A1,1 0 0,0 11,8V16A1,1 0 0,0 12,17A1,1 0 0,0 13,16V8A1,1 0 0,0 12,7M12,19A1,1 0 0,0 11,20A1,1 0 0,0 12,21A1,1 0 0,0 13,20A1,1 0 0,0 12,19Z" />
+            </svg>
+            <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" />
+            </svg>
+          </div>
+          <span class="toast-message">{{ notificationMessage }}</span>
+          <button @click="hideNotification" class="toast-close">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </transition>
+
     <!-- Loading Overlay -->
     <div v-if="isLoading" class="loading-overlay">
       <div class="loading-content">
@@ -405,6 +476,12 @@ const currentUser = ref(null)
 const teacherInfo = ref(null)
 const authListener = ref(null)
 const isInitialized = ref(false)
+const showDeleteModal = ref(false)
+const deleteType = ref('') // 'subject' or 'section'
+const itemToDelete = ref(null)
+const showNotification = ref(false)
+const notificationMessage = ref('')
+const notificationType = ref('success') // 'success', 'error', 'warning'
 
 // Form data
 const formData = ref({
@@ -1150,14 +1227,51 @@ const editSubject = (subject) => {
   currentStep.value = 1
 }
 
+// Modal functions
+const showToast = (message, type = 'success') => {
+  notificationMessage.value = message
+  notificationType.value = type
+  showNotification.value = true
+  
+  // Auto-hide after 4 seconds
+  setTimeout(() => {
+    showNotification.value = false
+  }, 4000)
+}
+
+const hideNotification = () => {
+  showNotification.value = false
+}
+
+const openDeleteModal = (type, item) => {
+  deleteType.value = type
+  itemToDelete.value = item
+  showDeleteModal.value = true
+}
+
+const cancelDelete = () => {
+  showDeleteModal.value = false
+  itemToDelete.value = null
+  deleteType.value = ''
+}
+
+const confirmDelete = async () => {
+  if (deleteType.value === 'subject') {
+    await deleteSubjectConfirmed(itemToDelete.value.id)
+  } else if (deleteType.value === 'section') {
+    await deleteSectionConfirmed(itemToDelete.value.section_id)
+  }
+  showDeleteModal.value = false
+  itemToDelete.value = null
+  deleteType.value = ''
+}
+
 const deleteSubject = async (subjectId) => {
   try {
     if (!teacherInfo.value) return
 
     const subject = subjects.value.find(s => s.id === subjectId)
-    if (!confirm(`Are you sure you want to delete "${subject?.name}"?\n\nThis will permanently remove:\n• All sections (${subject?.sections?.length || 0} sections)\n• All enrolled students\n• All class data\n\nThis action cannot be undone.`)) {
-      return
-    }
+    // Removed confirm dialog - now handled by modal
 
     isLoading.value = true
     loadingMessage.value = 'Deleting subject...'
@@ -1206,14 +1320,42 @@ const editSection = (section) => {
   editSubject(subjectData)
 }
 
+// Separate confirmed delete functions
+const deleteSubjectConfirmed = async (subjectId) => {
+  try {
+    if (!teacherInfo.value) return
+
+    const subject = subjects.value.find(s => s.id === subjectId)
+    isLoading.value = true
+    loadingMessage.value = 'Deleting subject...'
+
+    const { error } = await supabase
+      .from('subjects')
+      .delete()
+      .eq('id', subjectId)
+      .eq('teacher_id', teacherInfo.value.id)
+
+    if (error) throw error
+    await fetchSubjects()
+    showToast(`Subject "${subject?.name}" deleted successfully!`, 'success')
+  } catch (error) {
+    if (error.code === 'PGRST301' || error.message?.includes('JWT')) {
+      alert('Your session has expired. Please log in again.')
+      await router.push('/login')
+      return
+    }
+    alert(`Error deleting subject: ${error.message}`)
+  } finally {
+    isLoading.value = false
+  }
+}
+
 const deleteSection = async (sectionId) => {
   try {
     if (!teacherInfo.value) return
 
     const section = subjects.value.find(s => s.section_id === sectionId)
-    if (!confirm(`Are you sure you want to delete section "${section?.section_name}"?\n\nThis will permanently remove:\n• All enrolled students (${section?.student_count || 0} students)\n• All class data for this section\n\nThis action cannot be undone.`)) {
-      return
-    }
+    // Removed confirm dialog - now handled by modal
 
     isLoading.value = true
     loadingMessage.value = 'Deleting section...'
@@ -1242,6 +1384,34 @@ const deleteSection = async (sectionId) => {
       return
     }
     
+    alert(`Error deleting section: ${error.message}`)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const deleteSectionConfirmed = async (sectionId) => {
+  try {
+    if (!teacherInfo.value) return
+
+    const section = subjects.value.find(s => s.section_id === sectionId)
+    isLoading.value = true
+    loadingMessage.value = 'Deleting section...'
+
+    const { error } = await supabase
+      .from('sections')
+      .delete()
+      .eq('id', sectionId)
+
+    if (error) throw error
+    await fetchSubjects()
+    showToast(`Section "${section?.section_name}" deleted successfully!`, 'success')
+  } catch (error) {
+    if (error.code === 'PGRST301' || error.message?.includes('JWT')) {
+      alert('Your session has expired. Please log in again.')
+      await router.push('/login')
+      return
+    }
     alert(`Error deleting section: ${error.message}`)
   } finally {
     isLoading.value = false
@@ -2900,6 +3070,172 @@ onUnmounted(() => {
   color: var(--error-color);
 }
 
+/* Delete Confirmation Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-card {
+  background: var(--bg-card, #fff);
+  color: var(--primary-text-color, #222);
+  border-radius: 20px;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.15),
+    0 10px 20px rgba(0, 0, 0, 0.1);
+  padding: 2.5rem;
+  min-width: 380px;
+  max-width: 90vw;
+  text-align: center;
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.1));
+  transition: all 0.3s ease;
+  animation: slideUp 0.3s ease-out;
+}
+
+.modal-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 1.5rem;
+  background: linear-gradient(135deg, #ff6b6b, #e74c3c);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.modal-card h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--primary-text-color);
+}
+
+.item-details {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--bg-secondary, #f8f9fa);
+  border-radius: 12px;
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.1));
+}
+
+.item-name {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  color: var(--primary-text-color);
+}
+
+.item-info {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--secondary-text-color, #666);
+}
+
+.warning-text {
+  margin: 0 0 2rem 0;
+  font-size: 0.9rem;
+  color: var(--secondary-text-color, #666);
+  font-style: italic;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.btn-cancel {
+  background: linear-gradient(135deg, var(--accent-color, #10b981), #059669);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.btn-cancel:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-delete {
+  background: linear-gradient(135deg, #ff6b6b, #e74c3c);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.btn-delete:hover {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .modal-card {
+    background: var(--bg-card, #2d3748);
+    color: var(--primary-text-color, #f7fafc);
+    border-color: var(--border-color, rgba(255, 255, 255, 0.1));
+  }
+  
+  .item-details {
+    background: var(--bg-secondary, #4a5568);
+    border-color: var(--border-color, rgba(255, 255, 255, 0.1));
+  }
+  
+  .btn-cancel {
+    background: linear-gradient(135deg, var(--accent-color, #10b981), #059669);
+    color: white;
+    border: none;
+  }
+  
+  .btn-cancel:hover {
+    background: linear-gradient(135deg, #059669, #047857);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  }
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .subjects-grid {
@@ -3021,6 +3357,131 @@ onUnmounted(() => {
   
   .dark-mode .student-row > div:before {
     color: var(--accent-color);
+  }
+}
+
+/* Toast Notification System */
+.toast-notification {
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  max-width: 400px;
+  z-index: 2000;
+  border-radius: 16px;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.15),
+    0 10px 20px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.toast-success {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(5, 150, 105, 0.95));
+  color: white;
+}
+
+.toast-error {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(220, 38, 38, 0.95));
+  color: white;
+}
+
+.toast-warning {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.95), rgba(217, 119, 6, 0.95));
+  color: white;
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+}
+
+.toast-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: toastIconPulse 2s ease-in-out infinite;
+}
+
+.toast-message {
+  flex: 1;
+  font-weight: 500;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 6px;
+  transition: background 0.2s;
+  opacity: 0.8;
+}
+
+.toast-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  opacity: 1;
+}
+
+/* Toast Transitions */
+.toast-enter-active {
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.toast-leave-active {
+  transition: all 0.3s ease-in;
+}
+
+.toast-enter-from {
+  opacity: 0;
+  transform: translateX(100%) scale(0.8);
+}
+
+.toast-enter-to {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+}
+
+.toast-leave-from {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+}
+
+.toast-leave-to {
+  opacity: 0;
+  transform: translateX(100%) scale(0.8);
+}
+
+@keyframes toastIconPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+@media (max-width: 768px) {
+  .toast-notification {
+    top: 1rem;
+    right: 1rem;
+    left: 1rem;
+    max-width: none;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .toast-notification {
+    border-color: rgba(255, 255, 255, 0.1);
   }
 }
 </style>
