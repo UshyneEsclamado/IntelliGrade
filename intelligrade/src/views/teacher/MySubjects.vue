@@ -43,19 +43,20 @@
     </div>
 
     <div class="subjects-grid" v-if="subjects.length > 0">
-      <div v-for="subject in subjects" :key="subject.id" class="subject-card">
-        <div class="subject-header">
-          <div class="subject-info">
-            <h3>{{ subject.name }}</h3>
-            <p class="grade-level">Grade {{ subject.grade_level }}</p>
+      <div v-for="section in subjects" :key="section.section_id" class="section-card">
+        <div class="section-header">
+          <div class="section-info">
+            <h3>{{ section.subject_name }}</h3>
+            <p class="section-name">{{ section.section_name }}</p>
+            <p class="grade-level">Grade {{ section.grade_level }}</p>
           </div>
-          <div class="subject-actions">
-            <button @click="editSubject(subject)" class="action-btn edit" title="Edit Subject">
+          <div class="section-actions">
+            <button @click="editSection(section)" class="action-btn edit" title="Edit Section">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
               </svg>
             </button>
-            <button @click="deleteSubject(subject.id)" class="action-btn delete" title="Delete Subject">
+            <button @click="deleteSection(section.section_id)" class="action-btn delete" title="Delete Section">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
               </svg>
@@ -63,110 +64,92 @@
           </div>
         </div>
 
-        <div class="subject-stats">
-          <div class="stat">
-            <span class="stat-number">{{ subject.sections?.length || 0 }}</span>
-            <span class="stat-label">Sections</span>
-          </div>
-          <div class="stat clickable-stat" @click="viewStudentRoster(subject)">
-            <span class="stat-number">{{ getTotalStudents(subject) }}</span>
+        <div class="section-stats">
+          <div class="stat clickable-stat" @click="viewSectionStudents(section, section.sections[0])">
+            <span class="stat-number">{{ section.student_count || 0 }}</span>
             <span class="stat-label">Students</span>
             <small class="view-hint">Click to view roster</small>
           </div>
           <div class="stat">
-            <span class="stat-number">{{ subject.grade_level }}</span>
+            <span class="stat-number">{{ section.max_students || 0 }}</span>
+            <span class="stat-label">Max Students</span>
+          </div>
+          <div class="stat">
+            <span class="stat-number">{{ section.grade_level }}</span>
             <span class="stat-label">Grade</span>
           </div>
         </div>
 
-        <!-- Sections List with Section Codes -->
-        <div class="sections-list" v-if="subject.sections && subject.sections.length > 0">
-          <h4>Sections & Codes:</h4>
-          <div class="sections">
-            <div v-for="section in subject.sections" :key="section.id" 
-                 class="section-item enhanced-section" 
-                 @click="navigateToSections(subject, section, $event)"
-                 :style="{ cursor: 'pointer' }"
-                 title="Click to manage this section">
-              <div class="section-info">
-                <div class="section-header-info">
-                  <span class="section-name">{{ section.name }}</span>
-                  <div class="section-code-display">
-                    <span class="code-label">Section Code:</span>
-                    <span class="section-code">{{ section.section_code }}</span>
-                    <button @click.stop="copyCode(section.section_code, section.id)" class="copy-code-btn">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z" />
-                      </svg>
-                      {{ copiedCodeId === section.id ? 'Copied!' : 'Copy' }}
-                    </button>
-                  </div>
-                </div>
-                <div class="section-stats-info">
-                  <span class="student-count">{{ section.student_count || 0 }} students enrolled</span>
-                  <span class="click-hint">Click to manage section</span>
-                </div>
-                
-                <!-- Section Action Buttons -->
-                <div class="section-actions">
-                  <button 
-                    @click.stop="viewSectionStudents(subject, section)"
-                    class="section-action-btn view-students"
-                    title="View Students in Section"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M16,4C18.21,4 20,5.79 20,8C20,10.21 18.21,12 16,12C13.79,12 12,10.21 12,8C12,5.79 13.79,4 16,4M16,14C20.42,14 24,15.79 24,18V20H8V18C8,15.79 11.58,14 16,14M6,6C7.1,6 8,6.9 8,8C8,9.1 7.1,10 6,10C4.9,10 4,9.1 4,8C4,6.9 4.9,6 6,6M6,12C8.67,12 12,13.34 12,16V18H0V16C0,13.34 3.33,12 6,12Z" />
-                    </svg>
-                    View Students
-                  </button>
-
-                  <button 
-                    @click.stop="navigateToCreateQuiz(subject, section)"
-                    class="section-action-btn create-quiz"
-                    title="Create Quiz/Assessment"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-                    </svg>
-                    Create Quiz
-                  </button>
-                  
-                  <button 
-                    @click.stop="viewQuizzes(subject, section)"
-                    class="section-action-btn view-quizzes"
-                    title="View Past Quizzes"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M13,9V3.5L18.5,9M6,2C4.89,2 4,2.89 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2H6Z" />
-                    </svg>
-                    View Quizzes
-                  </button>
-                  
-                  <button 
-                    @click.stop="manageGrades(subject, section)"
-                    class="section-action-btn manage-grades"
-                    title="Grade Management"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M19,19H5V5H19V19Z" />
-                    </svg>
-                    Grades
-                  </button>
-                  
-                  <button 
-                    @click.stop="generateReports(subject, section)"
-                    class="section-action-btn generate-reports"
-                    title="Generate Reports"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M9,17H7V10H9V17M13,17H11V7H13V17M17,17H15V13H17V17M19.5,3.5L18,2L16.5,3.5L15,2L13.5,3.5L12,2L10.5,3.5L9,2L7.5,3.5L6,2L4.5,3.5L3,2V22L4.5,20.5L6,22L7.5,20.5L9,22L10.5,20.5L12,22L13.5,20.5L15,22L16.5,20.5L18,22L19.5,20.5L21,22V2L19.5,3.5Z" />
-                    </svg>
-                    Reports
-                  </button>
-                </div>
-              </div>
-            </div>
+        <!-- Section Code Display -->
+        <div class="section-code-area">
+          <h4>Section Code:</h4>
+          <div class="section-code-display">
+            <span class="section-code">{{ section.section_code }}</span>
+            <button @click.stop="copyCode(section.section_code, section.section_id)" class="copy-code-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z" />
+              </svg>
+              {{ copiedCodeId === section.section_id ? 'Copied!' : 'Copy' }}
+            </button>
           </div>
+        </div>
+        
+        <!-- Section Action Buttons -->
+        <div class="section-actions-grid">
+          <button 
+            @click.stop="viewSectionStudents(section, section.sections[0])"
+            class="section-action-btn view-students"
+            title="View Students in Section"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M16,4C18.21,4 20,5.79 20,8C20,10.21 18.21,12 16,12C13.79,12 12,10.21 12,8C12,5.79 13.79,4 16,4M16,14C20.42,14 24,15.79 24,18V20H8V18C8,15.79 11.58,14 16,14M6,6C7.1,6 8,6.9 8,8C8,9.1 7.1,10 6,10C4.9,10 4,9.1 4,8C4,6.9 4.9,6 6,6M6,12C8.67,12 12,13.34 12,16V18H0V16C0,13.34 3.33,12 6,12Z" />
+            </svg>
+            View Students
+          </button>
+
+          <button 
+            @click.stop="navigateToCreateQuiz(section, section.sections[0])"
+            class="section-action-btn create-quiz"
+            title="Create Quiz/Assessment"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+            </svg>
+            Create Quiz
+          </button>
+          
+          <button 
+            @click.stop="viewQuizzes(section, section.sections[0])"
+            class="section-action-btn view-quizzes"
+            title="View Past Quizzes"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M13,9V3.5L18.5,9M6,2C4.89,2 4,2.89 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2H6Z" />
+            </svg>
+            View Quizzes
+          </button>
+          
+          <button 
+            @click.stop="manageGrades(section, section.sections[0])"
+            class="section-action-btn manage-grades"
+            title="Grade Management"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9,5A4,4 0 0,1 13,9A4,4 0 0,1 9,13A4,4 0 0,1 5,9A4,4 0 0,1 9,5M9,15C11.67,15 17,16.34 17,19V21H1V19C1,16.34 6.33,15 9,15M16.76,5.36C18.78,7.56 18.78,10.61 16.76,12.63L15.08,10.94C15.92,9.76 15.92,8.23 15.08,7.05L16.76,5.36M20.07,2C24,6.05 23.97,12.11 20.07,16.07L18.44,14.44C21.21,11.19 21.21,6.65 18.44,3.63L20.07,2Z" />
+            </svg>
+            Grades
+          </button>
+          
+          <button 
+            @click.stop="generateReports(section, section.sections[0])"
+            class="section-action-btn generate-reports"
+            title="Generate Reports"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M13,9H18.5L13,3.5V9M6,2H14L20,8V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V4C4,2.89 4.89,2 6,2M15,18V16H6V18H15M18,14V12H6V14H18Z" />
+            </svg>
+            Reports
+          </button>
         </div>
       </div>
     </div>
@@ -729,22 +712,12 @@ const fetchSubjects = async (retryCount = 0) => {
 
     console.log('Subjects data:', subjectsData)
 
-    // Process subjects data and get enrollment counts
-    const processedSubjects = []
+    // Process sections as individual cards instead of grouping under subjects
+    const processedSections = []
 
     if (subjectsData && subjectsData.length > 0) {
       for (const subject of subjectsData) {
-        const processedSubject = {
-          id: subject.id,
-          name: subject.name,
-          grade_level: subject.grade_level,
-          description: subject.description,
-          is_active: subject.is_active,
-          sections: [],
-          actualStudentCount: 0
-        }
-
-        // Process sections and get enrollment counts
+        // Process each section as an individual card
         if (subject.sections && subject.sections.length > 0) {
           for (const section of subject.sections) {
             if (section.is_active) {
@@ -761,26 +734,31 @@ const fetchSubjects = async (retryCount = 0) => {
 
               const studentCount = enrollmentCount || 0
 
-              processedSubject.sections.push({
+              // Create individual section card with subject info
+              processedSections.push({
                 id: section.id,
-                name: section.name,
+                section_id: section.id,
+                section_name: section.name,
                 section_code: section.section_code,
                 max_students: section.max_students,
                 student_count: studentCount,
                 actualStudentCount: studentCount,
-                is_active: section.is_active
+                is_active: section.is_active,
+                // Include subject information for each section
+                subject_id: subject.id,
+                subject_name: subject.name,
+                grade_level: subject.grade_level,
+                description: subject.description,
+                name: `${subject.name} - ${section.name}`, // Combined name for display
+                sections: [section] // Keep sections array for compatibility
               })
-
-              processedSubject.actualStudentCount += studentCount
             }
           }
         }
-
-        processedSubjects.push(processedSubject)
       }
     }
 
-    subjects.value = [...processedSubjects]
+    subjects.value = [...processedSections]
     console.log('Updated subjects array:', subjects.value.length, 'subjects')
 
     await nextTick()
@@ -1184,6 +1162,61 @@ const deleteSubject = async (subjectId) => {
   }
 }
 
+const editSection = (section) => {
+  // For now, we'll edit by opening the subject edit modal
+  // In a more advanced implementation, you could have a separate section edit modal
+  const subjectData = {
+    id: section.subject_id,
+    name: section.subject_name,
+    grade_level: section.grade_level,
+    description: section.description || '',
+    sections: section.sections
+  }
+  editSubject(subjectData)
+}
+
+const deleteSection = async (sectionId) => {
+  try {
+    if (!teacherInfo.value) return
+
+    const section = subjects.value.find(s => s.section_id === sectionId)
+    if (!confirm(`Are you sure you want to delete section "${section?.section_name}"?\n\nThis will permanently remove:\n• All enrolled students (${section?.student_count || 0} students)\n• All class data for this section\n\nThis action cannot be undone.`)) {
+      return
+    }
+
+    isLoading.value = true
+    loadingMessage.value = 'Deleting section...'
+
+    console.log('Deleting section:', sectionId)
+
+    const { error } = await supabase
+      .from('sections')
+      .delete()
+      .eq('id', sectionId)
+
+    if (error) {
+      console.error('Delete section error:', error)
+      throw error
+    }
+
+    console.log('Section deleted successfully, refreshing list...')
+    await fetchSubjects()
+    alert(`Section "${section?.section_name}" deleted successfully!`)
+  } catch (error) {
+    console.error('Error deleting section:', error)
+    
+    if (error.code === 'PGRST301' || error.message?.includes('JWT')) {
+      alert('Your session has expired. Please log in again.')
+      await router.push('/login')
+      return
+    }
+    
+    alert(`Error deleting section: ${error.message}`)
+  } finally {
+    isLoading.value = false
+  }
+}
+
 const closeModal = () => {
   showCreateModal.value = false
   isEditing.value = false
@@ -1490,7 +1523,8 @@ onUnmounted(() => {
   gap: 2rem;
 }
 
-.subject-card {
+.subject-card,
+.section-card {
   background: rgba(255, 255, 255, 0.95);
   border-radius: 20px;
   padding: 2rem;
@@ -1501,7 +1535,8 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-.subject-card::before {
+.subject-card::before,
+.section-card::before {
   content: '';
   position: absolute;
   top: 0;
@@ -1512,24 +1547,35 @@ onUnmounted(() => {
   border-radius: 20px 20px 0 0;
 }
 
-.subject-card:hover {
+.subject-card:hover,
+.section-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 16px 48px rgba(16, 185, 129, 0.2);
   border-color: rgba(16, 185, 129, 0.3);
 }
 
-.subject-header {
+.subject-header,
+.section-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 2rem;
 }
 
-.subject-info h3 {
+.subject-info h3,
+.section-info h3 {
   color: #10b981;
   font-size: 1.5rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
+}
+
+.section-info .section-name {
+  color: #059669;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+  display: block;
 }
 
 .grade-level {
@@ -1543,7 +1589,8 @@ onUnmounted(() => {
   margin-bottom: 0.5rem;
 }
 
-.subject-actions {
+.subject-actions,
+.section-actions {
   display: flex;
   gap: 0.5rem;
 }
@@ -1570,7 +1617,8 @@ onUnmounted(() => {
   transform: scale(1.1);
 }
 
-.subject-stats {
+.subject-stats,
+.section-stats {
   display: flex;
   gap: 2rem;
   margin-bottom: 2rem;
@@ -1784,6 +1832,65 @@ onUnmounted(() => {
   font-style: italic;
   opacity: 0.7;
   transition: opacity 0.2s ease;
+}
+
+.section-code-area {
+  margin-bottom: 1.5rem;
+}
+
+.section-code-area h4 {
+  color: #10b981;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.section-code-display {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(16, 185, 129, 0.05);
+  border: 1px solid rgba(16, 185, 129, 0.1);
+  border-radius: 12px;
+}
+
+.section-code {
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #10b981;
+  background: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.copy-code-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.copy-code-btn:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+.section-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
 }
 
 .section-actions {
@@ -2427,17 +2534,20 @@ onUnmounted(() => {
   color: var(--text-muted);
 }
 
-.dark-mode .subject-card {
+.dark-mode .subject-card,
+.dark-mode .section-card {
   background: var(--card-background);
   border: 1px solid var(--card-border-color);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
-.dark-mode .subject-card:hover {
+.dark-mode .subject-card:hover,
+.dark-mode .section-card:hover {
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
 }
 
-.dark-mode .subject-info h3 {
+.dark-mode .subject-info h3,
+.dark-mode .section-info h3 {
   color: var(--primary-text-color);
 }
 
@@ -2455,7 +2565,8 @@ onUnmounted(() => {
   color: #f87171;
 }
 
-.dark-mode .subject-stats {
+.dark-mode .subject-stats,
+.dark-mode .section-stats {
   background: var(--bg-accent);
 }
 
