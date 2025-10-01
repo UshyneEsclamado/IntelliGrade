@@ -115,60 +115,24 @@
             </div>
           </div>
 
-          <!-- Students Grid -->
-          <div v-if="filteredStudents.length > 0" class="students-grid">
-            <div v-for="student in filteredStudents" :key="student.id" class="student-card">
-              <div class="student-header">
-                <div class="student-avatar">
-                  <div class="avatar-circle">
-                    {{ getInitials(student.full_name) }}
-                  </div>
-                  <div :class="['status-indicator', student.status]"></div>
+          <!-- Students List -->
+          <div v-if="filteredStudents.length > 0" class="students-list">
+            <div class="list-header">
+              <div class="header-name">Student Name</div>
+              <div class="header-enrolled">Enrolled</div>
+              <div class="header-status">Status</div>
+            </div>
+            
+            <div v-for="student in filteredStudents" :key="student.id" class="student-row">
+              <div class="student-name">
+                <div class="name-avatar">
+                  {{ getInitials(student.full_name) }}
                 </div>
-                
-                <div class="student-info">
-                  <h4>{{ student.full_name }}</h4>
-                  <p class="email">{{ student.email }}</p>
-                  <div class="student-meta">
-                    <span class="enrollment-date">
-                      Enrolled: {{ formatDate(student.enrolled_at) }}
-                    </span>
-                    <span class="last-activity">
-                      Last active: {{ formatDate(student.last_activity) }}
-                    </span>
-                  </div>
-                </div>
+                <span>{{ student.full_name }}</span>
               </div>
-              
-              <div class="student-stats">
-                <div class="stat-item">
-                  <span class="stat-label">Quizzes</span>
-                  <span class="stat-value">{{ student.quiz_count || 0 }}</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-label">Avg Grade</span>
-                  <span class="stat-value">{{ student.average_grade || 'N/A' }}%</span>
-                </div>
-              </div>
-              
-              <div class="student-actions">
-                <button @click="viewStudentDetails(student)" class="student-action-btn view" title="View Details">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
-                  </svg>
-                </button>
-                
-                <button @click="messageStudent(student)" class="student-action-btn message" title="Send Message">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M20,2H4A2,2 0 0,0 2,4V22L6,18H20A2,2 0 0,0 22,16V4C22,2.89 21.1,2 20,2Z" />
-                  </svg>
-                </button>
-                
-                <button @click="removeStudent(student)" class="student-action-btn remove" title="Remove from Section">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
-                  </svg>
-                </button>
+              <div class="student-enrolled">{{ formatDate(student.enrolled_at) }}</div>
+              <div class="student-status">
+                <span :class="['status-badge', student.status]">{{ student.status }}</span>
               </div>
             </div>
           </div>
@@ -244,14 +208,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Loading Overlay -->
-    <div v-if="isLoading" class="loading-overlay">
-      <div class="loading-content">
-        <div class="loading-spinner"></div>
-        <p>{{ loadingMessage }}</p>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -318,36 +274,114 @@ const fetchStudents = async () => {
   loadingMessage.value = 'Loading students...'
 
   try {
-    // Fetch students enrolled in this section
-    const { data, error } = await supabase
-      .from('section_enrollments')
-      .select(`
-        *,
-        student:student_id (
-          id,
-          full_name,
-          email,
-          created_at
-        )
-      `)
+    // Get enrollments for the section
+    const { data: enrollments, error: enrollError } = await supabase
+      .from('enrollments')
+      .select('*')
       .eq('section_id', sectionId.value)
 
-    if (error) throw error
+    if (enrollError) throw enrollError
+    if (!enrollments || enrollments.length === 0) {
+      students.value = []
+      return
+    }
 
-    // Transform the data
-    students.value = data?.map((enrollment: any) => ({
-      id: enrollment.student.id,
-      full_name: enrollment.student.full_name || 'Unknown Student',
-      email: enrollment.student.email,
-      enrolled_at: enrollment.created_at,
-      last_activity: enrollment.last_activity || enrollment.created_at,
-      status: enrollment.status || 'active',
-      quiz_count: 0,
-      average_grade: null
-    })) || []
+    console.log('🔍 Found enrollments:', enrollments)
 
-    console.log('Fetched students:', students.value)
+    // 🎯 COMPREHENSIVE APPROACH: Try multiple ways to get real names
+    const studentPromises = enrollments.map(async (enrollment: any) => {
+      const studentId = enrollment.student_id
+      console.log(`🔍 Processing student ID: ${studentId}`)
+      
+      let studentName = null
+      let foundMethod = 'none'
 
+      // METHOD 1: Try profiles table with auth_user_id
+      try {
+        const { data: profile1 } = await supabase
+          .from('profiles')
+          .select('full_name, email')
+          .eq('auth_user_id', studentId)
+          .single()
+        
+        if (profile1?.full_name) {
+          studentName = profile1.full_name
+          foundMethod = 'profiles by auth_user_id'
+          console.log(`✅ Method 1 SUCCESS for ${studentId}: ${studentName}`)
+        }
+      } catch (e) {
+        console.log(`❌ Method 1 failed for ${studentId}:`, e)
+      }
+
+      // METHOD 2: Try profiles table with id field
+      if (!studentName) {
+        try {
+          const { data: profile2 } = await supabase
+            .from('profiles')
+            .select('full_name, email')
+            .eq('id', studentId)
+            .single()
+          
+          if (profile2?.full_name) {
+            studentName = profile2.full_name
+            foundMethod = 'profiles by id'
+            console.log(`✅ Method 2 SUCCESS for ${studentId}: ${studentName}`)
+          }
+        } catch (e) {
+          console.log(`❌ Method 2 failed for ${studentId}:`, e)
+        }
+      }
+
+      // METHOD 3: Try students table lookup
+      if (!studentName) {
+        try {
+          const { data: student } = await supabase
+            .from('students')
+            .select('full_name, profile_id')
+            .eq('profile_id', studentId)
+            .single()
+          
+          if (student?.full_name) {
+            studentName = student.full_name
+            foundMethod = 'students table'
+            console.log(`✅ Method 3 SUCCESS for ${studentId}: ${studentName}`)
+          }
+        } catch (e) {
+          console.log(`❌ Method 3 failed for ${studentId}:`, e)
+        }
+      }
+
+      // METHOD 4: Try auth admin API
+      if (!studentName) {
+        try {
+          const { data: authUser } = await supabase.auth.admin.getUserById(studentId)
+          if (authUser?.user) {
+            studentName = authUser.user.user_metadata?.full_name || 
+                        authUser.user.user_metadata?.name ||
+                        authUser.user.email?.split('@')[0]
+            if (studentName) {
+              foundMethod = 'auth admin API'
+              console.log(`✅ Method 4 SUCCESS for ${studentId}: ${studentName}`)
+            }
+          }
+        } catch (e) {
+          console.log(`❌ Method 4 failed for ${studentId}:`, e)
+        }
+      }
+
+      // Final result
+      const finalName = studentName || `Student ${studentId.slice(-8).toUpperCase()}`
+      console.log(`🎯 FINAL for ${studentId}: "${finalName}" (via ${foundMethod})`)
+
+      return {
+        id: studentId,
+        full_name: finalName,
+        enrolled_at: enrollment.enrolled_at || enrollment.created_at,
+        status: enrollment.status || 'active'
+      }
+    })
+
+    students.value = await Promise.all(studentPromises)
   } catch (error: any) {
     console.error('Error fetching students:', error)
     alert(`Error loading students: ${error?.message || 'Unknown error'}`)
@@ -412,16 +446,6 @@ const addStudent = async () => {
   }
 }
 
-const viewStudentDetails = (student: any) => {
-  console.log('Viewing details for:', student)
-  alert(`View details for ${student.full_name} - This feature will be implemented later`)
-}
-
-const messageStudent = (student: any) => {
-  console.log('Messaging student:', student)
-  alert(`Send message to ${student.full_name} - This feature will be implemented later`)
-}
-
 const removeStudent = async (student: any) => {
   if (!confirm(`Are you sure you want to remove ${student.full_name} from this section?`)) {
     return
@@ -432,7 +456,7 @@ const removeStudent = async (student: any) => {
 
   try {
     const { error } = await supabase
-      .from('section_enrollments')
+      .from('enrollments')
       .delete()
       .eq('section_id', sectionId.value)
       .eq('student_id', student.id)
@@ -880,166 +904,120 @@ onMounted(() => {
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
-/* Students Grid */
-.students-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: 1.5rem;
-}
-
-.student-card {
+/* Students List */
+.students-list {
   background: white;
   border: 1px solid #e5e7eb;
-  border-radius: 20px;
-  padding: 2rem;
-  transition: all 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
-.student-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-  border-color: #10b981;
-}
-
-.student-header {
-  display: flex;
-  align-items: flex-start;
+.list-header {
+  display: grid;
+  grid-template-columns: 3fr 1fr 1fr; /* name, enrolled, status */
   gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.student-avatar {
-  position: relative;
-  flex-shrink: 0;
+.list-header .header-actions {
+  text-align: center;
 }
 
-.avatar-circle {
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
+.student-row {
+  display: grid;
+  grid-template-columns: 3fr 1fr 1fr; /* name, enrolled, status */
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #f3f4f6;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.student-row:hover {
+  background: #f9fafb;
+}
+
+.student-row:last-child {
+  border-bottom: none;
+}
+
+.student-name {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.name-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   background: linear-gradient(135deg, #059669 0%, #10b981 100%);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 1.1rem;
-}
-
-.status-indicator {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 3px solid white;
-}
-
-.status-indicator.active {
-  background: #22c55e;
-}
-
-.status-indicator.inactive {
-  background: #ef4444;
-}
-
-.student-info {
-  flex: 1;
-}
-
-.student-info h4 {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #111827;
-  margin: 0 0 0.25rem 0;
-}
-
-.student-info .email {
-  color: #6b7280;
-  font-size: 0.9rem;
-  margin: 0 0 0.75rem 0;
-}
-
-.student-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.enrollment-date,
-.last-activity {
-  color: #9ca3af;
-  font-size: 0.8rem;
-}
-
-.student-stats {
-  display: flex;
-  gap: 2rem;
-  padding: 1rem;
-  background: #f9fafb;
-  border-radius: 12px;
-}
-
-.stat-item {
-  text-align: center;
-  flex: 1;
-}
-
-.stat-label {
-  display: block;
   font-size: 0.75rem;
+}
+
+
+
+.student-enrolled {
   color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-size: 0.875rem;
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
-  margin-bottom: 0.25rem;
+  text-transform: uppercase;
 }
 
-.stat-value {
-  display: block;
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: #111827;
+.status-badge.active {
+  background: #dcfce7;
+  color: #166534;
 }
 
-.student-actions {
-  display: flex;
-  gap: 0.75rem;
-  justify-content: flex-end;
+.status-badge.inactive {
+  background: #fee2e2;
+  color: #991b1b;
 }
 
-.student-action-btn {
+
+
+.action-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
-.student-action-btn.view {
-  background: rgba(16, 185, 129, 0.1);
-  color: #059669;
+.action-btn.remove {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
-.student-action-btn.message {
-  background: rgba(37, 99, 235, 0.1);
-  color: #2563eb;
-}
-
-.student-action-btn.remove {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-}
-
-.student-action-btn:hover {
+.action-btn:hover {
   transform: scale(1.1);
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.4);
 }
 
 /* Empty States */
@@ -1295,12 +1273,66 @@ onMounted(() => {
     width: 100%;
   }
 
-  .students-grid {
-    grid-template-columns: 1fr;
+  .list-header {
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
   }
 
-  .student-stats {
-    gap: 1rem;
+  .header-email,
+  .header-enrolled {
+    display: none;
+  }
+
+  .student-row {
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .student-email,
+  .student-enrolled {
+    display: none;
+  }
+
+  .student-name {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .name-avatar {
+    width: 24px;
+    height: 24px;
+    font-size: 0.625rem;
+  }
+
+  .action-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .action-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .list-header {
+    grid-template-columns: 1fr auto;
+  }
+
+  .header-status {
+    display: none;
+  }
+
+  .student-row {
+    grid-template-columns: 1fr auto;
+  }
+
+  .student-status {
+    display: none;
   }
 }
 
@@ -1377,21 +1409,32 @@ onMounted(() => {
   color: var(--secondary-text-color);
 }
 
-.dark-mode .student-card {
-  background: var(--card-background);
+.dark-mode .students-list {
+  background: var(--bg-secondary);
   border: 1px solid var(--border-color);
 }
 
-.dark-mode .student-card:hover {
-  border-color: var(--accent-color);
+.dark-mode .list-header {
+  background: var(--bg-primary);
+  border-bottom-color: var(--border-color);
+  color: var(--secondary-text-color);
 }
 
-.dark-mode .student-info h4 {
+.dark-mode .student-row {
+  border-bottom-color: var(--border-color);
+}
+
+.dark-mode .student-row:hover {
+  background: var(--bg-primary);
+}
+
+.dark-mode .student-name {
   color: var(--primary-text-color);
 }
 
-.dark-mode .stat-value {
-  color: var(--primary-text-color);
+.dark-mode .student-email,
+.dark-mode .student-enrolled {
+  color: var(--secondary-text-color);
 }
 
 .dark-mode .search-input input,
@@ -1405,10 +1448,6 @@ onMounted(() => {
 .dark-mode .filter-select:focus {
   border-color: var(--accent-color);
   box-shadow: 0 0 0 3px rgba(95, 179, 160, 0.1);
-}
-
-.dark-mode .student-stats {
-  background: var(--bg-primary);
 }
 
 .dark-mode .empty-state h3,

@@ -66,9 +66,9 @@
 
         <div class="section-stats">
           <div class="stat clickable-stat" @click="viewSectionStudents(section, section.sections[0])">
-            <span class="stat-number">{{ section.student_count || 0 }}</span>
-            <span class="stat-label">Students</span>
-            <small class="view-hint">Click to view roster</small>
+          <span class="stat-number">{{ section.student_count || 0 }}</span>
+          <span class="stat-label">Students</span>
+          <small class="view-hint clickable-link">Click to view roster</small>
           </div>
           <div class="stat">
             <span class="stat-number">{{ section.max_students || 0 }}</span>
@@ -734,18 +734,20 @@ const viewAssessments = async (subject, section) => {
 
 // View students in a specific section
 const viewSectionStudents = async (subject, section) => {
+  // Always connect to ViewStudents.vue with correct section data
   try {
+    const sec = section || (subject.sections && subject.sections[0]) || subject
     await router.push({
       name: 'ViewStudents',
       params: {
-        subjectId: subject.id,
-        sectionId: section.id
+        subjectId: subject.id || subject.subject_id,
+        sectionId: sec.id || sec.section_id
       },
       query: {
-        subjectName: subject.name,
-        sectionName: section.name,
+        subjectName: subject.name || subject.subject_name,
+        sectionName: sec.name || sec.section_name,
         gradeLevel: subject.grade_level,
-        sectionCode: section.section_code
+        sectionCode: sec.section_code
       }
     })
   } catch (error) {
@@ -834,7 +836,6 @@ const fetchSubjects = async (retryCount = 0) => {
                 .from('enrollments')
                 .select('id', { count: 'exact' })
                 .eq('section_id', section.id)
-                .eq('status', 'active')
 
               if (countError) {
                 console.error('Error getting enrollment count:', countError)
