@@ -150,6 +150,17 @@
             </svg>
             Reports
           </button>
+          
+          <button 
+            @click.stop="viewAssessments(section, section.sections[0])"
+            class="section-action-btn view-assessments"
+            title="View Assessments"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+            </svg>
+            Assessments
+          </button>
         </div>
       </div>
     </div>
@@ -617,6 +628,26 @@ const generateReports = async (subject, section) => {
         sectionName: section.name,
         gradeLevel: subject.grade_level,
         sectionCode: section.section_code
+      }
+    })
+  } catch (error) {
+    console.error('Navigation error:', error)
+  }
+}
+
+const viewAssessments = async (subject, section) => {
+  try {
+    await router.push({
+      name: 'Assessments',
+      params: {
+        subjectId: subject.subject_id,
+        sectionId: subject.section_id
+      },
+      query: {
+        subjectName: subject.subject_name,
+        sectionName: subject.section_name,
+        gradeLevel: subject.grade_level,
+        sectionCode: subject.section_code
       }
     })
   } catch (error) {
@@ -1939,36 +1970,47 @@ onUnmounted(() => {
 }
 
 .view-quizzes {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #14b8a6 0%, #5eead4 100%);
   color: white;
 }
 
 .view-quizzes:hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 6px 20px rgba(20, 184, 166, 0.4);
 }
 
 .manage-grades {
-  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+  background: linear-gradient(135deg, #ea580c 0%, #fb923c 100%);
   color: white;
 }
 
 .manage-grades:hover {
-  background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+  background: linear-gradient(135deg, #c2410c 0%, #ea580c 100%);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+  box-shadow: 0 6px 20px rgba(234, 88, 12, 0.4);
 }
 
 .generate-reports {
-  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
   color: white;
 }
 
 .generate-reports:hover {
-  background: linear-gradient(135deg, #059669 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
+}
+
+.view-assessments {
+  background: linear-gradient(135deg, #eab308 0%, #facc15 100%);
+  color: white;
+}
+
+.view-assessments:hover {
+  background: linear-gradient(135deg, #ca8a04 0%, #eab308 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(234, 179, 8, 0.4);
 }
 
 /* Empty State */
