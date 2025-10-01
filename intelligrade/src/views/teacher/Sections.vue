@@ -12,6 +12,30 @@
       </button>
     </div>
 
+    <!-- Navigation Buttons -->
+    <div class="navigation-buttons">
+      <button @click="navigateToViewStudents" class="nav-btn view-students-btn">
+        <i class="fas fa-users"></i>
+        View Students
+      </button>
+      <button @click="navigateToCreateQuiz" class="nav-btn create-quiz-btn">
+        <i class="fas fa-plus-square"></i>
+        Create Quiz
+      </button>
+      <button @click="navigateToViewQuizzes" class="nav-btn view-quizzes-btn">
+        <i class="fas fa-clipboard-list"></i>
+        View Quizzes
+      </button>
+      <button @click="navigateToGrades" class="nav-btn grades-btn">
+        <i class="fas fa-graduation-cap"></i>
+        Grades
+      </button>
+      <button @click="navigateToReports" class="nav-btn reports-btn">
+        <i class="fas fa-chart-bar"></i>
+        Reports
+      </button>
+    </div>
+
     <!-- Stats Cards -->
     <div class="stats-grid">
       <div class="stat-card">
@@ -450,6 +474,31 @@ export default {
       return name.split(' ').map(n => n[0]).join('').toUpperCase()
     }
 
+    const navigateToViewStudents = () => {
+      console.log('Navigate to View Students')
+      // Add navigation logic here
+    }
+
+    const navigateToCreateQuiz = () => {
+      console.log('Navigate to Create Quiz')
+      // Add navigation logic here
+    }
+
+    const navigateToViewQuizzes = () => {
+      console.log('Navigate to View Quizzes')
+      // Add navigation logic here
+    }
+
+    const navigateToGrades = () => {
+      console.log('Navigate to Grades')
+      // Add navigation logic here
+    }
+
+    const navigateToReports = () => {
+      console.log('Navigate to Reports')
+      // Add navigation logic here
+    }
+
     onMounted(() => {
       fetchSections()
     })
@@ -477,7 +526,12 @@ export default {
       enrollStudent,
       removeStudent,
       viewStudentProfile,
-      getInitials
+      getInitials,
+      navigateToViewStudents,
+      navigateToCreateQuiz,
+      navigateToViewQuizzes,
+      navigateToGrades,
+      navigateToReports
     }
   }
 }
@@ -556,15 +610,89 @@ export default {
   font-weight: 600;
   font-size: 0.875rem;
   display: flex;
-  align-items: center;
+  /* Removed orphaned align-items: center; */
   gap: 0.5rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 14px var(--shadow-medium);
-}
+/* Removed stray closing brace */
 
 .create-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px var(--shadow-strong);
+}
+
+.navigation-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.nav-btn {
+  padding: 1.25rem 1.5rem;
+  border: none;
+  border-radius: 1rem;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+.nav-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+}
+
+.nav-btn i {
+  font-size: 1.125rem;
+}
+
+.view-students-btn {
+  background: linear-gradient(135deg, #5A8FF0 0%, #4C7ED9 100%);
+}
+
+.view-students-btn:hover {
+  box-shadow: 0 8px 25px rgba(90, 143, 240, 0.4);
+}
+
+.create-quiz-btn {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+}
+
+.create-quiz-btn:hover {
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+}
+
+.view-quizzes-btn {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+}
+
+.view-quizzes-btn:hover {
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+}
+
+.grades-btn {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+}
+
+.grades-btn:hover {
+  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+}
+
+.reports-btn {
+  background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+}
+
+.reports-btn:hover {
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
 }
 
 .stats-grid {
@@ -835,69 +963,72 @@ export default {
   font-size: 0.875rem;
 }
 
-.student-info {
-  flex: 1;
-}
-
-.student-info h5 {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #0f172a;
-  margin: 0;
-}
-
-.student-info p {
-  font-size: 0.8rem;
-  color: #64748b;
-  margin: 0.25rem 0 0 0;
-}
-
-.student-id {
-  font-weight: 600;
-  color: #10b981;
-}
-
-.student-actions {
+.header-section {
   display: flex;
-  gap: 0.5rem;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2.5rem;
+  background: linear-gradient(135deg, #f8fafc 80%, #e0e7ef 100%);
+  backdrop-filter: blur(20px);
+  padding: 2.25rem 2rem 2.25rem 2rem;
+  border-radius: 1.5rem;
+  border: 1px solid #e0e7ef;
+  box-shadow: 0 8px 32px rgba(79, 70, 229, 0.08);
 }
-
-.student-action-btn {
-  width: 2.25rem;
-  height: 2.25rem;
-  border: none;
-  border-radius: 0.5rem;
-  cursor: pointer;
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+/* Removed stray color property */
+.stat-card {
+  background: linear-gradient(135deg, #f8fafc 80%, #e0e7ef 100%);
+  backdrop-filter: blur(20px);
+  border-radius: 1.5rem;
+  padding: 2rem;
+  border: 1px solid #e0e7ef;
+  box-shadow: 0 8px 32px rgba(79, 70, 229, 0.08);
   display: flex;
+/* Removed stray align-items property */
+  gap: 1.25rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
   align-items: center;
-  justify-content: center;
+.section-card {
+  background: linear-gradient(135deg, #f8fafc 80%, #e0e7ef 100%);
+  backdrop-filter: blur(20px);
+  border-radius: 1.5rem;
+  border: 1px solid #e0e7ef;
+  box-shadow: 0 8px 32px rgba(79, 70, 229, 0.08);
+  margin-bottom: 2rem;
+  overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
-.student-action-btn:not(.remove) {
-  background: rgba(79, 70, 229, 0.1);
-  color: #10b981;
-  border: 1px solid rgba(79, 70, 229, 0.2);
+/* Removed stray selector .student-action-btn:not(.remove):hover { */
+.students-list {
+  background: linear-gradient(135deg, #f1f5f9 80%, #e0e7ef 100%);
+  padding: 2rem;
+  border-radius: 1.25rem;
+  border: 1px solid #e0e7ef;
+  box-shadow: 0 4px 16px rgba(79, 70, 229, 0.04);
+  margin-top: 1.5rem;
+/* Removed stray closing brace */
 }
-
-.student-action-btn:not(.remove):hover {
-  background: #10b981;
-  color: white;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+.student-card {
+  background: linear-gradient(135deg, #f8fafc 80%, #e0e7ef 100%);
+  backdrop-filter: blur(10px);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid #e0e7ef;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 16px rgba(79, 70, 229, 0.04);
 }
-
-.student-action-btn.remove {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.2);
-}
-
-.student-action-btn.remove:hover {
-  background: #ef4444;
-  color: white;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
 .empty-students {
@@ -1180,6 +1311,16 @@ export default {
   
   .create-btn {
     justify-content: center;
+  }
+  
+  .navigation-buttons {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .nav-btn {
+    padding: 1rem 1.25rem;
+    font-size: 0.8rem;
   }
   
   .stats-grid {
