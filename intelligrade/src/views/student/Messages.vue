@@ -341,7 +341,6 @@ const getCurrentUser = async () => {
       return null
     }
     
-    // Query profiles table directly - matching your database schema
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('id, auth_user_id, role, full_name, email')
@@ -355,7 +354,6 @@ const getCurrentUser = async () => {
       return null
     }
     
-    // Now get the student ID from students table
     const { data: studentData, error: studentError } = await supabase
       .from('students')
       .select('id')
@@ -365,7 +363,7 @@ const getCurrentUser = async () => {
     if (studentError) throw studentError
     
     currentUser.value = user
-    currentStudentId.value = studentData.id // This is the student UUID, not profile UUID
+    currentStudentId.value = studentData.id
     
     console.log('Student authenticated:', profile.full_name)
     console.log('Student ID:', studentData.id)
@@ -378,7 +376,7 @@ const getCurrentUser = async () => {
   }
 }
 
-// Data loading methods - UPDATED to use new messaging functions
+// Data loading methods - FIXED for your database schema
 const loadEnrolledSubjectsAndTeachers = async () => {
   try {
     if (!currentStudentId.value) {
@@ -389,70 +387,150 @@ const loadEnrolledSubjectsAndTeachers = async () => {
     isLoading.value = true
     console.log('Loading subjects and teachers for student:', currentStudentId.value)
     
-    // UPDATED: Use the new get_student_teachers function instead of student_dashboard view
-    const { data: teachersData, error: teachersError } = await supabase
-      .rpc('get_student_teachers', { student_uuid: currentStudentId.value })
+    // Step 1: Get enrollments
+    const { data: enrollments, error: enrollError } = await supabase
+      .from('enrollments')
+      .select('section_id')
+      .eq('student_id', currentStudentId.value)
+      .eq('status', 'active')
     
-    if (teachersError) {
-      console.error('Error fetching student teachers:', teachersError)
-      throw teachersError
+    if (enrollError) {
+      console.error('Error fetching enrollments:', enrollError)
+      throw enrollError
     }
     
-    console.log('Student teachers found:', teachersData)
+    console.log('Enrollments found:', enrollments)
     
-    if (!teachersData || teachersData.length === 0) {
-      console.log('No teachers found for this student')
+    if (!enrollments || enrollments.length === 0) {
+      console.log('No enrollments found for this student')
       enrolledSubjects.value = []
       enrolledTeachers.value = []
       return
     }
     
-    // SIMPLIFIED: Process the data - the function already returns what we need
-    const subjects = []
-    const teachers = []
+    const sectionIds = enrollments.map(e => e.section_id)
+    
+    // Step 2: Get sections - FIXED: using 'name' instead of 'section_name'
+    console.log('Fetching sections for IDs:', sectionIds)
+    const { data: sections, error: sectionsError } = await supabase
+      .from('sections')
+      .select(`
+        id,
+        name,
+        section_code,
+        subject_id
+      `)
+      .in('id', sectionIds)
+    
+    if (sectionsError) {
+      console.error('DETAILED sections error:', JSON.stringify(sectionsError, null, 2))
+      console.error('Error message:', sectionsError.message)
+      console.error('Error details:', sectionsError.details)
+      console.error('Error hint:', sectionsError.hint)
+      throw sectionsError
+    }
+    
+    console.log('Sections found:', sections)
+    
+    if (!sections || sections.length === 0) {
+      enrolledSubjects.value = []
+      enrolledTeachers.value = []
+      return
+    }
+    
+    // Step 3: Get subjects - FIXED: getting teacher_id from subjects
+    const subjectIds = [...new Set(sections.map(s => s.subject_id))]
+    const { data: subjects, error: subjectsError } = await supabase
+      .from('subjects')
+      .select('id, name, teacher_id')
+      .in('id', subjectIds)
+    
+    if (subjectsError) throw subjectsError
+    
+    // Step 4: Get teachers - FIXED: from teachers table, not profiles
+    const teacherIds = [...new Set(subjects.map(s => s.teacher_id))]
+    const { data: teachers, error: teachersError } = await supabase
+      .from('teachers')
+      .select('id, full_name, email')
+      .in('id', teacherIds)
+    
+    if (teachersError) throw teachersError
+    
+    console.log('Subjects:', subjects)
+    console.log('Teachers:', teachers)
+    
+    // Process the data
+    const processedSubjects = []
+    const processedTeachers = []
     const subjectMap = new Map()
     
-    teachersData.forEach(row => {
+    // Create maps for easy lookup
+    const subjectsDataMap = new Map(subjects.map(s => [s.id, s]))
+    const teachersDataMap = new Map(teachers.map(t => [t.id, t]))
+    
+    for (const section of sections) {
+      const subject = subjectsDataMap.get(section.subject_id)
+      if (!subject) continue
+      
+      const teacher = teachersDataMap.get(subject.teacher_id)
+      if (!teacher) continue
+      
       // Add subject if not exists
-      if (!subjectMap.has(row.subject_id)) {
-        subjects.push({
-          id: row.subject_id,
-          name: row.subject_name,
-          code: row.section_code
+      if (!subjectMap.has(subject.id)) {
+        processedSubjects.push({
+          id: subject.id,
+          name: subject.name,
+          code: section.section_code
         })
-        subjectMap.set(row.subject_id, true)
+        subjectMap.set(subject.id, true)
       }
       
-      // Add teacher data - matching template expectations
-      teachers.push({
-        id: row.teacher_id,
-        teacher_name: row.teacher_name,
-        email: row.teacher_email,
-        subject_id: row.subject_id,
-        subject_name: row.subject_name,
-        section_id: row.section_id,
-        section_name: row.section_name,
-        section_code: row.section_code,
-        
-        // UPDATED: Now using real messaging data from the function
-        unread_count: row.unread_count || 0,
-        last_message: row.last_message,
-        last_message_time: row.last_message_time,
-        
-        // Legacy support
-        name: row.teacher_name
+      // Get unread count
+      const { count: unreadCount } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('section_id', section.id)
+        .eq('sender_id', teacher.id)
+        .eq('recipient_id', currentStudentId.value)
+        .eq('is_read', false)
+      
+      // Get last message
+      const { data: lastMsgData } = await supabase
+        .from('messages')
+        .select('message_text, sent_at')
+        .eq('section_id', section.id)
+        .or(`and(sender_id.eq.${currentStudentId.value},recipient_id.eq.${teacher.id}),and(sender_id.eq.${teacher.id},recipient_id.eq.${currentStudentId.value})`)
+        .order('sent_at', { ascending: false })
+        .limit(1)
+      
+      const lastMsg = lastMsgData && lastMsgData.length > 0 ? lastMsgData[0] : null
+      
+      // Add teacher
+      processedTeachers.push({
+        id: teacher.id,
+        teacher_name: teacher.full_name,
+        email: teacher.email,
+        subject_id: subject.id,
+        subject_name: subject.name,
+        section_id: section.id,
+        section_name: section.name,
+        section_code: section.section_code,
+        unread_count: unreadCount || 0,
+        last_message: lastMsg?.message_text || null,
+        last_message_time: lastMsg?.sent_at || null,
+        name: teacher.full_name
       })
-    })
+    }
     
-    enrolledSubjects.value = subjects
-    enrolledTeachers.value = teachers
+    enrolledSubjects.value = processedSubjects
+    enrolledTeachers.value = processedTeachers
     
-    console.log('Processed subjects:', subjects)
-    console.log('Processed teachers:', teachers)
+    console.log('Processed subjects:', processedSubjects)
+    console.log('Processed teachers:', processedTeachers)
     
   } catch (error) {
     console.error('Error loading enrolled data:', error)
-    alert('Error loading messaging data. Please check the console for details.')
+    alert('Error loading messaging data. Please check console for details.')
   } finally {
     isLoading.value = false
   }
@@ -464,29 +542,81 @@ const loadNotifications = async () => {
     
     console.log('Loading notifications for student:', currentStudentId.value)
     
-    // TODO: When you create student_notifications_view, uncomment this:
-    /*
-    const { data: notificationsData, error } = await supabase
-      .from('student_notifications_view')
-      .select('*')
+    const { data: enrollments } = await supabase
+      .from('enrollments')
+      .select('section_id')
       .eq('student_id', currentStudentId.value)
-      .order('created_at', { ascending: false })
+      .eq('status', 'active')
+    
+    if (!enrollments || enrollments.length === 0) {
+      notifications.value = []
+      return
+    }
+    
+    const sectionIds = enrollments.map(e => e.section_id)
+    
+    const { data: messages, error } = await supabase
+      .from('messages')
+      .select('*')
+      .in('section_id', sectionIds)
+      .eq('message_type', 'announcement')
+      .order('sent_at', { ascending: false })
     
     if (error) throw error
     
-    notifications.value = notificationsData || []
-    console.log('Loaded notifications:', notifications.value)
-    */
+    if (!messages || messages.length === 0) {
+      notifications.value = []
+      return
+    }
     
-    // For now, return empty notifications
-    notifications.value = []
+    const { data: sections } = await supabase
+      .from('sections')
+      .select('id, subject_id')
+      .in('id', sectionIds)
+    
+    const sectionMap = new Map(sections?.map(s => [s.id, s]) || [])
+    
+    const subjectIds = [...new Set(sections?.map(s => s.subject_id) || [])]
+    const { data: subjects } = await supabase
+      .from('subjects')
+      .select('id, name')
+      .in('id', subjectIds)
+    
+    const subjectMap = new Map(subjects?.map(s => [s.id, s]) || [])
+    
+    const senderIds = [...new Set(messages.map(m => m.sender_id))]
+    const { data: senders } = await supabase
+      .from('teachers')
+      .select('id, full_name')
+      .in('id', senderIds)
+    
+    const senderMap = new Map(senders?.map(s => [s.id, s]) || [])
+    
+    notifications.value = messages.map(msg => {
+      const section = sectionMap.get(msg.section_id)
+      const subject = section ? subjectMap.get(section.subject_id) : null
+      const sender = senderMap.get(msg.sender_id)
+      
+      return {
+        notification_id: msg.id,
+        title: 'Class Announcement',
+        body: msg.message_text,
+        created_at: msg.sent_at,
+        is_read: msg.is_read,
+        notification_type: 'announcement',
+        teacher_name: sender?.full_name,
+        subject_name: subject?.name
+      }
+    })
+    
+    console.log('Loaded notifications:', notifications.value)
     
   } catch (error) {
     console.error('Error loading notifications:', error)
   }
 }
 
-// Chat methods - UPDATED to use new messaging functions
+// Chat methods
 const startChatWithTeacher = async (teacher) => {
   console.log('Starting chat with teacher:', teacher)
   
@@ -500,10 +630,8 @@ const startChatWithTeacher = async (teacher) => {
   
   isModalOpen.value = true
   
-  // Load messages for this conversation
   await loadConversationMessages(teacher.id, teacher.section_id)
   
-  // Scroll to bottom of messages
   await nextTick()
   scrollToBottom()
 }
@@ -518,17 +646,16 @@ const loadConversationMessages = async (teacherId, sectionId) => {
       sectionId 
     })
     
-    // UPDATED: Use the new get_conversation_messages function
     const { data: messages, error } = await supabase
-      .rpc('get_conversation_messages', {
-        section_uuid: sectionId,
-        user1_uuid: currentStudentId.value,
-        user2_uuid: teacherId
-      })
+      .from('messages')
+      .select('*')
+      .eq('section_id', sectionId)
+      .eq('message_type', 'direct')
+      .or(`and(sender_id.eq.${currentStudentId.value},recipient_id.eq.${teacherId}),and(sender_id.eq.${teacherId},recipient_id.eq.${currentStudentId.value})`)
+      .order('sent_at', { ascending: true })
     
     if (error) throw error
     
-    // UPDATED: Map the data to match template expectations - FIXED field names
     currentMessages.value = (messages || []).map(msg => ({
       id: msg.id,
       sender_id: msg.sender_id,
@@ -541,7 +668,6 @@ const loadConversationMessages = async (teacherId, sectionId) => {
     
     console.log('Loaded messages:', currentMessages.value)
     
-    // Mark messages as read
     await markMessagesAsRead(teacherId, sectionId)
     
   } catch (error) {
@@ -563,41 +689,48 @@ const sendMessage = async () => {
     message_type: 'direct'
   }
   
-  // Add temporary message to display
   currentMessages.value.push(tempMessage)
   newMessage.value = ''
   
-  // Scroll to bottom
   await nextTick()
   scrollToBottom()
   
   try {
-    // UPDATED: Use the real send_direct_message function
-    const { data: messageId, error: sendError } = await supabase
-      .rpc('send_direct_message', {
-        p_section_id: activeTeacher.value.section_id,
-        p_sender_id: currentStudentId.value,
-        p_recipient_id: activeTeacher.value.id,
-        p_message_text: messageText
+    const { data: newMsg, error: sendError } = await supabase
+      .from('messages')
+      .insert({
+        section_id: activeTeacher.value.section_id,
+        sender_id: currentStudentId.value,
+        recipient_id: activeTeacher.value.id,
+        message_text: messageText,
+        message_type: 'direct',
+        is_read: false
       })
+      .select()
+      .single()
     
     if (sendError) throw sendError
     
-    console.log('Message sent successfully with ID:', messageId)
+    console.log('Message sent successfully:', newMsg)
     
-    // Update the temporary message with the real ID
     const tempIndex = currentMessages.value.findIndex(m => m.id === tempMessage.id)
     if (tempIndex !== -1) {
-      currentMessages.value[tempIndex].id = messageId
+      currentMessages.value[tempIndex] = {
+        id: newMsg.id,
+        sender_id: newMsg.sender_id,
+        recipient_id: newMsg.recipient_id,
+        content: newMsg.message_text,
+        sent_at: newMsg.sent_at,
+        is_read: newMsg.is_read,
+        message_type: newMsg.message_type
+      }
     }
     
-    // Refresh the teachers list to update unread counts
     await loadEnrolledSubjectsAndTeachers()
     
   } catch (error) {
     console.error('Failed to send message:', error)
     
-    // Remove temporary message on error
     const tempIndex = currentMessages.value.findIndex(m => m.id === tempMessage.id)
     if (tempIndex !== -1) {
       currentMessages.value.splice(tempIndex, 1)
@@ -613,20 +746,22 @@ const markMessagesAsRead = async (teacherId, sectionId) => {
     
     console.log('Marking messages as read:', { teacherId, sectionId })
     
-    // UPDATED: Mark unread messages as read
-    const unreadMessages = currentMessages.value.filter(m => 
-      m.sender_id === teacherId && 
-      !m.is_read
-    )
+    const { error } = await supabase
+      .from('messages')
+      .update({ is_read: true })
+      .eq('section_id', sectionId)
+      .eq('sender_id', teacherId)
+      .eq('recipient_id', currentStudentId.value)
+      .eq('is_read', false)
     
-    for (const message of unreadMessages) {
-      await supabase.rpc('mark_message_read', {
-        p_message_id: message.id,
-        p_reader_id: currentStudentId.value
-      })
-    }
+    if (error) throw error
     
-    // Update local state
+    currentMessages.value.forEach(m => {
+      if (m.sender_id === teacherId && !m.is_read) {
+        m.is_read = true
+      }
+    })
+    
     const teacher = enrolledTeachers.value.find(t => 
       t.id === teacherId && t.section_id === sectionId
     )
@@ -650,14 +785,12 @@ const openNotificationModal = async (notif) => {
   try {
     console.log('Marking notification as read:', notif)
     
-    // UPDATED: Mark notification as read when clicked
-    await supabase.rpc('mark_message_read', {
-      p_message_id: notif.notification_id,
-      p_reader_id: currentStudentId.value
-    })
+    await supabase
+      .from('messages')
+      .update({ is_read: true })
+      .eq('id', notif.notification_id)
     
     notif.is_read = true
-    notif.read_at = new Date().toISOString()
     
   } catch (error) {
     console.error('Error marking notification as read:', error)
@@ -670,31 +803,34 @@ const clearNotifications = async () => {
     
     console.log('Marking all notifications as read')
     
-    // UPDATED: Mark all unread notifications as read
-    const unreadNotifications = notifications.value.filter(n => !n.is_read)
+    const unreadIds = notifications.value
+      .filter(n => !n.is_read)
+      .map(n => n.notification_id)
     
-    for (const notif of unreadNotifications) {
-      await supabase.rpc('mark_message_read', {
-        p_message_id: notif.notification_id,
-        p_reader_id: currentStudentId.value
-      })
-      
-      notif.is_read = true
-      notif.read_at = new Date().toISOString()
-    }
+    if (unreadIds.length === 0) return
+    
+    const { error } = await supabase
+      .from('messages')
+      .update({ is_read: true })
+      .in('id', unreadIds)
+    
+    if (error) throw error
+    
+    notifications.value.forEach(n => {
+      n.is_read = true
+    })
     
   } catch (error) {
     console.error('Error clearing notifications:', error)
   }
 }
 
-// Real-time methods - UPDATED for new messaging system
+// Real-time methods
 const setupRealTimeSubscriptions = () => {
   if (!currentStudentId.value) return
   
   console.log('Setting up real-time subscriptions for student messages')
   
-  // UPDATED: Subscribe to messages table changes
   messageChannel = supabase
     .channel('student-messages-realtime')
     .on(
@@ -709,21 +845,17 @@ const setupRealTimeSubscriptions = () => {
         
         const newMessageData = payload.new
         
-        // Check if this message is for this student
         if (newMessageData.recipient_id === currentStudentId.value || 
-            newMessageData.recipient_id === null) { // Broadcast message
+            newMessageData.message_type === 'announcement') {
           
-          // Refresh teachers list to update unread counts
           await loadEnrolledSubjectsAndTeachers()
           await loadNotifications()
           
-          // If chat modal is open and this message is part of the current conversation
           if (isModalOpen.value && activeTeacher.value && 
               newMessageData.section_id === activeTeacher.value.section_id &&
-              (newMessageData.sender_id === activeTeacher.value.id || 
-               newMessageData.recipient_id === activeTeacher.value.id)) {
+              newMessageData.sender_id === activeTeacher.value.id &&
+              newMessageData.message_type === 'direct') {
             
-            // Add the message to the current conversation
             currentMessages.value.push({
               id: newMessageData.id,
               sender_id: newMessageData.sender_id,
@@ -734,17 +866,13 @@ const setupRealTimeSubscriptions = () => {
               message_type: newMessageData.message_type
             })
             
-            // Auto-scroll to bottom
             await nextTick()
             scrollToBottom()
             
-            // Mark as read if from teacher
-            if (newMessageData.sender_id === activeTeacher.value.id) {
-              await supabase.rpc('mark_message_read', {
-                p_message_id: newMessageData.id,
-                p_reader_id: currentStudentId.value
-              })
-            }
+            await supabase
+              .from('messages')
+              .update({ is_read: true })
+              .eq('id', newMessageData.id)
           }
         }
       }
@@ -757,7 +885,6 @@ const setupRealTimeSubscriptions = () => {
         table: 'messages'
       },
       async () => {
-        // Refresh data when messages are updated (e.g., marked as read)
         await loadEnrolledSubjectsAndTeachers()
       }
     )
@@ -805,13 +932,11 @@ onMounted(async () => {
   if (userData) {
     console.log('Student authenticated:', userData.profile.full_name)
     
-    // Load initial data
     await Promise.all([
       loadEnrolledSubjectsAndTeachers(),
       loadNotifications()
     ])
     
-    // Setup real-time subscriptions
     setupRealTimeSubscriptions()
   } else {
     console.error('Authentication failed or user is not a student')
