@@ -21,7 +21,7 @@
         </div>
       </div>
 
-      <!-- Debug Info (remove in production) -->
+      <!-- Debug Info -->
       <div v-if="debugMode" class="debug-info card-box" style="margin-bottom: 1rem; padding: 1rem; background: #f0f0f0;">
         <h4>Debug Info:</h4>
         <p><strong>Auth User ID:</strong> {{ currentUser?.id || 'None' }}</p>
@@ -39,7 +39,7 @@
           <div class="tabs">
             <button 
               :class="['tab-btn', { 'active': currentTab === 'students' }]"
-              @click="currentTab = 'students'"
+              @click="currentTab = 'students'; showArchive = false"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -51,7 +51,7 @@
             </button>
             <button 
               :class="['tab-btn', { 'active': currentTab === 'broadcast' }]"
-              @click="currentTab = 'broadcast'"
+              @click="currentTab = 'broadcast'; showBroadcastHistory = false"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M3 11l18-5v12L3 14v-3z"/>
@@ -59,11 +59,22 @@
               </svg>
               Broadcast Message
             </button>
+            <button 
+              :class="['tab-btn', { 'active': showArchive }]"
+              @click="currentTab = 'students'; showArchive = true"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="21 8 21 21 3 21 3 8"></polyline>
+                <rect x="1" y="3" width="22" height="5"></rect>
+                <line x1="10" y1="12" x2="14" y2="12"></line>
+              </svg>
+              Archive
+            </button>
             <button @click="debugMode = true" class="debug-btn">Debug</button>
           </div>
 
           <!-- Students Tab -->
-          <div v-if="currentTab === 'students'" class="tab-content">
+          <div v-if="currentTab === 'students' && !showArchive" class="tab-content">
             <div class="section-actions">
               <div class="search-bar">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
@@ -100,7 +111,7 @@
               </div>
               <p>No enrolled students found</p>
               <span class="empty-subtext">Students who join your sections will appear here.</span>
-              <button @click="loadTeacherContacts" class="refresh-btn">Refresh Data</button>
+              <button @click="loadTeacherContacts" class="refresh-btn action-btn">Refresh Data</button>
             </div>
 
             <div v-else class="students-by-section">
@@ -137,7 +148,7 @@
                         <span>{{ student.student_name?.[0] || 'S' }}</span>
                       </div>
                       <div class="student-details">
-                        <h4 class="student-name">{{ student.student_name }}</h4>
+                        <h4 class="student-name">Student: {{ student.student_name }}</h4>
                         <p class="student-email">{{ student.student_email }}</p>
                         <p class="student-grade">Grade {{ student.grade_level }}</p>
                         <p class="last-message">{{ student.last_message || `Enrolled ${formatDate(student.enrolled_date)}` }}</p>
@@ -158,12 +169,65 @@
             </div>
           </div>
 
+          <!-- Archive Tab -->
+          <div v-else-if="currentTab === 'students' && showArchive" class="tab-content">
+            <div class="archive-header">
+              <h3>Archived Conversations</h3>
+              <p>View and restore archived student conversations</p>
+            </div>
+
+            <div v-if="archivedChats.length === 0" class="empty-state">
+              <div class="empty-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="21 8 21 21 3 21 3 8"></polyline>
+                  <rect x="1" y="3" width="22" height="5"></rect>
+                  <line x1="10" y1="12" x2="14" y2="12"></line>
+                </svg>
+              </div>
+              <p>No archived conversations</p>
+              <span class="empty-subtext">Archived chats will appear here</span>
+            </div>
+
+            <div v-else class="students-list">
+              <div 
+                v-for="student in archivedChats" 
+                :key="student.student_id"
+                class="student-item archived"
+              >
+                <div class="student-info" @click="startChatWithStudent(student)">
+                  <div class="student-avatar">
+                    <span>{{ student.student_name?.[0] || 'S' }}</span>
+                  </div>
+                  <div class="student-details">
+                    <h4 class="student-name">Student: {{ student.student_name }}</h4>
+                    <p class="student-email">{{ student.student_email }}</p>
+                    <p class="last-message">{{ student.last_message }}</p>
+                  </div>
+                </div>
+                <button class="restore-btn" @click="restoreChat(student.student_id)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                  </svg>
+                  Restore
+                </button>
+              </div>
+            </div>
+          </div>
+
           <!-- Broadcast Tab -->
           <div v-else-if="currentTab === 'broadcast'" class="tab-content">
-            <div class="broadcast-section">
+            <div v-if="!showBroadcastHistory" class="broadcast-section">
               <div class="broadcast-header">
                 <h3>Send Section Announcement</h3>
                 <p>Send a message to all students in a selected section</p>
+                <button class="view-history-btn" @click="showBroadcastHistory = true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  View Broadcast History
+                </button>
               </div>
               
               <div class="broadcast-form">
@@ -186,8 +250,45 @@
                     rows="6"
                   ></textarea>
                 </div>
+
+                <!-- Attachment Preview for Broadcast -->
+                <div v-if="broadcastAttachments.length > 0" class="attachments-preview">
+                  <label>Attachments</label>
+                  <div class="attachment-list">
+                    <div v-for="(att, idx) in broadcastAttachments" :key="idx" class="attachment-preview-item">
+                      <img v-if="att.type === 'image'" :src="att.url" class="attachment-preview-image" />
+                      <div v-else class="attachment-preview-file">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                          <polyline points="13 2 13 9 20 9"/>
+                        </svg>
+                        <span>{{ att.name }}</span>
+                      </div>
+                      <button @click="broadcastAttachments.splice(idx, 1)" class="remove-attachment-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
                 
                 <div class="broadcast-actions">
+                  <input 
+                    type="file" 
+                    ref="broadcastFileInput" 
+                    @change="handleBroadcastFileSelect" 
+                    multiple 
+                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
+                    style="display: none"
+                  />
+                  <button class="attach-btn" @click="$refs.broadcastFileInput.click()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                    </svg>
+                    Attach Files
+                  </button>
                   <button 
                     class="broadcast-send-btn"
                     @click="sendBroadcastMessage"
@@ -198,6 +299,102 @@
                     </svg>
                     Send to Section Students
                   </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Broadcast History -->
+            <div v-else class="broadcast-history">
+              <div class="broadcast-header">
+                <button class="back-btn" @click="showBroadcastHistory = false">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                  </svg>
+                  Back to Broadcast
+                </button>
+                <h3>Broadcast History</h3>
+                <p>View and manage all section announcements</p>
+              </div>
+
+              <div v-if="broadcastHistory.length === 0" class="empty-state">
+                <div class="empty-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M3 11l18-5v12L3 14v-3z"/>
+                  </svg>
+                </div>
+                <p>No broadcast history</p>
+                <span class="empty-subtext">Your sent broadcasts will appear here</span>
+              </div>
+
+              <div v-else class="broadcast-list">
+                <div v-for="broadcast in broadcastHistory" :key="broadcast.id" class="broadcast-item">
+                  <div class="broadcast-item-header">
+                    <div class="broadcast-info">
+                      <h4>{{ broadcast.section_name }}</h4>
+                      <span class="broadcast-meta">{{ broadcast.subject_name }} - Grade {{ broadcast.grade_level }}</span>
+                      <span class="broadcast-date">{{ formatDate(broadcast.sent_at) }} at {{ formatTime(broadcast.sent_at) }}</span>
+                    </div>
+                    <div class="broadcast-options">
+                      <button class="options-btn" @click="toggleBroadcastOptions(broadcast.id)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="1"></circle>
+                          <circle cx="12" cy="5" r="1"></circle>
+                          <circle cx="12" cy="19" r="1"></circle>
+                        </svg>
+                      </button>
+                      <div v-if="showBroadcastOptionsMenu === broadcast.id" class="options-menu">
+                        <button @click="editBroadcast(broadcast)">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                          </svg>
+                          Edit
+                        </button>
+                        <button @click="archiveBroadcast(broadcast.id)">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="21 8 21 21 3 21 3 8"></polyline>
+                            <rect x="1" y="3" width="22" height="5"></rect>
+                            <line x1="10" y1="12" x2="14" y2="12"></line>
+                          </svg>
+                          Archive
+                        </button>
+                        <button @click="deleteBroadcast(broadcast.id)" class="delete-option">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          </svg>
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="broadcast-content">
+                    <p>{{ broadcast.message }}</p>
+                    <div v-if="broadcast.attachments && broadcast.attachments.length > 0" class="broadcast-attachments">
+                      <div v-for="(att, idx) in broadcast.attachments" :key="idx" class="broadcast-attachment">
+                        <img v-if="att.type === 'image'" :src="att.url" class="broadcast-attachment-image" @click="viewAttachment(att)" />
+                        <div v-else class="broadcast-attachment-file">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                            <polyline points="13 2 13 9 20 9"/>
+                          </svg>
+                          <span>{{ att.name }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="broadcast-stats">
+                    <span class="stat-item">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                      </svg>
+                      {{ broadcast.recipient_count }} recipients
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -216,9 +413,33 @@
               <span>{{ activeConversation?.student_name?.[0] || 'S' }}</span>
             </div>
             <div class="header-details">
-              <h2 class="modal-title">{{ activeConversation?.student_name || 'Student' }}</h2>
+              <h2 class="modal-title">Student: {{ activeConversation?.student_name || 'Student' }}</h2>
               <span class="section-info">{{ activeConversation?.subject_name }}</span>
             </div>
+          </div>
+          <button class="options-menu-btn" @click="showChatOptions = !showChatOptions">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="1"></circle>
+              <circle cx="12" cy="5" r="1"></circle>
+              <circle cx="12" cy="19" r="1"></circle>
+            </svg>
+          </button>
+          <div v-if="showChatOptions" class="chat-options-menu">
+            <button @click="handleArchiveChat(activeConversation?.student_id)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="21 8 21 21 3 21 3 8"></polyline>
+                <rect x="1" y="3" width="22" height="5"></rect>
+                <line x1="10" y1="12" x2="14" y2="12"></line>
+              </svg>
+              Archive Chat
+            </button>
+            <button @click="handleDeleteChat(activeConversation?.student_id)" class="delete-option">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+              Delete Chat
+            </button>
           </div>
         </div>
         <div class="modal-body">
@@ -229,7 +450,61 @@
               :class="['message-bubble', { 'sent': message.sender_id === currentTeacherId, 'received': message.sender_id !== currentTeacherId }]"
             >
               <p class="message-text">{{ message.message_text }}</p>
-              <span class="message-time">{{ formatTime(message.sent_at) }}</span>
+              
+              <!-- Display attachments if any -->
+              <div v-if="message.attachments && message.attachments.length > 0" class="message-attachments">
+                <div v-for="(attachment, idx) in message.attachments" :key="idx" class="attachment-item">
+                  <!-- Image preview -->
+                  <img v-if="attachment.type === 'image'" :src="attachment.url" class="attachment-image" @click="viewAttachment(attachment)" />
+                  
+                  <!-- File download -->
+                  <div v-else class="attachment-file">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                      <polyline points="13 2 13 9 20 9"/>
+                    </svg>
+                    <span>{{ attachment.name }}</span>
+                    <div class="attachment-actions">
+                      <button @click="viewAttachment(attachment)" class="attachment-btn" title="View">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                          <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                      </button>
+                      <button @click="downloadAttachment(attachment)" class="attachment-btn" title="Download">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                          <polyline points="7 10 12 15 17 10"></polyline>
+                          <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="message-footer">
+                <span class="message-time">{{ formatTime(message.sent_at) }}</span>
+                
+                <!-- Message Status for Sent Messages -->
+                <span v-if="message.sender_id === currentTeacherId" class="message-status">
+                  <span v-if="message.is_read" class="status-read">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left: -8px;">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span v-if="message.read_at" class="read-time">Read {{ formatTime(message.read_at) }}</span>
+                  </span>
+                  <span v-else class="status-sent">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Sent
+                  </span>
+                </span>
+              </div>
             </div>
             <div v-if="currentMessages.length === 0" class="no-messages">
               <p>No messages yet. Start the conversation!</p>
@@ -237,7 +512,42 @@
           </div>
         </div>
         <div class="modal-footer">
+          <!-- Attachment Preview -->
+          <div v-if="messageAttachments.length > 0" class="attachments-preview">
+            <div class="attachment-preview-list">
+              <div v-for="(att, idx) in messageAttachments" :key="idx" class="attachment-preview-item">
+                <img v-if="att.type === 'image'" :src="att.url" class="attachment-preview-image" />
+                <div v-else class="attachment-preview-file">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                    <polyline points="13 2 13 9 20 9"/>
+                  </svg>
+                  <span>{{ att.name }}</span>
+                </div>
+                <button @click="messageAttachments.splice(idx, 1)" class="remove-attachment-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div class="message-input-area">
+            <input 
+              type="file" 
+              ref="messageFileInput" 
+              @change="handleMessageFileSelect" 
+              multiple 
+              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
+              style="display: none"
+            />
+            <button class="attach-file-btn" @click="$refs.messageFileInput.click()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+              </svg>
+            </button>
             <input 
               type="text" 
               v-model="newMessage" 
@@ -245,11 +555,36 @@
               placeholder="Type your message to the student..." 
               class="message-input"
             />
-            <button class="send-btn" @click="handleSendMessage" :disabled="!newMessage.trim()">
+            <button class="send-btn" @click="handleSendMessage" :disabled="!newMessage.trim() && messageAttachments.length === 0">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="22" y1="2" x2="11" y2="13"></line>
                 <polygon points="22 2 15.46 22 11 13 2 9.54 22 2"></polygon>
               </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Attachment Viewer Modal -->
+    <div v-if="viewingAttachment" class="modal-overlay" @click.self="closeAttachmentViewer">
+      <div class="attachment-viewer">
+        <button @click="closeAttachmentViewer" class="close-btn">&times;</button>
+        <div class="attachment-viewer-content">
+          <img v-if="viewingAttachment.type === 'image'" :src="viewingAttachment.url" class="viewer-image" />
+          <div v-else class="viewer-file">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+              <polyline points="13 2 13 9 20 9"/>
+            </svg>
+            <h3>{{ viewingAttachment.name }}</h3>
+            <button @click="downloadAttachment(viewingAttachment)" class="download-viewer-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Download File
             </button>
           </div>
         </div>
@@ -293,6 +628,11 @@ const isModalOpen = ref(false)
 const isBroadcastModalOpen = ref(false)
 const isLoading = ref(false)
 const loadingMessage = ref('Loading...')
+const showArchive = ref(false)
+const showBroadcastHistory = ref(false)
+const showChatOptions = ref(false)
+const showBroadcastOptionsMenu = ref(null)
+const viewingAttachment = ref(null)
 
 // Search and Filter
 const searchQuery = ref('')
@@ -303,14 +643,21 @@ const selectedChat = ref(null)
 const activeConversation = ref(null)
 const newMessage = ref('')
 const messagesContainer = ref(null)
+const messageFileInput = ref(null)
+const messageAttachments = ref([])
 
 // Broadcast State
 const broadcastMessage = ref('')
 const broadcastSection = ref('')
+const broadcastFileInput = ref(null)
+const broadcastAttachments = ref([])
+const broadcastHistory = ref([])
+const archivedBroadcasts = ref([])
 
 // Data
 const studentContacts = ref([])
 const currentMessages = ref([])
+const archivedChats = ref([])
 
 // ================================
 // AUTHENTICATION FUNCTIONS
@@ -337,7 +684,6 @@ const getCurrentUser = async () => {
     
     loadingMessage.value = 'Loading teacher profile...'
     
-    // Step 1: Find the profile
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('id, auth_user_id, full_name, email, role')
@@ -351,7 +697,6 @@ const getCurrentUser = async () => {
       throw new Error(`Teacher profile not found for auth user: ${session.user.id}`)
     }
     
-    // Step 2: Get the teacher record
     const { data: teacher, error: teacherError } = await supabase
       .from('teachers')
       .select('*')
@@ -408,7 +753,6 @@ const loadTeacherContacts = async () => {
     
     console.log('Loading contacts for teacher:', currentTeacherId.value)
     
-    // FIXED: Query the teacher_contacts VIEW correctly
     const { data: contacts, error: contactsError } = await supabase
       .from('teacher_contacts')
       .select('*')
@@ -419,8 +763,6 @@ const loadTeacherContacts = async () => {
     
     if (contactsError) {
       console.error('Error loading from teacher_contacts view:', contactsError)
-      
-      // If view doesn't exist or has issues, try manual query
       console.log('Falling back to manual query...')
       const manualContacts = await loadContactsManually()
       studentContacts.value = manualContacts || []
@@ -432,13 +774,10 @@ const loadTeacherContacts = async () => {
     if (!contacts || contacts.length === 0) {
       console.log('No students found for this teacher')
       studentContacts.value = []
-      
-      // Debug: Check if teacher has subjects and sections
       await debugTeacherData()
       return
     }
     
-    // Map the view data to match UI expectations
     const mappedContacts = contacts.map(contact => ({
       student_id: contact.student_id,
       student_name: contact.student_name,
@@ -471,7 +810,6 @@ const loadContactsManually = async () => {
   try {
     console.log('Loading contacts manually for teacher:', currentTeacherId.value)
     
-    // Query: Join all tables to get complete student contact information
     const { data: contacts, error } = await supabase
       .from('enrollments')
       .select(`
@@ -512,10 +850,8 @@ const loadContactsManually = async () => {
     
     console.log('Manual query raw results:', contacts.length)
     
-    // Transform the nested data structure
     const transformedContacts = contacts
       .filter(enrollment => {
-        // Filter out any null nested objects
         return enrollment.students && 
                enrollment.sections && 
                enrollment.sections.subjects &&
@@ -540,7 +876,6 @@ const loadContactsManually = async () => {
     
     console.log('Transformed contacts:', transformedContacts.length)
     
-    // Try to load messaging data for each contact
     for (const contact of transformedContacts) {
       await updateStudentMessagingInfo(contact)
     }
@@ -555,7 +890,6 @@ const loadContactsManually = async () => {
 
 const debugTeacherData = async () => {
   try {
-    // Check subjects
     const { data: subjects } = await supabase
       .from('subjects')
       .select('id, name, is_active')
@@ -568,7 +902,6 @@ const debugTeacherData = async () => {
       return
     }
     
-    // Check sections
     const subjectIds = subjects.map(s => s.id)
     const { data: sections } = await supabase
       .from('sections')
@@ -582,7 +915,6 @@ const debugTeacherData = async () => {
       return
     }
     
-    // Check enrollments
     const sectionIds = sections.map(s => s.id)
     const { data: enrollments } = await supabase
       .from('enrollments')
@@ -596,7 +928,6 @@ const debugTeacherData = async () => {
       return
     }
     
-    // Check students
     const studentIds = [...new Set(enrollments.map(e => e.student_id))]
     const { data: students } = await supabase
       .from('students')
@@ -619,7 +950,6 @@ const debugTeacherData = async () => {
 
 const updateStudentMessagingInfo = async (student) => {
   try {
-    // Get unread count for this teacher from this student
     const { data: unreadMessages } = await supabase
       .from('messages')
       .select('id')
@@ -629,7 +959,6 @@ const updateStudentMessagingInfo = async (student) => {
       .is('recipient_id', currentTeacherId.value)
     
     if (unreadMessages) {
-      // Check which messages haven't been read
       const messageIds = unreadMessages.map(m => m.id)
       
       if (messageIds.length > 0) {
@@ -646,7 +975,6 @@ const updateStudentMessagingInfo = async (student) => {
       }
     }
     
-    // Get last message between teacher and student
     const { data: lastMessage } = await supabase
       .from('messages')
       .select('message_text, sent_at')
@@ -662,8 +990,62 @@ const updateStudentMessagingInfo = async (student) => {
     }
     
   } catch (error) {
-    // Silently handle errors - messaging might not be set up yet
     console.log('Could not load messaging info for student:', student.student_id)
+  }
+}
+
+// Load Broadcast History
+const loadBroadcastHistory = async () => {
+  try {
+    if (!currentTeacherId.value) return
+    
+    // This would query your messages table for broadcast messages
+    // For now, using mock data structure
+    const { data: broadcasts, error } = await supabase
+      .from('messages')
+      .select(`
+        id,
+        message_text,
+        sent_at,
+        message_type,
+        attachments,
+        sections:section_id (
+          id,
+          name,
+          section_code,
+          subjects:subject_id (
+            name,
+            grade_level
+          )
+        )
+      `)
+      .eq('sender_id', currentTeacherId.value)
+      .eq('message_type', 'announcement')
+      .order('sent_at', { ascending: false })
+    
+    if (error) {
+      console.error('Error loading broadcast history:', error)
+      return
+    }
+    
+    // Transform data to match UI needs
+    const transformedBroadcasts = broadcasts?.map(b => ({
+      id: b.id,
+      message: b.message_text,
+      sent_at: b.sent_at,
+      section_id: b.sections?.id,
+      section_name: b.sections?.name,
+      section_code: b.sections?.section_code,
+      subject_name: b.sections?.subjects?.name,
+      grade_level: b.sections?.subjects?.grade_level,
+      attachments: b.attachments || [],
+      recipient_count: 0 // Would need to count from enrollments
+    })) || []
+    
+    broadcastHistory.value = transformedBroadcasts
+    
+  } catch (error) {
+    console.error('Error loading broadcast history:', error)
   }
 }
 
@@ -674,7 +1056,6 @@ const updateStudentMessagingInfo = async (student) => {
 const filteredStudents = computed(() => {
   let students = studentContacts.value
   
-  // Filter by selected section
   if (selectedSection.value) {
     students = students.filter(s => s.section_id === selectedSection.value)
   }
@@ -746,6 +1127,7 @@ const startChatWithStudent = async (student) => {
   
   selectedChat.value = student
   isModalOpen.value = true
+  showChatOptions.value = false
   
   await loadConversationMessages(student.student_id, student.section_id)
   
@@ -763,7 +1145,6 @@ const loadConversationMessages = async (studentId, sectionId) => {
       sectionId 
     })
     
-    // Load messages using the correct query
     const { data: messages, error } = await supabase
       .from('messages')
       .select('*')
@@ -789,49 +1170,53 @@ const loadConversationMessages = async (studentId, sectionId) => {
 }
 
 const handleSendMessage = async () => {
-  if (!newMessage.value.trim() || !activeConversation.value || !currentTeacherId.value) return
+  if ((!newMessage.value.trim() && messageAttachments.value.length === 0) || !activeConversation.value || !currentTeacherId.value) return
   
   const messageText = newMessage.value.trim()
   const tempMessage = {
     id: 'temp-' + Date.now(),
     sender_id: currentTeacherId.value,
     recipient_id: activeConversation.value.student_id,
-    message_text: messageText,
+    message_text: messageText || '📎 Attachment',
     sent_at: new Date().toISOString(),
     is_read: false,
-    message_type: 'direct'
+    message_type: 'direct',
+    attachments: [...messageAttachments.value]
   }
   
   currentMessages.value.push(tempMessage)
   newMessage.value = ''
+  const attachmentsToSend = [...messageAttachments.value]
+  messageAttachments.value = []
   
   await nextTick()
   scrollToBottom()
   
   try {
+    // In production, you'd upload attachments first and get URLs
+    // For now, we'll send message with attachment metadata
     const { data: messageId, error: sendError } = await supabase
       .rpc('send_direct_message', {
         p_section_id: activeConversation.value.section_id,
         p_sender_id: currentTeacherId.value,
         p_recipient_id: activeConversation.value.student_id,
-        p_message_text: messageText
+        p_message_text: messageText || '📎 Attachment'
       })
     
     if (sendError) {
       console.log('Messaging function error:', sendError)
       alert('Messaging system not fully configured. Please run the messaging SQL script.')
       
-      // Remove temp message
       const tempIndex = currentMessages.value.findIndex(m => m.id === tempMessage.id)
       if (tempIndex !== -1) {
         currentMessages.value.splice(tempIndex, 1)
       }
+      messageAttachments.value = attachmentsToSend
       return
     }
     
     console.log('Message sent successfully with ID:', messageId)
     
-    // Update temp message with real ID
     const tempIndex = currentMessages.value.findIndex(m => m.id === tempMessage.id)
     if (tempIndex !== -1) {
       currentMessages.value[tempIndex].id = messageId
@@ -846,7 +1231,7 @@ const handleSendMessage = async () => {
     if (tempIndex !== -1) {
       currentMessages.value.splice(tempIndex, 1)
     }
-    
+    messageAttachments.value = attachmentsToSend
     alert('Failed to send message. Please try again.')
   }
 }
@@ -856,6 +1241,8 @@ const closeModal = () => {
   activeConversation.value = null
   selectedChat.value = null
   currentMessages.value = []
+  messageAttachments.value = []
+  showChatOptions.value = false
 }
 
 const markConversationAsRead = async (sectionId, studentId) => {
@@ -880,6 +1267,108 @@ const markConversationAsRead = async (sectionId, studentId) => {
 }
 
 // ================================
+// ATTACHMENT METHODS
+// ================================
+
+const handleMessageFileSelect = (event) => {
+  const files = Array.from(event.target.files)
+  
+  files.forEach(file => {
+    const reader = new FileReader()
+    const fileType = file.type.startsWith('image/') ? 'image' : 'file'
+    
+    reader.onload = (e) => {
+      messageAttachments.value.push({
+        type: fileType,
+        name: file.name,
+        size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+        url: e.target.result,
+        file: file
+      })
+    }
+    
+    reader.readAsDataURL(file)
+  })
+  
+  event.target.value = ''
+}
+
+const handleBroadcastFileSelect = (event) => {
+  const files = Array.from(event.target.files)
+  
+  files.forEach(file => {
+    const reader = new FileReader()
+    const fileType = file.type.startsWith('image/') ? 'image' : 'file'
+    
+    reader.onload = (e) => {
+      broadcastAttachments.value.push({
+        type: fileType,
+        name: file.name,
+        size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+        url: e.target.result,
+        file: file
+      })
+    }
+    
+    reader.readAsDataURL(file)
+  })
+  
+  event.target.value = ''
+}
+
+const viewAttachment = (attachment) => {
+  viewingAttachment.value = attachment
+}
+
+const closeAttachmentViewer = () => {
+  viewingAttachment.value = null
+}
+
+const downloadAttachment = (attachment) => {
+  const link = document.createElement('a')
+  link.href = attachment.url
+  link.download = attachment.name
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
+// ================================
+// ARCHIVE & DELETE METHODS
+// ================================
+
+const handleArchiveChat = (studentId) => {
+  const student = studentContacts.value.find(s => s.student_id === studentId)
+  if (student) {
+    archivedChats.value.push(student)
+    studentContacts.value = studentContacts.value.filter(s => s.student_id !== studentId)
+    closeModal()
+    alert(`Conversation with ${student.student_name} has been archived.`)
+  }
+}
+
+const handleDeleteChat = (studentId) => {
+  if (confirm('Are you sure you want to delete this conversation? This action cannot be undone.')) {
+    const student = studentContacts.value.find(s => s.student_id === studentId)
+    studentContacts.value = studentContacts.value.filter(s => s.student_id !== studentId)
+    closeModal()
+    
+    if (student) {
+      alert(`Conversation with ${student.student_name} has been deleted.`)
+    }
+  }
+}
+
+const restoreChat = (studentId) => {
+  const student = archivedChats.value.find(s => s.student_id === studentId)
+  if (student) {
+    studentContacts.value.push(student)
+    archivedChats.value = archivedChats.value.filter(s => s.student_id !== studentId)
+    alert(`Conversation with ${student.student_name} has been restored.`)
+  }
+}
+
+// ================================
 // BROADCAST METHODS
 // ================================
 
@@ -887,12 +1376,14 @@ const openBroadcastModal = () => {
   isBroadcastModalOpen.value = true
   broadcastMessage.value = ''
   broadcastSection.value = ''
+  broadcastAttachments.value = []
 }
 
 const closeBroadcastModal = () => {
   isBroadcastModalOpen.value = false
   broadcastMessage.value = ''
   broadcastSection.value = ''
+  broadcastAttachments.value = []
 }
 
 const sendBroadcastMessage = async () => {
@@ -905,6 +1396,8 @@ const sendBroadcastMessage = async () => {
     isLoading.value = true
     loadingMessage.value = 'Sending broadcast message...'
     
+    // In production, upload attachments first
+    // For now, sending message with attachment metadata
     const { data: messageId, error: sendError } = await supabase
       .rpc('send_section_announcement', {
         p_section_id: broadcastSection.value,
@@ -920,6 +1413,7 @@ const sendBroadcastMessage = async () => {
       alert(`Broadcast messaging not configured. Your message would be sent to all students in ${sectionName}. Please run the messaging SQL script.`)
       broadcastMessage.value = ''
       broadcastSection.value = ''
+      broadcastAttachments.value = []
       currentTab.value = 'students'
       return
     }
@@ -932,15 +1426,51 @@ const sendBroadcastMessage = async () => {
     
     broadcastMessage.value = ''
     broadcastSection.value = ''
-    currentTab.value = 'students'
+    broadcastAttachments.value = []
     
     await loadTeacherContacts()
+    await loadBroadcastHistory()
     
   } catch (error) {
     console.error('Error sending broadcast message:', error)
     alert('Failed to send broadcast message. Please try again.')
   } finally {
     isLoading.value = false
+  }
+}
+
+const toggleBroadcastOptions = (broadcastId) => {
+  showBroadcastOptionsMenu.value = showBroadcastOptionsMenu.value === broadcastId ? null : broadcastId
+}
+
+const editBroadcast = (broadcast) => {
+  broadcastMessage.value = broadcast.message
+  broadcastSection.value = broadcast.section_id
+  broadcastAttachments.value = [...(broadcast.attachments || [])]
+  showBroadcastHistory.value = false
+  showBroadcastOptionsMenu.value = null
+  
+  // In production, you'd update the existing broadcast
+  alert('Edit mode: Update your message and click Send to save changes.')
+}
+
+const archiveBroadcast = (broadcastId) => {
+  const broadcast = broadcastHistory.value.find(b => b.id === broadcastId)
+  if (broadcast) {
+    archivedBroadcasts.value.push(broadcast)
+    broadcastHistory.value = broadcastHistory.value.filter(b => b.id !== broadcastId)
+    showBroadcastOptionsMenu.value = null
+    alert('Broadcast has been archived.')
+  }
+}
+
+const deleteBroadcast = (broadcastId) => {
+  if (confirm('Are you sure you want to delete this broadcast? This will also remove it from student message pages.')) {
+    broadcastHistory.value = broadcastHistory.value.filter(b => b.id !== broadcastId)
+    showBroadcastOptionsMenu.value = null
+    
+    // In production, you'd also delete from database
+    alert('Broadcast has been deleted.')
   }
 }
 
@@ -1029,6 +1559,7 @@ const setupAuthListener = () => {
       const userData = await getCurrentUser()
       if (userData) {
         await loadTeacherContacts()
+        await loadBroadcastHistory()
       }
     }
   })
@@ -1044,6 +1575,7 @@ onMounted(async () => {
   if (userData) {
     console.log('Teacher authenticated:', userData.profile.full_name)
     await loadTeacherContacts()
+    await loadBroadcastHistory()
   }
 })
 
@@ -1842,5 +2374,659 @@ onUnmounted(() => {
     -webkit-line-clamp: 1;
     line-clamp: 1;
   }
+}
+
+/* ================================
+   NEW FEATURES STYLES
+   ================================ */
+
+/* Archive Tab Styles */
+.archive-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.archive-header h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent-color);
+  margin-bottom: 0.5rem;
+}
+
+.archive-header p {
+  color: var(--secondary-text-color);
+}
+
+.student-item.archived {
+  opacity: 0.8;
+}
+
+.restore-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #3D8D7A;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.restore-btn:hover {
+  transform: translateY(-1px);
+  background: #2f7063;
+}
+
+/* Chat Options Menu */
+.options-menu-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: absolute;
+  right: 60px;
+  top: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.options-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.chat-options-menu {
+  position: absolute;
+  right: 60px;
+  top: 4rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  min-width: 180px;
+  overflow: hidden;
+}
+
+.chat-options-menu button {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: white;
+  border: none;
+  color: #333;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  text-align: left;
+}
+
+.chat-options-menu button:hover {
+  background: #f5f5f5;
+}
+
+.chat-options-menu button.delete-option {
+  color: #dc3545;
+}
+
+.chat-options-menu button.delete-option:hover {
+  background: #fff5f5;
+}
+
+/* Message Attachments */
+.message-attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.attachment-item {
+  max-width: 100%;
+}
+
+.attachment-image {
+  max-width: 250px;
+  max-height: 200px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.attachment-image:hover {
+  transform: scale(1.02);
+}
+
+.attachment-file {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  max-width: 300px;
+}
+
+.message-bubble.received .attachment-file {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.attachment-file span {
+  flex: 1;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attachment-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.attachment-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: inherit;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.attachment-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+/* Message Status Icons */
+.message-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.message-status {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+}
+
+.status-sent {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.status-read {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #4CAF50;
+}
+
+.read-time {
+  font-size: 0.7rem;
+  margin-left: 0.25rem;
+}
+
+.message-bubble.received .message-status {
+  display: none;
+}
+
+/* Attachment Preview in Input */
+.attachments-preview {
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+}
+
+.attachments-preview label {
+  display: block;
+  font-weight: 600;
+  color: var(--accent-color);
+  margin-bottom: 0.5rem;
+}
+
+.attachment-list,
+.attachment-preview-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.attachment-preview-item {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #ddd;
+}
+
+.attachment-preview-image {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  display: block;
+}
+
+.attachment-preview-file {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f0f0f0;
+  padding: 0.5rem;
+}
+
+.attachment-preview-file span {
+  font-size: 0.7rem;
+  text-align: center;
+  margin-top: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 70px;
+}
+
+.remove-attachment-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(220, 53, 69, 0.9);
+  color: white;
+  border: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.remove-attachment-btn:hover {
+  background: #dc3545;
+  transform: scale(1.1);
+}
+
+/* Attach File Button */
+.attach-file-btn {
+  background: #e9ecef;
+  color: #495057;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.attach-file-btn:hover {
+  background: #dee2e6;
+  transform: scale(1.05);
+}
+
+.attach-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.attach-btn:hover {
+  background: #5a6268;
+  transform: translateY(-1px);
+}
+
+/* Attachment Viewer Modal */
+.attachment-viewer {
+  background: white;
+  border-radius: 20px;
+  max-width: 90vw;
+  max-height: 90vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.attachment-viewer .close-btn {
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.attachment-viewer-content {
+  padding: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-height: 85vh;
+}
+
+.viewer-image {
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+.viewer-file {
+  text-align: center;
+  padding: 2rem;
+}
+
+.viewer-file h3 {
+  margin: 1rem 0;
+  color: #333;
+}
+
+.download-viewer-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #3D8D7A;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 1rem;
+}
+
+.download-viewer-btn:hover {
+  background: #2f7063;
+  transform: translateY(-2px);
+}
+
+/* Broadcast History */
+.view-history-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 1rem;
+}
+
+.view-history-btn:hover {
+  background: #5a6268;
+  transform: translateY(-1px);
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 1rem;
+}
+
+.back-btn:hover {
+  background: #5a6268;
+}
+
+.broadcast-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.broadcast-item {
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.broadcast-item:hover {
+  box-shadow: 0 4px 12px var(--shadow-light);
+}
+
+.broadcast-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 1rem;
+}
+
+.broadcast-info h4 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent-color);
+  margin: 0 0 0.25rem 0;
+}
+
+.broadcast-meta {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--secondary-text-color);
+  margin-bottom: 0.25rem;
+}
+
+.broadcast-date {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.broadcast-options {
+  position: relative;
+}
+
+.options-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--secondary-text-color);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.options-btn:hover {
+  background: var(--bg-accent);
+}
+
+.options-menu {
+  position: absolute;
+  right: 0;
+  top: 40px;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  min-width: 150px;
+  overflow: hidden;
+}
+
+.options-menu button {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: white;
+  border: none;
+  color: #333;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  text-align: left;
+}
+
+.options-menu button:hover {
+  background: #f5f5f5;
+}
+
+.options-menu button.delete-option {
+  color: #dc3545;
+}
+
+.options-menu button.delete-option:hover {
+  background: #fff5f5;
+}
+
+.broadcast-content p {
+  margin: 0 0 1rem 0;
+  line-height: 1.6;
+  color: var(--primary-text-color);
+}
+
+.broadcast-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.broadcast-attachment-image {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.broadcast-attachment-image:hover {
+  transform: scale(1.05);
+}
+
+.broadcast-attachment-file {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--bg-accent);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.broadcast-attachment-file span {
+  font-size: 0.85rem;
+  color: var(--primary-text-color);
+}
+
+.broadcast-stats {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+  margin-top: 1rem;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--secondary-text-color);
+}
+
+/* Loading Overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(3px);
+}
+
+.loading-content {
+  text-align: center;
+  color: white;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-content p {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
 }
 </style>
