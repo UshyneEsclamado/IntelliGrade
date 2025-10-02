@@ -261,28 +261,6 @@
             </svg>
             Grades
           </button>
-          
-          <button 
-            @click.stop="generateReports(selectedSubject, selectedSection)"
-            class="section-action-btn generate-reports"
-            title="Generate Reports"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M13,9H18.5L13,3.5V9M6,2H14L20,8V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V4C4,2.89 4.89,2 6,2M15,18V16H6V18H15M18,14V12H6V14H18Z" />
-            </svg>
-            Reports
-          </button>
-          
-          <button 
-            @click.stop="viewAssessments(selectedSubject, selectedSection)"
-            class="section-action-btn view-assessments"
-            title="View Assessments"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-            </svg>
-            Assessments
-          </button>
         </div>
       </div>
     </div>
@@ -871,46 +849,6 @@ const manageGrades = async (subject, section) => {
         sectionName: section.name,
         gradeLevel: subject.grade_level,
         sectionCode: section.section_code
-      }
-    })
-  } catch (error) {
-    console.error('Navigation error:', error)
-  }
-}
-
-const generateReports = async (subject, section) => {
-  try {
-    await router.push({
-      name: 'Reports',
-      params: {
-        subjectId: subject.id,
-        sectionId: section.id
-      },
-      query: {
-        subjectName: subject.name,
-        sectionName: section.name,
-        gradeLevel: subject.grade_level,
-        sectionCode: section.section_code
-      }
-    })
-  } catch (error) {
-    console.error('Navigation error:', error)
-  }
-}
-
-const viewAssessments = async (subject, section) => {
-  try {
-    await router.push({
-      name: 'Assessments',
-      params: {
-        subjectId: subject.subject_id,
-        sectionId: subject.section_id
-      },
-      query: {
-        subjectName: subject.subject_name,
-        sectionName: subject.section_name,
-        gradeLevel: subject.grade_level,
-        sectionCode: subject.section_code
       }
     })
   } catch (error) {
@@ -2217,8 +2155,8 @@ onUnmounted(() => {
 .section-code-display {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
+  gap: 0.3rem;
+  padding: 0.4rem 0.7rem;
   background: rgba(79, 70, 229, 0.05);
   border-radius: 10px;
   border: 1px solid rgba(79, 70, 229, 0.1);
@@ -2360,7 +2298,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1rem 1.5rem;
+  padding: 0.4rem 0.7rem;
   background: rgba(16, 185, 129, 0.07);
   border-radius: 8px;
   border: 1px solid rgba(16, 185, 129, 0.1);
@@ -2402,8 +2340,8 @@ onUnmounted(() => {
 .section-actions-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
 }
 
 .section-actions {
@@ -2471,28 +2409,6 @@ onUnmounted(() => {
   background: linear-gradient(135deg, #c2410c 0%, #ea580c 100%);
   transform: translateY(-1px);
   box-shadow: 0 6px 20px rgba(234, 88, 12, 0.4);
-}
-
-.generate-reports {
-  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
-  color: white;
-}
-
-.generate-reports:hover {
-  background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
-}
-
-.view-assessments {
-  background: linear-gradient(135deg, #eab308 0%, #facc15 100%);
-  color: white;
-}
-
-.view-assessments:hover {
-  background: linear-gradient(135deg, #ca8a04 0%, #eab308 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(234, 179, 8, 0.4);
 }
 
 /* Empty State */
@@ -3659,9 +3575,10 @@ onUnmounted(() => {
 
 .dark-mode .subject-card,
 .dark-mode .section-card {
-  background: var(--card-background);
-  border: 1px solid var(--card-border-color);
+  background: #111111;
+  border: 2px solid #10b981;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  color: #e9ecef;
 }
 
 .dark-mode .subject-card:hover,
@@ -4133,8 +4050,9 @@ onUnmounted(() => {
 }
 
 .dark-mode .section-card.simple {
-  background: linear-gradient(135deg, #1f2937 0%, #374151 50%, #4b5563 100%);
-  border-color: #6b7280;
+  background: #111111;
+  border: 2px solid #10b981;
+  color: #e9ecef;
 }
 
 .dark-mode .section-card.simple:hover {
@@ -4222,24 +4140,6 @@ onUnmounted(() => {
 .dark-mode .section-action-btn.manage-grades:hover {
   background: linear-gradient(135deg, #d97706, #b45309);
   box-shadow: 0 8px 24px rgba(245, 158, 11, 0.3);
-}
-
-.dark-mode .section-action-btn.generate-reports {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-}
-
-.dark-mode .section-action-btn.generate-reports:hover {
-  background: linear-gradient(135deg, #7c3aed, #6d28d9);
-  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
-}
-
-.dark-mode .section-action-btn.view-assessments {
-  background: linear-gradient(135deg, #f97316, #ea580c);
-}
-
-.dark-mode .section-action-btn.view-assessments:hover {
-  background: linear-gradient(135deg, #ea580c, #c2410c);
-  box-shadow: 0 8px 24px rgba(249, 115, 22, 0.3);
 }
 
 .dark-mode .arrow-icon {
