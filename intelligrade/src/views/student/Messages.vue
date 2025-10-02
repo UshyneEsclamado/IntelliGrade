@@ -419,6 +419,76 @@ const currentMessages = ref([])
 const currentUser = ref(null)
 const currentStudentId = ref(null)
 
+// ================================
+// FILE UPLOAD FUNCTIONS
+// ================================
+
+const uploadFileToStorage = async (file, folder = 'message-attachments') => {
+  try {
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
+    const filePath = `${folder}/${fileName}`
+    
+    const { data, error } = await supabase.storage
+      .from('attachments')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      })
+    
+    if (error) {
+      console.error('Upload error:', error)
+      throw error
+    }
+    
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('attachments')
+      .getPublicUrl(filePath)
+    
+    return {
+      path: filePath,
+      url: urlData.publicUrl,
+      name: file.name,
+      type: file.type.startsWith('image/') ? 'image' : 'file',
+      size: file.size,
+      mimeType: file.type
+    }
+  } catch (error) {
+    console.error('Error uploading file:', error)
+    throw error
+  }
+}
+
+const saveMessageAttachments = async (messageId, attachments) => {
+  try {
+    const attachmentRecords = attachments.map(att => ({
+      message_id: messageId,
+      file_name: att.name,
+      file_path: att.path,
+      file_url: att.url,
+      file_type: att.type,
+      file_size: att.size,
+      mime_type: att.mimeType
+    }))
+    
+    const { data, error } = await supabase
+      .from('message_attachments')
+      .insert(attachmentRecords)
+      .select()
+    
+    if (error) {
+      console.error('Error saving attachments:', error)
+      throw error
+    }
+    
+    return data
+  } catch (error) {
+    console.error('Error saving message attachments:', error)
+    throw error
+  }
+}
+
 // Computed properties
 const hasDeletedConversations = computed(() => {
   return deletedConversationKeys.value.size > 0 && filteredTeachers.value.length === 0 && !showArchive.value
@@ -515,7 +585,7 @@ const deleteConversation = async (teacher) => {
     
     deletedConversationKeys.value.add(`${teacher.id}-${teacher.section_id}`)
     
-    enrolledTeachers.value = enrolledTeachers.value.filterenrolledTeachers.value = enrolledTeachers.value.filter(t => 
+    enrolledTeachers.value = enrolledTeachers.value.filter(t => 
       !(t.id === teacher.id && t.section_id === teacher.section_id)
     )
     activeTeacherOptionsId.value = null
@@ -566,7 +636,10 @@ const downloadAttachment = (attachment) => {
   const link = document.createElement('a')
   link.href = attachment.url
   link.download = attachment.name
+  link.target = '_blank'
+  document.body.appendChild(link)
   link.click()
+  document.body.removeChild(link)
 }
 
 const openBroadcastGroup = (group) => {
@@ -894,6 +967,7 @@ const startChatWithTeacher = async (teacher) => {
   }
   
   isModalOpen.value = true
+  await nextTick()
   
   await loadConversationMessages(teacher.id, teacher.section_id)
   
@@ -911,6 +985,8 @@ const loadConversationMessages = async (teacherId, sectionId) => {
       sectionId 
     })
     
+    currentMessages.value = []
+    
     const { data: messages, error } = await supabase
       .from('messages')
       .select('*')
@@ -919,9 +995,44 @@ const loadConversationMessages = async (teacherId, sectionId) => {
       .or(`and(sender_id.eq.${currentStudentId.value},recipient_id.eq.${teacherId}),and(sender_id.eq.${teacherId},recipient_id.eq.${currentStudentId.value})`)
       .order('sent_at', { ascending: true })
     
-    if (error) throw error
+    if (error) {
+      console.error('Error fetching messages:', error)
+      throw error
+    }
     
-    currentMessages.value = (messages || []).map(msg => ({
+    console.log('Raw messages from database:', messages)
+    
+    if (!messages || messages.length === 0) {
+      console.log('No messages found in database')
+      currentMessages.value = []
+      return
+    }
+    
+    // Load attachments for all messages
+    const messageIds = messages.map(m => m.id)
+    const { data: attachments } = await supabase
+      .from('message_attachments')
+      .select('*')
+      .in('message_id', messageIds)
+    
+    // Group attachments by message_id
+    const attachmentsMap = {}
+    if (attachments) {
+      attachments.forEach(att => {
+        if (!attachmentsMap[att.message_id]) {
+          attachmentsMap[att.message_id] = []
+        }
+        attachmentsMap[att.message_id].push({
+          name: att.file_name,
+          url: att.file_url,
+          type: att.file_type,
+          size: att.file_size,
+          path: att.file_path
+        })
+      })
+    }
+    
+    currentMessages.value = messages.map(msg => ({
       id: msg.id,
       sender_id: msg.sender_id,
       recipient_id: msg.recipient_id,
@@ -930,15 +1041,17 @@ const loadConversationMessages = async (teacherId, sectionId) => {
       is_read: msg.is_read,
       read_at: msg.read_at,
       message_type: 'direct',
-      attachments: msg.attachments || []
+      attachments: attachmentsMap[msg.id] || []
     }))
     
-    console.log('Loaded messages:', currentMessages.value)
+    console.log('Processed messages with attachments:', currentMessages.value)
     
+    await nextTick()
     await markMessagesAsRead(teacherId, sectionId)
     
   } catch (error) {
     console.error('Error loading conversation messages:', error)
+    currentMessages.value = []
   }
 }
 
@@ -946,47 +1059,23 @@ const sendMessage = async () => {
   if ((!newMessage.value.trim() && !selectedFile.value) || !activeTeacher.value || !currentStudentId.value) return
   
   const messageText = newMessage.value.trim()
-  let attachments = []
+  const fileToUpload = selectedFile.value
   
-  if (selectedFile.value) {
-    try {
-      const fileExt = selectedFile.value.name.split('.').pop()
-      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`
-      const filePath = `message-attachments/${currentStudentId.value}/${fileName}`
-      
-      const { error: uploadError } = await supabase.storage
-        .from('attachments')
-        .upload(filePath, selectedFile.value)
-      
-      if (uploadError) throw uploadError
-      
-      const { data: { publicUrl } } = supabase.storage
-        .from('attachments')
-        .getPublicUrl(filePath)
-      
-      attachments = [{
-        name: selectedFile.value.name,
-        url: publicUrl,
-        type: selectedFile.value.type.startsWith('image/') ? 'image' : 'file'
-      }]
-      
-    } catch (error) {
-      console.error('File upload error:', error)
-      alert('Failed to upload file. Please try again.')
-      return
-    }
-  }
-  
+  // Create temporary message for UI
   const tempMessage = {
     id: 'temp-' + Date.now(),
     sender_id: currentStudentId.value,
     recipient_id: activeTeacher.value.id,
-    content: messageText,
+    content: messageText || '📎 Attachment',
     sent_at: new Date().toISOString(),
     is_read: false,
     read_at: null,
     message_type: 'direct',
-    attachments: attachments
+    attachments: fileToUpload ? [{
+      name: fileToUpload.name,
+      url: previewFile.value,
+      type: fileToUpload.type.startsWith('image/') ? 'image' : 'file'
+    }] : []
   }
   
   currentMessages.value.push(tempMessage)
@@ -997,16 +1086,24 @@ const sendMessage = async () => {
   scrollToBottom()
   
   try {
+    isLoading.value = true
+    
+    // Upload file first if exists
+    let uploadedAttachment = null
+    if (fileToUpload) {
+      uploadedAttachment = await uploadFileToStorage(fileToUpload)
+    }
+    
+    // Insert message
     const { data: newMsg, error: sendError } = await supabase
       .from('messages')
       .insert({
         section_id: activeTeacher.value.section_id,
         sender_id: currentStudentId.value,
         recipient_id: activeTeacher.value.id,
-        message_text: messageText,
+        message_text: messageText || '📎 Attachment',
         message_type: 'direct',
-        is_read: false,
-        attachments: attachments
+        is_read: false
       })
       .select()
       .single()
@@ -1015,6 +1112,12 @@ const sendMessage = async () => {
     
     console.log('Message sent successfully:', newMsg)
     
+    // Save attachments to database if exists
+    if (uploadedAttachment) {
+      await saveMessageAttachments(newMsg.id, [uploadedAttachment])
+    }
+    
+    // Update temp message with real data
     const tempIndex = currentMessages.value.findIndex(m => m.id === tempMessage.id)
     if (tempIndex !== -1) {
       currentMessages.value[tempIndex] = {
@@ -1026,7 +1129,12 @@ const sendMessage = async () => {
         is_read: newMsg.is_read,
         read_at: newMsg.read_at,
         message_type: newMsg.message_type,
-        attachments: newMsg.attachments || []
+        attachments: uploadedAttachment ? [{
+          name: uploadedAttachment.name,
+          url: uploadedAttachment.url,
+          type: uploadedAttachment.type,
+          size: uploadedAttachment.size
+        }] : []
       }
     }
     
@@ -1041,6 +1149,8 @@ const sendMessage = async () => {
     }
     
     alert('Failed to send message. Please try again.')
+  } finally {
+    isLoading.value = false
   }
 }
 
@@ -1134,16 +1244,36 @@ const setupRealTimeSubscriptions = () => {
         
         const newMessageData = payload.new
         
-        if (newMessageData.recipient_id === currentStudentId.value || 
-            newMessageData.message_type === 'announcement') {
+        if (newMessageData.message_type === 'announcement') {
+          await loadNotifications()
+          return
+        }
+        
+        if (newMessageData.recipient_id === currentStudentId.value && 
+            newMessageData.message_type === 'direct') {
           
           await loadEnrolledSubjectsAndTeachers()
-          await loadNotifications()
           
-          if (isModalOpen.value && activeTeacher.value && 
+          if (isModalOpen.value && 
+              activeTeacher.value && 
               newMessageData.section_id === activeTeacher.value.section_id &&
-              newMessageData.sender_id === activeTeacher.value.id &&
-              newMessageData.message_type === 'direct') {
+              newMessageData.sender_id === activeTeacher.value.id) {
+            
+            // Load attachments for the new message
+            const { data: attachments } = await supabase
+              .from('message_attachments')
+              .select('*')
+              .eq('message_id', newMessageData.id)
+            
+            const processedAttachments = attachments ? attachments.map(att => ({
+              name: att.file_name,
+              url: att.file_url,
+              type: att.file_type,
+              size: att.file_size,
+              path: att.file_path
+            })) : []
+            
+            console.log('Loaded attachments for new message:', processedAttachments)
             
             currentMessages.value.push({
               id: newMessageData.id,
@@ -1154,8 +1284,10 @@ const setupRealTimeSubscriptions = () => {
               is_read: newMessageData.is_read,
               read_at: newMessageData.read_at,
               message_type: newMessageData.message_type,
-              attachments: newMessageData.attachments || []
+              attachments: processedAttachments
             })
+            
+            console.log('Message added with attachments:', processedAttachments)
             
             await nextTick()
             scrollToBottom()
@@ -1164,6 +1296,12 @@ const setupRealTimeSubscriptions = () => {
               .from('messages')
               .update({ is_read: true, read_at: new Date().toISOString() })
               .eq('id', newMessageData.id)
+            
+            const msgIndex = currentMessages.value.findIndex(m => m.id === newMessageData.id)
+            if (msgIndex !== -1) {
+              currentMessages.value[msgIndex].is_read = true
+              currentMessages.value[msgIndex].read_at = new Date().toISOString()
+            }
           }
         }
       }
@@ -1187,6 +1325,38 @@ const setupRealTimeSubscriptions = () => {
         }
         
         await loadEnrolledSubjectsAndTeachers()
+      }
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'message_attachments'
+      },
+      async (payload) => {
+        console.log('New attachment received:', payload.new)
+        
+        // If we're viewing the conversation and a new attachment is added
+        if (isModalOpen.value && activeTeacher.value) {
+          const messageIndex = currentMessages.value.findIndex(m => m.id === payload.new.message_id)
+          if (messageIndex !== -1) {
+            const newAttachment = {
+              name: payload.new.file_name,
+              url: payload.new.file_url,
+              type: payload.new.file_type,
+              size: payload.new.file_size,
+              path: payload.new.file_path
+            }
+            
+            if (!currentMessages.value[messageIndex].attachments) {
+              currentMessages.value[messageIndex].attachments = []
+            }
+            
+            currentMessages.value[messageIndex].attachments.push(newAttachment)
+            console.log('Attachment added to message:', newAttachment)
+          }
+        }
       }
     )
     .subscribe()
@@ -1962,19 +2132,22 @@ onUnmounted(() => {
 .message-input-area {
   display: flex;
   gap: 0.75rem;
+  align-items: center;
 }
 
 .message-input {
   flex: 1;
   padding: 0.75rem 1.25rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
   border-radius: 20px;
   font-size: 1rem;
+  background: var(--bg-card);
+  color: var(--text-primary);
 }
 
 .message-input:focus {
   outline: none;
-  border-color: #3D8D7A;
+  border-color: var(--text-accent);
   box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
 }
 
@@ -2604,38 +2777,5 @@ onUnmounted(() => {
 
 .file-preview {
   animation: slideDown 0.3s ease;
-}
-
-/* Update message-input-area for new layout */
-.message-input-area {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
-}
-
-.message-input {
-  flex: 1;
-  padding: 0.75rem 1.25rem;
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  font-size: 1rem;
-  background: var(--bg-card);
-  color: var(--text-primary);
-}
-
-.message-input:focus {
-  outline: none;
-  border-color: var(--text-accent);
-  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
-}
-
-.send-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.send-btn:disabled:hover {
-  transform: none;
-  background: var(--text-accent);
 }
 </style>

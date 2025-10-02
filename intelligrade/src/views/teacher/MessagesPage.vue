@@ -660,6 +660,76 @@ const currentMessages = ref([])
 const archivedChats = ref([])
 
 // ================================
+// FILE UPLOAD FUNCTIONS
+// ================================
+
+const uploadFileToStorage = async (file, folder = 'message-attachments') => {
+  try {
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
+    const filePath = `${folder}/${fileName}`
+    
+    const { data, error } = await supabase.storage
+      .from('attachments')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      })
+    
+    if (error) {
+      console.error('Upload error:', error)
+      throw error
+    }
+    
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('attachments')
+      .getPublicUrl(filePath)
+    
+    return {
+      path: filePath,
+      url: urlData.publicUrl,
+      name: file.name,
+      type: file.type.startsWith('image/') ? 'image' : 'file',
+      size: file.size,
+      mimeType: file.type
+    }
+  } catch (error) {
+    console.error('Error uploading file:', error)
+    throw error
+  }
+}
+
+const saveMessageAttachments = async (messageId, attachments) => {
+  try {
+    const attachmentRecords = attachments.map(att => ({
+      message_id: messageId,
+      file_name: att.name,
+      file_path: att.path,
+      file_url: att.url,
+      file_type: att.type,
+      file_size: att.size,
+      mime_type: att.mimeType
+    }))
+    
+    const { data, error } = await supabase
+      .from('message_attachments')
+      .insert(attachmentRecords)
+      .select()
+    
+    if (error) {
+      console.error('Error saving attachments:', error)
+      throw error
+    }
+    
+    return data
+  } catch (error) {
+    console.error('Error saving message attachments:', error)
+    throw error
+  }
+}
+
+// ================================
 // AUTHENTICATION FUNCTIONS
 // ================================
 
@@ -999,8 +1069,6 @@ const loadBroadcastHistory = async () => {
   try {
     if (!currentTeacherId.value) return
     
-    // This would query your messages table for broadcast messages
-    // For now, using mock data structure
     const { data: broadcasts, error } = await supabase
       .from('messages')
       .select(`
@@ -1008,7 +1076,6 @@ const loadBroadcastHistory = async () => {
         message_text,
         sent_at,
         message_type,
-        attachments,
         sections:section_id (
           id,
           name,
@@ -1028,7 +1095,30 @@ const loadBroadcastHistory = async () => {
       return
     }
     
-    // Transform data to match UI needs
+    // Load attachments for each broadcast
+    const broadcastIds = broadcasts?.map(b => b.id) || []
+    let attachmentsMap = {}
+    
+    if (broadcastIds.length > 0) {
+      const { data: attachments } = await supabase
+        .from('message_attachments')
+        .select('*')
+        .in('message_id', broadcastIds)
+      
+      if (attachments) {
+        attachmentsMap = attachments.reduce((acc, att) => {
+          if (!acc[att.message_id]) acc[att.message_id] = []
+          acc[att.message_id].push({
+            name: att.file_name,
+            url: att.file_url,
+            type: att.file_type,
+            size: att.file_size
+          })
+          return acc
+        }, {})
+      }
+    }
+    
     const transformedBroadcasts = broadcasts?.map(b => ({
       id: b.id,
       message: b.message_text,
@@ -1038,8 +1128,8 @@ const loadBroadcastHistory = async () => {
       section_code: b.sections?.section_code,
       subject_name: b.sections?.subjects?.name,
       grade_level: b.sections?.subjects?.grade_level,
-      attachments: b.attachments || [],
-      recipient_count: 0 // Would need to count from enrollments
+      attachments: attachmentsMap[b.id] || [],
+      recipient_count: 0
     })) || []
     
     broadcastHistory.value = transformedBroadcasts
@@ -1158,6 +1248,37 @@ const loadConversationMessages = async (studentId, sectionId) => {
       return
     }
     
+    // Load attachments for all messages
+    if (messages && messages.length > 0) {
+      const messageIds = messages.map(m => m.id)
+      const { data: attachments } = await supabase
+        .from('message_attachments')
+        .select('*')
+        .in('message_id', messageIds)
+      
+      // Group attachments by message_id
+      const attachmentsMap = {}
+      if (attachments) {
+        attachments.forEach(att => {
+          if (!attachmentsMap[att.message_id]) {
+            attachmentsMap[att.message_id] = []
+          }
+          attachmentsMap[att.message_id].push({
+            name: att.file_name,
+            url: att.file_url,
+            type: att.file_type,
+            size: att.file_size,
+            path: att.file_path
+          })
+        })
+      }
+      
+      // Attach attachments to messages
+      messages.forEach(msg => {
+        msg.attachments = attachmentsMap[msg.id] || []
+      })
+    }
+    
     currentMessages.value = messages || []
     console.log('Loaded messages:', messages?.length || 0)
     
@@ -1173,6 +1294,9 @@ const handleSendMessage = async () => {
   if ((!newMessage.value.trim() && messageAttachments.value.length === 0) || !activeConversation.value || !currentTeacherId.value) return
   
   const messageText = newMessage.value.trim()
+  const attachmentsToSend = [...messageAttachments.value]
+  
+  // Create temporary message for UI
   const tempMessage = {
     id: 'temp-' + Date.now(),
     sender_id: currentTeacherId.value,
@@ -1181,20 +1305,36 @@ const handleSendMessage = async () => {
     sent_at: new Date().toISOString(),
     is_read: false,
     message_type: 'direct',
-    attachments: [...messageAttachments.value]
+    attachments: attachmentsToSend.map(att => ({
+      name: att.name,
+      url: att.url,
+      type: att.type
+    }))
   }
   
   currentMessages.value.push(tempMessage)
   newMessage.value = ''
-  const attachmentsToSend = [...messageAttachments.value]
   messageAttachments.value = []
   
   await nextTick()
   scrollToBottom()
   
   try {
-    // In production, you'd upload attachments first and get URLs
-    // For now, we'll send message with attachment metadata
+    isLoading.value = true
+    loadingMessage.value = 'Sending message...'
+    
+    // Upload files first
+    const uploadedAttachments = []
+    if (attachmentsToSend.length > 0) {
+      loadingMessage.value = 'Uploading attachments...'
+      for (const attachment of attachmentsToSend) {
+        const uploaded = await uploadFileToStorage(attachment.file)
+        uploadedAttachments.push(uploaded)
+      }
+    }
+    
+    // Send message
+    loadingMessage.value = 'Saving message...'
     const { data: messageId, error: sendError } = await supabase
       .rpc('send_direct_message', {
         p_section_id: activeConversation.value.section_id,
@@ -1215,11 +1355,23 @@ const handleSendMessage = async () => {
       return
     }
     
+    // Save attachments to database
+    if (uploadedAttachments.length > 0) {
+      await saveMessageAttachments(messageId, uploadedAttachments)
+    }
+    
     console.log('Message sent successfully with ID:', messageId)
     
+    // Update temp message with real ID and attachments
     const tempIndex = currentMessages.value.findIndex(m => m.id === tempMessage.id)
     if (tempIndex !== -1) {
       currentMessages.value[tempIndex].id = messageId
+      currentMessages.value[tempIndex].attachments = uploadedAttachments.map(att => ({
+        name: att.name,
+        url: att.url,
+        type: att.type,
+        size: att.size
+      }))
     }
     
     await loadTeacherContacts()
@@ -1233,6 +1385,8 @@ const handleSendMessage = async () => {
     }
     messageAttachments.value = attachmentsToSend
     alert('Failed to send message. Please try again.')
+  } finally {
+    isLoading.value = false
   }
 }
 
@@ -1328,6 +1482,7 @@ const downloadAttachment = (attachment) => {
   const link = document.createElement('a')
   link.href = attachment.url
   link.download = attachment.name
+  link.target = '_blank'
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
@@ -1396,8 +1551,19 @@ const sendBroadcastMessage = async () => {
     isLoading.value = true
     loadingMessage.value = 'Sending broadcast message...'
     
-    // In production, upload attachments first
-    // For now, sending message with attachment metadata
+    const attachmentsToSend = [...broadcastAttachments.value]
+    
+    // Upload files first
+    const uploadedAttachments = []
+    if (attachmentsToSend.length > 0) {
+      loadingMessage.value = 'Uploading attachments...'
+      for (const attachment of attachmentsToSend) {
+        const uploaded = await uploadFileToStorage(attachment.file, 'broadcast-attachments')
+        uploadedAttachments.push(uploaded)
+      }
+    }
+    
+    loadingMessage.value = 'Sending to students...'
     const { data: messageId, error: sendError } = await supabase
       .rpc('send_section_announcement', {
         p_section_id: broadcastSection.value,
@@ -1416,6 +1582,11 @@ const sendBroadcastMessage = async () => {
       broadcastAttachments.value = []
       currentTab.value = 'students'
       return
+    }
+    
+    // Save attachments to database if broadcast was sent
+    if (uploadedAttachments.length > 0 && messageId) {
+      await saveMessageAttachments(messageId, uploadedAttachments)
     }
     
     console.log('Broadcast message sent successfully with ID:', messageId)
@@ -1450,7 +1621,6 @@ const editBroadcast = (broadcast) => {
   showBroadcastHistory.value = false
   showBroadcastOptionsMenu.value = null
   
-  // In production, you'd update the existing broadcast
   alert('Edit mode: Update your message and click Send to save changes.')
 }
 
@@ -1464,13 +1634,39 @@ const archiveBroadcast = (broadcastId) => {
   }
 }
 
-const deleteBroadcast = (broadcastId) => {
+const deleteBroadcast = async (broadcastId) => {
   if (confirm('Are you sure you want to delete this broadcast? This will also remove it from student message pages.')) {
-    broadcastHistory.value = broadcastHistory.value.filter(b => b.id !== broadcastId)
-    showBroadcastOptionsMenu.value = null
-    
-    // In production, you'd also delete from database
-    alert('Broadcast has been deleted.')
+    try {
+      // Delete attachments first
+      const { error: attachError } = await supabase
+        .from('message_attachments')
+        .delete()
+        .eq('message_id', broadcastId)
+      
+      if (attachError) {
+        console.error('Error deleting attachments:', attachError)
+      }
+      
+      // Delete message
+      const { error: msgError } = await supabase
+        .from('messages')
+        .delete()
+        .eq('id', broadcastId)
+      
+      if (msgError) {
+        console.error('Error deleting broadcast:', msgError)
+        alert('Failed to delete broadcast.')
+        return
+      }
+      
+      broadcastHistory.value = broadcastHistory.value.filter(b => b.id !== broadcastId)
+      showBroadcastOptionsMenu.value = null
+      alert('Broadcast has been deleted.')
+      
+    } catch (error) {
+      console.error('Error deleting broadcast:', error)
+      alert('Failed to delete broadcast.')
+    }
   }
 }
 
