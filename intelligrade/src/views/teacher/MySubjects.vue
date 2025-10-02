@@ -42,21 +42,103 @@
       </div>
     </div>
 
-    <div class="subjects-grid" v-if="subjects.length > 0">
-      <div v-for="section in subjects" :key="section.section_id" class="section-card">
+    <!-- Level 1: Subject Names Only -->
+    <div v-if="viewMode === 'subjects' && subjects.length > 0" class="subjects-grid">
+      <div v-for="subject in subjects" :key="subject.id" class="subject-card simple" @click="selectSubject(subject)">
+        <div class="subject-simple-header">
+          <div class="subject-info">
+            <h3>{{ subject.subject_name }}</h3>
+            <p class="grade-level">{{ subject.grade_level_display }}</p>
+            <p class="subject-stats-simple">{{ subject.section_count }} sections • {{ subject.total_students }} students</p>
+          </div>
+          <div class="arrow-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Level 2: Sections List -->
+    <div v-if="viewMode === 'sections' && selectedSubject" class="sections-view">
+      <div class="breadcrumb">
+        <button @click="goBackToSubjects" class="breadcrumb-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
+          </svg>
+          My Subjects
+        </button>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-current">{{ selectedSubject.subject_name }}</span>
+      </div>
+      
+      <!-- Grade Filter Buttons -->
+      <div class="grade-filter-container">
+        <button 
+          @click="setGradeFilter('all')" 
+          class="grade-filter-btn"
+          :class="{ 'active': selectedGradeFilter === 'all' }"
+        >
+          All
+        </button>
+        <button 
+          v-for="grade in availableGrades" 
+          :key="grade"
+          @click="setGradeFilter(grade.toString())" 
+          class="grade-filter-btn"
+          :class="{ 'active': selectedGradeFilter === grade.toString() }"
+        >
+          Grade {{ grade }}
+        </button>
+      </div>
+      
+      <div class="sections-grid">
+        <div v-for="section in filteredSections" :key="section.id" class="section-card simple" @click="selectSection(section)">
+          <div class="section-simple-header">
+            <div class="section-info">
+              <h4>{{ section.section_name }} (Grade {{ section.grade_level }})</h4>
+              <p class="section-code">{{ section.section_code }}</p>
+              <p class="section-stats-simple">{{ section.student_count || 0 }}/{{ section.max_students }} students</p>
+            </div>
+            <div class="arrow-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Level 3: Section Detail (like in the picture) -->
+    <div v-if="viewMode === 'section-detail' && selectedSection" class="section-detail-view">
+      <div class="breadcrumb">
+        <button @click="goBackToSubjects" class="breadcrumb-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
+          </svg>
+          My Subjects
+        </button>
+        <span class="breadcrumb-separator">/</span>
+        <button @click="goBackToSections" class="breadcrumb-btn">{{ selectedSubject.subject_name }}</button>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-current">{{ selectedSection.section_name }} (Grade {{ selectedSection.grade_level }})</span>
+      </div>
+
+      <div class="section-detail-card">
         <div class="section-header">
           <div class="section-info">
-            <h3>{{ section.subject_name }}</h3>
-            <p class="section-name">{{ section.section_name }}</p>
-            <p class="grade-level">Grade {{ section.grade_level }}</p>
+            <h3>{{ selectedSection.section_name }}</h3>
+            <p class="section-code-text">Code: {{ selectedSection.section_code }}</p>
           </div>
           <div class="section-actions">
-            <button @click="editSection(section)" class="action-btn edit" title="Edit Section">
+            <button @click="editSection(selectedSection)" class="action-btn edit" title="Edit Section">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
               </svg>
             </button>
-            <button @click="openDeleteModal('section', section)" class="action-btn delete" title="Delete Section">
+            <button @click="openDeleteModal('section', selectedSection)" class="action-btn delete" title="Delete Section">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
               </svg>
@@ -65,18 +147,14 @@
         </div>
 
         <div class="section-stats">
-          <div class="stat clickable-stat" @click="viewSectionStudents(section, section.sections[0])">
-          <span class="stat-number">{{ section.student_count || 0 }}</span>
-          <span class="stat-label">Students</span>
-          <small class="view-hint clickable-link">Click to view roster</small>
+          <div class="stat clickable-stat" @click="viewSectionStudents(selectedSubject, selectedSection)">
+            <span class="stat-number">{{ selectedSection.student_count || 0 }}</span>
+            <span class="stat-label">Students</span>
+            <small class="view-hint clickable-link">Click to view roster</small>
           </div>
           <div class="stat">
-            <span class="stat-number">{{ section.max_students || 0 }}</span>
+            <span class="stat-number">{{ selectedSection.max_students || 0 }}</span>
             <span class="stat-label">Max Students</span>
-          </div>
-          <div class="stat">
-            <span class="stat-number">{{ section.grade_level }}</span>
-            <span class="stat-label">Grade</span>
           </div>
         </div>
 
@@ -84,12 +162,12 @@
         <div class="section-code-area">
           <h4>Section Code:</h4>
           <div class="section-code-display">
-            <span class="section-code">{{ section.section_code }}</span>
-            <button @click.stop="copyCode(section.section_code, section.section_id)" class="copy-code-btn">
+            <span class="section-code">{{ selectedSection.section_code }}</span>
+            <button @click.stop="copyCode(selectedSection.section_code, selectedSection.section_id)" class="copy-code-btn">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z" />
               </svg>
-              {{ copiedCodeId === section.section_id ? 'Copied!' : 'Copy' }}
+              {{ copiedCodeId === selectedSection.section_id ? 'Copied!' : 'Copy' }}
             </button>
           </div>
         </div>
@@ -97,7 +175,7 @@
         <!-- Section Action Buttons -->
         <div class="section-actions-grid">
           <button 
-            @click.stop="viewSectionStudents(section, section.sections[0])"
+            @click.stop="viewSectionStudents(selectedSubject, selectedSection)"
             class="section-action-btn view-students"
             title="View Students in Section"
           >
@@ -108,7 +186,7 @@
           </button>
 
           <button 
-            @click.stop="navigateToCreateQuiz(section, section.sections[0])"
+            @click.stop="navigateToCreateQuiz(selectedSubject, selectedSection)"
             class="section-action-btn create-quiz"
             title="Create Quiz/Assessment"
           >
@@ -119,7 +197,7 @@
           </button>
           
           <button 
-            @click.stop="viewQuizzes(section, section.sections[0])"
+            @click.stop="viewQuizzes(selectedSubject, selectedSection)"
             class="section-action-btn view-quizzes"
             title="View Past Quizzes"
           >
@@ -130,7 +208,7 @@
           </button>
           
           <button 
-            @click.stop="manageGrades(section, section.sections[0])"
+            @click.stop="manageGrades(selectedSubject, selectedSection)"
             class="section-action-btn manage-grades"
             title="Grade Management"
           >
@@ -141,7 +219,7 @@
           </button>
           
           <button 
-            @click.stop="generateReports(section, section.sections[0])"
+            @click.stop="generateReports(selectedSubject, selectedSection)"
             class="section-action-btn generate-reports"
             title="Generate Reports"
           >
@@ -152,7 +230,7 @@
           </button>
           
           <button 
-            @click.stop="viewAssessments(section, section.sections[0])"
+            @click.stop="viewAssessments(selectedSubject, selectedSection)"
             class="section-action-btn view-assessments"
             title="View Assessments"
           >
@@ -165,7 +243,8 @@
       </div>
     </div>
 
-    <div v-else class="empty-state">
+    <!-- Empty State - only show when in subjects view and no subjects exist -->
+    <div v-if="viewMode === 'subjects' && subjects.length === 0" class="empty-state">
       <div class="empty-icon">
         <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z" />
@@ -463,6 +542,10 @@ const router = useRouter()
 
 // State
 const subjects = ref([])
+const selectedSubject = ref(null)
+const selectedSection = ref(null)
+const viewMode = ref('subjects') // 'subjects', 'sections', 'section-detail'
+const selectedGradeFilter = ref('all') // 'all', '7', '8', '9', '10'
 const showCreateModal = ref(false)
 const showStudentRosterModal = ref(false)
 const currentStudentRoster = ref(null)
@@ -603,6 +686,64 @@ const setupAuthListener = () => {
     }
   })
 }
+
+// Subject expand/collapse functionality
+const toggleSubjectExpansion = (subject) => {
+  subject.expanded = !subject.expanded
+}
+
+// Navigation methods for the three-level hierarchy
+const selectSubject = (subject) => {
+  selectedSubject.value = subject
+  selectedSection.value = null
+  selectedGradeFilter.value = 'all' // Reset filter when selecting a subject
+  viewMode.value = 'sections'
+}
+
+const selectSection = (section) => {
+  selectedSection.value = section
+  viewMode.value = 'section-detail'
+}
+
+const goBackToSubjects = () => {
+  selectedSubject.value = null
+  selectedSection.value = null
+  selectedGradeFilter.value = 'all'
+  viewMode.value = 'subjects'
+}
+
+const goBackToSections = () => {
+  selectedSection.value = null
+  viewMode.value = 'sections'
+}
+
+// Grade filtering methods
+const setGradeFilter = (grade) => {
+  selectedGradeFilter.value = grade
+}
+
+const filteredSections = computed(() => {
+  if (!selectedSubject.value || !selectedSubject.value.sections) {
+    return []
+  }
+  
+  if (selectedGradeFilter.value === 'all') {
+    return selectedSubject.value.sections
+  }
+  
+  return selectedSubject.value.sections.filter(section => 
+    section.grade_level.toString() === selectedGradeFilter.value
+  )
+})
+
+const availableGrades = computed(() => {
+  if (!selectedSubject.value || !selectedSubject.value.sections) {
+    return []
+  }
+  
+  const grades = [...new Set(selectedSubject.value.sections.map(section => section.grade_level))]
+  return grades.sort((a, b) => a - b)
+})
 
 // ASSESSMENT METHODS
 // Navigation functions
@@ -822,13 +963,31 @@ const fetchSubjects = async (retryCount = 0) => {
 
     console.log('Subjects data:', subjectsData)
 
-    // Process sections as individual cards instead of grouping under subjects
-    const processedSections = []
+    // Process subjects and group by subject name (combine different grades)
+    const subjectGroups = new Map()
 
     if (subjectsData && subjectsData.length > 0) {
       for (const subject of subjectsData) {
-        // Process each section as an individual card
         if (subject.sections && subject.sections.length > 0) {
+          const subjectName = subject.name
+
+          // Get or create subject group
+          if (!subjectGroups.has(subjectName)) {
+            subjectGroups.set(subjectName, {
+              subject_name: subjectName,
+              name: subjectName,
+              sections: [],
+              grade_levels: new Set(),
+              total_students: 0,
+              section_count: 0,
+              expanded: false
+            })
+          }
+
+          const subjectGroup = subjectGroups.get(subjectName)
+          subjectGroup.grade_levels.add(subject.grade_level)
+
+          // Process each section for this subject
           for (const section of subject.sections) {
             if (section.is_active) {
               // Get enrollment count for this section
@@ -842,32 +1001,44 @@ const fetchSubjects = async (retryCount = 0) => {
               }
 
               const studentCount = enrollmentCount || 0
+              subjectGroup.total_students += studentCount
 
-              // Create individual section card with subject info
-              processedSections.push({
+              // Add section with enrollment data and grade info
+              subjectGroup.sections.push({
                 id: section.id,
                 section_id: section.id,
+                name: section.name,
                 section_name: section.name,
                 section_code: section.section_code,
                 max_students: section.max_students,
                 student_count: studentCount,
-                actualStudentCount: studentCount,
                 is_active: section.is_active,
-                // Include subject information for each section
+                grade_level: subject.grade_level, // Include grade level for each section
                 subject_id: subject.id,
-                subject_name: subject.name,
-                grade_level: subject.grade_level,
-                description: subject.description,
-                name: `${subject.name} - ${section.name}`, // Combined name for display
-                sections: [section] // Keep sections array for compatibility
+                subject_name: subject.name
               })
+              
+              subjectGroup.section_count++
             }
           }
         }
       }
     }
 
-    subjects.value = [...processedSections]
+    // Convert Map to array and add combined grade levels
+    const processedSubjects = Array.from(subjectGroups.values()).map(group => {
+      const gradeLevelsArray = Array.from(group.grade_levels).sort((a, b) => a - b)
+      return {
+        ...group,
+        id: `combined_${group.name}`, // Use combined ID for grouped subjects
+        grade_levels: gradeLevelsArray,
+        grade_level_display: gradeLevelsArray.length === 1 
+          ? `Grade ${gradeLevelsArray[0]}` 
+          : `Grades ${gradeLevelsArray.join(', ')}`
+      }
+    })
+
+    subjects.value = [...processedSubjects]
     console.log('Updated subjects array:', subjects.value.length, 'subjects')
 
     await nextTick()
@@ -2251,6 +2422,330 @@ onUnmounted(() => {
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   position: relative;
+}
+
+/* Subject-specific styles */
+.subject-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 0;
+  box-shadow: 0 8px 32px rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.1);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.subject-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(5, 150, 105, 0.02) 100%);
+}
+
+.subject-header:hover {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%);
+}
+
+.subject-info h3 {
+  color: #10b981;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.subject-description {
+  color: #666;
+  font-size: 1rem;
+  margin-top: 0.5rem;
+  font-style: italic;
+}
+
+.expand-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  transition: all 0.3s ease;
+}
+
+.expand-icon svg {
+  transition: transform 0.3s ease;
+}
+
+.expand-icon svg.rotated {
+  transform: rotate(180deg);
+}
+
+.sections-container {
+  border-top: 1px solid rgba(16, 185, 129, 0.1);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.sections-container .section-card {
+  margin: 1rem;
+  padding: 1.5rem;
+  border-radius: 15px;
+  background: white;
+  border: 1px solid rgba(16, 185, 129, 0.08);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.08);
+}
+
+.sections-container .section-card:last-child {
+  margin-bottom: 1rem;
+}
+
+.section-info h4 {
+  color: #059669;
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.section-code-display {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+/* Responsive adjustments for new layout */
+@media (max-width: 768px) {
+  .subject-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .subject-stats {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .expand-icon {
+    align-self: flex-end;
+  }
+}
+
+/* Three-level hierarchy styles */
+.subject-card.simple {
+  padding: 2rem;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.1);
+  transition: all 0.3s ease;
+}
+
+.subject-card.simple:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.subject-simple-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.subject-simple-header h3 {
+  color: #10b981;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.subject-stats-simple {
+  color: #666;
+  font-size: 1rem;
+  margin-top: 0.5rem;
+}
+
+.arrow-icon {
+  color: #10b981;
+  transition: all 0.3s ease;
+}
+
+.subject-card.simple:hover .arrow-icon {
+  transform: translateX(4px);
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding: 1rem 0;
+  border-bottom: 2px solid rgba(16, 185, 129, 0.1);
+}
+
+.breadcrumb-btn {
+  background: none;
+  border: none;
+  color: #10b981;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+.breadcrumb-btn:hover {
+  color: #059669;
+  text-decoration: underline;
+}
+
+.breadcrumb-separator {
+  color: #666;
+  font-weight: 600;
+}
+
+.breadcrumb-current {
+  color: #666;
+  font-weight: 600;
+}
+
+.sections-view,
+.section-detail-view {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.grade-filter-container {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding: 1rem 0;
+  border-bottom: 2px solid rgba(16, 185, 129, 0.1);
+  flex-wrap: wrap;
+}
+
+.grade-filter-btn {
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid rgba(16, 185, 129, 0.2);
+  border-radius: 25px;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #666;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.grade-filter-btn:hover {
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #10b981;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+.grade-filter-btn.active {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-color: #10b981;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+}
+
+.sections-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 1.5rem;
+}
+
+.section-card.simple {
+  padding: 1.5rem;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 15px;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.08);
+  transition: all 0.3s ease;
+}
+
+.section-card.simple:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.section-simple-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.section-simple-header h4 {
+  color: #059669;
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.section-code {
+  color: #10b981;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+
+.section-stats-simple {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.section-detail-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.1);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.section-code-text {
+  color: #666;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .sections-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .subject-simple-header,
+  .section-simple-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .arrow-icon {
+    align-self: flex-end;
+  }
+  
+  .grade-filter-container {
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  
+  .grade-filter-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+  }
 }
 
 .modal-header {
