@@ -180,33 +180,39 @@
       <div class="section-detail-card">
         <div class="section-header">
           <div class="section-info">
-            <h3>{{ selectedSection.section_name }}</h3>
           </div>
-          <div class="section-actions">
-            <button @click="editSection(selectedSection)" class="action-btn edit" title="Edit Section">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
-              </svg>
-            </button>
-            <button @click="openDeleteModal('section', selectedSection)" class="action-btn delete" title="Delete Section">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
-              </svg>
-            </button>
-          </div>
+          <!-- Removed edit and delete buttons -->
+          <div class="section-actions"></div>
         </div>
 
-        <!-- Section Code Display -->
-        <div class="section-code-area">
-          <h4>Section Code:</h4>
-          <div class="section-code-display">
-            <span class="section-code">{{ selectedSection.section_code }}</span>
-            <button @click.stop="copyCode(selectedSection.section_code, selectedSection.section_id)" class="copy-code-btn">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z" />
-              </svg>
-              {{ copiedCodeId === selectedSection.section_id ? 'Copied!' : 'Copy' }}
-            </button>
+        <!-- Section Info -->
+        <div class="section-info-container">
+          <div class="section-info-grid">
+            <div class="section-info-item">
+              <span class="info-label">Subject:</span>
+              <span class="info-value">{{ selectedSection.subject_name }}</span>
+            </div>
+            <div class="section-info-item">
+              <span class="info-label">Section:</span>
+              <span class="info-value">{{ selectedSection.section_name }}</span>
+            </div>
+            <div class="section-info-item">
+              <span class="info-label">Grade:</span>
+              <span class="info-value">{{ selectedSection.grade_level_display || selectedSection.grade_level }}</span>
+            </div>
+          </div>
+          
+          <div class="section-code-area">
+            <h4>Section Code:</h4>
+            <div class="section-code-display">
+              <span class="section-code">{{ selectedSection.section_code }}</span>
+              <button @click.stop="copyCode(selectedSection.section_code, selectedSection.section_id)" class="copy-code-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z" />
+                </svg>
+                {{ copiedCodeId === selectedSection.section_id ? 'Copied!' : 'Copy' }}
+              </button>
+            </div>
           </div>
         </div>
         
@@ -2295,35 +2301,82 @@ onUnmounted(() => {
 }
 
 .section-code-area {
-  margin-bottom: 1.5rem;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .section-code-area h4 {
-  color: #10b981;
+  color: #059669;
   font-size: 1rem;
   font-weight: 600;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.3px;
+}
+
+.section-info-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.section-info-grid {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  background: rgba(16, 185, 129, 0.05);
+  border-radius: 8px;
+  padding: 0.75rem 1.25rem;
+  border: 1px solid rgba(16, 185, 129, 0.1);
+}
+
+.section-info-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  flex: 1;
+}
+
+.info-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #059669;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.1rem;
+}
+
+.info-value {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #059669;
+  word-break: break-word;
 }
 
 .section-code-display {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1rem;
-  background: rgba(16, 185, 129, 0.05);
+  padding: 1rem 1.5rem;
+  background: rgba(16, 185, 129, 0.07);
+  border-radius: 8px;
   border: 1px solid rgba(16, 185, 129, 0.1);
-  border-radius: 12px;
 }
 
 .section-code {
   font-family: 'Courier New', monospace;
   font-weight: 700;
   font-size: 1.1rem;
-  color: #10b981;
-  background: white;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: #059669;
+  background: #fff;
+  padding: 0.5rem 1.25rem;
+  border-radius: 6px;
+  border: 1px solid #bbf7d0;
+  letter-spacing: 1px;
+  text-align: center;
 }
 
 .copy-code-btn {
@@ -3059,19 +3112,27 @@ onUnmounted(() => {
 }
 
 .section-detail-card {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 20px;
-  padding: 1.25rem;
-  cursor: pointer;
-  background: #f6fefb;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.07);
-  border: 1.5px solid #bbf7d0;
+  background: linear-gradient(120deg, #e6fff4 0%, #f8fffa 100%);
+  border-radius: 16px;
+    padding: 0.75rem 1rem 1rem 1rem;
+  box-shadow: 0 4px 20px rgba(52, 211, 153, 0.1);
+  border: 1.5px solid #34d399;
+  border-left: 6px solid #10b981;
   box-sizing: border-box;
   transition: all 0.3s ease;
-  color: #666;
+  color: #1f2937;
   font-size: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+  min-height: auto;
+  display: flex;
+  flex-direction: column;
+    gap: 0.5rem;
+}
+
+.section-detail-card:hover {
+  box-shadow: 0 6px 25px rgba(52, 211, 153, 0.15);
+  transform: translateY(-1px);
 }
 
 @media (max-width: 768px) {
@@ -3195,7 +3256,8 @@ onUnmounted(() => {
 .sections-setup {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
   max-height: 300px;
   overflow-y: auto;
   padding: 1rem;
