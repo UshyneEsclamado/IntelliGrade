@@ -23,7 +23,6 @@ import UploadAssessment from '@/components/UploadAssessment.vue'
 // Quiz Management components
 import CreateQuiz from '@/views/teacher/CreateQuiz.vue'
 import ViewQuizzes from '@/views/teacher/ViewQuizzes.vue'
-import Reports from '@/views/teacher/Reports.vue'
 
 // Analytics component
 import Analytics from '@/views/teacher/Analytics.vue'
