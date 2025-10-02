@@ -95,16 +95,67 @@
       
       <div class="sections-grid">
         <div v-for="section in filteredSections" :key="section.id" class="section-card simple" @click="selectSection(section)">
+          <!-- Decorative corner accent -->
+          <div class="card-corner-accent"></div>
+          <!-- Decorative icon -->
+          <div class="card-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" opacity="0.15">
+              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+            </svg>
+          </div>
           <div class="section-simple-header">
+            <!-- 3-dots menu at the top -->
+            <div class="section-actions-row">
+              <div class="section-menu-container">
+                <button class="section-action-btn menu" @click.stop="toggleSectionMenu(section.id)" title="More Options">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="5" cy="12" r="2" />
+                    <circle cx="12" cy="12" r="2" />
+                    <circle cx="19" cy="12" r="2" />
+                  </svg>
+                </button>
+                <div v-if="openMenuId === section.id" class="section-dropdown-menu">
+                  <button @click.stop="editSection(section)" class="menu-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
+                    </svg>
+                    Edit
+                  </button>
+                  <button @click.stop="openDeleteModal('section', section)" class="menu-item delete">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
+                    </svg>
+                    Delete
+                  </button>
+                  <button @click.stop="toggleArchiveSection(section)" class="menu-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M3,3H21V7H3V3M4,8H20V21H4V8M9.5,11A0.5,0.5 0 0,0 9,11.5V13H15V11.5A0.5,0.5 0 0,0 14.5,11H9.5Z" />
+                    </svg>
+                    {{ (section.status === 'archived') ? 'Unarchive' : 'Archive' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Section name and grade in the center -->
             <div class="section-info">
               <h4>{{ section.section_name }} (Grade {{ section.grade_level }})</h4>
-              <p class="section-code">{{ section.section_code }}</p>
-              <p class="section-stats-simple">{{ section.student_count || 0 }}/{{ section.max_students }} students</p>
-            </div>
-            <div class="arrow-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" />
-              </svg>
+              
+              <!-- Section Code Display -->
+              <div class="section-code-inline">
+                <span class="code-label">Code:</span>
+                <span class="section-code-text" @click.stop="copyCode(section.section_code, section.id)">
+                  {{ section.section_code }}
+                </span>
+                <button @click.stop="copyCode(section.section_code, section.id)" class="copy-code-mini" :title="copiedCodeId === section.id ? 'Copied!' : 'Copy Code'">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z" />
+                  </svg>
+                </button>
+              </div>
+              
+              <!-- Student count at the bottom -->
+              <p class="section-stats-simple">{{ section.student_count || 0 }} students</p>
             </div>
           </div>
         </div>
@@ -130,7 +181,6 @@
         <div class="section-header">
           <div class="section-info">
             <h3>{{ selectedSection.section_name }}</h3>
-            <p class="section-code-text">Code: {{ selectedSection.section_code }}</p>
           </div>
           <div class="section-actions">
             <button @click="editSection(selectedSection)" class="action-btn edit" title="Edit Section">
@@ -143,18 +193,6 @@
                 <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
               </svg>
             </button>
-          </div>
-        </div>
-
-        <div class="section-stats">
-          <div class="stat clickable-stat" @click="viewSectionStudents(selectedSubject, selectedSection)">
-            <span class="stat-number">{{ selectedSection.student_count || 0 }}</span>
-            <span class="stat-label">Students</span>
-            <small class="view-hint clickable-link">Click to view roster</small>
-          </div>
-          <div class="stat">
-            <span class="stat-number">{{ selectedSection.max_students || 0 }}</span>
-            <span class="stat-label">Max Students</span>
           </div>
         </div>
 
@@ -565,6 +603,7 @@ const itemToDelete = ref(null)
 const showNotification = ref(false)
 const notificationMessage = ref('')
 const notificationType = ref('success') // 'success', 'error', 'warning'
+const openMenuId = ref(null) // Track which menu is open
 
 // Form data
 const formData = ref({
@@ -1658,6 +1697,42 @@ const exportStudentRoster = () => {
   }
 }
 
+// Menu handler for 3-dot menu
+const toggleSectionMenu = (sectionId) => {
+  openMenuId.value = openMenuId.value === sectionId ? null : sectionId
+}
+
+// Archive/Unarchive section
+const toggleArchiveSection = async (section) => {
+  try {
+    const newStatus = section.status === 'archived' ? 'in-progress' : 'archived'
+    
+    // Update in database
+    const { error } = await supabase
+      .from('sections')
+      .update({ status: newStatus })
+      .eq('id', section.id)
+    
+    if (error) throw error
+    
+    // Update local data
+    section.status = newStatus
+    openMenuId.value = null // Close menu
+    
+    showToast(`Section ${newStatus === 'archived' ? 'archived' : 'unarchived'} successfully!`, 'success')
+  } catch (error) {
+    console.error('Error updating section status:', error)
+    showToast('Error updating section status', 'error')
+  }
+}
+
+// Close menu when clicking outside
+const handleClickOutside = (event) => {
+  if (!event.target.closest('.section-menu-container')) {
+    openMenuId.value = null
+  }
+}
+
 // Lifecycle
 onMounted(async () => {
   console.log('Component mounted - My Subjects page')
@@ -1677,6 +1752,9 @@ onMounted(async () => {
     isInitialized.value = true
     await fetchSubjects()
     
+    // Add click outside listener for dropdown menus
+    document.addEventListener('click', handleClickOutside)
+    
     console.log('Component initialization complete')
     
   } catch (error) {
@@ -1691,6 +1769,8 @@ onUnmounted(() => {
     authListener.value.data.subscription.unsubscribe()
     authListener.value = null
   }
+  // Remove click outside listener
+  document.removeEventListener('click', handleClickOutside)
 })
 </script>
 
@@ -1894,6 +1974,7 @@ onUnmounted(() => {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
   gap: 2rem;
+  align-items: stretch;
 }
 
 .subject-card,
@@ -2177,6 +2258,12 @@ onUnmounted(() => {
 
 .section-info {
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  flex: 1;
 }
 
 .section-name {
@@ -2539,8 +2626,13 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.95);
   border-radius: 20px;
   box-shadow: 0 8px 32px rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.1);
+  border: 2px solid #10b981;
+  box-sizing: border-box;
   transition: all 0.3s ease;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .subject-card.simple:hover {
@@ -2582,36 +2674,66 @@ onUnmounted(() => {
   align-items: center;
   gap: 1rem;
   margin-bottom: 2rem;
-  padding: 1rem 0;
-  border-bottom: 2px solid rgba(16, 185, 129, 0.1);
+  padding: 0;
 }
 
 .breadcrumb-btn {
-  background: none;
-  border: none;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(5, 150, 105, 0.05));
+  border: 2px solid rgba(16, 185, 129, 0.15);
+  border-radius: 12px;
+  padding: 0.7rem 1.4rem;
   color: #10b981;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  transition: all 0.3s ease;
-  font-size: 1rem;
+  gap: 0.6rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 0.95rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.06);
+}
+
+.breadcrumb-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.1), transparent);
+  transition: left 0.4s ease;
 }
 
 .breadcrumb-btn:hover {
-  color: #059669;
-  text-decoration: underline;
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border-color: #10b981;
+  color: #065f46;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.15);
+}
+
+.breadcrumb-btn:hover::before {
+  left: 100%;
 }
 
 .breadcrumb-separator {
-  color: #666;
-  font-weight: 600;
+  color: #94a3b8;
+  font-weight: 500;
+  font-size: 1.2rem;
+  margin: 0 0.3rem;
 }
 
 .breadcrumb-current {
-  color: #666;
-  font-weight: 600;
+  color: #1e293b;
+  font-weight: 800;
+  font-size: 1rem;
+  background: linear-gradient(135deg, #10b981, #059669);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  padding: 0.2rem 0;
 }
 
 .sections-view,
@@ -2623,31 +2745,53 @@ onUnmounted(() => {
 
 .grade-filter-container {
   display: flex;
-  gap: 1rem;
+  gap: 0.8rem;
   margin-bottom: 2rem;
-  padding: 1rem 0;
-  border-bottom: 2px solid rgba(16, 185, 129, 0.1);
+  padding: 0;
   flex-wrap: wrap;
 }
 
 .grade-filter-btn {
-  background: rgba(255, 255, 255, 0.9);
-  border: 2px solid rgba(16, 185, 129, 0.2);
-  border-radius: 25px;
-  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, rgba(255,255,255,0.7), rgba(248,250,252,0.7)); /* less intense glass effect */
+  border: 2px solid rgba(16,185,129,0.10); /* softer border */
+  border-radius: 12px;
+  padding: 0.5rem 1rem;
   cursor: pointer;
   font-weight: 600;
-  font-size: 0.9rem;
-  color: #666;
-  transition: all 0.3s ease;
+  font-size: 0.8rem;
+  color: #475569;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 1.5px 6px rgba(16,185,129,0.04); /* softer shadow */
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.grade-filter-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.1), transparent);
+  transition: left 0.5s ease;
 }
 
 .grade-filter-btn:hover {
-  border-color: rgba(16, 185, 129, 0.4);
-  color: #10b981;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+  border-color: #10b981;
+  color: #065f46;
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  transform: translateY(-3px);
+  box-shadow: 
+    0 4px 12px rgba(16,185,129,0.12),
+    0 2px 6px rgba(16,185,129,0.08); /* softer hover shadow */
+}
+
+.grade-filter-btn:hover::before {
+  left: 100%;
 }
 
 .grade-filter-btn.active {
@@ -2655,49 +2799,98 @@ onUnmounted(() => {
   border-color: #10b981;
   color: white;
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+  box-shadow: 
+    0 4px 16px rgba(16,185,129,0.18),
+    0 2px 8px rgba(16,185,129,0.12),
+    inset 0 1px 0 rgba(255,255,255,0.15); /* softer active shadow */
+}
+
+.grade-filter-btn.active::before {
+  display: none;
 }
 
 .sections-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  justify-items: center;
 }
 
 .section-card.simple {
-  padding: 1.5rem;
+  padding: 0.75rem 1.5rem 1.5rem 1.5rem; /* Reduce top padding to make the top area less tall */
   cursor: pointer;
   background: rgba(255, 255, 255, 0.95);
   border-radius: 15px;
   box-shadow: 0 4px 16px rgba(16, 185, 129, 0.08);
-  border: 1px solid rgba(16, 185, 129, 0.08);
+  border: 2px solid #10b981;
+  box-sizing: border-box;
   transition: all 0.3s ease;
+  /* aspect-ratio removed to make card rectangular */
+  width: 100%;
+  max-width: 350px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .section-card.simple:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
-  border-color: rgba(16, 185, 129, 0.2);
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 12px 32px rgba(16, 185, 129, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #10b981;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 50%, #a7f3d0 100%);
+}
+
+.card-corner-accent {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(45deg, transparent 50%, rgba(16, 185, 129, 0.1) 50%);
+  border-radius: 0 16px 0 100%;
+}
+
+.card-icon {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  color: #10b981;
+  opacity: 0.8;
+  transition: all 0.3s ease;
+}
+
+.section-card.simple:hover .card-icon {
+  opacity: 1;
+  transform: scale(1.1);
 }
 
 .section-simple-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  width: 100%;
+  gap: 1rem;
+  z-index: 2;
+  position: relative;
+  flex: 1;
 }
 
 .section-simple-header h4 {
-  color: #059669;
-  font-size: 1.3rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
+  color: #047857;
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 0.1rem;
+  text-align: center;
+  line-height: 1.3;
+  letter-spacing: -0.025em;
 }
 
-.section-code {
-  color: #10b981;
-  font-weight: 600;
-  font-size: 0.9rem;
-  margin-bottom: 0.3rem;
+.section-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  flex: 1;
 }
 
 .section-stats-simple {
@@ -2705,17 +2898,177 @@ onUnmounted(() => {
   font-size: 0.9rem;
 }
 
-.section-detail-card {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 20px;
-  padding: 2rem;
-  box-shadow: 0 8px 32px rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.1);
-  max-width: 800px;
-  margin: 0 auto;
+/* Section Code Inline Display */
+.section-code-inline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+  padding: 0.25rem 0.5rem;
+  background: rgba(16, 185, 129, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(16, 185, 129, 0.15);
+}
+
+.code-label {
+  font-size: 0.75rem;
+  color: #065f46;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .section-code-text {
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+  color: #047857;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0.125rem 0.25rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.section-code-text:hover {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.copy-code-mini {
+  background: none;
+  border: none;
+  color: #10b981;
+  cursor: pointer;
+  padding: 0.125rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.copy-code-mini:hover {
+  background: rgba(16, 185, 129, 0.1);
+  transform: scale(1.1);
+}
+
+/* Section actions row for horizontal alignment */
+.section-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.section-action-btn {
+  background: none;
+  border: none;
+  padding: 0.3rem 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  transition: background 0.2s;
+}
+
+.section-action-btn:hover {
+  background: rgba(16,185,129,0.1);
+}
+
+.section-action-btn.delete {
+  color: #ef4444;
+}
+
+.section-action-btn.delete:hover {
+  background: rgba(239,68,68,0.1);
+}
+
+.section-action-btn.menu {
+  color: #64748b;
+}
+
+.section-action-btn.menu:hover {
+  background: rgba(100,116,139,0.1);
+}
+
+.section-status {
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  background: #dcfce7;
+  color: #16a34a;
+  margin-right: 0.5rem;
+}
+
+.section-status.archived {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+/* Section menu dropdown */
+.section-menu-container {
+  position: relative;
+}
+
+.section-dropdown-menu {
+  position: absolute;
+  top: 110%;
+  right: -16px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,0,0,0.10);
+  z-index: 2000;
+  min-width: 150px;
+  padding: 0.75rem 0;
+  opacity: 1;
+  pointer-events: auto;
+  box-sizing: border-box;
+  /* Visually floats outside the card */
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  background: none;
+  border: none;
+  color: #374151;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.menu-item:hover {
+  background: #f3f4f6;
+}
+
+.menu-item.delete {
+  color: #ef4444;
+}
+
+.menu-item.delete:hover {
+  background: #fef2f2;
+}
+
+.section-detail-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 1.25rem;
+  cursor: pointer;
+  background: #f6fefb;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.07);
+  border: 1.5px solid #bbf7d0;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
   color: #666;
   font-size: 1rem;
   margin-bottom: 1rem;
@@ -3564,6 +3917,341 @@ onUnmounted(() => {
   background: var(--error-bg);
   border: 1px solid rgba(217, 83, 79, 0.4);
   color: var(--error-color);
+}
+
+/* Additional Dark Mode Styles for Section Detail View */
+.dark-mode .breadcrumb {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .breadcrumb-btn {
+  background: linear-gradient(135deg, rgba(95, 179, 160, 0.08), rgba(74, 155, 135, 0.08));
+  color: var(--accent-color);
+  border: 2px solid var(--border-color);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.dark-mode .breadcrumb-btn::before {
+  background: linear-gradient(90deg, transparent, rgba(95, 179, 160, 0.2), transparent);
+}
+
+.dark-mode .breadcrumb-btn:hover {
+  background: linear-gradient(135deg, var(--bg-accent-hover), rgba(95, 179, 160, 0.15));
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+  box-shadow: 0 6px 20px rgba(95, 179, 160, 0.2);
+}
+
+.dark-mode .breadcrumb-separator {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .breadcrumb-current {
+  color: var(--primary-text-color);
+  background: linear-gradient(135deg, var(--accent-color), #4a9b87);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.dark-mode .grade-filter-btn {
+  background: linear-gradient(135deg, var(--bg-card), var(--bg-accent));
+  color: var(--secondary-text-color);
+  border: 2px solid var(--border-color);
+  box-shadow: 0 1.5px 6px rgba(0,0,0,0.10); /* softer shadow for dark mode */
+}
+
+.dark-mode .grade-filter-btn::before {
+  background: linear-gradient(90deg, transparent, rgba(95, 179, 160, 0.2), transparent);
+}
+
+.dark-mode .grade-filter-btn:hover {
+  background: linear-gradient(135deg, var(--bg-accent-hover), rgba(95,179,160,0.10)); /* less intense hover */
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+  box-shadow: 
+    0 4px 12px rgba(95,179,160,0.12),
+    0 2px 6px rgba(0,0,0,0.10); /* softer hover shadow for dark mode */
+}
+
+.dark-mode .grade-filter-btn.active {
+  background: linear-gradient(135deg, var(--accent-color), #4a9b87);
+  color: white;
+  border-color: var(--accent-color);
+  box-shadow: 
+    0 4px 16px rgba(95,179,160,0.18),
+    0 2px 8px rgba(95,179,160,0.12),
+    inset 0 1px 0 rgba(255,255,255,0.15); /* softer active shadow for dark mode */
+}
+
+.dark-mode .section-detail-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .section-detail-header h2 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .section-code-text {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .section-stats-simple {
+  color: var(--secondary-text-color);
+}
+
+/* Dark mode styles for section actions */
+.dark-mode .section-action-btn {
+  color: var(--accent-color);
+}
+
+.dark-mode .section-action-btn:hover {
+  background: rgba(95,179,160,0.1);
+}
+
+.dark-mode .section-action-btn.delete {
+  color: #f87171;
+}
+
+.dark-mode .section-action-btn.delete:hover {
+  background: rgba(248,113,113,0.1);
+}
+
+.dark-mode .section-action-btn.menu {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .section-action-btn.menu:hover {
+  background: rgba(100,116,139,0.1);
+}
+
+.dark-mode .section-status {
+  background: var(--bg-accent);
+  color: var(--accent-color);
+}
+
+.dark-mode .section-status.archived {
+  background: rgba(248,113,113,0.1);
+  color: #f87171;
+}
+
+/* Dark mode dropdown menu */
+.dark-mode .section-dropdown-menu {
+  background: var(--bg-card);
+  border-color: var(--border-color);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.38), 0 1.5px 6px rgba(0,0,0,0.20);
+}
+
+.dark-mode .menu-item {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .menu-item:hover {
+  background: var(--bg-accent);
+}
+
+.dark-mode .menu-item.delete {
+  color: #f87171;
+}
+
+.dark-mode .menu-item.delete:hover {
+  background: rgba(248,113,113,0.1);
+}
+
+.dark-mode .subject-simple-header h3,
+.dark-mode .section-simple-header h4 {
+  color: #f9fafb;
+}
+
+.dark-mode .subject-simple-header p,
+.dark-mode .section-simple-header p {
+  color: #d1d5db;
+}
+
+.dark-mode .section-card.simple {
+  background: linear-gradient(135deg, #1f2937 0%, #374151 50%, #4b5563 100%);
+  border-color: #6b7280;
+}
+
+.dark-mode .section-card.simple:hover {
+  background: linear-gradient(135deg, #111827 0%, #1f2937 50%, #374151 100%);
+  border-color: #10b981;
+}
+
+.dark-mode .card-corner-accent {
+  background: linear-gradient(45deg, transparent 50%, rgba(16, 185, 129, 0.2) 50%);
+}
+
+.dark-mode .card-icon {
+  color: #10b981;
+}
+
+.dark-mode .section-stats-simple {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #10b981;
+}
+
+/* Dark mode for inline section code */
+.dark-mode .section-code-inline {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.dark-mode .code-label {
+  color: #a7f3d0;
+}
+
+.dark-mode .section-code-text {
+  color: #10b981;
+}
+
+.dark-mode .section-code-text:hover {
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+}
+
+.dark-mode .copy-code-mini {
+  color: #10b981;
+}
+
+.dark-mode .copy-code-mini:hover {
+  background: rgba(16, 185, 129, 0.2);
+}
+
+.dark-mode .section-action-btn {
+  color: white;
+  border: none;
+}
+
+.dark-mode .section-action-btn.view-students {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.dark-mode .section-action-btn.view-students:hover {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+}
+
+.dark-mode .section-action-btn.create-quiz {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.dark-mode .section-action-btn.create-quiz:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+}
+
+.dark-mode .section-action-btn.view-quizzes {
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+}
+
+.dark-mode .section-action-btn.view-quizzes:hover {
+  background: linear-gradient(135deg, #0891b2, #0e7490);
+  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.3);
+}
+
+.dark-mode .section-action-btn.manage-grades {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.dark-mode .section-action-btn.manage-grades:hover {
+  background: linear-gradient(135deg, #d97706, #b45309);
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.3);
+}
+
+.dark-mode .section-action-btn.generate-reports {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+.dark-mode .section-action-btn.generate-reports:hover {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
+}
+
+.dark-mode .section-action-btn.view-assessments {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+}
+
+.dark-mode .section-action-btn.view-assessments:hover {
+  background: linear-gradient(135deg, #ea580c, #c2410c);
+  box-shadow: 0 8px 24px rgba(249, 115, 22, 0.3);
+}
+
+.dark-mode .arrow-icon {
+  color: var(--accent-color);
+}
+
+.dark-mode .create-quiz-btn {
+  background: linear-gradient(135deg, var(--accent-color), #4a9b87);
+  border-color: var(--accent-color);
+}
+
+.dark-mode .create-quiz-btn:hover {
+  background: linear-gradient(135deg, #4a9b87, #3d8b78);
+  box-shadow: 0 8px 24px rgba(95, 179, 160, 0.3);
+}
+
+/* Enhanced Dark Mode Styles for Section Detail View */
+.dark-mode .section-detail-header {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .section-detail-header h2 {
+  color: var(--accent-color);
+}
+
+.dark-mode .section-stats {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .section-stats .stat {
+  background: var(--bg-accent);
+  border: 1px solid var(--border-color);
+}
+
+.dark-mode .section-stats .stat:hover {
+  background: var(--bg-accent-hover);
+  border-color: var(--accent-color);
+}
+
+.dark-mode .section-stats .stat-number {
+  color: var(--accent-color);
+  font-weight: 700;
+}
+
+.dark-mode .section-stats .stat-label {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .view-hint {
+  color: var(--accent-color);
+}
+
+.dark-mode .clickable-link {
+  color: var(--accent-color);
+}
+
+.dark-mode .section-code-area h4 {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .section-actions-grid {
+  background: transparent;
+}
+
+/* Better contrast for action buttons in dark mode */
+.dark-mode .action-btn.edit:hover {
+  background: rgba(59, 130, 246, 0.3);
+  color: #93c5fd;
+}
+
+.dark-mode .action-btn.delete:hover {
+  background: rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
 }
 
 /* Delete Confirmation Modal */
