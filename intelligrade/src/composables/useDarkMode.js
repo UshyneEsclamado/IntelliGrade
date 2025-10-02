@@ -19,10 +19,10 @@ export function useDarkMode() {
   const applyDarkMode = () => {
     if (isDarkMode.value) {
       document.documentElement.classList.add('dark')
-      document.body.classList.add('dark-mode-body')
+      document.body.classList.add('dark-mode')
     } else {
       document.documentElement.classList.remove('dark')
-      document.body.classList.remove('dark-mode-body')
+      document.body.classList.remove('dark-mode')
     }
   }
 

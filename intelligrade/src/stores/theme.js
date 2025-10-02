@@ -10,8 +10,8 @@ export const useThemeStore = defineStore('theme', () => {
     if (savedMode !== null) {
       isDarkMode.value = savedMode === 'true'
     } else {
-      // Default to light mode if no preference is saved
-      isDarkMode.value = false
+      // Default to dark mode if no preference is saved
+      isDarkMode.value = true
     }
     applyDarkMode()
   }
