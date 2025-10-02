@@ -134,7 +134,12 @@
                       </div>
                     </div>
                     <div class="message-status">
-                      <span v-if="teacher.unread_count > 0" class="unread-badge">{{ teacher.unread_count }}</span>
+                      <template v-if="teacher.unread_count > 0">
+                        <div class="unread-status">
+                          <span class="unread-badge">{{ teacher.unread_count }}</span>
+                          <span class="unread-text">{{ teacher.unread_count === 1 ? '1 unread' : `${teacher.unread_count} unread` }}</span>
+                        </div>
+                      </template>
                       <span class="last-time">{{ formatTime(teacher.last_message_time) }}</span>
                       <div class="options-wrapper">
                         <button class="options-btn" @click.stop="toggleTeacherOptions(`${teacher.id}-${teacher.section_id}`)">
@@ -369,16 +374,140 @@
               v-for="announcement in selectedBroadcastGroup?.announcements || []" 
               :key="announcement.notification_id"
               :class="['broadcast-item', { 'unread': !announcement.is_read }]"
-              @click="markBroadcastAsRead(announcement)"
+              @click="openAnnouncementDetail(announcement)"
             >
               <div class="broadcast-item-header">
                 <h3 class="broadcast-item-title">{{ announcement.title }}</h3>
                 <span v-if="!announcement.is_read" class="unread-label">New</span>
               </div>
               <p class="broadcast-item-body">{{ announcement.body }}</p>
-              <span class="broadcast-item-time">{{ formatTime(announcement.created_at) }}</span>
+              <div class="broadcast-item-footer">
+                <span class="broadcast-item-time">{{ formatTime(announcement.created_at) }}</span>
+                <div v-if="announcement.has_attachments || (announcement.attachments && announcement.attachments.length > 0)" class="attachment-indicator">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                  </svg>
+                  <span>{{ announcement.attachments?.length || 0 }} attachments</span>
+                </div>
+              </div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Announcement Detail Modal -->
+    <div v-if="isAnnouncementDetailOpen" class="modal-overlay" @click.self="closeAnnouncementDetail">
+      <div class="modal-content announcement-detail-modal">
+        <div class="modal-header">
+          <button @click="closeAnnouncementDetail" class="close-btn">&times;</button>
+          <div class="header-info">
+            <div class="announcement-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+              </svg>
+            </div>
+            <div class="header-details">
+              <h2 class="modal-title">Class Announcement</h2>
+              <span class="subject-info">{{ selectedAnnouncement?.subject_name }} - {{ selectedAnnouncement?.section_name }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-body announcement-detail-body">
+          <div v-if="selectedAnnouncement" class="announcement-content">
+            <!-- Announcement Header -->
+            <div class="announcement-header">
+              <h3 class="announcement-title">{{ selectedAnnouncement.title }}</h3>
+              <div class="announcement-meta">
+                <div class="teacher-info">
+                  <span class="teacher-name">Teacher: {{ selectedAnnouncement.teacher_name }}</span>
+                </div>
+                <div class="announcement-date">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  <span>{{ formatFullDate(selectedAnnouncement.created_at) }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Announcement Body -->
+            <div class="announcement-body">
+              <p class="announcement-text">{{ selectedAnnouncement.body }}</p>
+            </div>
+
+            <!-- Attachments Section -->
+            <div v-if="selectedAnnouncement.attachments && selectedAnnouncement.attachments.length > 0" class="announcement-attachments">
+              <h4 class="attachments-title">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                </svg>
+                Attachments ({{ selectedAnnouncement.attachments.length }})
+              </h4>
+              <div class="attachments-grid">
+                <div 
+                  v-for="(attachment, idx) in selectedAnnouncement.attachments" 
+                  :key="idx" 
+                  class="attachment-item"
+                >
+                  <!-- Image Attachments -->
+                  <div v-if="attachment.type === 'image'" class="attachment-image-container">
+                    <img 
+                      :src="attachment.url" 
+                      :alt="attachment.name" 
+                      class="attachment-image-large" 
+                      @click="viewAttachment(attachment)"
+                    />
+                    <div class="attachment-overlay">
+                      <button @click="viewAttachment(attachment)" class="view-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                          <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        View
+                      </button>
+                      <button @click="downloadAttachment(attachment)" class="download-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                          <polyline points="7 10 12 15 17 10"/>
+                          <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Download
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- File Attachments -->
+                  <div v-else class="attachment-file-large" @click="downloadAttachment(attachment)">
+                    <div class="file-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                        <polyline points="13 2 13 9 20 9"/>
+                      </svg>
+                    </div>
+                    <div class="file-info">
+                      <span class="file-name">{{ attachment.name }}</span>
+                      <span class="file-size">{{ formatFileSize(attachment.size) }}</span>
+                    </div>
+                    <button class="download-file-btn" @click.stop="downloadAttachment(attachment)">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="closeAnnouncementDetail" class="close-detail-btn">
+            Close
+          </button>
         </div>
       </div>
     </div>
@@ -396,6 +525,8 @@ const searchQuery = ref('')
 const selectedSubject = ref('')
 const isModalOpen = ref(false)
 const isBroadcastModalOpen = ref(false)
+const isAnnouncementDetailOpen = ref(false)
+const selectedAnnouncement = ref(null)
 const activeTeacher = ref(null)
 const selectedBroadcastGroup = ref(null)
 const newMessage = ref('')
@@ -642,14 +773,117 @@ const downloadAttachment = (attachment) => {
   document.body.removeChild(link)
 }
 
-const openBroadcastGroup = (group) => {
+const openBroadcastGroup = async (group) => {
   selectedBroadcastGroup.value = group
+  
+  console.log('Opening broadcast group:', group)
+  
+  // Load attachments for all announcements in this group
+  for (const announcement of group.announcements) {
+    if (!announcement.attachments || announcement.attachments.length === 0) {
+      console.log('Loading attachments for announcement:', announcement.notification_id)
+      try {
+        const { data: attachments, error } = await supabase
+          .from('message_attachments')
+          .select('*')
+          .eq('message_id', announcement.notification_id)
+        
+        if (error) throw error
+        
+        if (attachments && attachments.length > 0) {
+          announcement.attachments = attachments.map(att => ({
+            name: att.file_name,
+            url: att.file_url,
+            type: att.file_type,
+            size: att.file_size,
+            path: att.file_path
+          }))
+          announcement.has_attachments = true
+          console.log('Loaded attachments for announcement:', announcement.attachments)
+        } else {
+          announcement.attachments = []
+          announcement.has_attachments = false
+        }
+      } catch (error) {
+        console.error('Error loading attachments for announcement:', error)
+        announcement.attachments = []
+        announcement.has_attachments = false
+      }
+    } else {
+      console.log('Announcement already has attachments:', announcement.attachments)
+    }
+  }
+  
   isBroadcastModalOpen.value = true
 }
 
 const closeBroadcastModal = () => {
   isBroadcastModalOpen.value = false
   selectedBroadcastGroup.value = null
+}
+
+// New methods for announcement detail
+const openAnnouncementDetail = async (announcement) => {
+  selectedAnnouncement.value = announcement
+  // Always fetch attachments from DB for reliability
+  await loadAnnouncementAttachments(announcement.notification_id)
+  // Mark as read
+  await markBroadcastAsRead(announcement)
+  isAnnouncementDetailOpen.value = true
+}
+
+const closeAnnouncementDetail = () => {
+  isAnnouncementDetailOpen.value = false
+  selectedAnnouncement.value = null
+}
+
+const loadAnnouncementAttachments = async (messageId) => {
+  try {
+    const { data: attachments, error } = await supabase
+      .from('message_attachments')
+      .select('*')
+      .eq('message_id', messageId)
+    if (error) throw error
+    if (attachments && attachments.length > 0) {
+      selectedAnnouncement.value.attachments = attachments.map(att => ({
+        name: att.file_name,
+        url: att.file_url,
+        type: att.file_type,
+        size: att.file_size,
+        path: att.file_path
+      }))
+      selectedAnnouncement.value.has_attachments = true
+    } else {
+      selectedAnnouncement.value.attachments = []
+      selectedAnnouncement.value.has_attachments = false
+    }
+  } catch (error) {
+    selectedAnnouncement.value.attachments = []
+    selectedAnnouncement.value.has_attachments = false
+  }
+}
+
+const formatFileSize = (bytes) => {
+  if (!bytes) return '0 B'
+  
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+}
+
+const formatFullDate = (dateString) => {
+  if (!dateString) return ''
+  
+  const date = new Date(dateString)
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }
 
 const markBroadcastAsRead = async (announcement) => {
@@ -663,7 +897,24 @@ const markBroadcastAsRead = async (announcement) => {
     
     if (error) throw error
     
+    // Update local state
     announcement.is_read = true
+    
+    // Update notifications array
+    const notificationIndex = notifications.value.findIndex(n => n.notification_id === announcement.notification_id)
+    if (notificationIndex !== -1) {
+      notifications.value[notificationIndex].is_read = true
+    }
+    
+    // Update selectedBroadcastGroup if it exists
+    if (selectedBroadcastGroup.value) {
+      const groupAnnouncement = selectedBroadcastGroup.value.announcements.find(a => a.notification_id === announcement.notification_id)
+      if (groupAnnouncement) {
+        groupAnnouncement.is_read = true
+      }
+    }
+    
+    console.log('Broadcast marked as read:', announcement.notification_id)
     
   } catch (error) {
     console.error('Error marking broadcast as read:', error)
@@ -830,6 +1081,7 @@ const loadEnrolledSubjectsAndTeachers = async () => {
         .eq('section_id', section.id)
         .eq('sender_id', teacher.id)
         .eq('recipient_id', currentStudentId.value)
+        .eq('message_type', 'direct')
         .eq('is_read', false)
       
       const { data: lastMsgData } = await supabase
@@ -906,6 +1158,30 @@ const loadNotifications = async () => {
       return
     }
     
+    // Load attachments for all messages
+    const messageIds = messages.map(m => m.id)
+    const { data: attachments } = await supabase
+      .from('message_attachments')
+      .select('*')
+      .in('message_id', messageIds)
+    
+    // Group attachments by message_id
+    const attachmentsMap = {}
+    if (attachments) {
+      attachments.forEach(att => {
+        if (!attachmentsMap[att.message_id]) {
+          attachmentsMap[att.message_id] = []
+        }
+        attachmentsMap[att.message_id].push({
+          name: att.file_name,
+          url: att.file_url,
+          type: att.file_type,
+          size: att.file_size,
+          path: att.file_path
+        })
+      })
+    }
+    
     const { data: sections } = await supabase
       .from('sections')
       .select('id, name, subject_id')
@@ -933,6 +1209,7 @@ const loadNotifications = async () => {
       const section = sectionMap.get(msg.section_id)
       const subject = section ? subjectMap.get(section.subject_id) : null
       const sender = senderMap.get(msg.sender_id)
+      const messageAttachments = attachmentsMap[msg.id] || []
       
       return {
         notification_id: msg.id,
@@ -943,11 +1220,13 @@ const loadNotifications = async () => {
         notification_type: 'announcement',
         teacher_name: sender?.full_name,
         subject_name: subject?.name,
-        section_name: section?.name
+        section_name: section?.name,
+        has_attachments: messageAttachments.length > 0,
+        attachments: messageAttachments
       }
     })
     
-    console.log('Loaded notifications:', notifications.value)
+    console.log('Loaded notifications with attachments:', notifications.value)
     
   } catch (error) {
     console.error('Error loading notifications:', error)
@@ -1160,16 +1439,22 @@ const markMessagesAsRead = async (teacherId, sectionId) => {
     
     console.log('Marking messages as read:', { teacherId, sectionId })
     
-    const { error } = await supabase
+    // First, update the database
+    const { data: updatedMessages, error } = await supabase
       .from('messages')
       .update({ is_read: true, read_at: new Date().toISOString() })
       .eq('section_id', sectionId)
       .eq('sender_id', teacherId)
       .eq('recipient_id', currentStudentId.value)
+      .eq('message_type', 'direct')
       .eq('is_read', false)
+      .select()
     
     if (error) throw error
     
+    console.log('Database updated, affected rows:', updatedMessages?.length || 0)
+    
+    // Update local message state
     currentMessages.value.forEach(m => {
       if (m.sender_id === teacherId && !m.is_read) {
         m.is_read = true
@@ -1177,12 +1462,22 @@ const markMessagesAsRead = async (teacherId, sectionId) => {
       }
     })
     
-    const teacher = enrolledTeachers.value.find(t => 
+    // IMMEDIATE: Update the specific teacher's unread count to 0
+    const teacherIndex = enrolledTeachers.value.findIndex(t => 
       t.id === teacherId && t.section_id === sectionId
     )
-    if (teacher) {
-      teacher.unread_count = 0
+    if (teacherIndex !== -1) {
+      // Force Vue reactivity by creating a new array
+      enrolledTeachers.value = enrolledTeachers.value.map((teacher, index) => {
+        if (index === teacherIndex) {
+          console.log(`Immediately reset unread count to 0 for teacher ${teacher.teacher_name}`)
+          return { ...teacher, unread_count: 0 }
+        }
+        return teacher
+      })
     }
+    
+    console.log('Messages marked as read and UI updated')
     
   } catch (error) {
     console.error('Error marking messages as read:', error)
@@ -1252,6 +1547,7 @@ const setupRealTimeSubscriptions = () => {
         if (newMessageData.recipient_id === currentStudentId.value && 
             newMessageData.message_type === 'direct') {
           
+          // Reload teacher list to update unread counts
           await loadEnrolledSubjectsAndTeachers()
           
           if (isModalOpen.value && 
@@ -1292,16 +1588,8 @@ const setupRealTimeSubscriptions = () => {
             await nextTick()
             scrollToBottom()
             
-            await supabase
-              .from('messages')
-              .update({ is_read: true, read_at: new Date().toISOString() })
-              .eq('id', newMessageData.id)
-            
-            const msgIndex = currentMessages.value.findIndex(m => m.id === newMessageData.id)
-            if (msgIndex !== -1) {
-              currentMessages.value[msgIndex].is_read = true
-              currentMessages.value[msgIndex].read_at = new Date().toISOString()
-            }
+            // Mark as read and immediately update teacher's unread count
+            await markMessagesAsRead(newMessageData.sender_id, newMessageData.section_id)
           }
         }
       }
@@ -1521,7 +1809,9 @@ onUnmounted(() => {
   align-items: center;
   justify-content: flex-start;
   background: var(--bg-card);
+ 
   border-radius: 28px;
+
   box-shadow: 0 8px 32px var(--shadow-medium);
   border: 1.5px solid var(--border-color-hover);
   padding: 3rem 4rem 3rem 3.5rem;
@@ -2283,8 +2573,16 @@ onUnmounted(() => {
 
 .message-status {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-end;
   gap: 0.5rem;
+}
+
+.unread-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .unread-badge {
@@ -2298,6 +2596,14 @@ onUnmounted(() => {
   justify-content: center;
   font-size: 0.8rem;
   font-weight: 600;
+}
+
+.unread-text {
+  font-size: 0.75rem;
+  color: var(--text-accent);
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .last-time {
@@ -2705,9 +3011,29 @@ onUnmounted(() => {
   margin: 0 0 0.75rem 0;
 }
 
+.broadcast-item-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+}
+
 .broadcast-item-time {
   font-size: 0.85rem;
   color: var(--text-muted);
+}
+
+.attachment-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-accent);
+  background: rgba(61, 141, 122, 0.1);
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-weight: 500;
 }
 
 /* Teacher Email Styling */
@@ -2729,53 +3055,282 @@ onUnmounted(() => {
   margin: 0;
 }
 
-/* Responsive adjustments for mobile */
+/* ================================
+   ANNOUNCEMENT DETAIL MODAL
+   ================================ */
+
+.announcement-detail-modal {
+  max-width: 800px;
+  width: 95%;
+  height: 85vh;
+}
+
+.announcement-detail_body {
+  padding: 2rem;
+}
+
+.announcement-content {
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.announcement-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.announcement-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-accent);
+  margin: 0 0 1rem 0;
+  line-height: 1.3;
+}
+
+.announcement-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.teacher-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.teacher-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.announcement-date {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.announcement-body {
+  margin-bottom: 2rem;
+}
+
+.announcement-text {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.announcement-attachments {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.attachments-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  color: var(--text-accent);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.attachments-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.attachment-item {
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  background: var(--bg-card);
+}
+
+.attachment-item:hover {
+  border-color: var(--border-color-hover);
+  box-shadow: 0 4px 12px var(--shadow-light);
+  transform: translateY(-2px);
+}
+
+.attachment-image-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.attachment-image-large {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.attachment-image-large:hover {
+  transform: scale(1.05);
+}
+
+.attachment-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+  padding: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.attachment-image-container:hover .attachment-overlay {
+  opacity: 1;
+}
+
+.view-btn,
+.download-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text-accent);
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-btn:hover,
+.download-btn:hover {
+  background: white;
+  transform: translateY(-1px);
+}
+
+.attachment-file-large {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--bg-card);
+}
+
+.attachment-file-large:hover {
+  background: var(--bg-accent);
+}
+
+.file-icon {
+  width: 56px;
+  height: 56px;
+  background: var(--bg-accent);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-accent);
+  flex-shrink: 0;
+}
+
+.file-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.file-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  word-break: break-word;
+  font-size: 1rem;
+}
+
+.file-size {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.download-file-btn {
+  background: var(--text-accent);
+  color: white;
+  border: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.download-file-btn:hover {
+  background: #2f7063;
+  transform: scale(1.1);
+}
+
+.announcement-icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #4A9B8E 0%, #3D8D7A 100%);
+  color: white;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-detail-btn {
+  background: var(--text-accent);
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.close-detail-btn:hover {
+  background: #2f7063;
+  transform: translateY(-1px);
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
-  .message-input-area {
-    gap: 0.5rem;
+  .announcement-detail-modal {
+    width: 98%;
+    height: 90vh;
   }
   
-  .attach-btn {
-    width: 40px;
-    height: 40px;
-  }
-  
-  .send-btn {
-    width: 40px;
-    height: 40px;
-  }
-  
-  .attachment-image {
-    max-width: 200px;
-    max-height: 200px;
-  }
-  
-  .broadcast-group {
+  .announcement-detail_body {
     padding: 1rem;
   }
   
-  .options-menu {
-    min-width: 160px;
+  .attachments-grid {
+    grid-template-columns: 1fr;
   }
-}
-
-/* Smooth animations */
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
+  
+  .announcement-meta {
+    flex-direction: column;
+    align-items: flex-start;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.options-menu {
-  animation: slideDown 0.2s ease;
-}
-
-.file-preview {
-  animation: slideDown 0.3s ease;
 }
 </style>

@@ -75,94 +75,147 @@
 
           <!-- Students Tab -->
           <div v-if="currentTab === 'students' && !showArchive" class="tab-content">
-            <div class="section-actions">
-              <div class="search-bar">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
-                  <circle cx="11" cy="11" r="8"></circle>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-                <input type="text" v-model="searchQuery" placeholder="Search students or sections..." class="search-input" />
-              </div>
-              <div class="action-buttons">
-                <div class="filter-section">
-                  <select v-model="selectedSection" class="section-filter">
-                    <option value="">All Sections</option>
-                    <option v-for="section in uniqueSections" :key="section.section_id" :value="section.section_id">
-                      {{ section.section_name }} - {{ section.subject_name }}
-                    </option>
-                  </select>
-                </div>
-                <button class="action-btn" @click="markAllAsRead">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="20,6 9,17 4,12"/>
+            <!-- Section Students View -->
+            <div v-if="showStudentsInSection" class="section-students-view">
+              <div class="section-students-header">
+                <button class="back-to-sections-btn" @click="backToSections()">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
                   </svg>
-                  Mark all read
+                  Back to Sections
+                </button>
+                <div class="section-students-info">
+                  <h3>{{ selectedSectionView?.subject_name }} - {{ selectedSectionView?.section_name }}</h3>
+                  <div class="section-students-meta">
+                    <span class="section-code">{{ selectedSectionView?.section_code }}</span>
+                    <span class="grade-info">Grade {{ selectedSectionView?.grade_level }}</span>
+                    <span class="student-count">{{ selectedSectionView?.students.length }} enrolled students</span>
+                  </div>
+                </div>
+                <button 
+                  class="section-broadcast-btn" 
+                  @click="openBroadcastModal(); broadcastSection = selectedSectionView?.section_id"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 11l18-5v12L3 14v-3z"/>
+                  </svg>
+                  Send Broadcast
                 </button>
               </div>
-            </div>
-            
-            <!-- Students grouped by section -->
-            <div v-if="groupedStudents.length === 0" class="empty-state">
-              <div class="empty-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                  <circle cx="8.5" cy="7" r="4"/>
-                </svg>
+
+              <div class="section-students-list">
+                <div 
+                  v-for="student in selectedSectionView?.students || []" 
+                  :key="`${student.student_id}-${selectedSectionView?.section_id}`"
+                  :class="['section-student-item', { 'has-unread': student.unread_count > 0 }]"
+                  @click="startChatWithStudent(student)"
+                >
+                  <div class="section-student-info">
+                    <div class="section-student-avatar">
+                      <span>{{ student.student_name?.[0] || 'S' }}</span>
+                    </div>
+                    <div class="section-student-details">
+                      <h4 class="section-student-name">{{ student.student_name }}</h4>
+                      <p class="section-student-email">{{ student.student_email }}</p>
+                      <p class="section-student-id">Student ID: {{ student.student_number }}</p>
+                      <p class="section-last-message">{{ student.last_message || `Enrolled ${formatDate(student.enrolled_date)}` }}</p>
+                    </div>
+                  </div>
+                  <div class="section-message-status">
+                    <span v-if="student.unread_count > 0" class="section-unread-badge">{{ student.unread_count }}</span>
+                    <span class="section-last-time">{{ formatTime(student.last_message_date || student.enrolled_date) }}</span>
+                    <div class="section-chat-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                      </svg>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <p>No enrolled students found</p>
-              <span class="empty-subtext">Students who join your sections will appear here.</span>
-              <button @click="loadTeacherContacts" class="refresh-btn action-btn">Refresh Data</button>
             </div>
 
-            <div v-else class="students-by-section">
-              <div v-for="section in groupedStudents" :key="section.section_id" class="section-group">
-                <div class="section-header">
-                  <div class="section-info">
-                    <h3 class="section-name">{{ section.section_name }}</h3>
-                    <span class="section-code">{{ section.section_code }}</span>
-                    <span class="subject-name">{{ section.subject_name }} (Grade {{ section.grade_level }})</span>
+            <!-- Sections Overview -->
+            <div v-else>
+              <div class="section-actions">
+                <div class="search-bar">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                  <input type="text" v-model="searchQuery" placeholder="Search students or sections..." class="search-input" />
+                </div>
+                <div class="action-buttons">
+                  <div class="filter-section">
+                    <select v-model="selectedSection" class="section-filter">
+                      <option value="">All Sections</option>
+                      <option v-for="section in uniqueSections" :key="section.section_id" :value="section.section_id">
+                        {{ section.section_name }} - {{ section.subject_name }}
+                      </option>
+                    </select>
                   </div>
-                  <div class="section-actions">
-                    <span class="student-count">{{ section.students.length }} students</span>
+                  <button class="action-btn" @click="markAllAsRead">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20,6 9,17 4,12"/>
+                    </svg>
+                    Mark all read
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Students grouped by section -->
+              <div v-if="groupedStudents.length === 0" class="empty-state">
+                <div class="empty-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="8.5" cy="7" r="4"/>
+                  </svg>
+                </div>
+                <p>No enrolled students found</p>
+                <span class="empty-subtext">Students who join your sections will appear here.</span>
+                <button @click="loadTeacherContacts" class="refresh-btn action-btn">Refresh Data</button>
+              </div>
+
+              <div v-else class="sections-overview">
+                <div v-for="section in groupedStudents" :key="section.section_id" class="section-overview-card">
+                  <div class="section-overview-header" @click="viewSectionStudents(section)">
+                    <div class="section-overview-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <path d="M9 22V12h6v10"/>
+                      </svg>
+                    </div>
+                    <div class="section-overview-info">
+                      <h3 class="section-overview-title">{{ section.subject_name }}</h3>
+                      <p class="section-overview-subtitle">{{ section.section_name }} - {{ section.section_code }}</p>
+                      <p class="section-overview-grade">Grade {{ section.grade_level }}</p>
+                    </div>
+                    <div class="section-overview-stats">
+                      <div class="section-overview-count">
+                        <span class="count-number">{{ section.students.length }}</span>
+                        <span class="count-label">Students</span>
+                      </div>
+                      <div v-if="section.total_unread > 0" class="section-overview-unread">
+                        <span class="unread-number">{{ section.total_unread }}</span>
+                        <span class="unread-label">Unread</span>
+                      </div>
+                    </div>
+                    <div class="section-overview-arrow">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                      </svg>
+                    </div>
+                  </div>
+                  <div class="section-overview-actions">
                     <button 
-                      class="broadcast-btn" 
-                      @click="openBroadcastModal(); broadcastSection = section.section_id"
+                      class="section-overview-broadcast-btn" 
+                      @click.stop="openBroadcastModal(); broadcastSection = section.section_id"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M3 11l18-5v12L3 14v-3z"/>
                       </svg>
                       Broadcast
                     </button>
-                  </div>
-                </div>
-                
-                <div class="students-list">
-                  <div 
-                    v-for="student in section.students" 
-                    :key="`${student.student_id}-${section.section_id}`"
-                    :class="['student-item', { 'has-unread': student.unread_count > 0 }]"
-                    @click="startChatWithStudent(student)"
-                  >
-                    <div class="student-info">
-                      <div class="student-avatar">
-                        <span>{{ student.student_name?.[0] || 'S' }}</span>
-                      </div>
-                      <div class="student-details">
-                        <h4 class="student-name">Student: {{ student.student_name }}</h4>
-                        <p class="student-email">{{ student.student_email }}</p>
-                        <p class="student-grade">Grade {{ student.grade_level }}</p>
-                        <p class="last-message">{{ student.last_message || `Enrolled ${formatDate(student.enrolled_date)}` }}</p>
-                      </div>
-                    </div>
-                    <div class="message-status">
-                      <span v-if="student.unread_count > 0" class="unread-badge">{{ student.unread_count }}</span>
-                      <span class="last-time">{{ formatTime(student.last_message_date || student.enrolled_date) }}</span>
-                      <div class="chat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                        </svg>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -289,6 +342,13 @@
                     </svg>
                     Attach Files
                   </button>
+                  <button class="cancel-broadcast-btn" @click="cancelBroadcast()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                    Cancel
+                  </button>
                   <button 
                     class="broadcast-send-btn"
                     @click="sendBroadcastMessage"
@@ -305,76 +365,75 @@
 
             <!-- Broadcast History -->
             <div v-else class="broadcast-history">
-              <div class="broadcast-header">
-                <button class="back-btn" @click="showBroadcastHistory = false">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="19" y1="12" x2="5" y2="12"></line>
-                    <polyline points="12 19 5 12 12 5"></polyline>
-                  </svg>
-                  Back to Broadcast
-                </button>
-                <h3>Broadcast History</h3>
-                <p>View and manage all section announcements</p>
-              </div>
-
-              <div v-if="broadcastHistory.length === 0" class="empty-state">
-                <div class="empty-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M3 11l18-5v12L3 14v-3z"/>
-                  </svg>
+              <!-- Broadcast Section Messages View -->
+              <div v-if="showBroadcastMessages" class="broadcast-messages-view">
+                <div class="broadcast-messages-header">
+                  <button class="back-to-history-btn" @click="backToBroadcastHistory()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="19" y1="12" x2="5" y2="12"></line>
+                      <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    Back to History
+                  </button>
+                  <div class="broadcast-messages-info">
+                    <h3>{{ selectedBroadcastSection?.subject_name }} - {{ selectedBroadcastSection?.section_name }}</h3>
+                    <p>{{ selectedBroadcastSection?.section_code }} • Grade {{ selectedBroadcastSection?.grade_level }}</p>
+                    <span class="broadcast-count">{{ selectedBroadcastSection?.broadcasts.length }} broadcast messages</span>
+                  </div>
+                  <button class="exit-btn" @click="showBroadcastHistory = false; showBroadcastMessages = false">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                    Exit
+                  </button>
                 </div>
-                <p>No broadcast history</p>
-                <span class="empty-subtext">Your sent broadcasts will appear here</span>
-              </div>
 
-              <div v-else class="broadcast-list">
-                <div v-for="broadcast in broadcastHistory" :key="broadcast.id" class="broadcast-item">
-                  <div class="broadcast-item-header">
-                    <div class="broadcast-info">
-                      <h4>{{ broadcast.section_name }}</h4>
-                      <span class="broadcast-meta">{{ broadcast.subject_name }} - Grade {{ broadcast.grade_level }}</span>
-                      <span class="broadcast-date">{{ formatDate(broadcast.sent_at) }} at {{ formatTime(broadcast.sent_at) }}</span>
-                    </div>
-                    <div class="broadcast-options">
-                      <button class="options-btn" @click="toggleBroadcastOptions(broadcast.id)">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <circle cx="12" cy="12" r="1"></circle>
-                          <circle cx="12" cy="5" r="1"></circle>
-                          <circle cx="12" cy="19" r="1"></circle>
-                        </svg>
-                      </button>
-                      <div v-if="showBroadcastOptionsMenu === broadcast.id" class="options-menu">
-                        <button @click="editBroadcast(broadcast)">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                <div class="broadcast-messages-list">
+                  <div v-for="broadcast in selectedBroadcastSection?.broadcasts || []" :key="broadcast.id" class="broadcast-message-item">
+                    <div class="broadcast-message-header">
+                      <div class="broadcast-message-info">
+                        <h4>{{ broadcast.message }}</h4>
+                        <span class="broadcast-message-date">{{ formatDate(broadcast.sent_at) }} at {{ formatTime(broadcast.sent_at) }}</span>
+                      </div>
+                      <div class="broadcast-message-options">
+                        <button class="options-btn" @click="toggleBroadcastOptions(broadcast.id)">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="1"></circle>
+                            <circle cx="12" cy="5" r="1"></circle>
+                            <circle cx="12" cy="19" r="1"></circle>
                           </svg>
-                          Edit
                         </button>
-                        <button @click="archiveBroadcast(broadcast.id)">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="21 8 21 21 3 21 3 8"></polyline>
-                            <rect x="1" y="3" width="22" height="5"></rect>
-                            <line x1="10" y1="12" x2="14" y2="12"></line>
-                          </svg>
-                          Archive
-                        </button>
-                        <button @click="deleteBroadcast(broadcast.id)" class="delete-option">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="3 6 5 6 21 6"></polyline>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                          </svg>
-                          Delete
-                        </button>
+                        <div v-if="showBroadcastOptionsMenu === broadcast.id" class="options-menu">
+                          <button @click="editBroadcast(broadcast)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                            Edit
+                          </button>
+                          <button @click="archiveBroadcast(broadcast.id)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                              <polyline points="21 8 21 21 3 21 3 8"></polyline>
+                              <rect x="1" y="3" width="22" height="5"></rect>
+                              <line x1="10" y1="12" x2="14" y2="12"></line>
+                            </svg>
+                            Archive
+                          </button>
+                          <button @click="deleteBroadcast(broadcast.id)" class="delete-option">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                              <polyline points="3 6 5 6 21 6"></polyline>
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                            Delete
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div class="broadcast-content">
-                    <p>{{ broadcast.message }}</p>
-                    <div v-if="broadcast.attachments && broadcast.attachments.length > 0" class="broadcast-attachments">
-                      <div v-for="(att, idx) in broadcast.attachments" :key="idx" class="broadcast-attachment">
-                        <img v-if="att.type === 'image'" :src="att.url" class="broadcast-attachment-image" @click="viewAttachment(att)" />
-                        <div v-else class="broadcast-attachment-file">
+                    <div v-if="broadcast.attachments && broadcast.attachments.length > 0" class="broadcast-message-attachments">
+                      <div v-for="(att, idx) in broadcast.attachments" :key="idx" class="broadcast-message-attachment">
+                        <img v-if="att.type === 'image'" :src="att.url" class="broadcast-message-attachment-image" @click="viewAttachment(att)" />
+                        <div v-else class="broadcast-message-attachment-file">
                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
                             <polyline points="13 2 13 9 20 9"/>
@@ -384,16 +443,59 @@
                       </div>
                     </div>
                   </div>
-                  <div class="broadcast-stats">
-                    <span class="stat-item">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="9" cy="7" r="4"></circle>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                      </svg>
-                      {{ broadcast.recipient_count }} recipients
-                    </span>
+                </div>
+              </div>
+
+              <!-- Broadcast History Overview -->
+              <div v-else>
+                <div class="broadcast-header">
+                  <button class="back-btn" @click="showBroadcastHistory = false">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="19" y1="12" x2="5" y2="12"></line>
+                      <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    Back to Broadcast
+                  </button>
+                  <h3>Broadcast History</h3>
+                  <p>View and manage all section announcements</p>
+                </div>
+
+                <div v-if="groupedBroadcasts.length === 0" class="empty-state">
+                  <div class="empty-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <path d="M3 11l18-5v12L3 14v-3z"/>
+                    </svg>
+                  </div>
+                  <p>No broadcast history</p>
+                  <span class="empty-subtext">Your sent broadcasts will appear here</span>
+                </div>
+
+                <div v-else class="broadcast-sections-overview">
+                  <div v-for="section in groupedBroadcasts" :key="section.section_id" class="broadcast-section-card">
+                    <div class="broadcast-section-header" @click="viewBroadcastSection(section)">
+                      <div class="broadcast-section-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M3 11l18-5v12L3 14v-3z"/>
+                          <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>
+                        </svg>
+                      </div>
+                      <div class="broadcast-section-info">
+                        <h3 class="broadcast-section-title">{{ section.subject_name }}</h3>
+                        <p class="broadcast-section-subtitle">{{ section.section_name }} - {{ section.section_code }}</p>
+                        <p class="broadcast-section-grade">Grade {{ section.grade_level }}</p>
+                      </div>
+                      <div class="broadcast-section-stats">
+                        <div class="broadcast-section-count">
+                          <span class="broadcast-count-number">{{ section.broadcasts.length }}</span>
+                          <span class="broadcast-count-label">Broadcasts</span>
+                        </div>
+                      </div>
+                      <div class="broadcast-section-arrow">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -633,6 +735,9 @@ const showBroadcastHistory = ref(false)
 const showChatOptions = ref(false)
 const showBroadcastOptionsMenu = ref(null)
 const viewingAttachment = ref(null)
+const expandedSections = ref(new Set())
+const selectedSectionView = ref(null)
+const showStudentsInSection = ref(false)
 
 // Search and Filter
 const searchQuery = ref('')
@@ -653,6 +758,8 @@ const broadcastFileInput = ref(null)
 const broadcastAttachments = ref([])
 const broadcastHistory = ref([])
 const archivedBroadcasts = ref([])
+const selectedBroadcastSection = ref(null)
+const showBroadcastMessages = ref(false)
 
 // Data
 const studentContacts = ref([])
@@ -1175,10 +1282,33 @@ const groupedStudents = computed(() => {
         section_code: student.section_code,
         subject_name: student.subject_name,
         grade_level: student.grade_level,
-        students: []
+        students: [],
+        total_unread: 0
       }
     }
     sections[sectionKey].students.push(student)
+    sections[sectionKey].total_unread += student.unread_count || 0
+  })
+  
+  return Object.values(sections)
+})
+
+const groupedBroadcasts = computed(() => {
+  const sections = {}
+  
+  broadcastHistory.value.forEach(broadcast => {
+    const sectionKey = broadcast.section_id
+    if (!sections[sectionKey]) {
+      sections[sectionKey] = {
+        section_id: broadcast.section_id,
+        section_name: broadcast.section_name,
+        section_code: broadcast.section_code,
+        subject_name: broadcast.subject_name,
+        grade_level: broadcast.grade_level,
+        broadcasts: []
+      }
+    }
+    sections[sectionKey].broadcasts.push(broadcast)
   })
   
   return Object.values(sections)
@@ -1239,6 +1369,7 @@ const loadConversationMessages = async (studentId, sectionId) => {
       .from('messages')
       .select('*')
       .eq('section_id', sectionId)
+      .eq('message_type', 'direct')
       .or(`and(sender_id.eq.${currentTeacherId.value},recipient_id.eq.${studentId}),and(sender_id.eq.${studentId},recipient_id.eq.${currentTeacherId.value})`)
       .order('sent_at', { ascending: true })
     
@@ -1464,6 +1595,8 @@ const handleBroadcastFileSelect = (event) => {
       })
     }
     
+
+    
     reader.readAsDataURL(file)
   })
   
@@ -1528,9 +1661,9 @@ const restoreChat = (studentId) => {
 // ================================
 
 const openBroadcastModal = () => {
-  isBroadcastModalOpen.value = true
+  currentTab.value = 'broadcast'
+  showBroadcastHistory.value = false
   broadcastMessage.value = ''
-  broadcastSection.value = ''
   broadcastAttachments.value = []
 }
 
@@ -1539,6 +1672,30 @@ const closeBroadcastModal = () => {
   broadcastMessage.value = ''
   broadcastSection.value = ''
   broadcastAttachments.value = []
+}
+
+const cancelBroadcast = () => {
+  if (broadcastMessage.value.trim() || broadcastAttachments.value.length > 0) {
+    if (confirm('Are you sure you want to cancel? All changes will be lost.')) {
+      broadcastMessage.value = ''
+      broadcastSection.value = ''
+      broadcastAttachments.value = []
+    }
+  } else {
+    broadcastMessage.value = ''
+    broadcastSection.value = ''
+    broadcastAttachments.value = []
+  }
+}
+
+const viewBroadcastSection = (section) => {
+  selectedBroadcastSection.value = section
+  showBroadcastMessages.value = true
+}
+
+const backToBroadcastHistory = () => {
+  selectedBroadcastSection.value = null
+  showBroadcastMessages.value = false
 }
 
 const sendBroadcastMessage = async () => {
@@ -1564,25 +1721,27 @@ const sendBroadcastMessage = async () => {
     }
     
     loadingMessage.value = 'Sending to students...'
-    const { data: messageId, error: sendError } = await supabase
-      .rpc('send_section_announcement', {
-        p_section_id: broadcastSection.value,
-        p_teacher_id: currentTeacherId.value,
-        p_message_text: broadcastMessage.value.trim()
-      })
     
-    if (sendError) {
-      console.log('Broadcast function error:', sendError)
-      const selectedSectionInfo = uniqueSections.value.find(s => s.section_id === broadcastSection.value)
-      const sectionName = selectedSectionInfo ? selectedSectionInfo.section_name : 'Selected Section'
-      
-      alert(`Broadcast messaging not configured. Your message would be sent to all students in ${sectionName}. Please run the messaging SQL script.`)
-      broadcastMessage.value = ''
-      broadcastSection.value = ''
-      broadcastAttachments.value = []
-      currentTab.value = 'students'
-      return
+    // Insert broadcast message directly into database
+    const { data: messageData, error: insertError } = await supabase
+      .from('messages')
+      .insert({
+        section_id: broadcastSection.value,
+        sender_id: currentTeacherId.value,
+        recipient_id: null, // null for broadcast messages
+        message_text: broadcastMessage.value.trim(),
+        message_type: 'announcement',
+        is_read: false
+      })
+      .select()
+      .single()
+    
+    if (insertError) {
+      console.error('Error inserting broadcast message:', insertError)
+      throw insertError
     }
+    
+    const messageId = messageData.id
     
     // Save attachments to database if broadcast was sent
     if (uploadedAttachments.length > 0 && messageId) {
@@ -1673,6 +1832,24 @@ const deleteBroadcast = async (broadcastId) => {
 // ================================
 // UTILITY METHODS
 // ================================
+
+const toggleSection = (sectionId) => {
+  if (expandedSections.value.has(sectionId)) {
+    expandedSections.value.delete(sectionId)
+  } else {
+    expandedSections.value.add(sectionId)
+  }
+}
+
+const viewSectionStudents = (section) => {
+  selectedSectionView.value = section
+  showStudentsInSection.value = true
+}
+
+const backToSections = () => {
+  selectedSectionView.value = null
+  showStudentsInSection.value = false
+}
 
 const markAllAsRead = async () => {
   try {
@@ -2115,12 +2292,12 @@ onUnmounted(() => {
 }
 
 .students-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  background: var(--bg-accent);
+  padding: 0;
 }
 
 .student-item {
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2135,7 +2312,6 @@ onUnmounted(() => {
 .student-item:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 24px var(--shadow-medium);
-  border-color: var(--border-color-hover);
 }
 
 .student-item.has-unread {
@@ -2151,17 +2327,17 @@ onUnmounted(() => {
 }
 
 .student-avatar {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   background: linear-gradient(135deg, #A3D1C6 0%, #B3D8A8 100%);
   color: var(--accent-color);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: 1.2rem;
-  box-shadow: 0 4px 12px var(--shadow-light);
+  font-weight: 700;
+  font-size: 1.3rem;
+  flex-shrink: 0;
 }
 
 .student-details {
@@ -2170,14 +2346,14 @@ onUnmounted(() => {
 }
 
 .student-name {
+  font-size: 1.1rem;
   font-weight: 700;
   color: var(--accent-color);
   margin: 0 0 0.25rem 0;
-  font-size: 1.1rem;
 }
 
 .student-email {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: var(--text-muted);
   margin: 0 0 0.25rem 0;
 }
@@ -2208,7 +2384,7 @@ onUnmounted(() => {
 }
 
 .last-time {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
 }
 
@@ -2220,6 +2396,7 @@ onUnmounted(() => {
 
 .student-item:hover .chat-icon {
   opacity: 1;
+  transform: scale(1.1);
 }
 
 /* ================================
@@ -2240,6 +2417,10 @@ onUnmounted(() => {
   font-weight: 700;
   color: var(--accent-color);
   margin-bottom: 0.5rem;
+}
+
+.broadcast-header p {
+  color: var(--secondary-text-color);
 }
 
 .broadcast-form {
@@ -2298,7 +2479,7 @@ onUnmounted(() => {
 
 .broadcast-send-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px var(--shadow-medium);
+  box-shadow: 0 6px 20px var(--shadow-medium);
 }
 
 .broadcast-send-btn:disabled {
@@ -2516,60 +2697,6 @@ onUnmounted(() => {
 .send-btn:hover {
   background: #347c6b;
   transform: scale(1.05);
-}
-
-/* ================================
-   RESPONSIVE
-   ================================ */
-@media (max-width: 768px) {
-  .page-container {
-    padding: 1rem;
-  }
-  
-  .card-box {
-    padding: 1.5rem;
-    border-radius: 20px;
-  }
-  
-  .page-title {
-    font-size: 2rem;
-  }
-  
-  .header-icon {
-    width: 64px;
-    height: 64px;
-  }
-  
-  .tab-btn {
-    padding: 0.5rem 1rem;
-  }
-
-  .section-actions {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
-  }
-  
-  .search-bar {
-    max-width: none;
-  }
-  
-  .subject-actions {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-  
-  .student-item {
-    padding: 1rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .last-message {
-    -webkit-line-clamp: 1;
-    line-clamp: 1;
-  }
 }
 
 /* ================================
@@ -3047,10 +3174,11 @@ onUnmounted(() => {
 }
 
 .broadcast-info h4 {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--accent-color);
-  margin: 0 0 0.25rem 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--primary-text-color);
+  margin: 0 0 0.5rem 0;
+  line-height: 1.4;
 }
 
 .broadcast-meta {
@@ -3164,65 +3292,617 @@ onUnmounted(() => {
   border: 1px solid var(--border-color);
 }
 
-.broadcast-attachment-file span {
-  font-size: 0.85rem;
-  color: var(--primary-text-color);
-}
-
-.broadcast-stats {
-  display: flex;
-  align-items: center;
+/* ================================
+   SECTION OVERVIEW CARDS
+   ================================ */
+.sections-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border-color);
-  margin-top: 1rem;
 }
 
-.stat-item {
+.section-overview-card {
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px var(--shadow-light);
+}
+
+.section-overview-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px var(--shadow-medium);
+}
+
+.section-overview-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.85rem;
-  color: var(--secondary-text-color);
+  padding: 2rem;
+  cursor: pointer;
+  gap: 1.5rem;
 }
 
-/* Loading Overlay */
-.loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+.section-overview-icon {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, var(--accent-color) 0%, #A3D1C6 100%);
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
-  backdrop-filter: blur(3px);
-}
-
-.loading-content {
-  text-align: center;
   color: white;
+  flex-shrink: 0;
 }
 
-.loading-spinner {
-  width: 48px;
-  height: 48px;
-  border: 4px solid rgba(255, 255, 255, 0.2);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin: 0 auto 1rem;
+.section-overview-info {
+  flex: 1;
+  min-width: 0;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.section-overview-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--accent-color);
+  margin: 0 0 0.5rem 0;
 }
 
-.loading-content p {
+.section-overview-subtitle {
+  font-size: 1rem;
+  color: var(--secondary-text-color);
+  margin: 0 0 0.25rem 0;
+}
+
+.section-overview-grade {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.section-overview-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.section-overview-count {
+  text-align: center;
+}
+
+.count-number {
+  display: block;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--accent-color);
+  line-height: 1;
+}
+
+.count-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.section-overview-unread {
+  background: #ff6b6b;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.unread-number {
+  display: block;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.unread-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+}
+
+.section-overview-arrow {
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+
+.section-overview-card:hover .section-overview-arrow {
+  transform: translateX(4px);
+}
+
+.section-overview-actions {
+  padding: 0 2rem 2rem 2rem;
+}
+
+.section-overview-broadcast-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, var(--accent-color) 0%, #A3D1C6 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
   font-size: 1rem;
   font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.section-overview-broadcast-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--shadow-medium);
+}
+
+/* ================================
+   SECTION STUDENTS VIEW
+   ================================ */
+.section-students-view {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.section-students-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.5rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.back-to-sections-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-accent);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--secondary-text-color);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.back-to-sections-btn:hover {
+  background: var(--bg-accent-hover);
+  transform: translateY(-1px);
+}
+
+.section-students-info {
+  flex: 1;
+  text-align: center;
+}
+
+.section-students-info h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent-color);
+  margin: 0 0 0.5rem 0;
+}
+
+.section-students-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.section-broadcast-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, var(--accent-color) 0%, #A3D1C6 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.section-broadcast-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--shadow-medium);
+}
+
+.section-students-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.section-student-item {
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-student-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px var(--shadow-medium);
+}
+
+.section-student-item.has-unread {
+  border-left: 4px solid var(--accent-color);
+  background: var(--bg-unread);
+}
+
+.section-student-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.section-student-avatar {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #A3D1C6 0%, #B3D8A8 100%);
+  color: var(--accent-color);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.section-student-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.section-student-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent-color);
+  margin: 0 0 0.25rem 0;
+}
+
+.section-student-email {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0 0 0.25rem 0;
+}
+
+.section-student-id {
+  font-size: 0.85rem;
+  color: var(--secondary-text-color);
+  margin: 0 0 0.25rem 0;
+}
+
+.section-last-message {
+  font-size: 0.9rem;
+  color: var(--secondary-text-color);
   margin: 0;
+}
+
+.section-message-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-unread-badge {
+  background: var(--accent-color);
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.section-last-time {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.section-chat-icon {
+  color: var(--accent-color);
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+.section-student-item:hover .section-chat-icon {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+/* ================================
+   BROADCAST SECTIONS OVERVIEW
+   ================================ */
+.broadcast-sections-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.broadcast-section-card {
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px var(--shadow-light);
+}
+
+.broadcast-section-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px var(--shadow-medium);
+}
+
+.broadcast-section-header {
+  display: flex;
+  align-items: center;
+  padding: 2rem;
+  cursor: pointer;
+  gap: 1.5rem;
+}
+
+.broadcast-section-icon {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.broadcast-section-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.broadcast-section-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--accent-color);
+  margin: 0 0 0.5rem 0;
+}
+
+.broadcast-section-subtitle {
+  font-size: 1rem;
+  color: var(--secondary-text-color);
+  margin: 0 0 0.25rem 0;
+}
+
+.broadcast-section-grade {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.broadcast-section-stats {
+  display: flex;
+  align-items: center;
+}
+
+.broadcast-section-count {
+  text-align: center;
+}
+
+.broadcast-count-number {
+  display: block;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #ff6b6b;
+  line-height: 1;
+}
+
+.broadcast-count-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.broadcast-section-arrow {
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+
+.broadcast-section-card:hover .broadcast-section-arrow {
+  transform: translateX(4px);
+}
+
+/* ================================
+   BROADCAST MESSAGES VIEW
+   ================================ */
+.broadcast-messages-view {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.broadcast-messages-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.5rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.back-to-history-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-accent);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--secondary-text-color);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.back-to-history-btn:hover {
+  background: var(--bg-accent-hover);
+  transform: translateY(-1px);
+}
+
+.broadcast-messages-info {
+  flex: 1;
+  text-align: center;
+}
+
+.broadcast-messages-info h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent-color);
+  margin: 0 0 0.5rem 0;
+}
+
+.broadcast-messages-info p {
+  color: var(--secondary-text-color);
+  margin: 0 0 0.25rem 0;
+}
+
+.broadcast-count {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.exit-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.exit-btn:hover {
+  background: #c82333;
+  transform: translateY(-1px);
+}
+
+.broadcast-messages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.broadcast-message-item {
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.broadcast-message-item:hover {
+  box-shadow: 0 4px 12px var(--shadow-light);
+}
+
+.broadcast-message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 1rem;
+}
+
+.broadcast-message-info h4 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--primary-text-color);
+  margin: 0 0 0.5rem 0;
+  line-height: 1.4;
+}
+
+.broadcast-message-date {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.broadcast-message-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.broadcast-message-attachment-image {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.broadcast-message-attachment-image:hover {
+  transform: scale(1.05);
+}
+
+.broadcast-message-attachment-file {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--bg-accent);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+/* ================================
+   CANCEL BUTTON STYLES
+   ================================ */
+.cancel-broadcast-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancel-broadcast-btn:hover {
+  background: #5a6268;
+  transform: translateY(-1px);
+}
+
+.broadcast-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
 }
 </style>
