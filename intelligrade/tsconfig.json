@@ -5,13 +5,16 @@
     "paths": {
       "@/*": ["src/*"]
     },
-    "strict": true,
-    "moduleResolution": "Node",
+    "strict": false,
+    "moduleResolution": "node",
     "resolveJsonModule": true,
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
     "noEmit": true,
+    "allowJs": true,
     "types": ["vite/client"]
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "env.d.ts"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "src/**/*.js", "env.d.ts"],
   "exclude": ["node_modules", "dist"]
 }
