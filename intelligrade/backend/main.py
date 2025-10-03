@@ -8,19 +8,19 @@ from dotenv import load_dotenv
 # Load environment variables first
 load_dotenv()
 
-# Import routes
-from routes.assessments import router as assessments_router
-
 app = FastAPI(title="IntelliGrade API", version="1.0.0")
 
-# Add CORS middleware for Vue.js frontend  
+# Add CORS middleware BEFORE importing routes
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:3000", "http://localhost:5173"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=["*"],  # Allow all origins for development
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+
+# Import routes AFTER CORS setup
+from routes.assessments import router as assessments_router
 
 # Include routers
 app.include_router(assessments_router)
