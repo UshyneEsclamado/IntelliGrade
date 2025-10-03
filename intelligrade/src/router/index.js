@@ -26,19 +26,27 @@ import MySubjects from '../views/teacher/MySubjects.vue'
 import SectionCode from '../views/teacher/SectionCode.vue'
 import SectionSelection from '../views/teacher/SectionSelection.vue'
 import SettingsPage from '../views/teacher/SettingsPage.vue'
+import UploadAssessment from '../views/teacher/UploadAssessment.vue'
+import AssessmentHistory from '../views/teacher/AssessmentHistory.vue'
+import AssessmentDetails from '../views/teacher/AssessmentDetails.vue'
 import ViewQuizzes from '../views/teacher/ViewQuizzes.vue'
 import ViewStudents from '../views/teacher/ViewStudents.vue'
+
+// Student subfolder components
+import Subjects from '../views/student/Subjects.vue'
+import TakeQuiz from '../views/student/TakeQuiz.vue'
+import Messages from '../views/student/Messages.vue'
 
 const routes = [
   {
     path: '/',
-    name: 'Landing',
-    component: Landing
-  },
-  {
-    path: '/intro',
     name: 'Intro',
     component: Intro
+  },
+  {
+    path: '/landing',
+    name: 'Landing',
+    component: Landing
   },
   {
     path: '/login',
@@ -102,6 +110,24 @@ const routes = [
         component: SettingsPage
       },
       {
+        path: 'upload-assessment',
+        name: 'UploadAssessment',
+        component: UploadAssessment,
+        meta: { requiresAuth: true, role: 'teacher' }
+      },
+      {
+        path: 'assessment-history',
+        name: 'AssessmentHistory',
+        component: AssessmentHistory,
+        meta: { requiresAuth: true, role: 'teacher' }
+      },
+      {
+        path: 'assessment-details/:id',
+        name: 'AssessmentDetails',
+        component: AssessmentDetails,
+        meta: { requiresAuth: true, role: 'teacher' }
+      },
+      {
         path: 'assessment-results',
         name: 'AssessmentRes',
         component: AssessmentRes
@@ -143,14 +169,46 @@ const routes = [
       }
     ]
   },
-  // Student Dashboard Route
+  // Student Dashboard Routes
+  {
+    path: '/student',
+    name: 'StudentLayout',
+    component: StudentDashboard,
+    meta: { requiresAuth: true, role: 'student' },
+    children: [
+      {
+        path: '',
+        redirect: 'dashboard'
+      },
+      {
+        path: 'dashboard',
+        name: 'StudentDashboardHome',
+        component: StudentDashboard
+      },
+      {
+        path: 'subjects',
+        name: 'StudentSubjects',
+        component: Subjects
+      },
+      {
+        path: 'messages',
+        name: 'StudentMessages',
+        component: Messages
+      },
+      {
+        path: 'quiz/:quizId',
+        name: 'TakeQuiz',
+        component: TakeQuiz,
+        meta: { requiresAuth: true, role: 'student' }
+      }
+    ]
+  },
+  // Legacy student dashboard route (for backward compatibility)
   {
     path: '/student-dashboard',
-    name: 'StudentDashboard',
-    component: StudentDashboard,
-    meta: { requiresAuth: true, role: 'student' }
+    redirect: '/student/dashboard'
   },
-  // Catch-all redirect
+  // Catch-all redirect to Intro
   {
     path: '/:pathMatch(.*)*',
     redirect: '/'
@@ -174,12 +232,12 @@ router.beforeEach(async (to, from, next) => {
       const { data: { session }, error } = await supabase.auth.getSession()
       
       if (error || !session) {
-        console.log('❌ No valid session, redirecting to login')
+        console.log('No valid session, redirecting to login')
         next('/login')
         return
       }
 
-      console.log('✅ Valid session found for user:', session.user.email)
+      console.log('Valid session found for user:', session.user.email)
 
       // Check user role if required
       if (to.meta.role) {
@@ -200,10 +258,10 @@ router.beforeEach(async (to, from, next) => {
         console.log('User profile role:', profile?.role)
 
         if (!profile || profile.role !== to.meta.role) {
-          console.log('❌ Role mismatch or no profile')
+          console.log('Role mismatch or no profile')
           if (profile?.role === 'student') {
             console.log('Redirecting to student dashboard')
-            next('/student-dashboard')
+            next('/student/dashboard')
           } else if (profile?.role === 'teacher') {
             console.log('Redirecting to teacher dashboard')
             next('/teacher/dashboard')
@@ -215,14 +273,14 @@ router.beforeEach(async (to, from, next) => {
         }
       }
       
-      console.log('✅ Authorization successful, proceeding to:', to.path)
+      console.log('Authorization successful, proceeding to:', to.path)
       next()
     } catch (error) {
       console.error('Auth check error:', error)
       next('/login')
     }
   } else {
-    console.log('✅ No auth required, proceeding to:', to.path)
+    console.log('No auth required, proceeding to:', to.path)
     next()
   }
 })
