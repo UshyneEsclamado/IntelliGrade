@@ -158,16 +158,16 @@
             All Quizzes Completed
           </button>
           
-          <button 
-            v-else
-            class="action-btn disabled"
-            disabled
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17Z" />
-            </svg>
-            No Quizzes Yet
-          </button>
+        <button 
+  v-else
+  class="action-btn clickable"
+  @click.stop="takeQuiz(subject)"
+>
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17Z" />
+  </svg>
+  Take Quiz
+</button>
 
           <button class="action-btn secondary" @click.stop="viewGrades(subject)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -441,10 +441,6 @@ export default {
           return
         }
 
-        if (retryCount === 0) {
-          this.loadingMessage = 'Loading your subjects...'
-          this.isLoading = true
-        }
 
         console.log('Fetching subjects for student:', this.studentInfo.id, `(attempt ${retryCount + 1})`)
 
@@ -590,11 +586,7 @@ export default {
           alert(`Unable to load subjects: ${error.message}`)
           this.subjects = []
         }
-      } finally {
-        if (retryCount === 0) {
-          this.isLoading = false
-        }
-      }
+      } 
     },
 
     // Validate section code using new schema
@@ -928,19 +920,21 @@ export default {
     },
 
     takeQuiz(subject) {
-      this.$router.push({
-        name: 'TakeQuiz',
-        params: {
-          subjectId: subject.id,
-          sectionId: subject.sectionId
-        },
-        query: {
-          subjectName: subject.name,
-          sectionName: subject.section,
-          availableQuizzes: subject.availableQuizzes
-        }
-      })
+  // Navigate to TakeQuiz regardless of availableQuizzes count
+  // TakeQuiz component will handle the "no quizzes" display
+  this.$router.push({
+    name: 'TakeQuiz',
+    params: {
+      subjectId: subject.id,
+      sectionId: subject.sectionId
     },
+    query: {
+      subjectName: subject.name,
+      sectionName: subject.section,
+      availableQuizzes: subject.availableQuizzes || 0
+    }
+  })
+},
 
     viewCompletedQuizzes(subject) {
       this.$router.push({
@@ -1694,16 +1688,17 @@ export default {
   cursor: default;
 }
 
-.action-btn.disabled {
-  background: rgba(107, 114, 128, 0.1);
-  color: #9ca3af;
-  border: 1px solid rgba(107, 114, 128, 0.2);
-  cursor: not-allowed;
+.action-btn.clickable {
+  background: var(--bg-secondary);
+  color: #3D8D7A;
+  border: 1px solid var(--border-color-light);
+  cursor: pointer;
 }
 
-.action-btn.disabled:hover {
-  transform: none;
-  background: rgba(107, 114, 128, 0.1);
+.action-btn.clickable:hover {
+  transform: translateY(-2px);
+  background: rgba(61, 141, 122, 0.1);
+  border-color: #3D8D7A;
 }
 
 .empty-state {
@@ -2071,4 +2066,5 @@ export default {
     flex-direction: column;
     align-items: center;
   }
+
 </style>
