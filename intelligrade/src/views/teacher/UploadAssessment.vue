@@ -405,6 +405,11 @@
           return;
         }
 
+        console.log('🚀 Starting assessment submission...');
+        console.log('📁 File:', assessmentFile.value);
+        console.log('📚 Subject:', subject.value);
+        console.log('🎯 Type:', selectedTemplate.value);
+
         isLoading.value = true;
         error.value = "";
         gradingResults.value = null;
@@ -417,8 +422,8 @@
 
           const formData = new FormData();
           formData.append('file', assessmentFile.value);
-          formData.append('student_name', studentName.value || 'Auto-detected'); // Optional
-          formData.append('assessment_title', assessmentTitle.value || 'Auto-detected'); // Optional
+          formData.append('student_name', studentName.value || 'Auto-detected');
+          formData.append('assessment_title', assessmentTitle.value || 'Auto-detected');
           formData.append('subject', subject.value);
           formData.append('total_points', totalPoints.value);
           formData.append('assessment_type', selectedTemplate.value);
@@ -428,17 +433,25 @@
           formData.append('generate_recommendations', generateRecommendations.value);
           formData.append('compare_to_standards', compareToStandards.value);
 
+          console.log('📤 Sending to: http://localhost:8000/api/assessments/upload');
+
           // Call your backend API endpoint
           const response = await fetch('http://localhost:8000/api/assessments/upload', {
             method: 'POST',
             body: formData
-            // Don't set any headers for FormData - browser handles this automatically
           });
+
+          console.log('📥 Response status:', response.status);
+          console.log('📥 Response ok:', response.ok);
 
           if (!response.ok) {
             const errorText = await response.text();
+            console.error('❌ Backend error:', errorText);
             throw new Error(`Upload failed: ${response.status} ${response.statusText} - ${errorText}`);
           }
+
+          const result = await response.json();
+          console.log('✅ Backend response:', result);
 
           // Step 2: Parse Content
           updateProcessingStep(1);
@@ -464,8 +477,6 @@
           updateProcessingStep(5);
           loadingMessage.value = "Finalizing results...";
           await new Promise(resolve => setTimeout(resolve, 1000));
-
-          const result = await response.json();
 
           // Process real backend response or simulate for demo
           gradingResults.value = result.results || {
