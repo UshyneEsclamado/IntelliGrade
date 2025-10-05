@@ -34,7 +34,6 @@ import ViewStudents from '../views/teacher/ViewStudents.vue'
 
 // Student subfolder components
 import Subjects from '../views/student/Subjects.vue'
-import TakeQuiz from '../views/student/TakeQuiz.vue'
 import Messages from '../views/student/Messages.vue'
 
 const routes = [
@@ -196,9 +195,9 @@ const routes = [
         component: Messages
       },
       {
-        path: 'quiz/:quizId',
+        path: 'take-quiz/:subjectId/:sectionId',
         name: 'TakeQuiz',
-        component: TakeQuiz,
+        component: () => import('../views/student/TakeQuiz.vue'),
         meta: { requiresAuth: true, role: 'student' }
       }
     ]

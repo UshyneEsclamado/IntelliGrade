@@ -1,0 +1,773 @@
+// ============================================
+// quizService.js - API Service for Quiz System
+// Section-specific implementation
+// Place this in: src/services/quizService.js
+// ============================================
+
+import { supabase } from '@/Supabase'; // Adjust path to match your config
+
+// ============================================
+// TEACHER FUNCTIONS - Create & Manage Quiz
+// ============================================
+
+/**
+ * Create a new quiz with questions (Section-specific)
+ * @param {Object} quizData - Quiz data from CreateQuiz.vue
+ * @returns {Object} Created quiz with ID
+ */
+export const createQuiz = async (quizData) => {
+  try {
+    // Get current teacher ID
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError) throw authError;
+
+    // Get teacher ID from profile
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, role')
+      .eq('auth_user_id', user.id)
+      .single();
+
+    if (profileError) throw profileError;
+    if (profileData.role !== 'teacher') throw new Error('Only teachers can create quizzes');
+
+    const { data: teacherData, error: teacherError } = await supabase
+      .from('teachers')
+      .select('id')
+      .eq('profile_id', profileData.id)
+      .single();
+
+    if (teacherError) throw teacherError;
+
+    // 1. Insert Quiz
+    const { data: quiz, error: quizError } = await supabase
+      .from('quizzes')
+      .insert({
+        subject_id: quizData.subjectId,
+        section_id: quizData.sectionId, // Required for section-specific
+        teacher_id: teacherData.id,
+        title: quizData.title,
+        description: quizData.description,
+        number_of_questions: quizData.numberOfQuestions,
+        has_time_limit: quizData.settings.hasTimeLimit,
+        time_limit_minutes: quizData.settings.hasTimeLimit ? quizData.settings.timeLimit : null,
+        attempts_allowed: quizData.settings.attemptsAllowed,
+        shuffle_questions: quizData.settings.shuffle,
+        shuffle_options: quizData.settings.shuffle,
+        start_date: quizData.settings.startDate || null,
+        end_date: quizData.settings.endDate || null,
+        status: 'published' // or 'draft' based on your needs
+      })
+      .select()
+      .single();
+
+    if (quizError) throw quizError;
+
+    // 2. Insert Questions
+    const questionsToInsert = quizData.questions.map((q, index) => ({
+      quiz_id: quiz.id,
+      question_number: index + 1,
+      question_type: q.type,
+      question_text: q.text,
+      points: 1
+    }));
+
+    const { data: questions, error: questionsError } = await supabase
+      .from('quiz_questions')
+      .insert(questionsToInsert)
+      .select();
+
+    if (questionsError) throw questionsError;
+
+    // 3. Insert Options and Answers
+    for (let i = 0; i < quizData.questions.length; i++) {
+      const question = quizData.questions[i];
+      const questionId = questions[i].id;
+
+      if (question.type === 'multiple_choice') {
+        // Insert options
+        const optionsToInsert = question.options.map((opt, optIndex) => ({
+          question_id: questionId,
+          option_number: optIndex + 1,
+          option_text: opt,
+          is_correct: question.correctAnswer === optIndex
+        }));
+
+        const { error: optionsError } = await supabase
+          .from('question_options')
+          .insert(optionsToInsert);
+
+        if (optionsError) throw optionsError;
+
+      } else if (question.type === 'true_false' || question.type === 'fill_blank') {
+        // Insert answer
+        const { error: answerError } = await supabase
+          .from('question_answers')
+          .insert({
+            question_id: questionId,
+            correct_answer: String(question.correctAnswer),
+            case_sensitive: question.type === 'fill_blank'
+          });
+
+        if (answerError) throw answerError;
+      }
+    }
+
+    return { success: true, quiz };
+
+  } catch (error) {
+    console.error('Error creating quiz:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Get all quizzes for a teacher's section
+ */
+export const getTeacherQuizzes = async (sectionId = null) => {
+  try {
+    let query = supabase
+      .from('vw_teacher_quiz_management')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (sectionId) {
+      query = query.eq('section_id', sectionId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+    return { success: true, data };
+
+  } catch (error) {
+    console.error('Error fetching teacher quizzes:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Get quizzes for a specific section (helper function)
+ */
+export const getSectionQuizzes = async (sectionId) => {
+  try {
+    const { data, error } = await supabase
+      .rpc('get_section_quizzes', { p_section_id: sectionId });
+
+    if (error) throw error;
+    return { success: true, data };
+
+  } catch (error) {
+    console.error('Error fetching section quizzes:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Update quiz
+ */
+export const updateQuiz = async (quizId, updates) => {
+  try {
+    const { data, error } = await supabase
+      .from('quizzes')
+      .update(updates)
+      .eq('id', quizId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { success: true, data };
+
+  } catch (error) {
+    console.error('Error updating quiz:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Delete quiz
+ */
+export const deleteQuiz = async (quizId) => {
+  try {
+    const { error } = await supabase
+      .from('quizzes')
+      .delete()
+      .eq('id', quizId);
+
+    if (error) throw error;
+    return { success: true };
+
+  } catch (error) {
+    console.error('Error deleting quiz:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Get quiz attempts for grading
+ */
+export const getQuizAttempts = async (quizId) => {
+  try {
+    const { data, error } = await supabase
+      .from('quiz_attempts')
+      .select(`
+        *,
+        student:student_id (
+          id,
+          full_name,
+          email,
+          student_id,
+          grade_level
+        )
+      `)
+      .eq('quiz_id', quizId)
+      .order('submitted_at', { ascending: false });
+
+    if (error) throw error;
+    return { success: true, data };
+
+  } catch (error) {
+    console.error('Error fetching quiz attempts:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Get section quiz statistics
+ */
+export const getSectionQuizStats = async (sectionId, quizId) => {
+  try {
+    const { data, error } = await supabase
+      .rpc('get_section_quiz_stats', { 
+        p_section_id: sectionId,
+        p_quiz_id: quizId 
+      });
+
+    if (error) throw error;
+    return { success: true, data: data[0] };
+
+  } catch (error) {
+    console.error('Error fetching section quiz stats:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Finalize quiz results (make visible to students)
+ */
+export const finalizeQuizResults = async (quizId) => {
+  try {
+    const { error } = await supabase.rpc('finalize_quiz_results', {
+      p_quiz_id: quizId
+    });
+
+    if (error) throw error;
+    return { success: true };
+
+  } catch (error) {
+    console.error('Error finalizing quiz results:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// ============================================
+// STUDENT FUNCTIONS - Take Quiz
+// ============================================
+
+/**
+ * Get available quizzes for student in their enrolled sections
+ */
+export const getStudentQuizzes = async (sectionId = null) => {
+  try {
+    // Get current student ID
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError) throw authError;
+
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, role')
+      .eq('auth_user_id', user.id)
+      .single();
+
+    if (profileError) throw profileError;
+
+    const { data: studentData, error: studentError } = await supabase
+      .from('students')
+      .select('id')
+      .eq('profile_id', profileData.id)
+      .single();
+
+    if (studentError) throw studentError;
+
+    let query = supabase
+      .from('vw_student_available_quizzes')
+      .select('*')
+      .eq('student_id', studentData.id);
+
+    if (sectionId) {
+      query = query.eq('section_id', sectionId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+    return { success: true, data };
+
+  } catch (error) {
+    console.error('Error fetching student quizzes:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Get student's quizzes for a specific section
+ */
+export const getStudentSectionQuizzes = async (studentId, sectionId) => {
+  try {
+    const { data, error } = await supabase
+      .rpc('get_student_section_quizzes', { 
+        p_student_id: studentId,
+        p_section_id: sectionId 
+      });
+
+    if (error) throw error;
+    return { success: true, data };
+
+  } catch (error) {
+    console.error('Error fetching student section quizzes:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Get quiz details with questions (for taking quiz)
+ */
+export const getQuizWithQuestions = async (quizId) => {
+  try {
+    // Get quiz details
+    const { data: quiz, error: quizError } = await supabase
+      .from('quizzes')
+      .select(`
+        *,
+        subject:subject_id (
+          id,
+          name,
+          grade_level
+        ),
+        section:section_id (
+          id,
+          name,
+          section_code
+        )
+      `)
+      .eq('id', quizId)
+      .single();
+
+    if (quizError) throw quizError;
+
+    // Get questions with options (but not answers)
+    const { data: questions, error: questionsError } = await supabase
+      .from('quiz_questions')
+      .select(`
+        *,
+        options:question_options (
+          id,
+          option_number,
+          option_text
+        )
+      `)
+      .eq('quiz_id', quizId)
+      .order('question_number');
+
+    if (questionsError) throw questionsError;
+
+    return { success: true, data: { quiz, questions } };
+
+  } catch (error) {
+    console.error('Error fetching quiz with questions:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Check if student can take quiz
+ */
+export const canTakeQuiz = async (quizId, studentId) => {
+  try {
+    const { data, error } = await supabase.rpc('can_take_quiz', {
+      p_quiz_id: quizId,
+      p_student_id: studentId
+    });
+
+    if (error) throw error;
+    return { success: true, canTake: data };
+
+  } catch (error) {
+    console.error('Error checking quiz eligibility:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Start a quiz attempt
+ */
+export const startQuizAttempt = async (quizId, studentId, maxScore) => {
+  try {
+    // Get current attempt number
+    const { data: attempts } = await supabase
+      .from('quiz_attempts')
+      .select('attempt_number')
+      .eq('quiz_id', quizId)
+      .eq('student_id', studentId)
+      .order('attempt_number', { ascending: false })
+      .limit(1);
+
+    const attemptNumber = (attempts && attempts.length > 0) 
+      ? attempts[0].attempt_number + 1 
+      : 1;
+
+    // Create new attempt
+    const { data, error } = await supabase
+      .from('quiz_attempts')
+      .insert({
+        quiz_id: quizId,
+        student_id: studentId,
+        attempt_number: attemptNumber,
+        max_score: maxScore,
+        status: 'in_progress'
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { success: true, data };
+
+  } catch (error) {
+    console.error('Error starting quiz attempt:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Save student answer (with auto-save support)
+ */
+export const saveStudentAnswer = async (attemptId, questionId, answer, pointsPossible) => {
+  try {
+    const answerData = {
+      attempt_id: attemptId,
+      question_id: questionId,
+      selected_option_id: answer.selected_option_id || null,
+      answer_text: answer.answer_text || null,
+      points_possible: pointsPossible
+    };
+
+    const { data, error } = await supabase
+      .from('student_answers')
+      .upsert(answerData, {
+        onConflict: 'attempt_id,question_id'
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { success: true, data };
+
+  } catch (error) {
+    console.error('Error saving answer:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Submit quiz attempt
+ */
+export const submitQuizAttempt = async (attemptId, timeTaken) => {
+  try {
+    const { data, error } = await supabase
+      .from('quiz_attempts')
+      .update({
+        status: 'submitted',
+        submitted_at: new Date().toISOString(),
+        time_taken_minutes: Math.ceil(timeTaken / 60)
+      })
+      .eq('id', attemptId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { success: true, data };
+
+  } catch (error) {
+    console.error('Error submitting quiz:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Get student's previous attempts for a quiz
+ */
+export const getStudentAttempts = async (quizId, studentId) => {
+  try {
+    const { data, error } = await supabase
+      .from('quiz_attempts')
+      .select('*')
+      .eq('quiz_id', quizId)
+      .eq('student_id', studentId)
+      .in('status', ['submitted', 'graded', 'reviewed'])
+      .order('attempt_number', { ascending: false });
+
+    if (error) throw error;
+    return { success: true, data };
+
+  } catch (error) {
+    console.error('Error fetching student attempts:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Get student's quiz results (only visible ones)
+ */
+export const getStudentQuizResults = async (sectionId = null) => {
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError) throw authError;
+
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('auth_user_id', user.id)
+      .single();
+
+    if (profileError) throw profileError;
+
+    const { data: studentData, error: studentError } = await supabase
+      .from('students')
+      .select('id')
+      .eq('profile_id', profileData.id)
+      .single();
+
+    if (studentError) throw studentError;
+
+    let query = supabase
+      .from('vw_student_quiz_overview')
+      .select('*')
+      .eq('student_id', studentData.id)
+      .eq('visible_to_student', true);
+
+    if (sectionId) {
+      query = query.eq('section_id', sectionId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+    return { success: true, data };
+
+  } catch (error) {
+    console.error('Error fetching quiz results:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Get detailed quiz result with answers
+ */
+export const getQuizResultDetails = async (attemptId) => {
+  try {
+    // Get attempt details
+    const { data: attempt, error: attemptError } = await supabase
+      .from('quiz_attempts')
+      .select(`
+        *,
+        quiz:quiz_id (
+          title,
+          description,
+          section_id
+        )
+      `)
+      .eq('id', attemptId)
+      .single();
+
+    if (attemptError) throw attemptError;
+
+    // Get answers with questions
+    const { data: answers, error: answersError } = await supabase
+      .from('student_answers')
+      .select(`
+        *,
+        question:question_id (
+          question_text,
+          question_type,
+          options:question_options (*),
+          answer:question_answers (*)
+        )
+      `)
+      .eq('attempt_id', attemptId);
+
+    if (answersError) throw answersError;
+
+    return { success: true, data: { attempt, answers } };
+
+  } catch (error) {
+    console.error('Error fetching quiz result details:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Get student statistics for a subject
+ */
+export const getStudentStats = async (studentId, subjectId = null) => {
+  try {
+    const { data, error } = await supabase.rpc('get_student_quiz_stats', {
+      p_student_id: studentId,
+      p_subject_id: subjectId
+    });
+
+    if (error) throw error;
+    return { success: true, data: data[0] };
+
+  } catch (error) {
+    console.error('Error fetching student stats:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Get current user info (student or teacher)
+ */
+export const getCurrentUserInfo = async () => {
+  try {
+    const { data, error } = await supabase.rpc('get_current_user_info');
+
+    if (error) throw error;
+    return { success: true, data: data[0] };
+
+  } catch (error) {
+    console.error('Error fetching current user info:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// ============================================
+// REALTIME SUBSCRIPTIONS
+// ============================================
+
+/**
+ * Subscribe to quiz attempts (for teachers to see live submissions)
+ */
+export const subscribeToQuizAttempts = (quizId, callback) => {
+  const subscription = supabase
+    .channel(`quiz-${quizId}-attempts`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'quiz_attempts',
+        filter: `quiz_id=eq.${quizId}`
+      },
+      (payload) => {
+        callback(payload);
+      }
+    )
+    .subscribe();
+
+  return subscription;
+};
+
+/**
+ * Unsubscribe from realtime updates
+ */
+export const unsubscribeFromChannel = (subscription) => {
+  if (subscription) {
+    supabase.removeChannel(subscription);
+  }
+};
+
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
+
+/**
+ * Calculate quiz score
+ */
+export const calculateScore = (answers, questions) => {
+  let totalScore = 0;
+  let maxScore = 0;
+
+  questions.forEach(question => {
+    maxScore += question.points || 1;
+    const answer = answers[question.id];
+    
+    if (answer?.is_correct) {
+      totalScore += question.points || 1;
+    }
+  });
+
+  const percentage = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
+
+  return {
+    totalScore,
+    maxScore,
+    percentage: Math.round(percentage * 100) / 100
+  };
+};
+
+/**
+ * Get quiz leaderboard
+ */
+export const getQuizLeaderboard = async (quizId) => {
+  try {
+    const { data, error } = await supabase
+      .from('vw_quiz_leaderboard')
+      .select('*')
+      .eq('quiz_id', quizId)
+      .order('rank', { ascending: true })
+      .limit(10);
+
+    if (error) throw error;
+    return { success: true, data };
+
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+export default {
+  // Teacher functions
+  createQuiz,
+  getTeacherQuizzes,
+  getSectionQuizzes,
+  updateQuiz,
+  deleteQuiz,
+  getQuizAttempts,
+  getSectionQuizStats,
+  finalizeQuizResults,
+  
+  // Student functions
+  getStudentQuizzes,
+  getStudentSectionQuizzes,
+  getQuizWithQuestions,
+  canTakeQuiz,
+  startQuizAttempt,
+  saveStudentAnswer,
+  submitQuizAttempt,
+  getStudentAttempts,
+  getStudentQuizResults,
+  getQuizResultDetails,
+  getStudentStats,
+  
+  // User functions
+  getCurrentUserInfo,
+  
+  // Realtime
+  subscribeToQuizAttempts,
+  unsubscribeFromChannel,
+  
+  // Utils
+  calculateScore,
+  getQuizLeaderboard
+};

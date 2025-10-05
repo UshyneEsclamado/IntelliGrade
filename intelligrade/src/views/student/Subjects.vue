@@ -137,7 +137,7 @@
           <button 
             v-if="subject.availableQuizzes > 0"
             class="action-btn primary pulse" 
-            @click.stop="takeQuiz(subject)"
+            @click.stop.prevent="takeQuiz(subject)"
             :title="`${subject.availableQuizzes} quiz${subject.availableQuizzes > 1 ? 'es' : ''} available`"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -158,16 +158,16 @@
             All Quizzes Completed
           </button>
           
-        <button 
-  v-else
-  class="action-btn clickable"
-  @click.stop="takeQuiz(subject)"
->
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17Z" />
-  </svg>
-  Take Quiz
-</button>
+          <button 
+            v-else
+            class="action-btn clickable"
+            @click.stop.prevent="takeQuiz(subject)"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17Z" />
+            </svg>
+            Take Quiz
+          </button>
 
           <button class="action-btn secondary" @click.stop="viewGrades(subject)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -315,7 +315,7 @@ export default {
         filtered = filtered.filter(subject => !this.archivedSubjects.has(subject.id));
       }
       
-      // Filter by status (only if not favorites or archived filter)
+      // Filter by status (only if not favorites or archived)
       if (this.activeFilter !== 'all' && this.activeFilter !== 'favorites' && this.activeFilter !== 'archived') {
         filtered = filtered.filter(subject => subject.status === this.activeFilter);
       }
@@ -922,18 +922,33 @@ export default {
     takeQuiz(subject) {
   // Navigate to TakeQuiz regardless of availableQuizzes count
   // TakeQuiz component will handle the "no quizzes" display
-  this.$router.push({
-    name: 'TakeQuiz',
-    params: {
-      subjectId: subject.id,
-      sectionId: subject.sectionId
-    },
-    query: {
-      subjectName: subject.name,
-      sectionName: subject.section,
-      availableQuizzes: subject.availableQuizzes || 0
+  console.log('Taking quiz for subject:', subject); // Debug log
+    
+    // Check if the route exists
+    if (this.$router.hasRoute('TakeQuiz')) {
+      this.$router.push({
+        name: 'TakeQuiz',
+        params: {
+          subjectId: subject.id,
+          sectionId: subject.sectionId
+        },
+        query: {
+          subjectName: subject.name,
+          sectionName: subject.section,
+          availableQuizzes: subject.availableQuizzes || 0
+        }
+      }).catch(error => {
+        console.error('Navigation error:', error);
+        alert('Unable to navigate to quiz page. Please try again.');
+      });
+    } else {
+      // Fallback navigation
+      console.log('TakeQuiz route not found, using fallback path');
+      this.$router.push(`/student/take-quiz/${subject.id}/${subject.sectionId}`).catch(error => {
+        console.error('Fallback navigation error:', error);
+        alert('Quiz page not found. Please contact support.');
+      });
     }
-  })
 },
 
     viewCompletedQuizzes(subject) {
@@ -1362,6 +1377,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
+  position: relative; /* Ensure proper stacking context */
 }
 
 .subject-card:hover {
@@ -1636,6 +1652,8 @@ export default {
 .subject-actions {
   display: flex;
   gap: 0.75rem;
+  position: relative;
+  z-index: 2; /* Higher than the card */
 }
 
 .action-btn {
@@ -1652,12 +1670,15 @@ export default {
   font-size: 0.875rem;
   border: none;
   font-family: 'Inter', sans-serif;
+  pointer-events: auto !important; /* Ensure button is clickable */
+  z-index: 1; /* Make sure it's above other elements */
 }
 
 .action-btn.primary {
   background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
   color: white;
   box-shadow: 0 4px 16px rgba(61, 141, 122, 0.2);
+  position: relative; /* Ensure proper stacking context */
 }
 
 .action-btn.primary:hover {
@@ -1969,9 +1990,9 @@ export default {
 }
 
 .join-btn:disabled {
+  pointer-events: none;
   opacity: 0.6;
   cursor: not-allowed;
-  transform: none;
 }
 
 /* Loading Styles */

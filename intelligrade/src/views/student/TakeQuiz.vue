@@ -1,355 +1,288 @@
-
 <template>
-  <div class="take-quiz-page">
-    <!-- Header Section -->
-    <div class="page-header">
-      <div class="header-container">
-        <div class="header-content">
-          <div class="quiz-info">
-            <div class="quiz-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-              </svg>
-            </div>
-            <div class="quiz-details">
-              <h1>{{ hasAvailableQuizzes ? quiz.title : 'Quiz Center' }}</h1>
-              <p>{{ quiz.subject_name }} • {{ quiz.section }}</p>
-            </div>
-          </div>
-          <div class="quiz-status">
-            <div v-if="quizStarted && !quizSubmitted && quiz.has_time_limit" class="timer-display">
-              <div class="timer-icon" :class="{ 'warning': timeRemaining < 300, 'critical': timeRemaining <= 60 }">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M16.2,16.2L11,13V7H12.5V12.2L17,14.7L16.2,16.2Z" />
-                </svg>
-              </div>
-              <div class="timer-content">
-                <div class="timer-value" :class="{ 'warning': timeRemaining < 300, 'critical': timeRemaining <= 60 }">
-                  {{ formatTime(timeRemaining) }}
-                </div>
-                <div class="timer-label">Time Left</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
+    <!-- Animated Background Shapes -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+      <div class="floating-shape shape-1"></div>
+      <div class="floating-shape shape-2"></div>
+      <div class="floating-shape shape-3"></div>
     </div>
 
-    <!-- Main Content -->
-    <div class="main-content">
-      <!-- Quiz Welcome Screen -->
-      <div v-if="!quizStarted && !quizSubmitted" class="welcome-section slide-up">
-        <!-- No Quizzes Available State -->
-        <div v-if="!hasAvailableQuizzes" class="no-quiz-card">
-          <div class="no-quiz-icon">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17Z" />
+    <div class="max-w-4xl mx-auto relative z-10">
+      <!-- Loading State -->
+      <div v-if="isLoading" class="glass-card p-12 text-center slide-up">
+        <div class="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p class="text-gray-600 font-semibold">Loading quizzes...</p>
+      </div>
+
+      <!-- No Quizzes Available -->
+      <div v-else-if="!isLoading && noQuizzesAvailable" class="slide-up">
+        <div class="glass-card p-12 text-center">
+          <div class="w-32 h-32 mx-auto mb-6 bg-gradient-to-br from-gray-300 to-gray-400 rounded-full flex items-center justify-center shadow-lg">
+            <svg class="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
           </div>
-          <h2>No Available Quizzes</h2>
-          <p>There are currently no quizzes available for this subject. Please check back later or contact your teacher.</p>
-          <div class="no-quiz-actions">
-            <button @click="$router.push('/student/subjects')" class="btn btn-primary">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
+          
+          <h2 class="text-3xl font-bold text-gray-800 mb-4">No Quizzes Available Yet</h2>
+          <p class="text-gray-600 mb-8">No quizzes have been published for this section. Please check back later.</p>
+          
+          <div class="flex justify-center">
+            <button @click="goBackToSubjects" class="btn-primary">
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
               </svg>
               Back to Subjects
             </button>
           </div>
         </div>
+      </div>
 
-        <!-- Regular Welcome Card (when quiz is available) -->
-        <div v-else class="welcome-card">
-          <div class="welcome-header">
-            <div class="quiz-badge">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-              </svg>
-            </div>
-            <h2>{{ quiz.title }}</h2>
-            <p v-if="quiz.description" class="quiz-description">{{ quiz.description }}</p>
-          </div>
-
-          <!-- Quiz Information Grid -->
-          <div class="info-grid">
-            <div class="info-card">
-              <div class="info-icon">📅</div>
-              <div class="info-label">Available Until</div>
-              <div class="info-value">{{ formatDate(quiz.end_date) }}</div>
-            </div>
-            
-            <div class="info-card">
-              <div class="info-icon">⏱</div>
-              <div class="info-label">Time Limit</div>
-              <div class="info-value">
-                {{ quiz.has_time_limit ? quiz.time_limit_minutes + ' min' : 'No limit' }}
-              </div>
-            </div>
-            
-            <div class="info-card">
-              <div class="info-icon">📝</div>
-              <div class="info-label">Questions</div>
-              <div class="info-value">{{ quiz.total_questions }}</div>
-            </div>
-            
-            <div class="info-card">
-              <div class="info-icon">🔁</div>
-              <div class="info-label">Attempts</div>
-              <div class="info-value">{{ attemptsUsed }} / {{ quiz.attempts_allowed }}</div>
-            </div>
-          </div>
-
-          <!-- Alert Messages -->
-          <div v-if="attemptsUsed >= quiz.attempts_allowed" class="alert alert-error">
-            <div class="alert-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"/>
-              </svg>
-            </div>
-            <div class="alert-content">
-              <div class="alert-title">No Attempts Remaining</div>
-              <div class="alert-text">You have used all {{ quiz.attempts_allowed }} attempt(s) for this quiz.</div>
-            </div>
-          </div>
-
-          <div v-else-if="quiz.has_time_limit" class="alert alert-warning">
-            <div class="alert-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"/>
-              </svg>
-            </div>
-            <div class="alert-content">
-              <div class="alert-title">Time Limit Active</div>
-              <div class="alert-text">You have {{ quiz.time_limit_minutes }} minutes to complete this quiz once you start.</div>
-            </div>
-          </div>
-
-          <!-- Start Button -->
-          <div class="start-section">
-            <button 
-              v-if="attemptsUsed < quiz.attempts_allowed"
-              @click="startQuiz" 
-              class="start-button"
-            >
-              <div class="start-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-                  <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-              </div>
-              <span>Start Quiz</span>
-              <div class="start-arrow">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                </svg>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        <!-- Previous Attempts -->
-        <div v-if="hasAvailableQuizzes && previousAttempts.length > 0" class="attempts-card">
-          <div class="attempts-header">
-            <div class="attempts-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-            </div>
-            <h3>Previous Attempts</h3>
-          </div>
-          <div class="attempts-list">
-            <div v-for="(attempt, index) in previousAttempts" :key="index" class="attempt-item">
-              <div class="attempt-info">
-                <div class="attempt-number">Attempt {{ index + 1 }}</div>
-                <div class="attempt-date">{{ formatDateTime(attempt.submitted_at) }}</div>
-              </div>
-              <div class="attempt-score">
-                <div class="score-percentage" :class="getScoreColor(attempt.percentage)">
-                  {{ attempt.percentage }}%
+      <!-- Quiz Selection (if multiple quizzes) -->
+      <div v-else-if="!quizStarted && availableQuizzes.length > 1" class="slide-up">
+        <div class="glass-card p-8">
+          <h2 class="text-3xl font-bold text-gray-800 mb-2">Available Quizzes</h2>
+          <p class="text-gray-600 mb-6">Select a quiz to begin</p>
+          
+          <div class="space-y-4">
+            <div v-for="quiz in availableQuizzes" :key="quiz.quiz_id" 
+                 @click="selectQuiz(quiz)" 
+                 class="quiz-selection-card">
+              <div class="flex-1">
+                <h3 class="text-xl font-bold text-gray-800">{{ quiz.title }}</h3>
+                <p class="text-gray-600 mt-1">{{ quiz.description }}</p>
+                <div class="flex items-center gap-4 mt-3 text-sm">
+                  <span class="quiz-badge">{{ quiz.number_of_questions }} Questions</span>
+                  <span v-if="quiz.has_time_limit" class="quiz-badge">⏱️ {{ quiz.time_limit_minutes }} min</span>
+                  <span class="quiz-badge">{{ quiz.attempts_used }}/{{ quiz.attempts_allowed === 999 ? '∞' : quiz.attempts_allowed }} Attempts</span>
                 </div>
-                <div class="score-points">{{ attempt.total_score }} / {{ attempt.max_score }}</div>
               </div>
+              <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Quiz Interface -->
-      <div v-if="quizStarted && !quizSubmitted" class="quiz-interface slide-up">
-        <!-- Progress Bar -->
-        <div class="progress-section">
-          <div class="progress-card">
-            <div class="progress-header">
-              <div class="progress-info">
-                <span class="progress-text">Question {{ currentQuestionIndex + 1 }} of {{ questions.length }}</span>
-                <span class="progress-percentage">{{ Math.round(((currentQuestionIndex + 1) / questions.length) * 100) }}%</span>
+      <!-- Quiz Start Screen -->
+      <div v-else-if="!quizStarted && selectedQuiz" class="slide-up">
+        <div class="glass-card p-8">
+          <h2 class="text-3xl font-bold text-gray-800 mb-2">{{ selectedQuiz.title }}</h2>
+          <p class="text-gray-600 mb-6">{{ selectedQuiz.description }}</p>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="info-card">
+              <div class="text-4xl mb-2">📝</div>
+              <div class="text-2xl font-bold text-gray-800">{{ selectedQuiz.number_of_questions }}</div>
+              <div class="text-sm text-gray-600">Questions</div>
+            </div>
+            <div class="info-card">
+              <div class="text-4xl mb-2">⏱️</div>
+              <div class="text-2xl font-bold text-gray-800">
+                {{ selectedQuiz.has_time_limit ? selectedQuiz.time_limit_minutes + ' min' : 'No Limit' }}
               </div>
-              <div v-if="quiz.has_time_limit" class="timer-compact">
-                <div class="timer-compact-icon" :class="{ 'warning': timeRemaining < 300, 'critical': timeRemaining <= 60 }">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M16.2,16.2L11,13V7H12.5V12.2L17,14.7L16.2,16.2Z" />
-                  </svg>
+              <div class="text-sm text-gray-600">Time Limit</div>
+            </div>
+            <div class="info-card">
+              <div class="text-4xl mb-2">🔁</div>
+              <div class="text-2xl font-bold text-gray-800">
+                {{ attemptsUsed }}/{{ selectedQuiz.attempts_allowed === 999 ? '∞' : selectedQuiz.attempts_allowed }}
+              </div>
+              <div class="text-sm text-gray-600">Attempts</div>
+            </div>
+          </div>
+
+          <!-- Previous Attempts -->
+          <div v-if="previousAttempts.length > 0" class="mb-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-3">Your Previous Attempts</h3>
+            <div class="space-y-2">
+              <div v-for="attempt in previousAttempts" :key="attempt.id" class="attempt-card">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <span class="font-semibold">Attempt {{ attempt.attempt_number }}</span>
+                    <span class="text-gray-600 ml-3">{{ formatDateTime(attempt.submitted_at) }}</span>
+                  </div>
+                  <div class="text-right">
+                    <div :class="['text-2xl font-bold', getScoreColor(attempt.percentage)]">
+                      {{ attempt.percentage }}%
+                    </div>
+                    <div class="text-sm text-gray-600">{{ attempt.total_score }}/{{ attempt.max_score }} points</div>
+                  </div>
                 </div>
-                <span class="timer-compact-text" :class="{ 'warning': timeRemaining < 300, 'critical': timeRemaining <= 60 }">
-                  {{ formatTime(timeRemaining) }}
-                </span>
               </div>
             </div>
-            <div class="progress-bar">
-              <div class="progress-fill" :style="{ width: ((currentQuestionIndex + 1) / questions.length) * 100 + '%' }"></div>
+          </div>
+
+          <!-- Warnings -->
+          <div v-if="selectedQuiz.attempts_allowed !== 999 && attemptsUsed >= selectedQuiz.attempts_allowed" class="alert-danger mb-6">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+            </svg>
+            <div>
+              <strong>No Attempts Remaining</strong>
+              <p>You have used all {{ selectedQuiz.attempts_allowed }} attempts for this quiz.</p>
             </div>
+          </div>
+
+          <div v-else-if="selectedQuiz.has_time_limit" class="alert-warning mb-6">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+            </svg>
+            <div>
+              <strong>Time Limit: {{ selectedQuiz.time_limit_minutes }} minutes</strong>
+              <p>Once you start, the timer will begin. Make sure you have enough time to complete the quiz.</p>
+            </div>
+          </div>
+
+          <button 
+            @click="startQuiz" 
+            :disabled="selectedQuiz.attempts_allowed !== 999 && attemptsUsed >= selectedQuiz.attempts_allowed"
+            class="btn-start"
+            :class="{ 'opacity-50 cursor-not-allowed': selectedQuiz.attempts_allowed !== 999 && attemptsUsed >= selectedQuiz.attempts_allowed }">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Start Quiz
+          </button>
+        </div>
+      </div>
+
+      <!-- Quiz Taking Interface -->
+      <div v-else-if="quizStarted && !quizSubmitted" class="slide-up space-y-6">
+        <!-- Timer and Progress -->
+        <div class="glass-card p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-xl font-bold text-gray-800">{{ selectedQuiz.title }}</h3>
+              <p class="text-sm text-gray-600">Question {{ currentQuestionIndex + 1 }} of {{ questions.length }}</p>
+            </div>
+            <div v-if="selectedQuiz.has_time_limit" class="text-right">
+              <div class="text-3xl font-bold" :class="timeRemaining < 60 ? 'text-red-600' : 'text-blue-600'">
+                {{ formatTime(timeRemaining) }}
+              </div>
+              <div class="text-sm text-gray-600">Time Remaining</div>
+            </div>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" :style="{ width: progressPercentage + '%' }"></div>
           </div>
         </div>
 
         <!-- Question Card -->
-        <div class="question-section">
-          <div class="question-card">
-            <div class="question-header">
-              <div class="question-number-badge">{{ currentQuestionIndex + 1 }}</div>
-              <div class="question-info">
-                <h2 class="question-title">{{ currentQuestion.question_text }}</h2>
-                <div class="question-points">{{ currentQuestion.points }} {{ currentQuestion.points === 1 ? 'point' : 'points' }}</div>
-              </div>
-            </div>
+        <div class="glass-card p-8">
+          <div class="flex items-start gap-4 mb-6">
+            <div class="question-number">{{ currentQuestionIndex + 1 }}</div>
+            <div class="flex-1">
+              <h2 class="text-2xl font-bold text-gray-800 mb-4">{{ currentQuestion.question_text }}</h2>
 
-            <div class="question-content">
               <!-- Multiple Choice -->
-              <div v-if="currentQuestion.question_type === 'multiple_choice'" class="answer-options">
-                <div 
-                  v-for="(option, index) in currentQuestion.options" 
-                  :key="option.id"
-                  class="answer-option"
-                  :class="{ 'selected': studentAnswers[currentQuestion.id]?.selected_option_id === option.id }"
-                  @click="selectOption(currentQuestion.id, option.id)"
-                >
+              <div v-if="currentQuestion.question_type === 'multiple_choice'" class="space-y-3">
+                <div v-for="(option, index) in currentQuestion.options" :key="option.id"
+                     @click="selectAnswer(option.id)"
+                     :class="['answer-option', { 'selected': studentAnswers[currentQuestion.id]?.selected_option_id === option.id }]">
                   <div class="option-indicator">{{ String.fromCharCode(65 + index) }}</div>
-                  <span class="option-text">{{ option.option_text }}</span>
-                  <div class="option-check">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                    </svg>
-                  </div>
+                  <span class="flex-1">{{ option.option_text }}</span>
+                  <svg class="check-icon w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                  </svg>
                 </div>
               </div>
 
               <!-- True/False -->
-              <div v-if="currentQuestion.question_type === 'true_false'" class="tf-options">
-                <div 
-                  class="tf-option"
-                  :class="{ 'selected': studentAnswers[currentQuestion.id]?.answer_text === 'true' }"
-                  @click="selectTrueFalse(currentQuestion.id, 'true')"
-                >
-                  <div class="tf-icon true-icon">✅</div>
-                  <div class="tf-label">True</div>
+              <div v-else-if="currentQuestion.question_type === 'true_false'" class="grid grid-cols-2 gap-4">
+                <div @click="selectTrueFalse('true')"
+                     :class="['tf-answer-option', { 'selected': studentAnswers[currentQuestion.id]?.answer_text === 'true' }]">
+                  <div class="text-6xl mb-3">✅</div>
+                  <div class="text-2xl font-bold">True</div>
                 </div>
-                
-                <div 
-                  class="tf-option"
-                  :class="{ 'selected': studentAnswers[currentQuestion.id]?.answer_text === 'false' }"
-                  @click="selectTrueFalse(currentQuestion.id, 'false')"
-                >
-                  <div class="tf-icon false-icon">❌</div>
-                  <div class="tf-label">False</div>
+                <div @click="selectTrueFalse('false')"
+                     :class="['tf-answer-option', { 'selected': studentAnswers[currentQuestion.id]?.answer_text === 'false' }]">
+                  <div class="text-6xl mb-3">❌</div>
+                  <div class="text-2xl font-bold">False</div>
                 </div>
               </div>
 
               <!-- Fill in the Blank -->
-              <div v-if="currentQuestion.question_type === 'fill_blank'" class="fill-section">
+              <div v-else-if="currentQuestion.question_type === 'fill_blank'">
                 <input 
-                  type="text"
                   v-model="studentAnswers[currentQuestion.id].answer_text"
-                  placeholder="Type your answer here..."
+                  @input="autoSaveAnswer"
+                  type="text" 
+                  placeholder="Type your answer here..." 
                   class="fill-input"
                 />
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Navigation Section -->
-        <div class="navigation-section">
-          <div class="navigation-card">
-            <div class="nav-buttons">
-              <button 
-                @click="previousQuestion" 
-                :disabled="currentQuestionIndex === 0"
-                class="nav-btn nav-btn-secondary"
-                :class="{ 'disabled': currentQuestionIndex === 0 }"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M15 19l-7-7 7-7"/>
-                </svg>
-                Previous
-              </button>
+          <!-- Navigation -->
+          <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+            <button 
+              @click="previousQuestion" 
+              :disabled="currentQuestionIndex === 0"
+              class="btn-nav"
+              :class="{ 'opacity-50 cursor-not-allowed': currentQuestionIndex === 0 }">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+              Previous
+            </button>
 
+            <div class="flex items-center gap-2">
               <button 
-                v-if="currentQuestionIndex < questions.length - 1"
-                @click="nextQuestion" 
-                class="nav-btn nav-btn-primary"
-              >
-                Next
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M9 5l7 7-7 7"/>
-                </svg>
-              </button>
-
-              <button 
-                v-else
-                @click="showSubmitModal = true" 
-                class="nav-btn nav-btn-submit"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                </svg>
-                Submit Quiz
+                v-for="(q, index) in questions" 
+                :key="q.id"
+                @click="goToQuestion(index)"
+                :class="['question-dot', { 
+                  'active': index === currentQuestionIndex,
+                  'answered': isQuestionAnswered(q.id)
+                }]">
+                {{ index + 1 }}
               </button>
             </div>
 
-            <!-- Question Navigator -->
-            <div class="question-navigator">
-              <div class="navigator-title">Questions</div>
-              <div class="question-dots">
-                <button
-                  v-for="(q, index) in questions"
-                  :key="q.id"
-                  @click="goToQuestion(index)"
-                  class="question-dot"
-                  :class="{
-                    'current': index === currentQuestionIndex,
-                    'answered': isQuestionAnswered(q.id),
-                    'unanswered': !isQuestionAnswered(q.id)
-                  }"
-                >
-                  {{ index + 1 }}
-                </button>
-              </div>
-            </div>
+            <button 
+              v-if="currentQuestionIndex < questions.length - 1"
+              @click="nextQuestion" 
+              class="btn-nav-primary">
+              Next
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+
+            <button 
+              v-else
+              @click="showSubmitModal = true" 
+              class="btn-nav-primary">
+              Submit Quiz
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+            </button>
           </div>
         </div>
       </div>
 
-      <!-- Quiz Completion -->
-      <div v-if="quizSubmitted" class="completion-section slide-up">
-        <div class="completion-card">
-          <div class="completion-icon">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+      <!-- Quiz Submitted -->
+      <div v-else-if="quizSubmitted" class="slide-up">
+        <div class="glass-card p-12 text-center">
+          <div class="w-32 h-32 mx-auto mb-6 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center shadow-lg animate-bounce-slow">
+            <svg class="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
             </svg>
           </div>
-          <h2>Quiz Submitted Successfully!</h2>
-          <p>Your answers have been recorded. You can view your results in the Grades section once they are available.</p>
-          <div class="completion-actions">
-            <button @click="$router.push('/student/subjects')" class="btn btn-secondary">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
+          
+          <h2 class="text-3xl font-bold text-gray-800 mb-4">Quiz Submitted Successfully!</h2>
+          <p class="text-gray-600 mb-8">Your answers have been recorded. Your teacher will review and grade your quiz.</p>
+          
+          <div class="flex justify-center gap-4">
+            <button @click="goBackToSubjects" class="btn-primary">
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
               </svg>
-              Back to Subjects
-            </button>
-            <button @click="$router.push('/student/grades')" class="btn btn-primary">
-              View Grades
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-              </svg>
+              Back to Dashboard
             </button>
           </div>
         </div>
@@ -382,11 +315,12 @@
           <button @click="showSubmitModal = false" class="btn-secondary flex-1">
             Cancel
           </button>
-          <button @click="submitQuiz" class="btn-submit flex-1">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button @click="submitQuiz" :disabled="isSubmitting" class="btn-submit flex-1">
+            <div v-if="isSubmitting" class="spinner-small"></div>
+            <svg v-else class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
             </svg>
-            Yes, Submit
+            {{ isSubmitting ? 'Submitting...' : 'Yes, Submit' }}
           </button>
         </div>
       </div>
@@ -395,1250 +329,792 @@
 </template>
 
 <script>
-import { supabase } from '../../supabase.js'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import {
+  getStudentSectionQuizzes,
+  getQuizWithQuestions,
+  canTakeQuiz,
+  startQuizAttempt,
+  saveStudentAnswer,
+  submitQuizAttempt,
+  getStudentAttempts,
+  getCurrentUserInfo
+} from '@/services/quizService';
 
 export default {
   name: 'TakeQuiz',
-  data() {
-    return {
-      quiz: {
-        id: null,
-        title: 'Quiz Loading...',
-        description: '',
-        subject_name: this.$route.query.subjectName || 'Subject',
-        section: this.$route.query.sectionName || 'Section',
-        total_questions: 0,
-        has_time_limit: false,
-        time_limit_minutes: 0,
-        attempts_allowed: 1,
-        end_date: '',
-        start_date: ''
-      },
-      questions: [],
-      currentQuestionIndex: 0,
-      studentAnswers: {},
-      quizStarted: false,
-      quizSubmitted: false,
-      showSubmitModal: false,
-      timeRemaining: 0,
-      timerInterval: null,
-      attemptsUsed: 0,
-      previousAttempts: [],
-      hasAvailableQuizzes: false,
-      availableQuizzes: [],
-      currentUser: null,
-      studentInfo: null,
-      currentAttemptId: null
-    };
-  },
-  computed: {
-    currentQuestion() {
-      return this.questions[this.currentQuestionIndex] || {};
-    },
-    progressPercentage() {
-      return ((this.currentQuestionIndex + 1) / this.questions.length) * 100;
-    },
-    answeredCount() {
-      return Object.values(this.studentAnswers).filter(answer => 
+  setup() {
+    const router = useRouter();
+    const route = useRoute();
+
+    // State
+    const isLoading = ref(true);
+    const loadError = ref(null);
+    const noQuizzesAvailable = ref(false);
+    const sectionId = ref(null);
+    const sectionName = ref('Loading...');
+    const subjectName = ref('Loading...');
+    const studentId = ref(null);
+    const availableQuizzes = ref([]);
+    const selectedQuiz = ref(null);
+    const questions = ref([]);
+    const currentQuestionIndex = ref(0);
+    const studentAnswers = ref({});
+    const quizStarted = ref(false);
+    const quizSubmitted = ref(false);
+    const showSubmitModal = ref(false);
+    const timeRemaining = ref(0);
+    const timerInterval = ref(null);
+    const attemptsUsed = ref(0);
+    const previousAttempts = ref([]);
+    const attemptId = ref(null);
+    const isSubmitting = ref(false);
+    const quizStartTime = ref(null);
+
+    // Computed
+    const currentQuestion = computed(() => {
+      return questions.value[currentQuestionIndex.value] || {};
+    });
+
+    const progressPercentage = computed(() => {
+      return ((currentQuestionIndex.value + 1) / questions.value.length) * 100;
+    });
+
+    const answeredCount = computed(() => {
+      return Object.values(studentAnswers.value).filter(answer => 
         answer.selected_option_id || answer.answer_text
       ).length;
-    }
-  },
-  methods: {
-    async initializeAuth() {
+    });
+
+    // Methods
+    const fetchCurrentUser = async () => {
       try {
-        console.log('TakeQuiz: Initializing authentication...')
-        
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-        
-        if (sessionError || !session?.user) {
-          console.log('TakeQuiz: No session found')
-          await this.$router.push('/login')
-          return false
-        }
-        
-        this.currentUser = session.user
-        console.log('TakeQuiz: Session found for user:', session.user.id)
-        
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, role')
-          .eq('auth_user_id', session.user.id)
-          .single()
-        
-        if (profileError || !profile || profile.role !== 'student') {
-          console.log('TakeQuiz: Invalid profile or role')
-          await this.$router.push('/login')
-          return false
-        }
-
-        const { data: student, error: studentError } = await supabase
-          .from('students')
-          .select('*')
-          .eq('profile_id', profile.id)
-          .eq('is_active', true)
-          .single()
-
-        if (studentError || !student) {
-          console.log('TakeQuiz: Student not found')
-          await this.$router.push('/login')
-          return false
-        }
-
-        this.studentInfo = student
-        console.log('TakeQuiz: Student info loaded:', student.id)
-        return true
-
-      } catch (error) {
-        console.error('TakeQuiz: Authentication error:', error)
-        await this.$router.push('/login')
-        return false
-      }
-    },
-
-    async checkQuizAvailability() {
-      try {
-        const sectionId = this.$route.params.sectionId
-
-        console.log('TakeQuiz: Checking availability for section:', sectionId)
-        console.log('TakeQuiz: Student ID:', this.studentInfo?.id)
-
-        if (!sectionId || !this.studentInfo) {
-          console.log('TakeQuiz: Missing section ID or student info')
-          this.hasAvailableQuizzes = false
-          return
-        }
-
-        const now = new Date().toISOString()
-        console.log('TakeQuiz: Current time:', now)
-
-        // Get all published quizzes for this section (temporarily remove date filters for debugging)
-        const { data: quizzes, error: quizError } = await supabase
-          .from('quizzes')
-          .select('*')
-          .eq('section_id', sectionId)
-          .eq('is_published', true)
-
-        console.log('TakeQuiz: Query result - quizzes:', quizzes)
-        console.log('TakeQuiz: Query error:', quizError)
-
-        if (quizError) {
-          console.error('TakeQuiz: Error fetching quizzes:', quizError)
-          this.hasAvailableQuizzes = false
-          return
-        }
-
-        if (!quizzes || quizzes.length === 0) {
-          console.log('TakeQuiz: No published quizzes found for this section')
-          this.hasAvailableQuizzes = false
-          return
-        }
-
-        console.log('TakeQuiz: Found', quizzes.length, 'published quiz(es)')
-
-        // Check attempts for each quiz
-        const availableQuizzes = []
-        for (const quiz of quizzes) {
-          console.log('TakeQuiz: Checking quiz:', quiz.title, 'ID:', quiz.id)
-          
-          const { count, error: countError } = await supabase
-            .from('quiz_results')
-            .select('id', { count: 'exact' })
-            .eq('quiz_id', quiz.id)
-            .eq('student_id', this.studentInfo.id)
-
-          if (countError) {
-            console.error('TakeQuiz: Error checking attempts:', countError)
-            continue
-          }
-
-          const attemptsUsed = count || 0
-          console.log('TakeQuiz: Attempts used:', attemptsUsed, '/', quiz.attempts_allowed)
-
-          if (attemptsUsed < quiz.attempts_allowed) {
-            availableQuizzes.push({
-              ...quiz,
-              attemptsUsed
-            })
-            console.log('TakeQuiz: Quiz is available')
-          } else {
-            console.log('TakeQuiz: Quiz has no remaining attempts')
-          }
-        }
-
-        console.log('TakeQuiz: Total available quizzes:', availableQuizzes.length)
-
-        this.availableQuizzes = availableQuizzes
-        this.hasAvailableQuizzes = availableQuizzes.length > 0
-        
-        if (this.hasAvailableQuizzes) {
-          console.log('TakeQuiz: Loading first available quiz')
-          await this.loadQuizData(availableQuizzes[0])
+        const result = await getCurrentUserInfo();
+        if (result.success && result.data) {
+          studentId.value = result.data.user_id;
+          console.log('Current student ID:', studentId.value);
         } else {
-          console.log('TakeQuiz: No available quizzes (all used up or none exist)')
+          throw new Error('Failed to fetch user info');
+        }
+      } catch (error) {
+        console.error('Error fetching current user:', error);
+        alert('Error: Could not identify student. Please log in again.');
+        router.push('/login');
+      }
+    };
+
+    const checkAvailableQuizzes = async () => {
+      isLoading.value = true;
+      loadError.value = null;
+      
+      try {
+        // Get student ID first
+        await fetchCurrentUser();
+
+        if (!studentId.value || !sectionId.value) {
+          throw new Error('Missing student or section information');
+        }
+
+        // Fetch quizzes for this section
+        const result = await getStudentSectionQuizzes(studentId.value, sectionId.value);
+        
+        if (result.success) {
+          // Filter only available quizzes
+          availableQuizzes.value = result.data.filter(quiz => quiz.is_available);
+          
+          if (availableQuizzes.value.length === 0) {
+            noQuizzesAvailable.value = true;
+          } else if (availableQuizzes.value.length === 1) {
+            // Auto-select if only one quiz
+            selectedQuiz.value = availableQuizzes.value[0];
+            await loadQuizDetails();
+          }
+        } else {
+          throw new Error(result.error || 'Failed to fetch quizzes');
         }
         
       } catch (error) {
-        console.error('TakeQuiz: Error in checkQuizAvailability:', error)
-        this.hasAvailableQuizzes = false
+        console.error('Error checking available quizzes:', error);
+        loadError.value = error.message;
+        noQuizzesAvailable.value = true;
+      } finally {
+        isLoading.value = false;
       }
-    },
-
-    async loadQuizData(quizData) {
+    };
+    
+    const goBackToSubjects = () => {
+      router.push('/student/subjects');
+    };
+    
+    const selectQuiz = async (quiz) => {
+      selectedQuiz.value = quiz;
+      await loadQuizDetails();
+    };
+    
+    const loadQuizDetails = async () => {
+      if (!selectedQuiz.value) return;
+      
       try {
-        console.log('TakeQuiz: Loading quiz data:', quizData.title)
-        
-        this.quiz = {
-          id: quizData.id,
-          title: quizData.title,
-          description: quizData.description || '',
-          subject_name: this.$route.query.subjectName || 'Subject',
-          section: this.$route.query.sectionName || 'Section',
-          total_questions: quizData.total_questions || 0,
-          has_time_limit: quizData.has_time_limit,
-          time_limit_minutes: quizData.time_limit_minutes || 0,
-          attempts_allowed: quizData.attempts_allowed,
-          end_date: quizData.end_date,
-          start_date: quizData.start_date
+        // Get previous attempts
+        const attemptsResult = await getStudentAttempts(
+          selectedQuiz.value.quiz_id,
+          studentId.value
+        );
+
+        if (attemptsResult.success) {
+          previousAttempts.value = attemptsResult.data;
+          attemptsUsed.value = previousAttempts.value.length;
+        }
+      } catch (error) {
+        console.error('Error loading quiz details:', error);
+      }
+    };
+    
+    const startQuiz = async () => {
+      try {
+        // Check if student can take quiz
+        const canTakeResult = await canTakeQuiz(
+          selectedQuiz.value.quiz_id,
+          studentId.value
+        );
+
+        if (!canTakeResult.success || !canTakeResult.canTake) {
+          alert('You cannot take this quiz at this time.');
+          return;
         }
 
-        this.attemptsUsed = quizData.attemptsUsed || 0
+        // Load questions
+        const quizResult = await getQuizWithQuestions(selectedQuiz.value.quiz_id);
         
-        await this.loadPreviousAttempts()
-        
-        console.log('TakeQuiz: Quiz data loaded successfully')
-        
-      } catch (error) {
-        console.error('TakeQuiz: Error loading quiz data:', error)
-      }
-    },
-
-    async loadPreviousAttempts() {
-      try {
-        const { data: attempts, error } = await supabase
-          .from('quiz_results')
-          .select('score, total_score, submitted_at')
-          .eq('quiz_id', this.quiz.id)
-          .eq('student_id', this.studentInfo.id)
-          .order('submitted_at', { ascending: false })
-
-        if (error) throw error
-
-        this.previousAttempts = (attempts || []).map(attempt => ({
-          total_score: attempt.score,
-          max_score: attempt.total_score,
-          percentage: Math.round((attempt.score / attempt.total_score) * 100),
-          submitted_at: attempt.submitted_at
-        }))
-
-        console.log('TakeQuiz: Loaded', this.previousAttempts.length, 'previous attempt(s)')
-
-      } catch (error) {
-        console.error('TakeQuiz: Error loading previous attempts:', error)
-        this.previousAttempts = []
-      }
-    },
-
-    async startQuiz() {
-      try {
-        console.log('TakeQuiz: Starting quiz...')
-        
-        const { data: attempt, error: attemptError } = await supabase
-          .from('quiz_results')
-          .insert([{
-            quiz_id: this.quiz.id,
-            student_id: this.studentInfo.id,
-            score: 0,
-            total_score: 0,
-            started_at: new Date().toISOString(),
-            submitted_at: null
-          }])
-          .select()
-          .single()
-
-        if (attemptError) {
-          console.error('TakeQuiz: Error creating attempt:', attemptError)
-          alert('Failed to start quiz. Please try again.')
-          return
+        if (!quizResult.success) {
+          throw new Error('Failed to load quiz questions');
         }
 
-        this.currentAttemptId = attempt.id
-        this.quizStarted = true
+        questions.value = quizResult.data.questions;
 
-        console.log('TakeQuiz: Attempt created with ID:', attempt.id)
+        // Calculate max score
+        const maxScore = questions.value.reduce((sum, q) => sum + (q.points || 1), 0);
 
-        if (this.quiz.has_time_limit) {
-          this.timeRemaining = this.quiz.time_limit_minutes * 60
-          this.startTimer()
-          console.log('TakeQuiz: Timer started for', this.quiz.time_limit_minutes, 'minutes')
+        // Start attempt
+        const attemptResult = await startQuizAttempt(
+          selectedQuiz.value.quiz_id,
+          studentId.value,
+          maxScore
+        );
+
+        if (!attemptResult.success) {
+          throw new Error('Failed to start quiz attempt');
         }
 
-        await this.loadQuestions()
+        attemptId.value = attemptResult.data.id;
+        quizStartTime.value = Date.now();
 
-      } catch (error) {
-        console.error('TakeQuiz: Error starting quiz:', error)
-        alert('Failed to start quiz. Please try again.')
-      }
-    },
-
-    async loadQuestions() {
-      try {
-        console.log('TakeQuiz: Loading questions for quiz ID:', this.quiz.id)
-        
-        const { data: questions, error: questionsError } = await supabase
-          .from('questions')
-          .select(`
-            id,
-            question_number,
-            question_type,
-            question_text,
-            points,
-            correct_answer,
-            question_options (
-              id,
-              option_text,
-              is_correct
-            )
-          `)
-          .eq('quiz_id', this.quiz.id)
-          .order('question_number', { ascending: true })
-
-        if (questionsError) throw questionsError
-
-        this.questions = questions.map(q => ({
-          id: q.id,
-          question_number: q.question_number,
-          question_type: q.question_type,
-          question_text: q.question_text,
-          points: q.points,
-          correct_answer: q.correct_answer,
-          options: q.question_options || []
-        }))
-        
-        this.questions.forEach(q => {
-          this.studentAnswers[q.id] = {
+        // Initialize answers
+        questions.value.forEach(q => {
+          studentAnswers.value[q.id] = {
             question_id: q.id,
             selected_option_id: null,
             answer_text: '',
-            points_possible: q.points
-          }
-        })
+            points_possible: q.points || 1
+          };
+        });
 
-        console.log('TakeQuiz: Loaded', this.questions.length, 'question(s)')
+        quizStarted.value = true;
+
+        // Start timer if time limit
+        if (selectedQuiz.value.has_time_limit) {
+          timeRemaining.value = selectedQuiz.value.time_limit_minutes * 60;
+          startTimer();
+        }
 
       } catch (error) {
-        console.error('TakeQuiz: Error loading questions:', error)
-        alert('Failed to load questions. Please refresh the page.')
+        console.error('Error starting quiz:', error);
+        alert(`Failed to start quiz: ${error.message}`);
       }
-    },
-
-    startTimer() {
-      this.timerInterval = setInterval(() => {
-        if (this.timeRemaining > 0) {
-          this.timeRemaining--
+    };
+    
+    const startTimer = () => {
+      timerInterval.value = setInterval(() => {
+        if (timeRemaining.value > 0) {
+          timeRemaining.value--;
         } else {
-          this.autoSubmitQuiz()
+          autoSubmitQuiz();
         }
-      }, 1000)
-    },
+      }, 1000);
+    };
+    
+    const formatTime = (seconds) => {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+    
+    const formatDateTime = (dateString) => {
+      return new Date(dateString).toLocaleString();
+    };
+    
+    const getScoreColor = (percentage) => {
+      if (percentage >= 90) return 'text-green-600';
+      if (percentage >= 75) return 'text-blue-600';
+      if (percentage >= 60) return 'text-yellow-600';
+      return 'text-red-600';
+    };
+    
+    const selectAnswer = async (optionId) => {
+      studentAnswers.value[currentQuestion.value.id].selected_option_id = optionId;
+      studentAnswers.value[currentQuestion.value.id].answer_text = null;
+      await autoSaveAnswer();
+    };
 
-    formatTime(seconds) {
-      const mins = Math.floor(seconds / 60)
-      const secs = seconds % 60
-      return `${mins}:${secs.toString().padStart(2, '0')}`
-    },
+    const selectTrueFalse = async (value) => {
+      studentAnswers.value[currentQuestion.value.id].answer_text = value;
+      studentAnswers.value[currentQuestion.value.id].selected_option_id = null;
+      await autoSaveAnswer();
+    };
 
-    formatDate(dateString) {
-      return new Date(dateString).toLocaleDateString()
-    },
+    const autoSaveAnswer = async () => {
+      if (!attemptId.value || !currentQuestion.value.id) return;
 
-    formatDateTime(dateString) {
-      return new Date(dateString).toLocaleString()
-    },
-
-    getScoreColor(percentage) {
-      if (percentage >= 90) return 'text-green-600'
-      if (percentage >= 75) return 'text-blue-600'
-      if (percentage >= 60) return 'text-yellow-600'
-      return 'text-red-600'
-    },
-
-    nextQuestion() {
-      if (this.currentQuestionIndex < this.questions.length - 1) {
-        this.currentQuestionIndex++
-      }
-    },
-
-    previousQuestion() {
-      if (this.currentQuestionIndex > 0) {
-        this.currentQuestionIndex--
-      }
-    },
-
-    goToQuestion(index) {
-      this.currentQuestionIndex = index
-    },
-
-    isQuestionAnswered(questionId) {
-      const answer = this.studentAnswers[questionId]
-      return !!(answer?.selected_option_id || answer?.answer_text)
-    },
-
-    selectOption(questionId, optionId) {
-      this.studentAnswers[questionId].selected_option_id = optionId
-    },
-
-    selectTrueFalse(questionId, value) {
-      this.studentAnswers[questionId].answer_text = value
-    },
-
-    async submitQuiz() {
       try {
-        console.log('TakeQuiz: Submitting quiz...')
-        
-        if (this.timerInterval) {
-          clearInterval(this.timerInterval)
+        const answer = studentAnswers.value[currentQuestion.value.id];
+        await saveStudentAnswer(
+          attemptId.value,
+          currentQuestion.value.id,
+          answer,
+          answer.points_possible
+        );
+      } catch (error) {
+        console.error('Error auto-saving answer:', error);
+        // Don't show error to user for auto-save
+      }
+    };
+    
+    const nextQuestion = () => {
+      if (currentQuestionIndex.value < questions.value.length - 1) {
+        currentQuestionIndex.value++;
+      }
+    };
+    
+    const previousQuestion = () => {
+      if (currentQuestionIndex.value > 0) {
+        currentQuestionIndex.value--;
+      }
+    };
+    
+    const goToQuestion = (index) => {
+      currentQuestionIndex.value = index;
+    };
+    
+    const isQuestionAnswered = (questionId) => {
+      const answer = studentAnswers.value[questionId];
+      return !!(answer?.selected_option_id || answer?.answer_text);
+    };
+    
+    const submitQuiz = async () => {
+      if (isSubmitting.value) return;
+
+      isSubmitting.value = true;
+      showSubmitModal.value = false;
+
+      try {
+        // Stop timer
+        if (timerInterval.value) {
+          clearInterval(timerInterval.value);
         }
-        
-        this.showSubmitModal = false
 
-        let totalScore = 0
-        let earnedScore = 0
-        const answerRecords = []
+        // Calculate time taken
+        const timeTaken = Math.floor((Date.now() - quizStartTime.value) / 1000);
 
-        for (const question of this.questions) {
-          const studentAnswer = this.studentAnswers[question.id]
-          totalScore += question.points
-          let isCorrect = false
-          let pointsEarned = 0
-
-          if (question.question_type === 'multiple_choice') {
-            const selectedOption = question.options.find(
-              opt => opt.id === studentAnswer.selected_option_id
-            )
-            if (selectedOption && selectedOption.is_correct) {
-              isCorrect = true
-              pointsEarned = question.points
-              earnedScore += question.points
-            }
-          } else if (question.question_type === 'true_false') {
-            if (studentAnswer.answer_text?.toLowerCase() === question.correct_answer?.toLowerCase()) {
-              isCorrect = true
-              pointsEarned = question.points
-              earnedScore += question.points
-            }
-          } else if (question.question_type === 'fill_blank') {
-            if (studentAnswer.answer_text?.trim().toLowerCase() === question.correct_answer?.trim().toLowerCase()) {
-              isCorrect = true
-              pointsEarned = question.points
-              earnedScore += question.points
-            }
+        // Save all answers one final time
+        for (const questionId in studentAnswers.value) {
+          const answer = studentAnswers.value[questionId];
+          if (answer.selected_option_id || answer.answer_text) {
+            await saveStudentAnswer(
+              attemptId.value,
+              questionId,
+              answer,
+              answer.points_possible
+            );
           }
-
-          answerRecords.push({
-            quiz_result_id: this.currentAttemptId,
-            question_id: question.id,
-            selected_option_id: studentAnswer.selected_option_id,
-            answer_text: studentAnswer.answer_text || null,
-            is_correct: isCorrect,
-            points_earned: pointsEarned
-          })
         }
 
-        console.log('TakeQuiz: Score:', earnedScore, '/', totalScore)
+        // Submit the attempt
+        const result = await submitQuizAttempt(attemptId.value, timeTaken);
 
-        const { error: answersError } = await supabase
-          .from('student_answers')
-          .insert(answerRecords)
-
-        if (answersError) throw answersError
-
-        const { error: updateError } = await supabase
-          .from('quiz_results')
-          .update({
-            score: earnedScore,
-            total_score: totalScore,
-            submitted_at: new Date().toISOString()
-          })
-          .eq('id', this.currentAttemptId)
-
-        if (updateError) throw updateError
-
-        console.log('TakeQuiz: Quiz submitted successfully')
-        this.quizSubmitted = true
+        if (result.success) {
+          console.log('Quiz submitted successfully:', result.data);
+          quizSubmitted.value = true;
+        } else {
+          throw new Error(result.error || 'Failed to submit quiz');
+        }
 
       } catch (error) {
-        console.error('TakeQuiz: Error submitting quiz:', error)
-        alert('Failed to submit quiz. Please try again.')
+        console.error('Error submitting quiz:', error);
+        alert(`Failed to submit quiz: ${error.message}. Please try again.`);
+        showSubmitModal.value = false;
+      } finally {
+        isSubmitting.value = false;
       }
-    },
-
-    autoSubmitQuiz() {
-      alert('Time is up! Your quiz will be automatically submitted.')
-      this.submitQuiz()
-    }
-  },
-
-  async mounted() {
-    console.log('TakeQuiz: Component mounted')
-    console.log('TakeQuiz: Route params:', this.$route.params)
-    console.log('TakeQuiz: Route query:', this.$route.query)
+    };
     
-    const authSuccess = await this.initializeAuth()
-    if (!authSuccess) {
-      console.log('TakeQuiz: Auth failed, redirecting...')
-      return
-    }
-    
-    await this.checkQuizAvailability()
-  },
+    const autoSubmitQuiz = () => {
+      alert('Time is up! Your quiz will be automatically submitted.');
+      submitQuiz();
+    };
 
-  beforeUnmount() {
-    console.log('TakeQuiz: Component unmounting')
-    if (this.timerInterval) {
-      clearInterval(this.timerInterval)
-    }
+    // Lifecycle
+    onMounted(async () => {
+      console.log('TakeQuiz component mounted');
+      
+      // Get route params
+      sectionId.value = route.params.sectionId || route.query.sectionId;
+      sectionName.value = route.query.sectionName || 'Section';
+      subjectName.value = route.query.subjectName || 'Subject';
+
+      console.log('Route params:', {
+        sectionId: sectionId.value,
+        sectionName: sectionName.value,
+        subjectName: subjectName.value
+      });
+
+      if (!sectionId.value) {
+        alert('Error: Missing section information');
+        router.push('/student/subjects');
+        return;
+      }
+
+      await checkAvailableQuizzes();
+    });
+
+    onBeforeUnmount(() => {
+      if (timerInterval.value) {
+        clearInterval(timerInterval.value);
+      }
+    });
+
+    return {
+      isLoading,
+      loadError,
+      noQuizzesAvailable,
+      sectionName,
+      subjectName,
+      availableQuizzes,
+      selectedQuiz,
+      questions,
+      currentQuestionIndex,
+      studentAnswers,
+      quizStarted,
+      quizSubmitted,
+      showSubmitModal,
+      timeRemaining,
+      attemptsUsed,
+      previousAttempts,
+      isSubmitting,
+      currentQuestion,
+      progressPercentage,
+      answeredCount,
+      goBackToSubjects,
+      selectQuiz,
+      startQuiz,
+      formatTime,
+      formatDateTime,
+      getScoreColor,
+      selectAnswer,
+      selectTrueFalse,
+      autoSaveAnswer,
+      nextQuestion,
+      previousQuestion,
+      goToQuestion,
+      isQuestionAnswered,
+      submitQuiz
+    };
   }
-}
+};
 </script>
 
 <style scoped>
-/* Color Theme Variables */
-:root {
-  --primary-green: #3D8D7A;
-  --light-green: #B3D8A8;
-  --mint-green: #A3D1C6;
-  --white: #FFFFFF;
-  --gray-50: #f9fafb;
-  --gray-100: #f3f4f6;
-  --gray-200: #e5e7eb;
-  --gray-300: #d1d5db;
-  --gray-400: #9ca3af;
-  --gray-500: #6b7280;
-  --gray-600: #4b5563;
-  --gray-700: #374151;
-  --gray-800: #1f2937;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  --warning-color: #f59e0b;
-  --critical-color: #ef4444;
-  --success-color: #10b981;
+.glass-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
-/* Base Styles */
-.take-quiz-page {
-  min-height: 100vh;
-  background: linear-gradient(135deg, var(--light-green) 0%, var(--mint-green) 100%);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-}
-
-/* Header Section */
-.page-header {
-  background: var(--white);
-  box-shadow: var(--shadow-md);
-  border-bottom: 3px solid var(--primary-green);
-}
-
-.header-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 2rem;
-}
-
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 0;
-}
-
-.quiz-info {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.quiz-icon {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, var(--primary-green), var(--mint-green));
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--white);
-}
-
-.quiz-details h1 {
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: var(--gray-800);
-  margin: 0;
-}
-
-.quiz-details p {
-  color: var(--gray-600);
-  margin: 0.25rem 0 0 0;
-  font-size: 0.95rem;
-}
-
-/* Timer Display */
-.timer-display {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  background: rgba(61, 141, 122, 0.1);
-  border: 2px solid var(--primary-green);
-  border-radius: 12px;
-  padding: 1rem 1.5rem;
-}
-
-.timer-icon {
-  width: 36px;
-  height: 36px;
-  background: var(--primary-green);
+.floating-shape {
+  position: absolute;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--white);
+  filter: blur(60px);
+  opacity: 0.3;
+  animation: float 20s infinite ease-in-out;
+}
+
+.shape-1 {
+  width: 400px;
+  height: 400px;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  top: -100px;
+  right: -100px;
+}
+
+.shape-2 {
+  width: 350px;
+  height: 350px;
+  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+  bottom: -100px;
+  left: -50px;
+}
+
+.shape-3 {
+  width: 300px;
+  height: 300px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+  top: 50%;
+  left: 30%;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-30px) rotate(5deg); }
+  50% { transform: translateY(0) rotate(0deg); }
+  75% { transform: translateY(30px) rotate(-5deg); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-up { animation: slideUp 0.5s ease-out; }
+
+@keyframes pulse-slow {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.animate-pulse-slow { animation: pulse-slow 3s ease-in-out infinite; }
+
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+.animate-bounce-slow { animation: bounce-slow 2s ease-in-out infinite; }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin { animation: spin 1s linear infinite; }
+
+.quiz-selection-card {
+  background: white;
+  border: 3px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 1.5rem;
+  cursor: pointer;
   transition: all 0.3s ease;
 }
 
-.timer-icon.warning {
-  background: var(--warning-color);
-  animation: pulse 2s infinite;
-}
-
-.timer-icon.critical {
-  background: var(--critical-color);
-  animation: pulse 1s infinite;
-}
-
-.timer-value {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--gray-800);
-}
-
-.timer-value.warning {
-  color: var(--warning-color);
-}
-
-.timer-value.critical {
-  color: var(--critical-color);
-}
-
-.timer-label {
-  font-size: 0.875rem;
-  color: var(--gray-600);
-  margin: 0;
-}
-
-/* Main Content */
-.main-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
-/* Welcome Section */
-.welcome-section {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-.welcome-card {
-  background: var(--white);
-  border-radius: 24px;
-  padding: 3rem;
-  box-shadow: var(--shadow-xl);
-  border: 1px solid rgba(61, 141, 122, 0.1);
-}
-
-.welcome-header {
-  text-align: center;
-  margin-bottom: 2.5rem;
+.quiz-selection-card:hover {
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  transform: translateX(8px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
 }
 
 .quiz-badge {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, var(--primary-green), var(--mint-green));
-  border-radius: 20px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  margin: 0 auto 1.5rem;
-  color: var(--white);
-  animation: bounce-slow 3s ease-in-out infinite;
-}
-
-.welcome-header h2 {
-  font-size: 2.25rem;
-  font-weight: 700;
-  color: var(--gray-800);
-  margin: 0 0 1rem 0;
-}
-
-.quiz-description {
-  font-size: 1.125rem;
-  color: var(--gray-600);
-  line-height: 1.6;
-  margin: 0;
-}
-
-/* Info Grid */
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  padding: 0.375rem 0.75rem;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #1e40af;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 8px;
 }
 
 .info-card {
-  background: linear-gradient(135deg, rgba(163, 209, 198, 0.1) 0%, rgba(179, 216, 168, 0.1) 100%);
-  border: 2px solid var(--mint-green);
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 2px solid #bae6fd;
   border-radius: 16px;
-  padding: 1.5rem;
+  padding: 1.25rem;
   text-align: center;
   transition: all 0.3s ease;
 }
 
 .info-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(163, 209, 198, 0.3);
-  border-color: var(--primary-green);
-}
-
-.info-icon {
-  font-size: 2rem;
-  margin-bottom: 0.75rem;
-  display: block;
-}
-
-.info-label {
-  font-size: 0.875rem;
-  color: var(--gray-600);
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-}
-
-.info-value {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: var(--gray-800);
-}
-
-/* Alerts */
-.alert {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  padding: 1.5rem;
-  border-radius: 12px;
-  margin-bottom: 2rem;
-}
-
-.alert-error {
-  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-  border: 2px solid #f87171;
-  color: #991b1b;
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
 }
 
 .alert-warning {
+  display: flex;
+  align-items: start;
   background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
   border: 2px solid #fbbf24;
+  border-radius: 12px;
+  padding: 1rem;
   color: #92400e;
 }
 
-.alert-icon {
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
+.alert-danger {
+  display: flex;
+  align-items: start;
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border: 2px solid #f87171;
+  border-radius: 12px;
+  padding: 1rem;
+  color: #991b1b;
 }
 
-.alert-title {
+.btn-start {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 1.25rem 2rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  color: white;
   font-weight: 700;
   font-size: 1.125rem;
-  margin-bottom: 0.25rem;
-}
-
-.alert-text {
-  font-size: 0.95rem;
-  line-height: 1.5;
-}
-
-/* Start Button */
-.start-section {
-  text-align: center;
-}
-
-.start-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.25rem 3rem;
-  background: linear-gradient(135deg, var(--primary-green), var(--mint-green));
-  color: var(--white);
-  border: none;
   border-radius: 16px;
-  font-size: 1.25rem;
-  font-weight: 700;
+  border: none;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 8px 25px rgba(61, 141, 122, 0.4);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5);
 }
 
-.start-button:hover {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 12px 35px rgba(61, 141, 122, 0.6);
+.btn-start:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 35px rgba(59, 130, 246, 0.7);
 }
 
-.start-icon, .start-arrow {
-  flex-shrink: 0;
-}
-
-/* Previous Attempts */
-.attempts-card {
-  background: var(--white);
-  border-radius: 20px;
-  padding: 2rem;
-  box-shadow: var(--shadow-lg);
-  border: 1px solid rgba(61, 141, 122, 0.1);
-}
-
-.attempts-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid var(--gray-100);
-}
-
-.attempts-icon {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, var(--primary-green), var(--mint-green));
-  border-radius: 12px;
-  display: flex;
+.btn-primary {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--white);
-}
-
-.attempts-header h3 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--gray-800);
-  margin: 0;
-}
-
-.attempts-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.attempt-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.25rem;
-  background: var(--gray-50);
-  border: 2px solid var(--gray-200);
+  padding: 0.875rem 2rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  color: white;
+  font-weight: 600;
   border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.875rem 1.5rem;
+  background: white;
+  color: #4b5563;
+  font-weight: 600;
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+  cursor: pointer;
   transition: all 0.3s ease;
 }
 
-.attempt-item:hover {
-  border-color: var(--mint-green);
-  background: rgba(163, 209, 198, 0.05);
-  transform: translateX(4px);
+.btn-secondary:hover {
+  background: #f9fafb;
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
 }
 
-.attempt-number {
-  font-weight: 600;
-  color: var(--gray-800);
-  font-size: 1.125rem;
-}
-
-.attempt-date {
-  font-size: 0.875rem;
-  color: var(--gray-600);
-  margin-top: 0.25rem;
-}
-
-.score-percentage {
-  font-size: 1.5rem;
-  font-weight: 700;
-}
-
-.score-points {
-  font-size: 0.875rem;
-  color: var(--gray-600);
-  margin-top: 0.25rem;
-}
-
-/* Quiz Interface */
-.quiz-interface {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-/* Progress Section */
-.progress-card {
-  background: var(--white);
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: var(--shadow-md);
-  border: 1px solid rgba(61, 141, 122, 0.1);
-}
-
-.progress-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.progress-text {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--gray-800);
-}
-
-.progress-percentage {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--primary-green);
-}
-
-.timer-compact {
+.btn-nav {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: rgba(61, 141, 122, 0.1);
-  border-radius: 8px;
-}
-
-.timer-compact-icon {
-  color: var(--primary-green);
-}
-
-.timer-compact-icon.warning {
-  color: var(--warning-color);
-}
-
-.timer-compact-icon.critical {
-  color: var(--critical-color);
-  animation: pulse 1s infinite;
-}
-
-.timer-compact-text {
+  padding: 0.75rem 1.5rem;
+  background: white;
+  color: #4b5563;
   font-weight: 600;
-  color: var(--gray-800);
-}
-
-.timer-compact-text.warning {
-  color: var(--warning-color);
-}
-
-.timer-compact-text.critical {
-  color: var(--critical-color);
-}
-
-.progress-bar {
-  width: 100%;
-  height: 8px;
-  background: var(--gray-200);
   border-radius: 10px;
-  overflow: hidden;
+  border: 2px solid #e5e7eb;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--primary-green) 0%, var(--mint-green) 100%);
-  transition: width 0.3s ease;
+.btn-nav:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
 }
 
-/* Question Section */
-.question-card {
-  background: var(--white);
-  border-radius: 20px;
-  padding: 2.5rem;
-  box-shadow: var(--shadow-lg);
-  border: 1px solid rgba(61, 141, 122, 0.1);
-}
-
-.question-header {
+.btn-nav-primary {
   display: flex;
-  align-items: flex-start;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 2px solid var(--gray-100);
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  color: white;
+  font-weight: 600;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
 }
 
-.question-number-badge {
+.btn-nav-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
+}
+
+.btn-submit {
+  display: flex;
+  align-items: center;
+  padding: 0.875rem 2rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  font-weight: 700;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+}
+
+.btn-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+}
+
+.question-number {
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, var(--primary-green), var(--mint-green));
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--white);
+  color: white;
   font-weight: 700;
   font-size: 1.25rem;
+  margin-right: 1rem;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
-}
-
-.question-info {
-  flex: 1;
-}
-
-.question-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--gray-800);
-  line-height: 1.4;
-  margin: 0 0 0.5rem 0;
-}
-
-.question-points {
-  font-size: 0.95rem;
-  color: var(--gray-600);
-  font-weight: 500;
-}
-
-/* Answer Options */
-.answer-options {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
 }
 
 .answer-option {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1.25rem 1.5rem;
-  background: var(--white);
-  border: 3px solid var(--gray-200);
+  padding: 1.25rem;
+  background: white;
+  border: 3px solid #e5e7eb;
   border-radius: 16px;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .answer-option:hover {
-  border-color: var(--mint-green);
-  background: rgba(163, 209, 198, 0.05);
+  border-color: #c7d2fe;
+  background: #f9fafb;
   transform: translateX(4px);
 }
 
 .answer-option.selected {
-  border-color: var(--primary-green);
-  background: rgba(61, 141, 122, 0.05);
-  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.2);
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
 }
 
 .option-indicator {
   width: 36px;
   height: 36px;
-  background: var(--gray-200);
+  background: linear-gradient(135deg, #e0e7ff 0%, #ddd6fe 100%);
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  color: var(--gray-600);
+  color: #4c1d95;
+  margin-right: 1rem;
   flex-shrink: 0;
   transition: all 0.3s ease;
 }
 
 .answer-option.selected .option-indicator {
-  background: linear-gradient(135deg, var(--primary-green), var(--mint-green));
-  color: var(--white);
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  color: white;
 }
 
-.option-text {
-  flex: 1;
-  font-size: 1rem;
-  line-height: 1.5;
-  color: var(--gray-800);
-}
-
-.option-check {
-  width: 24px;
-  height: 24px;
+.check-icon {
+  width: 32px;
+  height: 32px;
+  margin-left: 1rem;
   color: transparent;
   transition: all 0.3s ease;
 }
 
-.answer-option.selected .option-check {
-  color: var(--success-color);
+.answer-option.selected .check-icon {
+  color: #10b981;
 }
 
-/* True/False Options */
-.tf-options {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-}
-
-.tf-option {
+.tf-answer-option {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  background: var(--white);
-  border: 3px solid var(--gray-200);
+  background: white;
+  border: 3px solid #e5e7eb;
   border-radius: 20px;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
-.tf-option:hover {
-  border-color: var(--mint-green);
-  background: rgba(163, 209, 198, 0.05);
+.tf-answer-option:hover {
+  border-color: #c7d2fe;
+  background: #f9fafb;
   transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(163, 209, 198, 0.3);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
 }
 
-.tf-option.selected {
-  border-color: var(--primary-green);
-  background: rgba(61, 141, 122, 0.05);
-  box-shadow: 0 8px 25px rgba(61, 141, 122, 0.3);
-  transform: scale(1.02);
-}
-
-.tf-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-}
-
-.tf-label {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--gray-800);
-}
-
-/* Fill Input */
-.fill-section {
-  margin-top: 1rem;
+.tf-answer-option.selected {
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+  transform: scale(1.05);
 }
 
 .fill-input {
   width: 100%;
-  padding: 1.25rem 1.5rem;
-  border: 3px solid var(--gray-200);
+  padding: 1rem 1.25rem;
+  border: 3px solid #e5e7eb;
   border-radius: 12px;
-  font-size: 1.125rem;
+  font-size: 1rem;
   transition: all 0.3s ease;
-  background: var(--white);
+  background: white;
 }
 
 .fill-input:focus {
   outline: none;
-  border-color: var(--primary-green);
-  box-shadow: 0 0 0 4px rgba(61, 141, 122, 0.1);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
 }
 
-/* Navigation Section */
-.navigation-card {
-  background: var(--white);
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: var(--shadow-md);
-  border: 1px solid rgba(61, 141, 122, 0.1);
-}
-
-.nav-buttons {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.nav-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.875rem 1.5rem;
-  border: none;
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #e5e7eb;
   border-radius: 10px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  overflow: hidden;
 }
 
-.nav-btn-secondary {
-  background: var(--gray-100);
-  color: var(--gray-600);
-  border: 2px solid var(--gray-300);
-}
-
-.nav-btn-secondary:hover:not(.disabled) {
-  background: var(--gray-200);
-  color: var(--gray-700);
-  transform: translateY(-1px);
-}
-
-.nav-btn-secondary.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.nav-btn-primary {
-  background: linear-gradient(135deg, var(--primary-green), var(--mint-green));
-  color: var(--white);
-  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
-}
-
-.nav-btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(61, 141, 122, 0.4);
-}
-
-.nav-btn-submit {
-  background: linear-gradient(135deg, var(--success-color), #34d399);
-  color: var(--white);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-}
-
-.nav-btn-submit:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
-}
-
-/* Question Navigator */
-.question-navigator {
-  border-top: 2px solid var(--gray-100);
-  padding-top: 1.5rem;
-}
-
-.navigator-title {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--gray-600);
-  margin-bottom: 1rem;
-  text-align: center;
-}
-
-.question-dots {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  justify-content: center;
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+  border-radius: 10px;
+  transition: width 0.3s ease;
 }
 
 .question-dot {
@@ -1648,9 +1124,9 @@ export default {
   align-items: center;
   justify-content: center;
   border-radius: 10px;
-  border: 2px solid var(--gray-300);
-  background: var(--white);
-  color: var(--gray-600);
+  border: 2px solid #e5e7eb;
+  background: white;
+  color: #6b7280;
   font-weight: 600;
   font-size: 0.875rem;
   cursor: pointer;
@@ -1658,119 +1134,43 @@ export default {
 }
 
 .question-dot:hover {
-  border-color: var(--mint-green);
+  border-color: #c7d2fe;
   transform: scale(1.1);
 }
 
-.question-dot.current {
-  background: linear-gradient(135deg, var(--primary-green), var(--mint-green));
-  border-color: var(--primary-green);
-  color: var(--white);
-  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
+.question-dot.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  border-color: #3b82f6;
+  color: white;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
 }
 
 .question-dot.answered {
-  background: rgba(179, 216, 168, 0.2);
-  border-color: var(--light-green);
-  color: var(--primary-green);
+  background: #d1fae5;
+  border-color: #10b981;
+  color: #065f46;
 }
 
-.question-dot.answered.current {
-  background: linear-gradient(135deg, var(--success-color), #34d399);
-  border-color: var(--success-color);
-  color: var(--white);
+.question-dot.answered.active {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-color: #10b981;
+  color: white;
 }
 
-/* Completion Section */
-.completion-section {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 60vh;
-}
-
-.completion-card {
-  background: var(--white);
-  border-radius: 24px;
-  padding: 4rem 3rem;
-  text-align: center;
-  box-shadow: var(--shadow-xl);
-  border: 1px solid rgba(61, 141, 122, 0.1);
-  max-width: 600px;
-  width: 100%;
-}
-
-.completion-icon {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, var(--success-color), #34d399);
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 2rem;
-  color: var(--white);
-  animation: bounce-slow 2s ease-in-out infinite;
-}
-
-.completion-card h2 {
-  font-size: 2.25rem;
-  font-weight: 700;
-  color: var(--gray-800);
-  margin-bottom: 1rem;
-}
-
-.completion-card p {
-  font-size: 1.125rem;
-  color: var(--gray-600);
-  margin-bottom: 2.5rem;
-  line-height: 1.6;
-}
-
-.completion-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-}
-
-/* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.875rem 1.5rem;
+.attempt-card {
+  background: white;
+  border: 2px solid #e5e7eb;
   border-radius: 12px;
-  font-weight: 600;
-  cursor: pointer;
+  padding: 1rem;
   transition: all 0.3s ease;
-  border: none;
-  font-size: 0.95rem;
 }
 
-.btn-primary {
-  background: linear-gradient(135deg, var(--primary-green), var(--mint-green));
-  color: var(--white);
-  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
+.attempt-card:hover {
+  border-color: #c7d2fe;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.1);
+  transform: translateY(-2px);
 }
 
-.btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(61, 141, 122, 0.4);
-}
-
-.btn-secondary {
-  background: var(--white);
-  color: var(--gray-600);
-  border: 2px solid var(--gray-300);
-}
-
-.btn-secondary:hover {
-  background: var(--gray-50);
-  color: var(--gray-700);
-  border-color: var(--gray-400);
-}
-
-/* Modal Styles */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -1784,11 +1184,11 @@ export default {
 }
 
 .modal-content {
-  background: var(--white);
+  background: white;
   border-radius: 24px;
   max-width: 500px;
   width: 90%;
-  box-shadow: var(--shadow-xl);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   animation: slideUp 0.3s ease;
 }
 
@@ -1797,156 +1197,33 @@ export default {
   text-align: center;
 }
 
-.modal-header h3 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--gray-800);
-  margin: 1rem 0 0 0;
-}
-
 .modal-body {
   padding: 0 2rem 1.5rem;
 }
 
-.modal-body p {
-  color: var(--gray-600);
-  line-height: 1.6;
-  margin-bottom: 1rem;
-}
-
 .modal-footer {
   padding: 1.5rem 2rem;
-  border-top: 1px solid var(--gray-200);
+  border-top: 1px solid #e5e7eb;
   display: flex;
   gap: 1rem;
 }
 
-.btn-submit {
-  background: linear-gradient(135deg, var(--success-color), #34d399);
-  color: var(--white);
-  flex: 1;
-}
-
-.btn-submit:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-}
-
-/* Score Colors */
-.text-green-600 { color: var(--success-color); }
-.text-blue-600 { color: #3b82f6; }
-.text-yellow-600 { color: var(--warning-color); }
-.text-red-600 { color: var(--critical-color); }
-
-/* Animations */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
-@keyframes bounce-slow {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-
-.slide-up {
-  animation: slideUp 0.5s ease-out;
-}
-
-/* Responsive Design */
 @media (max-width: 768px) {
-  .take-quiz-page {
-    padding: 1rem;
-  }
-  
-  .header-container {
-    padding: 0 1rem;
-  }
-  
-  .header-content {
-    flex-direction: column;
-    gap: 1rem;
-    text-align: center;
-  }
-  
-  .main-content {
-    padding: 1rem;
-  }
-  
-  .welcome-card, .question-card, .completion-card {
-    padding: 2rem 1.5rem;
-  }
-  
-  .info-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .tf-options {
-    grid-template-columns: 1fr;
-  }
-  
-  .nav-buttons {
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
-  .completion-actions, .modal-footer {
-    flex-direction: column;
-  }
-  
-  .btn {
-    justify-content: center;
-  }
-  
-  .question-dots {
-    gap: 0.25rem;
-  }
-  
-  .question-dot {
-    width: 36px;
-    height: 36px;
-    font-size: 0.75rem;
-  }
+  .glass-card { padding: 1.5rem; }
+  .btn-start, .btn-primary, .btn-secondary, .btn-submit { width: 100%; }
+  .info-card { padding: 1rem; }
+  .question-dot { width: 36px; height: 36px; font-size: 0.75rem; }
+  .modal-content { margin: 1rem; }
+  .floating-shape { display: none; }
 }
 
-/* Utility Classes */
-.w-12 { width: 3rem; }
-.h-12 { height: 3rem; }
-.text-yellow-500 { color: var(--warning-color); }
-.text-2xl { font-size: 1.5rem; }
-.font-bold { font-weight: 700; }
-.text-gray-800 { color: var(--gray-800); }
-.text-gray-600 { color: var(--gray-600); }
-.text-blue-600 { color: #3b82f6; }
-.text-red-600 { color: var(--critical-color); }
-.text-sm { font-size: 0.875rem; }
-.mb-4 { margin-bottom: 1rem; }
-.mt-2 { margin-top: 0.5rem; }
-.w-5 { width: 1.25rem; }
-.h-5 { height: 1.25rem; }
-.mr-2 { margin-right: 0.5rem; }
-.bg-blue-50 { background-color: #eff6ff; }
-.rounded-lg { border-radius: 0.5rem; }
-.p-4 { padding: 1rem; }
-.border-l-4 { border-left-width: 4px; }
-.border-blue-500 { border-color: #3b82f6; }
-.flex-1 { flex: 1; }
-.btn-secondary.flex-1 { flex: 1; }
-.btn-submit.flex-1 { flex: 1; }
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%); }
 </style>
