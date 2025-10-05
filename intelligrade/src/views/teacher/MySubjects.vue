@@ -1,3 +1,150 @@
+/* Enhanced dark mode info box styling for section detail view (dashboard style) */
+.dark-mode .section-info-grid {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+.dark-mode .section-info-item {
+  background: #111111;
+  border: 2px solid #10b981;
+  border-radius: 14px;
+  padding: 1.2rem 2.5rem;
+  min-width: 120px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: none;
+}
+.dark-mode .section-info-item .info-label {
+  color: #10b981;
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+.dark-mode .section-info-item .info-value {
+  color: #e9ecef;
+  font-weight: 600;
+  font-size: 1.2rem;
+  background: rgba(16,185,129,0.08);
+  border-radius: 8px;
+  padding: 0.35rem 0.8rem;
+  margin-top: 0.2rem;
+  display: inline-block;
+}
+.dark-mode .section-code-area {
+  background: #111111;
+  border: 2px solid #10b981;
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  padding: 1.2rem 2.5rem;
+  margin-bottom: 2rem;
+}
+.dark-mode .section-code-area h4 {
+  color: #2dd4bf;
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+  margin-bottom: 0.5rem;
+}
+.dark-mode .section-code-display {
+  background: #111111;
+  border: 2px solid #10b981;
+  color: #10b981;
+  border-radius: 10px;
+  padding: 0.7rem 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+.dark-mode .section-code {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 1.3rem;
+  color: #10b981;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+.dark-mode .copy-code-btn {
+  background: #2dd4bf;
+  color: #111827;
+  border-radius: 8px;
+  font-weight: 700;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  transition: background 0.2s;
+  box-shadow: 0 2px 8px rgba(45,212,191,0.10);
+}
+.dark-mode .copy-code-btn:hover {
+  background: #059669;
+  color: #fff;
+}
+/* Dark mode accent for info labels in section detail view */
+.dark-mode .section-info-item .info-label,
+.dark-mode .section-code-area h4 {
+  color: var(--accent-color);
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.dark-mode .section-info-item .info-value {
+  color: var(--primary-text-color);
+  font-weight: 500;
+}
+/* Extra dark mode styles for section-detail view to match other pages */
+.dark-mode .section-detail-view {
+  background: var(--bg-primary);
+  color: var(--primary-text-color);
+}
+
+.dark-mode .section-detail-card {
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--border-color);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .section-info-container {
+  background: var(--bg-card);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+}
+
+.dark-mode .section-info-grid .info-label {
+  color: var(--accent-color);
+}
+.dark-mode .section-info-grid .info-value {
+  color: var(--primary-text-color);
+}
+
+.dark-mode .section-code-area h4 {
+  color: var(--accent-color);
+}
+.dark-mode .section-code-display {
+  background: var(--bg-accent);
+  border: 1px solid var(--border-color);
+  color: var(--accent-color);
+}
+.dark-mode .section-code {
+  background: var(--bg-secondary);
+  color: var(--accent-color);
+  border: 1px solid var(--border-color);
+}
+.dark-mode .copy-code-btn {
+  background: var(--accent-color);
+  color: #fff;
+}
+.dark-mode .copy-code-btn:hover {
+  background: var(--accent-hover);
+}
+
+.dark-mode .section-actions-grid {
+  background: var(--bg-card);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+}
 <template>
   <div class="subjects-page" :class="{ 'dark-mode': isDarkMode }">
     <div class="section-header-card">
