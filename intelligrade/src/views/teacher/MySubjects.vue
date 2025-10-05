@@ -714,14 +714,12 @@ const router = useRouter()
 const subjects = ref([])
 const selectedSubject = ref(null)
 const selectedSection = ref(null)
-const viewMode = ref('subjects') // 'subjects', 'sections', 'section-detail'
-const selectedGradeFilter = ref('all') // 'all', '7', '8', '9', '10'
+const viewMode = ref('subjects')
+const selectedGradeFilter = ref('all')
 const showCreateModal = ref(false)
 const showStudentRosterModal = ref(false)
 const currentStudentRoster = ref(null)
 const isEditing = ref(false)
-const isLoading = ref(false)
-const loadingMessage = ref('')
 const currentSubjectId = ref(null)
 const currentStep = ref(1)
 const copiedCodeId = ref(null)
@@ -730,12 +728,17 @@ const teacherInfo = ref(null)
 const authListener = ref(null)
 const isInitialized = ref(false)
 const showDeleteModal = ref(false)
-const deleteType = ref('') // 'subject' or 'section'
+const deleteType = ref('')
 const itemToDelete = ref(null)
 const showNotification = ref(false)
 const notificationMessage = ref('')
-const notificationType = ref('success') // 'success', 'error', 'warning'
-const openMenuId = ref(null) // Track which menu is open
+const notificationType = ref('success')
+const openMenuId = ref(null)
+
+// Cache state
+const subjectsCache = ref(null)
+const lastFetchTime = ref(0)
+const CACHE_DURATION = 30000 // 30 seconds
 
 // Form data
 const formData = ref({
@@ -751,62 +754,35 @@ const canProceedToStep2 = computed(() => {
   return formData.value.name && formData.value.grade_level && formData.value.number_of_sections
 })
 
-// Initialize authentication with new database structure
+// Initialize authentication
 const initializeAuth = async () => {
   try {
-    console.log('Initializing authentication...')
-    
-    // Get current session
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
     
-    if (sessionError) {
-      console.error('Session error:', sessionError)
-      throw sessionError
-    }
-    
+    if (sessionError) throw sessionError
     if (!session?.user) {
-      console.log('No active session found')
       await router.push('/login')
       return false
     }
     
-    console.log('Session found for user:', session.user.id)
     currentUser.value = session.user
     
-    // Get profile info first
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('id, role, full_name, email')
       .eq('auth_user_id', session.user.id)
       .single()
     
-    if (profileError) {
-      console.error('Error getting profile:', profileError)
-      
-      if (profileError.code === 'PGRST116') {
-        console.log('No profile found')
-        alert('User profile not found. Please contact support.')
-        await router.push('/login')
-        return false
-      }
-      throw profileError
-    }
-
-    if (!profile) {
-      console.log('No profile data returned')
-      alert('User profile not found. Please contact support.')
+    if (profileError || !profile) {
       await router.push('/login')
       return false
     }
 
     if (profile.role !== 'teacher') {
-      console.log('User is not a teacher:', profile.role)
-      alert('Access denied. Teacher account required.')
       await router.push('/login')
       return false
     }
 
-    // Now get the teacher record using the profile_id
     const { data: teacher, error: teacherError } = await supabase
       .from('teachers')
       .select('*')
@@ -814,25 +790,16 @@ const initializeAuth = async () => {
       .eq('is_active', true)
       .single()
 
-    if (teacherError) {
-      console.error('Error getting teacher info:', teacherError)
-      
-      if (teacherError.code === 'PGRST116') {
-        console.log('No teacher record found')
-        alert('Teacher record not found. Please contact support.')
-        await router.push('/login')
-        return false
-      }
-      throw teacherError
+    if (teacherError || !teacher) {
+      await router.push('/login')
+      return false
     }
 
     teacherInfo.value = teacher
-    console.log('Teacher info loaded:', teacherInfo.value.id)
     return true
 
   } catch (error) {
-    console.error('Authentication initialization error:', error)
-    alert(`Authentication error: ${error.message}`)
+    console.error('Authentication error:', error)
     await router.push('/login')
     return false
   }
@@ -845,29 +812,26 @@ const setupAuthListener = () => {
   }
   
   authListener.value = supabase.auth.onAuthStateChange(async (event, session) => {
-    console.log('Auth state change:', event, session?.user?.id)
-    
     if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
-      console.log('User signed out or token refresh failed')
       currentUser.value = null
       teacherInfo.value = null
       subjects.value = []
+      subjectsCache.value = null
       isInitialized.value = false
       await router.push('/login')
     }
   })
 }
 
-// Subject expand/collapse functionality
+// Navigation methods
 const toggleSubjectExpansion = (subject) => {
   subject.expanded = !subject.expanded
 }
 
-// Navigation methods for the three-level hierarchy
 const selectSubject = (subject) => {
   selectedSubject.value = subject
   selectedSection.value = null
-  selectedGradeFilter.value = 'all' // Reset filter when selecting a subject
+  selectedGradeFilter.value = 'all'
   viewMode.value = 'sections'
 }
 
@@ -888,7 +852,7 @@ const goBackToSections = () => {
   viewMode.value = 'sections'
 }
 
-// Grade filtering methods
+// Grade filtering
 const setGradeFilter = (grade) => {
   selectedGradeFilter.value = grade
 }
@@ -916,10 +880,8 @@ const availableGrades = computed(() => {
   return grades.sort((a, b) => a - b)
 })
 
-// ASSESSMENT METHODS
 // Navigation functions
 const navigateToSections = async (subject, section, event) => {
-  // Prevent navigation if clicking on buttons or other interactive elements
   if (event && (event.target.closest('button') || event.target.closest('.copy-code-btn'))) {
     return
   }
@@ -1004,9 +966,7 @@ const manageGrades = async (subject, section) => {
   }
 }
 
-// View students in a specific section
 const viewSectionStudents = async (subject, section) => {
-  // Always connect to ViewStudents.vue with correct section data
   try {
     const sec = section || (subject.sections && subject.sections[0]) || subject
     await router.push({
@@ -1027,28 +987,25 @@ const viewSectionStudents = async (subject, section) => {
   }
 }
 
-// Fetch subjects with new database structure
-const fetchSubjects = async (retryCount = 0) => {
-  const maxRetries = 2
-  
+// Optimized fetch with instant display from cache
+const fetchSubjects = async (forceRefresh = false) => {
   try {
-    if (!teacherInfo.value?.id) {
-      console.log('No teacher info available, skipping fetch')
+    if (!teacherInfo.value?.id) return
+
+    const now = Date.now()
+    
+    // Always use cache first for instant display
+    if (!forceRefresh && subjectsCache.value && (now - lastFetchTime.value) < CACHE_DURATION) {
+      subjects.value = subjectsCache.value
       return
     }
 
-    if (retryCount === 0) {
-      isLoading.value = true
-      loadingMessage.value = 'Loading subjects...'
+    // If we have cache, display it immediately and fetch in background
+    if (subjectsCache.value) {
+      subjects.value = subjectsCache.value
     }
 
-    console.log('Fetching subjects for teacher:', teacherInfo.value.id)
-
-    if (retryCount > 0) {
-      await new Promise(resolve => setTimeout(resolve, 1000 * retryCount))
-    }
-
-    // Fetch subjects with sections using the new schema
+    // Fetch in background (no loading state)
     const { data: subjectsData, error: subjectsError } = await supabase
       .from('subjects')
       .select(`
@@ -1070,39 +1027,36 @@ const fetchSubjects = async (retryCount = 0) => {
       .eq('is_active', true)
       .order('name')
 
-    if (subjectsError) {
-      console.error('Error fetching subjects:', subjectsError)
-      
-      if (subjectsError.code === 'PGRST301' || subjectsError.message?.includes('JWT')) {
-        console.log('JWT error in fetch, trying to refresh session')
-        
-        const { error: refreshError } = await supabase.auth.refreshSession()
-        if (refreshError) {
-          console.error('Session refresh failed:', refreshError)
-          await router.push('/login')
-          return
-        }
-        
-        if (retryCount < maxRetries) {
-          console.log('Retrying fetch after session refresh')
-          return await fetchSubjects(retryCount + 1)
-        }
-      }
-      
-      throw subjectsError
-    }
+    if (subjectsError) throw subjectsError
 
-    console.log('Subjects data:', subjectsData)
-
-    // Process subjects and group by subject name (combine different grades)
+    // Process subjects
     const subjectGroups = new Map()
 
     if (subjectsData && subjectsData.length > 0) {
+      // Batch fetch enrollment counts
+      const allSectionIds = subjectsData.flatMap(subject => 
+        (subject.sections || []).filter(s => s.is_active).map(s => s.id)
+      )
+
+      const enrollmentCounts = new Map()
+      if (allSectionIds.length > 0) {
+        const { data: enrollments } = await supabase
+          .from('enrollments')
+          .select('section_id')
+          .in('section_id', allSectionIds)
+
+        if (enrollments) {
+          enrollments.forEach(e => {
+            enrollmentCounts.set(e.section_id, (enrollmentCounts.get(e.section_id) || 0) + 1)
+          })
+        }
+      }
+
+      // Process subjects
       for (const subject of subjectsData) {
         if (subject.sections && subject.sections.length > 0) {
           const subjectName = subject.name
 
-          // Get or create subject group
           if (!subjectGroups.has(subjectName)) {
             subjectGroups.set(subjectName, {
               subject_name: subjectName,
@@ -1118,23 +1072,11 @@ const fetchSubjects = async (retryCount = 0) => {
           const subjectGroup = subjectGroups.get(subjectName)
           subjectGroup.grade_levels.add(subject.grade_level)
 
-          // Process each section for this subject
           for (const section of subject.sections) {
             if (section.is_active) {
-              // Get enrollment count for this section
-              const { count: enrollmentCount, error: countError } = await supabase
-                .from('enrollments')
-                .select('id', { count: 'exact' })
-                .eq('section_id', section.id)
-
-              if (countError) {
-                console.error('Error getting enrollment count:', countError)
-              }
-
-              const studentCount = enrollmentCount || 0
+              const studentCount = enrollmentCounts.get(section.id) || 0
               subjectGroup.total_students += studentCount
 
-              // Add section with enrollment data and grade info
               subjectGroup.sections.push({
                 id: section.id,
                 section_id: section.id,
@@ -1144,7 +1086,7 @@ const fetchSubjects = async (retryCount = 0) => {
                 max_students: section.max_students,
                 student_count: studentCount,
                 is_active: section.is_active,
-                grade_level: subject.grade_level, // Include grade level for each section
+                grade_level: subject.grade_level,
                 subject_id: subject.id,
                 subject_name: subject.name
               })
@@ -1156,12 +1098,12 @@ const fetchSubjects = async (retryCount = 0) => {
       }
     }
 
-    // Convert Map to array and add combined grade levels
+    // Convert to array
     const processedSubjects = Array.from(subjectGroups.values()).map(group => {
       const gradeLevelsArray = Array.from(group.grade_levels).sort((a, b) => a - b)
       return {
         ...group,
-        id: `combined_${group.name}`, // Use combined ID for grouped subjects
+        id: `combined_${group.name}`,
         grade_levels: gradeLevelsArray,
         grade_level_display: gradeLevelsArray.length === 1 
           ? `Grade ${gradeLevelsArray[0]}` 
@@ -1169,86 +1111,55 @@ const fetchSubjects = async (retryCount = 0) => {
       }
     })
 
+    // Update cache and state
+    subjectsCache.value = [...processedSubjects]
     subjects.value = [...processedSubjects]
-    console.log('Updated subjects array:', subjects.value.length, 'subjects')
+    lastFetchTime.value = now
 
     await nextTick()
 
   } catch (error) {
-    console.error('Error in fetchSubjects:', error)
+    console.error('Error fetching subjects:', error)
     
     if (error.code === 'PGRST301' || error.message?.includes('JWT')) {
-      console.log('JWT/Auth error in fetchSubjects, redirecting to login')
       await router.push('/login')
-      return
-    }
-    
-    if (retryCount < maxRetries && (error.code === 'PGRST000' || error.message?.includes('network'))) {
-      console.log(`Network error, retrying... (${retryCount + 1}/${maxRetries})`)
-      return await fetchSubjects(retryCount + 1)
-    }
-    
-    const errorMsg = `Unable to load subjects: ${error.message}\n\nPlease try refreshing the page or contact support if the problem persists.`
-    alert(errorMsg)
-  } finally {
-    if (retryCount === 0) {
-      isLoading.value = false
     }
   }
+}
+
+// Background refresh
+const startBackgroundRefresh = () => {
+  setInterval(() => {
+    if (teacherInfo.value?.id && document.visibilityState === 'visible') {
+      fetchSubjects(true)
+    }
+  }, CACHE_DURATION)
 }
 
 const getTotalStudents = (subject) => {
   return subject.actualStudentCount || 0
 }
 
-// View student roster with new schema
+// Student roster viewing (no loading overlay)
 const viewStudentRoster = async (subject) => {
   try {
-    if (!teacherInfo.value) {
-      console.log('No teacher info available')
-      return
-    }
+    if (!teacherInfo.value) return
 
-    isLoading.value = true
-    loadingMessage.value = 'Loading student roster...'
-    
-    console.log('🔍 Loading student roster for subject:', subject.id)
-    console.log('🔍 Teacher ID:', teacherInfo.value.id)
-
-    // Use the new comprehensive view
-    const { data: rosterData, error: rosterError } = await supabase
+    const { data: rosterData } = await supabase
       .from('teacher_student_roster')
       .select('*')
       .eq('subject_id', subject.id)
       .eq('teacher_id', teacherInfo.value.id)
 
-    if (rosterError) {
-      console.error('❌ Error fetching roster data:', rosterError)
-      throw rosterError
-    }
-
-    console.log('📊 Raw roster data from view:', rosterData)
-    console.log('📊 Number of enrolled students found:', rosterData?.length || 0)
-
-    // Get all sections for this subject (even empty ones)
-    const { data: allSections, error: sectionsError } = await supabase
+    const { data: allSections } = await supabase
       .from('sections')
       .select('*')
       .eq('subject_id', subject.id)
       .eq('is_active', true)
 
-    if (sectionsError) {
-      console.error('❌ Error fetching sections:', sectionsError)
-      throw sectionsError
-    }
-
-    console.log('📚 All sections for subject:', allSections)
-
-    // Process the data
     const studentsBySection = {}
     let totalActualStudents = 0
 
-    // Initialize all sections (including empty ones)
     if (allSections && allSections.length > 0) {
       allSections.forEach(section => {
         const sectionKey = `${section.name} (${section.section_code})`
@@ -1259,7 +1170,6 @@ const viewStudentRoster = async (subject) => {
       })
     }
 
-    // Add students to their respective sections
     if (rosterData && rosterData.length > 0) {
       rosterData.forEach(enrollment => {
         const studentInfo = {
@@ -1273,7 +1183,6 @@ const viewStudentRoster = async (subject) => {
 
         const sectionKey = `${enrollment.section_name} (${enrollment.section_code})`
         
-        // Make sure the section exists in our structure
         if (!studentsBySection[sectionKey]) {
           studentsBySection[sectionKey] = {
             section: {
@@ -1288,15 +1197,8 @@ const viewStudentRoster = async (subject) => {
 
         studentsBySection[sectionKey].students.push(studentInfo)
         totalActualStudents++
-        
-        console.log(`✅ Added student ${enrollment.student_name} to section ${sectionKey}`)
       })
     }
-
-    console.log('📋 Final processed data:')
-    console.log('- Total sections:', Object.keys(studentsBySection).length)
-    console.log('- Total students:', totalActualStudents)
-    console.log('- Students by section:', studentsBySection)
 
     currentStudentRoster.value = {
       subject,
@@ -1307,16 +1209,7 @@ const viewStudentRoster = async (subject) => {
     showStudentRosterModal.value = true
 
   } catch (error) {
-    console.error('❌ Error viewing student roster:', error)
-    
-    if (error.code === 'PGRST301' || error.message?.includes('JWT')) {
-      await router.push('/login')
-      return
-    }
-    
-    alert(`Unable to load student roster: ${error.message}`)
-  } finally {
-    isLoading.value = false
+    console.error('Error viewing student roster:', error)
   }
 }
 
@@ -1339,9 +1232,7 @@ const copyCode = async (code, codeId) => {
     setTimeout(() => {
       copiedCodeId.value = null
     }, 2000)
-    console.log('Copied section code:', code)
   } catch (err) {
-    console.error('Failed to copy code:', err)
     const textArea = document.createElement('textarea')
     textArea.value = code
     document.body.appendChild(textArea)
@@ -1362,7 +1253,7 @@ const nextStep = () => {
   }
 }
 
-// Save subject with new database structure
+// Save subject (no loading overlay)
 const saveSubject = async () => {
   try {
     if (!teacherInfo.value?.id) {
@@ -1370,12 +1261,6 @@ const saveSubject = async () => {
       return
     }
 
-    isLoading.value = true
-    loadingMessage.value = isEditing.value ? 'Updating subject...' : 'Creating subject...'
-
-    console.log('Starting subject save process for teacher:', teacherInfo.value.id)
-
-    // Prepare subject data
     const subjectData = {
       name: formData.value.name,
       grade_level: parseInt(formData.value.grade_level),
@@ -1387,7 +1272,6 @@ const saveSubject = async () => {
     let subjectId
 
     if (isEditing.value) {
-      // Update existing subject
       const { data: updatedSubject, error: updateError } = await supabase
         .from('subjects')
         .update(subjectData)
@@ -1396,58 +1280,38 @@ const saveSubject = async () => {
         .select()
         .single()
 
-      if (updateError) {
-        console.error('Update subject error:', updateError)
-        throw updateError
-      }
+      if (updateError) throw updateError
       
       subjectId = currentSubjectId.value
-      console.log('Updated subject:', updatedSubject)
 
-      // Delete existing sections for this subject
-      const { error: deleteError } = await supabase
+      await supabase
         .from('sections')
         .delete()
         .eq('subject_id', subjectId)
 
-      if (deleteError) {
-        console.error('Delete sections error:', deleteError)
-        throw deleteError
-      }
-
     } else {
-      // Create new subject
       const { data: newSubject, error: insertError } = await supabase
         .from('subjects')
         .insert([subjectData])
         .select()
         .single()
 
-      if (insertError) {
-        console.error('Insert subject error:', insertError)
-        throw insertError
-      }
+      if (insertError) throw insertError
       
       subjectId = newSubject.id
-      console.log('Created new subject:', newSubject)
     }
 
-    // Create sections with generated codes
     const sectionsToInsert = []
     const createdSectionCodes = []
     
-    // Generate section codes first
     for (let i = 0; i < formData.value.sections.length; i++) {
       const section = formData.value.sections[i]
       
-      // Simple section code generation (fallback method)
       const subjectPrefix = formData.value.name.substring(0, 4).toUpperCase().replace(/[^A-Z]/g, '')
       const year = new Date().getFullYear()
-      const timestamp = Date.now().toString().slice(-6) // Use 6 digits for more uniqueness
+      const timestamp = Date.now().toString().slice(-6)
       const sectionCode = `${subjectPrefix}${formData.value.grade_level}-${year}-${timestamp}${String(i + 1).padStart(2, '0')}`
-// 
-//       console.log(`Generated section code for ${section.name}:`, sectionCode)
-//       
+      
       sectionsToInsert.push({
         subject_id: subjectId,
         name: section.name,
@@ -1459,55 +1323,27 @@ const saveSubject = async () => {
       createdSectionCodes.push(`${section.name}: ${sectionCode}`)
     }
 
-    console.log('Sections to insert:', sectionsToInsert)
-
-    // Insert all sections
-    const { data: insertedSections, error: sectionsError } = await supabase
+    await supabase
       .from('sections')
       .insert(sectionsToInsert)
       .select()
 
-    if (sectionsError) {
-      console.error('Error inserting sections:', sectionsError)
-      throw sectionsError
-    }
-
-    console.log('Successfully inserted sections:', insertedSections)
-
     closeModal()
 
-    // Success message with section codes
     const sectionCodesText = createdSectionCodes.join('\n')
-    alert(`Subject "${formData.value.name}" ${isEditing.value ? 'updated' : 'created'} successfully!\n\nSection Codes:\n${sectionCodesText}\n\nShare these codes with your students so they can join their respective sections.`)
+    showToast(`Subject "${formData.value.name}" ${isEditing.value ? 'updated' : 'created'} successfully!`, 'success')
+    
+    setTimeout(() => {
+      alert(`Section Codes:\n${sectionCodesText}\n\nShare these codes with your students so they can join their respective sections.`)
+    }, 500)
 
-    console.log('Subject saved successfully, refreshing list...')
-    await fetchSubjects()
+    // Invalidate cache and refresh
+    subjectsCache.value = null
+    await fetchSubjects(true)
 
   } catch (error) {
     console.error('Error saving subject:', error)
-    
-    if (error.code === 'PGRST301' || error.message?.includes('JWT')) {
-      alert('Your session has expired. Please log in again.')
-      await router.push('/login')
-      return
-    }
-    
-    // More specific error handling
-    let errorMessage = `Error ${isEditing.value ? 'updating' : 'creating'} subject:\n\n`
-    
-    if (error.message?.includes('duplicate key')) {
-      errorMessage += 'A section with this code already exists. Please try again.'
-    } else if (error.message?.includes('foreign key')) {
-      errorMessage += 'Invalid teacher or subject reference. Please refresh and try again.'
-    } else if (error.message?.includes('null value')) {
-      errorMessage += 'Missing required information. Please check all fields are filled.'
-    } else {
-      errorMessage += error.message || 'An unexpected error occurred.'
-    }
-    
-    alert(errorMessage)
-  } finally {
-    isLoading.value = false
+    showToast('Error saving subject. Please try again.', 'error')
   }
 }
 
@@ -1530,13 +1366,12 @@ const editSubject = (subject) => {
   currentStep.value = 1
 }
 
-// Modal functions
+// Toast notifications
 const showToast = (message, type = 'success') => {
   notificationMessage.value = message
   notificationType.value = type
   showNotification.value = true
   
-  // Auto-hide after 4 seconds
   setTimeout(() => {
     showNotification.value = false
   }, 4000)
@@ -1569,127 +1404,23 @@ const confirmDelete = async () => {
   deleteType.value = ''
 }
 
-const deleteSubject = async (subjectId) => {
-  try {
-    if (!teacherInfo.value) return
-
-    const subject = subjects.value.find(s => s.id === subjectId)
-    // Removed confirm dialog - now handled by modal
-
-    isLoading.value = true
-    loadingMessage.value = 'Deleting subject...'
-
-    console.log('Deleting subject:', subjectId)
-
-    const { error } = await supabase
-      .from('subjects')
-      .delete()
-      .eq('id', subjectId)
-      .eq('teacher_id', teacherInfo.value.id)
-
-    if (error) {
-      console.error('Delete subject error:', error)
-      throw error
-    }
-
-    console.log('Subject deleted successfully, refreshing list...')
-    await fetchSubjects()
-    alert(`Subject "${subject?.name}" deleted successfully!`)
-  } catch (error) {
-    console.error('Error deleting subject:', error)
-    
-    if (error.code === 'PGRST301' || error.message?.includes('JWT')) {
-      alert('Your session has expired. Please log in again.')
-      await router.push('/login')
-      return
-    }
-    
-    alert(`Error deleting subject: ${error.message}`)
-  } finally {
-    isLoading.value = false
-  }
-}
-
-const editSection = (section) => {
-  // For now, we'll edit by opening the subject edit modal
-  // In a more advanced implementation, you could have a separate section edit modal
-  const subjectData = {
-    id: section.subject_id,
-    name: section.subject_name,
-    grade_level: section.grade_level,
-    description: section.description || '',
-    sections: section.sections
-  }
-  editSubject(subjectData)
-}
-
-// Separate confirmed delete functions
 const deleteSubjectConfirmed = async (subjectId) => {
   try {
     if (!teacherInfo.value) return
 
     const subject = subjects.value.find(s => s.id === subjectId)
-    isLoading.value = true
-    loadingMessage.value = 'Deleting subject...'
 
-    const { error } = await supabase
+    await supabase
       .from('subjects')
       .delete()
       .eq('id', subjectId)
       .eq('teacher_id', teacherInfo.value.id)
-
-    if (error) throw error
-    await fetchSubjects()
+    
+    subjectsCache.value = null
+    await fetchSubjects(true)
     showToast(`Subject "${subject?.name}" deleted successfully!`, 'success')
   } catch (error) {
-    if (error.code === 'PGRST301' || error.message?.includes('JWT')) {
-      alert('Your session has expired. Please log in again.')
-      await router.push('/login')
-      return
-    }
-    alert(`Error deleting subject: ${error.message}`)
-  } finally {
-    isLoading.value = false
-  }
-}
-
-const deleteSection = async (sectionId) => {
-  try {
-    if (!teacherInfo.value) return
-
-    const section = subjects.value.find(s => s.section_id === sectionId)
-    // Removed confirm dialog - now handled by modal
-
-    isLoading.value = true
-    loadingMessage.value = 'Deleting section...'
-
-    console.log('Deleting section:', sectionId)
-
-    const { error } = await supabase
-      .from('sections')
-      .delete()
-      .eq('id', sectionId)
-
-    if (error) {
-      console.error('Delete section error:', error)
-      throw error
-    }
-
-    console.log('Section deleted successfully, refreshing list...')
-    await fetchSubjects()
-    alert(`Section "${section?.section_name}" deleted successfully!`)
-  } catch (error) {
-    console.error('Error deleting section:', error)
-    
-    if (error.code === 'PGRST301' || error.message?.includes('JWT')) {
-      alert('Your session has expired. Please log in again.')
-      await router.push('/login')
-      return
-    }
-    
-    alert(`Error deleting section: ${error.message}`)
-  } finally {
-    isLoading.value = false
+    showToast('Error deleting subject', 'error')
   }
 }
 
@@ -1698,26 +1429,17 @@ const deleteSectionConfirmed = async (sectionId) => {
     if (!teacherInfo.value) return
 
     const section = subjects.value.find(s => s.section_id === sectionId)
-    isLoading.value = true
-    loadingMessage.value = 'Deleting section...'
 
-    const { error } = await supabase
+    await supabase
       .from('sections')
       .delete()
       .eq('id', sectionId)
-
-    if (error) throw error
-    await fetchSubjects()
+    
+    subjectsCache.value = null
+    await fetchSubjects(true)
     showToast(`Section "${section?.section_name}" deleted successfully!`, 'success')
   } catch (error) {
-    if (error.code === 'PGRST301' || error.message?.includes('JWT')) {
-      alert('Your session has expired. Please log in again.')
-      await router.push('/login')
-      return
-    }
-    alert(`Error deleting section: ${error.message}`)
-  } finally {
-    isLoading.value = false
+    showToast('Error deleting section', 'error')
   }
 }
 
@@ -1781,43 +1503,32 @@ const exportStudentRoster = () => {
     a.click()
     document.body.removeChild(a)
     window.URL.revokeObjectURL(url)
-    
-    console.log('Exported student roster successfully')
   } catch (error) {
     console.error('Error exporting roster:', error)
-    alert('Error exporting roster. Please try again.')
   }
 }
 
-// Menu handler for 3-dot menu
 const toggleSectionMenu = (sectionId) => {
   openMenuId.value = openMenuId.value === sectionId ? null : sectionId
 }
 
-// Archive/Unarchive section
 const toggleArchiveSection = async (section) => {
   try {
     const newStatus = section.status === 'archived' ? 'in-progress' : 'archived'
     
-    // Update in database
-    const { error } = await supabase
+    await supabase
       .from('sections')
       .update({ status: newStatus })
       .eq('id', section.id)
     
-    if (error) throw error
-    
-    // Update local data
     section.status = newStatus
-  openMenuId.value = null // Close menu
-  showToast(`Section "${section.section_name}" has been ${newStatus === 'archived' ? 'archived' : 'unarchived'}.`, 'success')
+    openMenuId.value = null
+    showToast(`Section "${section.section_name}" has been ${newStatus === 'archived' ? 'archived' : 'unarchived'}.`, 'success')
   } catch (error) {
-    console.error('Error updating section status:', error)
     showToast('Error updating section status', 'error')
   }
 }
 
-// Close menu when clicking outside
 const handleClickOutside = (event) => {
   if (!event.target.closest('.section-menu-container')) {
     openMenuId.value = null
@@ -1826,27 +1537,32 @@ const handleClickOutside = (event) => {
 
 // Lifecycle
 onMounted(async () => {
-  console.log('Component mounted - My Subjects page')
-  
   try {
-    // Initialize dark mode
     initDarkMode()
     
     const authSuccess = await initializeAuth()
-    
-    if (!authSuccess) {
-      console.log('Auth initialization failed')
-      return
-    }
+    if (!authSuccess) return
     
     setupAuthListener()
     isInitialized.value = true
+    
+    // Initial fetch - subjects display instantly from cache after first load
     await fetchSubjects()
     
-    // Add click outside listener for dropdown menus
+    // Start background refresh
+    startBackgroundRefresh()
+    
     document.addEventListener('click', handleClickOutside)
     
-    console.log('Component initialization complete')
+    // Refresh when tab becomes visible
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && teacherInfo.value?.id) {
+        const timeSinceLastFetch = Date.now() - lastFetchTime.value
+        if (timeSinceLastFetch > CACHE_DURATION) {
+          fetchSubjects(true)
+        }
+      }
+    })
     
   } catch (error) {
     console.error('Component mount error:', error)
@@ -1855,12 +1571,10 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  console.log('Component unmounting - cleaning up')
   if (authListener.value) {
     authListener.value.data.subscription.unsubscribe()
     authListener.value = null
   }
-  // Remove click outside listener
   document.removeEventListener('click', handleClickOutside)
 })
 </script>
