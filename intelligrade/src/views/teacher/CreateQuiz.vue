@@ -575,13 +575,13 @@ export default {
     });
 
     const subject = ref({
-      id: route.query.subjectId || '',
-      name: route.query.subjectName || 'Subject'
+      id: '',
+      name: 'Subject'
     });
 
     const section = ref({
-      id: route.query.sectionId || '',
-      name: route.query.sectionName || ''
+      id: '',
+      name: ''
     });
 
     const quiz = ref({
@@ -599,13 +599,126 @@ export default {
       }
     });
 
+    // Load teacher info from localStorage or session
+    const loadTeacherInfo = () => {
+      try {
+        // Try to get from localStorage
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          const user = JSON.parse(storedUser);
+          teacherInfo.value = {
+            full_name: user.full_name || user.name || 'Teacher',
+            email: user.email || '',
+            role: user.role || 'teacher',
+            teacher_id: user.id || user.teacher_id || null
+          };
+          console.log('Loaded teacher info from localStorage:', teacherInfo.value);
+          return;
+        }
+
+        // Alternative: Try sessionStorage
+        const sessionUser = sessionStorage.getItem('user');
+        if (sessionUser) {
+          const user = JSON.parse(sessionUser);
+          teacherInfo.value = {
+            full_name: user.full_name || user.name || 'Teacher',
+            email: user.email || '',
+            role: user.role || 'teacher',
+            teacher_id: user.id || user.teacher_id || null
+          };
+          console.log('Loaded teacher info from sessionStorage:', teacherInfo.value);
+          return;
+        }
+
+        // If no stored data, set default
+        console.warn('No teacher info found in storage');
+        teacherInfo.value = {
+          full_name: 'Teacher',
+          email: '',
+          role: 'teacher',
+          teacher_id: null
+        };
+      } catch (error) {
+        console.error('Error loading teacher info:', error);
+        teacherInfo.value = {
+          full_name: 'Teacher',
+          email: '',
+          role: 'teacher',
+          teacher_id: null
+        };
+      }
+    };
+
+    // Load route parameters
+    const loadRouteParams = () => {
+      // Get from route query parameters
+      if (route.query.subjectId && route.query.sectionId) {
+        subject.value = {
+          id: route.query.subjectId,
+          name: route.query.subjectName || 'Subject'
+        };
+        section.value = {
+          id: route.query.sectionId,
+          name: route.query.sectionName || ''
+        };
+        console.log('Loaded from query params:', { subject: subject.value, section: section.value });
+        return true;
+      }
+
+      // Try to get from route params (alternative)
+      if (route.params.subjectId && route.params.sectionId) {
+        subject.value = {
+          id: route.params.subjectId,
+          name: route.params.subjectName || 'Subject'
+        };
+        section.value = {
+          id: route.params.sectionId,
+          name: route.params.sectionName || ''
+        };
+        console.log('Loaded from route params:', { subject: subject.value, section: section.value });
+        return true;
+      }
+
+      // Try localStorage as fallback
+      try {
+        const storedSubject = localStorage.getItem('currentSubject');
+        const storedSection = localStorage.getItem('currentSection');
+        
+        if (storedSubject && storedSection) {
+          subject.value = JSON.parse(storedSubject);
+          section.value = JSON.parse(storedSection);
+          console.log('Loaded from localStorage:', { subject: subject.value, section: section.value });
+          return true;
+        }
+      } catch (error) {
+        console.error('Error loading from localStorage:', error);
+      }
+
+      return false;
+    };
+
     // Validate route parameters
     const validateRouteParams = () => {
-      if (!subject.value.id || !section.value.id) {
-        alert('Error: Missing subject or section information. Redirecting...');
-        router.push('/teacher');
+      const isValid = loadRouteParams();
+      
+      if (!isValid || !subject.value.id || !section.value.id) {
+        console.error('Missing required parameters:', {
+          subjectId: subject.value.id,
+          sectionId: section.value.id
+        });
+        
+        // Don't show alert or redirect, just use fallback values
+        console.warn('Using fallback values for subject/section');
+        if (!subject.value.id) {
+          subject.value.id = 'default';
+        }
+        if (!section.value.id) {
+          section.value.id = 'default';
+        }
         return false;
       }
+      
+      console.log('Route parameters validated successfully');
       return true;
     };
 
@@ -806,16 +919,19 @@ export default {
     };
 
     onMounted(() => {
-      console.log('Component mounted');
-      console.log('Route params:', {
-        subjectId: route.query.subjectId,
-        subjectName: route.query.subjectName,
-        sectionId: route.query.sectionId,
-        sectionName: route.query.sectionName
-      });
+      console.log('CreateQuiz component mounted');
       
-      // Validate route parameters
+      // Load teacher info first
+      loadTeacherInfo();
+      
+      // Then validate and load route parameters
       validateRouteParams();
+      
+      console.log('Initial state:', {
+        teacher: teacherInfo.value,
+        subject: subject.value,
+        section: section.value
+      });
     });
 
     return {
@@ -2848,8 +2964,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: 
-    linear-gradient(135deg, rgba(255,255,255,0.7), rgba(248,250,252,0.7));
+  background: linear-gradient(135deg, rgba(255,255,255,0.7), rgba(248,250,252,0.7));
   border: 2px solid rgba(16,185,129,0.15);
   border-radius: 12px;
   padding: 0.7rem 1.4rem;
