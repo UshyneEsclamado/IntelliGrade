@@ -1,36 +1,58 @@
 <!-- Add click event to moon icon for dark mode toggle -->
 /* Extra dark mode styles for section-detail view to match other pages */
 .dark-mode .section-detail-view {
-  background: var(--bg-primary);
-  color: var(--primary-text-color);
+  background: #181c1f !important;
+  color: #e5e7eb !important;
 }
 
 .dark-mode .section-detail-card {
-  background: var(--bg-secondary);
-  border: 1.5px solid var(--border-color);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  background: #181c1f !important;
+  border: 2px solid #10b981 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 0 8px 0 #10b98133 !important;
 }
 
 .dark-mode .section-info-container {
-  background: var(--bg-card); 
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin-bottom: 2rem !important;
 }
 
 .dark-mode .section-info-grid .info-label {
-  color: var(--accent-color);
+  color: #10b981 !important;
+  font-weight: 700 !important;
+  font-size: 0.85rem !important;
+  letter-spacing: 1.5px !important;
+  margin-bottom: 0.6rem !important;
+  text-transform: uppercase !important;
+  display: block !important;
 }
 .dark-mode .section-info-grid .info-value {
-  color: var(--primary-text-color);
+  color: #fff !important;
+  font-weight: 600 !important;
+  font-size: 1.5rem !important;
+  display: block !important;
+  text-align: center !important;
 }
 
-.dark-mode .section-code-area h4 {
-  color: var(--accent-color);
+.dark-mode .section-code-area {
+  background: #181c1f !important;
+  border: 2px solid #10b981 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 0 8px 0 #10b98133 !important;
+  padding: 1.5rem !important;
+  margin-bottom: 2rem !important;
 }
-.dark-mode .section-code-display {
-  background: var(--bg-accent);
-  border: 1px solid var(--border-color);
-  color: var(--accent-color);
+.dark-mode .section-code-area h4 {
+  color: #10b981 !important;
+  font-weight: 700 !important;
+  font-size: 0.85rem !important;
+  letter-spacing: 1.5px !important;
+  margin-bottom: 1rem !important;
+  text-transform: uppercase !important;
 }
 .dark-mode .section-code {
   background: var(--bg-secondary);
@@ -3854,11 +3876,26 @@ onUnmounted(() => {
   border: 2px solid #10b981;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   color: #e9ecef;
+.dark-mode .section-code-display {
+  background: #181c1f !important;
+  border: 2px solid #10b981 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 0 8px 0 #10b98133 !important;
+  padding: 0.8rem 1.5rem !important;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 1.3rem;
+  color: #10b981 !important;
+  transition: box-shadow 0.2s;
 }
 
-.dark-mode .subject-card:hover,
-.dark-mode .section-card:hover {
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+.dark-mode .section-code-display:hover {
+  /* Enhanced glow on hover, no movement */
+  box-shadow: 0 0 16px 0 #10b98166 !important;
+  border-color: #10b981 !important;
+}
 }
 
 .dark-mode .subject-info h3,
@@ -4914,63 +4951,54 @@ onUnmounted(() => {
 
 /* Dark Mode Styles for Section Detail Components */
 .dark-mode .section-code-area {
-  background: 
-    linear-gradient(135deg, rgba(17, 24, 39, 0.8) 0%, rgba(31, 41, 55, 0.9) 100%) !important;
-  border: 2px solid rgba(16, 185, 129, 0.25) !important;
-  box-shadow: 
-    0 4px 12px rgba(0, 0, 0, 0.3),
-    0 2px 6px rgba(0, 0, 0, 0.2) !important;
+  background: #181c1f !important;
+  border: 2px solid #10b981 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 0 8px 0 #10b98133 !important;
+  padding: 1.5rem !important;
+  margin-bottom: 2rem !important;
   color: #e5e7eb !important;
 }
 
 .dark-mode .section-code-area:hover {
-  box-shadow: 
-    0 8px 25px rgba(0, 0, 0, 0.4),
-    0 4px 12px rgba(0, 0, 0, 0.25) !important;
-  border-color: rgba(16, 185, 129, 0.35) !important;
+  box-shadow: 0 0 16px 0 #10b98166 !important;
+  border-color: #10b981 !important;
 }
 
 .dark-mode .section-code-area h4 {
   color: #10b981 !important;
+  font-weight: 700 !important;
+  font-size: 0.85rem !important;
+  letter-spacing: 1.5px !important;
+  margin-bottom: 1rem !important;
+  text-transform: uppercase !important;
 }
 
 .dark-mode .section-info-grid {
-  background: 
-    linear-gradient(135deg, rgba(17, 24, 39, 0.8) 0%, rgba(31, 41, 55, 0.9) 100%) !important;
-  border: 2px solid rgba(16, 185, 129, 0.25) !important;
-  box-shadow: 
-    0 4px 12px rgba(0, 0, 0, 0.3),
-    0 2px 6px rgba(0, 0, 0, 0.2) !important;
+  background: #181c1f !important;
+  border: 2px solid #10b981 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 0 8px 0 #10b98133 !important;
+  padding: 1.5rem !important;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 2rem;
   color: #e5e7eb !important;
 }
 
 .dark-mode .section-info-grid:hover {
-  box-shadow: 
-    0 12px 30px rgba(0, 0, 0, 0.4),
-    0 6px 15px rgba(0, 0, 0, 0.3) !important;
-  border-color: rgba(16, 185, 129, 0.35) !important;
+  box-shadow: 0 0 16px 0 #10b98166 !important;
+  border-color: #10b981 !important;
 }
 
-.dark-mode .section-code-display {
-  background: 
-    linear-gradient(135deg, rgba(17, 24, 39, 0.95) 0%, rgba(31, 41, 55, 0.8) 100%) !important;
-  border: 2px solid rgba(16, 185, 129, 0.25) !important;
-  box-shadow: 
-    0 4px 12px rgba(0, 0, 0, 0.3),
-    0 2px 6px rgba(0, 0, 0, 0.2) !important;
-}
 
-.dark-mode .section-code-display:hover {
-  box-shadow: 
-    0 8px 25px rgba(0, 0, 0, 0.4),
-    0 4px 12px rgba(0, 0, 0, 0.25) !important;
-  border-color: rgba(16, 185, 129, 0.35) !important;
-}
+
 
 .dark-mode .section-code {
-  background: rgba(31, 41, 55, 0.9) !important;
-  border: 2px solid rgba(16, 185, 129, 0.3) !important;
+  background: transparent !important;
+  border: none !important;
   color: #10b981 !important;
+  font-family: 'Courier New', Courier, monospace;
 }
 
 .dark-mode .info-label {
@@ -4984,20 +5012,33 @@ onUnmounted(() => {
 }
 
 .dark-mode .section-info-item {
-  background: rgba(31, 41, 55, 0.4) !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  text-align: center;
+}
+
+.dark-mode .info-value {
+  background: rgba(16,185,129,0.08) !important;
   border: 1px solid rgba(16, 185, 129, 0.15) !important;
   border-radius: 8px !important;
   padding: 0.5rem !important;
+  display: inline-block !important;
+  color: #fff !important;
 }
 
 .dark-mode .copy-code-btn {
-  background: rgba(16, 185, 129, 0.8) !important;
-  color: #fff !important;
-  border: 1px solid rgba(16, 185, 129, 0.9) !important;
+  background: #10b981 !important;
+  color: #181c1f !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 0.6rem 1.2rem !important;
+  font-weight: 700 !important;
 }
 
 .dark-mode .copy-code-btn:hover {
-  background: rgba(16, 185, 129, 1) !important;
-  border-color: rgba(16, 185, 129, 1) !important;
+  background: #059669 !important;
+  color: #fff !important;
 }
 </style>
