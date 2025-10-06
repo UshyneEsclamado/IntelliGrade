@@ -72,6 +72,7 @@
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.10);
 }
+
 <template>
   <div class="subjects-page" :class="{ 'dark-mode': isDarkMode }">
     <div class="section-header-card">
@@ -807,7 +808,7 @@ const availableGrades = computed(() => {
   return grades.sort((a, b) => a - b)
 })
 
-// Navigation functions
+// Navigation functions - FIXED
 const navigateToSections = async (subject, section, event) => {
   if (event && (event.target.closest('button') || event.target.closest('.copy-code-btn'))) {
     return
@@ -817,7 +818,7 @@ const navigateToSections = async (subject, section, event) => {
     await router.push({
       name: 'Sections',
       params: {
-        subjectId: subject.id,
+        subjectId: section.subject_id,  // ✅ Use real UUID from section
         sectionId: section.id
       },
       query: {
@@ -838,7 +839,7 @@ const navigateToCreateQuiz = async (subject, section) => {
     await router.push({
       name: 'CreateQuiz',
       params: {
-        subjectId: subject.id,
+        subjectId: section.subject_id,  // ✅ FIXED: Use real UUID from section
         sectionId: section.id
       },
       query: {
@@ -858,7 +859,7 @@ const viewQuizzes = async (subject, section) => {
     await router.push({
       name: 'ViewQuizzes',
       params: {
-        subjectId: subject.id,
+        subjectId: section.subject_id,  // ✅ FIXED: Use real UUID from section
         sectionId: section.id
       },
       query: {
@@ -878,7 +879,7 @@ const manageGrades = async (subject, section) => {
     await router.push({
       name: 'GradeManagement',
       params: {
-        subjectId: subject.id,
+        subjectId: section.subject_id,  // ✅ FIXED: Use real UUID from section
         sectionId: section.id
       },
       query: {
@@ -899,7 +900,7 @@ const viewSectionStudents = async (subject, section) => {
     await router.push({
       name: 'ViewStudents',
       params: {
-        subjectId: subject.id || subject.subject_id,
+        subjectId: sec.subject_id || subject.id,  // ✅ FIXED: Use real UUID from section
         sectionId: sec.id || sec.section_id
       },
       query: {
@@ -1014,7 +1015,7 @@ const fetchSubjects = async (forceRefresh = false) => {
                 student_count: studentCount,
                 is_active: section.is_active,
                 grade_level: subject.grade_level,
-                subject_id: subject.id,
+                subject_id: subject.id,  // ✅ Store the real UUID here
                 subject_name: subject.name
               })
               
@@ -1274,23 +1275,9 @@ const saveSubject = async () => {
   }
 }
 
-const editSubject = (subject) => {
-  if (!teacherInfo.value) return
-
-  isEditing.value = true
-  currentSubjectId.value = subject.id
-  formData.value = {
-    name: subject.name,
-    grade_level: subject.grade_level.toString(),
-    description: subject.description || '',
-    number_of_sections: subject.sections?.length.toString() || '1',
-    sections: subject.sections?.map(s => ({ 
-      name: s.name, 
-      max_students: s.max_students || 40 
-    })) || []
-  }
-  showCreateModal.value = true
-  currentStep.value = 1
+const editSection = (section) => {
+  console.log('Edit section:', section)
+  // Implement edit section logic
 }
 
 // Toast notifications
