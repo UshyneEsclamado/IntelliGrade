@@ -552,9 +552,9 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { createQuiz } from '@/services/quizService';
+import { supabase } from '@/supabase.js';
 
 export default {
   name: 'CreateQuiz',
@@ -566,7 +566,6 @@ export default {
     const steps = ['Details', 'Questions', 'Settings', 'Preview'];
     const isPublishing = ref(false);
     
-    // Real-time teacher info
     const teacherInfo = ref({
       full_name: 'Loading...',
       email: '',
@@ -599,131 +598,122 @@ export default {
       }
     });
 
-    // Load teacher info from localStorage or session
-    const loadTeacherInfo = () => {
+    // Real-time subscription
+    let quizSubscription = null;
+
+    const loadTeacherInfo = async () => {
       try {
-        // Try to get from localStorage
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-          const user = JSON.parse(storedUser);
-          teacherInfo.value = {
-            full_name: user.full_name || user.name || 'Teacher',
-            email: user.email || '',
-            role: user.role || 'teacher',
-            teacher_id: user.id || user.teacher_id || null
-          };
-          console.log('Loaded teacher info from localStorage:', teacherInfo.value);
-          return;
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !session?.user) {
+          console.error('No session found');
+          router.push('/login');
+          return false;
         }
 
-        // Alternative: Try sessionStorage
-        const sessionUser = sessionStorage.getItem('user');
-        if (sessionUser) {
-          const user = JSON.parse(sessionUser);
-          teacherInfo.value = {
-            full_name: user.full_name || user.name || 'Teacher',
-            email: user.email || '',
-            role: user.role || 'teacher',
-            teacher_id: user.id || user.teacher_id || null
-          };
-          console.log('Loaded teacher info from sessionStorage:', teacherInfo.value);
-          return;
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, role, full_name, email')
+          .eq('auth_user_id', session.user.id)
+          .single();
+
+        if (profileError || !profile) {
+          console.error('Profile error:', profileError);
+          alert('Failed to load profile. Please try logging in again.');
+          return false;
         }
 
-        // If no stored data, set default
-        console.warn('No teacher info found in storage');
+        const { data: teacher, error: teacherError } = await supabase
+          .from('teachers')
+          .select('*')
+          .eq('profile_id', profile.id)
+          .single();
+
+        if (teacherError || !teacher) {
+          console.error('Teacher error:', teacherError);
+          alert('Teacher profile not found. Please contact support.');
+          return false;
+        }
+
         teacherInfo.value = {
-          full_name: 'Teacher',
-          email: '',
-          role: 'teacher',
-          teacher_id: null
+          full_name: teacher.full_name,
+          email: teacher.email,
+          role: profile.role,
+          teacher_id: teacher.id
         };
+
+        console.log('Teacher info loaded:', teacherInfo.value);
+        return true;
       } catch (error) {
         console.error('Error loading teacher info:', error);
-        teacherInfo.value = {
-          full_name: 'Teacher',
-          email: '',
-          role: 'teacher',
-          teacher_id: null
-        };
-      }
-    };
-
-    // Load route parameters
-    const loadRouteParams = () => {
-      // Get from route query parameters
-      if (route.query.subjectId && route.query.sectionId) {
-        subject.value = {
-          id: route.query.subjectId,
-          name: route.query.subjectName || 'Subject'
-        };
-        section.value = {
-          id: route.query.sectionId,
-          name: route.query.sectionName || ''
-        };
-        console.log('Loaded from query params:', { subject: subject.value, section: section.value });
-        return true;
-      }
-
-      // Try to get from route params (alternative)
-      if (route.params.subjectId && route.params.sectionId) {
-        subject.value = {
-          id: route.params.subjectId,
-          name: route.params.subjectName || 'Subject'
-        };
-        section.value = {
-          id: route.params.sectionId,
-          name: route.params.sectionName || ''
-        };
-        console.log('Loaded from route params:', { subject: subject.value, section: section.value });
-        return true;
-      }
-
-      // Try localStorage as fallback
-      try {
-        const storedSubject = localStorage.getItem('currentSubject');
-        const storedSection = localStorage.getItem('currentSection');
-        
-        if (storedSubject && storedSection) {
-          subject.value = JSON.parse(storedSubject);
-          section.value = JSON.parse(storedSection);
-          console.log('Loaded from localStorage:', { subject: subject.value, section: section.value });
-          return true;
-        }
-      } catch (error) {
-        console.error('Error loading from localStorage:', error);
-      }
-
-      return false;
-    };
-
-    // Validate route parameters
-    const validateRouteParams = () => {
-      const isValid = loadRouteParams();
-      
-      if (!isValid || !subject.value.id || !section.value.id) {
-        console.error('Missing required parameters:', {
-          subjectId: subject.value.id,
-          sectionId: section.value.id
-        });
-        
-        // Don't show alert or redirect, just use fallback values
-        console.warn('Using fallback values for subject/section');
-        if (!subject.value.id) {
-          subject.value.id = 'default';
-        }
-        if (!section.value.id) {
-          section.value.id = 'default';
-        }
+        alert('Failed to load teacher information. Please refresh the page.');
         return false;
       }
-      
-      console.log('Route parameters validated successfully');
+    };
+
+    const loadRouteParams = () => {
+      console.log('Loading route params...');
+      console.log('Route params:', route.params);
+      console.log('Route query:', route.query);
+
+      const subjectId = route.params.subjectId;
+      const sectionId = route.params.sectionId;
+      const subjectName = route.query.subjectName || 'Subject';
+      const sectionName = route.query.sectionName || '';
+
+      if (!subjectId || !sectionId) {
+        console.error('Missing required route parameters');
+        return false;
+      }
+
+      subject.value = {
+        id: subjectId,
+        name: subjectName
+      };
+
+      section.value = {
+        id: sectionId,
+        name: sectionName
+      };
+
+      console.log('Route params loaded:', {
+        subject: subject.value,
+        section: section.value
+      });
+
       return true;
     };
 
+    const setupRealtimeSubscription = () => {
+      if (!teacherInfo.value.teacher_id) return;
+      
+      quizSubscription = supabase
+        .channel('quiz-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'quizzes',
+            filter: `teacher_id=eq.${teacherInfo.value.teacher_id}`
+          },
+          (payload) => {
+            console.log('New quiz created (real-time):', payload.new);
+          }
+        )
+        .subscribe((status) => {
+          console.log('Real-time subscription status:', status);
+        });
+    };
+
     const goBack = () => {
-      router.back();
+      if (currentStep.value === 'landing') {
+        router.back();
+      } else {
+        if (confirm('Are you sure you want to go back? Unsaved changes will be lost.')) {
+          router.back();
+        }
+      }
     };
 
     const getStepIndex = (step) => {
@@ -738,8 +728,12 @@ export default {
     };
 
     const proceedToQuestions = () => {
-      if (!quiz.value.title || !quiz.value.numberOfQuestions) {
-        alert('Please fill in all required fields');
+      if (!quiz.value.title || !quiz.value.title.trim()) {
+        alert('Please enter a quiz title');
+        return;
+      }
+      if (!quiz.value.numberOfQuestions) {
+        alert('Please enter the number of questions');
         return;
       }
       if (quiz.value.numberOfQuestions < 1 || quiz.value.numberOfQuestions > 50) {
@@ -751,6 +745,7 @@ export default {
 
     const addQuestion = () => {
       if (quiz.value.questions.length >= quiz.value.numberOfQuestions) {
+        alert(`You can only add ${quiz.value.numberOfQuestions} questions`);
         return;
       }
       quiz.value.questions.push({
@@ -778,50 +773,46 @@ export default {
     const removeOption = (questionIndex, optionIndex) => {
       if (quiz.value.questions[questionIndex].options.length > 2) {
         quiz.value.questions[questionIndex].options.splice(optionIndex, 1);
-        // Reset correct answer if it was the removed option
         if (quiz.value.questions[questionIndex].correctAnswer === optionIndex) {
           quiz.value.questions[questionIndex].correctAnswer = null;
         } else if (quiz.value.questions[questionIndex].correctAnswer > optionIndex) {
           quiz.value.questions[questionIndex].correctAnswer--;
         }
+      } else {
+        alert('A question must have at least 2 options');
       }
     };
 
     const validateQuiz = () => {
-      // Validate title and description
       if (!quiz.value.title.trim()) {
         alert('Please enter a quiz title');
         currentStep.value = 'details';
         return false;
       }
 
-      // Validate questions
       if (quiz.value.questions.length === 0) {
         alert('Please add at least one question');
         currentStep.value = 'questions';
         return false;
       }
 
-      // Validate each question
       for (let i = 0; i < quiz.value.questions.length; i++) {
         const q = quiz.value.questions[i];
         
         if (!q.text.trim()) {
-          alert(`Question ${i + 1} is missing question text`);
+          alert(`Question ${i + 1}: Please enter question text`);
           currentStep.value = 'questions';
           return false;
         }
 
         if (q.type === 'multiple_choice') {
-          // Check if all options are filled
           const emptyOptions = q.options.filter(opt => !opt.trim());
           if (emptyOptions.length > 0) {
-            alert(`Question ${i + 1}: All options must be filled`);
+            alert(`Question ${i + 1}: All answer options must be filled`);
             currentStep.value = 'questions';
             return false;
           }
 
-          // Check if correct answer is selected
           if (q.correctAnswer === null || q.correctAnswer === undefined) {
             alert(`Question ${i + 1}: Please select the correct answer`);
             currentStep.value = 'questions';
@@ -842,16 +833,14 @@ export default {
         }
       }
 
-      // Validate settings
       if (quiz.value.settings.hasTimeLimit) {
         if (!quiz.value.settings.timeLimit || quiz.value.settings.timeLimit < 1) {
-          alert('Please enter a valid time limit');
+          alert('Please enter a valid time limit (at least 1 minute)');
           currentStep.value = 'settings';
           return false;
         }
       }
 
-      // Validate dates
       if (quiz.value.settings.startDate && quiz.value.settings.endDate) {
         const startDate = new Date(quiz.value.settings.startDate);
         const endDate = new Date(quiz.value.settings.endDate);
@@ -866,72 +855,182 @@ export default {
     };
 
     const publishQuiz = async () => {
-      // Validate quiz before publishing
+      console.log('Starting quiz publication...');
+      
       if (!validateQuiz()) {
+        console.log('Validation failed');
         return;
       }
 
-      // Confirm publication
-      if (!confirm(`Are you sure you want to publish "${quiz.value.title}"? Students will be able to see and take this quiz immediately.`)) {
+      if (!confirm(`Are you sure you want to publish "${quiz.value.title}"?\n\nStudents will be able to see and take this quiz immediately.`)) {
         return;
       }
 
       isPublishing.value = true;
 
       try {
-        // Prepare quiz data
-        const quizData = {
+        // Verify all required data is present
+        if (!subject.value.id || !section.value.id || !teacherInfo.value.teacher_id) {
+          throw new Error('Missing required information. Please reload the page and try again.');
+        }
+
+        console.log('Creating quiz with:', {
           subjectId: subject.value.id,
           sectionId: section.value.id,
-          title: quiz.value.title,
-          description: quiz.value.description,
-          numberOfQuestions: quiz.value.questions.length,
-          questions: quiz.value.questions,
-          settings: quiz.value.settings
+          teacherId: teacherInfo.value.teacher_id
+        });
+
+        // Prepare quiz data - FIXED to match your database schema
+        const quizData = {
+          subject_id: subject.value.id,
+          section_id: section.value.id,
+          teacher_id: teacherInfo.value.teacher_id,
+          title: quiz.value.title.trim(),
+          description: quiz.value.description.trim() || null,
+          status: 'active',
+          attempts_allowed: parseInt(quiz.value.settings.attemptsAllowed),
+          shuffle_questions: quiz.value.settings.shuffle,
+          start_date: quiz.value.settings.startDate || null,
+          end_date: quiz.value.settings.endDate || null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         };
 
-        console.log('Publishing quiz:', quizData);
-
-        // Call API to create quiz
-        const result = await createQuiz(quizData);
-
-        if (result.success) {
-          alert('Quiz published successfully! Students can now take this quiz.');
-          console.log('Quiz created:', result.quiz);
+        // Add time limit fields only if enabled (adjust column names to match YOUR schema)
+        if (quiz.value.settings.hasTimeLimit) {
+          // Try different possible column names - uncomment the one that matches your schema:
           
-          // Redirect back to teacher dashboard or subject page
-          router.push({
-            path: '/teacher/subjects',
-            query: {
-              subjectId: subject.value.id,
-              sectionId: section.value.id
-            }
-          });
-        } else {
-          throw new Error(result.error || 'Failed to publish quiz');
+          // Option 1: If your column is 'time_limit_minutes'
+          quizData.time_limit_minutes = parseInt(quiz.value.settings.timeLimit);
+          
+          // Option 2: If your column is 'duration' (uncomment if this is your column name)
+          // quizData.duration = parseInt(quiz.value.settings.timeLimit);
+          
+          // Option 3: If your column is 'time_limit' (uncomment if this works)
+          // quizData.time_limit = parseInt(quiz.value.settings.timeLimit);
+          
+          // Option 4: If you have a boolean column 'has_time_limit'
+          // quizData.has_time_limit = true;
         }
+
+        console.log('Inserting quiz:', quizData);
+
+        // Insert quiz into database
+        const { data: newQuiz, error: quizError } = await supabase
+          .from('quizzes')
+          .insert([quizData])
+          .select()
+          .single();
+
+        if (quizError) {
+          console.error('Quiz insertion error:', quizError);
+          throw new Error(`Failed to create quiz: ${quizError.message}`);
+        }
+
+        if (!newQuiz || !newQuiz.id) {
+          throw new Error('Quiz was not created properly');
+        }
+
+        console.log('Quiz created with ID:', newQuiz.id);
+
+        // Prepare questions data
+        const questionsData = quiz.value.questions.map((q, index) => ({
+          quiz_id: newQuiz.id,
+          question_number: index + 1,
+          question_type: q.type,
+          question_text: q.text.trim(),
+          options: q.type === 'multiple_choice' ? q.options.map(opt => opt.trim()) : null,
+          correct_answer: q.type === 'multiple_choice' 
+            ? q.options[q.correctAnswer].trim()
+            : q.correctAnswer.toString(),
+          points: 1,
+          created_at: new Date().toISOString()
+        }));
+
+        console.log('Inserting questions:', questionsData);
+
+        // Insert questions
+        const { error: questionsError } = await supabase
+          .from('quiz_questions')
+          .insert(questionsData);
+
+        if (questionsError) {
+          console.error('Questions insertion error:', questionsError);
+          // Try to delete the quiz if questions failed
+          await supabase.from('quizzes').delete().eq('id', newQuiz.id);
+          throw new Error(`Failed to add questions: ${questionsError.message}`);
+        }
+
+        console.log('Questions created successfully');
+        
+        // Success!
+        alert('✅ Quiz published successfully!\n\nStudents can now see and take this quiz.\n\nRedirecting to My Subjects...');
+        
+        // Small delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Navigate back
+        await router.push('/teacher/subjects');
+        
       } catch (error) {
         console.error('Error publishing quiz:', error);
-        alert(`Failed to publish quiz: ${error.message || 'Unknown error'}. Please try again.`);
+        
+        let errorMessage = 'Failed to publish quiz.\n\n';
+        
+        if (error.message) {
+          errorMessage += `Error: ${error.message}\n\n`;
+        }
+        
+        if (error.message && error.message.includes('violates foreign key constraint')) {
+          errorMessage += 'Database relationship error. Please ensure the subject and section exist.\n\n';
+        }
+        
+        if (error.message && error.message.includes('time_limit')) {
+          errorMessage += 'Time limit column error. Please check your database schema or contact support.\n\n';
+        }
+        
+        errorMessage += 'Please check your connection and try again.';
+        
+        alert(errorMessage);
       } finally {
         isPublishing.value = false;
       }
     };
 
-    onMounted(() => {
+    onMounted(async () => {
       console.log('CreateQuiz component mounted');
       
-      // Load teacher info first
-      loadTeacherInfo();
+      // Load teacher information first
+      const teacherLoaded = await loadTeacherInfo();
+      if (!teacherLoaded) {
+        router.push('/login');
+        return;
+      }
       
-      // Then validate and load route parameters
-      validateRouteParams();
+      // Load route parameters
+      const paramsLoaded = loadRouteParams();
+      if (!paramsLoaded) {
+        console.error('Failed to load route parameters');
+        alert('Missing subject or section information. Redirecting back...');
+        router.push('/teacher/subjects');
+        return;
+      }
+
+      // Setup real-time subscription
+      setupRealtimeSubscription();
       
-      console.log('Initial state:', {
+      console.log('Component initialized successfully:', {
         teacher: teacherInfo.value,
         subject: subject.value,
         section: section.value
       });
+    });
+
+    onUnmounted(() => {
+      if (quizSubscription) {
+        supabase.removeChannel(quizSubscription);
+        console.log('Real-time subscription cleaned up');
+      }
     });
 
     return {
