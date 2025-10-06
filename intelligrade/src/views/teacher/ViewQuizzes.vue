@@ -83,10 +83,26 @@
           <div class="quiz-header">
             <div class="quiz-info">
               <h3 class="quiz-title">{{ quiz.title }}</h3>
+              <p v-if="quiz.description" class="quiz-description">{{ quiz.description }}</p>
               <div class="quiz-meta">
-                <span class="quiz-questions">{{ quiz.question_count }} Questions</span>
-                <span class="quiz-points">{{ quiz.total_points }} Points</span>
-                <span v-if="quiz.time_limit" class="quiz-time">{{ quiz.time_limit }} Minutes</span>
+                <span class="quiz-questions">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9,22A1,1 0 0,1 8,21V18H4A2,2 0 0,1 2,16V4C2,2.89 2.9,2 4,2H20A2,2 0 0,1 22,4V16A2,2 0 0,1 20,18H13.9L10.2,21.71C10,21.9 9.75,22 9.5,22V22H9M10,16V19.08L13.08,16H20V4H4V16H10Z" />
+                  </svg>
+                  {{ quiz.question_count || 0 }} Questions
+                </span>
+                <span class="quiz-points">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z" />
+                  </svg>
+                  {{ quiz.total_points || 0 }} Points
+                </span>
+                <span v-if="quiz.has_time_limit && quiz.time_limit_minutes" class="quiz-time">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
+                  </svg>
+                  {{ quiz.time_limit_minutes }} Minutes
+                </span>
               </div>
             </div>
             <div class="quiz-status">
@@ -98,16 +114,19 @@
 
           <div class="quiz-stats">
             <div class="stat">
-              <span class="stat-number">{{ quiz.attempts || 0 }}</span>
+              <span class="stat-icon">🔁</span>
+              <span class="stat-number">{{ quiz.attempts_allowed === 999 ? '∞' : quiz.attempts_allowed }}</span>
               <span class="stat-label">Attempts</span>
             </div>
             <div class="stat">
-              <span class="stat-number">{{ quiz.average_score || 0 }}%</span>
-              <span class="stat-label">Avg Score</span>
-            </div>
-            <div class="stat">
+              <span class="stat-icon">📅</span>
               <span class="stat-number">{{ formatDate(quiz.created_at) }}</span>
               <span class="stat-label">Created</span>
+            </div>
+            <div class="stat">
+              <span class="stat-icon">🔀</span>
+              <span class="stat-number">{{ quiz.shuffle_questions ? 'Yes' : 'No' }}</span>
+              <span class="stat-label">Shuffle</span>
             </div>
           </div>
 
@@ -162,18 +181,24 @@
 
         <div class="modal-body">
           <div class="quiz-overview">
+            <p v-if="selectedQuiz.description" class="quiz-description-modal">{{ selectedQuiz.description }}</p>
+            
             <div class="overview-stats">
               <div class="stat-item">
-                <span class="stat-value">{{ selectedQuiz.question_count }}</span>
+                <span class="stat-value">{{ selectedQuiz.question_count || 0 }}</span>
                 <span class="stat-label">Questions</span>
               </div>
               <div class="stat-item">
-                <span class="stat-value">{{ selectedQuiz.total_points }}</span>
+                <span class="stat-value">{{ selectedQuiz.total_points || 0 }}</span>
                 <span class="stat-label">Total Points</span>
               </div>
               <div class="stat-item">
-                <span class="stat-value">{{ selectedQuiz.time_limit || 'No Limit' }}</span>
+                <span class="stat-value">{{ selectedQuiz.has_time_limit && selectedQuiz.time_limit_minutes ? selectedQuiz.time_limit_minutes + ' min' : 'No Limit' }}</span>
                 <span class="stat-label">Time Limit</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value">{{ selectedQuiz.attempts_allowed === 999 ? '∞' : selectedQuiz.attempts_allowed }}</span>
+                <span class="stat-label">Attempts</span>
               </div>
             </div>
           </div>
@@ -228,6 +253,46 @@ const selectedQuiz = ref(null)
 const selectedQuizQuestions = ref([])
 const isLoading = ref(false)
 const error = ref(null)
+const teacherId = ref(null)
+
+// Load teacher information
+const loadTeacherInfo = async () => {
+  try {
+    // Get auth user
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      throw new Error('Please login to continue')
+    }
+
+    // Get profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('auth_user_id', user.id)
+      .single()
+
+    if (profileError || !profile) {
+      throw new Error('Profile not found')
+    }
+
+    // Get teacher
+    const { data: teacher, error: teacherError } = await supabase
+      .from('teachers')
+      .select('id')
+      .eq('profile_id', profile.id)
+      .single()
+
+    if (teacherError || !teacher) {
+      throw new Error('Teacher profile not found')
+    }
+
+    teacherId.value = teacher.id
+    return teacher.id
+  } catch (err) {
+    console.error('Error loading teacher info:', err)
+    throw err
+  }
+}
 
 // Methods
 const fetchQuizzes = async () => {
@@ -235,33 +300,48 @@ const fetchQuizzes = async () => {
   error.value = null
   
   try {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Please login to continue')
+    // Load teacher info first if not already loaded
+    if (!teacherId.value) {
+      await loadTeacherInfo()
+    }
 
     // Fetch quizzes with question count
     const { data: quizzesData, error: quizzesError } = await supabase
       .from('quizzes')
       .select(`
         *,
-        quiz_questions!inner(id, points)
+        quiz_questions(id, points)
       `)
       .eq('subject_id', subjectId.value)
       .eq('section_id', sectionId.value)
-      .eq('teacher_id', user.id)
+      .eq('teacher_id', teacherId.value)
       .order('created_at', { ascending: false })
 
     if (quizzesError) throw quizzesError
 
     // Process quiz data to add question count and total points
-    quizzes.value = (quizzesData || []).map(quiz => ({
-      ...quiz,
-      question_count: quiz.quiz_questions.length,
-      total_points: quiz.quiz_questions.reduce((sum, q) => sum + q.points, 0)
-    }))
+    quizzes.value = (quizzesData || []).map(quiz => {
+      const questions = quiz.quiz_questions || []
+      return {
+        ...quiz,
+        question_count: questions.length,
+        total_points: questions.reduce((sum, q) => sum + (q.points || 0), 0),
+        // Remove the nested quiz_questions to avoid confusion
+        quiz_questions: undefined
+      }
+    })
+
+    console.log('Quizzes loaded:', quizzes.value)
 
   } catch (err) {
     console.error('Error fetching quizzes:', err)
     error.value = err.message
+    
+    // If it's an authentication error, redirect to login
+    if (err.message.includes('login') || err.message.includes('not found')) {
+      alert('Session expired. Please login again.')
+      router.push('/login')
+    }
   } finally {
     isLoading.value = false
   }
@@ -283,6 +363,7 @@ const viewQuizDetails = async (quiz) => {
   } catch (err) {
     console.error('Error fetching quiz questions:', err)
     selectedQuizQuestions.value = []
+    alert('Error loading quiz questions: ' + err.message)
   }
 }
 
@@ -303,20 +384,29 @@ const editQuiz = async (quiz) => {
     })
   } catch (error) {
     console.error('Navigation error:', error)
+    alert('Edit feature coming soon!')
   }
 }
 
 const toggleQuizStatus = async (quiz) => {
   const newStatus = quiz.status === 'published' ? 'draft' : 'published'
   
+  if (!confirm(`Are you sure you want to ${newStatus === 'published' ? 'publish' : 'unpublish'} this quiz?`)) {
+    return
+  }
+  
   try {
     const { error } = await supabase
       .from('quizzes')
-      .update({ status: newStatus })
+      .update({ 
+        status: newStatus,
+        updated_at: new Date().toISOString()
+      })
       .eq('id', quiz.id)
     
     if (error) throw error
     
+    // Update local state
     quiz.status = newStatus
     alert(`Quiz ${newStatus === 'published' ? 'published' : 'unpublished'} successfully!`)
   } catch (err) {
@@ -326,7 +416,9 @@ const toggleQuizStatus = async (quiz) => {
 }
 
 const deleteQuiz = async (quiz) => {
-  if (!confirm(`Are you sure you want to delete "${quiz.title}"? This action cannot be undone.`)) return
+  if (!confirm(`Are you sure you want to delete "${quiz.title}"?\n\nThis action cannot be undone and will delete all associated questions, student attempts, and results.`)) {
+    return
+  }
   
   try {
     const { error } = await supabase
@@ -336,6 +428,7 @@ const deleteQuiz = async (quiz) => {
     
     if (error) throw error
     
+    // Remove from local state
     quizzes.value = quizzes.value.filter(q => q.id !== quiz.id)
     alert('Quiz deleted successfully!')
   } catch (err) {
@@ -369,6 +462,7 @@ const goBack = async () => {
     await router.push({ name: 'MySubjects' })
   } catch (error) {
     console.error('Navigation error:', error)
+    router.back()
   }
 }
 
@@ -378,26 +472,43 @@ const closeModal = () => {
 }
 
 const formatStatus = (status) => {
+  if (!status) return 'Unknown'
   return status.charAt(0).toUpperCase() + status.slice(1)
 }
 
 const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleDateString()
+  if (!dateString) return 'N/A'
+  const date = new Date(dateString)
+  return date.toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric' 
+  })
 }
 
 const formatQuestionType = (type) => {
   const types = {
-    'multiple-choice': 'Multiple Choice',
-    'true-false': 'True/False',
-    'short-answer': 'Short Answer'
+    'multiple_choice': 'Multiple Choice',
+    'true_false': 'True/False',
+    'fill_blank': 'Fill in the Blank'
   }
   return types[type] || type
 }
 
 // Lifecycle
-onMounted(() => {
+onMounted(async () => {
   initDarkMode()
-  fetchQuizzes()
+  
+  // Validate route params
+  if (!subjectId.value || !sectionId.value) {
+    error.value = 'Missing required parameters'
+    alert('Missing subject or section information. Redirecting back...')
+    router.push('/teacher/subjects')
+    return
+  }
+  
+  // Load quizzes
+  await fetchQuizzes()
 })
 </script>
 
