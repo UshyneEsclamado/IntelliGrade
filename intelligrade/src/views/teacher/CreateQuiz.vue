@@ -880,38 +880,27 @@ export default {
           teacherId: teacherInfo.value.teacher_id
         });
 
-        // Prepare quiz data - FIXED to match your database schema
+        // Prepare quiz data - FIXED to match database schema
         const quizData = {
           subject_id: subject.value.id,
           section_id: section.value.id,
           teacher_id: teacherInfo.value.teacher_id,
           title: quiz.value.title.trim(),
           description: quiz.value.description.trim() || null,
-          status: 'active',
+          number_of_questions: parseInt(quiz.value.numberOfQuestions),
+          status: 'published',
           attempts_allowed: parseInt(quiz.value.settings.attemptsAllowed),
           shuffle_questions: quiz.value.settings.shuffle,
+          shuffle_options: quiz.value.settings.shuffle,
           start_date: quiz.value.settings.startDate || null,
           end_date: quiz.value.settings.endDate || null,
+          has_time_limit: quiz.value.settings.hasTimeLimit,
+          time_limit_minutes: quiz.value.settings.hasTimeLimit 
+            ? parseInt(quiz.value.settings.timeLimit) 
+            : null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         };
-
-        // Add time limit fields only if enabled (adjust column names to match YOUR schema)
-        if (quiz.value.settings.hasTimeLimit) {
-          // Try different possible column names - uncomment the one that matches your schema:
-          
-          // Option 1: If your column is 'time_limit_minutes'
-          quizData.time_limit_minutes = parseInt(quiz.value.settings.timeLimit);
-          
-          // Option 2: If your column is 'duration' (uncomment if this is your column name)
-          // quizData.duration = parseInt(quiz.value.settings.timeLimit);
-          
-          // Option 3: If your column is 'time_limit' (uncomment if this works)
-          // quizData.time_limit = parseInt(quiz.value.settings.timeLimit);
-          
-          // Option 4: If you have a boolean column 'has_time_limit'
-          // quizData.has_time_limit = true;
-        }
 
         console.log('Inserting quiz:', quizData);
 
@@ -939,10 +928,6 @@ export default {
           question_number: index + 1,
           question_type: q.type,
           question_text: q.text.trim(),
-          options: q.type === 'multiple_choice' ? q.options.map(opt => opt.trim()) : null,
-          correct_answer: q.type === 'multiple_choice' 
-            ? q.options[q.correctAnswer].trim()
-            : q.correctAnswer.toString(),
           points: 1,
           created_at: new Date().toISOString()
         }));
@@ -950,9 +935,10 @@ export default {
         console.log('Inserting questions:', questionsData);
 
         // Insert questions
-        const { error: questionsError } = await supabase
+        const { data: insertedQuestions, error: questionsError } = await supabase
           .from('quiz_questions')
-          .insert(questionsData);
+          .insert(questionsData)
+          .select();
 
         if (questionsError) {
           console.error('Questions insertion error:', questionsError);
@@ -961,7 +947,57 @@ export default {
           throw new Error(`Failed to add questions: ${questionsError.message}`);
         }
 
-        console.log('Questions created successfully');
+        console.log('Questions created successfully:', insertedQuestions);
+
+        // Now insert options and answers for each question
+        for (let i = 0; i < quiz.value.questions.length; i++) {
+          const question = quiz.value.questions[i];
+          const questionId = insertedQuestions[i].id;
+
+          if (question.type === 'multiple_choice') {
+            // Insert options
+            const optionsData = question.options.map((opt, optIndex) => ({
+              question_id: questionId,
+              option_number: optIndex + 1,
+              option_text: opt.trim(),
+              is_correct: question.correctAnswer === optIndex,
+              created_at: new Date().toISOString()
+            }));
+
+            const { error: optionsError } = await supabase
+              .from('question_options')
+              .insert(optionsData);
+
+            if (optionsError) {
+              console.error('Options insertion error:', optionsError);
+              // Cleanup: delete quiz and questions
+              await supabase.from('quizzes').delete().eq('id', newQuiz.id);
+              throw new Error(`Failed to add options for question ${i + 1}: ${optionsError.message}`);
+            }
+
+          } else if (question.type === 'true_false' || question.type === 'fill_blank') {
+            // Insert answer
+            const answerData = {
+              question_id: questionId,
+              correct_answer: String(question.correctAnswer),
+              case_sensitive: question.type === 'fill_blank',
+              created_at: new Date().toISOString()
+            };
+
+            const { error: answerError } = await supabase
+              .from('question_answers')
+              .insert([answerData]);
+
+            if (answerError) {
+              console.error('Answer insertion error:', answerError);
+              // Cleanup: delete quiz and questions
+              await supabase.from('quizzes').delete().eq('id', newQuiz.id);
+              throw new Error(`Failed to add answer for question ${i + 1}: ${answerError.message}`);
+            }
+          }
+        }
+
+        console.log('All questions, options, and answers created successfully');
         
         // Success!
         alert('✅ Quiz published successfully!\n\nStudents can now see and take this quiz.\n\nRedirecting to My Subjects...');
@@ -983,10 +1019,6 @@ export default {
         
         if (error.message && error.message.includes('violates foreign key constraint')) {
           errorMessage += 'Database relationship error. Please ensure the subject and section exist.\n\n';
-        }
-        
-        if (error.message && error.message.includes('time_limit')) {
-          errorMessage += 'Time limit column error. Please check your database schema or contact support.\n\n';
         }
         
         errorMessage += 'Please check your connection and try again.';
