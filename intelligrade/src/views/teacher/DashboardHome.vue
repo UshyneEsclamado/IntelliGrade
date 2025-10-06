@@ -290,18 +290,21 @@ export default {
       }
     },
 
-      async generateEmployeeId(profileId) {
+    async generateEmployeeId(profileId) {
+      try {
         const year = new Date().getFullYear();
         const shortId = profileId.slice(-6).toUpperCase();
         const random = Math.floor(Math.random() * 99).toString().padStart(2, '0');
         const employeeId = `T${year}${shortId}${random}`;
         
+        const { data: existingTeacher } = await supabase
+          .from('teachers')
           .select('employee_id')
           .eq('employee_id', employeeId)
           .single();
         
         if (existingTeacher) {
-      color: #F3F4F6;
+          return await this.generateEmployeeId(profileId);
         }
         
         console.log('Generated employee ID:', employeeId);
@@ -312,76 +315,71 @@ export default {
       }
     },
 
-      color: #A3D1C6;
+    async loadDashboardStats() {
       try {
         if (!this.teacherId) {
           console.warn('No teacher ID available for dashboard stats');
-      background: #23272b;
-      border-color: #A3D1C6;
-      color: #A3D1C6;
+          this.totalClasses = 0;
+          this.gradedToday = 0;
+          this.pendingReviews = 0;
           return;
         }
 
-      background: #20c997;
-      color: #181c20;
-      transform: scale(1.05);
+        const { data: subjects, error: subjectsError } = await supabase
+          .from('teacher_dashboard')
           .select('subject_id')
           .eq('teacher_id', this.teacherId);
 
-      background: #23272b;
-      border-color: #23272b;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+        if (subjectsError) {
+          console.error('Error loading teacher subjects:', subjectsError);
+        } else {
           const uniqueSubjects = new Set(subjects?.map(s => s.subject_id) || []);
           this.totalClasses = uniqueSubjects.size;
           console.log('Total classes:', this.totalClasses);
-      color: #F3F4F6;
-      background: #23272b;
-      border-bottom: 1px solid #A3D1C6;
+        }
+
+        this.gradedToday = 0;
         this.pendingReviews = 0;
 
         await this.loadAssessmentsToGrade();
-      border-bottom: 1px solid #23272b;
+
       } catch (error) {
         console.error('Error loading dashboard stats:', error);
         this.totalClasses = 0;
-      background: #23272b;
+        this.gradedToday = 0;
         this.pendingReviews = 0;
       }
     },
-      background: #23272b;
-      border-color: #A3D1C6;
+
+    async loadAssessmentsToGrade() {
       try {
         this.assessmentsToGrade = [
           { 
-      background: #181c20;
-      border-color: #20c997;
+            id: 1, 
+            title: 'Mathematics Quiz 1', 
             className: 'Grade 7 Math', 
             studentsSubmitted: 15, 
             totalStudents: 20 
-      background: #20c997;
-      color: #181c20;
-      border: none;
-      box-shadow: none;
+          },
+          { 
             id: 2, 
             title: 'Science Test', 
             className: 'Grade 8 Science', 
-      background: #A3D1C6;
-      color: #181c20;
             studentsSubmitted: 18, 
             totalStudents: 22 
           }
-      background: #23272b;
-      border-color: #A3D1C6;
-      color: #A3D1C6;
+        ];
+
+        this.pendingReviews = this.assessmentsToGrade.length;
 
       } catch (error) {
         console.error('Error loading assessments to grade:', error);
-      background: #20c997;
-      color: #181c20;
+        this.assessmentsToGrade = [];
+      }
     },
 
     async fetchDashboardStats() {
-      color: #20c997;
+      console.log('Dashboard stats refresh triggered');
       await this.loadDashboardStats();
     },
 
@@ -540,7 +538,6 @@ export default {
   padding: 1.5rem;
   font-family: 'Inter', sans-serif;
 }
-
 .dark .home-container {
   background: #181c20;
 }
@@ -555,6 +552,7 @@ export default {
 }
 .dark .header-card {
   background: #23272b;
+  border: 1px solid #20c997;
   box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
 
@@ -588,7 +586,7 @@ export default {
   margin-bottom: 0.25rem;
 }
 .dark .header-title {
-  color: #F3F4F6;
+  color: #A3D1C6;
 }
 
 .header-subtitle {
@@ -672,7 +670,7 @@ export default {
   background: white;
 }
 .dark .notif-header {
-  color: #F3F4F6;
+  color: #A3D1C6;
   background: #23272b;
   border-bottom: 1px solid #3D8D7A;
 }
@@ -715,7 +713,7 @@ export default {
   margin-bottom: 0.25rem;
 }
 .dark .notif-title {
-  color: #F3F4F6;
+  color: #A3D1C6;
 }
 
 .notif-body {
@@ -754,6 +752,7 @@ export default {
 }
 .dark .stat-card {
   background: #23272b;
+  border: 1px solid #20c997;
   box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
 
@@ -779,7 +778,7 @@ export default {
   line-height: 1;
 }
 .dark .stat-number {
-  color: #F3F4F6;
+  color: #A3D1C6;
 }
 
 .stat-label {
@@ -810,6 +809,7 @@ export default {
 }
 .dark .content-card {
   background: #23272b;
+  border: 1px solid #20c997;
   box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
 
@@ -824,7 +824,7 @@ export default {
   margin-bottom: 0.25rem;
 }
 .dark .card-header h3 {
-  color: #F3F4F6;
+  color: #A3D1C6;
 }
 
 .card-desc {
@@ -866,19 +866,19 @@ export default {
   justify-content: space-between;
   align-items: center;
   transition: all 0.2s;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #A3D1C6;
 }
 .dark .assessment-item {
   background: #23272b;
-  border-color: #3D8D7A;
+  border-color: #20c997;
 }
 
 .assessment-item:hover {
-  background: #f0f9ff;
+  background: #181c20;
   border-color: #A3D1C6;
 }
 .dark .assessment-item:hover {
-  background: #181c20;
+  background: #23272b;
   border-color: #A3D1C6;
 }
 
@@ -889,7 +889,7 @@ export default {
   margin-bottom: 0.25rem;
 }
 .dark .assessment-info h4 {
-  color: #F3F4F6;
+  color: #A3D1C6;
 }
 
 .assessment-class {
@@ -911,9 +911,9 @@ export default {
 }
 
 .grade-btn {
-  background: #3D8D7A;
-  color: white;
-  border: none;
+  background: #20c997;
+  color: #181c20;
+  border: 1px solid #A3D1C6;
   padding: 0.5rem 1.25rem;
   border-radius: 8px;
   font-size: 0.875rem;
@@ -922,13 +922,21 @@ export default {
   transition: all 0.2s;
 }
 .dark .grade-btn {
-  background: #3D8D7A;
-  color: #F3F4F6;
+  background: #20c997;
+  color: #181c20;
+  border: 1px solid #A3D1C6;
 }
 
 .grade-btn:hover {
-  background: #2d6b5f;
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
   transform: translateY(-1px);
+}
+.dark .grade-btn:hover {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
 }
 
 .empty-state {
@@ -966,7 +974,7 @@ export default {
 
 .quick-link {
   background: #FBFFE4;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #A3D1C6;
   border-radius: 10px;
   padding: 1rem;
   display: flex;
@@ -982,22 +990,24 @@ export default {
 }
 .dark .quick-link {
   background: #23272b;
-  border-color: #3D8D7A;
+  border-color: #20c997;
   color: #A3D1C6;
 }
 
 .quick-link:hover {
-  background: #A3D1C6;
-  border-color: #3D8D7A;
+  background: #20c997;
+  color: #181c20;
+  border-color: #A3D1C6;
   transform: translateY(-2px);
 }
 .dark .quick-link:hover {
-  background: #3D8D7A;
-  color: #F3F4F6;
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
 }
 
 .quick-link svg {
-  color: #3D8D7A;
+  color: #20c997;
 }
 .dark .quick-link svg {
   color: #A3D1C6;
