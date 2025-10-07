@@ -331,16 +331,7 @@
 <script>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import {
-  getStudentSectionQuizzes,
-  getQuizWithQuestions,
-  canTakeQuiz,
-  startQuizAttempt,
-  saveStudentAnswer,
-  submitQuizAttempt,
-  getStudentAttempts,
-  getCurrentUserInfo
-} from '@/services/quizService';
+import { supabase } from '@/supabase';
 
 export default {
   name: 'TakeQuiz',
@@ -390,17 +381,41 @@ export default {
     // Methods
     const fetchCurrentUser = async () => {
       try {
-        const result = await getCurrentUserInfo();
-        if (result.success && result.data) {
-          studentId.value = result.data.user_id;
-          console.log('Current student ID:', studentId.value);
-        } else {
-          throw new Error('Failed to fetch user info');
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !session?.user) {
+          throw new Error('No active session');
         }
+
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, role')
+          .eq('auth_user_id', session.user.id)
+          .single();
+
+        if (profileError || !profile || profile.role !== 'student') {
+          throw new Error('Student profile not found');
+        }
+
+        const { data: student, error: studentError } = await supabase
+          .from('students')
+          .select('id')
+          .eq('profile_id', profile.id)
+          .eq('is_active', true)
+          .single();
+
+        if (studentError || !student) {
+          throw new Error('Student record not found');
+        }
+
+        studentId.value = student.id;
+        console.log('Current student ID:', studentId.value);
+        return true;
       } catch (error) {
         console.error('Error fetching current user:', error);
         alert('Error: Could not identify student. Please log in again.');
         router.push('/login');
+        return false;
       }
     };
 
@@ -409,35 +424,126 @@ export default {
       loadError.value = null;
       
       try {
-        // Get student ID first
-        await fetchCurrentUser();
+        const userSuccess = await fetchCurrentUser();
+        if (!userSuccess) {
+          return;
+        }
 
         if (!studentId.value || !sectionId.value) {
           throw new Error('Missing student or section information');
         }
 
-        // Fetch quizzes for this section
-        const result = await getStudentSectionQuizzes(studentId.value, sectionId.value);
-        
-        if (result.success) {
-          // Filter only available quizzes
-          availableQuizzes.value = result.data.filter(quiz => quiz.is_available);
+        console.log('Checking quizzes for section:', sectionId.value, 'student:', studentId.value);
+
+        // Fetch all published quizzes for this section
+        const { data: allQuizzes, error: quizError } = await supabase
+          .from('quizzes')
+          .select(`
+            id,
+            title,
+            description,
+            number_of_questions,
+            has_time_limit,
+            time_limit_minutes,
+            attempts_allowed,
+            shuffle_questions,
+            shuffle_options,
+            start_date,
+            end_date,
+            status,
+            created_at
+          `)
+          .eq('section_id', sectionId.value)
+          .eq('status', 'published')
+          .order('created_at', { ascending: false });
+
+        if (quizError) {
+          console.error('Error fetching quizzes:', quizError);
+          throw new Error('Failed to fetch quizzes: ' + quizError.message);
+        }
+
+        console.log('Found quizzes:', allQuizzes?.length || 0);
+
+        if (!allQuizzes || allQuizzes.length === 0) {
+          noQuizzesAvailable.value = true;
+          availableQuizzes.value = [];
+          isLoading.value = false;
+          return;
+        }
+
+        // Filter quizzes by date availability
+        const now = new Date();
+        const quizzesInDateRange = allQuizzes.filter(quiz => {
+          const startOk = !quiz.start_date || new Date(quiz.start_date) <= now;
+          const endOk = !quiz.end_date || new Date(quiz.end_date) >= now;
+          return startOk && endOk;
+        });
+
+        console.log('Quizzes in date range:', quizzesInDateRange.length);
+
+        if (quizzesInDateRange.length === 0) {
+          noQuizzesAvailable.value = true;
+          availableQuizzes.value = [];
+          isLoading.value = false;
+          return;
+        }
+
+        // Get student's attempts for these quizzes
+        const quizIds = quizzesInDateRange.map(q => q.id);
+        const { data: attempts, error: attemptsError } = await supabase
+          .from('quiz_attempts')
+          .select('quiz_id, attempt_number, status')
+          .eq('student_id', studentId.value)
+          .in('quiz_id', quizIds);
+
+        if (attemptsError) {
+          console.warn('Error fetching attempts:', attemptsError);
+        }
+
+        const studentAttempts = attempts || [];
+        console.log('Student attempts:', studentAttempts.length);
+
+        // Build available quizzes list with attempt info
+        const quizzesWithAttempts = quizzesInDateRange.map(quiz => {
+          const quizAttempts = studentAttempts.filter(a => 
+            a.quiz_id === quiz.id && 
+            ['submitted', 'graded', 'reviewed'].includes(a.status)
+          );
           
-          if (availableQuizzes.value.length === 0) {
-            noQuizzesAvailable.value = true;
-          } else if (availableQuizzes.value.length === 1) {
-            // Auto-select if only one quiz
-            selectedQuiz.value = availableQuizzes.value[0];
-            await loadQuizDetails();
-          }
+          const attemptsUsedCount = quizAttempts.length;
+          const hasAttemptsRemaining = quiz.attempts_allowed === 999 || attemptsUsedCount < quiz.attempts_allowed;
+
+          return {
+            ...quiz,
+            quiz_id: quiz.id,
+            attempts_used: attemptsUsedCount,
+            is_available: hasAttemptsRemaining
+          };
+        });
+
+        // Filter to only quizzes with attempts remaining
+        const takableQuizzes = quizzesWithAttempts.filter(q => q.is_available);
+
+        console.log('Takable quizzes:', takableQuizzes.length);
+
+        availableQuizzes.value = takableQuizzes;
+
+        if (takableQuizzes.length === 0) {
+          noQuizzesAvailable.value = true;
+        } else if (takableQuizzes.length === 1) {
+          // Auto-select if only one quiz
+          selectedQuiz.value = takableQuizzes[0];
+          await loadQuizDetails();
         } else {
-          throw new Error(result.error || 'Failed to fetch quizzes');
+          // Multiple quizzes available - show selection
+          noQuizzesAvailable.value = false;
         }
         
       } catch (error) {
         console.error('Error checking available quizzes:', error);
         loadError.value = error.message;
         noQuizzesAvailable.value = true;
+        availableQuizzes.value = [];
       } finally {
         isLoading.value = false;
       }
@@ -457,13 +563,26 @@ export default {
       
       try {
         // Get previous attempts
-        const attemptsResult = await getStudentAttempts(
-          selectedQuiz.value.quiz_id,
-          studentId.value
-        );
+        const { data: attempts, error: attemptsError } = await supabase
+          .from('quiz_attempts')
+          .select(`
+            id,
+            attempt_number,
+            submitted_at,
+            total_score,
+            max_score,
+            percentage,
+            status
+          `)
+          .eq('quiz_id', selectedQuiz.value.quiz_id)
+          .eq('student_id', studentId.value)
+          .in('status', ['submitted', 'graded', 'reviewed'])
+          .order('attempt_number', { ascending: false });
 
-        if (attemptsResult.success) {
-          previousAttempts.value = attemptsResult.data;
+        if (attemptsError) {
+          console.warn('Error loading attempts:', attemptsError);
+        } else {
+          previousAttempts.value = attempts || [];
           attemptsUsed.value = previousAttempts.value.length;
         }
       } catch (error) {
@@ -474,41 +593,73 @@ export default {
     const startQuiz = async () => {
       try {
         // Check if student can take quiz
-        const canTakeResult = await canTakeQuiz(
-          selectedQuiz.value.quiz_id,
-          studentId.value
-        );
+        const canTake = selectedQuiz.value.attempts_allowed === 999 || 
+                       attemptsUsed.value < selectedQuiz.value.attempts_allowed;
 
-        if (!canTakeResult.success || !canTakeResult.canTake) {
+        if (!canTake) {
           alert('You cannot take this quiz at this time.');
           return;
         }
 
         // Load questions
-        const quizResult = await getQuizWithQuestions(selectedQuiz.value.quiz_id);
+        const { data: quizQuestions, error: questionsError } = await supabase
+          .from('quiz_questions')
+          .select(`
+            id,
+            question_number,
+            question_type,
+            question_text,
+            points,
+            question_options (
+              id,
+              option_number,
+              option_text,
+              is_correct
+            )
+          `)
+          .eq('quiz_id', selectedQuiz.value.quiz_id)
+          .order('question_number', { ascending: true });
         
-        if (!quizResult.success) {
-          throw new Error('Failed to load quiz questions');
+        if (questionsError) {
+          throw new Error('Failed to load quiz questions: ' + questionsError.message);
         }
 
-        questions.value = quizResult.data.questions;
+        if (!quizQuestions || quizQuestions.length === 0) {
+          throw new Error('This quiz has no questions');
+        }
+
+        // Format questions
+        questions.value = quizQuestions.map(q => ({
+          ...q,
+          options: (q.question_options || []).sort((a, b) => a.option_number - b.option_number)
+        }));
+
+        console.log('Loaded questions:', questions.value.length);
 
         // Calculate max score
         const maxScore = questions.value.reduce((sum, q) => sum + (q.points || 1), 0);
 
         // Start attempt
-        const attemptResult = await startQuizAttempt(
-          selectedQuiz.value.quiz_id,
-          studentId.value,
-          maxScore
-        );
+        const { data: newAttempt, error: attemptError } = await supabase
+          .from('quiz_attempts')
+          .insert([{
+            quiz_id: selectedQuiz.value.quiz_id,
+            student_id: studentId.value,
+            attempt_number: attemptsUsed.value + 1,
+            max_score: maxScore,
+            status: 'in_progress'
+          }])
+          .select()
+          .single();
 
-        if (!attemptResult.success) {
-          throw new Error('Failed to start quiz attempt');
+        if (attemptError) {
+          throw new Error('Failed to start quiz attempt: ' + attemptError.message);
         }
 
-        attemptId.value = attemptResult.data.id;
+        attemptId.value = newAttempt.id;
         quizStartTime.value = Date.now();
+
+        console.log('Started attempt:', attemptId.value);
 
         // Initialize answers
         questions.value.forEach(q => {
@@ -578,15 +729,39 @@ export default {
 
       try {
         const answer = studentAnswers.value[currentQuestion.value.id];
-        await saveStudentAnswer(
-          attemptId.value,
-          currentQuestion.value.id,
-          answer,
-          answer.points_possible
-        );
+        
+        // Check if answer already exists
+        const { data: existing } = await supabase
+          .from('student_answers')
+          .select('id')
+          .eq('attempt_id', attemptId.value)
+          .eq('question_id', currentQuestion.value.id)
+          .maybeSingle();
+
+        if (existing) {
+          // Update existing answer
+          await supabase
+            .from('student_answers')
+            .update({
+              selected_option_id: answer.selected_option_id,
+              answer_text: answer.answer_text,
+              points_possible: answer.points_possible
+            })
+            .eq('id', existing.id);
+        } else {
+          // Insert new answer
+          await supabase
+            .from('student_answers')
+            .insert([{
+              attempt_id: attemptId.value,
+              question_id: currentQuestion.value.id,
+              selected_option_id: answer.selected_option_id,
+              answer_text: answer.answer_text,
+              points_possible: answer.points_possible
+            }]);
+        }
       } catch (error) {
         console.error('Error auto-saving answer:', error);
-        // Don't show error to user for auto-save
       }
     };
     
@@ -623,31 +798,60 @@ export default {
           clearInterval(timerInterval.value);
         }
 
-        // Calculate time taken
+        // Calculate time taken (in seconds)
         const timeTaken = Math.floor((Date.now() - quizStartTime.value) / 1000);
+        const timeTakenMinutes = Math.ceil(timeTaken / 60);
 
         // Save all answers one final time
         for (const questionId in studentAnswers.value) {
           const answer = studentAnswers.value[questionId];
           if (answer.selected_option_id || answer.answer_text) {
-            await saveStudentAnswer(
-              attemptId.value,
-              questionId,
-              answer,
-              answer.points_possible
-            );
+            const { data: existing } = await supabase
+              .from('student_answers')
+              .select('id')
+              .eq('attempt_id', attemptId.value)
+              .eq('question_id', questionId)
+              .maybeSingle();
+
+            if (existing) {
+              await supabase
+                .from('student_answers')
+                .update({
+                  selected_option_id: answer.selected_option_id,
+                  answer_text: answer.answer_text,
+                  points_possible: answer.points_possible
+                })
+                .eq('id', existing.id);
+            } else {
+              await supabase
+                .from('student_answers')
+                .insert([{
+                  attempt_id: attemptId.value,
+                  question_id: questionId,
+                  selected_option_id: answer.selected_option_id,
+                  answer_text: answer.answer_text,
+                  points_possible: answer.points_possible
+                }]);
+            }
           }
         }
 
-        // Submit the attempt
-        const result = await submitQuizAttempt(attemptId.value, timeTaken);
+        // Update attempt status to submitted
+        const { error: submitError } = await supabase
+          .from('quiz_attempts')
+          .update({
+            status: 'submitted',
+            submitted_at: new Date().toISOString(),
+            time_taken_minutes: timeTakenMinutes
+          })
+          .eq('id', attemptId.value);
 
-        if (result.success) {
-          console.log('Quiz submitted successfully:', result.data);
-          quizSubmitted.value = true;
-        } else {
-          throw new Error(result.error || 'Failed to submit quiz');
+        if (submitError) {
+          throw new Error('Failed to submit quiz: ' + submitError.message);
         }
+
+        console.log('Quiz submitted successfully');
+        quizSubmitted.value = true;
 
       } catch (error) {
         console.error('Error submitting quiz:', error);
