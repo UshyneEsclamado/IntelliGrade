@@ -35,6 +35,7 @@ import ViewStudents from '../views/teacher/ViewStudents.vue'
 // Student subfolder components
 import Subjects from '../views/student/Subjects.vue'
 import Messages from '../views/student/Messages.vue'
+import TakeQuiz from '../views/student/TakeQuiz.vue'
 
 const routes = [
   {
@@ -193,14 +194,15 @@ const routes = [
         path: 'messages',
         name: 'StudentMessages',
         component: Messages
-      },
-      {
-        path: 'take-quiz/:subjectId/:sectionId',
-        name: 'TakeQuiz',
-        component: () => import('../views/student/TakeQuiz.vue'),
-        meta: { requiresAuth: true, role: 'student' }
       }
     ]
+  },
+  // TakeQuiz as standalone route (moved outside StudentLayout children)
+  {
+    path: '/student/take-quiz/:sectionId',
+    name: 'TakeQuiz',
+    component: TakeQuiz,
+    meta: { requiresAuth: true, role: 'student' }
   },
   // Legacy student dashboard route (for backward compatibility)
   {
