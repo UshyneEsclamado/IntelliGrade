@@ -1,125 +1,111 @@
 <template>
-  <div class="home-container" :class="{ 'dark-mode': isDarkMode }">
-    <!-- Compact Header Section with Bell Icon Dropdown -->
-    <div class="section-header-card">
-      <div class="header-bg-decoration"></div>
-      <div class="floating-shapes">
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
-      </div>
-      <div class="section-header-content">
-        <div class="section-header-left">
-          <div class="section-header-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <div class="home-container">
+    <!-- Simple Header -->
+    <div class="header-card">
+      <div class="header-content">
+        <div class="header-left">
+          <div class="user-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
               <circle cx="12" cy="7" r="4"></circle>
             </svg>
           </div>
-          <div class="header-text">
-            <div class="section-header-title">
+          <div>
+            <h1 class="header-title">
               <span v-if="!isLoadingName">Hello, {{ fullName }}!</span>
               <span v-else>Hello, Loading...</span>
-            </div>
-            <div class="section-header-subtitle">Welcome to your teaching dashboard</div>
-            <div class="section-header-description">Manage your classes, grade assessments, and track student progress</div>
+            </h1>
+            <p class="header-subtitle">Welcome to your dashboard</p>
           </div>
         </div>
-        <div class="header-actions">
-          <!-- Bell Icon Dropdown (improved positioning) -->
-          <div class="notif-bell-wrapper">
-            <button class="notif-bell-btn" @click="toggleNotifDropdown" aria-label="Notifications">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4DBB98" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 16v-5a6 6 0 0 0-12 0v5a2 2 0 0 1-2 2h16a2 2 0 0 1-2-2z"/>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                <circle cx="12" cy="7" r="4" fill="#4DBB98" opacity="0.15"/>
-              </svg>
-              <span v-if="notifications.length" class="notif-bell-dot"></span>
-            </button>
-            <div v-if="showNotifDropdown" class="notif-dropdown">
-              <div class="notif-dropdown-header">Notifications</div>
-              <div v-if="notifications.length === 0" class="notif-dropdown-empty">No notifications yet.</div>
-              <div v-for="notif in notifications" :key="notif.id" class="notif-dropdown-item">
-                <div class="notif-title">{{ notif.title }}</div>
-                <div class="notif-body">{{ notif.body }}</div>
-                <div class="notif-date">{{ notif.date }}</div>
-              </div>
+        
+        <!-- Notification Bell -->
+        <div class="notif-wrapper">
+          <button class="notif-btn" @click="toggleNotifDropdown" aria-label="Notifications">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <span v-if="notifications.length" class="notif-badge">{{ notifications.length }}</span>
+          </button>
+          
+          <!-- Notification Dropdown -->
+          <div v-if="showNotifDropdown" class="notif-dropdown">
+            <div class="notif-header">Notifications</div>
+            <div v-if="notifications.length === 0" class="notif-empty">No notifications</div>
+            <div v-for="notif in notifications" :key="notif.id" class="notif-item">
+              <div class="notif-title">{{ notif.title }}</div>
+              <div class="notif-body">{{ notif.body }}</div>
+              <div class="notif-date">{{ notif.date }}</div>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Compact Stats Cards -->
+    <!-- Stats Cards -->
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-icon classes">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <div class="stat-icon stat-classes">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
             <circle cx="9" cy="7" r="4"></circle>
             <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
             <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
           </svg>
         </div>
-        <div class="stat-content">
+        <div>
           <div class="stat-number">{{ totalClasses }}</div>
-          <div class="stat-label">TOTAL CLASSES</div>
+          <div class="stat-label">Total Classes</div>
         </div>
       </div>
 
       <div class="stat-card">
-        <div class="stat-icon graded">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <div class="stat-icon stat-graded">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M22 11.08V12a10 10 0 1 1-5.93-8.66"></path>
             <path d="M22 4L12 14.01l-3-3"></path>
           </svg>
         </div>
-        <div class="stat-content">
+        <div>
           <div class="stat-number">{{ gradedToday }}</div>
-          <div class="stat-label">GRADED TODAY</div>
+          <div class="stat-label">Graded Today</div>
         </div>
       </div>
 
       <div class="stat-card">
-        <div class="stat-icon pending">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <div class="stat-icon stat-pending">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <circle cx="12" cy="12" r="10"></circle>
             <polyline points="12,6 12,12 16,14"></polyline>
           </svg>
         </div>
-        <div class="stat-content">
+        <div>
           <div class="stat-number">{{ pendingReviews }}</div>
-          <div class="stat-label">PENDING REVIEWS</div>
+          <div class="stat-label">Pending Reviews</div>
         </div>
       </div>
     </div>
 
-    <!-- Optimized Content Grid -->
+    <!-- Content Grid -->
     <div class="content-grid">
       <!-- Assessments to Grade -->
       <div class="content-card">
         <div class="card-header">
-          <h3>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-            </svg>
-            Assessments to Grade
-          </h3>
-          <p class="card-subtitle">A list of assessments waiting for your attention.</p>
+          <h3>Assessments to Grade</h3>
+          <p class="card-desc">Review pending student submissions</p>
         </div>
         <div class="assessment-list">
           <div v-if="assessmentsToGrade.length === 0" class="empty-state">
-            <p>No new assessments to grade at the moment.</p>
+            No assessments to grade
           </div>
           <div v-for="assessment in assessmentsToGrade" :key="assessment.id" class="assessment-item">
             <div class="assessment-info">
               <h4>{{ assessment.title }}</h4>
               <p class="assessment-class">{{ assessment.className }}</p>
-              <p class="assessment-progress">Submitted: {{ assessment.studentsSubmitted }} / {{ assessment.totalStudents }}</p>
+              <p class="assessment-progress">{{ assessment.studentsSubmitted }} / {{ assessment.totalStudents }} submitted</p>
             </div>
-            <div class="assessment-actions">
-              <button @click="gradeAssessment(assessment)" class="grade-btn">Grade Assessment</button>
-            </div>
+            <button @click="gradeAssessment(assessment)" class="grade-btn">Grade</button>
           </div>
         </div>
       </div>
@@ -127,46 +113,39 @@
       <!-- Quick Links -->
       <div class="content-card">
         <div class="card-header">
-          <h3>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M13,9H18.5L13,3.5V9M6,2H14L20,8V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V4C4,2.89 4.89,2 6,2M15,18V16H6V18H15M18,14V12H6V14H18Z" />
-            </svg>
-            Quick Links
-          </h3>
-          <p class="card-subtitle">Navigate to key features quickly.</p>
+          <h3>Quick Links</h3>
+          <p class="card-desc">Access key features</p>
         </div>
-        <div class="quick-links-grid">
-          <router-link to="/teacher/subjects" class="quick-link-btn quiz">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <div class="quick-links">
+          <router-link to="/teacher/subjects" class="quick-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
             </svg>
-            Make Quiz
-            <span class="link-description">Create interactive quizzes</span>
+            <span>Make Quiz</span>
           </router-link>
-          <router-link to="/teacher/upload-assessment" class="quick-link-btn upload">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+          
+          <router-link to="/teacher/upload-assessment" class="quick-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9,16V10H5L12,3L19,10H15V16H9M5,20V18H19V20H5Z" />
             </svg>
-            Upload Assessment
-            <span class="link-description">Upload for auto-grading</span>
+            <span>Upload Assessment</span>
           </router-link>
-          <button @click="navigateToClasses" class="quick-link-btn classes">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          
+          <button @click="navigateToClasses" class="quick-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
               <circle cx="9" cy="7" r="4"></circle>
               <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
               <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
             </svg>
-            My Classes
-            <span class="link-description">Manage your classes</span>
+            <span>My Classes</span>
           </button>
-          <button @click="navigateToGradebook" class="quick-link-btn gradebook">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-8.66"></path>
-              <path d="M22 4L12 14.01l-3-3"></path>
+          
+          <button @click="navigateToGradebook" class="quick-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19,3H14.82C14.4,1.84 13.3,1 12,1C10.7,1 9.6,1.84 9.18,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M12,3A1,1 0 0,1 13,4A1,1 0 0,1 12,5A1,1 0 0,1 11,4A1,1 0 0,1 12,3Z" />
             </svg>
-            Gradebook
-            <span class="link-description">View all grades</span>
+            <span>Gradebook</span>
           </button>
         </div>
       </div>
@@ -545,379 +524,216 @@ export default {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* Fix the main container to not clip dropdowns */
-.home-container {
-  padding: 1.25rem;
-  max-width: 100%;
+* {
   margin: 0;
-  font-family: 'Inter', sans-serif;
-  background: var(--bg-primary);
-  height: 100vh;
-  overflow-y: auto;
+  padding: 0;
   box-sizing: border-box;
-  position: relative; /* Add relative positioning */
 }
 
-.home-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: 
-    radial-gradient(circle at 20% 80%, rgba(61, 141, 122, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(179, 216, 168, 0.15) 0%, transparent 50%),
-    radial-gradient(circle at 50% 50%, rgba(163, 209, 198, 0.08) 0%, transparent 50%);
-  z-index: -1;
-  pointer-events: none;
+.home-container {
+  min-height: 100vh;
+  background: #FBFFE4;
+  padding: 1.5rem;
+  font-family: 'Inter', sans-serif;
+}
+.dark .home-container {
+  background: #181c20;
 }
 
-/* Fix the header card positioning to not interfere */
-.section-header-card {
-  position: relative;
-  background: var(--bg-secondary);
-  backdrop-filter: blur(20px);
-  border-radius: 24px;
-  padding: 2rem;
+/* Header */
+.header-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
   margin-bottom: 1.5rem;
-  min-height: 120px;
-  box-shadow: 
-    0 16px 32px var(--shadow-medium),
-    0 8px 16px var(--shadow-light),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  border: 2px solid var(--border-color);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: visible; /* Make sure overflow is visible */
-  z-index: 1; /* Lower z-index than notification */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.dark .header-card {
+  background: #23272b;
+  border: 1px solid #20c997;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
 
-.section-header-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 
-    0 24px 48px var(--shadow-strong),
-    0 12px 24px var(--shadow-medium),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-}
-
-.header-bg-decoration {
-  position: absolute;
-  top: -50%;
-  right: -20%;
-  width: 120%;
-  height: 200%;
-  background: radial-gradient(ellipse at center, rgba(77, 187, 152, 0.08) 0%, transparent 70%);
-  z-index: 1;
-}
-
-.floating-shapes {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1;
-  pointer-events: none;
-}
-
-.shape {
-  position: absolute;
-  border-radius: 50%;
-  background: linear-gradient(135deg, rgba(77, 187, 152, 0.1) 0%, rgba(51, 128, 107, 0.05) 100%);
-}
-
-.shape-1 {
-  width: 80px;
-  height: 80px;
-  top: -20px;
-  right: 10%;
-  animation: float 6s ease-in-out infinite;
-}
-
-.shape-2 {
-  width: 60px;
-  height: 60px;
-  bottom: -15px;
-  right: 25%;
-  animation: float 8s ease-in-out infinite reverse;
-}
-
-.shape-3 {
-  width: 45px;
-  height: 45px;
-  top: 50%;
-  right: 5%;
-  animation: float 7s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-15px) rotate(8deg); }
-}
-
-.section-header-content {
-  position: relative;
-  z-index: 2;
+.header-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 100%;
 }
 
-.section-header-left {
+.header-left {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
-.section-header-icon {
-  width: 60px;
-  height: 60px;
-  background: linear-gradient(135deg, var(--accent-color) 0%, #A3D1C6 100%);
-  border-radius: 16px;
+.user-icon {
+  width: 56px;
+  height: 56px;
+  background: #3D8D7A;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  box-shadow: 
-    0 8px 16px var(--shadow-light),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
+  color: white;
 }
 
-.section-header-icon:hover {
+.header-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+.dark .header-title {
+  color: #A3D1C6;
+}
+
+.header-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+.dark .header-subtitle {
+  color: #A3D1C6;
+}
+
+/* Notification */
+.notif-wrapper {
+  position: relative;
+}
+
+.notif-btn {
+  width: 48px;
+  height: 48px;
+  background: #FBFFE4;
+  border: 2px solid #A3D1C6;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  color: #3D8D7A;
+}
+.dark .notif-btn {
+  background: #23272b;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
+}
+
+.notif-btn:hover {
+  background: #A3D1C6;
   transform: scale(1.05);
 }
 
-.header-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.section-header-title {
-  font-size: 1.75rem;
-  font-weight: 800;
-  color: var(--text-accent);
-  letter-spacing: -0.02em;
-  background: linear-gradient(135deg, var(--accent-color) 0%, #A3D1C6 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-bottom: 0.1rem;
-}
-
-.section-header-subtitle {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin-bottom: 0.1rem;
-}
-
-.section-header-description {
-  font-size: 0.875rem;
-  color: var(--text-muted);
-  font-weight: 400;
-  opacity: 0.9;
-}
-
-/* Ensure header actions don't clip the dropdown */
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  position: relative;
-  z-index: 9999; /* High z-index for the actions container */
-}
-
-/* Fix the notification wrapper positioning */
-.notif-bell-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  z-index: 9999; /* Increase base z-index */
-}
-
-.notif-bell-btn {
-  background: var(--bg-accent);
-  border: 2px solid var(--accent-color);
-  cursor: pointer;
-  position: relative;
-  padding: 0.25rem;
-  border-radius: 50%;
-  transition: background 0.2s, box-shadow 0.2s;
-  outline: none;
-  box-shadow: 0 2px 8px var(--shadow-light);
-}
-
-.notif-bell-btn:focus {
-  box-shadow: 0 0 0 3px var(--accent-color);
-}
-
-.notif-bell-btn:hover {
-  background: var(--accent-hover);
-}
-
-.notif-bell-dot {
+.notif-badge {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 8px;
-  height: 8px;
-  background: #ff4757;
-  border-radius: 50%;
-  border: 2px solid white;
-  animation: pulse 2s infinite;
+  top: -4px;
+  right: -4px;
+  background: #ef4444;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.125rem 0.375rem;
+  border-radius: 999px;
+  min-width: 20px;
+  text-align: center;
 }
 
-@keyframes pulse {
-  0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.2); opacity: 0.8; }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-/* Ensure the dropdown has the highest z-index */
 .notif-dropdown {
   position: absolute;
-  top: 56px;
+  top: 60px;
   right: 0;
-  min-width: 320px;
-  max-width: 400px;
-  max-height: 350px;
-  background: var(--bg-secondary);
-  border: 1.5px solid var(--border-color);
-  border-radius: 16px;
-  box-shadow: 0 20px 64px rgba(0, 0, 0, 0.2), 0 8px 24px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1);
-  z-index: 999999; /* Super high z-index to ensure it's on top */
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  overflow-y: auto;
-  overflow-x: hidden;
-  backdrop-filter: blur(30px);
-  transform-origin: top right;
-  animation: dropdownSlide 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  /* Prevent the dropdown from being clipped */
-  will-change: transform;
-  isolation: isolate;
-}
-
-@keyframes dropdownSlide {
-  from {
-    opacity: 0;
-    transform: translateY(-10px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.notif-dropdown::before {
-  content: '';
-  position: absolute;
-  top: -8px;
-  right: 25px;
-  width: 0;
-  height: 0;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-bottom: 8px solid var(--border-color);
-  z-index: 1;
-}
-
-.notif-dropdown::after {
-  content: '';
-  position: absolute;
-  top: -6px;
-  right: 26px;
-  width: 0;
-  height: 0;
-  border-left: 7px solid transparent;
-  border-right: 7px solid transparent;
-  border-bottom: 7px solid var(--bg-secondary);
-  z-index: 2;
-}
-
-.notif-dropdown::-webkit-scrollbar {
-  width: 6px;
-}
-
-.notif-dropdown::-webkit-scrollbar-track {
-  background: var(--bg-accent);
-  border-radius: 10px;
-}
-
-.notif-dropdown::-webkit-scrollbar-thumb {
-  background: var(--accent-color);
-  border-radius: 10px;
-  opacity: 0.7;
-}
-
-.notif-dropdown::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-hover);
-  opacity: 1;
-}
-
-.notif-dropdown-header {
-  font-weight: 700;
-  color: var(--text-accent);
-  font-size: 1.1rem;
-  margin-bottom: 0.5rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border-color);
-  text-align: center;
-}
-
-.notif-dropdown-empty {
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  text-align: center;
-  padding: 2rem 1rem;
-  font-style: italic;
-}
-
-.notif-dropdown-item {
-  background: var(--bg-accent);
+  width: 320px;
+  max-height: 400px;
+  background: white;
   border-radius: 12px;
-  padding: 0.875rem;
-  border: 1px solid var(--border-color);
-  display: flex;
-  flex-direction: column;
-  gap: 0.375rem;
-  transition: all 0.2s ease;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  z-index: 1000;
+  border: 1px solid #e5e7eb;
+}
+.dark .notif-dropdown {
+  background: #23272b;
+  border-color: #3D8D7A;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+}
+
+.notif-header {
+  padding: 1rem 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  background: white;
+}
+.dark .notif-header {
+  color: #A3D1C6;
+  background: #23272b;
+  border-bottom: 1px solid #3D8D7A;
+}
+
+.notif-empty {
+  padding: 2rem 1.25rem;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.875rem;
+}
+.dark .notif-empty {
+  color: #A3D1C6;
+}
+
+.notif-item {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background 0.2s;
   cursor: pointer;
 }
+.dark .notif-item {
+  border-bottom: 1px solid #232a2f;
+}
 
-.notif-dropdown-item:hover {
-  background: var(--bg-accent-hover);
-  transform: translateX(2px);
-  border-color: var(--accent-color);
+.notif-item:hover {
+  background: #f9fafb;
+}
+.dark .notif-item:hover {
+  background: #23272b;
+}
+
+.notif-item:last-child {
+  border-bottom: none;
 }
 
 .notif-title {
   font-weight: 600;
-  color: var(--text-accent);
-  font-size: 0.95rem;
-  line-height: 1.3;
+  color: #1f2937;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+.dark .notif-title {
+  color: #A3D1C6;
 }
 
 .notif-body {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  line-height: 1.4;
+  font-size: 0.813rem;
+  color: #6b7280;
+  margin-bottom: 0.375rem;
+}
+.dark .notif-body {
+  color: #A3D1C6;
 }
 
 .notif-date {
   font-size: 0.75rem;
-  color: var(--text-muted);
-  align-self: flex-end;
-  margin-top: 0.25rem;
+  color: #9ca3af;
+}
+.dark .notif-date {
+  color: #A3D1C6;
 }
 
+/* Stats Grid */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -926,27 +742,24 @@ export default {
 }
 
 .stat-card {
-  background: var(--bg-card);
-  backdrop-filter: blur(20px);
-  border-radius: 16px;
+  background: white;
+  border-radius: 12px;
   padding: 1.25rem;
   display: flex;
   align-items: center;
   gap: 1rem;
-  box-shadow: 0 6px 24px var(--shadow-medium);
-  border: 1px solid var(--border-color);
-  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 32px var(--shadow-strong);
+.dark .stat-card {
+  background: #23272b;
+  border: 1px solid #20c997;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
 
 .stat-icon {
-  width: 45px;
-  height: 45px;
-  border-radius: 12px;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -954,82 +767,81 @@ export default {
   flex-shrink: 0;
 }
 
-.stat-icon.classes {
-  background: linear-gradient(135deg, var(--accent-color) 0%, #A3D1C6 100%);
-}
-
-.stat-icon.graded {
-  background: linear-gradient(135deg, #B3D8A8 0%, var(--accent-color) 100%);
-}
-
-.stat-icon.pending {
-  background: linear-gradient(135deg, #A3D1C6 0%, #B3D8A8 100%);
-}
+.stat-classes { background: #3D8D7A; }
+.stat-graded { background: #B3D8A8; }
+.stat-pending { background: #A3D1C6; }
 
 .stat-number {
-  font-size: 1.75rem;
-  font-weight: 800;
-  color: var(--text-accent);
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #1f2937;
   line-height: 1;
+}
+.dark .stat-number {
+  color: #A3D1C6;
 }
 
 .stat-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: 0.813rem;
+  color: #6b7280;
   margin-top: 0.25rem;
+  font-weight: 500;
+}
+.dark .stat-label {
+  color: #A3D1C6;
 }
 
+/* Content Grid */
 .content-grid {
   display: grid;
-  grid-template-columns: 1.8fr 1fr;
+  grid-template-columns: 1.5fr 1fr;
   gap: 1.5rem;
-  height: calc(100vh - 420px);
-  min-height: 350px;
 }
 
 .content-card {
-  background: var(--bg-card);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
+  background: white;
+  border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 6px 24px var(--shadow-medium);
-  border: 1px solid var(--border-color);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  max-height: 500px;
+}
+.dark .content-card {
+  background: #23272b;
+  border: 1px solid #20c997;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
 
 .card-header {
   margin-bottom: 1.25rem;
-  flex-shrink: 0;
 }
 
 .card-header h3 {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text-accent);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.375rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+.dark .card-header h3 {
+  color: #A3D1C6;
 }
 
-.card-subtitle {
-  color: var(--text-secondary);
-  font-size: 0.875rem;
+.card-desc {
+  font-size: 0.813rem;
+  color: #6b7280;
+}
+.dark .card-desc {
+  color: #A3D1C6;
 }
 
+/* Assessment List */
 .assessment-list {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  flex: 1;
   overflow-y: auto;
-  padding-right: 0.5rem;
-  margin-right: -0.5rem;
+  flex: 1;
 }
 
 .assessment-list::-webkit-scrollbar {
@@ -1037,213 +849,204 @@ export default {
 }
 
 .assessment-list::-webkit-scrollbar-track {
-  background: var(--bg-accent);
-  border-radius: 10px;
+  background: #f3f4f6;
+  border-radius: 3px;
 }
 
 .assessment-list::-webkit-scrollbar-thumb {
-  background: var(--accent-color);
-  border-radius: 10px;
-  opacity: 0.7;
-}
-
-.assessment-list::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-hover);
-  opacity: 1;
+  background: #A3D1C6;
+  border-radius: 3px;
 }
 
 .assessment-item {
-  background: var(--bg-accent);
-  border-radius: 12px;
+  background: #FBFFE4;
+  border-radius: 10px;
   padding: 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border: 1px solid var(--border-color);
-  transition: all 0.3s ease;
-  flex-shrink: 0;
+  transition: all 0.2s;
+  border: 1px solid #A3D1C6;
+}
+.dark .assessment-item {
+  background: #23272b;
+  border-color: #20c997;
 }
 
 .assessment-item:hover {
-  background: var(--bg-accent-hover);
-  transform: translateX(4px);
+  background: #181c20;
+  border-color: #A3D1C6;
+}
+.dark .assessment-item:hover {
+  background: #23272b;
+  border-color: #A3D1C6;
 }
 
 .assessment-info h4 {
+  font-size: 0.938rem;
   font-weight: 600;
-  color: var(--text-accent);
-  margin-bottom: 0.2rem;
-  font-size: 0.95rem;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+.dark .assessment-info h4 {
+  color: #A3D1C6;
 }
 
 .assessment-class {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  margin-bottom: 0.2rem;
+  font-size: 0.813rem;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
+}
+.dark .assessment-class {
+  color: #A3D1C6;
 }
 
 .assessment-progress {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text-accent);
+  font-size: 0.75rem;
+  color: #3D8D7A;
+  font-weight: 500;
+}
+.dark .assessment-progress {
+  color: #A3D1C6;
 }
 
 .grade-btn {
-  background: linear-gradient(135deg, var(--accent-color) 0%, #A3D1C6 100%);
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
+  background: #20c997;
+  color: #181c20;
+  border: 1px solid #A3D1C6;
+  padding: 0.5rem 1.25rem;
   border-radius: 8px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: 0.875rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px var(--shadow-light);
+  transition: all 0.2s;
+}
+.dark .grade-btn {
+  background: #20c997;
+  color: #181c20;
+  border: 1px solid #A3D1C6;
 }
 
 .grade-btn:hover {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px var(--shadow-medium);
+}
+.dark .grade-btn:hover {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
 }
 
 .empty-state {
   text-align: center;
-  color: var(--text-muted);
+  color: #9ca3af;
   padding: 2rem;
-  font-style: italic;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
+}
+.dark .empty-state {
+  color: #A3D1C6;
 }
 
-.quick-links-grid {
+/* Quick Links */
+.quick-links {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
-  flex: 1;
   overflow-y: auto;
-  padding-right: 0.5rem;
-  margin-right: -0.5rem;
-  align-content: start;
+  flex: 1;
 }
 
-.quick-links-grid::-webkit-scrollbar {
+.quick-links::-webkit-scrollbar {
   width: 6px;
 }
 
-.quick-links-grid::-webkit-scrollbar-track {
-  background: var(--bg-accent);
+.quick-links::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+
+.quick-links::-webkit-scrollbar-thumb {
+  background: #A3D1C6;
+  border-radius: 3px;
+}
+
+.quick-link {
+  background: #FBFFE4;
+  border: 1px solid #A3D1C6;
   border-radius: 10px;
-}
-
-.quick-links-grid::-webkit-scrollbar-thumb {
-  background: var(--accent-color);
-  border-radius: 10px;
-  opacity: 0.7;
-}
-
-.quick-links-grid::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-hover);
-  opacity: 1;
-}
-
-.quick-link-btn {
-  background: var(--bg-accent);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 1rem 0.75rem;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.375rem;
+  gap: 0.5rem;
   cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 600;
-  color: var(--text-accent);
+  transition: all 0.2s;
   text-decoration: none;
-  text-align: center;
-  font-size: 0.85rem;
-  height: fit-content;
-  min-height: 80px;
+  color: #1f2937;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+.dark .quick-link {
+  background: #23272b;
+  border-color: #20c997;
+  color: #A3D1C6;
 }
 
-.quick-link-btn:hover {
-  background: var(--bg-accent-hover);
+.quick-link:hover {
+  background: #20c997;
+  color: #181c20;
+  border-color: #A3D1C6;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px var(--shadow-strong);
-  text-decoration: none;
-  color: var(--text-accent);
+}
+.dark .quick-link:hover {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
 }
 
-.link-description {
-  font-size: 0.7rem;
-  font-weight: 400;
-  color: var(--text-muted);
-  margin-top: 0.2rem;
+.quick-link svg {
+  color: #20c997;
+}
+.dark .quick-link svg {
+  color: #A3D1C6;
 }
 
-@media (max-width: 1200px) {
-  .home-container {
-    padding: 1rem;
-  }
-  
+/* Responsive */
+@media (max-width: 1024px) {
   .content-grid {
     grid-template-columns: 1fr;
-    height: auto;
   }
-  
+}
+
+@media (max-width: 768px) {
   .stats-grid {
     grid-template-columns: 1fr;
-    gap: 0.75rem;
   }
-}
-
-  @media (max-width: 768px) {
-    .notif-dropdown {
-      position: fixed; /* Use fixed positioning on mobile */
-      top: auto;
-      bottom: 20px; /* Position from bottom */
-      right: 0.75rem;
-      left: 0.75rem;
-      min-width: auto;
-      max-width: none;
-      max-height: 300px;
-      z-index: 999999;
-      transform-origin: center bottom;
-    }
-    /* Remove the arrow on mobile since it's positioned differently */
-    .notif-dropdown::before,
-    .notif-dropdown::after {
-      display: none;
-    }
-    /* Alternative: Keep it at top but with better positioning */
-    .notif-dropdown.top-positioned {
-      position: fixed;
-      top: 120px;
-      bottom: auto;
-      transform-origin: top center;
-    }
-    .notif-dropdown.top-positioned::before {
-      display: block;
-      right: 40px;
-    }
-    .notif-dropdown.top-positioned::after {
-      display: block;
-      right: 41px;
-    }
+  
+  .quick-links {
+    grid-template-columns: 1fr;
   }
-
-/* Add a backdrop overlay to prevent interaction with other elements */
-.notif-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 99999; /* Just below dropdown */
-  background: transparent;
-  display: none;
-}
-
-.notif-backdrop.active {
-  display: block;
+  
+  .header-content {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .header-left {
+    width: 100%;
+  }
+  
+  .notif-wrapper {
+    align-self: flex-end;
+  }
+  
+  .notif-dropdown {
+    right: 0;
+    left: auto;
+    width: calc(100vw - 3rem);
+    max-width: 320px;
+  }
 }
 </style>
