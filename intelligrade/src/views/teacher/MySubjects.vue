@@ -75,39 +75,30 @@
 
 <template>
   <div class="subjects-page" :class="{ 'dark-mode': isDarkMode }">
+    <!-- Simple Header Card -->
     <div class="section-header-card">
-      <div class="header-bg-decoration"></div>
-      <div class="floating-shapes">
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
-        <div class="shape shape-4"></div>
-        <div class="shape shape-5"></div>
-      </div>
-      
       <div class="section-header-content">
         <div class="section-header-left">
           <div class="section-header-icon">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z" />
             </svg>
           </div>
-          
           <div class="header-text">
-            <h1 class="section-header-title">My Subjects</h1>
-            <p class="section-header-subtitle">Create and manage your class subjects with multiple sections</p>
-            <p class="section-header-description">Organize your classes and track student progress</p>
+            <h1>My Subjects</h1>
+            <p>Create and manage your class subjects with multiple sections</p>
           </div>
         </div>
         
-    <div class="header-actions">
-      <svg v-if="isDarkMode" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" @click="toggleDarkMode" style="cursor:pointer">
+        <div class="header-actions">
+          <button @click="toggleDarkMode" class="dark-mode-toggle">
+            <svg v-if="isDarkMode" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,2L14.39,5.42C13.65,5.15 12.84,5 12,5C11.16,5 10.35,5.15 9.61,5.42L12,2M3.34,7L7.5,6.65C6.9,7.16 6.36,7.78 5.94,8.5C5.52,9.22 5.25,10 5.11,10.79L3.34,7M3.36,17L5.12,13.23C5.26,14 5.53,14.78 5.95,15.5C6.37,16.22 6.91,16.84 7.51,17.35L3.36,17M20.65,7L18.88,10.79C18.74,10 18.47,9.22 18.05,8.5C17.63,7.78 17.09,7.15 16.49,6.64L20.65,7M20.64,17L16.5,17.36C17.1,16.85 17.64,16.22 18.06,15.5" />
             </svg>
-            <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="currentColor" @click="toggleDarkMode" style="cursor:pointer">
+            <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M17.75,4.09L15.22,6.03L16.13,9.09L13.5,7.28L10.87,9.09L11.78,6.03L9.25,4.09L12.44,4L13.5,1L14.56,4L17.75,4.09M21.25,11L19.61,12.25L20.2,14.23L18.5,13.06L16.8,14.23L17.39,12.25L15.75,11L17.81,10.95L18.5,9L19.19,10.95L21.25,11M18.97,15.95C19.8,15.87 20.69,17.05 20.16,17.8C19.84,18.25 19.5,18.67 19.08,19.07C15.17,23 8.84,23 4.94,19.07C1.03,15.17 1.03,8.83 4.94,4.93C5.34,4.53 5.76,4.17 6.21,3.85C6.96,3.32 8.14,4.21 8.06,5.04C7.79,7.9 8.75,10.87 10.95,13.06C13.14,15.26 16.1,16.22 18.97,15.95M17.33,17.97C14.5,17.81 11.7,16.64 9.53,14.5C7.36,12.31 6.2,9.5 6.04,6.68C3.23,9.82 3.34,14.4 6.35,17.41C9.37,20.43 14,20.54 17.33,17.97Z" />
             </svg>
-          <!-- End dark mode toggle button -->
+          </button>
           <button @click="showCreateModal = true" class="create-quiz-btn">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
@@ -623,6 +614,20 @@
         <p>{{ loadingMessage }}</p>
       </div>
     </div>
+
+    <!-- Success Modal -->
+    <div v-if="showSuccessModal" class="success-modal" @click.self="closeSuccessModal">
+      <div class="success-modal-content">
+        <div class="success-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z" />
+          </svg>
+        </div>
+        <h3>Success!</h3>
+        <p>{{ successMessage }}</p>
+        <button @click="closeSuccessModal" class="success-close-btn">OK</button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -667,6 +672,10 @@ const openMenuId = ref(null)
 const subjectsCache = ref(null)
 const lastFetchTime = ref(0)
 const CACHE_DURATION = 30000 // 30 seconds
+
+// Success modal state
+const showSuccessModal = ref(false)
+const successMessage = ref('')
 
 // Form data
 const formData = ref({
@@ -1259,11 +1268,10 @@ const saveSubject = async () => {
     closeModal()
 
     const sectionCodesText = createdSectionCodes.join('\n')
-    showToast(`Subject "${formData.value.name}" ${isEditing.value ? 'updated' : 'created'} successfully!`, 'success')
     
-    setTimeout(() => {
-      alert(`Section Codes:\n${sectionCodesText}\n\nShare these codes with your students so they can join their respective sections.`)
-    }, 500)
+    // Show success modal instead of toast and alert
+    successMessage.value = `Subject "${formData.value.name}" ${isEditing.value ? 'updated' : 'created'} successfully!\n\nSection Codes:\n${sectionCodesText}\n\nShare these codes with your students so they can join their respective sections.`
+    showSuccessModal.value = true
 
     // Invalidate cache and refresh
     subjectsCache.value = null
@@ -1293,6 +1301,12 @@ const showToast = (message, type = 'success') => {
 
 const hideNotification = () => {
   showNotification.value = false
+}
+
+// Success modal functions
+const closeSuccessModal = () => {
+  showSuccessModal.value = false
+  successMessage.value = ''
 }
 
 const openDeleteModal = (type, item) => {
@@ -1494,19 +1508,288 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Base Styles */
+/* Base Container */
 .subjects-page {
-  padding: 2rem;
-  max-width: 1400px;
+  padding: 1.5rem;
+  max-width: 1200px;
   margin: 0 auto;
-  background: var(--bg-primary);
+  background: #f8fafc;
   min-height: 100vh;
-  color: var(--primary-text-color);
+}
+
+/* Simple Header Card */
+.section-header-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.section-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.section-header-icon {
+  width: 60px;
+  height: 60px;
+  background: #20c997;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+}
+
+.header-text h1 {
+  color: #333;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.header-text p {
+  color: #666;
+  margin: 0.5rem 0 0 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.create-quiz-btn {
+  background: #20c997;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   transition: all 0.3s ease;
 }
 
-.section-header-card {
-  margin-bottom: 2rem;
+.create-quiz-btn:hover {
+  background: #1ba085;
+  transform: translateY(-1px);
+}
+
+.dark-mode-toggle {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0.75rem;
+  cursor: pointer;
+  color: #666;
+  transition: all 0.3s ease;
+}
+
+.dark-mode-toggle:hover {
+  border-color: #20c997;
+  color: #20c997;
+}
+
+/* Subject Grid */
+.subjects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.subject-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+}
+
+.subject-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #20c997;
+}
+
+.subject-simple-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.subject-simple-header h3 {
+  color: #20c997;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+}
+
+.subject-stats-simple {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.arrow-icon {
+  color: #20c997;
+  transition: transform 0.3s ease;
+}
+
+.subject-card:hover .arrow-icon {
+  transform: translateX(4px);
+}
+
+/* Success Modal */
+.success-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.success-modal-content {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.success-icon {
+  width: 60px;
+  height: 60px;
+  background: #20c997;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  color: white;
+  font-size: 1.5rem;
+}
+
+.success-modal h3 {
+  color: #333;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 1rem 0;
+}
+
+.success-modal p {
+  color: #666;
+  margin: 0 0 2rem 0;
+  white-space: pre-line;
+}
+
+.success-close-btn {
+  background: #20c997;
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.success-close-btn:hover {
+  background: #1ba085;
+}
+
+/* Dark Mode */
+.dark-mode .subjects-page {
+  background: #1a202c;
+  color: #e2e8f0;
+}
+
+.dark-mode .section-header-card {
+  background: #23272b;
+  border: 1px solid #20c997;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.dark-mode .header-text h1 {
+  color: #e2e8f0;
+}
+
+.dark-mode .header-text p {
+  color: #a0aec0;
+}
+
+.dark-mode .dark-mode-toggle {
+  background: #23272b;
+  border-color: #20c997;
+  color: #20c997;
+}
+
+.dark-mode .dark-mode-toggle:hover {
+  background: #2d3748;
+}
+
+.dark-mode .subject-card {
+  background: #23272b;
+  border: 1px solid #20c997;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  color: #e2e8f0;
+}
+
+.dark-mode .subject-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .subject-simple-header h3 {
+  color: #20c997;
+}
+
+.dark-mode .subject-stats-simple {
+  color: #a0aec0;
+}
+
+.dark-mode .success-modal-content {
+  background: #23272b;
+  color: #e2e8f0;
+}
+
+.dark-mode .success-modal h3 {
+  color: #e2e8f0;
+}
+
+.dark-mode .success-modal p {
+  color: #a0aec0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .subjects-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .section-header-content {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+</style>
   position: relative;
   overflow: hidden;
   background: rgba(248, 250, 252, 0.9);
@@ -5023,9 +5306,3 @@ onUnmounted(() => {
   padding: 0.6rem 1.2rem !important;
   font-weight: 700 !important;
 }
-
-.dark-mode .copy-code-btn:hover {
-  background: #059669 !important;
-  color: #fff !important;
-}
-</style>
