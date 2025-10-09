@@ -125,20 +125,7 @@
   }
 
 .dark .section-header-card {
-  background: #23272b;
-  border: 1px solid #20c997;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 
-/* Simple, compact card style */
-.section-card.simple, .section-detail-card {
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-  padding: 1rem 1.1rem;
-  margin-bottom: 0.7rem;
-  transition: box-shadow 0.18s, border 0.18s, background 0.18s;
-}
 .section-card.simple:hover {
   background: #f6f8fa;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
@@ -242,28 +229,45 @@
 .breadcrumb {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
   margin-bottom: 1.5rem;
+  padding: 0.75rem 1rem;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   font-size: 0.875rem;
   color: #6b7280;
 }
+
 .dark .breadcrumb {
+  background: #1f2937;
+  border: 1px solid #374151;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
   color: #A3D1C6;
 }
 
 .breadcrumb-separator {
-  color: #6b7280;
+  color: #9ca3af;
+  font-weight: 300;
+  user-select: none;
 }
+
 .dark .breadcrumb-separator {
-  color: #A3D1C6;
+  color: #6b7280;
 }
 
 .breadcrumb-current {
   color: #1f2937;
   font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  background: #f3f4f6;
+  border-radius: 6px;
 }
+
 .dark .breadcrumb-current {
-  color: #A3D1C6;
+  color: #ffffff;
+  background: #374151;
 }
 
 /* Grade Filter */
@@ -366,15 +370,34 @@
   margin-top: 2rem;
 }
 .breadcrumb-btn {
-  font-weight: 600;
+  background: none;
+  border: none;
+  color: #17815c;
+  font-weight: 700;
+  text-decoration: underline;
   display: flex;
   align-items: center;
-  gap: 0.3rem;
-  transition: background 0.2s, color 0.2s;
+  gap: 0.4rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  font-size: 0.875rem;
 }
+
+.dark .breadcrumb-btn {
+  color: #A3D1C6;
+}
+
 .breadcrumb-btn:hover {
+  background: #A3D1C6;
+  color: #ffffff;
+  transform: translateX(-1px);
+}
+
+.dark .breadcrumb-btn:hover {
   background: #20c997;
-  color: #fff;
+  color: #ffffff;
 }
 .breadcrumb-separator {
   color: #20c997;
@@ -386,41 +409,79 @@
 }
 .grade-filter-container {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.75rem;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
 }
+
 .grade-filter-btn {
+  background: #ffffff;
+  color: #3D8D7A;
+  border: 1.5px solid #A3D1C6;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.dark .grade-filter-btn {
   background: #23272f;
   color: #20c997;
   border: 1.5px solid #20c997;
-  border-radius: 8px;
-  padding: 0.3rem 1rem;
   font-weight: 600;
-  transition: background 0.2s, color 0.2s;
 }
+
 .grade-filter-btn.active, .grade-filter-btn:hover {
+  background: #A3D1C6;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(163, 209, 198, 0.3);
+}
+
+.dark .grade-filter-btn.active, .dark .grade-filter-btn:hover {
   background: #20c997;
-  color: #fff;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(32, 201, 151, 0.3);
 }
 .sections-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+  max-width: 100%;
 }
+
 .section-card.simple {
-  background: #23272f;
-  border: 1.5px solid #20c997;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px 0 #20c99722;
-  padding: 1.5rem 1.2rem;
+  background: #ffffff;
+  border: 1.5px solid #A3D1C6;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 1.25rem 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
-  transition: box-shadow 0.2s, border 0.2s;
+  gap: 0.75rem;
+  transition: all 0.2s ease;
   cursor: pointer;
+  position: relative;
+  max-width: 350px;
+  min-height: 120px;
 }
+
+.dark .section-card.simple {
+  background: #23272f;
+  border: 1.5px solid #20c997;
+  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.15);
+}
+
 .section-card.simple:hover {
-  box-shadow: 0 4px 16px 0 #20c99744;
+  box-shadow: 0 4px 16px rgba(163, 209, 198, 0.25);
+  border-color: #3D8D7A;
+  transform: translateY(-2px);
+}
+
+.dark .section-card.simple:hover {
+  box-shadow: 0 4px 16px rgba(32, 201, 151, 0.3);
   border-color: #18b087;
 }
 .section-simple-header {
@@ -428,25 +489,45 @@
   align-items: flex-start;
   gap: 1rem;
 }
+
 .section-info h4 {
-  color: #20c997;
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin-bottom: 0.3rem;
+  color: #3D8D7A;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  line-height: 1.3;
 }
+
+.dark .section-info h4 {
+  color: #20c997;
+  font-weight: 700;
+}
+
 .section-code-inline {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: #181c1f;
-  border-radius: 8px;
-  padding: 0.3rem 0.8rem;
-  font-size: 1rem;
-  margin-bottom: 0.3rem;
+  background: #F8F9FA;
+  border: 1px solid #A3D1C6;
+  border-radius: 6px;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
 }
+
+.dark .section-code-inline {
+  background: #181c1f;
+  border: 1px solid #20c997;
+}
+
 .code-label {
-  color: #20c997;
+  color: #3D8D7A;
   font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.dark .code-label {
+  color: #20c997;
 }
 .section-code-text {
   color: #fff;
@@ -478,48 +559,100 @@
 .section-action-btn.menu {
   background: transparent;
   border: none;
-  color: #20c997;
-  font-size: 1.2rem;
-  padding: 0.2rem;
+  color: #3D8D7A;
+  font-size: 1.1rem;
+  padding: 0.3rem;
   border-radius: 50%;
-  transition: background 0.2s;
+  transition: all 0.2s ease;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+
+.dark .section-action-btn.menu {
+  color: #20c997;
+}
+
 .section-action-btn.menu:hover {
-  background: #23272f;
+  background: #A3D1C6;
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
+.dark .section-action-btn.menu:hover {
+  background: #20c997;
+  color: #ffffff;
 }
 .section-dropdown-menu {
   position: absolute;
   top: 2rem;
   right: 0;
-  background: #23272f;
-  border: 1.5px solid #20c997;
+  background: #ffffff;
+  border: 1.5px solid #A3D1C6;
   border-radius: 10px;
-  box-shadow: 0 2px 8px 0 #20c99722;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   z-index: 10;
-  min-width: 120px;
+  min-width: 140px;
   display: flex;
   flex-direction: column;
+  font-size: 0.875rem;
 }
+
+.dark .section-dropdown-menu {
+  background: #23272f;
+  border: 1.5px solid #20c997;
+  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.2);
+}
+
 .section-dropdown-menu .menu-item {
   background: none;
   border: none;
-  color: #20c997;
-  padding: 0.7rem 1rem;
+  color: #3D8D7A;
+  padding: 0.75rem 1rem;
   text-align: left;
+  font-weight: 500;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.dark .section-dropdown-menu .menu-item {
+  color: #20c997;
   font-weight: 600;
-  border-radius: 8px;
-  transition: background 0.2s, color 0.2s;
 }
+
 .section-dropdown-menu .menu-item:hover {
-  background: #20c997;
-  color: #fff;
+  background: #A3D1C6;
+  color: #ffffff;
+  transform: translateX(2px);
 }
+
+.dark .section-dropdown-menu .menu-item:hover {
+  background: #20c997;
+  color: #ffffff;
+}
+
 .section-dropdown-menu .menu-item.delete {
+  color: #dc3545;
+}
+
+.dark .section-dropdown-menu .menu-item.delete {
   color: #ff5c5c;
 }
+
 .section-dropdown-menu .menu-item.delete:hover {
+  background: #dc3545;
+  color: #ffffff;
+}
+
+.dark .section-dropdown-menu .menu-item.delete:hover {
   background: #ff5c5c;
-  color: #fff;
+  color: #ffffff;
 }
 
 /* Section Detail View Enhancements */
@@ -561,20 +694,38 @@
   justify-content: center;
 }
 .section-action-btn {
-  background: #23272f;
-  color: #20c997;
-  border: 1.5px solid #20c997;
+  background: #ffffff;
+  color: #3D8D7A;
+  border: 1.5px solid #A3D1C6;
   border-radius: 8px;
   padding: 0.6rem 1.2rem;
-  font-weight: 600;
-  transition: background 0.2s, color 0.2s;
+  font-weight: 500;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   gap: 0.4rem;
+  cursor: pointer;
+  font-size: 0.875rem;
 }
+
+.dark .section-action-btn {
+  background: #23272f;
+  color: #20c997;
+  border: 1.5px solid #20c997;
+  font-weight: 600;
+}
+
 .section-action-btn:hover {
+  background: #A3D1C6;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(163, 209, 198, 0.3);
+}
+
+.dark .section-action-btn:hover {
   background: #20c997;
-  color: #fff;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.3);
 }
 .dark-mode .section-actions-grid {
   background: var(--bg-card);
@@ -583,29 +734,29 @@
 }
 
 <template>
-  <div class="subjects-page" :class="{ 'dark-mode': isDarkMode }">
-    <!-- Simple Header Card -->
-    <div class="section-header-card">
-      <div class="section-header-content">
-        <div class="section-header-left">
-          <div class="section-header-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z" />
+  <div :class="['subjects-page', isDarkMode ? 'dark' : '']">
+    <!-- Header Card -->
+    <div class="header-card">
+      <div class="header-content">
+        <div class="header-left">
+          <div class="user-icon">
+            <svg width="40" height="40" fill="none" viewBox="0 0 24 24">
+              <path fill="currentColor" d="M12 2a2 2 0 0 1 2 2v1h4a2 2 0 0 1 2 2v1H4V7a2 2 0 0 1 2-2h4V4a2 2 0 0 1 2-2Zm8 7v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9h16Zm-2 2H6v7h12v-7Z"/>
             </svg>
           </div>
-          <div class="header-text">
-            <h1>My Subjects</h1>
-            <p>Create and manage your class subjects with multiple sections</p>
+          <div>
+            <h1 class="header-title">My Subjects</h1>
+            <p class="header-subtitle">Manage your classes and student sections</p>
           </div>
         </div>
         
         <div class="header-actions">
-          <button @click="toggleDarkMode" class="dark-mode-toggle">
-            <svg v-if="isDarkMode" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,2L14.39,5.42C13.65,5.15 12.84,5 12,5C11.16,5 10.35,5.15 9.61,5.42L12,2M3.34,7L7.5,6.65C6.9,7.16 6.36,7.78 5.94,8.5C5.52,9.22 5.25,10 5.11,10.79L3.34,7M3.36,17L5.12,13.23C5.26,14 5.53,14.78 5.95,15.5C6.37,16.22 6.91,16.84 7.51,17.35L3.36,17M20.65,7L18.88,10.79C18.74,10 18.47,9.22 18.05,8.5C17.63,7.78 17.09,7.15 16.49,6.64L20.65,7M20.64,17L16.5,17.36C17.1,16.85 17.64,16.22 18.06,15.5" />
+          <button class="dark-mode-toggle" @click="toggleDarkMode">
+            <svg v-if="!isDarkMode" width="24" height="24" fill="none" viewBox="0 0 24 24">
+              <path fill="currentColor" d="M12 2a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0V3a1 1 0 0 1 1-1Zm6.364 3.636a1 1 0 0 1 1.414 1.414l-1.414 1.414a1 1 0 1 1-1.414-1.414l1.414-1.414ZM21 11a1 1 0 1 1 0 2h-2a1 1 0 1 1 0-2h2Zm-2.222 7.364a1 1 0 0 1-1.415 1.415l-1.414-1.415a1 1 0 1 1 1.415-1.414l1.414 1.414ZM13 21a1 1 0 1 1-2 0v-2a1 1 0 1 1 2 0v2Zm-7.364-2.222a1 1 0 0 1-1.414-1.415l1.414-1.414a1 1 0 1 1 1.414 1.415l-1.414 1.414ZM3 13a1 1 0 1 1 0-2h2a1 1 0 1 1 0 2H3Zm2.222-7.364a1 1 0 0 1 1.415-1.414l1.414 1.414A1 1 0 1 1 6.05 6.05L4.636 4.636Z"/>
             </svg>
-            <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M17.75,4.09L15.22,6.03L16.13,9.09L13.5,7.28L10.87,9.09L11.78,6.03L9.25,4.09L12.44,4L13.5,1L14.56,4L17.75,4.09M21.25,11L19.61,12.25L20.2,14.23L18.5,13.06L16.8,14.23L17.39,12.25L15.75,11L17.81,10.95L18.5,9L19.19,10.95L21.25,11M18.97,15.95C19.8,15.87 20.69,17.05 20.16,17.8C19.84,18.25 19.5,18.67 19.08,19.07C15.17,23 8.84,23 4.94,19.07C1.03,15.17 1.03,8.83 4.94,4.93C5.34,4.53 5.76,4.17 6.21,3.85C6.96,3.32 8.14,4.21 8.06,5.04C7.79,7.9 8.75,10.87 10.95,13.06C13.14,15.26 16.1,16.22 18.97,15.95M17.33,17.97C14.5,17.81 11.7,16.64 9.53,14.5C7.36,12.31 6.2,9.5 6.04,6.68C3.23,9.82 3.34,14.4 6.35,17.41C9.37,20.43 14,20.54 17.33,17.97Z" />
+            <svg v-else width="24" height="24" fill="none" viewBox="0 0 24 24">
+              <path fill="currentColor" d="M21 12.79A9 9 0 0 1 11.21 3a1 1 0 0 0-1.21 1v.09A9 9 0 1 0 20.91 13a1 1 0 0 0 1-1.21ZM12 21a7 7 0 0 1 0-14V5a7 7 0 0 1 0 14Z"/>
             </svg>
           </button>
           <button @click="showCreateModal = true" class="create-quiz-btn">
@@ -618,9 +769,21 @@
       </div>
     </div>
 
-    <!-- Level 1: Subject Names Only -->
+    <!-- Empty State -->
+    <div v-if="viewMode === 'subjects' && subjects.length === 0" class="empty-state">
+      <div class="empty-icon">
+        <svg width="48" height="48" fill="none" viewBox="0 0 24 24">
+          <path fill="currentColor" d="M12 2a2 2 0 0 1 2 2v1h4a2 2 0 0 1 2 2v1H4V7a2 2 0 0 1 2-2h4V4a2 2 0 0 1 2-2Zm8 7v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9h16Zm-2 2H6v7h12v-7Z"/>
+        </svg>
+      </div>
+      <div class="empty-title">No Subjects Created Yet</div>
+      <div class="empty-desc">Create your first subject to start managing your classes and student sections</div>
+      <button class="create-quiz-btn" @click="showCreateModal = true">Create Your First Subject</button>
+    </div>
+
+    <!-- Subjects Grid -->
     <div v-if="viewMode === 'subjects' && subjects.length > 0" class="subjects-grid">
-      <div v-for="subject in subjects" :key="subject.id" class="subject-card simple" @click="selectSubject(subject)">
+      <div v-for="subject in subjects" :key="subject.id" class="subject-card" @click="selectSubject(subject)">
         <div class="subject-simple-header">
           <div class="subject-info">
             <h3>{{ subject.subject_name }}</h3>
@@ -670,38 +833,40 @@
       </div>
       
       <div class="sections-grid">
-        <div v-for="section in filteredSections" :key="section.id" class="section-card simple" @click="selectSection(section)">
-          <!-- Decorative corner accent -->
-          <div class="card-corner-accent"></div>
-          <!-- Decorative icon -->
-          <div class="card-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" opacity="0.15">
-              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-            </svg>
-          </div>
-          <div class="section-simple-header">
-            <!-- 3-dots menu at the top -->
-            <div class="section-actions-row">
-              <div class="section-menu-container">
-                <button class="section-action-btn menu" @click.stop="toggleSectionMenu(section.id)" title="More Options">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                    <circle cx="5" cy="12" r="2" />
-                    <circle cx="12" cy="12" r="2" />
-                    <circle cx="19" cy="12" r="2" />
-                  </svg>
-                </button>
+        <div v-for="section in filteredSections" :key="section.id" class="section-card enhanced" @click="selectSection(section)">
+          <div class="section-card-header">
+            <!-- Section icon and title -->
+            <div class="section-title-area">
+              <div class="section-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                </svg>
+              </div>
+              <h4 class="section-title">{{ section.section_name }} (Grade {{ section.grade_level }})</h4>
+            </div>
+            
+            <!-- Always visible 3-dots menu -->
+            <div class="section-menu-container">
+              <button class="section-menu-btn" @click.stop="toggleSectionMenu(section.id)" title="More Options">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="5" cy="12" r="2" />
+                  <circle cx="12" cy="12" r="2" />
+                  <circle cx="19" cy="12" r="2" />
+                </svg>
+              </button>
+              <transition name="dropdown">
                 <div v-if="openMenuId === section.id" class="section-dropdown-menu">
                   <button @click.stop="editSection(section)" class="menu-item">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
                     </svg>
-                    Edit
+                    Edit Section
                   </button>
                   <button @click.stop="openDeleteModal('section', section)" class="menu-item delete">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
                     </svg>
-                    Delete
+                    Delete Section
                   </button>
                   <button @click.stop="toggleArchiveSection(section)" class="menu-item">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -710,28 +875,39 @@
                     {{ (section.status === 'archived') ? 'Unarchive' : 'Archive' }}
                   </button>
                 </div>
+              </transition>
+            </div>
+          </div>
+          
+          <div class="section-card-body">
+            <!-- Section Code in distinct box -->
+            <div class="section-code-box">
+              <div class="code-box-header">
+                <span class="code-label">Section Code</span>
+              </div>
+              <div class="code-box-content">
+                <span class="section-code-text">{{ section.section_code }}</span>
+                <button @click.stop="copyCode(section.section_code, section.id)" 
+                        class="copy-code-btn" 
+                        :class="{ 'copied': copiedCodeId === section.id }"
+                        :title="copiedCodeId === section.id ? 'Copied!' : 'Copy Code'">
+                  <svg v-if="copiedCodeId !== section.id" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z" />
+                  </svg>
+                  <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
+                  </svg>
+                  {{ copiedCodeId === section.id ? 'Copied!' : 'Copy' }}
+                </button>
               </div>
             </div>
             
-            <!-- Section name and grade in the center -->
-            <div class="section-info">
-              <h4>{{ section.section_name }} (Grade {{ section.grade_level }})</h4>
-              
-              <!-- Section Code Display -->
-              <div class="section-code-inline">
-                <span class="code-label">Code:</span>
-                <span class="section-code-text" @click.stop="copyCode(section.section_code, section.id)">
-                  {{ section.section_code }}
-                </span>
-                <button @click.stop="copyCode(section.section_code, section.id)" class="copy-code-mini" :title="copiedCodeId === section.id ? 'Copied!' : 'Copy Code'">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z" />
-                  </svg>
-                </button>
-              </div>
-              
-              <!-- Student count at the bottom -->
-              <p class="section-stats-simple">{{ section.student_count || 0 }} students</p>
+            <!-- Student count -->
+            <div class="section-stats">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M16,4C18.21,4 20,5.79 20,8C20,10.21 18.21,12 16,12C13.79,12 12,10.21 12,8C12,5.79 13.79,4 16,4M16,14C20.42,14 24,15.79 24,18V20H8V18C8,15.79 11.58,14 16,14M6,6H4V4H2V6H0V8H2V10H4V8H6V6Z" />
+              </svg>
+              <span>{{ section.student_count || 0 }} students</span>
             </div>
           </div>
         </div>
@@ -753,108 +929,111 @@
         <span class="breadcrumb-current">{{ selectedSection.section_name }} (Grade {{ selectedSection.grade_level }})</span>
       </div>
 
-      <div class="section-detail-card">
-        <div class="section-header">
-          <div class="section-info">
+      <div class="section-detail-enhanced">
+        <!-- Left Section: Section Info -->
+        <div class="section-info-card">
+          <div class="section-header">
+            <div class="section-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+              </svg>
+            </div>
+            <div class="section-title-info">
+              <h3 class="section-title">{{ selectedSection.section_name }} (Grade {{ selectedSection.grade_level }})</h3>
+              <p class="section-subtitle">{{ selectedSection.subject_name }}</p>
+            </div>
           </div>
-          <!-- Removed edit and delete buttons -->
-          <div class="section-actions"></div>
-        </div>
 
-        <!-- Section Info -->
-        <div class="section-info-container">
-          <div class="section-info-grid">
-            <div class="section-info-item">
-              <span class="info-label">Subject:</span>
-              <span class="info-value">{{ selectedSection.subject_name }}</span>
+          <!-- Section Details -->
+          <div class="section-details">
+            <div class="detail-item">
+              <span class="detail-label">Subject:</span>
+              <span class="detail-value">{{ selectedSection.subject_name }}</span>
             </div>
-            <div class="section-info-item">
-              <span class="info-label">Section:</span>
-              <span class="info-value">{{ selectedSection.section_name }}</span>
+            <div class="detail-item">
+              <span class="detail-label">Section:</span>
+              <span class="detail-value">{{ selectedSection.section_name }}</span>
             </div>
-            <div class="section-info-item">
-              <span class="info-label">Grade:</span>
-              <span class="info-value">{{ selectedSection.grade_level_display || selectedSection.grade_level }}</span>
+            <div class="detail-item">
+              <span class="detail-label">Grade:</span>
+              <span class="detail-value">{{ selectedSection.grade_level }}</span>
             </div>
           </div>
           
-          <div class="section-code-area">
-            <h4>Section Code:</h4>
-            <div class="section-code-display">
-              <span class="section-code">{{ selectedSection.section_code }}</span>
-              <button @click.stop="copyCode(selectedSection.section_code, selectedSection.section_id)" class="copy-code-btn">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z" />
+          <!-- Section Code -->
+          <div class="section-code-container">
+            <div class="code-label">Section Code:</div>
+            <div class="code-value">{{ selectedSection.section_code }}</div>
+            <button @click.stop="copyCode(selectedSection.section_code, selectedSection.section_id)" class="copy-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z" />
+              </svg>
+              {{ copiedCodeId === selectedSection.section_id ? 'Copied!' : 'Copy' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Right Section: Quick Actions -->
+        <div class="quick-actions-card">
+          <h4 class="actions-title">Quick Actions</h4>
+          <div class="actions-grid">
+            <button 
+              @click.stop="viewSectionStudents(selectedSubject, selectedSection)"
+              class="action-button primary"
+              title="View Students in Section"
+            >
+              <div class="btn-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M16,4C18.21,4 20,5.79 20,8C20,10.21 18.21,12 16,12C13.79,12 12,10.21 12,8C12,5.79 13.79,4 16,4M16,14C20.42,14 24,15.79 24,18V20H8V18C8,15.79 11.58,14 16,14" />
                 </svg>
-                {{ copiedCodeId === selectedSection.section_id ? 'Copied!' : 'Copy' }}
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Section Action Buttons -->
-        <div class="section-actions-grid">
-          <button 
-            @click.stop="viewSectionStudents(selectedSubject, selectedSection)"
-            class="section-action-btn view-students"
-            title="View Students in Section"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M16,4C18.21,4 20,5.79 20,8C20,10.21 18.21,12 16,12C13.79,12 12,10.21 12,8C12,5.79 13.79,4 16,4M16,14C20.42,14 24,15.79 24,18V20H8V18C8,15.79 11.58,14 16,14C10.5 14 9.2 14.3 8.5 14.8V11.5Z" />
-            </svg>
-            View Students
-          </button>
+              </div>
+              <span class="btn-text">View Students</span>
+            </button>
 
-          <button 
-            @click.stop="navigateToCreateQuiz(selectedSubject, selectedSection)"
-            class="section-action-btn create-quiz"
-            title="Create Quiz/Assessment"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-            </svg>
-            Create Quiz
-          </button>
-          
-          <button 
-            @click.stop="viewQuizzes(selectedSubject, selectedSection)"
-            class="section-action-btn view-quizzes"
-            title="View Past Quizzes"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M13,9V3.5L18.5,9M6,2C4.89,2 4,2.89 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2H6Z" />
-            </svg>
-            View Quizzes
-          </button>
-          
-          <button 
-            @click.stop="manageGrades(selectedSubject, selectedSection)"
-            class="section-action-btn manage-grades"
-            title="Grade Management"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M9,5A4,4 0 0,1 13,9A4,4 0 0,1 9,13A4,4 0 0,1 5,9A4,4 0 0,1 9,5M9,15C11.67,15 17,16.34 17,19V21H1V19C1,16.34 6.33,15 9,15M16.76,5.36C18.78,7.56 18.78,10.61 16.76,12.63L15.08,10.94C15.92,9.76 15.92,8.23 15.08,7.05L16.76,5.36M20.07,2C24,6.05 23.97,12.11 20.07,16.07L18.44,14.44C21.21,11.19 21.21,6.65 18.44,3.63L20.07,2Z" />
-          </svg>
-            Grades
-          </button>
+            <button 
+              @click.stop="navigateToCreateQuiz(selectedSubject, selectedSection)"
+              class="action-button secondary"
+              title="Create Quiz/Assessment"
+            >
+              <div class="btn-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                </svg>
+              </div>
+              <span class="btn-text">Create Quiz</span>
+            </button>
+            
+            <button 
+              @click.stop="viewQuizzes(selectedSubject, selectedSection)"
+              class="action-button secondary"
+              title="View Past Quizzes"
+            >
+              <div class="btn-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M13,9V3.5L18.5,9M6,2C4.89,2 4,2.89 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2H6Z" />
+                </svg>
+              </div>
+              <span class="btn-text">View Quizzes</span>
+            </button>
+            
+            <button 
+              @click.stop="manageGrades(selectedSubject, selectedSection)"
+              class="action-button tertiary"
+              title="Grade Management"
+            >
+              <div class="btn-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M16,18H18V16H16M16,14H18V12H16M14,18H16V16H14M12,18H14V16H12M12,14H14V12H12M10,18H12V16H10M8,18H10V16H8M8,14H10V12H8M6,18H8V16H6M14,10H16V8H14M12,10H14V8H12M10,10H12V8H10M8,10H10V8H8M6,10H8V8H6M6,14H8V12H6" />
+                </svg>
+              </div>
+              <span class="btn-text">Grades</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Empty State - only show when in subjects view and no subjects exist -->
-    <div v-if="viewMode === 'subjects' && subjects.length === 0" class="empty-state">
-      <div class="empty-icon">
-        <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z" />
-        </svg>
-      </div>
-      <h3>No Subjects Created Yet</h3>
-      <p>Create your first subject to start managing your classes and student sections</p>
-      <button @click="showCreateModal = true" class="create-first-btn">
-        Create Your First Subject
-      </button>
-    </div>
-
     <!-- Create/Edit Subject Modal -->
     <div v-if="showCreateModal" class="modal-overlay" @click="closeModal">
       <div class="modal-content" @click.stop>
@@ -2018,228 +2197,281 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Base Container */
-.subjects-page {
-  padding: 1.5rem;
-  max-width: 1200px;
-  margin: 0 auto;
-  background: #f8fafc;
-  min-height: 100vh;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-/* Simple Header Card */
-.section-header-card {
+.subjects-page {
+  min-height: 100vh;
+  background: #FBFFE4;
+  padding: 1.5rem;
+  font-family: 'Inter', sans-serif;
+}
+.dark .subjects-page {
+  background: #181c20;
+}
+
+/* Header */
+.header-card {
   background: white;
   border-radius: 16px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
+.dark .header-card {
+  background: #23272b;
+  border: 1px solid #20c997;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
 
-.section-header-content {
+.header-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.section-header-left {
+.header-left {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
-.section-header-icon {
-  width: 60px;
-  height: 60px;
-  background: #20c997;
+.user-icon {
+  width: 56px;
+  height: 56px;
+  background: #3D8D7A;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
+}
+
+.header-title {
   font-size: 1.5rem;
-}
-
-.header-text h1 {
-  color: #333;
-  font-size: 1.8rem;
   font-weight: 700;
-  margin: 0;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+.dark .header-title {
+  color: #A3D1C6;
 }
 
-.header-text p {
-  color: #666;
-  margin: 0.5rem 0 0 0;
+.header-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+.dark .header-subtitle {
+  color: #A3D1C6;
 }
 
 .header-actions {
   display: flex;
+  align-items: center;
   gap: 1rem;
 }
 
-.create-quiz-btn {
-  background: #20c997;
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
+.dark-mode-toggle {
+  width: 48px;
+  height: 48px;
+  background: #FBFFE4;
+  border: 2px solid #A3D1C6;
+  border-radius: 12px;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  transition: all 0.3s ease;
-}
-
-.create-quiz-btn:hover {
-  background: #1ba085;
-  transform: translateY(-1px);
-}
-
-.dark-mode-toggle {
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 0.75rem;
+  justify-content: center;
   cursor: pointer;
-  color: #666;
-  transition: all 0.3s ease;
+  transition: all 0.2s;
+  color: #3D8D7A;
+}
+.dark .dark-mode-toggle {
+  background: #23272b;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
 }
 
 .dark-mode-toggle:hover {
-  border-color: #20c997;
-  color: #20c997;
+  background: #A3D1C6;
+  transform: scale(1.05);
 }
 
-/* Subject Grid */
+/* Empty State */
+.empty-state {
+  background: white;
+  border-radius: 16px;
+  padding: 2.5rem 1.5rem;
+  margin: 2rem auto;
+  max-width: 480px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+  text-align: center;
+  color: #1f2937;
+}
+.dark .empty-state {
+  background: #23272b;
+  color: #A3D1C6;
+  border: 1px solid #20c997;
+}
+
+.empty-icon {
+  margin-bottom: 1rem;
+  color: #3D8D7A;
+}
+.dark .empty-icon {
+  color: #A3D1C6;
+}
+
+.empty-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.empty-desc {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+}
+
+.dark .empty-desc {
+  color: #9ca3af;
+}
+
+/* Center button in empty state */
+.empty-state .create-quiz-btn {
+  margin: 0 auto;
+  display: inline-block;
+}
+
+/* Subjects Grid */
 .subjects-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
 }
 
 .subject-card {
   background: white;
-  border-radius: 16px;
-  padding: 1.5rem;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  border: 1px solid #A3D1C6;
+  transition: all 0.2s;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e5e7eb;
 }
-
-.subject-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+.dark .subject-card {
+  background: #23272b;
   border-color: #20c997;
 }
 
-.subject-card.simple {
-  background: #f9fafb;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-  padding: 1rem 1.1rem;
-  margin-bottom: 0.7rem;
-  transition: box-shadow 0.18s, border 0.18s, background 0.18s;
+.subject-card:hover {
+  background: #e6faf6;
+  border-color: #20c997;
+  transform: translateY(-2px);
 }
-.subject-card.simple:hover {
-  background: #f6f8fa;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  border-color: var(--color-primary);
-}
-.dark .subject-card.simple, .dark .section-detail-card {
+.dark .subject-card:hover {
   background: #23272b;
-  border: 1px solid #20c997;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.13);
+  border-color: #20c997;
 }
 
-/* Text Colors */
-.section-info h4,
-.section-detail-card h4,
-.info-label,
-.card-header h3 {
-  color: #1f2937;
-  font-weight: 600;
+.subject-card:hover .subject-info h3,
+.subject-card:hover .grade-level,
+.subject-card:hover .subject-stats-simple {
+  color: #23272b;
 }
-.dark .section-info h4,
-.dark .section-detail-card h4,
-.dark .info-label,
-.dark .card-header h3 {
+.dark .subject-card:hover .subject-info h3,
+.dark .subject-card:hover .grade-level,
+.dark .subject-card:hover .subject-stats-simple {
   color: #A3D1C6;
 }
 
-.info-value,
-.section-stats-simple {
-  color: #6b7280;
-}
-.dark .info-value,
-.dark .section-stats-simple {
-  color: #A3D1C6;
-}
-
-/* Simple, compact buttons */
-.breadcrumb-btn, .grade-filter-btn, .section-action-btn {
-  background: var(--color-primary);
-  color: #fff;
-  border: none;
-  border-radius: 7px;
-  padding: 0.45rem 1.1rem;
-  font-size: 0.97rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.18s, box-shadow 0.18s;
+.subject-simple-header {
   display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-}
-.breadcrumb-btn:hover, .grade-filter-btn:hover, .section-action-btn:hover {
-  background: var(--color-primary-dark);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-}
-
-/* Code Area Styling */
-.section-code-area,
-.section-code-inline {
-  background: #f8f9fa;
-  border-radius: 8px;
-  padding: 1rem;
-  margin: 1rem 0;
-}
-.dark .section-code-area,
-.dark .section-code-inline {
-  background: #181c20;
-  border: 1px solid #20c997;
-}
-/* Grid Layouts */
-.sections-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-/* Section Card Content */
-.section-simple-header {
-  display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
+  width: 100%;
 }
 
-.section-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.section-info h4 {
-  color: #1f2937;
+.subject-info h3 {
   font-size: 1.125rem;
   font-weight: 600;
-  margin: 0;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
 }
-.dark .section-info h4 {
+.dark .subject-info h3 {
   color: #A3D1C6;
+}
+
+.grade-level {
+  font-size: 0.875rem;
+  color: #3D8D7A;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+.dark .grade-level {
+  color: #A3D1C6;
+}
+
+.subject-stats-simple {
+  font-size: 0.813rem;
+  color: #6b7280;
+}
+.dark .subject-stats-simple {
+  color: #A3D1C6;
+}
+
+.arrow-icon {
+  color: #20c997;
+  transition: transform 0.3s ease;
+}
+.dark .arrow-icon {
+  color: #A3D1C6;
+}
+
+.subject-card:hover .arrow-icon {
+  transform: translateX(4px);
+}
+
+/* Buttons */
+.create-quiz-btn {
+  background: #20c997;
+  color: #181c20;
+  border: 1px solid #A3D1C6;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.dark .create-quiz-btn {
+  background: #20c997;
+  color: #181c20;
+  border: 1px solid #A3D1C6;
+}
+
+.create-quiz-btn:hover {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
+  transform: translateY(-1px);
+}
+.dark .create-quiz-btn:hover {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
 }
 
 /* Breadcrumb Styling */
@@ -2249,10 +2481,28 @@ onUnmounted(() => {
   gap: 0.5rem;
   margin-bottom: 1.5rem;
   font-size: 0.875rem;
-  color: #6b7280;
 }
 .dark .breadcrumb {
   color: #A3D1C6;
+}
+
+.breadcrumb-btn {
+  background: transparent;
+  border: none;
+  color: #20c997;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  text-decoration: underline;
+}
+.dark .breadcrumb-btn {
+  color: #A3D1C6;
+}
+
+.breadcrumb-btn:hover {
+  color: #3D8D7A;
 }
 
 .breadcrumb-separator {
@@ -2264,7 +2514,7 @@ onUnmounted(() => {
 
 .breadcrumb-current {
   color: #1f2937;
-  font-weight: 600;
+  font-weight: 500;
 }
 .dark .breadcrumb-current {
   color: #A3D1C6;
@@ -2277,777 +2527,638 @@ onUnmounted(() => {
   margin-bottom: 1.5rem;
 }
 
-.grade-filter-btn.active {
-  background: #2a6d5f;
+.grade-filter-btn {
+  background: white;
+  border: 1px solid #A3D1C6;
+  color: #3D8D7A;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
 }
-
-/* Empty State */
-.empty-state {
-  text-align: center;
-  padding: 3rem 2rem;
-}
-
-.empty-icon svg {
+.dark .grade-filter-btn {
+  background: #23272b;
+  border-color: #20c997;
   color: #A3D1C6;
+}
+
+.grade-filter-btn.active,
+.grade-filter-btn:hover {
+  background: #20c997;
+  color: #181c20;
+}
+
+/* Sections Grid */
+.sections-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+
+.section-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border: 1px solid #A3D1C6;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.dark .section-card {
+  background: #23272b;
+  border-color: #20c997;
+}
+
+.section-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .subjects-grid {
+    grid-template-columns: 1fr;
+  }
+  /* .sections-grid {
+    grid-template-columns: 1fr;
+  } */
+}
+
+/* Enhanced Section Card Styles */
+.section-card.enhanced {
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  padding: 0;
   margin-bottom: 1rem;
+  transition: all 0.18s;
+  overflow: hidden;
+  cursor: pointer;
+  width: 340px;
 }
 
-/* Modal Enhancements */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
+.section-card.enhanced:hover {
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.10);
+  border-color: #10b981;
+  transform: translateY(-2px);
 }
 
-.modal-content {
-  max-width: 600px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
+.dark .section-card.enhanced {
+  background: #23272b;
+  border: 1.5px solid #374151;
+  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.13);
 }
 
-.modal-header {
+.dark .section-card.enhanced:hover {
+  border-color: #20c997;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.18);
+}
+
+.section-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1.5rem;
+  padding: 0.9rem 1rem 0.5rem 1rem;
+  border-bottom: 1px solid #f3f4f6;
 }
 
-.modal-header h2 {
-  color: #1f2937;
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin: 0;
-}
-.dark .modal-header h2 {
-  color: #A3D1C6;
+.dark .section-card-header {
+  border-bottom: 1.5px solid #374151;
 }
 
-/* Form Elements */
-.form-group {
-  margin-bottom: 1.5rem;
-}
-
-.form-group label {
-  display: block;
-  color: #1f2937;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-.dark .form-group label {
-  color: #A3D1C6;
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-  width: 100%;
-  background: white;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  padding: 0.75rem;
-  font-size: 0.875rem;
-}
-.dark .form-group input,
-.dark .form-group select,
-.dark .form-group textarea {
-  background: #181c20;
-  border: 1px solid #20c997;
-  color: #A3D1C6;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-.breadcrumb-btn:hover {
-  background: #20c997;
-  color: #fff;
-}
-.breadcrumb-separator {
-  color: #20c997;
-  font-weight: 700;
-}
-.breadcrumb-current {
-  color: #fff;
-  font-weight: 700;
-}
-.grade-filter-container {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-}
-.grade-filter-btn {
-  background: #23272f;
-  color: #20c997;
-  border: 1.5px solid #20c997;
-  border-radius: 8px;
-  padding: 0.3rem 1rem;
-  font-weight: 600;
-  transition: background 0.2s, color 0.2s;
-}
-.grade-filter-btn.active, .grade-filter-btn:hover {
-  background: #20c997;
-  color: #fff;
-}
-.sections-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 1.5rem;
-}
-.section-card.simple {
-  background: #23272f;
-  border: 1.5px solid #20c997;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px 0 #20c99722;
-  padding: 1.5rem 1.2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-  transition: box-shadow 0.2s, border 0.2s;
-  cursor: pointer;
-}
-.section-card.simple:hover {
-  box-shadow: 0 4px 16px 0 #20c99744;
-  border-color: #18b087;
-}
-.section-simple-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-}
-.section-info h4 {
-  color: #20c997;
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin-bottom: 0.3rem;
-}
-.section-code-inline {
+.section-title-area {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: #181c1f;
-  border-radius: 8px;
-  padding: 0.3rem 0.8rem;
-  font-size: 1rem;
-  margin-bottom: 0.3rem;
+  gap: 1rem;
+  flex: 1;
 }
-.code-label {
-  color: #20c997;
+
+.section-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.section-title {
+  font-size: 1.125rem;
   font-weight: 600;
+  color: #1f2937;
+  margin: 0;
 }
-.section-code-text {
-  color: #fff;
-  font-weight: 600;
-  letter-spacing: 1px;
-  cursor: pointer;
+
+.dark .section-title {
+  color: #f9fafb;
 }
-.copy-code-mini {
-  background: #20c997;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 0.2rem 0.6rem;
-  font-size: 0.95rem;
-  font-weight: 600;
-  transition: background 0.2s;
-}
-.copy-code-mini:hover {
-  background: #18b087;
-}
-.section-stats-simple {
-  color: #b5b5b5;
-  font-size: 0.95rem;
-  margin-top: 0.2rem;
-}
+
 .section-menu-container {
   position: relative;
 }
-.section-action-btn.menu {
-  background: transparent;
-  border: none;
-  color: #20c997;
-  font-size: 1.2rem;
-  padding: 0.2rem;
-  border-radius: 50%;
-  transition: background 0.2s;
-}
-.section-action-btn.menu:hover {
-  background: #23272f;
-}
-.section-dropdown-menu {
-  position: absolute;
-  top: 2rem;
-  right: 0;
-  background: #23272f;
-  border: 1.5px solid #20c997;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px 0 #20c99722;
-  z-index: 10;
-  min-width: 120px;
-  display: flex;
-  flex-direction: column;
-}
-.section-dropdown-menu .menu-item {
-  background: none;
-  border: none;
-  color: #20c997;
-  padding: 0.7rem 1rem;
-  text-align: left;
-  font-weight: 600;
-  border-radius: 8px;
-  transition: background 0.2s, color 0.2s;
-}
-.section-dropdown-menu .menu-item:hover {
-  background: #20c997;
-  color: #fff;
-}
-.section-dropdown-menu .menu-item.delete {
-  color: #ff5c5c;
-}
-.section-dropdown-menu .menu-item.delete:hover {
-  background: #ff5c5c;
-  color: #fff;
-}
 
-/* Section Detail View Enhancements */
-.section-detail-view {
-  padding: 2rem;
-  background: #181c1f;
-  border-radius: 16px;
-  border: 2px solid #20c997;
-  box-shadow: 0 0 8px 0 #20c99733;
-  color: #f1f1f1;
-}
-.section-detail-card {
-  background: #23272f;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px 0 #20c99722;
-  border: 1.5px solid #20c997;
-  padding: 2rem;
-}
-.section-info-container {
-  background: #181c1f;
-  border-radius: 12px;
-  border: 1.5px solid #20c997;
-  padding: 1.5rem 1rem;
-  margin-bottom: 2rem;
-}
-.section-info-grid {
-  display: flex;
-  gap: 2rem;
-  justify-content: center;
-  margin-bottom: 1.5rem;
-}
-.section-info-item {
-  text-align: center;
-}
-.section-actions-grid {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1.5rem;
-  justify-content: center;
-}
-.section-action-btn {
-  background: #23272f;
-  color: #20c997;
-  border: 1.5px solid #20c997;
-  border-radius: 8px;
-  padding: 0.6rem 1.2rem;
-  font-weight: 600;
-  transition: background 0.2s, color 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-.section-action-btn:hover {
-  background: #20c997;
-  color: #fff;
-}
-.dark-mode .section-actions-grid {
-  background: var(--bg-card);
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .subjects-page {
-    padding: 1rem;
-  }
-  .section-header-content {
-    flex-direction: column;
-    gap: 1rem;
-  }
-  .header-actions {
-    width: 100%;
-    justify-content: space-between;
-  }
-  .subjects-grid,
-  .sections-grid {
-    grid-template-columns: 1fr;
-  }
-  .section-actions-grid {
-    grid-template-columns: 1fr;
-  }
-  .section-info-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  .grade-filter-container {
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .grade-filter-container::-webkit-scrollbar {
-    display: none;
-  }
-  .modal-content {
-    width: 95%;
-    padding: 1.5rem;
-  }
-  .toast-notification {
-    bottom: 1rem;
-    right: 1rem;
-    left: 1rem;
-    min-width: auto;
-  }
-}
-
-/* Delete Confirmation Modal */
-.modal-card {
-  background: white;
-  color: #1f2937;
-  border-radius: 20px;
-  box-shadow: 
-    0 20px 40px rgba(0, 0, 0, 0.15),
-    0 10px 20px rgba(0, 0, 0, 0.1);
-  padding: 2.5rem;
-  min-width: 380px;
-  max-width: 90vw;
-  text-align: center;
+.section-menu-btn {
+  width: 40px;
+  height: 40px;
+  background: #f9fafb;
   border: 1px solid #e5e7eb;
-  transition: all 0.3s ease;
-  animation: slideUp 0.3s ease-out;
-}
-.modal-icon {
-  width: 56px;
-  height: 56px;
-  margin: 0 auto 1.5rem;
-  background: linear-gradient(135deg, #ff6b6b, #e74c3c);
-  border-radius: 50%;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-}
-.modal-card h3 {
-  margin: 0 0 1.5rem 0;
-  font-size: 1.4rem;
-  font-weight: 600;
-  color: #1f2937;
-}
-.item-details {
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  background: #FBFFE4;
-  border-radius: 12px;
-  border: 1px solid #A3D1C6;
-}
-.item-name {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.1rem;
-  color: #1f2937;
-  font-weight: 600;
-}
-.item-info {
-  margin: 0;
-  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
   color: #6b7280;
 }
-.warning-text {
-  margin: 0 0 2rem 0;
-  font-size: 0.9rem;
-  color: #6b7280;
-  font-style: italic;
-}
-.btn-cancel {
-  background: #3D8D7A;
+
+.section-menu-btn:hover {
+  background: #10b981;
+  border-color: #10b981;
   color: white;
-  border: none;
-  border-radius: 12px;
-  padding: 0.75rem 1.5rem;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.2s ease;
+  transform: scale(1.05);
 }
-.btn-cancel:hover {
-  background: #2d6d5f;
-  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
-}
-.btn-delete {
-  background: linear-gradient(135deg, #ff6b6b, #e74c3c);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  padding: 0.75rem 1.5rem;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.2s ease;
-}
-.btn-delete:hover {
-  background: linear-gradient(135deg, #e74c3c, #c0392b);
-  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
-}
-.dark-mode .modal-card {
-  background: #23272b;
-  color: #A3D1C6;
-  border-color: #3D8D7A;
-}
-.dark-mode .modal-card h3 {
-  color: #A3D1C6;
-}
-.dark-mode .item-details {
-  background: rgba(61, 141, 122, 0.1);
-  border-color: #3D8D7A;
-}
-.dark-mode .item-name {
-  color: #A3D1C6;
-}
-.dark-mode .item-info,
-.dark-mode .warning-text {
+
+.dark .section-menu-btn {
+  background: #374151;
+  border-color: #4b5563;
   color: #9ca3af;
 }
 
-/* Section Menu */
-.section-actions-row {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 0.5rem;
+.dark .section-menu-btn:hover {
+  background: #10b981;
+  border-color: #10b981;
+  color: white;
 }
-.section-menu-container {
-  position: relative;
-}
-.section-action-btn.menu {
-  background: transparent;
-  border: none;
-  color: #3D8D7A;
-  padding: 0.5rem;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all 0.2s;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.section-action-btn.menu:hover {
-  background: #FBFFE4;
-}
+
 .section-dropdown-menu {
   position: absolute;
-  top: 40px;
+  top: 100%;
   right: 0;
   background: white;
-  border: 1px solid #A3D1C6;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  z-index: 10;
-  min-width: 140px;
-  display: flex;
-  flex-direction: column;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  z-index: 50;
+  min-width: 180px;
   overflow: hidden;
+  margin-top: 0.5rem;
 }
-.section-dropdown-menu .menu-item {
-  background: none;
-  border: none;
-  color: #1f2937;
-  padding: 0.75rem 1rem;
-  text-align: left;
-  font-weight: 600;
-  font-size: 0.875rem;
-  border-radius: 0;
-  transition: all 0.2s;
+
+.dark .section-dropdown-menu {
+  background: #1f2937;
+  border-color: #374151;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.menu-item {
+  width: 100%;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
   cursor: pointer;
+  transition: all 0.15s ease;
 }
-.section-dropdown-menu .menu-item:hover {
-  background: #FBFFE4;
-  color: #3D8D7A;
+
+.menu-item:hover {
+  background: #f3f4f6;
+  color: #10b981;
 }
-.section-dropdown-menu .menu-item.delete {
+
+.menu-item.delete {
   color: #ef4444;
 }
-.section-dropdown-menu .menu-item.delete:hover {
+
+.menu-item.delete:hover {
   background: #fef2f2;
   color: #dc2626;
 }
-.dark-mode .section-action-btn.menu {
-  color: #A3D1C6;
+
+.dark .menu-item {
+  color: #d1d5db;
 }
-.dark-mode .section-action-btn.menu:hover {
-  background: rgba(61, 141, 122, 0.1);
+
+.dark .menu-item:hover {
+  background: #374151;
+  color: #10b981;
 }
-.dark-mode .section-dropdown-menu {
-  background: #23272b;
-  border-color: #3D8D7A;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-.dark-mode .section-dropdown-menu .menu-item {
-  color: #A3D1C6;
-}
-.dark-mode .section-dropdown-menu .menu-item:hover {
-  background: rgba(61, 141, 122, 0.1);
-}
-.dark-mode .section-dropdown-menu .menu-item.delete {
+
+.dark .menu-item.delete {
   color: #f87171;
 }
-.dark-mode .section-dropdown-menu .menu-item.delete:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: #fca5a5;
+
+.dark .menu-item.delete:hover {
+  background: #451a1a;
+  color: #ef4444;
 }
-/* Student Roster Modal */
-.student-roster-modal {
-  max-width: 900px;
+
+.section-card-body {
+  padding: 0.5rem 1rem 0.8rem 1rem;
 }
-.roster-subtitle {
-  color: #6b7280;
-  font-size: 0.875rem;
-  margin-top: 0.5rem;
-}
-.roster-content {
-  max-height: 60vh;
-  overflow-y: auto;
-}
-.sections-roster {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-.section-roster {
-  background: #FBFFE4;
-  border: 1px solid #A3D1C6;
-  border-radius: 12px;
-  padding: 1.25rem;
-}
-.section-roster-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #A3D1C6;
-}
-.section-roster-header h3 {
-  color: #1f2937;
-  font-size: 1rem;
-  font-weight: 600;
-  margin: 0;
-}
-.section-details {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-}
-.section-details .section-code {
-  background: white;
-  padding: 0.375rem 0.75rem;
-  font-size: 0.813rem;
-}
-.section-details .student-count {
-  color: #6b7280;
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-.students-table {
-  background: white;
+
+.section-code-box {
+  background: #f3f4f6;
+  border: 1.5px solid #e5e7eb;
   border-radius: 8px;
   overflow: hidden;
-}
-.table-header {
-  display: grid;
-  grid-template-columns: 100px 1fr 1fr 80px 120px;
-  gap: 1rem;
-  padding: 0.75rem 1rem;
-  background: #f3f4f6;
-  font-weight: 600;
-  font-size: 0.813rem;
-  color: #6b7280;
-  border-bottom: 1px solid #e5e7eb;
-}
-.table-body {
-  display: flex;
-  flex-direction: column;
-}
-.student-row {
-  display: grid;
-  grid-template-columns: 100px 1fr 1fr 80px 120px;
-  gap: 1rem;
-  padding: 1rem;
-  border-bottom: 1px solid #f3f4f6;
-  transition: all 0.2s;
-  font-size: 0.875rem;
-}
-.student-row:hover {
-  background: #f9fafb;
-}
-.student-row:last-child {
-  border-bottom: none;
-}
-.col-id,
-.col-name,
-.col-email,
-.col-grade,
-.col-date {
-  display: flex;
-  align-items: center;
-  color: #1f2937;
-}
-.col-id {
-  font-family: 'Courier New', monospace;
-  font-weight: 600;
-}
-.no-students {
-  text-align: center;
-  padding: 3rem 2rem;
-}
-.no-students .empty-icon {
-  margin-bottom: 1rem;
-}
-.no-students h3 {
-  color: #1f2937;
-  font-size: 1.125rem;
-  font-weight: 600;
   margin-bottom: 0.5rem;
 }
-.no-students p {
-  color: #6b7280;
-  font-size: 0.875rem;
+
+.dark .section-code-box {
+  background: #23272b;
+  border-color: #374151;
 }
-.roster-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #e5e7eb;
+
+.code-box-header {
+  background: #e8ecef;
+  padding: 0.32rem 0.8rem;
+  border-bottom: 1px solid #e5e7eb;
 }
-.export-btn {
-  background: #3D8D7A;
-  color: white;
-  border: none;
-  padding: 0.75rem 1.25rem;
-  border-radius: 8px;
+
+.dark .code-box-header {
+  background: #23272b;
+  border-bottom-color: #374151;
+}
+
+.code-label {
+  font-size: 0.75rem;
   font-weight: 600;
-  font-size: 0.875rem;
-  cursor: pointer;
+  color: #7ca3c7;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dark .code-label {
+  color: #20c997;
+}
+
+.code-box-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.8rem;
+  gap: 0.7rem;
+}
+
+.section-code-text {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: 0.05em;
+  flex: 1;
+}
+
+.dark .section-code-text {
+  color: #a3ffd6;
+}
+
+.copy-code-btn {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  transition: all 0.2s;
-}
-.export-btn:hover {
-  background: #2d6d5f;
-}
-.close-roster-btn {
-  background: white;
-  color: #6b7280;
-  border: 1px solid #d1d5db;
-  padding: 0.75rem 1.25rem;
+  background: #10b981;
+  color: white;
+  border: none;
   border-radius: 8px;
-  font-weight: 600;
+  padding: 0.5rem 1rem;
   font-size: 0.875rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
 }
-.close-roster-btn:hover {
-  background: #f3f4f6;
-  border-color: #9ca3af;
+
+.copy-code-btn:hover {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
 }
-.dark-mode .roster-subtitle {
+
+.copy-code-btn.copied {
+  background: #22c55e;
+}
+
+.copy-code-btn.copied:hover {
+  background: #16a34a;
+}
+
+.section-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.dark .section-stats {
   color: #9ca3af;
 }
-.dark-mode .section-roster {
-  background: rgba(61, 141, 122, 0.1);
-  border-color: #3D8D7A;
+
+/* Dropdown transition */
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.2s ease;
 }
-.dark-mode .section-roster-header {
-  border-bottom-color: #3D8D7A;
+
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
 }
-.dark-mode .section-roster-header h3,
-.dark-mode .no-students h3 {
-  color: #A3D1C6;
+
+.dropdown-enter-to,
+.dropdown-leave-from {
+  opacity: 1;
+  transform: translateY(0) scale(1);
 }
-.dark-mode .section-details .student-count,
-.dark-mode .no-students p {
-  color: #9ca3af;
-}
-.dark-mode .students-table {
-  background: #181c20;
-}
-.dark-mode .table-header {
-  background: #2d3748;
-  color: #9ca3af;
-  border-bottom-color: #3D8D7A;
-}
-.dark-mode .student-row {
-  border-bottom-color: #2d3748;
-}
-.dark-mode .student-row:hover {
-  background: #23272b;
-}
-.dark-mode .col-id,
-.dark-mode .col-name,
-.dark-mode .col-email,
-.dark-mode .col-grade,
-.dark-mode .col-date {
-  color: #A3D1C6;
-}
-.dark-mode .roster-actions {
-  border-top-color: #2d3748;
-}
-.dark-mode .close-roster-btn {
-  background: #181c20;
-  color: #A3D1C6;
-  border-color: #3D8D7A;
-}
-.dark-mode .close-roster-btn:hover {
-  background: #2d3748;
-}
+
 @media (max-width: 768px) {
-  .table-header,
-  .student-row {
+  .header-content {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .header-left {
+    width: 100%;
+  }
+  
+  .header-actions {
+    align-self: flex-end;
+  }
+}
+
+/* Enhanced Section Detail Styles */
+.section-detail-enhanced {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-top: 1.5rem;
+}
+
+.section-info-card,
+.quick-actions-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.dark .section-info-card,
+.dark .quick-actions-card {
+  background: #23272b;
+  border: 1px solid #20c997;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.13);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-radius: 12px;
+  color: white;
+}
+
+.section-title-info .section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 0.25rem 0;
+}
+
+.dark .section-title-info .section-title {
+  color: #A3D1C6;
+}
+
+.section-title-info .section-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.dark .section-title-info .section-subtitle {
+  color: #A3D1C6;
+}
+
+.section-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.dark .detail-item {
+  border-bottom-color: #374151;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 0.875rem;
+}
+
+.dark .detail-label {
+  color: #A3D1C6;
+}
+
+.detail-value {
+  font-weight: 500;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.dark .detail-value {
+  color: #A3D1C6;
+}
+
+.section-code-container {
+  background: #f8f9fa;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dark .section-code-container {
+  background: #181c20;
+  border: 1px solid #20c997;
+}
+
+.code-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dark .code-label {
+  color: #9ca3af;
+}
+
+.code-value {
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #10b981;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.5rem;
+}
+
+.dark .code-value {
+  color: #20c997;
+}
+
+.copy-btn {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.copy-btn:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+.actions-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 1.5rem 0;
+}
+
+.dark .actions-title {
+  color: #A3D1C6;
+}
+
+.actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.action-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.5rem 1rem;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  min-height: 120px;
+  background: #ffffff;
+  color: #1f2937;
+  border: 1px solid #e5e7eb;
+}
+
+.dark .action-button {
+  background: #23272b;
+  color: #A3D1C6;
+  border: 1px solid #20c997;
+}
+
+.action-button.primary {
+  border: 2px solid #10b981;
+}
+
+.action-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.dark .action-button:hover {
+  box-shadow: 0 8px 25px rgba(32, 201, 151, 0.2);
+}
+
+.btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.dark .btn-icon {
+  background: rgba(32, 201, 151, 0.1);
+  color: #20c997;
+}
+
+.btn-text {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+@media (max-width: 1024px) {
+  .section-detail-enhanced {
     grid-template-columns: 1fr;
-    gap: 0.5rem;
+    gap: 1.5rem;
   }
-  .col-id,
-  .col-name,
-  .col-email,
-  .col-grade,
-  .col-date {
-    padding: 0.25rem 0;
+}
+
+@media (max-width: 640px) {
+  .actions-grid {
+    grid-template-columns: 1fr;
   }
-  .student-roster-modal {
-    max-width: 100%;
+  
+  .section-detail-enhanced {
+    gap: 1rem;
+  }
+  
+  .section-info-card,
+  .quick-actions-card {
+    padding: 1rem;
   }
 }
 </style>
+
+
