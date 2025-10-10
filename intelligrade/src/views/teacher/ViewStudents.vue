@@ -15,7 +15,7 @@
           </div>
         </div>
         <div class="header-actions">
-          <button @click="exportStudents" class="export-btn" :disabled="isExporting">
+          <button @click="exportStudents" class="header-action-btn" :disabled="isExporting">
             <svg v-if="isExporting" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="spinner">
               <path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z" />
             </svg>
@@ -24,11 +24,11 @@
             </svg>
             {{ isExporting ? 'Exporting...' : 'Export List' }}
           </button>
-          <button @click="goBack" class="back-button">
+          <button @click="goBack" class="header-action-btn">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M10 19l-7-7 7-7m-7 7h18"></path>
+              <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
             </svg>
-            Back to Subjects
+            Back to Section
           </button>
         </div>
       </div>
@@ -353,7 +353,18 @@ const formatDate = (dateString: string) => {
 
 const goBack = async () => {
   try {
-    await router.push({ name: 'MySubjects' })
+    await router.push({
+      name: 'SectionDetail',
+      params: { sectionId: sectionId.value },
+      query: {
+        subjectId: subjectId.value,
+        subjectName: subjectName.value,
+        sectionName: sectionName.value,
+        gradeLevel: gradeLevel.value,
+        classCode: classCode.value,
+        sectionCode: sectionCode.value
+      }
+    })
   } catch (error) {
     console.error('Navigation error:', error)
   }
@@ -454,16 +465,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.dark .back-button {
-  background: #23272b;
-  color: #A3D1C6;
-  border: 2px solid #3D8D7A;
-}
-.dark .back-button:hover {
-  background: #3D8D7A;
-  color: #FBFFE4;
-  border-color: #A3D1C6;
-}
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 .students-home-container {
@@ -886,5 +887,42 @@ onMounted(() => {
 
 .dark-mode .cancel-btn:hover {
   background: var(--card-background);
+}
+
+/* --- Header Action Button (Reference: MySubjects.vue create-quiz-btn) --- */
+.header-action-btn {
+  background: #20c997;
+  color: #181c20;
+  border: 1px solid #A3D1C6;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  outline: none;
+}
+.header-action-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.header-action-btn:hover:not(:disabled) {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
+  transform: translateY(-1px);
+}
+.dark .header-action-btn {
+  background: #20c997;
+  color: #181c20;
+  border: 1px solid #A3D1C6;
+}
+.dark .header-action-btn:hover:not(:disabled) {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
 }
 </style>
