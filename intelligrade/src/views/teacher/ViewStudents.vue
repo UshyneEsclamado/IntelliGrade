@@ -1,28 +1,19 @@
 <template>
-  <div class="students-container" :class="{ 'dark-mode': isDarkMode }">
-    <!-- Enhanced Header Section -->
-    <div class="section-header-card">
-      <div class="header-bg-decoration"></div>
-      <div class="floating-shapes">
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
-      </div>
-      
-      <div class="section-header-content">
-        <div class="section-header-left">
-          <div class="section-header-icon">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+  <div :class="['students-home-container', isDarkMode ? 'dark' : '']">
+    <!-- Simple Header Section -->
+    <div class="header-card">
+      <div class="header-content">
+        <div class="header-left">
+          <div class="user-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
               <path d="M16,4C18.21,4 20,5.79 20,8C20,10.21 18.21,12 16,12C13.79,12 12,10.21 12,8C12,5.79 13.79,4 16,4M16,14C20.42,14 24,15.79 24,18V20H8V18C8,15.79 11.58,14 16,14M6,6C7.1,6 8,6.9 8,8C8,9.1 7.1,10 6,10C4.9,10 4,9.1 4,8C4,6.9 4.9,6 6,6M6,12C8.67,12 12,13.34 12,16V18H0V16C0,13.34 3.33,12 6,12Z" />
             </svg>
           </div>
-          <div class="header-text">
-            <div class="section-header-title">Student Management</div>
-            <div class="section-header-subtitle">{{ subjectName }} (Grade {{ gradeLevel }})</div>
-            <div class="section-header-description">{{ sectionName }} - {{ sectionCode }}</div>
+          <div>
+            <h1 class="header-title">Student Management</h1>
+            <p class="header-subtitle">{{ subjectName }} (Grade {{ gradeLevel }}) - {{ sectionName }} ({{ sectionCode }})</p>
           </div>
         </div>
-        
         <div class="header-actions">
           <button @click="exportStudents" class="export-btn" :disabled="isExporting">
             <svg v-if="isExporting" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="spinner">
@@ -44,121 +35,72 @@
     </div>
 
     <!-- Main Content -->
-    <div class="main-wrapper">
-      <!-- Loading State -->
+    <div class="main-content-wrapper">
       <div v-if="isLoading" class="loading-state">
         <div class="loading-spinner"></div>
         <p>{{ loadingMessage }}</p>
       </div>
-
-      <!-- Students Content -->
-      <div v-else class="students-content">
-        <!-- Summary Cards -->
-        <div class="summary-grid">
-          <div class="summary-card total-students">
-            <div class="summary-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M16,4C18.11,4 19.81,5.69 19.81,7.8C19.81,9.91 18.11,11.6 16,11.6C13.89,11.6 12.2,9.91 12.2,7.8C12.2,5.69 13.89,4 16,4M16,13.4C18.73,13.4 22,14.76 22,17.5V20H10V17.5C10,14.76 13.27,13.4 16,13.4M6,6H8V8H6V6M6,10H8V12H6V10M6,14H8V16H6V14Z" />
+      <div v-else>
+        <!-- Simple Summary Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon stat-classes">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M16,4C18.21,4 20,5.79 20,8C20,10.21 18.21,12 16,12C13.79,12 12,10.21 12,8C12,5.79 13.79,4 16,4M16,14C20.42,14 24,15.79 24,18V20H8V18C8,15.79 11.58,14 16,14M6,6C7.1,6 8,6.9 8,8C8,9.1 7.1,10 6,10C4.9,10 4,9.1 4,8C4,6.9 4.9,6 6,6M6,12C8.67,12 12,13.34 12,16V18H0V16C0,13.34 3.33,12 6,12Z" />
               </svg>
             </div>
-            <div class="summary-info">
-              <span class="summary-number">{{ students.length }}</span>
-              <span class="summary-label">Total Students</span>
+            <div>
+              <div class="stat-number">{{ students.length }}</div>
+              <div class="stat-label">Total Students</div>
             </div>
           </div>
-
-          <div class="summary-card active-students">
-            <div class="summary-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+          <div class="stat-card">
+            <div class="stat-icon stat-graded">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z" />
               </svg>
             </div>
-            <div class="summary-info">
-              <span class="summary-number">{{ activeStudents }}</span>
-              <span class="summary-label">Active Students</span>
+            <div>
+              <div class="stat-number">{{ activeStudents }}</div>
+              <div class="stat-label">Active Students</div>
             </div>
           </div>
         </div>
 
-        <!-- Students Management Section -->
-        <div class="students-section">
-          <div class="section-header">
-            <div class="section-title">
-              <h3>Enrolled Students</h3>
-              <p>{{ students.length }} students enrolled in this section</p>
-            </div>
-            
-            <!-- Search and Filter -->
-            <div class="search-controls">
-              <div class="search-input">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="search-icon">
-                  <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" />
-                </svg>
-                <input 
-                  type="text" 
-                  v-model="searchQuery" 
-                  placeholder="Search students by name or email..."
-                >
-              </div>
-              
-              <select v-model="filterStatus" class="filter-select">
-                <option value="all">All Students</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-
-              <button @click="showAddStudentModal = true" class="add-student-icon-btn" title="Add Student">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M15 12C17.21 12 19 10.21 19 8S17.21 4 15 4 11 5.79 11 8 12.79 12 15 12M6 10V7H4V10H1V12H4V15H6V12H9V10M15 14C12.33 14 7 15.34 7 18V20H23V18C23 15.34 17.67 14 15 14Z"/>
-                </svg>
-              </button>
-            </div>
+        <!-- Students List Card -->
+        <div class="content-card">
+          <div class="card-header">
+            <h3>Enrolled Students</h3>
+            <p class="card-desc">{{ students.length }} students enrolled in this section</p>
           </div>
-
-          <!-- Students List -->
-          <div v-if="filteredStudents.length > 0" class="students-list">
-            <div class="list-header">
-              <div class="header-name">Student Name</div>
-              <div class="header-enrolled">Enrolled</div>
-              <div class="header-status">Status</div>
-            </div>
-            
-            <div v-for="student in filteredStudents" :key="student.id" class="student-row">
-              <div class="student-name">
-                <div class="name-avatar">
-                  {{ getInitials(student.full_name) }}
-                </div>
-                <span>{{ student.full_name }}</span>
-              </div>
-              <div class="student-enrolled">{{ formatDate(student.enrolled_at) }}</div>
-              <div class="student-status">
-                <span :class="['status-badge', student.status]">{{ student.status }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Empty State -->
-          <div v-else-if="students.length === 0" class="empty-state">
-            <div class="empty-icon">
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M16,4C18.11,4 20.11,4.89 21.39,6.39C22.67,7.89 23.11,9.89 22.39,11.39L20.39,8.61C19.56,7.11 18.11,6 16,6C15.44,6 14.89,6.22 14.5,6.61L12.89,8.22C12.33,8.78 11.67,8.78 11.11,8.22L9.5,6.61C9.11,6.22 8.56,6 8,6C5.89,6 4.44,7.11 3.61,8.61L1.61,11.39C0.89,9.89 1.33,7.89 2.61,6.39C3.89,4.89 5.89,4 8,4C9.33,4 10.56,4.44 11.5,5.17C12.44,4.44 13.67,4 16,4M12,13.5A1.5,1.5 0 0,1 10.5,12A1.5,1.5 0 0,1 12,10.5A1.5,1.5 0 0,1 13.5,12A1.5,1.5 0 0,1 12,13.5Z" />
-              </svg>
-            </div>
-            <h3>No Students Enrolled</h3>
-            <p>Students will appear here once they join this section using the section code.</p>
-            <button @click="showAddStudentModal = true" class="empty-action-btn">
-              Add First Student
+          <div class="search-controls">
+            <input type="text" v-model="searchQuery" placeholder="Search students by name or email..." class="search-input-simple" />
+            <select v-model="filterStatus" class="filter-select-simple">
+              <option value="all">All Students</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+            <button @click="showAddStudentModal = true" class="add-student-btn" title="Add Student">
+              Add Student
             </button>
           </div>
-
-          <!-- No Results -->
-          <div v-else class="no-results">
-            <div class="no-results-icon">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" />
-              </svg>
+          <div v-if="filteredStudents.length > 0" class="students-list-simple">
+            <div class="students-list-header">
+              <span>Name</span>
+              <span>Status</span>
+              <span>Enrolled</span>
             </div>
-            <h4>No students found</h4>
+            <div v-for="student in filteredStudents" :key="student.id" class="students-list-row">
+              <span>{{ student.full_name }}</span>
+              <span :class="['status-badge', student.status]">{{ student.status }}</span>
+              <span>{{ formatDate(student.enrolled_at) }}</span>
+            </div>
+          </div>
+          <div v-else-if="students.length === 0" class="empty-state">
+            <p>No students enrolled yet.</p>
+            <button @click="showAddStudentModal = true" class="empty-action-btn">Add First Student</button>
+          </div>
+          <div v-else class="no-results">
             <p>No students found matching "{{ searchQuery }}"</p>
           </div>
         </div>
@@ -512,159 +454,90 @@ onMounted(() => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+.dark .back-button {
+  background: #23272b;
+  color: #A3D1C6;
+  border: 2px solid #3D8D7A;
+}
+.dark .back-button:hover {
+  background: #3D8D7A;
+  color: #FBFFE4;
+  border-color: #A3D1C6;
+}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-.students-container {
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
-  font-family: 'Inter', sans-serif;
-  background: var(--bg-primary);
+.students-home-container {
   min-height: 100vh;
+  background: #FBFFE4;
+  padding: 1.5rem;
+  font-family: 'Inter', sans-serif;
+}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+.students-home-container {
+  min-height: 100vh;
+  background: #FBFFE4;
+  padding: 1.5rem;
+  font-family: 'Inter', sans-serif;
+}
+.dark .students-home-container {
+  background: #181c20;
 }
 
-/* Enhanced Header Design */
-.section-header-card {
-  position: relative;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%);
-  backdrop-filter: blur(20px);
-  border-radius: 32px;
-  padding: 3.5rem;
-  margin-bottom: 3rem;
-  min-height: 180px;
-  box-shadow: 
-    0 24px 48px rgba(0, 0, 0, 0.1),
-    0 12px 24px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+.header-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.dark .header-card {
+  background: #23272b;
+  border: 1px solid #3D8D7A;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
 
-.section-header-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 
-    0 32px 64px rgba(0, 0, 0, 0.12),
-    0 16px 32px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-}
-
-.header-bg-decoration {
-  position: absolute;
-  top: -50%;
-  right: -20%;
-  width: 120%;
-  height: 200%;
-  background: radial-gradient(ellipse at center, rgba(16, 185, 129, 0.08) 0%, transparent 70%);
-  z-index: 1;
-}
-
-.floating-shapes {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1;
-  pointer-events: none;
-}
-
-.shape {
-  position: absolute;
-  border-radius: 50%;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%);
-}
-
-.shape-1 {
-  width: 100px;
-  height: 100px;
-  top: -20px;
-  right: 15%;
-  animation: float 6s ease-in-out infinite;
-}
-
-.shape-2 {
-  width: 80px;
-  height: 80px;
-  bottom: -15px;
-  right: 30%;
-  animation: float 8s ease-in-out infinite reverse;
-}
-
-.shape-3 {
-  width: 60px;
-  height: 60px;
-  top: 40%;
-  right: 5%;
-  animation: float 7s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-15px) rotate(10deg); }
-}
-
-.section-header-content {
-  position: relative;
-  z-index: 2;
+.header-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 100%;
 }
-
-.section-header-left {
+.header-left {
   display: flex;
   align-items: center;
-  gap: 2rem;
+  gap: 1rem;
 }
-
-.section-header-icon {
+.user-icon {
+  width: 56px;
+  height: 56px;
+  background: #3D8D7A;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.1) 100%);
-  border-radius: 24px;
-  color: #059669;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: white;
 }
-
-.header-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+.header-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
 }
-
-.section-header-title {
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: #111827;
-  line-height: 1.1;
-  margin: 0;
+.dark .header-title {
+  color: #A3D1C6;
 }
-
-.section-header-subtitle {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #059669;
-  margin: 0;
-}
-
-.section-header-description {
-  font-size: 1rem;
+.header-subtitle {
+  font-size: 0.875rem;
   color: #6b7280;
-  margin: 0;
 }
-
+.dark .header-subtitle {
+  color: #A3D1C6;
+}
 .header-actions {
   display: flex;
   gap: 1rem;
   align-items: center;
 }
-
 .export-btn,
 .back-button {
   display: flex;
@@ -679,708 +552,231 @@ onMounted(() => {
   text-decoration: none;
   border: none;
 }
-
 .export-btn {
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
   color: white;
-  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);
+  box-shadow: 0 4px 14px rgba(61, 141, 122, 0.3);
 }
-
 .export-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(5, 150, 105, 0.4);
-  background: linear-gradient(135deg, #047857 0%, #059669 100%);
+  box-shadow: 0 8px 25px rgba(61, 141, 122, 0.4);
+  background: linear-gradient(135deg, #3D8D7A 0%, #B3D8A8 100%);
 }
-
 .export-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
   transform: none;
 }
-
 .back-button {
-  background: rgba(255, 255, 255, 0.9);
+  background: #FBFFE4;
   color: #374151;
-  border: 2px solid rgba(16, 185, 129, 0.2);
+  border: 2px solid #A3D1C6;
   backdrop-filter: blur(10px);
 }
-
 .back-button:hover {
-  background: rgba(255, 255, 255, 1);
-  border-color: rgba(16, 185, 129, 0.3);
+  background: #B3D8A8;
+  border-color: #3D8D7A;
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
-
-.spinner {
-  animation: spin 1s linear infinite;
+.main-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
-
-/* Main Content */
-.main-wrapper {
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.dark .stat-card {
+  background: #23272b;
+  border: 1px solid #3D8D7A;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+.stat-classes { background: #3D8D7A; }
+.stat-graded { background: #B3D8A8; }
+.stat-number {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1;
+}
+.dark .stat-number {
+  color: #A3D1C6;
+}
+.stat-label {
+  font-size: 0.813rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+  font-weight: 500;
+}
+.dark .stat-label {
+  color: #A3D1C6;
+}
+.content-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
-
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem 2rem;
-  text-align: center;
+.dark .content-card {
+  background: #23272b;
+  border: 1px solid #3D8D7A;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
-
-.loading-spinner {
-  width: 48px;
-  height: 48px;
-  border: 4px solid rgba(16, 185, 129, 0.2);
-  border-top: 4px solid #10b981;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+.card-header {
   margin-bottom: 1rem;
 }
-
-.loading-state p {
-  color: #6b7280;
-  font-size: 1.1rem;
-  font-weight: 500;
-}
-
-/* Summary Cards */
-.summary-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 2rem;
-  width: 100%;
-  margin-bottom: 3rem;
-}
-
-.summary-card {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 20px;
-  padding: 2rem;
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-}
-
-.summary-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-}
-
-.summary-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
-  flex-shrink: 0;
-}
-
-.total-students .summary-icon {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%);
-  color: #059669;
-}
-
-.active-students .summary-icon {
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(22, 163, 74, 0.05) 100%);
-  color: #16a34a;
-}
-
-.summary-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.summary-number {
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: #111827;
-  line-height: 1;
+.card-header h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
   margin-bottom: 0.25rem;
 }
-
-.summary-label {
-  font-size: 0.95rem;
-  font-weight: 600;
+.dark .card-header h3 {
+  color: #A3D1C6;
+}
+.card-desc {
+  font-size: 0.813rem;
   color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
-
-/* Students Section */
-.students-section {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 20px;
-  padding: 2.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+.dark .card-desc {
+  color: #A3D1C6;
 }
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 2rem;
-  gap: 2rem;
-}
-
-.section-title h3 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #111827;
-  margin: 0 0 0.5rem 0;
-}
-
-.section-title p {
-  color: #6b7280;
-  margin: 0;
-  font-size: 1rem;
-}
-
 .search-controls {
   display: flex;
   gap: 1rem;
   align-items: center;
-  flex-wrap: wrap;
-}
-
-.search-input {
-  position: relative;
-  min-width: 300px;
-}
-
-.search-icon {
-  position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #9ca3af;
-  z-index: 2;
-}
-
-.search-input input {
-  width: 100%;
-  padding: 0.875rem 1rem 0.875rem 3rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  font-size: 0.95rem;
-  background: white;
-  transition: all 0.3s ease;
-}
-
-.search-input input:focus {
-  outline: none;
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-}
-
-.filter-select {
-  padding: 0.875rem 1rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  font-size: 0.95rem;
-  background: white;
-  color: #374151;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.filter-select:focus {
-  outline: none;
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-}
-
-/* Students List */
-.students-list {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.list-header {
-  display: grid;
-  grid-template-columns: 3fr 1fr 1fr; /* name, enrolled, status */
-  gap: 1rem;
-  padding: 1rem 1.5rem;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
-  font-weight: 600;
-  color: #374151;
-  font-size: 0.875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.list-header .header-actions {
-  text-align: center;
-}
-
-.student-row {
-  display: grid;
-  grid-template-columns: 3fr 1fr 1fr; /* name, enrolled, status */
-  gap: 1rem;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #f3f4f6;
-  align-items: center;
-  transition: all 0.2s ease;
-}
-
-.student-row:hover {
-  background: #f9fafb;
-}
-
-.student-row:last-child {
-  border-bottom: none;
-}
-
-.student-name {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-weight: 600;
-  color: #111827;
-}
-
-.name-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 0.75rem;
-}
-
-
-
-.student-enrolled {
-  color: #6b7280;
-  font-size: 0.875rem;
-}
-
-.status-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.status-badge.active {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.status-badge.inactive {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-
-
-.action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.action-btn.remove {
-  background: rgba(239, 68, 68, 0.15);
-  color: #dc2626;
-  border: 1px solid rgba(239, 68, 68, 0.2);
-}
-
-.action-btn:hover {
-  transform: scale(1.1);
-  background: rgba(239, 68, 68, 0.25);
-  border-color: rgba(239, 68, 68, 0.4);
-}
-
-/* Empty States */
-.empty-state,
-.no-results {
-  text-align: center;
-  padding: 4rem 2rem;
-  color: #6b7280;
-}
-
-.empty-icon,
-.no-results-icon {
-  color: #d1d5db;
-  margin-bottom: 2rem;
-}
-
-.empty-state h3,
-.no-results h4 {
-  color: #111827;
-  font-size: 1.5rem;
-  font-weight: 700;
   margin-bottom: 1rem;
 }
-
-.empty-action-btn {
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-  color: white;
+.search-input-simple {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1.5px solid #A3D1C6;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #FBFFE4;
+  color: #1f2937;
+}
+.dark .search-input-simple {
+  background: #23272b;
+  color: #A3D1C6;
+  border-color: #3D8D7A;
+}
+.filter-select-simple {
+  padding: 0.75rem 1rem;
+  border: 1.5px solid #A3D1C6;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #FBFFE4;
+  color: #1f2937;
+}
+.dark .filter-select-simple {
+  background: #23272b;
+  color: #A3D1C6;
+  border-color: #3D8D7A;
+}
+.add-student-btn {
+  background: #3D8D7A;
+  color: #FBFFE4;
   border: none;
-  padding: 1rem 2rem;
-  border-radius: 16px;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s;
-  margin-top: 1rem;
+  transition: all 0.2s;
 }
-
-.empty-action-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(5, 150, 105, 0.3);
+.add-student-btn:hover {
+  background: #B3D8A8;
+  color: #23272b;
 }
-
-/* Modal Styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+.students-list-simple {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 2rem;
+  flex-direction: column;
+  gap: 0.5rem;
 }
-
-.modal-content {
-  background: white;
-  border-radius: 24px;
-  max-width: 500px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+.students-list-header {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  color: #3D8D7A;
+  border-bottom: 1px solid #A3D1C6;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
 }
-
-.modal-header {
+.students-list-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 2rem 2rem 1rem;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.modal-header h2 {
-  color: #111827;
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin: 0;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  padding: 0.5rem;
-  border-radius: 8px;
-}
-
-.close-btn:hover {
-  color: #111827;
-  background: #f3f4f6;
-}
-
-.modal-body {
-  padding: 2rem;
-}
-
-.form-group {
-  margin-bottom: 1.5rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  color: #374151;
-  font-weight: 600;
-}
-
-.form-group input {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #F3F4F6;
   font-size: 1rem;
-  transition: all 0.3s ease;
+  color: #23272b;
 }
-
-.form-group input:focus {
-  outline: none;
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+.dark .students-list-row {
+  color: #A3D1C6;
+  border-bottom: 1px solid #3D8D7A;
 }
-
-.modal-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-  margin-top: 2rem;
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.85em;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: #B3D8A8;
+  color: #3D8D7A;
 }
-
-.cancel-btn {
-  background: #f3f4f6;
-  color: #374151;
+.status-badge.active {
+  background: #B3D8A8;
+  color: #3D8D7A;
+}
+.status-badge.inactive {
+  background: #FEE2E2;
+  color: #991b1b;
+}
+.empty-state, .no-results {
+  text-align: center;
+  color: #6b7280;
+  padding: 2rem 0;
+}
+.empty-action-btn {
+  background: #3D8D7A;
+  color: #FBFFE4;
   border: none;
   padding: 0.75rem 1.5rem;
-  border-radius: 12px;
+  border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s;
+  margin-top: 1rem;
+  transition: all 0.2s;
 }
-
-.cancel-btn:hover {
-  background: #e5e7eb;
-}
-
-.add-btn {
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.add-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 25px rgba(5, 150, 105, 0.3);
-}
-
-.add-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-/* New Add Student Button Styles */
-.add-student-icon-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-  color: white;
-  border: none;
-  font-size: 1.5rem;
-  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.add-student-icon-btn:hover {
-  transform: scale(1.08);
-  box-shadow: 0 8px 25px rgba(5, 150, 105, 0.4);
-}
-
-.add-student-icon-btn svg {
-  width: 32px;
-  height: 32px;
-  color: white;
-}
-
-/* Responsive Design */
-@media (max-width: 1024px) {
-  .section-header-content {
-    flex-direction: column;
-    gap: 2rem;
-    text-align: center;
-  }
-
-  .section-header-left {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .header-actions {
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .export-btn,
-  .back-button {
-    width: 100%;
-    justify-content: center;
-  }
-}
-
-@media (max-width: 768px) {
-  .students-container {
-    padding: 1rem;
-  }
-
-  .section-header-card {
-    padding: 2rem;
-  }
-
-  .section-header-title {
-    font-size: 2rem;
-  }
-
-  .summary-grid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-
-  .section-header {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .search-controls {
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .search-input {
-    min-width: unset;
-    width: 100%;
-  }
-
-  .list-header {
-    grid-template-columns: 2fr 1fr 1fr;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
-  }
-
-  .header-email,
-  .header-enrolled {
-    display: none;
-  }
-
-  .student-row {
-    grid-template-columns: 2fr 1fr 1fr;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
-  }
-
-  .student-email,
-  .student-enrolled {
-    display: none;
-  }
-
-  .student-name {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.25rem;
-  }
-
-  .name-avatar {
-    width: 24px;
-    height: 24px;
-    font-size: 0.625rem;
-  }
-
-  .action-btn {
-    width: 28px;
-    height: 28px;
-  }
-
-  .action-btn svg {
-    width: 14px;
-    height: 14px;
-  }
-}
-
-@media (max-width: 480px) {
-  .list-header {
-    grid-template-columns: 1fr auto;
-  }
-
-  .header-status {
-    display: none;
-  }
-
-  .student-row {
-    grid-template-columns: 1fr auto;
-  }
-
-  .student-status {
-    display: none;
-  }
-}
-
-/* Dark Mode Styles */
-.students-container.dark-mode {
-  background: var(--bg-primary);
-  color: var(--primary-text-color);
-}
-
-.dark-mode .section-header-card {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-}
-
-.dark-mode .section-header-title {
-  color: var(--primary-text-color);
-}
-
-.dark-mode .section-header-subtitle {
-  color: var(--accent-color);
-}
-
-.dark-mode .section-header-description {
-  color: var(--secondary-text-color);
-}
-
-.dark-mode .export-btn {
-  background: linear-gradient(135deg, var(--accent-color) 0%, #4a9b87 100%);
-}
-
-.dark-mode .back-button {
-  background: var(--bg-card);
-  border: 2px solid var(--border-color);
-  color: var(--secondary-text-color);
-}
-
-.dark-mode .back-button:hover {
-  border-color: var(--accent-color);
-  color: var(--accent-color);
-}
-
-.dark-mode .loading-state p {
-  color: var(--secondary-text-color);
-}
-
-.dark-mode .loading-spinner {
-  border: 4px solid rgba(95, 179, 160, 0.2);
-  border-top: 4px solid var(--accent-color);
+.empty-action-btn:hover {
+  background: #B3D8A8;
+  color: #23272b;
 }
 
 .dark-mode .summary-card {
