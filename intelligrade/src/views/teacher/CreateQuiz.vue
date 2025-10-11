@@ -31,7 +31,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
             </svg>
-            Back to Subjects
+            Back to Section
           </button>
         </div>
       </div>
@@ -65,36 +65,18 @@
         <div class="landing-card">
           <div class="landing-icon">
             <div class="icon-bg">
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="3" y="3" width="18" height="18" rx="4" fill="currentColor"/>
+                <rect x="7" y="7" width="2" height="8" rx="1" fill="#FBFFE4"/>
+                <rect x="11" y="10" width="2" height="5" rx="1" fill="#B3D8A8"/>
+                <rect x="15" y="13" width="2" height="2" rx="1" fill="#A3D1C6"/>
               </svg>
             </div>
-            <div class="icon-glow"></div>
           </div>
-          <h2>Create a New Quiz</h2>
-          <p>Design an engaging quiz experience for your students with our intuitive AI-powered quiz builder</p>
-          <div class="features-preview">
-            <div class="feature-item">
-              <span class="feature-icon">🎯</span>
-              <span>Smart Questions</span>
-            </div>
-            <div class="feature-item">
-              <span class="feature-icon">⚡</span>
-              <span>Instant Grading</span>
-            </div>
-            <div class="feature-item">
-              <span class="feature-icon">📊</span>
-              <span>Analytics</span>
-            </div>
-          </div>
+          <h2 class="landing-title">Create a New Quiz</h2>
+          <p class="landing-desc">Design an engaging quiz experience for your students with our intuitive AI-powered quiz builder</p>
           <button @click="currentStep = 'details'" class="create-quiz-btn">
-            <span class="btn-content">
-              <span>Start Creating</span>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-              </svg>
-            </span>
-            <div class="btn-bg"></div>
+            Start Creating
           </button>
         </div>
       </div>
@@ -116,27 +98,18 @@
         <div class="form-section">
           <div class="form-grid">
             <div class="form-group">
-              <label class="form-label">
-                <span class="label-icon">📝</span>
-                Quiz Title *
-              </label>
+              <label class="form-label">Quiz Title *</label>
               <input v-model="quiz.title" type="text" placeholder="e.g., Biology Chapter 5 Quiz" class="form-input enhanced-input" />
             </div>
 
             <div class="form-group">
-              <label class="form-label">
-                <span class="label-icon">🔢</span>
-                Number of Questions *
-              </label>
+              <label class="form-label">Number of Questions *</label>
               <input v-model.number="quiz.numberOfQuestions" type="number" min="1" max="50" placeholder="e.g., 10" class="form-input enhanced-input" />
             </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label">
-              <span class="label-icon">📋</span>
-              Description / Instructions
-            </label>
+            <label class="form-label">Description / Instructions</label>
             <textarea v-model="quiz.description" rows="4" placeholder="Add instructions or context for this quiz..." class="form-input form-textarea enhanced-input"></textarea>
           </div>
 
@@ -157,67 +130,43 @@
         </div>
       </div>
 
-      <!-- Add Questions with Enhanced Design -->
+      <!-- Simple Questions Section -->
       <div v-if="currentStep === 'questions'" class="content-card slide-up">
-        <div class="section-header">
-          <div class="section-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-          </div>
-          <div class="section-content">
-            <h2 class="section-title">Build Your Questions</h2>
-            <div class="question-counter">
-              <span class="counter-icon">🎯</span>
-              {{ quiz.questions.length }} / {{ quiz.numberOfQuestions }}
-            </div>
-          </div>
+        <div class="card-header">
+          <h3>Build Your Questions</h3>
+          <p class="card-desc">{{ quiz.questions.length }} / {{ quiz.numberOfQuestions }} questions added</p>
         </div>
 
         <!-- Question Cards with Enhanced Design -->
         <div class="questions-container">
-          <div v-for="(question, index) in quiz.questions" :key="index" class="question-card enhanced-card">
+          <div v-for="(question, index) in quiz.questions" :key="index" class="question-card">
             <div class="question-header">
-              <div class="question-number">
-                <div class="question-badge">{{ index + 1 }}</div>
-                <h3 class="question-title">Question {{ index + 1 }}</h3>
-              </div>
-              <button @click="removeQuestion(index)" class="btn btn-danger delete-btn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                </svg>
-              </button>
+              <h4>Question {{ index + 1 }}</h4>
+              <button @click="removeQuestion(index)" class="remove-btn">×</button>
             </div>
 
-            <div class="question-content">
+            <div class="question-body">
+              <!-- Question Type -->
               <div class="form-group">
-                <label class="form-label">
-                  <span class="label-icon">🔧</span>
-                  Question Type
-                </label>
-                <select v-model="question.type" class="form-input form-select enhanced-input">
-                  <option value="multiple_choice">📝 Multiple Choice</option>
-                  <option value="true_false">✅ True/False</option>
-                  <option value="fill_blank">📝 Fill in the Blanks</option>
+                <label class="form-label">Type</label>
+                <select v-model="question.type" class="form-select">
+                  <option value="multiple_choice">Multiple Choice</option>
+                  <option value="true_false">True/False</option>
+                  <option value="fill_blank">Fill in the Blank</option>
                 </select>
               </div>
 
+              <!-- Question Text -->
               <div class="form-group">
-                <label class="form-label">
-                  <span class="label-icon">❓</span>
-                  Question Text
-                </label>
-                <textarea v-model="question.text" rows="3" placeholder="Enter your question here..." class="form-input form-textarea enhanced-input"></textarea>
+                <label class="form-label">Question</label>
+                <textarea v-model="question.text" rows="3" placeholder="Enter your question here..." class="form-input"></textarea>
               </div>
 
-              <!-- Multiple Choice Options with Enhanced Design -->
+              <!-- Multiple Choice Options -->
               <div v-if="question.type === 'multiple_choice'" class="option-group">
-                <label class="form-label">
-                  <span class="label-icon">📋</span>
-                  Answer Options
-                </label>
+                <label class="form-label">Answer Options</label>
                 <div class="options-container">
-                  <div v-for="(option, optIndex) in question.options" :key="optIndex" class="option-item enhanced-option">
+                  <div v-for="(option, optIndex) in question.options" :key="optIndex" class="option-item">
                     <input 
                       type="radio" 
                       :name="'correct-' + index" 
@@ -225,59 +174,38 @@
                       @change="question.correctAnswer = optIndex" 
                       class="option-radio"
                     />
-                    <div class="option-letter">{{ String.fromCharCode(65 + optIndex) }}</div>
+                    <span class="option-letter">{{ String.fromCharCode(65 + optIndex) }}</span>
                     <input 
                       v-model="question.options[optIndex]" 
                       type="text" 
                       :placeholder="'Option ' + String.fromCharCode(65 + optIndex)" 
                       class="option-input"
                     />
-                    <button v-if="question.options.length > 2" @click="removeOption(index, optIndex)" class="remove-option-btn">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M6 18L18 6M6 6l12 12"/>
-                      </svg>
-                    </button>
+                    <button v-if="question.options.length > 2" @click="removeOption(index, optIndex)" class="remove-option-btn">×</button>
                   </div>
                 </div>
-                <button @click="addOption(index)" class="btn btn-success add-option-btn">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                  </svg>
-                  Add Option
-                </button>
+                <button @click="addOption(index)" class="btn-add">+ Add Option</button>
               </div>
 
-              <!-- True/False Options with Enhanced Design -->
+              <!-- True/False Options -->
               <div v-if="question.type === 'true_false'" class="option-group">
-                <label class="form-label">
-                  <span class="label-icon">✅</span>
-                  Correct Answer
-                </label>
+                <label class="form-label">Correct Answer</label>
                 <div class="tf-options">
                   <label class="tf-option" :class="question.correctAnswer === 'true' ? 'selected' : ''">
-                    <input type="radio" v-model="question.correctAnswer" value="true" class="hidden" />
-                    <div class="tf-content">
-                      <div class="tf-icon">✅</div>
-                      <div class="tf-label">True</div>
-                    </div>
+                    <input type="radio" v-model="question.correctAnswer" value="true" />
+                    <span>True</span>
                   </label>
                   <label class="tf-option" :class="question.correctAnswer === 'false' ? 'selected' : ''">
-                    <input type="radio" v-model="question.correctAnswer" value="false" class="hidden" />
-                    <div class="tf-content">
-                      <div class="tf-icon">❌</div>
-                      <div class="tf-label">False</div>
-                    </div>
+                    <input type="radio" v-model="question.correctAnswer" value="false" />
+                    <span>False</span>
                   </label>
                 </div>
               </div>
 
-              <!-- Fill in the Blanks with Enhanced Design -->
+              <!-- Fill in the Blank -->
               <div v-if="question.type === 'fill_blank'" class="form-group">
-                <label class="form-label">
-                  <span class="label-icon">✏️</span>
-                  Correct Answer (exact match)
-                </label>
-                <input v-model="question.correctAnswer" type="text" placeholder="Enter the correct answer..." class="form-input enhanced-input" />
+                <label class="form-label">Correct Answer</label>
+                <input v-model="question.correctAnswer" type="text" placeholder="Enter the correct answer..." class="form-input" />
               </div>
             </div>
           </div>
@@ -285,13 +213,9 @@
           <!-- Add Question Card -->
           <div v-if="quiz.questions.length < quiz.numberOfQuestions" class="add-question-card" @click="addQuestion">
             <div class="add-question-content">
-              <div class="add-question-icon">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                </svg>
-              </div>
-              <h3>Add Another Question</h3>
-              <p>Click to create question {{ quiz.questions.length + 1 }}</p>
+              <div class="add-question-icon">+</div>
+              <h4>Add Question {{ quiz.questions.length + 1 }}</h4>
+              <p>Click to add a new question</p>
             </div>
           </div>
         </div>
@@ -313,30 +237,20 @@
         </div>
       </div>
 
-      <!-- Quiz Settings with Enhanced Design -->
+      <!-- Simple Quiz Settings -->
       <div v-if="currentStep === 'settings'" class="content-card slide-up">
-        <div class="section-header">
-          <div class="section-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-            </svg>
-          </div>
-          <div class="section-content">
-            <h2 class="section-title">Quiz Settings</h2>
-            <p class="section-subtitle">Configure how your quiz will work</p>
-          </div>
+        <div class="card-header">
+          <h3>Quiz Settings</h3>
+          <p class="card-desc">Configure how your quiz will work</p>
         </div>
 
-        <div class="settings-grid">
+        <div class="settings-container">
           <!-- Time Limit Setting -->
-          <div class="setting-card enhanced-setting">
+          <div class="setting-group">
             <div class="setting-header">
-              <div class="setting-info">
-                <span class="setting-emoji">⏱️</span>
-                <div class="setting-details">
-                  <h3>Time Limit</h3>
-                  <p>Set a time constraint for this quiz</p>
-                </div>
+              <div>
+                <h4>Time Limit</h4>
+                <p>Set a time constraint for this quiz</p>
               </div>
               <label class="toggle-switch">
                 <input v-model="quiz.settings.hasTimeLimit" type="checkbox" />
@@ -345,53 +259,44 @@
             </div>
             <div v-if="quiz.settings.hasTimeLimit" class="setting-content">
               <div class="time-input-group">
-                <input v-model.number="quiz.settings.timeLimit" type="number" min="1" max="180" placeholder="30" class="form-input time-input" />
+                <input v-model.number="quiz.settings.timeLimit" type="number" min="1" max="180" placeholder="30" class="form-input" />
                 <span class="time-unit">minutes</span>
               </div>
             </div>
           </div>
 
           <!-- Attempts Setting -->
-          <div class="setting-card enhanced-setting">
+          <div class="setting-group">
             <div class="setting-header">
-              <div class="setting-info">
-                <span class="setting-emoji">🔁</span>
-                <div class="setting-details">
-                  <h3>Attempts Allowed</h3>
-                  <p>How many times can students retake?</p>
-                </div>
+              <div>
+                <h4>Attempts Allowed</h4>
+                <p>How many times can students retake?</p>
               </div>
             </div>
             <div class="setting-content">
               <div class="attempts-options">
                 <label class="attempt-option" :class="quiz.settings.attemptsAllowed === 1 ? 'selected' : ''">
-                  <input type="radio" v-model.number="quiz.settings.attemptsAllowed" :value="1" class="hidden" />
-                  <span class="attempt-number">1</span>
-                  <span class="attempt-label">Once</span>
+                  <input type="radio" v-model.number="quiz.settings.attemptsAllowed" :value="1" />
+                  <span>Once</span>
                 </label>
                 <label class="attempt-option" :class="quiz.settings.attemptsAllowed === 2 ? 'selected' : ''">
-                  <input type="radio" v-model.number="quiz.settings.attemptsAllowed" :value="2" class="hidden" />
-                  <span class="attempt-number">2</span>
-                  <span class="attempt-label">Twice</span>
+                  <input type="radio" v-model.number="quiz.settings.attemptsAllowed" :value="2" />
+                  <span>Twice</span>
                 </label>
                 <label class="attempt-option" :class="quiz.settings.attemptsAllowed === 999 ? 'selected' : ''">
-                  <input type="radio" v-model.number="quiz.settings.attemptsAllowed" :value="999" class="hidden" />
-                  <span class="attempt-number">∞</span>
-                  <span class="attempt-label">Unlimited</span>
+                  <input type="radio" v-model.number="quiz.settings.attemptsAllowed" :value="999" />
+                  <span>Unlimited</span>
                 </label>
               </div>
             </div>
           </div>
 
           <!-- Shuffle Setting -->
-          <div class="setting-card enhanced-setting">
+          <div class="setting-group">
             <div class="setting-header">
-              <div class="setting-info">
-                <span class="setting-emoji">🔀</span>
-                <div class="setting-details">
-                  <h3>Shuffle Questions</h3>
-                  <p>Randomize question and answer order</p>
-                </div>
+              <div>
+                <h4>Shuffle Questions</h4>
+                <p>Randomize question and answer order</p>
               </div>
               <label class="toggle-switch">
                 <input v-model="quiz.settings.shuffle" type="checkbox" />
@@ -401,31 +306,22 @@
           </div>
 
           <!-- Schedule Setting -->
-          <div class="setting-card enhanced-setting schedule-card">
+          <div class="setting-group">
             <div class="setting-header">
-              <div class="setting-info">
-                <span class="setting-emoji">📅</span>
-                <div class="setting-details">
-                  <h3>Schedule</h3>
-                  <p>Set when students can access this quiz</p>
-                </div>
+              <div>
+                <h4>Schedule</h4>
+                <p>Set when students can access this quiz</p>
               </div>
             </div>
             <div class="setting-content">
               <div class="schedule-grid">
                 <div class="form-group">
-                  <label class="form-label-small">
-                    <span class="label-icon">🕐</span>
-                    Start Date & Time
-                  </label>
-                  <input v-model="quiz.settings.startDate" type="datetime-local" class="form-input enhanced-input" />
+                  <label class="form-label">Start Date & Time</label>
+                  <input v-model="quiz.settings.startDate" type="datetime-local" class="form-input" />
                 </div>
                 <div class="form-group">
-                  <label class="form-label-small">
-                    <span class="label-icon">🕕</span>
-                    End Date & Time
-                  </label>
-                  <input v-model="quiz.settings.endDate" type="datetime-local" class="form-input enhanced-input" />
+                  <label class="form-label">End Date & Time</label>
+                  <input v-model="quiz.settings.endDate" type="datetime-local" class="form-input" />
                 </div>
               </div>
             </div>
@@ -448,81 +344,80 @@
         </div>
       </div>
 
-      <!-- Preview with Enhanced Design -->
+      <!-- Simple Preview Section -->
       <div v-if="currentStep === 'preview'" class="content-card slide-up">
-        <div class="preview-header">
-          <div class="preview-badge">
-            <span class="badge-icon">👁️</span>
-            PREVIEW MODE
-          </div>
-          <h2 class="preview-title">{{ quiz.title }}</h2>
+        <div class="card-header">
+          <h3>Quiz Preview</h3>
+          <p class="card-desc">Review your quiz before publishing</p>
+        </div>
+
+        <!-- Quiz Info -->
+        <div class="quiz-preview-info">
+          <h4 class="preview-title">{{ quiz.title }}</h4>
           <p class="preview-description">{{ quiz.description }}</p>
+          
           <div class="preview-stats">
-            <div class="stat-card">
-              <div class="stat-icon">⏱️</div>
-              <div class="stat-value">
-                <span v-if="quiz.settings.hasTimeLimit">{{ quiz.settings.timeLimit }} min</span>
+            <div class="stat-item">
+              <span class="stat-label">Time Limit:</span>
+              <span class="stat-value">
+                <span v-if="quiz.settings.hasTimeLimit">{{ quiz.settings.timeLimit }} minutes</span>
                 <span v-else>No limit</span>
-              </div>
-              <div class="stat-label">Time</div>
+              </span>
             </div>
-            <div class="stat-card">
-              <div class="stat-icon">📝</div>
-              <div class="stat-value">{{ quiz.questions.length }}</div>
-              <div class="stat-label">Questions</div>
+            <div class="stat-item">
+              <span class="stat-label">Questions:</span>
+              <span class="stat-value">{{ quiz.questions.length }}</span>
             </div>
-            <div class="stat-card">
-              <div class="stat-icon">🔁</div>
-              <div class="stat-value">{{ quiz.settings.attemptsAllowed === 999 ? '∞' : quiz.settings.attemptsAllowed }}</div>
-              <div class="stat-label">Attempts</div>
+            <div class="stat-item">
+              <span class="stat-label">Attempts:</span>
+              <span class="stat-value">{{ quiz.settings.attemptsAllowed === 999 ? 'Unlimited' : quiz.settings.attemptsAllowed }}</span>
             </div>
           </div>
         </div>
 
+        <!-- Questions Preview -->
         <div class="preview-questions">
-          <div v-for="(question, index) in quiz.questions" :key="index" class="preview-card enhanced-preview">
-            <div class="preview-question-header">
-              <div class="preview-question-number">{{ index + 1 }}</div>
-              <div class="question-type-badge" :class="question.type">
-                <span v-if="question.type === 'multiple_choice'">📝 MCQ</span>
-                <span v-else-if="question.type === 'true_false'">✅ T/F</span>
-                <span v-else>✏️ Fill</span>
-              </div>
+          <div v-for="(question, index) in quiz.questions" :key="index" class="preview-question">
+            <div class="question-preview-header">
+              <span class="question-number">{{ index + 1 }}</span>
+              <span class="question-type-tag" :class="question.type">
+                <span v-if="question.type === 'multiple_choice'">MCQ</span>
+                <span v-else-if="question.type === 'true_false'">T/F</span>
+                <span v-else>Fill</span>
+              </span>
             </div>
-            <h3 class="preview-question-text">{{ question.text }}</h3>
+            
+            <h5 class="question-preview-text">{{ question.text }}</h5>
             
             <!-- MCQ Preview -->
             <div v-if="question.type === 'multiple_choice'" class="preview-options">
               <div v-for="(option, optIndex) in question.options" :key="optIndex" 
-                   :class="['preview-option', question.correctAnswer === optIndex ? 'correct-option' : '']">
-                <div class="option-marker">{{ String.fromCharCode(65 + optIndex) }}</div>
+                   class="preview-option" :class="{ 'correct': question.correctAnswer === optIndex }">
+                <span class="option-letter">{{ String.fromCharCode(65 + optIndex) }}</span>
                 <span class="option-text">{{ option }}</span>
-                <span v-if="question.correctAnswer === optIndex" class="correct-mark">✓</span>
+                <span v-if="question.correctAnswer === optIndex" class="correct-indicator">✓</span>
               </div>
             </div>
 
             <!-- True/False Preview -->
             <div v-if="question.type === 'true_false'" class="preview-options">
-              <div :class="['preview-option', question.correctAnswer === 'true' ? 'correct-option' : '']">
-                <div class="option-marker">✅</div>
+              <div class="preview-option" :class="{ 'correct': question.correctAnswer === 'true' }">
+                <span class="option-letter">T</span>
                 <span class="option-text">True</span>
-                <span v-if="question.correctAnswer === 'true'" class="correct-mark">✓</span>
+                <span v-if="question.correctAnswer === 'true'" class="correct-indicator">✓</span>
               </div>
-              <div :class="['preview-option', question.correctAnswer === 'false' ? 'correct-option' : '']">
-                <div class="option-marker">❌</div>
+              <div class="preview-option" :class="{ 'correct': question.correctAnswer === 'false' }">
+                <span class="option-letter">F</span>
                 <span class="option-text">False</span>
-                <span v-if="question.correctAnswer === 'false'" class="correct-mark">✓</span>
+                <span v-if="question.correctAnswer === 'false'" class="correct-indicator">✓</span>
               </div>
             </div>
 
             <!-- Fill Blank Preview -->
             <div v-if="question.type === 'fill_blank'" class="preview-fill-blank">
-              <div class="fill-blank-input">
-                <input type="text" disabled placeholder="Student answer here..." class="form-input" />
-              </div>
-              <div class="correct-answer-display">
-                <span class="correct-label">✓ Correct Answer:</span>
-                <span class="correct-text">{{ question.correctAnswer }}</span>
+              <div class="fill-answer-display">
+                <span class="answer-label">Correct Answer:</span>
+                <span class="answer-text">{{ question.correctAnswer }}</span>
               </div>
             </div>
           </div>
@@ -548,6 +443,37 @@
         </div>
       </div>
     </div>
+
+    <!-- Custom Confirmation Modal -->
+    <div v-if="showConfirmModal" class="modal-overlay" @click="showConfirmModal = false">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>Publish Quiz</h3>
+          <button @click="showConfirmModal = false" class="modal-close">×</button>
+        </div>
+        
+        <div class="modal-body">
+          <div class="modal-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            </svg>
+          </div>
+          
+          <div class="modal-text">
+            <p class="modal-title">Are you sure you want to publish "{{ quiz.title }}"?</p>
+            <p class="modal-description">Students will be able to see and take this quiz immediately.</p>
+          </div>
+        </div>
+        
+        <div class="modal-actions">
+          <button @click="showConfirmModal = false" class="btn btn-secondary">Cancel</button>
+          <button @click="confirmPublish" :disabled="isPublishing" class="btn btn-primary">
+            <span v-if="isPublishing">Publishing...</span>
+            <span v-else>OK</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -565,6 +491,7 @@ export default {
     const currentStep = ref('landing');
     const steps = ['Details', 'Questions', 'Settings', 'Preview'];
     const isPublishing = ref(false);
+    const showConfirmModal = ref(false);
     
     const teacherInfo = ref({
       full_name: 'Loading...',
@@ -862,10 +789,11 @@ export default {
         return;
       }
 
-      if (!confirm(`Are you sure you want to publish "${quiz.value.title}"?\n\nStudents will be able to see and take this quiz immediately.`)) {
-        return;
-      }
+      showConfirmModal.value = true;
+    };
 
+    const confirmPublish = async () => {
+      showConfirmModal.value = false;
       isPublishing.value = true;
 
       try {
@@ -1073,6 +1001,7 @@ export default {
       section,
       quiz,
       isPublishing,
+      showConfirmModal,
       goBack,
       getStepIndex,
       proceedToQuestions,
@@ -1080,344 +1009,148 @@ export default {
       removeQuestion,
       addOption,
       removeOption,
-      publishQuiz
+      publishQuiz,
+      confirmPublish
     };
   }
 };
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 .create-quiz-page {
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
-  background: var(--bg-primary);
   min-height: 100vh;
-  color: var(--primary-text-color);
-  transition: all 0.3s ease;
+  background: #FBFFE4;
+  padding: 1.5rem;
+  font-family: 'Inter', sans-serif;
+}
+.dark .create-quiz-page {
+  background: #181c20;
 }
 
+/* Header */
 .section-header-card {
-  margin-bottom: 2rem;
-  position: relative;
-  overflow: hidden;
-  background: rgba(248, 250, 252, 0.9);
-  backdrop-filter: blur(20px);
-  border-radius: 32px;
-  padding: 3.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  min-height: 180px;
-  box-shadow: 
-    0 20px 40px rgba(0, 0, 0, 0.06),
-    0 10px 20px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
-
-.section-header-card:hover {
-  transform: translateY(-4px) scale(1.005);
-  box-shadow: 
-    0 35px 70px rgba(16, 185, 129, 0.12),
-    0 20px 40px rgba(0, 0, 0, 0.08),
-    0 12px 24px rgba(16, 185, 129, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95),
-    inset 0 0 0 1px rgba(16, 185, 129, 0.1);
-  border-color: rgba(16, 185, 129, 0.15);
-}
-
-.header-bg-decoration {
-  position: absolute;
-  top: -50%;
-  right: -20%;
-  width: 140%;
-  height: 220%;
-  background: 
-    radial-gradient(ellipse 60% 40% at 70% 30%, rgba(16, 185, 129, 0.12) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 60% at 30% 70%, rgba(5, 150, 105, 0.08) 0%, transparent 50%),
-    linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, transparent 80%);
-  z-index: 1;
-  opacity: 0.8;
+.dark .section-header-card {
+  background: #23272b;
+  border: 1px solid #3D8D7A;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
 
 .section-header-content {
-  position: relative;
-  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 100%;
 }
 
 .section-header-left {
   display: flex;
   align-items: center;
-  gap: 2rem;
+  gap: 1rem;
 }
 
 .section-header-icon {
-  width: 88px;
-  height: 88px;
-  background: 
-    linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%),
-    linear-gradient(225deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
-  border-radius: 28px;
+  width: 56px;
+  height: 56px;
+  background: #3D8D7A;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  box-shadow: 
-    0 12px 32px rgba(16, 185, 129, 0.35),
-    0 6px 16px rgba(16, 185, 129, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.section-header-icon:hover {
-  transform: translateY(-3px) scale(1.05);
-  box-shadow: 
-    0 16px 40px rgba(16, 185, 129, 0.4),
-    0 8px 20px rgba(16, 185, 129, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.4),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.15);
-}
-
-.section-header-icon::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  transition: left 0.6s;
-}
-
-.section-header-icon:hover::before {
-  left: 100%;
-}
-
-.header-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
+  color: white;
 }
 
 .section-header-title {
-  font-size: 2rem;
-  font-weight: 800;
-  color: #10b981;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
   margin-bottom: 0.25rem;
-  letter-spacing: -0.025em;
+}
+.dark .section-header-title {
+  color: #A3D1C6;
 }
 
 .section-header-subtitle {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #64748b;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+.dark .section-header-subtitle {
+  color: #A3D1C6;
 }
 
 .section-header-description {
-  font-size: 0.9rem;
+  font-size: 0.813rem;
   color: #94a3b8;
 }
-
-.header-actions {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
+.dark .section-header-description {
+  color: #A3D1C6;
 }
 
 .back-btn {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: 
-    linear-gradient(135deg, rgba(255,255,255,0.7), rgba(248,250,252,0.7));
-  border: 2px solid rgba(16,185,129,0.15);
-  border-radius: 12px;
-  padding: 0.7rem 1.4rem;
-  color: #10b981;
-  font-weight: 700;
+  padding: 0.6rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  font-size: 0.95rem;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.06);
+  text-decoration: none;
+  border: 2px solid #20c997;
+  background: #20c997;
+  color: #181c20;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
 }
-
-.back-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.1), transparent);
-  transition: left 0.4s ease;
-}
-
 .back-btn:hover {
-  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-  border-color: #10b981;
-  color: #065f46;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.15);
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
+  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.18);
+}
+.dark .back-btn {
+  background: #20c997;
+  color: #181c20;
+  border-color: #A3D1C6;
+}
+.dark .back-btn:hover {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
 }
 
-.back-btn:hover::before {
-  left: 100%;
-}
-
-.floating-shapes {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-  overflow: hidden;
-}
-
-.shape {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(0.5px);
-  opacity: 0.8;
-}
-
-.shape-1 {
-  width: 120px;
-  height: 120px;
-  top: -25px;
-  right: 12%;
-  background: 
-    radial-gradient(circle at 30% 30%, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.08) 40%, transparent 70%),
-    linear-gradient(135deg, rgba(5, 150, 105, 0.12) 0%, rgba(16, 185, 129, 0.06) 50%, transparent 100%);
-  animation: float 8s ease-in-out infinite, shimmer 4s ease-in-out infinite alternate;
-  box-shadow: 
-    0 8px 32px rgba(16, 185, 129, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-}
-
-.shape-2 {
-  width: 80px;
-  height: 80px;
-  bottom: -15px;
-  right: 28%;
-  background: 
-    radial-gradient(circle at 70% 70%, rgba(5, 150, 105, 0.12) 0%, rgba(16, 185, 129, 0.06) 40%, transparent 70%),
-    linear-gradient(225deg, rgba(16, 185, 129, 0.1) 0%, rgba(4, 120, 87, 0.05) 50%, transparent 100%);
-  animation: float 10s ease-in-out infinite reverse, pulse 6s ease-in-out infinite;
-  box-shadow: 
-    0 6px 24px rgba(5, 150, 105, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
-}
-
-.shape-3 {
-  width: 100px;
-  height: 100px;
-  top: 45%;
-  right: 3%;
-  background: 
-    radial-gradient(circle at 50% 20%, rgba(16, 185, 129, 0.14) 0%, rgba(5, 150, 105, 0.08) 45%, transparent 75%),
-    linear-gradient(315deg, rgba(4, 120, 87, 0.1) 0%, rgba(16, 185, 129, 0.05) 60%, transparent 100%);
-  animation: float 12s ease-in-out infinite, rotate 20s linear infinite;
-  box-shadow: 
-    0 10px 30px rgba(16, 185, 129, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18);
-}
-
-.shape-4 {
-  width: 60px;
-  height: 60px;
-  top: 20%;
-  right: 40%;
-  background: 
-    radial-gradient(circle at 60% 40%, rgba(16, 185, 129, 0.1) 0%, transparent 60%);
-  animation: float 9s ease-in-out infinite, fade 8s ease-in-out infinite alternate;
-  border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
-}
-
-.shape-5 {
-  width: 40px;
-  height: 40px;
-  bottom: 30%;
-  right: 8%;
-  background: 
-    linear-gradient(135deg, rgba(5, 150, 105, 0.08) 0%, rgba(16, 185, 129, 0.04) 100%);
-  animation: float 7s ease-in-out infinite reverse, scale 5s ease-in-out infinite alternate;
-  border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0) translateX(0) rotate(0deg); }
-  25% { transform: translateY(-12px) translateX(8px) rotate(5deg); }
-  50% { transform: translateY(-20px) translateX(0) rotate(10deg); }
-  75% { transform: translateY(-8px) translateX(-6px) rotate(5deg); }
-}
-
-@keyframes shimmer {
-  0% { opacity: 0.6; filter: blur(0.5px) brightness(1); }
-  100% { opacity: 0.9; filter: blur(0.3px) brightness(1.1); }
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); opacity: 0.7; }
-  50% { transform: scale(1.1); opacity: 0.9; }
-}
-
-@keyframes rotate {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-@keyframes fade {
-  0% { opacity: 0.4; }
-  100% { opacity: 0.8; }
-}
-
-@keyframes scale {
-  0% { transform: scale(0.8); }
-  100% { transform: scale(1.2); }
-}
-
-/* Progress Section */
-.progress-container {
-  max-width: 1400px;
-  margin: 2rem auto;
-  padding: 0 2rem;
-  position: relative;
-  z-index: 5;
-}
-
+/* Progress */
 .progress-card {
-  background: rgba(248, 250, 252, 0.9);
-  backdrop-filter: blur(20px);
-  border-radius: 24px;
-  padding: 2.5rem;
-  box-shadow: 
-    0 12px 40px rgba(16, 185, 129, 0.12),
-    0 6px 20px rgba(0, 0, 0, 0.08),
-    0 3px 10px rgba(16, 185, 129, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  border: 2px solid rgba(16, 185, 129, 0.08);
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
-
+.dark .progress-card {
+  background: #23272b;
+  border: 1px solid #3D8D7A;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
 .progress-track {
   display: flex;
   align-items: center;
   justify-content: space-between;
   position: relative;
+  overflow: hidden;
 }
-
 .progress-step {
   display: flex;
   flex-direction: column;
@@ -1425,81 +1158,191 @@ export default {
   position: relative;
   flex: 1;
 }
-
 .step-line {
   position: absolute;
-  top: 28px;
+  top: 20px;
   left: 50%;
   right: -50%;
-  height: 3px;
-  background: linear-gradient(90deg, #e2e8f0, #cbd5e0);
+  height: 2px;
+  background: #e5e7eb;
   z-index: 1;
   transition: all 0.3s ease;
 }
-
-.step-line.completed {
-  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
-  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+.progress-step:last-child .step-line {
+  right: 50%;
 }
-
+.step-line.completed {
+  background: #3D8D7A;
+}
 .step-indicator {
   position: relative;
   z-index: 2;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
-
 .step-circle {
-  width: 56px;
-  height: 56px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 1.1rem;
+  font-weight: 600;
+  font-size: 0.875rem;
   transition: all 0.3s ease;
-  background: #e2e8f0;
-  color: #64748b;
-  border: 3px solid #e2e8f0;
+  background: #e5e7eb;
+  color: #6b7280;
 }
-
 .step-indicator.active .step-circle,
 .step-indicator.completed .step-circle {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: #3D8D7A;
   color: white;
-  border-color: transparent;
-  transform: scale(1.1);
-  box-shadow: 
-    0 12px 32px rgba(16, 185, 129, 0.35),
-    0 6px 16px rgba(16, 185, 129, 0.2);
-  animation: pulse 2s ease-in-out infinite;
 }
-
 .step-label {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
   text-align: center;
 }
-
+.dark .step-label {
+  color: #A3D1C6;
+}
 .step-indicator.active + .step-label,
 .step-indicator.completed + .step-label {
-  color: #10b981;
-  font-weight: 700;
+  color: #3D8D7A;
+  font-weight: 600;
 }
-
-@keyframes pulse {
-  0%, 100% { box-shadow: 0 12px 32px rgba(16, 185, 129, 0.35), 0 6px 16px rgba(16, 185, 129, 0.2); }
-  50% { box-shadow: 0 16px 40px rgba(16, 185, 129, 0.45), 0 8px 20px rgba(16, 185, 129, 0.3); }
+.dark .step-indicator.active + .step-label,
+.dark .step-indicator.completed + .step-label {
+  color: #A3D1C6;
 }
 
 /* Main Content */
 .main-content {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 2rem 4rem;
-  position: relative;
-  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.content-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.dark .content-card {
+  background: #23272b;
+  border: 1px solid #3D8D7A;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+/* Card Headers */
+.card-header {
+  margin-bottom: 1.5rem;
+}
+.card-header h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+.dark .card-header h3 {
+  color: #A3D1C6;
+}
+.card-desc {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+.dark .card-desc {
+  color: #A3D1C6;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+.btn-secondary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  text-decoration: none;
+  border: 2px solid #20c997;
+  background: transparent;
+  color: #A3D1C6;
+  box-shadow: none;
+}
+.btn-secondary:hover {
+  background: #23272b;
+  color: #20c997;
+  border-color: #20c997;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
+}
+.dark .btn-secondary {
+  background: transparent;
+  color: #A3D1C6;
+  border-color: #20c997;
+}
+.dark .btn-secondary:hover {
+  background: #23272b;
+  color: #20c997;
+  border-color: #20c997;
+}
+.btn-primary {
+  background: #20c997;
+  color: #181c20;
+  border: 2px solid #20c997;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 0.6rem 2.2rem;
+  box-shadow: none;
+  transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+.btn-primary:hover {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
+  transform: translateY(-1px);
+}
+.btn-danger {
+  background: #ef4444;
+  color: white;
+}
+.btn-danger:hover {
+  background: #dc2626;
+}
+.btn-success {
+  background: #B3D8A8;
+  color: #1f2937;
+}
+.btn-success:hover {
+  background: #9fcf94;
+}
+.btn-publish {
+  background: #A3D1C6;
+  color: #1f2937;
+  padding: 1rem 2rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.btn-publish:hover {
+  background: #8fbeb6;
+  transform: translateY(-2px);
 }
 
 /* Landing Section */
@@ -1507,722 +1350,728 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 70vh;
+  min-height: 60vh;
 }
-
+/* Card style like dashboard */
 .landing-card {
-  background: rgba(248, 250, 252, 0.9);
-  backdrop-filter: blur(20px);
-  border-radius: 24px;
-  padding: 4rem 3rem;
-  text-align: center;
-  box-shadow: 
-    0 12px 40px rgba(16, 185, 129, 0.12),
-    0 6px 20px rgba(0, 0, 0, 0.08),
-    0 3px 10px rgba(16, 185, 129, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  border: 2px solid rgba(16, 185, 129, 0.08);
-  max-width: 700px;
+  background: white;
+  border-radius: 16px;
+  border: 2px solid #3D8D7A;
+  padding: 2.5rem 2rem;
+  box-shadow: 0 2px 16px rgba(61, 141, 122, 0.10);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 420px;
   width: 100%;
-  position: relative;
-  overflow: hidden;
+  transition: box-shadow 0.2s, border-color 0.2s;
 }
-
-.landing-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+.dark .landing-card {
+  background: #181c20;
+  border: 1.5px solid #3D8D7A;
+  box-shadow: 0 2px 12px rgba(61, 141, 122, 0.10);
 }
-
 .landing-icon {
-  position: relative;
-  width: 120px;
-  height: 120px;
-  margin: 0 auto 2rem;
-}
-
-.icon-bg {
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
-  border-radius: 24px;
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #3D8D7A 60%, #A3D1C6 100%);
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  position: relative;
-  z-index: 2;
-  animation: iconFloat 3s ease-in-out infinite;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
 }
-
-.icon-glow {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 140px;
-  height: 140px;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, transparent 70%);
-  border-radius: 50%;
-  animation: glow 2s ease-in-out infinite alternate;
+.landing-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+  text-align: center;
 }
-
-@keyframes iconFloat {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+.dark .landing-title {
+  color: #A3D1C6;
 }
-
-@keyframes glow {
-  0% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
-  100% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+.landing-desc {
+  font-size: 1rem;
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+  text-align: center;
 }
-
-.landing-card h2 {
-  font-size: 2.5rem;
-  font-weight: 800;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: 1rem;
+.dark .landing-desc {
+  color: #A3D1C6;
 }
-
-.landing-card p {
-  font-size: 1.2rem;
-  color: #64748b;
-  margin-bottom: 2rem;
-  line-height: 1.6;
-}
-
 .features-preview {
   display: flex;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+  width: 100%;
   justify-content: center;
-  gap: 2rem;
-  margin-bottom: 2.5rem;
-  flex-wrap: wrap;
 }
-
 .feature-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
-  padding: 1rem;
-  background: rgba(16, 185, 129, 0.1);
-  border-radius: 16px;
-  border: 1px solid rgba(16, 185, 129, 0.2);
-  transition: all 0.3s ease;
+  background: #FBFFE4;
+  border: 2px solid #3D8D7A;
+  border-radius: 12px;
+  padding: 1.1rem 1.2rem 0.7rem 1.2rem;
+  min-width: 110px;
+  font-size: 1.05rem;
+  color: #3D8D7A;
+  font-weight: 500;
+  box-shadow: 0 1px 4px rgba(61, 141, 122, 0.07);
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  cursor: pointer;
 }
-
 .feature-item:hover {
-  transform: translateY(-5px);
-  background: rgba(16, 185, 129, 0.15);
-  box-shadow: 
-    0 8px 25px rgba(16, 185, 129, 0.15),
-    0 4px 12px rgba(16, 185, 129, 0.1);
+  border-color: #B3D8A8;
+  background: #B3D8A8;
+  color: #1f2937;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.13);
 }
-
+.dark .feature-item {
+  background: #23272b;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
+  box-shadow: 0 1px 4px rgba(61, 141, 122, 0.04);
+}
+.dark .feature-item:hover {
+  background: #3D8D7A;
+  color: #FBFFE4;
+  border-color: #A3D1C6;
+}
 .feature-icon {
-  font-size: 2rem;
-}
-
-.create-quiz-btn {
-  position: relative;
-  padding: 1.25rem 2.5rem;
-  background: 
-    linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%) !important;
-  color: white !important;
-  border: none !important;
-  border-radius: 16px !important;
-  font-weight: 700 !important;
-  font-size: 1.1rem !important;
-  cursor: pointer !important;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  box-shadow: 
-    0 10px 30px rgba(16, 185, 129, 0.35),
-    0 5px 15px rgba(16, 185, 129, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
-  overflow: hidden !important;
-  letter-spacing: 0.025em !important;
-  position: relative !important;
-}
-
-.create-quiz-btn:hover {
-  background: 
-    linear-gradient(135deg, #059669 0%, #047857 50%, #065f46 100%) !important;
-  transform: translateY(-3px) scale(1.05) !important;
-  box-shadow: 
-    0 15px 40px rgba(16, 185, 129, 0.45),
-    0 8px 20px rgba(16, 185, 129, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
-}
-
-/* Card Styles */
-.content-card {
-  background: rgba(248, 250, 252, 0.9);
-  backdrop-filter: blur(20px);
-  border-radius: 24px;
-  padding: 3rem;
-  box-shadow: 
-    0 12px 40px rgba(16, 185, 129, 0.12),
-    0 6px 20px rgba(0, 0, 0, 0.08),
-    0 3px 10px rgba(16, 185, 129, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  border: 2px solid rgba(16, 185, 129, 0.08);
-  margin-bottom: 2rem;
-  position: relative;
-  overflow: hidden;
-}
-
-.content-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
-}
-
-/* Section Headers */
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  margin-bottom: 3rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 2px solid rgba(16, 185, 129, 0.1);
-}
-
-.section-icon {
-  width: 56px;
-  height: 56px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  box-shadow: 
-    0 12px 32px rgba(16, 185, 129, 0.35),
-    0 6px 16px rgba(16, 185, 129, 0.2);
+  margin-bottom: 0.4rem;
 }
-
-.section-content {
-  flex: 1;
-}
-
-.section-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0 0 0.5rem 0;
-}
-
-.section-subtitle {
-  color: #64748b;
-  font-size: 1.1rem;
-  margin: 0;
-}
-
-.question-counter {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 16px;
-  font-weight: 700;
-  font-size: 1.1rem;
-  box-shadow: 
-    0 8px 25px rgba(67, 233, 123, 0.3),
-    0 4px 12px rgba(67, 233, 123, 0.2);
-}
-
-.counter-icon {
-  font-size: 1.2rem;
-}
-
-/* Form Styles */
-.form-section {
-  margin-bottom: 2rem;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 200px;
-  gap: 2rem;
-  margin-bottom: 2rem;
-}
-
-.form-group {
-  margin-bottom: 1.5rem;
-}
-
-.form-label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 0.75rem;
-  font-size: 1rem;
-}
-
-.label-icon {
-  font-size: 1.1rem;
-}
-
-.form-input {
-  width: 100%;
-  padding: 1rem 1.25rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 16px;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-}
-
-.enhanced-input {
-  border-color: rgba(16, 185, 129, 0.2);
-  background: rgba(255, 255, 255, 0.9);
-}
-
-.enhanced-input:focus {
-  outline: none;
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
-  background: rgba(255, 255, 255, 1);
-}
-
-.form-textarea {
-  resize: vertical;
-  min-height: 120px;
-}
-
-.form-select {
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2310b981' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
-  background-position: right 1rem center;
-  background-repeat: no-repeat;
-  background-size: 1.5em 1.5em;
-  padding-right: 3rem;
-}
-
-/* Button Styles */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem 1.75rem;
-  border-radius: 16px;
+.create-quiz-btn {
+  background: #20c997;
+  color: #181c20;
+  border: 2px solid #20c997;
+  border-radius: 8px;
+  padding: 0.6rem 1.5rem;
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
-  transition: all 0.3s ease;
-  border: none;
-  position: relative;
-  overflow: hidden;
+  transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
+  margin-top: 0.7rem;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
+}
+.create-quiz-btn:hover {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
+  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.18);
+}
+.dark .create-quiz-btn {
+  background: #20c997;
+  color: #181c20;
+  border-color: #A3D1C6;
+}
+.dark .create-quiz-btn:hover {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
 }
 
-.btn-primary {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  box-shadow: 
-    0 8px 25px rgba(16, 185, 129, 0.3),
-    0 4px 12px rgba(16, 185, 129, 0.2);
+/* Responsive Design */
+@media (max-width: 768px) {
+  .create-quiz-page {
+    padding: 1rem;
+  }
+  .section-header-content {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  .section-header-left {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  .main-content {
+    gap: 1rem;
+  }
 }
 
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 
-    0 12px 35px rgba(16, 185, 129, 0.4),
-    0 6px 18px rgba(16, 185, 129, 0.25);
+/* Quiz Details Form Grid & Inputs */
+.form-section {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
-
-.btn-secondary {
-  background: rgba(255, 255, 255, 0.8);
-  color: #64748b;
-  border: 2px solid #e2e8f0;
-  backdrop-filter: blur(10px);
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem 2rem;
+  margin-bottom: 1rem;
 }
-
-.btn-secondary:hover {
-  background: rgba(255, 255, 255, 1);
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.form-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #3D8D7A;
+  margin-bottom: 0.2rem;
+}
+.dark .form-label {
+  color: #A3D1C6;
+}
+.form-input {
+  padding: 0.7rem 1rem;
+  border-radius: 8px;
+  border: 1.5px solid #A3D1C6;
+  background: #FBFFE4;
+  font-size: 1rem;
   color: #1f2937;
-  border-color: #10b981;
-  transform: translateY(-2px);
+  font-family: 'Inter', sans-serif;
+  transition: border-color 0.2s, background 0.2s;
+}
+.form-input:focus {
+  outline: none;
+  border-color: #3D8D7A;
+  background: #fff;
+}
+.dark .form-input {
+  background: #23272b;
+  color: #A3D1C6;
+  border-color: #3D8D7A;
+}
+.dark .form-input:focus {
+  background: #181c20;
+  border-color: #A3D1C6;
 }
 
-.btn-success {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-  color: white;
-  box-shadow: 0 4px 15px rgba(67, 233, 123, 0.3);
+/* DateTime Local Calendar Styling */
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%233D8D7A'%3e%3cpath fill-rule='evenodd' d='M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z' clip-rule='evenodd'/%3e%3c/svg%3e") no-repeat center;
+  background-size: 16px 16px;
+  cursor: pointer;
+  opacity: 1;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background-color: transparent;
 }
 
-.btn-success:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(67, 233, 123, 0.4);
+.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23A3D1C6'%3e%3cpath fill-rule='evenodd' d='M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z' clip-rule='evenodd'/%3e%3c/svg%3e") no-repeat center;
+  background-size: 16px 16px;
 }
 
-.btn-danger {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  color: white;
-  box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);
+input[type="datetime-local"]::-webkit-datetime-edit {
+  color: #3D8D7A;
+  font-family: 'Inter', sans-serif;
 }
 
-.btn-danger:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
+.dark input[type="datetime-local"]::-webkit-datetime-edit {
+  color: #A3D1C6;
 }
 
-.btn-publish {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  color: white;
-  padding: 1.25rem 2.5rem;
-  font-size: 1.2rem;
-  font-weight: 700;
-  box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
+input[type="datetime-local"]::-webkit-datetime-edit-text {
+  color: #6b7280;
+  padding: 0 0.25rem;
 }
 
-.btn-publish:hover {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 12px 35px rgba(79, 172, 254, 0.6);
+.dark input[type="datetime-local"]::-webkit-datetime-edit-text {
+  color: #A3D1C6;
 }
 
-/* Question Cards */
+input[type="datetime-local"]::-webkit-datetime-edit-month-field,
+input[type="datetime-local"]::-webkit-datetime-edit-day-field,
+input[type="datetime-local"]::-webkit-datetime-edit-year-field,
+input[type="datetime-local"]::-webkit-datetime-edit-hour-field,
+input[type="datetime-local"]::-webkit-datetime-edit-minute-field {
+  background: transparent;
+  color: #3D8D7A;
+  font-weight: 500;
+  padding: 0.1rem 0.2rem;
+  border-radius: 4px;
+  border: none;
+}
+
+.dark input[type="datetime-local"]::-webkit-datetime-edit-month-field,
+.dark input[type="datetime-local"]::-webkit-datetime-edit-day-field,
+.dark input[type="datetime-local"]::-webkit-datetime-edit-year-field,
+.dark input[type="datetime-local"]::-webkit-datetime-edit-hour-field,
+.dark input[type="datetime-local"]::-webkit-datetime-edit-minute-field {
+  color: #A3D1C6;
+}
+
+input[type="datetime-local"]::-webkit-datetime-edit-month-field:focus,
+input[type="datetime-local"]::-webkit-datetime-edit-day-field:focus,
+input[type="datetime-local"]::-webkit-datetime-edit-year-field:focus,
+input[type="datetime-local"]::-webkit-datetime-edit-hour-field:focus,
+input[type="datetime-local"]::-webkit-datetime-edit-minute-field:focus {
+  background: rgba(61, 141, 122, 0.1);
+  outline: none;
+}
+
+.dark input[type="datetime-local"]::-webkit-datetime-edit-month-field:focus,
+.dark input[type="datetime-local"]::-webkit-datetime-edit-day-field:focus,
+.dark input[type="datetime-local"]::-webkit-datetime-edit-year-field:focus,
+.dark input[type="datetime-local"]::-webkit-datetime-edit-hour-field:focus,
+.dark input[type="datetime-local"]::-webkit-datetime-edit-minute-field:focus {
+  background: rgba(163, 209, 198, 0.1);
+}
+
+/* Custom calendar popup styling for supported browsers */
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+  background-color: rgba(61, 141, 122, 0.1);
+  border-radius: 4px;
+}
+
+.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+  background-color: rgba(163, 209, 198, 0.1);
+}
+
+/* Enhanced Calendar Popup Styling */
+/* Force calendar to use appropriate color scheme */
+input[type="datetime-local"] {
+  color-scheme: light;
+  accent-color: #3D8D7A;
+}
+
+.dark input[type="datetime-local"] {
+  color-scheme: dark;
+  accent-color: #A3D1C6;
+}
+
+/* Style the calendar popup directly where browsers support it */
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233D8D7A'%3e%3cpath d='M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 18px 18px;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  opacity: 1;
+  padding: 2px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23A3D1C6'%3e%3cpath d='M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z'/%3e%3c/svg%3e");
+}
+
+/* Enhanced hover and active states */
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+  background-color: rgba(61, 141, 122, 0.1);
+}
+
+.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+  background-color: rgba(163, 209, 198, 0.1);
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:active {
+  background-color: rgba(61, 141, 122, 0.2);
+  transform: scale(0.95);
+}
+
+.dark input[type="datetime-local"]::-webkit-calendar-picker-indicator:active {
+  background-color: rgba(163, 209, 198, 0.2);
+}
+
+/* Additional webkit calendar styling */
+input[type="datetime-local"]::-webkit-inner-spin-button {
+  display: none;
+}
+
+input[type="datetime-local"]::-webkit-clear-button {
+  display: none;
+}
+
+/* Force the calendar popup to respect dark mode */
+@media (prefers-color-scheme: dark) {
+  .dark input[type="datetime-local"] {
+    color-scheme: dark;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  input[type="datetime-local"] {
+    color-scheme: light;
+  }
+}
+.enhanced-input {
+  box-shadow: 0 1px 4px rgba(61, 141, 122, 0.07);
+}
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+  max-height: 200px;
+}
+  .action-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1.1rem;
+    margin-top: 2rem;
+  }
+  .action-buttons .btn-primary {
+    min-width: 220px;
+    justify-content: center;
+  }
+@media (max-width: 768px) {
+  .action-buttons {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.7rem;
+  }
+}
+
+/* Questions Section Styles */
 .questions-container {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-  margin-bottom: 3rem;
+  gap: 1.5rem;
 }
 
 .question-card {
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(15px);
-  border: 2px solid rgba(16, 185, 129, 0.1);
-  border-radius: 24px;
-  padding: 2rem;
-  transition: all 0.3s ease;
+  background: #FBFFE4;
+  border: 1px solid #A3D1C6;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.2s;
 }
-
-.enhanced-card:hover {
-  border-color: rgba(16, 185, 129, 0.3);
-  box-shadow: 
-    0 8px 30px rgba(16, 185, 129, 0.12),
-    0 4px 15px rgba(16, 185, 129, 0.08);
-  transform: translateY(-5px);
+.dark .question-card {
+  background: #23272b;
+  border-color: #3D8D7A;
 }
 
 .question-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(16, 185, 129, 0.1);
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #A3D1C6;
+}
+.dark .question-header {
+  border-bottom-color: #3D8D7A;
 }
 
-.question-number {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.question-badge {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 1.2rem;
-  box-shadow: 
-    0 8px 25px rgba(16, 185, 129, 0.3),
-    0 4px 12px rgba(16, 185, 129, 0.2);
-}
-
-.question-title {
-  font-size: 1.3rem;
+.question-header h4 {
+  font-size: 1.125rem;
   font-weight: 600;
-  color: #1f2937;
+  color: #3D8D7A;
   margin: 0;
 }
-
-.delete-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
+.dark .question-header h4 {
+  color: #A3D1C6;
 }
 
-.delete-btn:hover {
-  transform: scale(1.1);
+.remove-btn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+.remove-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
 }
 
-/* Options */
-.options-container {
+.question-body {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  margin-bottom: 1.5rem;
+}
+
+.form-select {
+  padding: 0.7rem 1rem;
+  border-radius: 8px;
+  border: 1.5px solid #A3D1C6;
+  background: #FBFFE4;
+  font-size: 1rem;
+  color: #1f2937;
+  font-family: 'Inter', sans-serif;
+  transition: border-color 0.2s, background 0.2s;
+}
+.form-select:focus {
+  outline: none;
+  border-color: #3D8D7A;
+  background: #fff;
+}
+.dark .form-select {
+  background: #23272b;
+  color: #A3D1C6;
+  border-color: #3D8D7A;
+}
+.dark .form-select:focus {
+  background: #181c20;
+  border-color: #A3D1C6;
+}
+
+.option-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.options-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .option-item {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 16px;
-  transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.8);
+  gap: 0.75rem;
+  padding: 0.5rem;
+  border-radius: 8px;
+  background: white;
+  border: 1px solid #A3D1C6;
 }
-
-.enhanced-option:hover {
-  border-color: rgba(16, 185, 129, 0.3);
-  background: rgba(16, 185, 129, 0.05);
-  transform: translateX(5px);
+.dark .option-item {
+  background: #181c20;
+  border-color: #3D8D7A;
 }
 
 .option-radio {
-  width: 20px;
-  height: 20px;
-  accent-color: #10b981;
+  margin: 0;
 }
 
 .option-letter {
-  width: 32px;
-  height: 32px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: #3D8D7A;
   color: white;
-  border-radius: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 
 .option-input {
   flex: 1;
-  border: none;
-  background: transparent;
-  font-size: 1rem;
   padding: 0.5rem;
-  color: #1f2937;
+  border: 1px solid #A3D1C6;
+  border-radius: 6px;
+  background: #FBFFE4;
+  font-size: 0.875rem;
 }
-
 .option-input:focus {
   outline: none;
+  border-color: #3D8D7A;
+}
+.dark .option-input {
+  background: #23272b;
+  color: #A3D1C6;
+  border-color: #3D8D7A;
 }
 
 .remove-option-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 1.125rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: background 0.2s;
 }
-
 .remove-option-btn:hover {
-  transform: scale(1.1);
+  background: rgba(239, 68, 68, 0.1);
 }
 
-.add-option-btn {
+.btn-add {
+  background: #B3D8A8;
+  color: #1f2937;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
   align-self: flex-start;
-  margin-top: 0.5rem;
+}
+.btn-add:hover {
+  background: #9fcf94;
 }
 
-/* True/False Options */
 .tf-options {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  margin-top: 1rem;
+  display: flex;
+  gap: 1rem;
 }
 
 .tf-option {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  border: 3px solid #e2e8f0;
-  border-radius: 16px;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #A3D1C6;
+  border-radius: 8px;
+  background: white;
   cursor: pointer;
-  transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.8);
+  transition: all 0.2s;
 }
-
 .tf-option:hover {
-  border-color: rgba(16, 185, 129, 0.3);
-  background: rgba(16, 185, 129, 0.05);
-  transform: translateY(-5px);
+  border-color: #3D8D7A;
+  background: #FBFFE4;
 }
-
 .tf-option.selected {
-  border-color: #10b981;
-  background: rgba(16, 185, 129, 0.1);
-  box-shadow: 
-    0 8px 25px rgba(16, 185, 129, 0.15),
-    0 4px 12px rgba(16, 185, 129, 0.1);
+  border-color: #3D8D7A;
+  background: #FBFFE4;
+}
+.dark .tf-option {
+  background: #23272b;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
+}
+.dark .tf-option:hover,
+.dark .tf-option.selected {
+  background: #181c20;
+  border-color: #A3D1C6;
 }
 
-.tf-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
+.tf-option input {
+  margin: 0;
 }
 
-.tf-icon {
-  font-size: 3rem;
-}
-
-.tf-label {
-  font-weight: 700;
-  color: #1f2937;
-  font-size: 1.2rem;
-}
-
-/* Add Question Card */
 .add-question-card {
-  border: 3px dashed rgba(16, 185, 129, 0.3);
-  border-radius: 24px;
-  padding: 3rem;
+  background: white;
+  border: 2px dashed #A3D1C6;
+  border-radius: 12px;
+  padding: 2rem;
   text-align: center;
   cursor: pointer;
-  transition: all 0.3s ease;
-  background: rgba(16, 185, 129, 0.02);
+  transition: all 0.2s;
 }
-
 .add-question-card:hover {
-  border-color: rgba(16, 185, 129, 0.5);
-  background: rgba(16, 185, 129, 0.05);
-  transform: translateY(-5px);
+  border-color: #3D8D7A;
+  background: #FBFFE4;
+}
+.dark .add-question-card {
+  background: #23272b;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
+}
+.dark .add-question-card:hover {
+  background: #181c20;
+  border-color: #A3D1C6;
 }
 
 .add-question-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .add-question-icon {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border-radius: 24px;
+  font-size: 2rem;
+  color: #3D8D7A;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #FBFFE4;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  box-shadow: 
-    0 8px 25px rgba(16, 185, 129, 0.15),
-    0 4px 12px rgba(16, 185, 129, 0.1);
+  margin-bottom: 0.5rem;
+}
+.dark .add-question-icon {
+  color: #A3D1C6;
+  background: #181c20;
 }
 
-.add-question-content h3 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1f2937;
+.add-question-content h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #3D8D7A;
   margin: 0;
+}
+.dark .add-question-content h4 {
+  color: #A3D1C6;
 }
 
 .add-question-content p {
-  color: #64748b;
+  font-size: 0.875rem;
+  color: #6b7280;
   margin: 0;
-  font-size: 1.1rem;
+}
+.dark .add-question-content p {
+  color: #A3D1C6;
 }
 
-/* Settings */
-.settings-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-  margin-bottom: 3rem;
+/* Settings Section Styles */
+.settings-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.setting-card {
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(15px);
-  border: 2px solid rgba(16, 185, 129, 0.1);
-  border-radius: 24px;
-  padding: 2rem;
-  transition: all 0.3s ease;
+.setting-group {
+  background: #FBFFE4;
+  border: 1px solid #A3D1C6;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.2s;
 }
-
-.enhanced-setting:hover {
-  border-color: rgba(16, 185, 129, 0.3);
-  box-shadow: 
-    0 8px 30px rgba(16, 185, 129, 0.12),
-    0 4px 15px rgba(16, 185, 129, 0.08);
-  transform: translateY(-5px);
-}
-
-.schedule-card {
-  grid-column: 1 / -1;
+.dark .setting-group {
+  background: #23272b;
+  border-color: #3D8D7A;
 }
 
 .setting-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
 }
 
-.setting-info {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+.setting-header h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #3D8D7A;
+  margin: 0 0 0.25rem 0;
+}
+.dark .setting-header h4 {
+  color: #A3D1C6;
 }
 
-.setting-emoji {
-  font-size: 2.5rem;
-}
-
-.setting-details h3 {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0 0 0.5rem 0;
-}
-
-.setting-details p {
-  font-size: 1rem;
-  color: #64748b;
+.setting-header p {
+  font-size: 0.875rem;
+  color: #6b7280;
   margin: 0;
+}
+.dark .setting-header p {
+  color: #A3D1C6;
 }
 
 .setting-content {
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid rgba(16, 185, 129, 0.1);
+  margin-top: 1rem;
 }
 
-/* Toggle Switch */
 .toggle-switch {
   position: relative;
   display: inline-block;
-  width: 64px;
-  height: 36px;
+  width: 48px;
+  height: 24px;
 }
 
 .toggle-switch input {
@@ -2238,499 +2087,99 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: #e2e8f0;
-  border-radius: 34px;
-  transition: all 0.3s ease;
+  background-color: #ccc;
+  transition: 0.2s;
+  border-radius: 24px;
 }
 
 .toggle-slider:before {
   position: absolute;
   content: "";
-  height: 28px;
-  width: 28px;
-  left: 4px;
-  bottom: 4px;
-  background: white;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.2s;
   border-radius: 50%;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .toggle-switch input:checked + .toggle-slider {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  box-shadow: 
-    0 8px 25px rgba(16, 185, 129, 0.15),
-    0 4px 12px rgba(16, 185, 129, 0.1);
+  background-color: #3D8D7A;
 }
 
 .toggle-switch input:checked + .toggle-slider:before {
-  transform: translateX(28px);
+  transform: translateX(24px);
 }
 
-/* Time Input */
 .time-input-group {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
-.time-input {
-  width: 100px;
+.time-input-group input {
+  width: 80px;
 }
 
 .time-unit {
-  font-weight: 600;
-  color: #64748b;
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+.dark .time-unit {
+  color: #A3D1C6;
 }
 
-/* Attempts Options */
 .attempts-options {
   display: flex;
   gap: 1rem;
-}
-
-.attempt-option {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 1.5rem 1rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 16px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.8);
-}
-
-.attempt-option:hover {
-  border-color: rgba(16, 185, 129, 0.3);
-  background: rgba(16, 185, 129, 0.05);
-}
-
-.attempt-option.selected {
-  border-color: #10b981;
-  background: rgba(16, 185, 129, 0.1);
-  box-shadow: 
-    0 8px 25px rgba(16, 185, 129, 0.15),
-    0 4px 12px rgba(16, 185, 129, 0.1);
-}
-
-.attempt-number {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 0.5rem;
-}
-
-.attempt-label {
-  font-weight: 600;
-  color: #64748b;
-}
-
-/* Schedule Grid */
-.schedule-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-}
-
-.form-label-small {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 0.75rem;
-  font-size: 0.95rem;
-}
-
-/* Preview Section */
-.preview-header {
-  text-align: center;
-  margin-bottom: 3rem;
-  padding-bottom: 2rem;
-  border-bottom: 2px solid rgba(16, 185, 129, 0.1);
-}
-
-.preview-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-  color: white;
-  border-radius: 50px;
-  font-weight: 700;
-  font-size: 0.95rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 
-    0 8px 25px rgba(67, 233, 123, 0.3),
-    0 4px 12px rgba(67, 233, 123, 0.2);
-  animation: badge-pulse 2s ease-in-out infinite;
-}
-
-.badge-icon {
-  font-size: 1.1rem;
-}
-
-@keyframes badge-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
-.preview-title {
-  font-size: 2.5rem;
-  font-weight: 800;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: 1rem;
-}
-
-.preview-description {
-  color: #64748b;
-  font-size: 1.2rem;
-  margin-bottom: 2rem;
-  line-height: 1.6;
-}
-
-.preview-stats {
-  display: flex;
-  justify-content: center;
-  gap: 2rem;
   flex-wrap: wrap;
 }
 
-.stat-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 1.5rem 2rem;
-  background: rgba(255, 255, 255, 0.8);
-  border: 2px solid rgba(16, 185, 129, 0.1);
-  border-radius: 24px;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(15px);
-}
-
-.stat-card:hover {
-  border-color: rgba(16, 185, 129, 0.3);
-  transform: translateY(-5px);
-  box-shadow: 
-    0 8px 30px rgba(16, 185, 129, 0.12),
-    0 4px 15px rgba(16, 185, 129, 0.08);
-}
-
-.stat-icon {
-  font-size: 2rem;
-  margin-bottom: 0.75rem;
-}
-
-.stat-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 0.5rem;
-}
-
-.stat-label {
-  font-weight: 600;
-  color: #64748b;
-  text-transform: uppercase;
-  font-size: 0.85rem;
-  letter-spacing: 0.5px;
-}
-
-/* Preview Questions */
-.preview-questions {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  margin-bottom: 3rem;
-}
-
-.preview-card {
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(15px);
-  border: 2px solid rgba(16, 185, 129, 0.1);
-  border-radius: 24px;
-  padding: 2rem;
-  transition: all 0.3s ease;
-}
-
-.enhanced-preview:hover {
-  border-color: rgba(16, 185, 129, 0.3);
-  box-shadow: 
-    0 8px 30px rgba(16, 185, 129, 0.12),
-    0 4px 15px rgba(16, 185, 129, 0.08);
-  transform: translateY(-5px);
-}
-
-.preview-question-header {
+.attempt-option {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.preview-question-number {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 1.2rem;
-  box-shadow: 
-    0 8px 25px rgba(16, 185, 129, 0.3),
-    0 4px 12px rgba(16, 185, 129, 0.2);
-}
-
-.question-type-badge {
-  padding: 0.5rem 1rem;
-  border-radius: 16px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.question-type-badge.multiple_choice {
-  background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.2);
-}
-
-.question-type-badge.true_false {
-  background: rgba(67, 233, 123, 0.1);
-  color: #43e97b;
-  border: 1px solid rgba(67, 233, 123, 0.2);
-}
-
-.question-type-badge.fill_blank {
-  background: rgba(245, 87, 108, 0.1);
-  color: #f5576c;
-  border: 1px solid rgba(245, 87, 108, 0.2);
-}
-
-.preview-question-text {
-  color: var(--primary-text-color);
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin: 0 0 1.5rem 0;
-  line-height: 1.5;
-}
-
-.preview-options {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.preview-option {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  background: rgba(248, 250, 252, 0.8);
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  transition: all 0.3s ease;
-}
-
-.preview-option:hover {
-  background: rgba(16, 185, 129, 0.05);
-  border-color: rgba(16, 185, 129, 0.2);
-}
-
-.preview-option.correct-option {
-  background: rgba(67, 233, 123, 0.1);
-  border-color: rgba(67, 233, 123, 0.3);
-  border-width: 2px;
-}
-
-.option-marker {
-  width: 32px;
-  height: 32px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #A3D1C6;
   border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 0.9rem;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.attempt-option:hover {
+  border-color: #3D8D7A;
+  background: white;
+}
+.attempt-option.selected {
+  border-color: #3D8D7A;
+  background: white;
+  box-shadow: 0 0 0 2px rgba(61, 141, 122, 0.1);
+}
+.dark .attempt-option {
+  background: #181c20;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
+}
+.dark .attempt-option:hover,
+.dark .attempt-option.selected {
+  background: #181c20;
+  border-color: #A3D1C6;
 }
 
-.option-text {
-  flex: 1;
-  font-size: 1rem;
-  color: #1f2937;
+.attempt-option input {
+  margin: 0;
 }
 
-.correct-mark {
-  color: #43e97b;
-  font-weight: 700;
-  font-size: 1.5rem;
-  animation: correct-bounce 0.5s ease-out;
-}
-
-@keyframes correct-bounce {
-  0% { transform: scale(0); }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); }
-}
-
-/* Fill Blank Preview */
-.preview-fill-blank {
-  display: flex;
-  flex-direction: column;
+.schedule-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 1rem;
-}
-
-.fill-blank-input {
-  max-width: 300px;
-}
-
-.correct-answer-display {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem;
-  background: rgba(67, 233, 123, 0.1);
-  border: 1px solid rgba(67, 233, 123, 0.3);
-  border-radius: 16px;
-}
-
-.correct-label {
-  font-weight: 700;
-  color: #43e97b;
-}
-
-.correct-text {
-  color: var(--primary-text-color);
-  font-weight: 600;
-}
-
-/* Action Buttons */
-.action-buttons {
-  display: flex;
-  gap: 1.5rem;
-  margin-top: 3rem;
-  padding-top: 2rem;
-  border-top: 2px solid rgba(16, 185, 129, 0.1);
-}
-
-/* Animations */
-.slide-up {
-  animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Utility Classes */
-.hidden {
-  display: none;
-}
-
-/* Responsive Design */
-@media (max-width: 1200px) {
-  .progress-container,
-  .main-content {
-    max-width: 100%;
-    padding: 0 1.5rem;
-  }
 }
 
 @media (max-width: 768px) {
-  .create-quiz-page {
-    padding: 1rem;
-  }
-
-  .section-header-card {
-    padding: 2rem;
-    margin-bottom: 1.5rem;
-  }
-  
-  .section-header-content {
-    flex-direction: column;
-    gap: 1rem;
-    text-align: center;
-  }
-
-  .section-header-left {
-    flex-direction: column;
-    gap: 1rem;
-    text-align: center;
-  }
-
-  .section-header-icon {
-    width: 64px;
-    height: 64px;
-  }
-
-  .section-header-title {
-    font-size: 1.5rem;
-  }
-
-  .progress-card {
-    padding: 1.5rem;
-  }
-  
-  .progress-track {
-    flex-direction: column;
-    gap: 1.5rem;
-  }
-  
-  .step-line {
-    display: none;
-  }
-  
-  .landing-card {
-    padding: 2.5rem 1.5rem;
-    margin: 1rem;
-  }
-  
-  .content-card {
-    padding: 2rem 1.5rem;
-    margin: 1rem;
-  }
-  
-  .features-preview {
-    gap: 1rem;
-  }
-  
-  .feature-item {
-    padding: 0.75rem;
-    min-width: 120px;
-  }
-
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-  
   .schedule-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .settings-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .tf-options {
     grid-template-columns: 1fr;
   }
   
@@ -2738,396 +2187,430 @@ export default {
     flex-direction: column;
   }
   
-  .preview-stats {
+  .setting-header {
+    flex-direction: column;
+    align-items: flex-start;
     gap: 1rem;
   }
-  
-  .action-buttons {
-    flex-direction: column;
-  }
-
-  .floating-shapes {
-    display: none;
-  }
 }
 
-@media (max-width: 480px) {
-  .landing-card h2 {
-    font-size: 2rem;
-  }
-  
-  .section-title {
-    font-size: 1.5rem;
-  }
-  
-  .preview-title {
-    font-size: 2rem;
-  }
-
-  .section-header-card {
-    padding: 1.5rem;
-  }
-
-  .content-card {
-    padding: 1.5rem;
-  }
-
-  .question-card {
-    padding: 1.5rem;
-  }
+/* Preview Section Styles */
+.quiz-preview-info {
+  background: #FBFFE4;
+  border: 1px solid #A3D1C6;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.dark .quiz-preview-info {
+  background: #23272b;
+  border-color: #3D8D7A;
 }
 
-/* Accessibility improvements */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+.preview-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #3D8D7A;
+  margin: 0 0 0.5rem 0;
+}
+.dark .preview-title {
+  color: #A3D1C6;
 }
 
-.btn:focus-visible,
-.form-input:focus-visible,
-.toggle-switch:focus-visible {
-  outline: 2px solid #10b981;
-  outline-offset: 2px;
+.preview-description {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0 0 1rem 0;
+}
+.dark .preview-description {
+  color: #A3D1C6;
 }
 
-/* Dark Mode Styles */
-.create-quiz-page.dark-mode {
-  background: var(--bg-primary);
-  color: var(--primary-text-color);
+.preview-stats {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
 }
 
-.dark-mode .section-header-card {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
-.dark-mode .section-header-title {
-  color: var(--primary-text-color);
+.stat-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.dark .stat-label {
+  color: #A3D1C6;
 }
 
-.dark-mode .section-header-subtitle {
-  color: var(--secondary-text-color);
+.stat-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #3D8D7A;
+}
+.dark .stat-value {
+  color: #A3D1C6;
 }
 
-.dark-mode .section-header-description {
-  color: var(--text-muted);
+.preview-questions {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.dark-mode .progress-card {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
+.preview-question {
+  background: white;
+  border: 1px solid #A3D1C6;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.2s;
+}
+.dark .preview-question {
+  background: #181c20;
+  border-color: #3D8D7A;
 }
 
-.dark-mode .landing-card {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-}
-
-.dark-mode .landing-card h2 {
-  background: linear-gradient(135deg, var(--accent-color) 0%, #4a9b87 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.dark-mode .landing-card p {
-  color: var(--secondary-text-color);
-}
-
-.dark-mode .content-card {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-}
-
-.dark-mode .section-title {
-  color: var(--primary-text-color);
-}
-
-.dark-mode .section-subtitle {
-  color: var(--secondary-text-color);
-}
-
-.dark-mode .form-label {
-  color: var(--primary-text-color);
-}
-
-.dark-mode .form-input {
-  background: var(--input-bg);
-  border-color: var(--input-border);
-  color: var(--primary-text-color);
-}
-
-.dark-mode .form-input:focus {
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 3px rgba(95, 179, 160, 0.15);
-}
-
-.dark-mode .question-card {
-  background: var(--bg-card);
-  border: 1px solid var(--card-border-color);
-}
-
-.dark-mode .question-title {
-  color: var(--primary-text-color);
-}
-
-.dark-mode .option-item {
-  background: var(--bg-card);
-  border-color: var(--border-color);
-}
-
-.dark-mode .option-input {
-  color: var(--primary-text-color);
-}
-
-.dark-mode .tf-option {
-  background: var(--bg-card);
-  border-color: var(--border-color);
-}
-
-.dark-mode .tf-label {
-  color: var(--primary-text-color);
-}
-
-.dark-mode .setting-card {
-  background: var(--bg-card);
-  border: 1px solid var(--card-border-color);
-}
-
-.dark-mode .setting-details h3 {
-  color: var(--primary-text-color);
-}
-
-.dark-mode .setting-details p {
-  color: var(--secondary-text-color);
-}
-
-.dark-mode .attempt-option {
-  background: var(--bg-card);
-  border-color: var(--border-color);
-}
-
-.dark-mode .attempt-number {
-  color: var(--primary-text-color);
-}
-
-.dark-mode .attempt-label {
-  color: var(--secondary-text-color);
-}
-
-.dark-mode .time-unit {
-  color: var(--secondary-text-color);
-}
-
-.dark-mode .preview-title {
-  background: linear-gradient(135deg, var(--accent-color) 0%, #4a9b87 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.dark-mode .preview-description {
-  color: var(--secondary-text-color);
-}
-
-.dark-mode .stat-card {
-  background: var(--bg-card);
-  border: 1px solid var(--card-border-color);
-}
-
-.dark-mode .stat-value {
-  color: var(--primary-text-color);
-}
-
-.dark-mode .stat-label {
-  color: var(--secondary-text-color);
-}
-
-.dark-mode .preview-card {
-  background: var(--bg-card);
-  border: 1px solid var(--card-border-color);
-}
-
-.dark-mode .preview-question-text {
-  color: var(--primary-text-color);
-}
-
-.dark-mode .preview-option {
-  background: var(--bg-accent);
-  border-color: var(--border-color);
-}
-
-.dark-mode .option-text {
-  color: var(--primary-text-color);
-}
-
-.dark-mode .correct-text {
-  color: var(--primary-text-color);
-}
-
-
-.create-quiz-page {
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
-  background: var(--bg-primary, #f8fafc);
-  min-height: 100vh;
-  color: var(--primary-text-color, #1f2937);
-  transition: all 0.3s ease;
-}
-
-.section-header-card {
-  margin-bottom: 2rem;
-  position: relative;
-  overflow: hidden;
-  background: rgba(248, 250, 252, 0.9);
-  backdrop-filter: blur(20px);
-  border-radius: 32px;
-  padding: 3.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  min-height: 180px;
-  box-shadow: 
-    0 20px 40px rgba(0, 0, 0, 0.06),
-    0 10px 20px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.section-header-card:hover {
-  transform: translateY(-4px) scale(1.005);
-  box-shadow: 
-    0 35px 70px rgba(16, 185, 129, 0.12),
-    0 20px 40px rgba(0, 0, 0, 0.08),
-    0 12px 24px rgba(16, 185, 129, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95),
-    inset 0 0 0 1px rgba(16, 185, 129, 0.1);
-  border-color: rgba(16, 185, 129, 0.15);
-}
-
-.header-bg-decoration {
-  position: absolute;
-  top: -50%;
-  right: -20%;
-  width: 140%;
-  height: 220%;
-  background: 
-    radial-gradient(ellipse 60% 40% at 70% 30%, rgba(16, 185, 129, 0.12) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 60% at 30% 70%, rgba(5, 150, 105, 0.08) 0%, transparent 50%),
-    linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, transparent 80%);
-  z-index: 1;
-  opacity: 0.8;
-}
-
-.section-header-content {
-  position: relative;
-  z-index: 2;
+.question-preview-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  width: 100%;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
 }
 
-.section-header-left {
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-}
-
-.section-header-icon {
-  width: 88px;
-  height: 88px;
-  background: 
-    linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%),
-    linear-gradient(225deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
-  border-radius: 28px;
+.question-number {
+  background: #3D8D7A;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  box-shadow: 
-    0 12px 32px rgba(16, 185, 129, 0.35),
-    0 6px 16px rgba(16, 185, 129, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 
-.section-header-icon:hover {
-  transform: translateY(-3px) scale(1.05);
-  box-shadow: 
-    0 16px 40px rgba(16, 185, 129, 0.4),
-    0 8px 20px rgba(16, 185, 129, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.4),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+.question-type-tag {
+  background: #B3D8A8;
+  color: #1f2937;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.question-type-tag.multiple_choice {
+  background: #B3D8A8;
+}
+.question-type-tag.true_false {
+  background: #A3D1C6;
+}
+.question-type-tag.fill_blank {
+  background: #FBFFE4;
+  border: 1px solid #A3D1C6;
+}
+.dark .question-type-tag {
+  color: #1f2937;
 }
 
-.header-text {
+.question-preview-text {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #1f2937;
+  margin: 0 0 1rem 0;
+  line-height: 1.5;
+}
+.dark .question-preview-text {
+  color: #A3D1C6;
+}
+
+.preview-options {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.75rem;
 }
 
-.section-header-title {
-  font-size: 2rem;
-  font-weight: 800;
-  color: #10b981;
-  margin-bottom: 0.25rem;
-  letter-spacing: -0.025em;
-}
-
-.section-header-subtitle {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #64748b;
-}
-
-.section-header-description {
-  font-size: 0.9rem;
-  color: #94a3b8;
-}
-
-.back-btn {
+.preview-option {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: linear-gradient(135deg, rgba(255,255,255,0.7), rgba(248,250,252,0.7));
-  border: 2px solid rgba(16,185,129,0.15);
-  border-radius: 12px;
-  padding: 0.7rem 1.4rem;
-  color: #10b981;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  font-size: 0.95rem;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.06);
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+  transition: all 0.2s;
+}
+.preview-option.correct {
+  border-color: #3D8D7A;
+  background: rgba(61, 141, 122, 0.1);
+}
+.dark .preview-option {
+  background: #23272b;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
+}
+.dark .preview-option.correct {
+  background: rgba(61, 141, 122, 0.2);
+  border-color: #A3D1C6;
 }
 
-.back-btn:hover {
-  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-  border-color: #10b981;
-  color: #065f46;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.15);
-}
-
-.spinner {
-  width: 20px;
-  height: 20px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
+.option-letter {
+  background: #6b7280;
+  color: white;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.preview-option.correct .option-letter {
+  background: #3D8D7A;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.option-text {
+  flex: 1;
+  font-size: 0.875rem;
+  color: #1f2937;
+}
+.dark .option-text {
+  color: #A3D1C6;
+}
+
+.correct-indicator {
+  color: #3D8D7A;
+  font-weight: 600;
+  font-size: 1rem;
+}
+.dark .correct-indicator {
+  color: #A3D1C6;
+}
+
+.preview-fill-blank {
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+}
+.dark .preview-fill-blank {
+  background: #23272b;
+  border-color: #3D8D7A;
+}
+
+.fill-answer-display {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.answer-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+}
+.dark .answer-label {
+  color: #A3D1C6;
+}
+
+.answer-text {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #3D8D7A;
+  background: rgba(61, 141, 122, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+.dark .answer-text {
+  color: #A3D1C6;
+  background: rgba(163, 209, 198, 0.1);
+}
+
+@media (max-width: 768px) {
+  .preview-stats {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .question-preview-header {
+    flex-wrap: wrap;
+  }
+}
+
+/* Custom Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  padding: 0;
+  max-width: 480px;
+  width: 90%;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  animation: modalSlideIn 0.3s ease-out;
+}
+.dark .modal-content {
+  background: #23272b;
+  border: 1px solid #3D8D7A;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+.dark .modal-header {
+  border-bottom-color: #3D8D7A;
+}
+
+.modal-header h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+.dark .modal-header h3 {
+  color: #A3D1C6;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: all 0.2s;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-close:hover {
+  background: rgba(107, 114, 128, 0.1);
+  color: #374151;
+}
+.dark .modal-close {
+  color: #A3D1C6;
+}
+.dark .modal-close:hover {
+  background: rgba(163, 209, 198, 0.1);
+  color: #A3D1C6;
+}
+
+.modal-body {
+  padding: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.modal-icon {
+  color: #3D8D7A;
+  flex-shrink: 0;
+}
+.dark .modal-icon {
+  color: #A3D1C6;
+}
+
+.modal-text {
+  flex: 1;
+}
+
+.modal-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.5;
+}
+.dark .modal-title {
+  color: #A3D1C6;
+}
+
+.modal-description {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
+}
+.dark .modal-description {
+  color: #A3D1C6;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  justify-content: flex-end;
+}
+.dark .modal-actions {
+  border-top-color: #3D8D7A;
+}
+
+.modal-actions .btn {
+  min-width: 80px;
+  justify-content: center;
+}
+
+@media (max-width: 640px) {
+  .modal-content {
+    width: 95%;
+    margin: 1rem;
+  }
+  
+  .modal-body {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .modal-actions {
+    flex-direction: column-reverse;
+  }
+  
+  .modal-actions .btn {
+    width: 100%;
+  }
 }
 
 </style>
