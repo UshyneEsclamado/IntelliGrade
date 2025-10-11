@@ -634,13 +634,21 @@ export default {
     };
 
     const goBack = () => {
-      if (currentStep.value === 'landing') {
-        router.back();
-      } else {
-        if (confirm('Are you sure you want to go back? Unsaved changes will be lost.')) {
-          router.back();
+      // Go back to MySubjects.vue and set viewMode to 'section-detail' with correct params
+      router.push({
+        name: 'MySubjects',
+        params: {
+          subjectId: section.value.id ? subject.value.id : '',
+          sectionId: section.value.id ? section.value.id : ''
+        },
+        query: {
+          viewMode: 'section-detail',
+          subjectName: subject.value.name,
+          sectionName: section.value.name,
+          gradeLevel: route.query.gradeLevel || '',
+          sectionCode: route.query.sectionCode || ''
         }
-      }
+      });
     };
 
     const getStepIndex = (step) => {
@@ -1102,13 +1110,17 @@ export default {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.6rem 1.5rem;
+  padding: 0.5rem 1.25rem;
   border-radius: 8px;
-  font-weight: 600;
-  font-size: 1rem;
-  transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s;
   cursor: pointer;
   text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  outline: none;
   border: 2px solid #20c997;
   background: #20c997;
   color: #181c20;
@@ -2483,12 +2495,7 @@ input[type="datetime-local"]::-webkit-clear-button {
     opacity: 0;
     transform: translateY(-20px) scale(0.95);
   }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
 }
-
 .modal-header {
   display: flex;
   align-items: center;
