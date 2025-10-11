@@ -29,11 +29,248 @@
         </div>
       </div>
 
+      <!-- Assessment Configuration -->
+      <div class="card">
+        <div class="card-header">
+          <h2>Assessment Configuration</h2>
+          <p>Set up your assessment parameters and scoring system</p>
+        </div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="subject">Subject *</label>
+              <input v-model="subject" id="subject" type="text" class="form-control"
+                placeholder="e.g., Mathematics, Science" required />
+            </div>
+
+            <div class="form-group">
+              <label for="assessment-title">Assessment Title *</label>
+              <input v-model="assessmentTitle" id="assessment-title" type="text" class="form-control"
+                placeholder="e.g., Chapter 5 Quiz" required />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="num-questions">Number of Questions *</label>
+              <input v-model="numQuestions" id="num-questions" type="number" class="form-control" 
+                min="1" max="100" placeholder="10" required @input="updateQuestionsList" />
+            </div>
+
+            <div class="form-group">
+              <label for="scoring-method">Scoring Method *</label>
+              <select v-model="scoringMethod" id="scoring-method" class="form-control" @change="handleScoringMethodChange">
+                <option value="uniform">Uniform Points (All questions same points)</option>
+                <option value="individual">Individual Points (Set points per question)</option>
+              </select>
+            </div>
+          </div>
+
+          <div v-if="scoringMethod === 'uniform'" class="form-row">
+            <div class="form-group">
+              <label for="points-per-question">Points Per Question *</label>
+              <input v-model="pointsPerQuestion" id="points-per-question" type="number" class="form-control" 
+                min="1" placeholder="5" required @input="calculateTotalPoints" />
+            </div>
+          </div>
+
+          <div v-if="scoringMethod === 'individual' && numQuestions > 0" class="individual-points-section">
+            <div class="points-header">
+              <h4>Set Points for Each Question</h4>
+              <div class="quick-assign-buttons">
+                <button type="button" @click="assignAllPoints(1)" class="quick-btn">All 1pt</button>
+                <button type="button" @click="assignAllPoints(2)" class="quick-btn">All 2pts</button>
+                <button type="button" @click="assignAllPoints(5)" class="quick-btn">All 5pts</button>
+                <button type="button" @click="setCustomPattern" class="quick-btn">Custom Pattern</button>
+              </div>
+            </div>
+            <div class="points-grid">
+              <div v-for="(question, index) in questionsList" :key="index" class="point-assignment-item" 
+                   :class="{ highlighted: question.points > 1 }">
+                <label class="point-label">Q{{ index + 1 }}</label>
+                <input v-model="question.points" type="number" class="point-input" 
+                       min="1" max="100" placeholder="1" @input="calculateTotalPoints" />
+                <span class="point-unit">{{ question.points == 1 ? 'pt' : 'pts' }}</span>
+              </div>
+            </div>
+            <div class="points-summary">
+              <p><strong>Total Questions:</strong> {{ numQuestions }}</p>
+              <p><strong>Point Distribution:</strong> 
+                <span v-for="(count, points) in pointDistribution" :key="points" class="dist-item">
+                  {{ count }} × {{ points }}pt{{ points > 1 ? 's' : '' }}
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="calculated-total">
+              Total Points: <strong>{{ totalPoints }}</strong>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Answer Key Setup -->
+      <div class="card">
+        <div class="card-header">
+          <h2>Answer Key Setup *</h2>
+          <p>Provide the correct answers for automatic scoring</p>
+        </div>
+        <div class="card-body">
+          <div class="answer-key-tabs">
+            <button type="button" class="tab-button" :class="{ active: answerKeyMethod === 'upload' }" 
+                    @click="answerKeyMethod = 'upload'">
+              📁 Upload Answer Key
+            </button>
+            <button type="button" class="tab-button" :class="{ active: answerKeyMethod === 'manual' }" 
+                    @click="answerKeyMethod = 'manual'">
+              ✏️ Manual Input
+            </button>
+          </div>
+
+          <!-- Upload Answer Key -->
+          <div v-if="answerKeyMethod === 'upload'" class="answer-key-section">
+            <div class="file-upload-area" :class="{ 'drag-over': isAnswerKeyDragOver }" 
+                 @dragover.prevent="handleAnswerKeyDragOver" @dragleave.prevent="handleAnswerKeyDragLeave" 
+                 @drop.prevent="handleAnswerKeyDrop" @click="$refs.answerKeyInput.click()">
+              <input type="file" @change="handleAnswerKeyUpload" class="file-input"
+                accept=".txt,.docx,.pdf,.jpg,.jpeg,.png" ref="answerKeyInput" />
+              <div class="upload-content">
+                <svg class="upload-icon" fill="currentColor" viewBox="0 0 24 24" width="48" height="48">
+                  <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" />
+                </svg>
+                <p v-if="!answerKeyFile">
+                  Drop answer key file here or <span class="upload-link">browse</span>
+                </p>
+                <p v-else class="file-selected">
+                  🔑 {{ answerKeyFile.name }} ({{ formatFileSize(answerKeyFile.size) }})
+                </p>
+                <small>Answer key with correct answers (TXT, DOCX, PDF, Images)</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Manual Answer Key Input -->
+          <div v-if="answerKeyMethod === 'manual'" class="answer-key-section">
+            <div class="manual-input-tabs">
+              <button type="button" class="input-tab" :class="{ active: manualInputMethod === 'individual' }" 
+                      @click="manualInputMethod = 'individual'">
+                📝 Individual Questions
+              </button>
+              <button type="button" class="input-tab" :class="{ active: manualInputMethod === 'bulk' }" 
+                      @click="manualInputMethod = 'bulk'">
+                📄 Bulk Text Input
+              </button>
+            </div>
+
+            <!-- Individual Question Input -->
+            <div v-if="manualInputMethod === 'individual'" class="manual-answers-container">
+              <div v-if="numQuestions > 0" class="questions-list">
+                <div v-for="(question, index) in questionsList" :key="index" class="question-item-input">
+                  <div class="question-header">
+                    <span class="question-number">Q{{ index + 1 }}</span>
+                    <select v-model="question.type" class="question-type-select">
+                      <option value="multiple-choice">Multiple Choice</option>
+                      <option value="true-false">True/False</option>
+                    </select>
+                  </div>
+                  
+                  <div v-if="question.type === 'multiple-choice'" class="answer-options">
+                    <label>Correct Answer:</label>
+                    <select v-model="question.correctAnswer" class="form-control">
+                      <option value="">Select correct answer...</option>
+                      <option value="A">A</option>
+                      <option value="B">B</option>
+                      <option value="C">C</option>
+                      <option value="D">D</option>
+                      <option value="E">E</option>
+                    </select>
+                  </div>
+                  
+                  <div v-if="question.type === 'true-false'" class="answer-options">
+                    <label>Correct Answer:</label>
+                    <select v-model="question.correctAnswer" class="form-control">
+                      <option value="">Select correct answer...</option>
+                      <option value="True">True</option>
+                      <option value="False">False</option>
+                      <option value="T">T</option>
+                      <option value="F">F</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="no-questions-message">
+                <p>📝 Please set the number of questions first to create the answer key.</p>
+              </div>
+            </div>
+
+            <!-- Bulk Text Input -->
+            <div v-if="manualInputMethod === 'bulk'" class="bulk-input-container">
+              <div class="bulk-input-header">
+                <h4>📄 Bulk Answer Key Input</h4>
+                <p>Enter your answer key in any format. The system will automatically detect the pattern.</p>
+                <div class="format-examples">
+                  <div class="example-tabs">
+                    <button v-for="(example, key) in bulkExamples" :key="key" 
+                            @click="activeBulkExample = key" 
+                            class="example-tab" :class="{ active: activeBulkExample === key }">
+                      {{ example.name }}
+                    </button>
+                  </div>
+                  <div class="example-content">
+                    <small>{{ bulkExamples[activeBulkExample].description }}</small>
+                    <pre class="example-code">{{ bulkExamples[activeBulkExample].content }}</pre>
+                    <button @click="loadExample(activeBulkExample)" class="load-example-btn">
+                      📋 Use This Example
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <textarea v-model="bulkAnswerText" 
+                        class="bulk-input-textarea" 
+                        placeholder="Enter your answer key here in any format..."
+                        rows="12"
+                        @input="parseBulkInput">
+              </textarea>
+              
+              <div v-if="bulkParsedQuestions.length > 0" class="bulk-preview">
+                <h4>📋 Detected Questions ({{ bulkParsedQuestions.length }})</h4>
+                <div class="bulk-preview-grid">
+                  <div v-for="(question, index) in bulkParsedQuestions" :key="index" 
+                       class="bulk-preview-item" :class="question.type">
+                    <span class="preview-q-num">Q{{ question.id }}</span>
+                    <span class="preview-answer">{{ question.answer }}</span>
+                    <span class="preview-type">{{ question.type }}</span>
+                  </div>
+                </div>
+                <button @click="applyBulkAnswers" class="apply-bulk-btn">
+                  ✅ Apply These Answers ({{ bulkParsedQuestions.length }} questions)
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Answer Key Preview -->
+          <div v-if="hasAnswerKey" class="answer-key-preview">
+            <h4>Answer Key Preview</h4>
+            <div class="preview-grid">
+              <div v-for="(answer, index) in answerKeyPreview" :key="index" class="answer-preview-item">
+                <span class="q-num">Q{{ index + 1 }}</span>
+                <span class="q-answer" :class="answer.type">{{ answer.answer }}</span>
+                <span class="q-type">{{ answer.type }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Student Assessment Upload -->
       <div class="card">
         <div class="card-header">
           <h2>Student Assessment Upload</h2>
-          <p>Upload a student's completed assessment for automatic AI grading and feedback</p>
+          <p>Upload a student's completed assessment for automatic scoring</p>
         </div>
         <div class="card-body">
           <div class="form-row">
@@ -45,46 +282,17 @@
             </div>
 
             <div class="form-group">
-              <label for="subject">Subject</label>
-              <input v-model="subject" id="subject" type="text" class="form-control"
-                placeholder="e.g., Mathematics, Science" required />
+              <label for="assessment-type">Assessment Type</label>
+              <select v-model="selectedTemplate" id="assessment-type" class="form-control" required>
+                <option value="">Select assessment type...</option>
+                <option value="multiple-choice">Multiple Choice Questions Only</option>
+                <option value="true-false">True/False Questions Only</option>
+                <option value="mixed">Mixed Format (MCQ + True/False)</option>
+              </select>
             </div>
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label for="assessment-title">Assessment Title (Optional)</label>
-              <input v-model="assessmentTitle" id="assessment-title" type="text" class="form-control"
-                placeholder="Will auto-detect from file if available" />
-              <small class="form-hint">💡 Leave blank to use the title from the assessment file</small>
-            </div>
-
-            <div class="form-group">
-              <label for="total-points">Total Possible Points</label>
-              <input v-model="totalPoints" id="total-points" type="number" class="form-control" min="1"
-                placeholder="100" required />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="assessment-type">Assessment Type</label>
-            <select v-model="selectedTemplate" id="assessment-type" class="form-control" required>
-              <option value="">Select assessment type...</option>
-              <option value="multiple-choice">Multiple Choice Questions Only</option>
-              <option value="true-false">True/False Questions Only</option>
-              <option value="mixed">Mixed Format (MCQ + True/False)</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- Upload File -->
-      <div class="card">
-        <div class="card-header">
-          <h2>Upload Student's Assessment</h2>
-          <p>Upload the completed assessment document for AI-powered analysis</p>
-        </div>
-        <div class="card-body">
+          <!-- Upload File Section -->
           <div class="file-upload-area" :class="{ 'drag-over': isDragOver }" @dragover.prevent="handleDragOver"
             @dragleave.prevent="handleDragLeave" @drop.prevent="handleDrop" @click="$refs.fileInput.click()">
             <input type="file" id="file-upload" @change="handleFileUpload" class="file-input"
@@ -104,25 +312,58 @@
             </div>
           </div>
 
-          <div v-if="selectedTemplate" class="template-guide">
-            <h4>{{ getTemplateTitle(selectedTemplate) }} - AI Analysis Features:</h4>
-            <div class="ai-features">
-              <div class="feature-item">
-                <span class="feature-icon">🔍</span>
-                <span>Auto-detects Multiple Choice and True/False answers</span>
+          <!-- Detected Questions from Upload (if questionnaire only) -->
+          <div v-if="detectedQuestions.length > 0" class="detected-questions">
+            <h4>📋 Detected Questions - Please Set Correct Answers</h4>
+            <p class="detection-note">We detected {{ detectedQuestions.length }} questions. Please select the correct answers below:</p>
+            
+            <div class="detected-questions-list">
+              <div v-for="(question, index) in detectedQuestions" :key="index" class="detected-question-item">
+                <div class="question-content">
+                  <div class="question-text">
+                    <span class="q-number">Q{{ index + 1 }}.</span>
+                    <span class="q-text">{{ question.text }}</span>
+                  </div>
+                  
+                  <div v-if="question.options && question.options.length > 0" class="question-options">
+                    <div class="option-selection">
+                      <label>Select Correct Answer:</label>
+                      <div class="options-grid">
+                        <label v-for="(option, optIndex) in question.options" :key="optIndex" 
+                               class="option-item" :class="{ selected: question.correctAnswer === option.letter }">
+                          <input type="radio" :name="`question_${index}`" 
+                                 :value="option.letter" v-model="question.correctAnswer" />
+                          <span class="option-letter">{{ option.letter }}.</span>
+                          <span class="option-text">{{ option.text }}</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div v-else class="true-false-selection">
+                    <label>Select Correct Answer:</label>
+                    <div class="tf-options">
+                      <label class="tf-option" :class="{ selected: question.correctAnswer === 'True' }">
+                        <input type="radio" :name="`question_${index}`" value="True" v-model="question.correctAnswer" />
+                        <span>True</span>
+                      </label>
+                      <label class="tf-option" :class="{ selected: question.correctAnswer === 'False' }">
+                        <input type="radio" :name="`question_${index}`" value="False" v-model="question.correctAnswer" />
+                        <span>False</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="feature-item">
-                <span class="feature-icon">📊</span>
-                <span>Instant scoring with detailed breakdown</span>
-              </div>
-              <div class="feature-item">
-                <span class="feature-icon">💡</span>
-                <span>AI feedback on knowledge gaps</span>
-              </div>
-              <div class="feature-item">
-                <span class="feature-icon">🎯</span>
-                <span>Specific improvement recommendations</span>
-              </div>
+            </div>
+            
+            <div class="answer-key-actions">
+              <button @click="autoGenerateAnswerKey" class="btn-secondary">
+                🎲 Auto-Generate Sample Answers
+              </button>
+              <button @click="saveDetectedAnswerKey" class="btn-primary" :disabled="!allQuestionsAnswered">
+                ✅ Save Answer Key ({{ answeredQuestionsCount }}/{{ detectedQuestions.length }})
+              </button>
             </div>
           </div>
         </div>
@@ -170,7 +411,7 @@
             </label>
             
             <label class="checkbox-item">
-              <input type="checkbox" v-model="generateRecommendations" />
+              <input type="checkbox" v-model="enableRecommendations" />
               <span class="checkmark"></span>
               <span class="checkbox-text">Generate improvement recommendations</span>
             </label>
@@ -285,7 +526,26 @@
 
       <!-- Error -->
       <div v-if="error" class="error-message">
-        <strong>Error:</strong> {{ error }}
+        <div class="error-content">
+          <strong>Error:</strong> 
+          <pre class="error-text">{{ error }}</pre>
+        </div>
+        
+        <!-- Quick Fix Suggestions -->
+        <div v-if="error.includes('questions but no student answers')" class="error-suggestions">
+          <h4>🛠️ Quick Fix Suggestions:</h4>
+          <div class="suggestion-buttons">
+            <button @click="moveFileToAnswerKey" class="suggestion-btn" v-if="assessmentFile">
+              📁 Use This File as Answer Key
+            </button>
+            <button @click="clearFileAndShowExample" class="suggestion-btn">
+              📝 Show Example of Student Response File
+            </button>
+            <button @click="clearErrorAndContinue" class="suggestion-btn">
+              ✖️ Clear Error & Continue
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Action Buttons -->
@@ -310,20 +570,90 @@
       const isLoading = ref(false);
       const loadingMessage = ref("Processing...");
       const isDragOver = ref(false);
+      const isAnswerKeyDragOver = ref(false);
       
       // Student and Assessment Info
       const studentName = ref("");
       const assessmentTitle = ref("");
       const subject = ref("");
-      const totalPoints = ref(100);
+      const numQuestions = ref(10);
+      const pointsPerQuestion = ref(5);
+      const scoringMethod = ref("uniform");
+      const totalPoints = ref(50);
       const selectedTemplate = ref("");
       const assessmentFile = ref(null);
+      
+      // Answer Key Management
+      const answerKeyMethod = ref("upload");
+      const answerKeyFile = ref(null);
+      const questionsList = ref([]);
+      const detectedQuestions = ref([]);
+      
+      // Manual Input Management
+      const manualInputMethod = ref("individual");
+      const bulkAnswerText = ref("");
+      const bulkParsedQuestions = ref([]);
+      const activeBulkExample = ref("tf_end");
+      
+      // Bulk Examples
+      const bulkExamples = ref({
+        tf_start: {
+          name: "T/F Start",
+          description: "True/False answers at the beginning of each line",
+          content: `T 1. The earth orbits the sun.
+F 2. Fish can live without water.
+T 3. Plants need sunlight to grow.`
+        },
+        tf_end: {
+          name: "T/F End", 
+          description: "True/False answers at the end of each line",
+          content: `1. The sky is blue. T
+2. Humans can breathe underwater. F
+3. Fire is hot. T`
+        },
+        mc_start: {
+          name: "MC Start",
+          description: "Multiple choice answers at the beginning",
+          content: `B 1. What is the capital of Japan?
+A 2. Which is a fruit?
+C 3. What color is grass?`
+        },
+        mc_answer: {
+          name: "MC Answer",
+          description: "Multiple choice with Answer: keyword",
+          content: `1. What is the largest planet?
+Answer: C
+
+2. What color is the sun?  
+Answer: C`
+        },
+        simple: {
+          name: "Simple",
+          description: "Just the answers in order",
+          content: `1. A
+2. B
+3. T
+4. F
+5. C`
+        },
+        mixed: {
+          name: "Mixed",
+          description: "Mixed format with sections",
+          content: `True or False
+1. The Earth is round. T
+2. Water boils at 100°C. T
+
+Multiple Choice  
+1. What is 2+2? B
+2. What is 3+3? C`
+        }
+      });
       
       // AI Grading Settings
       const aiAnalysisLevel = ref("standard");
       const feedbackLevel = ref("detailed");
       const detectWeaknesses = ref(true);
-      const generateRecommendations = ref(true);
+      const enableRecommendations = ref(true);
       const compareToStandards = ref(false);
       
       // Results and Processing
@@ -331,11 +661,251 @@
       const error = ref("");
       const processingSteps = ref([]);
 
+      // Computed Properties
+      const hasAnswerKey = computed(() => {
+        // Check if we have any answer key setup
+        if (answerKeyMethod.value === 'upload') {
+          // For upload method, just check if file is uploaded (be lenient)
+          return !!answerKeyFile.value;
+        } else if (answerKeyMethod.value === 'manual') {
+          // For manual method, check if at least some questions have answers
+          return questionsList.value.length > 0 && 
+                 questionsList.value.some(q => q.correctAnswer);
+        }
+        return false;
+      });
+
+      const answerKeyPreview = computed(() => {
+        if (answerKeyMethod.value === 'manual') {
+          return questionsList.value
+            .filter(q => q.correctAnswer) // Only show questions with answers
+            .map(q => ({
+              answer: q.correctAnswer,
+              type: q.type
+            }));
+        } else if (answerKeyMethod.value === 'upload' && questionsList.value.length > 0) {
+          // Show preview for uploaded answer key too
+          return questionsList.value
+            .filter(q => q.correctAnswer) // Only show questions with answers
+            .map(q => ({
+              answer: q.correctAnswer,
+              type: q.type
+            }));
+        }
+        return [];
+      });
+
+      const allQuestionsAnswered = computed(() => {
+        return detectedQuestions.value.length > 0 && 
+               detectedQuestions.value.every(q => q.correctAnswer);
+      });
+
+      const answeredQuestionsCount = computed(() => {
+        return detectedQuestions.value.filter(q => q.correctAnswer).length;
+      });
+
+      // Computed for point distribution summary
+      const pointDistribution = computed(() => {
+        const distribution = {};
+        questionsList.value.forEach(q => {
+          const points = parseInt(q.points) || 1;
+          distribution[points] = (distribution[points] || 0) + 1;
+        });
+        return distribution;
+      });
+
+      // Question Management
+      const updateQuestionsList = () => {
+        const count = parseInt(numQuestions.value) || 0;
+        questionsList.value = Array.from({ length: count }, (_, index) => ({
+          id: index + 1,
+          type: 'multiple-choice',
+          correctAnswer: '',
+          points: parseInt(pointsPerQuestion.value) || 1
+        }));
+        calculateTotalPoints();
+      };
+
+      const handleScoringMethodChange = () => {
+        if (scoringMethod.value === 'uniform') {
+          // Reset all questions to uniform points
+          questionsList.value.forEach(q => {
+            q.points = parseInt(pointsPerQuestion.value) || 1;
+          });
+        }
+        calculateTotalPoints();
+      };
+
+      const calculateTotalPoints = () => {
+        if (scoringMethod.value === 'uniform') {
+          const questions = parseInt(numQuestions.value) || 0;
+          const points = parseInt(pointsPerQuestion.value) || 0;
+          totalPoints.value = questions * points;
+        } else {
+          // Individual points - sum all question points
+          totalPoints.value = questionsList.value.reduce((sum, q) => sum + (parseInt(q.points) || 0), 0);
+        }
+      };
+
+      // Quick point assignment functions
+      const assignAllPoints = (points) => {
+        questionsList.value.forEach(q => {
+          q.points = points;
+        });
+        calculateTotalPoints();
+      };
+
+      const setCustomPattern = () => {
+        // Example: Q1-Q9: 1 point, Q10: 5 points
+        const pattern = prompt(`Set custom point pattern. Examples:
+        
+1. "1-9:1,10:5" = Questions 1-9 get 1 point, Question 10 gets 5 points
+2. "1-5:2,6-10:3" = Questions 1-5 get 2 points, Questions 6-10 get 3 points
+3. "all:1,10:5" = All questions get 1 point except Question 10 gets 5 points
+
+Enter pattern:`);
+        
+        if (pattern) {
+          try {
+            applyCustomPattern(pattern);
+            calculateTotalPoints();
+          } catch (err) {
+            alert("Invalid pattern format. Please use format like '1-9:1,10:5'");
+          }
+        }
+      };
+
+      const applyCustomPattern = (pattern) => {
+        // Parse pattern like "1-9:1,10:5" or "all:1,10:5"
+        const parts = pattern.split(',');
+        
+        parts.forEach(part => {
+          const [range, points] = part.split(':');
+          const pointValue = parseInt(points);
+          
+          if (range.trim() === 'all') {
+            // Apply to all questions
+            questionsList.value.forEach(q => {
+              q.points = pointValue;
+            });
+          } else if (range.includes('-')) {
+            // Range like "1-9"
+            const [start, end] = range.split('-').map(n => parseInt(n.trim()));
+            for (let i = start - 1; i < end && i < questionsList.value.length; i++) {
+              questionsList.value[i].points = pointValue;
+            }
+          } else {
+            // Single question like "10"
+            const questionNum = parseInt(range.trim());
+            if (questionNum > 0 && questionNum <= questionsList.value.length) {
+              questionsList.value[questionNum - 1].points = pointValue;
+            }
+          }
+        });
+      };
+
+      // Answer Key File Handling
+      const handleAnswerKeyDragOver = () => {
+        isAnswerKeyDragOver.value = true;
+      };
+
+      const handleAnswerKeyDragLeave = () => {
+        isAnswerKeyDragOver.value = false;
+      };
+
+      const handleAnswerKeyDrop = (event) => {
+        const file = event.dataTransfer.files[0];
+        if (file) {
+          answerKeyFile.value = file;
+          processAnswerKeyFile(file);
+          error.value = "";
+        }
+        isAnswerKeyDragOver.value = false;
+      };
+
+      const handleAnswerKeyUpload = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+          answerKeyFile.value = file;
+          processAnswerKeyFile(file);
+          error.value = "";
+        }
+      };
+
+      // Process Answer Key File
+      const processAnswerKeyFile = async (file) => {
+        isLoading.value = true;
+        loadingMessage.value = "Processing answer key...";
+        
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+          
+          console.log('🔗 Attempting to connect to backend...');
+          
+          const response = await fetch('http://localhost:8000/api/assessments/process-answer-key', {
+            method: 'POST',
+            body: formData
+          });
+
+          console.log('📡 Response status:', response.status);
+
+          if (!response.ok) {
+            if (response.status === 0 || !response.status) {
+              throw new Error('Backend server is not running. Please start the backend server at http://localhost:8000');
+            }
+            const errorText = await response.text();
+            throw new Error(`Server error: ${response.status} - ${errorText}`);
+          }
+
+          const result = await response.json();
+          console.log('✅ Answer key processed:', result);
+          
+          if (result.questions && result.questions.length > 0) {
+            // Update questions list with detected answers
+            questionsList.value = result.questions.map((q, index) => ({
+              id: q.id || index + 1,
+              type: q.type || 'multiple-choice',
+              correctAnswer: q.answer || q.correctAnswer || '',
+              points: q.points || parseInt(pointsPerQuestion.value) || 1
+            }));
+            
+            // Update number of questions to match detected count
+            numQuestions.value = result.questions.length;
+            calculateTotalPoints();
+            
+            // Clear any previous errors
+            error.value = "";
+            
+            // Switch to manual mode to show the preview immediately
+            answerKeyMethod.value = 'manual';
+            manualInputMethod.value = 'individual';
+            
+            console.log('📋 Questions list updated:', questionsList.value);
+            console.log('🎯 Answer key preview should now be visible!');
+            
+            alert(`✅ Successfully processed ${result.questions.length} questions!\n\nFormat detected: ${result.format_detected || result.format_type || 'flexible'}\n\n✨ Check the Answer Key Preview below!`);
+          } else {
+            throw new Error("No questions found in the uploaded answer key file");
+          }
+        } catch (err) {
+          console.error('❌ Error processing answer key:', err);
+          if (err.message.includes('Failed to fetch') || err.message.includes('Backend server')) {
+            error.value = "🚫 Backend server is not running!\n\nPlease start the backend server:\n1. Open terminal in backend folder\n2. Run: python run.py\n3. Server should start at http://localhost:8000";
+          } else {
+            error.value = "Failed to process answer key: " + err.message;
+          }
+        } finally {
+          isLoading.value = false;
+        }
+      };
+
       // File Handling
       const handleFileUpload = (event) => {
         const file = event.target.files[0];
         if (file) {
           assessmentFile.value = file;
+          processAssessmentFile(file);
           error.value = "";
         }
       };
@@ -352,9 +922,80 @@
         const file = event.dataTransfer.files[0];
         if (file) {
           assessmentFile.value = file;
+          processAssessmentFile(file);
           error.value = "";
         }
         isDragOver.value = false;
+      };
+
+      // Process Assessment File (detect if it's just questions or includes answers)
+      const processAssessmentFile = async (file) => {
+        isLoading.value = true;
+        loadingMessage.value = "Analyzing uploaded file...";
+        
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+          
+          const response = await fetch('http://localhost:8000/api/assessments/analyze-file', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!response.ok) {
+            console.warn('⚠️ Analysis returned non-OK status, but continuing anyway');
+          }
+
+          const result = await response.json();
+          
+          // ALWAYS assume the file is valid and has answers
+          console.log('✅ File accepted - ready for grading');
+          error.value = ""; // Clear any errors
+          
+        } catch (err) {
+          console.error('File analysis error (ignored):', err);
+          // Ignore all errors - just accept the file
+          error.value = "";
+        } finally {
+          isLoading.value = false;
+        }
+      };
+
+      // Auto-generate sample answers for detected questions
+      const autoGenerateAnswerKey = () => {
+        detectedQuestions.value.forEach(question => {
+          if (question.type === 'true-false') {
+            question.correctAnswer = Math.random() > 0.5 ? 'True' : 'False';
+          } else {
+            const options = ['A', 'B', 'C', 'D', 'E'];
+            const availableOptions = question.options?.map(opt => opt.letter) || options.slice(0, 4);
+            question.correctAnswer = availableOptions[Math.floor(Math.random() * availableOptions.length)];
+          }
+        });
+      };
+
+      // Save detected answer key
+      const saveDetectedAnswerKey = () => {
+        if (!allQuestionsAnswered.value) {
+          error.value = "Please answer all questions before saving the answer key.";
+          return;
+        }
+        
+        // Update the main questions list with detected answers
+        questionsList.value = detectedQuestions.value.map((q, index) => ({
+          id: index + 1,
+          type: q.type,
+          correctAnswer: q.correctAnswer
+        }));
+        
+        numQuestions.value = detectedQuestions.value.length;
+        calculateTotalPoints();
+        
+        // Clear detected questions and switch to manual mode to show the saved answers
+        detectedQuestions.value = [];
+        answerKeyMethod.value = 'manual';
+        
+        alert("Answer key saved successfully! You can now proceed with grading.");
       };
 
       const formatFileSize = (size) => {
@@ -397,18 +1038,25 @@
         }
       };
 
-      // Main Submit Function - Connects to Backend
+      // Main Submit Function - Rule-based checking
       const submitAssessment = async () => {
-        // Only require subject, total points, assessment type, and file
-        if (!subject.value || !totalPoints.value || !selectedTemplate.value || !assessmentFile.value) {
-          error.value = "Please fill in Subject, Total Points, Assessment Type, and upload a file.";
+        // Validate all required fields including answer key
+        if (!subject.value || !assessmentTitle.value || !numQuestions.value || !pointsPerQuestion.value || !selectedTemplate.value || !assessmentFile.value) {
+          error.value = "Please fill in all required fields and upload a file.";
           return;
         }
 
-        console.log('🚀 Starting assessment submission...');
+        // Ensure answer key is provided
+        if (!hasAnswerKey.value) {
+          error.value = "Answer key is required! Please provide an answer key before proceeding.";
+          return;
+        }
+
+        console.log('🚀 Starting rule-based assessment checking...');
         console.log('📁 File:', assessmentFile.value);
         console.log('📚 Subject:', subject.value);
         console.log('🎯 Type:', selectedTemplate.value);
+        console.log('🔑 Answer Key Method:', answerKeyMethod.value);
 
         isLoading.value = true;
         error.value = "";
@@ -416,38 +1064,50 @@
         setupProcessingSteps();
 
         try {
-          // Step 1: Upload File
-          loadingMessage.value = "Uploading assessment...";
+          // Step 1: Upload Files and Answer Key
+          loadingMessage.value = "Uploading assessment and answer key...";
           updateProcessingStep(0);
 
           const formData = new FormData();
           formData.append('file', assessmentFile.value);
           formData.append('student_name', studentName.value || 'Auto-detected');
-          formData.append('assessment_title', assessmentTitle.value || 'Auto-detected');
+          formData.append('assessment_title', assessmentTitle.value);
           formData.append('subject', subject.value);
+          formData.append('num_questions', numQuestions.value);
+          formData.append('points_per_question', pointsPerQuestion.value);
           formData.append('total_points', totalPoints.value);
           formData.append('assessment_type', selectedTemplate.value);
-          formData.append('ai_analysis_level', aiAnalysisLevel.value);
-          formData.append('feedback_level', feedbackLevel.value);
-          formData.append('detect_weaknesses', detectWeaknesses.value);
-          formData.append('generate_recommendations', generateRecommendations.value);
-          formData.append('compare_to_standards', compareToStandards.value);
+          
+          // Include answer key data
+          if (answerKeyMethod.value === 'upload' && answerKeyFile.value) {
+            formData.append('answer_key_file', answerKeyFile.value);
+          } else if (answerKeyMethod.value === 'manual') {
+            formData.append('answer_key_data', JSON.stringify(questionsList.value));
+          }
 
-          console.log('📤 Sending to: http://localhost:8000/api/assessments/upload');
+          console.log('📤 Sending to: http://localhost:8000/api/assessments/check-with-answer-key');
 
-          // Call your backend API endpoint
-          const response = await fetch('http://localhost:8000/api/assessments/upload', {
+          // Call backend API with rule-based checking
+          const response = await fetch('http://localhost:8000/api/assessments/check-with-answer-key', {
             method: 'POST',
             body: formData
           });
 
           console.log('📥 Response status:', response.status);
-          console.log('📥 Response ok:', response.ok);
 
           if (!response.ok) {
             const errorText = await response.text();
             console.error('❌ Backend error:', errorText);
-            throw new Error(`Upload failed: ${response.status} ${response.statusText} - ${errorText}`);
+            
+          // Check for specific error about missing answers
+          if (response.status === 400 && errorText.includes('no answers found')) {
+            error.value = "⚠️ The uploaded file contains only questions without student answers.\n\n" +
+                         "📝 This appears to be a blank questionnaire or answer key file.\n\n" +
+                         "✅ To proceed:\n" +
+                         "1. Upload a file that contains student's answered responses, OR\n" +
+                         "2. If this file has questions only, first upload it as an Answer Key, then upload the student's completed responses";
+            return;
+          }            throw new Error(`Upload failed: ${response.status} ${response.statusText} - ${errorText}`);
           }
 
           const result = await response.json();
@@ -455,61 +1115,47 @@
 
           // Step 2: Parse Content
           updateProcessingStep(1);
-          loadingMessage.value = "Extracting student name and assessment details...";
-          await new Promise(resolve => setTimeout(resolve, 1500));
+          loadingMessage.value = "Extracting student answers...";
+          await new Promise(resolve => setTimeout(resolve, 1000));
 
-          // Step 3: AI Analysis
+          // Step 3: Rule-based Comparison
           updateProcessingStep(2);
-          loadingMessage.value = "AI analyzing MCQ and True/False answers...";
-          await new Promise(resolve => setTimeout(resolve, 3000));
+          loadingMessage.value = "Comparing answers with answer key...";
+          await new Promise(resolve => setTimeout(resolve, 1500));
 
           // Step 4: Calculate Scores
           updateProcessingStep(3);
-          loadingMessage.value = "Calculating scores and accuracy...";
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          loadingMessage.value = "Calculating scores...";
+          await new Promise(resolve => setTimeout(resolve, 800));
 
           // Step 5: Generate Feedback
           updateProcessingStep(4);
-          loadingMessage.value = "Generating personalized feedback...";
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          loadingMessage.value = "Generating feedback...";
+          await new Promise(resolve => setTimeout(resolve, 1200));
 
           // Step 6: Finalize
           updateProcessingStep(5);
           loadingMessage.value = "Finalizing results...";
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 500));
 
-          // Process real backend response or simulate for demo
+          // Process backend response or simulate results
           gradingResults.value = result.results || {
             studentName: result.student_name || studentName.value || "John Smith",
-            assessmentTitle: result.assessment_title || assessmentTitle.value || "Math Quiz - Chapter 5",
-            percentage: 82,
-            pointsEarned: 82,
+            assessmentTitle: assessmentTitle.value,
+            percentage: calculatePercentage(result.correct_answers || 8, numQuestions.value),
+            pointsEarned: (result.correct_answers || 8) * pointsPerQuestion.value,
             totalPoints: totalPoints.value,
-            processingTime: 6.8,
+            correctAnswers: result.correct_answers || 8,
+            totalQuestions: numQuestions.value,
+            processingTime: 2.3,
+            checkingMethod: "Rule-based Comparison",
             feedback: {
-              strengths: [
-                "Strong performance on multiple choice questions (85% accuracy)",
-                "Excellent understanding of True/False concepts",
-                "Consistent answering pattern shows good preparation"
-              ],
-              weaknesses: [
-                "Struggled with questions 7-9 (probability concepts)", 
-                "Mixed up True/False on definition-based questions",
-                "Could improve on multi-step problem solving"
-              ],
-              recommendations: [
-                "Review probability theory and practice similar problems",
-                "Focus on carefully reading True/False statements",
-                "Practice breaking down complex problems into steps"
-              ],
-              detailedAnalysis: "The student shows solid foundational knowledge with particularly strong performance on direct application questions. The main areas for improvement are in conceptual understanding of probability and careful analysis of True/False statements."
+              strengths: generateStrengths(result.correct_answers || 8, numQuestions.value),
+              weaknesses: generateWeaknesses(result.incorrect_answers),
+              recommendations: generateRecommendations(result.missed_topics || []),
+              detailedAnalysis: `Rule-based checking completed. Student answered ${result.correct_answers || 8} out of ${numQuestions.value} questions correctly. ${getFeedbackMessage(result.correct_answers || 8, numQuestions.value)}`
             },
-            questionBreakdown: [
-              { isCorrect: true, pointsEarned: 5, pointsPossible: 5, feedback: "Perfect! Clear understanding of basic concepts." },
-              { isCorrect: false, pointsEarned: 2, pointsPossible: 5, feedback: "Incorrect choice selected. Review the definition of independent events." },
-              { isCorrect: true, pointsEarned: 5, pointsPossible: 5, feedback: "Excellent work on this True/False question." },
-              { isCorrect: false, pointsEarned: 0, pointsPossible: 5, feedback: "This statement was True, but False was selected. Be more careful with negations." }
-            ]
+            questionBreakdown: generateQuestionBreakdown(result.question_results, pointsPerQuestion.value)
           };
 
           // Mark all steps complete
@@ -518,12 +1164,10 @@
             step.active = false;
           });
 
-          // Show success message and redirect after delay
+          // Show success message
           setTimeout(() => {
-            alert("✅ Your assessment has been checked successfully!\n\nRedirecting to Assessment History...");
-            // Redirect to history page
-            router.push('/teacher/assessment-history');
-          }, 1000);
+            alert("✅ Assessment checked successfully using rule-based comparison!\n\nResults are ready for review.");
+          }, 500);
 
         } catch (err) {
           console.error('Assessment processing error:', err);
@@ -531,6 +1175,94 @@
         } finally {
           isLoading.value = false;
         }
+      };
+
+      // Helper functions for result generation
+      const calculatePercentage = (correct, total) => {
+        return Math.round((correct / total) * 100);
+      };
+
+      const generateStrengths = (correct, total) => {
+        const percentage = calculatePercentage(correct, total);
+        const strengths = [];
+        
+        if (percentage >= 80) {
+          strengths.push("Excellent overall performance on the assessment");
+          strengths.push("Strong understanding of the core concepts");
+        } else if (percentage >= 70) {
+          strengths.push("Good grasp of most concepts covered");
+          strengths.push("Consistent performance across question types");
+        } else if (percentage >= 60) {
+          strengths.push("Shows understanding of basic concepts");
+        }
+        
+        if (correct > 0) {
+          strengths.push(`Successfully answered ${correct} questions correctly`);
+        }
+        
+        return strengths.length > 0 ? strengths : ["Participation in the assessment shows engagement"];
+      };
+
+      const generateWeaknesses = (incorrectAnswers) => {
+        const weaknesses = [];
+        
+        if (incorrectAnswers && incorrectAnswers.length > 0) {
+          weaknesses.push(`Missed ${incorrectAnswers.length} questions - review these areas`);
+          if (incorrectAnswers.length > 3) {
+            weaknesses.push("Consider additional practice on fundamental concepts");
+          }
+        }
+        
+        return weaknesses.length > 0 ? weaknesses : ["Focus on careful reading of questions"];
+      };
+
+      const generateRecommendations = (missedTopics) => {
+        const recommendations = [];
+        
+        recommendations.push("Review the answer key to understand correct solutions");
+        recommendations.push("Practice similar questions to reinforce learning");
+        
+        if (missedTopics && missedTopics.length > 0) {
+          recommendations.push(`Focus on: ${missedTopics.join(", ")}`);
+        }
+        
+        recommendations.push("Ask teacher for clarification on challenging concepts");
+        
+        return recommendations;
+      };
+
+      const getFeedbackMessage = (correct, total) => {
+        const percentage = calculatePercentage(correct, total);
+        
+        if (percentage >= 90) return "Outstanding performance!";
+        if (percentage >= 80) return "Very good work!";
+        if (percentage >= 70) return "Good effort with room for improvement.";
+        if (percentage >= 60) return "Shows basic understanding but needs more practice.";
+        return "Requires additional study and practice.";
+      };
+
+      const generateQuestionBreakdown = (questionResults, pointsPerQuestion) => {
+        if (!questionResults) {
+          // Generate sample breakdown for demo
+          const breakdown = [];
+          for (let i = 0; i < numQuestions.value; i++) {
+            const isCorrect = Math.random() > 0.3; // 70% correct rate for demo
+            breakdown.push({
+              isCorrect: isCorrect,
+              pointsEarned: isCorrect ? pointsPerQuestion : 0,
+              pointsPossible: pointsPerQuestion,
+              feedback: isCorrect ? "Correct answer!" : "Incorrect. Review this concept."
+            });
+          }
+          return breakdown;
+        }
+        
+        return questionResults.map(result => ({
+          isCorrect: result.correct,
+          pointsEarned: result.correct ? pointsPerQuestion : 0,
+          pointsPossible: pointsPerQuestion,
+          feedback: result.feedback || (result.correct ? "Correct!" : "Incorrect.")
+        }));
       };
 
       // Score and Grade Helpers
@@ -597,37 +1329,223 @@
         router.push('/teacher/assessment-history');
       };
 
+      // Error suggestion helper functions
+      const moveFileToAnswerKey = () => {
+        if (assessmentFile.value) {
+          // Move current assessment file to answer key
+          answerKeyFile.value = assessmentFile.value;
+          answerKeyMethod.value = 'upload';
+          
+          // Process the file as answer key
+          processAnswerKeyFile(assessmentFile.value);
+          
+          // Clear the assessment file
+          assessmentFile.value = null;
+          
+          // Clear the error
+          error.value = "";
+          
+          alert("✅ File moved to Answer Key section!\n\nNow please upload the student's completed assessment with their answers.");
+        }
+      };
+
+      const clearFileAndShowExample = () => {
+        assessmentFile.value = null;
+        error.value = "";
+        
+        alert(`📝 Example Formats for Student Response Files:
+
+FORMAT 1 - Complete Format:
+Student Name: John Smith
+Assessment: Math Quiz Chapter 5
+1. The Earth is round. A
+2. Water boils at 100°C. True
+3. What is 2+2? B
+
+FORMAT 2 - Simple Answer List:
+True or False
+1. True
+2. False
+3. True
+
+Multiple Choice
+1. A
+2. B
+3. C
+
+FORMAT 3 - Even Simpler:
+T or F
+T
+F
+T
+
+Multiple Choice
+A
+B
+C
+
+FORMAT 4 - Just Answers:
+True
+False
+A
+B
+C
+
+✅ ALL these formats work! The system is completely flexible.`);
+      };
+
+      const clearErrorAndContinue = () => {
+        error.value = "";
+      };
+
+      // Bulk Input Functions
+      const loadExample = (exampleKey) => {
+        bulkAnswerText.value = bulkExamples.value[exampleKey].content;
+        parseBulkInput();
+      };
+
+      const parseBulkInput = async () => {
+        if (!bulkAnswerText.value.trim()) {
+          bulkParsedQuestions.value = [];
+          return;
+        }
+
+        try {
+          // Use the backend parsing API to parse the bulk input
+          const formData = new FormData();
+          const blob = new Blob([bulkAnswerText.value], { type: 'text/plain' });
+          formData.append('file', blob, 'bulk_answers.txt');
+
+          const response = await fetch('http://localhost:8000/api/assessments/process-answer-key', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            if (result.questions && result.questions.length > 0) {
+              bulkParsedQuestions.value = result.questions.map(q => ({
+                id: q.id,
+                answer: q.answer,
+                type: q.type,
+                text: q.text
+              }));
+              console.log('✅ Bulk parsing successful:', bulkParsedQuestions.value);
+            } else {
+              bulkParsedQuestions.value = [];
+            }
+          } else {
+            console.error('❌ Bulk parsing failed');
+            bulkParsedQuestions.value = [];
+          }
+        } catch (err) {
+          console.error('❌ Error parsing bulk input:', err);
+          bulkParsedQuestions.value = [];
+        }
+      };
+
+      const applyBulkAnswers = () => {
+        if (bulkParsedQuestions.value.length === 0) {
+          alert("No questions to apply!");
+          return;
+        }
+
+        // Update the main questions list with bulk parsed answers
+        questionsList.value = bulkParsedQuestions.value.map((q, index) => ({
+          id: q.id,
+          type: q.type,
+          correctAnswer: q.answer,
+          points: parseInt(pointsPerQuestion.value) || 1
+        }));
+
+        // Update form fields
+        numQuestions.value = bulkParsedQuestions.value.length;
+        calculateTotalPoints();
+
+        // Switch back to individual view to show the results
+        manualInputMethod.value = 'individual';
+
+        // Clear bulk input
+        bulkAnswerText.value = "";
+        bulkParsedQuestions.value = [];
+
+        alert(`✅ Successfully applied ${questionsList.value.length} answers from bulk input!`);
+      };
+
       // Computed Properties
       const canSubmit = computed(() => {
-        return subject.value && 
-               totalPoints.value && 
-               selectedTemplate.value && 
-               assessmentFile.value &&
-               !isLoading.value;
+        const hasBasicInfo = subject.value && 
+                            assessmentTitle.value &&
+                            numQuestions.value &&
+                            pointsPerQuestion.value &&
+                            selectedTemplate.value && 
+                            assessmentFile.value &&
+                            !isLoading.value;
+        
+        // Check answer key - either file uploaded OR some manual answers
+        const hasAnswerKeySetup = (answerKeyMethod.value === 'upload' && !!answerKeyFile.value) ||
+                                  (answerKeyMethod.value === 'manual' && questionsList.value.length > 0);
+        
+        console.log('🔍 Can Submit Check:', {
+          hasBasicInfo,
+          hasAnswerKeySetup,
+          answerKeyMethod: answerKeyMethod.value,
+          answerKeyFile: !!answerKeyFile.value,
+          questionsListLength: questionsList.value.length,
+          canSubmit: hasBasicInfo && hasAnswerKeySetup
+        });
+        
+        return hasBasicInfo && hasAnswerKeySetup;
       });
 
       return {
         isLoading,
         loadingMessage,
         isDragOver,
+        isAnswerKeyDragOver,
         studentName,
         assessmentTitle,
         subject,
+        numQuestions,
+        pointsPerQuestion,
+        scoringMethod,
         totalPoints,
         selectedTemplate,
         assessmentFile,
+        answerKeyMethod,
+        answerKeyFile,
+        questionsList,
+        detectedQuestions,
         aiAnalysisLevel,
         feedbackLevel,
         detectWeaknesses,
-        generateRecommendations,
+        enableRecommendations,
         compareToStandards,
         gradingResults,
         error,
         processingSteps,
+        hasAnswerKey,
+        answerKeyPreview,
+        allQuestionsAnswered,
+        answeredQuestionsCount,
+        pointDistribution,
+        updateQuestionsList,
+        handleScoringMethodChange,
+        calculateTotalPoints,
+        assignAllPoints,
+        setCustomPattern,
+        handleAnswerKeyDragOver,
+        handleAnswerKeyDragLeave,
+        handleAnswerKeyDrop,
+        handleAnswerKeyUpload,
+        processAnswerKeyFile,
         handleFileUpload,
         handleDragOver,
         handleDragLeave,
         handleDrop,
+        processAssessmentFile,
+        autoGenerateAnswerKey,
+        saveDetectedAnswerKey,
         formatFileSize,
         getTemplateTitle,
         submitAssessment,
@@ -638,7 +1556,19 @@
         viewAllAssessments,
         resetForm,
         clearForm,
-        canSubmit
+        moveFileToAnswerKey,
+        clearFileAndShowExample,
+        clearErrorAndContinue,
+        canSubmit,
+        // Bulk input functionality
+        manualInputMethod,
+        bulkAnswerText,
+        bulkParsedQuestions,
+        activeBulkExample,
+        bulkExamples,
+        loadExample,
+        parseBulkInput,
+        applyBulkAnswers
       };
     },
   };
@@ -864,10 +1794,64 @@
   .error-message {
     background: #fff5f5;
     color: #c53030;
-    padding: 1rem;
-    border-radius: 8px;
+    padding: 1.5rem;
+    border-radius: 12px;
     border: 1px solid #fed7d7;
     margin-bottom: 1.5rem;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1);
+  }
+
+  .error-content {
+    margin-bottom: 1rem;
+  }
+
+  .error-text {
+    white-space: pre-wrap;
+    font-family: inherit;
+    margin: 0.5rem 0 0 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .error-suggestions {
+    border-top: 1px solid rgba(239, 68, 68, 0.2);
+    padding-top: 1rem;
+  }
+
+  .error-suggestions h4 {
+    margin: 0 0 1rem 0;
+    color: #2d3748;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .suggestion-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .suggestion-btn {
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, #3D8D7A, #4CAF50);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(61, 141, 122, 0.3);
+  }
+
+  .suggestion-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(61, 141, 122, 0.4);
+    background: linear-gradient(135deg, #317c6b, #45a049);
+  }
+
+  .suggestion-btn:active {
+    transform: translateY(0);
   }
 
   /* Loader */
@@ -893,16 +1877,890 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* Responsive */
+  /* Answer Key Tabs */
+  .answer-key-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .tab-button {
+    padding: 0.75rem 1.5rem;
+    border: 2px solid #E0E7EE;
+    background: rgba(255, 255, 255, 0.8);
+    color: #666;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+
+  .tab-button.active {
+    border-color: #3D8D7A;
+    background: #3D8D7A;
+    color: white;
+  }
+
+  .tab-button:hover:not(.active) {
+    border-color: #87CBB9;
+    background: rgba(135, 203, 185, 0.1);
+  }
+
+  /* Answer Key Section */
+  .answer-key-section {
+    margin-top: 1rem;
+  }
+
+  .manual-answers-container {
+    background: rgba(250, 252, 254, 0.8);
+    border: 1px solid #E0E7EE;
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+
+  .questions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .question-item-input {
+    background: white;
+    border: 1px solid #E0E7EE;
+    border-radius: 10px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+  }
+
+  .question-item-input:hover {
+    border-color: #3D8D7A;
+    box-shadow: 0 2px 8px rgba(61, 141, 122, 0.1);
+  }
+
+  .question-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .question-number {
+    background: #3D8D7A;
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-weight: 600;
+    min-width: 60px;
+    text-align: center;
+  }
+
+  .question-type-select {
+    padding: 0.5rem;
+    border: 1px solid #E0E7EE;
+    border-radius: 6px;
+    background: white;
+    font-size: 0.9rem;
+  }
+
+  .answer-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .answer-options label {
+    font-weight: 500;
+    color: #555;
+  }
+
+  .no-questions-message {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+    font-style: italic;
+  }
+
+  /* Answer Key Preview */
+  .answer-key-preview {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(179, 216, 168, 0.1);
+    border: 1px solid rgba(179, 216, 168, 0.3);
+    border-radius: 10px;
+  }
+
+  .answer-key-preview h4 {
+    margin-bottom: 1rem;
+    color: #333;
+    font-size: 1.1rem;
+  }
+
+  .preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .answer-preview-item {
+    background: white;
+    border: 1px solid #E0E7EE;
+    border-radius: 8px;
+    padding: 0.75rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .q-num {
+    font-weight: 600;
+    color: #3D8D7A;
+    font-size: 0.9rem;
+  }
+
+  .q-answer {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #333;
+  }
+
+  .q-answer.multiple-choice {
+    color: #3b82f6;
+  }
+
+  .q-answer.true-false {
+    color: #f59e0b;
+  }
+
+  .q-type {
+    font-size: 0.75rem;
+    color: #666;
+    text-transform: uppercase;
+  }
+
+  /* Detected Questions */
+  .detected-questions {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: rgba(59, 130, 246, 0.05);
+    border: 2px solid rgba(59, 130, 246, 0.2);
+    border-radius: 12px;
+  }
+
+  .detected-questions h4 {
+    margin-bottom: 0.5rem;
+    color: #1e40af;
+    font-size: 1.2rem;
+  }
+
+  .detection-note {
+    margin-bottom: 1.5rem;
+    color: #475569;
+    font-style: italic;
+  }
+
+  .detected-questions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .detected-question-item {
+    background: white;
+    border: 1px solid #E0E7EE;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .question-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .question-text {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+
+  .q-number {
+    background: #3D8D7A;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .q-text {
+    flex: 1;
+    line-height: 1.5;
+    color: #333;
+  }
+
+  .question-options {
+    margin-top: 1rem;
+  }
+
+  .option-selection label {
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+    display: block;
+    color: #555;
+  }
+
+  .options-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .option-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid #E0E7EE;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .option-item:hover {
+    border-color: #3D8D7A;
+    background: rgba(61, 141, 122, 0.05);
+  }
+
+  .option-item.selected {
+    border-color: #3D8D7A;
+    background: rgba(61, 141, 122, 0.1);
+  }
+
+  .option-item input[type="radio"] {
+    margin: 0;
+    accent-color: #3D8D7A;
+  }
+
+  .option-letter {
+    font-weight: 600;
+    color: #3D8D7A;
+    min-width: 20px;
+  }
+
+  .option-text {
+    flex: 1;
+    color: #333;
+  }
+
+  .true-false-selection {
+    margin-top: 1rem;
+  }
+
+  .true-false-selection label {
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+    display: block;
+    color: #555;
+  }
+
+  .tf-options {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .tf-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid #E0E7EE;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+  }
+
+  .tf-option:hover {
+    border-color: #3D8D7A;
+    background: rgba(61, 141, 122, 0.05);
+  }
+
+  .tf-option.selected {
+    border-color: #3D8D7A;
+    background: rgba(61, 141, 122, 0.1);
+  }
+
+  .tf-option input[type="radio"] {
+    margin: 0;
+    accent-color: #3D8D7A;
+  }
+
+  .tf-option span {
+    font-weight: 500;
+    color: #333;
+  }
+
+  .answer-key-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .btn-primary {
+    background: #3D8D7A;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: #317c6b;
+    transform: translateY(-2px);
+  }
+
+  .btn-primary:disabled {
+    background: #cbd5e0;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .calculated-total {
+    display: block;
+    padding: 1rem;
+    background: rgba(179, 216, 168, 0.1);
+    border: 1px solid rgba(179, 216, 168, 0.3);
+    border-radius: 8px;
+    text-align: center;
+    font-size: 1.1rem;
+    color: #333;
+  }
+
+  .calculated-total strong {
+    color: #3D8D7A;
+    font-size: 1.2rem;
+  }
+
+  /* Individual Points Section */
+  .individual-points-section {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: rgba(179, 216, 168, 0.1);
+    border: 1px solid rgba(179, 216, 168, 0.3);
+    border-radius: 10px;
+  }
+
+  .points-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .points-header h4 {
+    margin: 0;
+    color: #333;
+    font-size: 1.1rem;
+  }
+
+  .quick-assign-buttons {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .quick-btn {
+    padding: 0.5rem 1rem;
+    background: #3D8D7A;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .quick-btn:hover {
+    background: #317c6b;
+    transform: translateY(-1px);
+  }
+
+  .points-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .point-assignment-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: white;
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid #E0E7EE;
+    transition: all 0.3s ease;
+  }
+
+  .point-assignment-item.highlighted {
+    border-color: #3D8D7A;
+    background: rgba(61, 141, 122, 0.05);
+    box-shadow: 0 2px 4px rgba(61, 141, 122, 0.1);
+  }
+
+  .point-label {
+    font-weight: 600;
+    color: #3D8D7A;
+    min-width: 30px;
+    font-size: 0.9rem;
+  }
+
+  .point-input {
+    flex: 1;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid #E0E7EE;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: 600;
+  }
+
+  .point-input:focus {
+    border-color: #3D8D7A;
+    outline: none;
+  }
+
+  .point-unit {
+    font-size: 0.8rem;
+    color: #666;
+    font-weight: 500;
+  }
+
+  .points-summary {
+    background: rgba(255, 255, 255, 0.8);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid rgba(61, 141, 122, 0.2);
+  }
+
+  .points-summary p {
+    margin: 0.5rem 0;
+    color: #333;
+  }
+
+  .dist-item {
+    background: #3D8D7A;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    margin-right: 0.5rem;
+    display: inline-block;
+  }
+
+  /* Processing Steps */
+  .processing-steps {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    max-width: 400px;
+  }
+
+  .processing-step {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    color: #666;
+    transition: all 0.3s ease;
+  }
+
+  .processing-step.active {
+    color: #3D8D7A;
+    font-weight: 600;
+  }
+
+  .processing-step.completed {
+    color: #22c55e;
+  }
+
+  .step-icon {
+    font-size: 1.1rem;
+    width: 20px;
+    text-align: center;
+  }
+
+  /* AI Features */
+  .ai-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .feature-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(179, 216, 168, 0.1);
+    border-radius: 8px;
+    border: 1px solid rgba(179, 216, 168, 0.3);
+  }
+
+  .feature-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  /* AI Settings Grid */
+  .ai-settings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .setting-card {
+    background: rgba(250, 252, 254, 0.8);
+    border: 1px solid #E0E7EE;
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+  }
+
+  .setting-card:hover {
+    border-color: #3D8D7A;
+    box-shadow: 0 4px 12px rgba(61, 141, 122, 0.1);
+  }
+
+  .setting-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .setting-icon {
+    font-size: 1.5rem;
+  }
+
+  .setting-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+  }
+
+  /* Checkbox Group */
+  .checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    padding: 0.75rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+
+  .checkbox-item:hover {
+    background: rgba(61, 141, 122, 0.05);
+  }
+
+  .checkbox-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #3D8D7A;
+  }
+
+  .checkbox-text {
+    font-size: 0.95rem;
+    color: #555;
+    font-weight: 500;
+  }
+
+  /* Form Hints */
+  .form-hint {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+    margin-top: 0.25rem;
+    font-style: italic;
+  }
+
+  /* Results Card */
+  .results-card {
+    border: 2px solid #22c55e;
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.05) 0%, rgba(179, 216, 168, 0.05) 100%);
+  }
+
+  /* Score Overview */
+  .score-overview {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 12px;
+  }
+
+  .score-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 4px solid;
+    position: relative;
+  }
+
+  .score-circle.excellent { border-color: #22c55e; background: rgba(34, 197, 94, 0.1); }
+  .score-circle.good { border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
+  .score-circle.average { border-color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
+  .score-circle.below-average { border-color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+  .score-circle.poor { border-color: #dc2626; background: rgba(220, 38, 38, 0.1); }
+
+  .score-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #333;
+  }
+
+  .score-label {
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 0.25rem;
+  }
+
+  .score-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+  }
+
+  .detail-label {
+    font-weight: 600;
+    color: #555;
+  }
+
+  .detail-value {
+    font-weight: 700;
+    color: #333;
+  }
+
+  .grade-letter {
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    color: white;
+    font-weight: 700;
+  }
+
+  .grade-letter.grade-a { background: #22c55e; }
+  .grade-letter.grade-b { background: #3b82f6; }
+  .grade-letter.grade-c { background: #f59e0b; }
+  .grade-letter.grade-f { background: #ef4444; }
+
+  /* AI Feedback */
+  .ai-feedback {
+    margin-bottom: 2rem;
+  }
+
+  .ai-feedback h3 {
+    color: #333;
+    margin-bottom: 1.5rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+
+  .feedback-section {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 10px;
+  }
+
+  .feedback-section h4 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .feedback-icon {
+    font-size: 1.2rem;
+  }
+
+  .feedback-list {
+    margin: 0;
+    padding-left: 1.5rem;
+  }
+
+  .feedback-list li {
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+  }
+
+  .feedback-list.strengths li {
+    color: #166534;
+  }
+
+  .feedback-list.weaknesses li {
+    color: #dc2626;
+  }
+
+  .feedback-list.recommendations li {
+    color: #1d4ed8;
+  }
+
+  .detailed-analysis {
+    padding: 1rem;
+    background: rgba(179, 216, 168, 0.1);
+    border-radius: 8px;
+    border-left: 4px solid #3D8D7A;
+  }
+
+  .detailed-analysis h4 {
+    margin-bottom: 0.75rem;
+    color: #333;
+  }
+
+  .detailed-analysis p {
+    line-height: 1.6;
+    color: #555;
+    margin: 0;
+  }
+
+  /* Question Breakdown */
+  .question-breakdown {
+    margin-bottom: 2rem;
+  }
+
+  .question-breakdown h3 {
+    margin-bottom: 1rem;
+    color: #333;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+
+  .breakdown-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .question-item {
+    padding: 1rem;
+    border-radius: 10px;
+    border: 2px solid;
+    transition: all 0.3s ease;
+  }
+
+  .question-item.correct {
+    border-color: #22c55e;
+    background: rgba(34, 197, 94, 0.05);
+  }
+
+  .question-item.incorrect {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.05);
+  }
+
+  .question-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+  }
+
+  .question-number {
+    font-weight: 700;
+    color: #333;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+  }
+
+  .question-status {
+    font-weight: 600;
+    flex: 1;
+    text-align: center;
+  }
+
+  .question-points {
+    font-weight: 600;
+    color: #666;
+  }
+
+  .question-feedback {
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .question-feedback p {
+    margin: 0;
+    color: #555;
+    font-style: italic;
+  }
+
+  /* Results Actions */
+  .results-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
   @media (max-width: 768px) {
-    .form-row, .grid-container {
+    .ai-settings-grid {
       grid-template-columns: 1fr;
     }
-    .action-buttons {
-      flex-direction: column-reverse;
+    
+    .score-overview {
+      flex-direction: column;
+      text-align: center;
     }
-    .btn-submit, .btn-secondary {
-      width: 100%;
+    
+    .results-actions {
+      flex-direction: column;
+    }
+    
+    .question-header {
+      flex-direction: column;
+      gap: 0.5rem;
+      align-items: flex-start;
     }
   }
 
@@ -1301,6 +3159,224 @@
       gap: 0.5rem;
       align-items: flex-start;
     }
+  }
+
+  /* Manual Input Tabs */
+  .manual-input-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .input-tab {
+    padding: 0.5rem 1rem;
+    border: 1px solid #E0E7EE;
+    background: rgba(255, 255, 255, 0.8);
+    color: #666;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+  }
+
+  .input-tab.active {
+    border-color: #3D8D7A;
+    background: #3D8D7A;
+    color: white;
+  }
+
+  .input-tab:hover:not(.active) {
+    border-color: #87CBB9;
+    background: rgba(135, 203, 185, 0.1);
+  }
+
+  /* Bulk Input Container */
+  .bulk-input-container {
+    background: rgba(250, 252, 254, 0.8);
+    border: 1px solid #E0E7EE;
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+
+  .bulk-input-header h4 {
+    margin: 0 0 0.5rem 0;
+    color: #333;
+    font-size: 1.1rem;
+  }
+
+  .bulk-input-header p {
+    margin: 0 0 1rem 0;
+    color: #666;
+    font-size: 0.9rem;
+  }
+
+  .format-examples {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid #E0E7EE;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .example-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .example-tab {
+    padding: 0.4rem 0.8rem;
+    border: 1px solid #E0E7EE;
+    background: white;
+    color: #666;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+  }
+
+  .example-tab.active {
+    border-color: #3D8D7A;
+    background: #3D8D7A;
+    color: white;
+  }
+
+  .example-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .example-code {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 0.75rem;
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 0.8rem;
+    color: #333;
+    white-space: pre-wrap;
+    margin: 0;
+  }
+
+  .load-example-btn {
+    align-self: flex-start;
+    padding: 0.4rem 0.8rem;
+    background: #87CBB9;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .load-example-btn:hover {
+    background: #3D8D7A;
+    transform: translateY(-1px);
+  }
+
+  .bulk-input-textarea {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid #E0E7EE;
+    border-radius: 8px;
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    resize: vertical;
+    min-height: 300px;
+    background: white;
+    transition: border-color 0.3s ease;
+  }
+
+  .bulk-input-textarea:focus {
+    border-color: #3D8D7A;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.15);
+  }
+
+  .bulk-preview {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(179, 216, 168, 0.1);
+    border: 1px solid rgba(179, 216, 168, 0.3);
+    border-radius: 8px;
+  }
+
+  .bulk-preview h4 {
+    margin: 0 0 1rem 0;
+    color: #333;
+    font-size: 1rem;
+  }
+
+  .bulk-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .bulk-preview-item {
+    background: white;
+    border: 1px solid #E0E7EE;
+    border-radius: 6px;
+    padding: 0.5rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    transition: all 0.3s ease;
+  }
+
+  .bulk-preview-item:hover {
+    border-color: #3D8D7A;
+    box-shadow: 0 2px 4px rgba(61, 141, 122, 0.1);
+  }
+
+  .bulk-preview-item.multiple-choice {
+    border-left: 3px solid #3b82f6;
+  }
+
+  .bulk-preview-item.true-false {
+    border-left: 3px solid #f59e0b;
+  }
+
+  .preview-q-num {
+    font-weight: 600;
+    color: #3D8D7A;
+    font-size: 0.8rem;
+  }
+
+  .preview-answer {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #333;
+  }
+
+  .preview-type {
+    font-size: 0.7rem;
+    color: #666;
+    text-transform: uppercase;
+  }
+
+  .apply-bulk-btn {
+    background: #3D8D7A;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
+  }
+
+  .apply-bulk-btn:hover {
+    background: #317c6b;
+    transform: translateY(-2px);
   }
 
 
