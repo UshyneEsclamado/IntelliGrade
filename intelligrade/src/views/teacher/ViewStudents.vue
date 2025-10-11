@@ -352,22 +352,21 @@ const formatDate = (dateString: string) => {
 }
 
 const goBack = async () => {
-  try {
-    await router.push({
-      name: 'SectionDetail',
-      params: { sectionId: sectionId.value },
-      query: {
-        subjectId: subjectId.value,
-        subjectName: subjectName.value,
-        sectionName: sectionName.value,
-        gradeLevel: gradeLevel.value,
-        classCode: classCode.value,
-        sectionCode: sectionCode.value
-      }
-    })
-  } catch (error) {
-    console.error('Navigation error:', error)
-  }
+  // Go back to MySubjects.vue and set viewMode to 'section-detail' with correct params
+  router.push({
+    name: 'MySubjects',
+    params: {
+      subjectId: subjectId.value,
+      sectionId: sectionId.value
+    },
+    query: {
+      viewMode: 'section-detail',
+      subjectName: subjectName.value,
+      sectionName: sectionName.value,
+      gradeLevel: gradeLevel.value,
+      sectionCode: sectionCode.value
+    }
+  });
 }
 
 const addStudent = async () => {

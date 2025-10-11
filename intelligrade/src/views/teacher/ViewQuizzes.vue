@@ -1,47 +1,34 @@
 <template>
-  <div class="view-quizzes-container" :class="{ 'dark-mode': isDarkMode }">
-    <!-- Enhanced Header Section -->
-    <div class="section-header-card">
-      <div class="header-bg-decoration"></div>
-      <div class="floating-shapes">
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
-      </div>
-      
-      <div class="section-header-content">
-        <div class="section-header-left">
-          <div class="section-header-icon">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+  <div class="view-quizzes-container" :class="{ 'dark': isDarkMode }">
+    <!-- Simple Header -->
+    <div class="header-card">
+      <div class="header-content">
+        <div class="header-left">
+          <div class="quiz-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
             </svg>
           </div>
-          <div class="header-text">
-            <div class="section-header-title">Quiz Management</div>
-            <div class="section-header-subtitle">{{ subjectName }} (Grade {{ gradeLevel }})</div>
-            <div class="section-header-description">{{ sectionName }} - {{ sectionCode }}</div>
+          <div>
+            <h1 class="header-title">Quiz Management</h1>
+            <p class="header-subtitle">{{ subjectName }} (Grade {{ gradeLevel }}) - {{ sectionName }}</p>
           </div>
         </div>
         
         <div class="header-actions">
-          <button @click="navigateToCreateQuiz" class="create-quiz-btn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
-            </svg>
-            Create New Quiz
-          </button>
-          <button @click="goBack" class="back-button">
+          
+          <button @click="goBack" class="back-btn">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M10 19l-7-7 7-7m-7 7h18"></path>
             </svg>
-            Back to Subjects
+            Back to Section
           </button>
         </div>
       </div>
     </div>
 
     <!-- Main Content -->
-    <div class="main-wrapper">
+    <div class="content-card">
       <!-- Loading State -->
       <div v-if="isLoading" class="loading-state">
         <div class="loading-spinner"></div>
@@ -69,7 +56,7 @@
         </div>
         <h3>No Quizzes Available</h3>
         <p>You haven't created any quizzes for this section yet.</p>
-        <button @click="navigateToCreateQuiz" class="create-first-quiz-btn">
+        <button @click="navigateToCreateQuiz" class="create-first-btn">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
           </svg>
@@ -77,89 +64,44 @@
         </button>
       </div>
 
-      <!-- Quizzes List -->
+      <!-- Quizzes Grid -->
       <div v-else class="quizzes-grid">
         <div v-for="quiz in quizzes" :key="quiz.id" class="quiz-card">
           <div class="quiz-header">
-            <div class="quiz-info">
-              <h3 class="quiz-title">{{ quiz.title }}</h3>
-              <p v-if="quiz.description" class="quiz-description">{{ quiz.description }}</p>
-              <div class="quiz-meta">
-                <span class="quiz-questions">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M9,22A1,1 0 0,1 8,21V18H4A2,2 0 0,1 2,16V4C2,2.89 2.9,2 4,2H20A2,2 0 0,1 22,4V16A2,2 0 0,1 20,18H13.9L10.2,21.71C10,21.9 9.75,22 9.5,22V22H9M10,16V19.08L13.08,16H20V4H4V16H10Z" />
-                  </svg>
-                  {{ quiz.question_count || 0 }} Questions
-                </span>
-                <span class="quiz-points">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z" />
-                  </svg>
-                  {{ quiz.total_points || 0 }} Points
-                </span>
-                <span v-if="quiz.has_time_limit && quiz.time_limit_minutes" class="quiz-time">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
-                  </svg>
-                  {{ quiz.time_limit_minutes }} Minutes
-                </span>
-              </div>
-            </div>
-            <div class="quiz-status">
-              <span :class="['status-badge', quiz.status]">
-                {{ formatStatus(quiz.status) }}
-              </span>
-            </div>
+            <h3 class="quiz-title">{{ quiz.title }}</h3>
+            <span :class="['status-badge', quiz.status]">
+              {{ formatStatus(quiz.status) }}
+            </span>
           </div>
-
-          <div class="quiz-stats">
-            <div class="stat">
-              <span class="stat-icon">🔁</span>
-              <span class="stat-number">{{ quiz.attempts_allowed === 999 ? '∞' : quiz.attempts_allowed }}</span>
-              <span class="stat-label">Attempts</span>
-            </div>
-            <div class="stat">
-              <span class="stat-icon">📅</span>
-              <span class="stat-number">{{ formatDate(quiz.created_at) }}</span>
-              <span class="stat-label">Created</span>
-            </div>
-            <div class="stat">
-              <span class="stat-icon">🔀</span>
-              <span class="stat-number">{{ quiz.shuffle_questions ? 'Yes' : 'No' }}</span>
-              <span class="stat-label">Shuffle</span>
-            </div>
+          
+          <p v-if="quiz.description" class="quiz-description">{{ quiz.description }}</p>
+          
+          <div class="quiz-meta">
+            <span class="meta-item">
+              {{ quiz.question_count || 0 }} Questions
+            </span>
+            <span class="meta-item">
+              {{ quiz.total_points || 0 }} Points
+            </span>
+            <span v-if="quiz.has_time_limit && quiz.time_limit_minutes" class="meta-item">
+              {{ quiz.time_limit_minutes }} Minutes
+            </span>
           </div>
 
           <div class="quiz-actions">
             <button @click="viewQuizDetails(quiz)" class="action-btn primary">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
-              </svg>
               View Details
             </button>
-            
             <button @click="editQuiz(quiz)" class="action-btn secondary">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
-              </svg>
               Edit
             </button>
-
             <button 
               @click="toggleQuizStatus(quiz)" 
               :class="['action-btn', quiz.status === 'published' ? 'warning' : 'success']"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path v-if="quiz.status === 'published'" d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M14.5,9L12,11.5L9.5,9L8,10.5L10.5,13L8,15.5L9.5,17L12,14.5L14.5,17L16,15.5L13.5,13L16,10.5L14.5,9Z" />
-                <path v-else d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M11,16.5L18,9.5L16.5,8L11,13.5L7.5,10L6,11.5L11,16.5Z" />
-              </svg>
               {{ quiz.status === 'published' ? 'Unpublish' : 'Publish' }}
             </button>
-
             <button @click="deleteQuiz(quiz)" class="action-btn danger">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
-              </svg>
               Delete
             </button>
           </div>
@@ -206,7 +148,7 @@
           <div class="questions-preview">
             <h4>Questions Preview</h4>
             <div v-if="selectedQuizQuestions.length > 0" class="questions-list">
-              <div v-for="(question, index) in selectedQuizQuestions" :key="question.id" class="question-preview">
+              <div v-for="question in selectedQuizQuestions" :key="question.id" class="question-preview">
                 <div class="question-number">{{ question.question_number }}</div>
                 <div class="question-content">
                   <p class="question-text">{{ question.question_text }}</p>
@@ -458,12 +400,21 @@ const navigateToCreateQuiz = async () => {
 }
 
 const goBack = async () => {
-  try {
-    await router.push({ name: 'MySubjects' })
-  } catch (error) {
-    console.error('Navigation error:', error)
-    router.back()
-  }
+  // Go back to MySubjects.vue and set viewMode to 'section-detail' with correct params
+  router.push({
+    name: 'MySubjects',
+    params: {
+      subjectId: subjectId.value,
+      sectionId: sectionId.value
+    },
+    query: {
+      viewMode: 'section-detail',
+      subjectName: subjectName.value,
+      sectionName: sectionName.value,
+      gradeLevel: gradeLevel.value,
+      sectionCode: sectionCode.value
+    }
+  });
 }
 
 const closeModal = () => {
@@ -474,16 +425,6 @@ const closeModal = () => {
 const formatStatus = (status) => {
   if (!status) return 'Unknown'
   return status.charAt(0).toUpperCase() + status.slice(1)
-}
-
-const formatDate = (dateString) => {
-  if (!dateString) return 'N/A'
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'short', 
-    day: 'numeric' 
-  })
 }
 
 const formatQuestionType = (type) => {
@@ -513,298 +454,134 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 .view-quizzes-container {
   padding: 2rem;
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: var(--bg-primary);
+  font-family: 'Inter', sans-serif;
+  background: #FBFFE4;
   min-height: 100vh;
-  color: var(--primary-text-color);
   transition: all 0.3s ease;
 }
 
-/* Enhanced Header Design */
-.section-header-card {
-  position: relative;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%);
-  backdrop-filter: blur(20px);
-  border-radius: 32px;
-  padding: 3.5rem;
-  margin-bottom: 2.5rem;
-  min-height: 180px;
-  box-shadow: 
-    0 20px 60px rgba(0, 0, 0, 0.05),
-    0 8px 32px rgba(0, 0, 0, 0.03),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+/* Header Card */
+.header-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 2px solid #A3D1C6;
 }
 
-.section-header-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 
-    0 32px 80px rgba(0, 0, 0, 0.08),
-    0 12px 40px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-}
-
-.header-bg-decoration {
-  position: absolute;
-  top: -50%;
-  right: -20%;
-  width: 120%;
-  height: 200%;
-  background: radial-gradient(ellipse at center, rgba(79, 70, 229, 0.08) 0%, transparent 70%);
-  z-index: 1;
-}
-
-.floating-shapes {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1;
-  pointer-events: none;
-}
-
-.shape {
-  position: absolute;
-  border-radius: 50%;
-  background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%);
-}
-
-.shape-1 {
-  width: 120px;
-  height: 120px;
-  top: -30px;
-  right: 10%;
-  animation: float 6s ease-in-out infinite;
-}
-
-.shape-2 {
-  width: 80px;
-  height: 80px;
-  bottom: -20px;
-  right: 25%;
-  animation: float 8s ease-in-out infinite reverse;
-}
-
-.shape-3 {
-  width: 60px;
-  height: 60px;
-  top: 50%;
-  right: 5%;
-  animation: float 7s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-20px) rotate(10deg); }
-}
-
-.header-bg-decoration {
-  position: absolute;
-  top: -50%;
-  right: -20%;
-  width: 120%;
-  height: 200%;
-  background: radial-gradient(ellipse at center, rgba(61, 141, 122, 0.08) 0%, transparent 70%);
-  z-index: 1;
-}
-
-.floating-shapes {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1;
-  pointer-events: none;
-}
-
-.shape {
-  position: absolute;
-  border-radius: 50%;
-  background: linear-gradient(135deg, rgba(61, 141, 122, 0.1) 0%, rgba(163, 209, 198, 0.05) 100%);
-}
-
-.shape-1 {
-  width: 100px;
-  height: 100px;
-  top: -20px;
-  right: 15%;
-  animation: float 6s ease-in-out infinite;
-}
-
-.shape-2 {
-  width: 60px;
-  height: 60px;
-  bottom: -10px;
-  right: 25%;
-  animation: float 8s ease-in-out infinite reverse;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-15px) rotate(10deg); }
-}
-
-.section-header-content {
-  position: relative;
-  z-index: 2;
+.header-content {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  width: 100%;
+  align-items: center;
 }
 
-.section-header-left {
+.header-left {
   display: flex;
   align-items: center;
-  gap: 2.5rem;
+  gap: 1rem;
 }
 
-.section-header-icon {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border-radius: 24px;
+.quiz-icon {
+  width: 48px;
+  height: 48px;
+  background: #FBFFE4;
+  border: 2px solid #A3D1C6;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  box-shadow: 0 8px 24px rgba(79, 70, 229, 0.3);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #3D8D7A;
 }
 
-.section-header-icon:hover {
-  transform: translateY(-2px);
+.header-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #3D8D7A;
+  margin: 0 0 0.25rem 0;
 }
 
-.header-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-.section-header-title {
-  font-size: 2rem;
-  font-weight: 800;
-  color: #10b981;
-  margin-bottom: 0.25rem;
-  letter-spacing: -0.025em;
-}
-
-.section-header-subtitle {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #64748b;
-}
-
-.section-header-description {
-  font-size: 0.9rem;
-  color: #94a3b8;
+.header-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
 }
 
 .header-actions {
   display: flex;
-  gap: 1rem;
-  align-items: center;
+  gap: 0.75rem;
 }
 
-.create-quiz-btn {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+.create-btn, .back-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  cursor: pointer;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  outline: none;
+}
+
+.create-btn {
+  border: 2px solid #3D8D7A;
+  background: #3D8D7A;
   color: white;
-  border: none;
-  padding: 0.875rem 1.75rem;
-  border-radius: 0.75rem;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.875rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
 }
 
-.create-quiz-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+.create-btn:hover {
+  background: #2d6a5a;
+  border-color: #2d6a5a;
+  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.18);
 }
 
-.back-button {
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(148, 163, 184, 0.2);
-  color: #64748b;
-  padding: 0.875rem 1.75rem;
-  border-radius: 0.75rem;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.875rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.back-btn {
+  border: 2px solid #20c997;
+  background: #20c997;
+  color: #181c20;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
 }
 
-.back-button:hover {
-  background: rgba(148, 163, 184, 0.1);
-  border-color: rgba(148, 163, 184, 0.3);
-  transform: translateY(-1px);
+.back-btn:hover {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
+  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.18);
 }
 
-.back-button {
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(203, 213, 225, 0.5);
-  border-radius: 16px;
-  padding: 0.875rem 1.5rem;
-  backdrop-filter: blur(10px);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #64748b;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.back-button:hover {
-  background: rgba(255, 255, 255, 0.95);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-}
-
-.main-wrapper {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border-radius: 32px;
-  padding: 3rem;
-  box-shadow: 
-    0 20px 60px rgba(0, 0, 0, 0.05),
-    0 8px 32px rgba(0, 0, 0, 0.03),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+/* Content Card */
+.content-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 2px solid #A3D1C6;
 }
 
 /* States */
 .loading-state, .error-state, .empty-state {
   text-align: center;
-  padding: 4rem 2rem;
+  padding: 3rem 2rem;
 }
 
 .loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(61, 141, 122, 0.1);
-  border-left: 4px solid #10b981;
+  width: 32px;
+  height: 32px;
+  border: 3px solid #A3D1C6;
+  border-left: 3px solid #3D8D7A;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 1rem;
@@ -815,208 +592,175 @@ onMounted(async () => {
 }
 
 .error-icon, .empty-icon {
-  color: #94a3b8;
-  margin-bottom: 1.5rem;
+  color: #9ca3af;
+  margin-bottom: 1rem;
 }
 
 .empty-state h3, .error-state h3 {
-  color: #374151;
-  font-size: 1.5rem;
+  color: #3D8D7A;
+  font-size: 1.25rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
 }
 
 .empty-state p, .error-state p {
   color: #6b7280;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
-.create-first-quiz-btn, .retry-btn {
+.create-first-btn, .retry-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: #3D8D7A;
   color: white;
   border: none;
-  padding: 1rem 2rem;
-  border-radius: 16px;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
-.create-first-quiz-btn:hover, .retry-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(61, 141, 122, 0.3);
+.create-first-btn:hover, .retry-btn:hover {
+  background: #2d6a5a;
 }
 
 /* Quizzes Grid */
 .quizzes-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
 }
 
 .quiz-card {
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(20px);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 24px;
-  padding: 2.5rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.06),
-    0 4px 16px rgba(0, 0, 0, 0.04);
-  position: relative;
-  overflow: hidden;
-}
-
-.quiz-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #10b981, #059669, #10b981);
-  border-radius: 1.25rem 1.25rem 0 0;
+  background: #FBFFE4;
+  border: 2px solid #A3D1C6;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.2s ease;
 }
 
 .quiz-card:hover {
-  border-color: rgba(79, 70, 229, 0.3);
-  transform: translateY(-4px);
-  box-shadow: 
-    0 20px 50px rgba(0, 0, 0, 0.1),
-    0 8px 32px rgba(79, 70, 229, 0.15);
+  border-color: #3D8D7A;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.1);
 }
 
 .quiz-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .quiz-title {
   color: #3D8D7A;
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin: 0 0 0.5rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-badge.draft {
+  background: #e5e7eb;
+  color: #6b7280;
+}
+
+.status-badge.published {
+  background: #B3D8A8;
+  color: #3D8D7A;
+}
+
+.quiz-description {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
 }
 
 .quiz-meta {
   display: flex;
   gap: 1rem;
-  font-size: 0.85rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.meta-item {
+  font-size: 0.875rem;
   color: #6b7280;
-}
-
-.quiz-meta span {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.status-badge {
-  padding: 0.3rem 0.8rem;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.status-badge.draft {
-  background: rgba(156, 163, 175, 0.1);
-  color: #6b7280;
-}
-
-.status-badge.published {
-  background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
-}
-
-.status-badge.archived {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-}
-
-.quiz-stats {
-  display: flex;
-  justify-content: space-between;
-  margin: 1.5rem 0;
-  padding: 1rem;
-  background: rgba(248, 250, 252, 0.8);
-  border-radius: 12px;
-}
-
-.stat {
-  text-align: center;
-}
-
-.stat-number {
-  display: block;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #3D8D7A;
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  background: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #A3D1C6;
 }
 
 .quiz-actions {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 0.5rem;
 }
 
 .action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  padding: 0.6rem 1rem;
+  padding: 0.5rem 1rem;
   border: none;
-  border-radius: 10px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   text-align: center;
 }
 
 .action-btn.primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+  background: #3D8D7A;
   color: white;
+}
+
+.action-btn.primary:hover {
+  background: #2d6a5a;
 }
 
 .action-btn.secondary {
-  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
-  color: white;
+  background: #B3D8A8;
+  color: #3D8D7A;
+}
+
+.action-btn.secondary:hover {
+  background: #a0c995;
 }
 
 .action-btn.success {
-  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  background: #22c55e;
   color: white;
+}
+
+.action-btn.success:hover {
+  background: #16a34a;
 }
 
 .action-btn.warning {
-  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+  background: #f59e0b;
   color: white;
+}
+
+.action-btn.warning:hover {
+  background: #d97706;
 }
 
 .action-btn.danger {
-  background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+  background: #ef4444;
   color: white;
 }
 
-.action-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+.action-btn.danger:hover {
+  background: #dc2626;
 }
 
 /* Modal Styles */
@@ -1026,40 +770,36 @@ onMounted(async () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 2rem;
+  padding: 1rem;
 }
 
 .modal-content {
   background: white;
-  border-radius: 24px;
-  max-width: 800px;
+  border-radius: 12px;
+  max-width: 600px;
   width: 100%;
-  max-height: 90vh;
+  max-height: 80vh;
   overflow-y: auto;
-  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.3);
-}
-
-.quiz-details-modal {
-  max-width: 900px;
+  border: 2px solid #A3D1C6;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 2rem 2rem 1rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .modal-header h2 {
   color: #3D8D7A;
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 1.25rem;
+  font-weight: 600;
   margin: 0;
 }
 
@@ -1069,93 +809,83 @@ onMounted(async () => {
   color: #6b7280;
   cursor: pointer;
   padding: 0.5rem;
-  border-radius: 8px;
-  transition: all 0.3s ease;
+  border-radius: 6px;
+  transition: all 0.2s ease;
 }
 
 .close-btn:hover {
   color: #3D8D7A;
-  background: rgba(61, 141, 122, 0.1);
+  background: #f3f4f6;
 }
 
 .modal-body {
-  padding: 2rem;
-}
-
-.quiz-overview {
-  margin-bottom: 2rem;
+  padding: 1.5rem;
 }
 
 .overview-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .stat-item {
   text-align: center;
-  padding: 1.5rem;
-  background: rgba(248, 250, 252, 0.8);
-  border-radius: 16px;
-  border: 1px solid rgba(203, 213, 225, 0.3);
+  padding: 1rem;
+  background: #FBFFE4;
+  border-radius: 8px;
+  border: 1px solid #A3D1C6;
 }
 
 .stat-value {
   display: block;
-  font-size: 1.5rem;
-  font-weight: 800;
+  font-size: 1.25rem;
+  font-weight: 700;
   color: #3D8D7A;
   margin-bottom: 0.25rem;
 }
 
 .stat-label {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: #6b7280;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.questions-preview {
-  margin-top: 2rem;
 }
 
 .questions-preview h4 {
   color: #3D8D7A;
-  font-size: 1.2rem;
+  font-size: 1.125rem;
   font-weight: 600;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .questions-list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  max-height: 400px;
+  gap: 0.75rem;
+  max-height: 300px;
   overflow-y: auto;
 }
 
 .question-preview {
   display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  padding: 1.5rem;
-  background: rgba(248, 250, 252, 0.5);
-  border-radius: 12px;
-  border: 1px solid rgba(203, 213, 225, 0.2);
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #FBFFE4;
+  border-radius: 8px;
+  border: 1px solid #A3D1C6;
 }
 
 .question-number {
   background: #3D8D7A;
   color: white;
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   flex-shrink: 0;
 }
 
@@ -1167,29 +897,28 @@ onMounted(async () => {
   color: #374151;
   font-weight: 500;
   margin: 0 0 0.5rem 0;
-  line-height: 1.5;
 }
 
 .question-meta {
   display: flex;
-  gap: 1rem;
-  font-size: 0.8rem;
+  gap: 0.75rem;
+  font-size: 0.75rem;
 }
 
 .question-type {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
-  padding: 0.25rem 0.6rem;
-  border-radius: 8px;
-  font-weight: 600;
+  background: #B3D8A8;
+  color: #3D8D7A;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
 }
 
 .question-points {
-  background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
-  padding: 0.25rem 0.6rem;
-  border-radius: 8px;
-  font-weight: 600;
+  background: #A3D1C6;
+  color: #3D8D7A;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
 }
 
 .loading-questions {
@@ -1198,39 +927,164 @@ onMounted(async () => {
   color: #6b7280;
 }
 
+/* Dark Mode */
+.dark {
+  background: #23272b;
+  color: #A3D1C6;
+}
+
+.dark .header-card,
+.dark .content-card {
+  background: #23272b;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
+}
+
+.dark .quiz-icon {
+  background: #23272b;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
+}
+
+.dark .header-title {
+  color: #A3D1C6;
+}
+
+.dark .header-subtitle {
+  color: #A3D1C6;
+}
+
+.dark .create-btn {
+  background: #3D8D7A;
+  color: white;
+  border-color: #3D8D7A;
+}
+
+.dark .create-btn:hover {
+  background: #2d6a5a;
+  border-color: #2d6a5a;
+}
+
+.dark .back-btn {
+  background: #20c997;
+  color: #181c20;
+  border-color: #A3D1C6;
+}
+
+.dark .back-btn:hover {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
+}
+
+.dark .quiz-card {
+  background: #23272b;
+  border-color: #3D8D7A;
+}
+
+.dark .quiz-card:hover {
+  border-color: #A3D1C6;
+}
+
+.dark .quiz-title {
+  color: #A3D1C6;
+}
+
+.dark .quiz-description {
+  color: #A3D1C6;
+}
+
+.dark .meta-item {
+  background: #23272b;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
+}
+
+.dark .status-badge.published {
+  background: #3D8D7A;
+  color: #FBFFE4;
+}
+
+.dark .modal-content {
+  background: #23272b;
+  border-color: #3D8D7A;
+}
+
+.dark .modal-header {
+  border-bottom-color: #3D8D7A;
+}
+
+.dark .modal-header h2 {
+  color: #A3D1C6;
+}
+
+.dark .close-btn {
+  color: #A3D1C6;
+}
+
+.dark .close-btn:hover {
+  background: #3D8D7A;
+}
+
+.dark .stat-item {
+  background: #23272b;
+  border-color: #3D8D7A;
+}
+
+.dark .stat-value {
+  color: #A3D1C6;
+}
+
+.dark .stat-label {
+  color: #A3D1C6;
+}
+
+.dark .question-preview {
+  background: #23272b;
+  border-color: #3D8D7A;
+}
+
+.dark .question-number {
+  background: #A3D1C6;
+  color: #23272b;
+}
+
+.dark .question-text {
+  color: #A3D1C6;
+}
+
+.dark .question-type {
+  background: #3D8D7A;
+  color: #FBFFE4;
+}
+
+.dark .question-points {
+  background: #3D8D7A;
+  color: #FBFFE4;
+}
+
+.dark .loading-questions {
+  color: #A3D1C6;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .view-quizzes-container {
     padding: 1rem;
   }
   
-  .section-header-card {
-    padding: 2rem;
-    margin-bottom: 2rem;
-  }
-  
-  .section-header-content {
+  .header-content {
     flex-direction: column;
+    gap: 1rem;
     align-items: stretch;
-    gap: 1.5rem;
-  }
-  
-  .section-header-left {
-    gap: 1.5rem;
   }
   
   .header-actions {
     flex-direction: column;
-    align-items: stretch;
   }
   
   .quizzes-grid {
     grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-  
-  .quiz-card {
-    padding: 1.5rem;
   }
   
   .quiz-actions {
@@ -1238,287 +1092,11 @@ onMounted(async () => {
   }
   
   .modal-overlay {
-    padding: 1rem;
+    padding: 0.5rem;
   }
   
   .overview-stats {
     grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
   }
-  
-  .question-preview {
-    padding: 1rem;
-  }
-  
-  .question-meta {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-}
-
-/* Dark Mode Styles */
-.view-quizzes-container.dark-mode {
-  background: var(--bg-primary);
-  color: var(--primary-text-color);
-}
-
-.dark-mode .section-header-card {
-  background: var(--bg-secondary) !important;
-  border: 1px solid var(--border-color) !important;
-  backdrop-filter: blur(20px);
-}
-
-.dark-mode .section-header-card:hover {
-  box-shadow: 
-    0 24px 48px rgba(0, 0, 0, 0.4),
-    0 12px 24px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-}
-
-.dark-mode .header-bg-decoration {
-  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.02) 0%, transparent 70%);
-}
-
-.dark-mode .section-header-title {
-  color: var(--primary-text-color);
-}
-
-.dark-mode .section-header-subtitle {
-  color: var(--accent-color);
-}
-
-.dark-mode .section-header-description {
-  color: var(--secondary-text-color);
-}
-
-.dark-mode .create-quiz-btn {
-  background: linear-gradient(135deg, var(--accent-color) 0%, #4a9b87 100%);
-}
-
-.dark-mode .back-button {
-  background: var(--bg-card);
-  border: 2px solid var(--border-color);
-  color: var(--secondary-text-color);
-}
-
-.dark-mode .back-button:hover {
-  border-color: var(--accent-color);
-  color: var(--accent-color);
-}
-
-.dark-mode .loading-state {
-  color: var(--secondary-text-color);
-}
-
-/* Add missing main wrapper dark mode styling */
-.dark-mode .main-wrapper {
-  background: var(--card-background) !important;
-  border: 1px solid var(--card-border-color) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
-}
-
-.dark-mode .loading-spinner {
-  border: 4px solid rgba(95, 179, 160, 0.2);
-  border-left: 4px solid var(--accent-color);
-}
-
-.dark-mode .error-state {
-  background: var(--card-background);
-  border: 1px solid var(--card-border-color);
-  color: var(--primary-text-color);
-}
-
-.dark-mode .error-state h3 {
-  color: var(--primary-text-color);
-}
-
-.dark-mode .error-state p {
-  color: var(--secondary-text-color);
-}
-
-.dark-mode .retry-btn {
-  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
-}
-
-.dark-mode .empty-state {
-  color: var(--secondary-text-color);
-}
-
-.dark-mode .empty-state h3 {
-  color: var(--primary-text-color);
-}
-
-.dark-mode .quiz-stats {
-  background: var(--bg-accent);
-  border: 1px solid var(--border-color);
-}
-
-.dark-mode .stat-number {
-  color: var(--accent-color);
-}
-
-.dark-mode .stat-label {
-  color: var(--secondary-text-color);
-}
-
-/* Add missing quiz card dark mode styling */
-.dark-mode .quiz-card {
-  background: var(--card-background) !important;
-  border: 1px solid var(--card-border-color) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
-}
-
-.dark-mode .quiz-card:hover {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  border-color: var(--accent-color);
-}
-
-.dark-mode .quiz-title {
-  color: var(--primary-text-color);
-}
-
-.dark-mode .quiz-description {
-  color: var(--secondary-text-color);
-}
-
-.dark-mode .quiz-meta-item {
-  background: var(--bg-accent);
-  color: var(--secondary-text-color);
-}
-
-.dark-mode .quiz-status {
-  color: var(--primary-text-color);
-}
-
-.dark-mode .quiz-actions .quiz-action-btn {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  color: var(--secondary-text-color);
-}
-
-.dark-mode .quiz-actions .quiz-action-btn:hover {
-  border-color: var(--accent-color);
-  color: var(--accent-color);
-}
-
-.dark-mode .quiz-actions .quiz-action-btn.primary {
-  background: var(--accent-color);
-  color: white;
-}
-
-.dark-mode .quiz-actions .quiz-action-btn.primary:hover {
-  background: var(--accent-hover);
-}
-
-.dark-mode .quiz-actions .quiz-action-btn.danger {
-  background: var(--error-bg);
-  border-color: var(--error-color);
-  color: var(--error-color);
-}
-
-.dark-mode .quiz-actions .quiz-action-btn.danger:hover {
-  background: rgba(217, 83, 79, 0.3);
-}
-
-.dark-mode .modal-content {
-  background: var(--card-background) !important;
-  border: 1px solid var(--card-border-color);
-}
-
-.dark-mode .modal-header {
-  border-bottom: 1px solid var(--border-color);
-}
-
-.dark-mode .modal-header h2 {
-  color: var(--primary-text-color);
-}
-
-.dark-mode .close-btn {
-  color: var(--secondary-text-color);
-}
-
-.dark-mode .close-btn:hover {
-  color: var(--accent-color);
-  background: var(--bg-accent);
-}
-
-.dark-mode .modal-overlay {
-  background: rgba(0, 0, 0, 0.8);
-}
-
-.dark-mode .stat-item {
-  background: var(--bg-accent);
-  border: 1px solid var(--border-color);
-}
-
-.dark-mode .stat-value {
-  color: var(--accent-color);
-}
-
-.dark-mode .stat-label {
-  color: var(--secondary-text-color);
-}
-
-.dark-mode .modal-close {
-  background: rgba(239, 68, 68, 0.2);
-  color: #f87171;
-}
-
-.dark-mode .modal-close:hover {
-  background: rgba(239, 68, 68, 0.3);
-}
-
-.dark-mode .quiz-details h4 {
-  color: var(--primary-text-color);
-}
-
-.dark-mode .detail-item {
-  color: var(--secondary-text-color);
-}
-
-.dark-mode .detail-item strong {
-  color: var(--primary-text-color);
-}
-
-.dark-mode .questions-preview {
-  background: var(--bg-accent);
-  border: 1px solid var(--border-color);
-}
-
-.dark-mode .questions-preview h4 {
-  color: var(--primary-text-color);
-}
-
-.dark-mode .question-preview {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-}
-
-.dark-mode .question-number {
-  background: var(--accent-color);
-}
-
-.dark-mode .question-text {
-  color: var(--primary-text-color);
-}
-
-.dark-mode .question-type {
-  background: var(--bg-accent-hover);
-  color: var(--accent-color);
-}
-
-.dark-mode .question-points {
-  color: var(--secondary-text-color);
-}
-
-.dark-mode .loading-questions {
-  color: var(--secondary-text-color);
-}
-
-/* Add missing dark mode styles for main wrapper */
-.dark-mode .main-wrapper {
-  background: var(--card-background) !important;
-  border: 1px solid var(--card-border-color) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
 }
 </style>
