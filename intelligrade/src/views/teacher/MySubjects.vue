@@ -2513,8 +2513,12 @@ onUnmounted(() => {
 }
 
 /* Buttons */
+/* Uniform button style for main actions (matches Analytics.vue and DashboardHome.vue) */
 .create-quiz-btn {
-  background: #20c997;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #B3D8A8;
   color: #181c20;
   border: 1px solid #A3D1C6;
   padding: 0.5rem 1.25rem;
@@ -2523,16 +2527,13 @@ onUnmounted(() => {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  box-shadow: none;
 }
 .dark .create-quiz-btn {
-  background: #20c997;
+  background: #B3D8A8;
   color: #181c20;
   border: 1px solid #A3D1C6;
 }
-
 .create-quiz-btn:hover {
   background: #A3D1C6;
   color: #23272b;
