@@ -1,25 +1,17 @@
 <template>
-  <div class="analytics-container" :class="{ 'dark-mode': isDarkMode }">
-    <!-- Enhanced Header Section -->
-    <div class="section-header-card">
-      <div class="header-bg-decoration"></div>
-      <div class="floating-shapes">
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
-      </div>
-      
-      <div class="section-header-content">
-        <div class="section-header-left">
-          <div class="section-header-icon">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+  <div class="analytics-container" :class="{ 'dark': isDarkMode }">
+    <!-- Simple Header -->
+    <div class="header-card">
+      <div class="header-content">
+        <div class="header-left">
+          <div class="header-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
               <path d="M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z" />
             </svg>
           </div>
-          <div class="header-text">
-            <div class="section-header-title">Student Analytics</div>
-            <div class="section-header-subtitle">Performance Insights</div>
-            <div class="section-header-description">Monitor and analyze student performance across all assessments</div>
+          <div>
+            <h1 class="header-title">Student Analytics</h1>
+            <p class="header-subtitle">Monitor and analyze student performance</p>
           </div>
         </div>
         
@@ -30,92 +22,64 @@
               {{ section.name }} - {{ section.subject }}
             </option>
           </select>
-          <button @click="exportData" class="export-btn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+          <button @click="exportData" class="grade-btn export-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="margin-right:8px;vertical-align:middle;">
+              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" fill="currentColor"/>
             </svg>
-            Export Data
+            <span style="vertical-align:middle;">Export Data</span>
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Enhanced Overview Cards -->
-    <div class="overview-grid">
-      <div class="overview-card">
-        <div class="card-floating-shapes">
-          <div class="card-shape shape-1"></div>
-        </div>
-        <div class="card-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon stat-average">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M16,6L18.29,8.29L13.41,13.17L9.41,9.17L2,16.59L3.41,18L9.41,12L13.41,16L19.71,9.71L22,12V6H16Z" />
           </svg>
         </div>
-        <div class="card-content">
-          <h3>{{ overallStats.averageScore }}%</h3>
-          <p>Overall Average</p>
-          <span class="trend" :class="overallStats.trend > 0 ? 'positive' : 'negative'">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path :d="overallStats.trend > 0 ? 'M7,14H17V16H7V14M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M7,9H17V11H7V9Z' : 'M7,9H17V11H7V9M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4Z'" />
-            </svg>
-            {{ Math.abs(overallStats.trend) }}% from last month
-          </span>
+        <div>
+          <div class="stat-number">{{ overallStats.averageScore }}%</div>
+          <div class="stat-label">Overall Average</div>
         </div>
       </div>
 
-      <div class="overview-card">
-        <div class="card-floating-shapes">
-          <div class="card-shape shape-2"></div>
-        </div>
-        <div class="card-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+      <div class="stat-card">
+        <div class="stat-icon stat-students">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12,5.5A3.5,3.5 0 0,1 15.5,9A3.5,3.5 0 0,1 12,12.5A3.5,3.5 0 0,1 8.5,9A3.5,3.5 0 0,1 12,5.5M5,8C5.56,8 6.08,8.15 6.53,8.42C6.38,9.85 6.8,11.27 7.66,12.38C7.16,13.34 6.16,14 5,14A3,3 0 0,1 2,11A3,3 0 0,1 5,8M19,8A3,3 0 0,1 22,11A3,3 0 0,1 19,14C17.84,14 16.84,13.34 16.34,12.38C17.2,11.27 17.62,9.85 17.47,8.42C17.92,8.15 18.44,8 19,8M5.5,18.25C5.5,16.18 8.41,14.5 12,14.5C15.59,14.5 18.5,16.18 18.5,18.25V20H5.5V18.25M0,20V18.5C0,17.11 1.89,15.94 4.45,15.6C3.86,16.28 3.5,17.22 3.5,18.25V20H0M24,20H20.5V18.25C20.5,17.22 20.14,16.28 19.55,15.6C22.11,15.94 24,17.11 24,18.5V20Z" />
           </svg>
         </div>
-        <div class="card-content">
-          <h3>{{ overallStats.totalStudents }}</h3>
-          <p>Total Students</p>
-          <span class="info">Across {{ sections.length }} sections</span>
+        <div>
+          <div class="stat-number">{{ overallStats.totalStudents }}</div>
+          <div class="stat-label">Total Students</div>
         </div>
       </div>
 
-      <div class="overview-card">
-        <div class="card-floating-shapes">
-          <div class="card-shape shape-3"></div>
-        </div>
-        <div class="card-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+      <div class="stat-card">
+        <div class="stat-icon stat-assessments">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M9,17H7V10H9V17M13,17H11V7H13V17M17,17H15V13H17V17Z" />
           </svg>
         </div>
-        <div class="card-content">
-          <h3>{{ overallStats.totalAssessments }}</h3>
-          <p>Assessments Given</p>
-          <span class="info">This academic year</span>
+        <div>
+          <div class="stat-number">{{ overallStats.totalAssessments }}</div>
+          <div class="stat-label">Assessments Given</div>
         </div>
       </div>
 
-      <div class="overview-card alert-card">
-        <div class="card-floating-shapes">
-          <div class="card-shape shape-4"></div>
-        </div>
-        <div class="card-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z" />
-          </svg>
-        </div>
-        <div class="card-content">
-          <h3>{{ overallStats.studentsNeedingHelp }}</h3>
-          <p>Need Remediation</p>
-          <span class="warning">Below 75% average</span>
-        </div>
-      </div>
     </div>
 
-    <!-- Performance Charts -->
-    <div class="charts-section">
-      <div class="chart-container">
-        <h3>Performance Trends</h3>
+    <!-- Content Grid -->
+    <div class="content-grid">
+      <!-- Performance Charts -->
+      <div class="content-card">
+        <div class="card-header">
+          <h3>Performance Trends</h3>
+          <p class="card-desc">Track student performance over time</p>
+        </div>
         <div class="chart-controls">
           <button 
             v-for="period in timePeriods" 
@@ -126,19 +90,28 @@
             {{ period.label }}
           </button>
         </div>
-        <canvas ref="performanceChart"></canvas>
+        <div class="chart-placeholder">
+          <canvas ref="performanceChart"></canvas>
+        </div>
       </div>
 
-      <div class="chart-container">
-        <h3>Score Distribution</h3>
-        <canvas ref="distributionChart"></canvas>
+      <!-- Score Distribution -->
+      <div class="content-card">
+        <div class="card-header">
+          <h3>Score Distribution</h3>
+          <p class="card-desc">Distribution of student scores</p>
+        </div>
+        <div class="chart-placeholder">
+          <canvas ref="distributionChart"></canvas>
+        </div>
       </div>
     </div>
 
     <!-- Student Performance Table -->
-    <div class="performance-table-section">
-      <div class="table-header">
+    <div class="content-card">
+      <div class="card-header">
         <h3>Individual Student Performance</h3>
+        <p class="card-desc">Detailed performance data for each student</p>
         <div class="table-controls">
           <input 
             v-model="searchQuery" 
@@ -161,7 +134,7 @@
             <tr>
               <th>Student</th>
               <th>Section</th>
-              <th>Assessments Taken</th>
+              <th>Assessments</th>
               <th>Average Score</th>
               <th>Latest Score</th>
               <th>Improvement</th>
@@ -187,18 +160,7 @@
               </td>
               <td>{{ student.section_name }}</td>
               <td>{{ student.assessments_count }}</td>
-              <td>
-                <div class="score-cell">
-                  <span class="score-value">{{ student.average_score }}%</span>
-                  <div class="score-bar">
-                    <div 
-                      class="score-fill" 
-                      :style="{ width: student.average_score + '%' }"
-                      :class="getScoreClass(student.average_score)"
-                    ></div>
-                  </div>
-                </div>
-              </td>
+              <td>{{ student.average_score }}%</td>
               <td>
                 <span :class="['score-badge', getScoreClass(student.latest_score)]">
                   {{ student.latest_score }}%
@@ -206,8 +168,7 @@
               </td>
               <td>
                 <span :class="['improvement-badge', student.improvement >= 0 ? 'positive' : 'negative']">
-                  <i :class="student.improvement >= 0 ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
-                  {{ Math.abs(student.improvement) }}%
+                  {{ student.improvement >= 0 ? '+' : '' }}{{ student.improvement }}%
                 </span>
               </td>
               <td>
@@ -217,17 +178,23 @@
               </td>
               <td class="actions-cell">
                 <button @click="viewStudentDetails(student)" class="action-btn view-btn">
-                  <i class="fas fa-eye"></i>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
+                  </svg>
                 </button>
                 <button @click="updateScore(student)" class="action-btn edit-btn">
-                  <i class="fas fa-edit"></i>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
+                  </svg>
                 </button>
                 <button 
                   v-if="student.average_score < 75" 
                   @click="flagForRemediation(student)" 
                   class="action-btn warning-btn"
                 >
-                  <i class="fas fa-flag"></i>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M14.4,6L14,4H5V21H7V14H12.6L13,16H20V6H14.4Z" />
+                  </svg>
                 </button>
               </td>
             </tr>
@@ -235,7 +202,7 @@
         </table>
       </div>
 
-      <!-- Pagination -->
+      <!-- Simple Pagination -->
       <div class="pagination">
         <button 
           @click="currentPage = Math.max(1, currentPage - 1)"
@@ -741,141 +708,79 @@ export default {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
 .analytics-container {
-  padding: 2rem 5%;
-  font-family: 'Inter', sans-serif;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f0f9f6 0%, #e8f5f0 100%);
+  background: #FBFFE4;
+  padding: 1.5rem;
+  font-family: 'Inter', sans-serif;
+}
+.dark .analytics-container {
+  background: #181c20;
 }
 
-/* Enhanced Header Section */
-.section-header-card {
-  position: relative;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(61, 141, 122, 0.1);
-  border-radius: 24px;
-  padding: 2.5rem;
-  margin-bottom: 2rem;
-  overflow: hidden;
-  box-shadow: 
-    0 8px 32px rgba(61, 141, 122, 0.1),
-    0 0 0 1px rgba(255, 255, 255, 0.2);
-}
-
-.header-bg-decoration {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 200px;
-  height: 200px;
-  background: linear-gradient(135deg, rgba(61, 141, 122, 0.05), rgba(163, 209, 198, 0.05));
-  border-radius: 50%;
-  transform: translate(50%, -50%);
-  pointer-events: none;
-}
-
-.floating-shapes {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.shape {
-  position: absolute;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #3D8D7A, #A3D1C6);
-  opacity: 0.1;
-  animation: floatBackground 8s ease-in-out infinite;
-}
-
-.shape.shape-1 {
-  width: 80px;
-  height: 80px;
-  top: 20%;
-  left: 10%;
-  animation-delay: 0s;
-}
-
-.shape.shape-2 {
-  width: 120px;
-  height: 120px;
-  top: 60%;
-  right: 15%;
-  animation-delay: 2s;
-}
-
-.shape.shape-3 {
-  width: 60px;
-  height: 60px;
-  bottom: 20%;
-  left: 70%;
-  animation-delay: 4s;
-}
-
-@keyframes floatBackground {
-  0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.1; }
-  50% { transform: translateY(-30px) rotate(180deg); opacity: 0.15; }
-}
-
-.section-header-content {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 2rem;
-}
-
-.section-header-left {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  flex: 1;
-}
-
-.section-header-icon {
-  width: 60px;
-  height: 60px;
-  background: linear-gradient(135deg, #3D8D7A, #2c6b5c);
+/* Header */
+.header-card {
+  background: white;
   border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.dark .header-card {
+  background: #23272b;
+  border: 1px solid #20c997;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-icon {
+  width: 56px;
+  height: 56px;
+  background: #3D8D7A;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
 }
 
-.header-text {
-  flex: 1;
+.header-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+.dark .header-title {
+  color: #A3D1C6;
 }
 
-.section-header-title {
-  font-size: 2rem;
-  font-weight: 800;
-  color: #3D8D7A;
-  margin-bottom: 0.5rem;
-  letter-spacing: -0.5px;
-}
-
-.section-header-subtitle {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #10b981;
-  margin-bottom: 0.5rem;
-}
-
-.section-header-description {
-  font-size: 0.95rem;
+.header-subtitle {
+  font-size: 0.875rem;
   color: #6b7280;
-  font-weight: 500;
+}
+.dark .header-subtitle {
+  color: #A3D1C6;
 }
 
 .header-actions {
@@ -886,421 +791,235 @@ export default {
 }
 
 .section-filter {
-  padding: 0.875rem 1.25rem;
-  border: 2px solid rgba(61, 141, 122, 0.1);
-  border-radius: 16px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
+  padding: 0.75rem 1rem;
+  border: 1px solid #A3D1C6;
+  border-radius: 8px;
+  background: white;
   color: #3D8D7A;
-  min-width: 200px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
-}
-
-.section-filter:focus {
-  outline: none;
-  border-color: rgba(61, 141, 122, 0.3);
-  box-shadow: 0 0 0 4px rgba(61, 141, 122, 0.1);
-  transform: translateY(-1px);
-}
-
-.export-btn {
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: white;
-  border: none;
-  padding: 0.875rem 1.75rem;
-  border-radius: 16px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.95rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.export-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s;
-}
-
-.export-btn:hover::before {
-  left: 100%;
-}
-
-.export-btn:hover {
-  background: linear-gradient(135deg, #059669, #047857);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
-}
-
-.export-btn:hover svg {
-  transform: scale(1.1);
-}
-
-/* Enhanced Overview Cards */
-.overview-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2.5rem;
-}
-
-.overview-card {
-  position: relative;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(61, 141, 122, 0.1);
-  border-radius: 20px;
-  padding: 2rem 1.5rem;
-  overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 
-    0 4px 16px rgba(61, 141, 122, 0.05),
-    0 0 0 1px rgba(255, 255, 255, 0.1);
-}
-
-.overview-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 
-    0 12px 32px rgba(61, 141, 122, 0.15),
-    0 0 0 1px rgba(255, 255, 255, 0.2);
-  border-color: rgba(61, 141, 122, 0.2);
-}
-
-.overview-card.alert-card {
-  border-color: rgba(249, 115, 22, 0.2);
-  background: rgba(255, 255, 255, 0.98);
-}
-
-.overview-card.alert-card:hover {
-  border-color: rgba(249, 115, 22, 0.3);
-  box-shadow: 
-    0 12px 32px rgba(249, 115, 22, 0.15),
-    0 0 0 1px rgba(255, 255, 255, 0.2);
-}
-
-.card-floating-shapes {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.card-shape {
-  position: absolute;
-  border-radius: 50%;
-  opacity: 0.08;
-  animation: floatCard 4s ease-in-out infinite;
-}
-
-.card-shape.shape-1 {
-  width: 60px;
-  height: 60px;
-  background: linear-gradient(135deg, #10b981, #059669);
-  top: -20px;
-  right: -20px;
-  animation-delay: 0s;
-}
-
-.card-shape.shape-2 {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  bottom: -30px;
-  left: -30px;
-  animation-delay: 1s;
-}
-
-.card-shape.shape-3 {
-  width: 50px;
-  height: 50px;
-  background: linear-gradient(135deg, #10b981, #059669);
-  top: 50%;
-  right: -15px;
-  animation-delay: 2s;
-}
-
-.card-shape.shape-4 {
-  width: 70px;
-  height: 70px;
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  bottom: -25px;
-  right: 20%;
-  animation-delay: 1.5s;
-}
-
-@keyframes floatCard {
-  0%, 100% { transform: translateY(0px) scale(1); }
-  50% { transform: translateY(-10px) scale(1.1); }
-}
-
-.card-icon {
-  width: 56px;
-  height: 56px;
-  background: linear-gradient(135deg, #3D8D7A, #2c6b5c);
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  margin-bottom: 1.25rem;
-  position: relative;
-  z-index: 2;
-  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.25);
-  transition: all 0.3s ease;
-}
-
-.overview-card:hover .card-icon {
-  transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(61, 141, 122, 0.35);
-}
-
-.card-content {
-  position: relative;
-  z-index: 2;
-}
-
-.card-content h3 {
-  font-size: 2rem;
-  font-weight: 800;
-  color: #3D8D7A;
-  margin: 0 0 0.5rem 0;
-  letter-spacing: -0.5px;
-}
-
-.card-content p {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #374151;
-  margin: 0 0 0.75rem 0;
-}
-
-.trend {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  padding: 0.375rem 0.75rem;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-}
-
-.trend.positive {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
-  color: #059669;
-  border: 1px solid rgba(16, 185, 129, 0.2);
-}
-
-.trend.negative {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1));
-  color: #dc2626;
-  border: 1px solid rgba(239, 68, 68, 0.2);
-}
-
-.info {
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   font-weight: 500;
-  color: #6b7280;
-  background: rgba(107, 114, 128, 0.1);
-  padding: 0.375rem 0.75rem;
-  border-radius: 8px;
-  border: 1px solid rgba(107, 114, 128, 0.15);
+}
+.dark .section-filter {
+  background: #23272b;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
 }
 
-.warning {
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #d97706;
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
-  padding: 0.375rem 0.75rem;
-  border-radius: 8px;
-  border: 1px solid rgba(245, 158, 11, 0.2);
-}
+  .export-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #20c997;
+    color: #181c20;
+    border: 1px solid #A3D1C6;
+    padding: 0.5rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: none;
+  }
+  .dark .export-btn {
+    background: #20c997;
+    color: #181c20;
+    border: 1px solid #A3D1C6;
+  }
+  .export-btn:hover {
+    background: #A3D1C6;
+    color: #23272b;
+    border-color: #20c997;
+    transform: translateY(-1px);
+  }
+  .dark .export-btn:hover {
+    background: #A3D1C6;
+    color: #23272b;
+    border-color: #20c997;
+  }
+  .export-btn svg {
+    margin-right: 8px;
+    color: #3D8D7A;
+  }
 
-.export-btn:hover {
-  background: var(--accent-hover);
-}
-
-.overview-grid {
+/* Stats Grid */
+.stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
-.overview-card {
-  background: var(--card-background);
-  border-radius: 1rem;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px var(--shadow-light);
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
   display: flex;
   align-items: center;
   gap: 1rem;
-  border: 1px solid var(--card-border-color);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.dark .stat-card {
+  background: #23272b;
+  border: 1px solid #20c997;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
 
-.card-icon {
-  width: 4rem;
-  height: 4rem;
-  border-radius: 1rem;
-  background: linear-gradient(135deg, var(--accent-color) 0%, #764ba2 100%);
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 1.5rem;
+  flex-shrink: 0;
 }
 
-.card-content h3 {
-  font-size: 2rem;
-  font-weight: bold;
-  color: var(--primary-text-color);
-  margin: 0;
+.stat-average { background: #3D8D7A; }
+.stat-students { background: #B3D8A8; }
+.stat-assessments { background: #A3D1C6; }
+.stat-help { background: #f59e0b; }
+
+.stat-number {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1;
+}
+.dark .stat-number {
+  color: #A3D1C6;
 }
 
-.card-content p {
-  color: var(--secondary-text-color);
-  margin: 0.25rem 0 0.5rem 0;
-  font-size: 0.875rem;
+.stat-label {
+  font-size: 0.813rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
   font-weight: 500;
 }
-
-.trend {
-  font-size: 0.75rem;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
+.dark .stat-label {
+  color: #A3D1C6;
 }
 
-.trend.positive {
-  color: var(--success-color);
-}
-
-.trend.negative {
-  color: var(--error-color);
-}
-
-.info {
-  color: var(--secondary-text-color);
-  font-size: 0.75rem;
-}
-
-.warning {
-  color: #f59e0b;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.charts-section {
+/* Content Grid */
+.content-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: 2rem;
-  margin-bottom: 2rem;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
-.chart-container {
-  background: var(--card-background);
-  border-radius: 1rem;
+.content-card {
+  background: white;
+  border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 1px 3px var(--shadow-light);
-  border: 1px solid var(--card-border-color);
-}
-
-.chart-container h3 {
-  color: var(--primary-text-color);
-  font-size: 1.25rem;
-  margin: 0 0 1rem 0;
-}
-
-.chart-controls {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  flex-direction: column;
+}
+.dark .content-card {
+  background: #23272b;
+  border: 1px solid #20c997;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
 
-.period-btn {
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--border-color);
-  background: var(--card-background);
-  color: var(--secondary-text-color);
-  border-radius: 0.5rem;
-  cursor: pointer;
-  font-size: 0.875rem;
-  transition: all 0.2s;
-}
-
-.period-btn.active {
-  background: var(--accent-color);
-  color: white;
-  border-color: var(--accent-color);
-}
-
-.performance-table-section {
-  background: var(--card-background);
-  border-radius: 1rem;
-  box-shadow: 0 1px 3px var(--shadow-light);
-  border: 1px solid var(--card-border-color);
-  overflow: hidden;
-}
-
-.table-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
+.card-header {
+  margin-bottom: 1.25rem;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
-.table-header h3 {
-  color: var(--primary-text-color);
-  margin: 0;
+.card-header h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+.dark .card-header h3 {
+  color: #A3D1C6;
+}
+
+.card-desc {
+  font-size: 0.813rem;
+  color: #6b7280;
+}
+.dark .card-desc {
+  color: #A3D1C6;
 }
 
 .table-controls {
   display: flex;
   gap: 1rem;
   align-items: center;
+  flex-wrap: wrap;
 }
 
-.search-input {
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  background: var(--input-bg);
-  color: var(--primary-text-color);
-  width: 200px;
-}
-
+.search-input,
 .sort-select {
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--border-color);
-  background: var(--input-bg);
-  color: var(--primary-text-color);
-  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #A3D1C6;
+  border-radius: 6px;
+  background: white;
+  color: #3D8D7A;
+  font-size: 0.875rem;
+}
+.dark .search-input,
+.dark .sort-select {
+  background: #23272b;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
 }
 
+.chart-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.period-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #A3D1C6;
+  background: white;
+  color: #3D8D7A;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+.dark .period-btn {
+  background: #23272b;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
+}
+
+.period-btn.active,
+.period-btn:hover {
+  background: #3D8D7A;
+  color: white;
+  border-color: #3D8D7A;
+}
+
+.chart-placeholder {
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #FBFFE4;
+  border-radius: 8px;
+  color: #6b7280;
+}
+.dark .chart-placeholder {
+  background: #181c20;
+  color: #A3D1C6;
+}
+
+/* Table */
 .table-wrapper {
   overflow-x: auto;
+  margin-bottom: 1rem;
 }
 
 .performance-table {
@@ -1310,20 +1029,24 @@ export default {
 
 .performance-table th,
 .performance-table td {
-  padding: 1rem;
+  padding: 0.75rem;
   text-align: left;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #e5e7eb;
+}
+.dark .performance-table th,
+.dark .performance-table td {
+  border-bottom-color: #374151;
 }
 
 .performance-table th {
-  background: var(--bg-accent);
+  background: #FBFFE4;
   font-weight: 600;
-  color: var(--primary-text-color);
+  color: #3D8D7A;
   font-size: 0.875rem;
 }
-
-.student-cell {
-  width: 200px;
+.dark .performance-table th {
+  background: #181c20;
+  color: #A3D1C6;
 }
 
 .student-info {
@@ -1333,8 +1056,8 @@ export default {
 }
 
 .student-avatar {
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2rem;
+  height: 2rem;
   border-radius: 50%;
   overflow: hidden;
 }
@@ -1348,138 +1071,73 @@ export default {
 .avatar-placeholder {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, var(--accent-color) 0%, #764ba2 100%);
+  background: #3D8D7A;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
-  font-size: 0.875rem;
+  font-weight: 600;
+  font-size: 0.75rem;
 }
 
 .student-name {
   font-weight: 500;
-  color: var(--primary-text-color);
+  color: #1f2937;
+  font-size: 0.875rem;
+}
+.dark .student-name {
+  color: #A3D1C6;
 }
 
 .student-id {
   font-size: 0.75rem;
-  color: var(--secondary-text-color);
+  color: #6b7280;
+}
+.dark .student-id {
+  color: #9ca3af;
 }
 
-.score-cell {
-  min-width: 120px;
-}
-
-.score-value {
-  font-weight: 600;
-  color: var(--primary-text-color);
-}
-
-.score-bar {
-  width: 100%;
-  height: 4px;
-  background: var(--border-color);
-  border-radius: 2px;
-  margin-top: 0.25rem;
-  overflow: hidden;
-}
-
-.score-fill {
-  height: 100%;
-  border-radius: 2px;
-  transition: width 0.3s ease;
-}
-
-.score-fill.excellent {
-  background: var(--success-color);
-}
-
-.score-fill.good {
-  background: var(--accent-color);
-}
-
-.score-fill.satisfactory {
-  background: #f59e0b;
-}
-
-.score-fill.needs-improvement {
-  background: var(--error-color);
-}
-
-.score-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.score-badge.excellent {
-  background: var(--success-bg);
-  color: var(--success-color);
-}
-
-.score-badge.good {
-  background: var(--bg-accent);
-  color: var(--accent-color);
-}
-
-.score-badge.satisfactory {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.score-badge.needs-improvement {
-  background: var(--error-bg);
-  color: var(--error-color);
-}
-
-.improvement-badge {
+.score-badge,
+.improvement-badge,
+.status-badge {
   padding: 0.25rem 0.5rem;
-  border-radius: 0.375rem;
+  border-radius: 4px;
   font-size: 0.75rem;
   font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  width: fit-content;
 }
 
-.improvement-badge.positive {
-  background: var(--success-bg);
-  color: var(--success-color);
-}
-
-.improvement-badge.negative {
-  background: var(--error-bg);
-  color: var(--error-color);
-}
-
-.status-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
+.score-badge.excellent,
 .status-badge.excellent {
-  background: var(--success-bg);
-  color: var(--success-color);
+  background: #dcfce7;
+  color: #166534;
 }
 
+.score-badge.good,
 .status-badge.good {
-  background: var(--bg-accent);
-  color: var(--accent-color);
+  background: #dbeafe;
+  color: #1e40af;
 }
 
+.score-badge.satisfactory,
 .status-badge.satisfactory {
   background: #fef3c7;
   color: #92400e;
 }
 
+.score-badge.needs-improvement,
 .status-badge.warning {
-  background: var(--error-bg);
-  color: var(--error-color);
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.improvement-badge.positive {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.improvement-badge.negative {
+  background: #fee2e2;
+  color: #dc2626;
 }
 
 .actions-cell {
@@ -1490,7 +1148,7 @@ export default {
   width: 2rem;
   height: 2rem;
   border: none;
-  border-radius: 0.375rem;
+  border-radius: 4px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -1500,53 +1158,62 @@ export default {
 }
 
 .view-btn {
-  background: #f3f4f6;
-  color: #374151;
+  background: #FBFFE4;
+  color: #3D8D7A;
 }
 
 .view-btn:hover {
-  background: #e5e7eb;
+  background: #A3D1C6;
 }
 
 .edit-btn {
+  background: #B3D8A8;
+  color: #1f2937;
+}
+
+.edit-btn:hover {
+  background: #A3D1C6;
+}
+
+.warning-btn {
   background: #fef3c7;
   color: #d97706;
 }
 
-.edit-btn:hover {
+.warning-btn:hover {
   background: #fde68a;
 }
 
-.warning-btn {
-  background: #fecaca;
-  color: #dc2626;
-}
-
-.warning-btn:hover {
-  background: #fca5a5;
-}
-
 .pagination {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid #e5e7eb;
+  padding: 1rem 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-top: 1px solid #e5e7eb;
+}
+.dark .pagination {
+  border-top-color: #374151;
 }
 
 .page-btn {
   padding: 0.5rem 1rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid #A3D1C6;
   background: white;
-  color: #374151;
-  border-radius: 0.375rem;
+  color: #3D8D7A;
+  border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
   transition: all 0.2s;
 }
+.dark .page-btn {
+  background: #23272b;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
+}
 
 .page-btn:hover:not(:disabled) {
-  background: #f9fafb;
+  background: #A3D1C6;
+  color: white;
 }
 
 .page-btn:disabled {
@@ -1558,7 +1225,11 @@ export default {
   color: #6b7280;
   font-size: 0.875rem;
 }
+.dark .page-info {
+  color: #A3D1C6;
+}
 
+/* Modals */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -1574,11 +1245,15 @@ export default {
 
 .modal {
   background: white;
-  border-radius: 1rem;
+  border-radius: 12px;
   max-width: 500px;
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
+}
+.dark .modal {
+  background: #23272b;
+  border: 1px solid #20c997;
 }
 
 .student-detail-modal {
@@ -1592,10 +1267,16 @@ export default {
   justify-content: space-between;
   align-items: center;
 }
+.dark .modal-header {
+  border-bottom-color: #374151;
+}
 
 .modal-header h3 {
   margin: 0;
   color: #1f2937;
+}
+.dark .modal-header h3 {
+  color: #A3D1C6;
 }
 
 .close-btn {
@@ -1609,12 +1290,18 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0.375rem;
+  border-radius: 6px;
   transition: all 0.2s;
+}
+.dark .close-btn {
+  color: #A3D1C6;
 }
 
 .close-btn:hover {
   background: #f3f4f6;
+}
+.dark .close-btn:hover {
+  background: #374151;
 }
 
 .modal-content {
@@ -1631,15 +1318,21 @@ export default {
 .summary-stat {
   text-align: center;
   padding: 1rem;
-  background: #f9fafb;
-  border-radius: 0.5rem;
+  background: #FBFFE4;
+  border-radius: 8px;
+}
+.dark .summary-stat {
+  background: #181c20;
 }
 
 .summary-stat h4 {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #1f2937;
+  color: #3D8D7A;
   margin: 0;
+}
+.dark .summary-stat h4 {
+  color: #A3D1C6;
 }
 
 .summary-stat p {
@@ -1647,10 +1340,16 @@ export default {
   font-size: 0.875rem;
   margin: 0.25rem 0 0 0;
 }
+.dark .summary-stat p {
+  color: #A3D1C6;
+}
 
 .assessment-history h4 {
   color: #1f2937;
   margin: 0 0 1rem 0;
+}
+.dark .assessment-history h4 {
+  color: #A3D1C6;
 }
 
 .history-list {
@@ -1664,8 +1363,11 @@ export default {
   align-items: center;
   padding: 0.75rem;
   border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
+  border-radius: 8px;
   margin-bottom: 0.5rem;
+}
+.dark .history-item {
+  border-color: #374151;
 }
 
 .assessment-info h5 {
@@ -1673,11 +1375,17 @@ export default {
   color: #1f2937;
   margin: 0;
 }
+.dark .assessment-info h5 {
+  color: #A3D1C6;
+}
 
 .assessment-info p {
   color: #6b7280;
   font-size: 0.75rem;
   margin: 0.25rem 0 0 0;
+}
+.dark .assessment-info p {
+  color: #A3D1C6;
 }
 
 .remediation-notes {
@@ -1688,22 +1396,32 @@ export default {
   color: #1f2937;
   margin: 0 0 1rem 0;
 }
+.dark .remediation-notes h4 {
+  color: #A3D1C6;
+}
 
 .notes-textarea {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
+  border: 1px solid #A3D1C6;
+  border-radius: 8px;
   resize: vertical;
   font-family: inherit;
+  background: white;
+  color: #1f2937;
+}
+.dark .notes-textarea {
+  background: #23272b;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
 }
 
 .save-notes-btn {
-  background: #10b981;
+  background: #3D8D7A;
   color: white;
   border: none;
   padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
+  border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
   margin-top: 0.5rem;
@@ -1711,7 +1429,7 @@ export default {
 }
 
 .save-notes-btn:hover {
-  background: #059669;
+  background: #2c6b5c;
 }
 
 .modal-form {
@@ -1728,23 +1446,34 @@ export default {
   color: #374151;
   margin-bottom: 0.5rem;
 }
+.dark .form-group label {
+  color: #A3D1C6;
+}
 
 .form-group input,
 .form-group select,
 .form-group textarea {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
+  border: 1px solid #A3D1C6;
+  border-radius: 8px;
   font-size: 0.875rem;
+  background: white;
+  color: #1f2937;
+}
+.dark .form-group input,
+.dark .form-group select,
+.dark .form-group textarea {
+  background: #23272b;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
 }
 
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #3D8D7A;
 }
 
 .modal-actions {
@@ -1756,25 +1485,33 @@ export default {
 
 .cancel-btn {
   padding: 0.75rem 1.5rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid #A3D1C6;
   background: white;
-  color: #374151;
-  border-radius: 0.5rem;
+  color: #3D8D7A;
+  border-radius: 8px;
   cursor: pointer;
   font-weight: 500;
   transition: all 0.2s;
 }
+.dark .cancel-btn {
+  background: #23272b;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
+}
 
 .cancel-btn:hover {
-  background: #f9fafb;
+  background: #FBFFE4;
+}
+.dark .cancel-btn:hover {
+  background: #181c20;
 }
 
 .submit-btn {
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #3D8D7A;
   color: white;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: 8px;
   cursor: pointer;
   font-weight: 500;
   transition: all 0.2s;
@@ -1786,11 +1523,12 @@ export default {
 }
 
 .submit-btn:hover:not(:disabled) {
+  background: #2c6b5c;
   transform: translateY(-1px);
 }
 
 @media (max-width: 1024px) {
-  .charts-section {
+  .content-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -1800,9 +1538,8 @@ export default {
     padding: 1rem;
   }
   
-  .header-section {
+  .header-content {
     flex-direction: column;
-    gap: 1rem;
     align-items: stretch;
   }
   
@@ -1811,13 +1548,12 @@ export default {
     gap: 0.5rem;
   }
   
-  .overview-grid {
+  .stats-grid {
     grid-template-columns: 1fr;
   }
   
-  .table-header {
+  .card-header {
     flex-direction: column;
-    gap: 1rem;
     align-items: stretch;
   }
   
@@ -1837,11 +1573,6 @@ export default {
   .performance-table th,
   .performance-table td {
     padding: 0.5rem;
-  }
-  
-  .student-cell {
-    width: auto;
-    min-width: 150px;
   }
   
   .student-summary {

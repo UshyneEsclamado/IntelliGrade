@@ -14,11 +14,11 @@
             <p class="header-subtitle">{{ subject?.name }} - {{ section?.name }}</p>
           </div>
         </div>
-        <button @click="goBack" class="back-btn">
+        <button @click="goBack" class="back-btn back-btn-black">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
           </svg>
-          Back to Students
+          Back to Sections
         </button>
       </div>
     </div>
@@ -1143,4 +1143,9 @@ onMounted(async () => {
     margin: 1rem;
   }
 }
+  .back-btn-black {
+    color: #111 !important;
+    border-color: #A3D1C6;
+    background: none;
+  }
 </style>
