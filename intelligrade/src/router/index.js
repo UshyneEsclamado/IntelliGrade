@@ -207,6 +207,17 @@ const routes = [
     path: '/student-dashboard',
     redirect: '/student/dashboard'
   },
+  // Forgot/Reset Password routes
+  {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: () => import('../views/ForgotPassword.vue')
+  },
+  {
+    path: '/reset-password',
+    name: 'ResetPassword',
+    component: () => import('../views/ResetPassword.vue')
+  },
   // Catch-all redirect to Intro
   {
     path: '/:pathMatch(.*)*',
