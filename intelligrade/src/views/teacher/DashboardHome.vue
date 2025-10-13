@@ -149,6 +149,62 @@
           </button>
         </div>
       </div>
+
+      <!-- Quick Actions Grid -->
+      <div class="quick-actions">
+        <h2>Quick Actions</h2>
+        <div class="actions-grid">
+          <router-link to="/teacher/quizzes/create" class="action-card">
+            <div class="action-icon">
+              <i class="fas fa-plus-circle"></i>
+            </div>
+            <div class="action-content">
+              <h3>Create Quiz</h3>
+              <p>Create a new quiz for your students</p>
+            </div>
+          </router-link>
+
+          <router-link to="/teacher/gradebook" class="action-card">
+            <div class="action-icon">
+              <i class="fas fa-clipboard-check"></i>
+            </div>
+            <div class="action-content">
+              <h3>Gradebook</h3>
+              <p>Review and grade quiz submissions</p>
+            </div>
+          </router-link>
+
+          <router-link to="/teacher/students" class="action-card">
+            <div class="action-icon">
+              <i class="fas fa-users"></i>
+            </div>
+            <div class="action-content">
+              <h3>Manage Students</h3>
+              <p>View and manage your students</p>
+            </div>
+          </router-link>
+
+          <router-link to="/teacher/subjects" class="action-card">
+            <div class="action-icon">
+              <i class="fas fa-book"></i>
+            </div>
+            <div class="action-content">
+              <h3>View Subjects</h3>
+              <p>Manage your teaching subjects</p>
+            </div>
+          </router-link>
+
+          <router-link to="/teacher/schedule" class="action-card">
+            <div class="action-icon">
+              <i class="fas fa-calendar"></i>
+            </div>
+            <div class="action-content">
+              <h3>Schedule</h3>
+              <p>View your teaching schedule</p>
+            </div>
+          </router-link>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -1010,6 +1066,84 @@ export default {
   color: #20c997;
 }
 .dark .quick-link svg {
+  color: #A3D1C6;
+}
+
+/* Quick Actions */
+.quick-actions {
+  margin-top: 1.5rem;
+}
+
+.actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.action-card {
+  background: #FBFFE4;
+  border: 1px solid #A3D1C6;
+  border-radius: 10px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  transition: all 0.2s;
+  text-decoration: none;
+  color: #1f2937;
+  font-weight: 500;
+}
+.dark .action-card {
+  background: #23272b;
+  border-color: #20c997;
+  color: #A3D1C6;
+}
+
+.action-card:hover {
+  background: #20c997;
+  color: #181c20;
+  border-color: #A3D1C6;
+  transform: translateY(-2px);
+}
+.dark .action-card:hover {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
+}
+
+.action-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  margin-bottom: 0.5rem;
+}
+
+.action-icon i {
+  font-size: 1.5rem;
+}
+.dark .action-icon i {
+  color: #A3D1C6;
+}
+
+.action-content h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+.dark .action-content h3 {
+  color: #A3D1C6;
+}
+
+.action-content p {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+.dark .action-content p {
   color: #A3D1C6;
 }
 
