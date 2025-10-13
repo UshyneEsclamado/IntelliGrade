@@ -31,7 +31,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
             </svg>
-            Back to Section
+            Back to Subjects
           </button>
         </div>
       </div>
@@ -65,18 +65,36 @@
         <div class="landing-card">
           <div class="landing-icon">
             <div class="icon-bg">
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor">
-                <rect x="3" y="3" width="18" height="18" rx="4" fill="currentColor"/>
-                <rect x="7" y="7" width="2" height="8" rx="1" fill="#FBFFE4"/>
-                <rect x="11" y="10" width="2" height="5" rx="1" fill="#B3D8A8"/>
-                <rect x="15" y="13" width="2" height="2" rx="1" fill="#A3D1C6"/>
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
               </svg>
             </div>
+            <div class="icon-glow"></div>
           </div>
-          <h2 class="landing-title">Create a New Quiz</h2>
-          <p class="landing-desc">Design an engaging quiz experience for your students with our intuitive AI-powered quiz builder</p>
+          <h2>Create a New Quiz</h2>
+          <p>Design an engaging quiz experience for your students with our intuitive AI-powered quiz builder</p>
+          <div class="features-preview">
+            <div class="feature-item">
+              <span class="feature-icon">🎯</span>
+              <span>Smart Questions</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-icon">⚡</span>
+              <span>Instant Grading</span>
+            </div>
+            <div class="feature-item">
+              <span class="feature-icon">📊</span>
+              <span>Analytics</span>
+            </div>
+          </div>
           <button @click="currentStep = 'details'" class="create-quiz-btn">
-            Start Creating
+            <span class="btn-content">
+              <span>Start Creating</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+              </svg>
+            </span>
+            <div class="btn-bg"></div>
           </button>
         </div>
       </div>
@@ -98,18 +116,27 @@
         <div class="form-section">
           <div class="form-grid">
             <div class="form-group">
-              <label class="form-label">Quiz Title *</label>
+              <label class="form-label">
+                <span class="label-icon">📝</span>
+                Quiz Title *
+              </label>
               <input v-model="quiz.title" type="text" placeholder="e.g., Biology Chapter 5 Quiz" class="form-input enhanced-input" />
             </div>
 
             <div class="form-group">
-              <label class="form-label">Number of Questions *</label>
+              <label class="form-label">
+                <span class="label-icon">🔢</span>
+                Number of Questions *
+              </label>
               <input v-model.number="quiz.numberOfQuestions" type="number" min="1" max="50" placeholder="e.g., 10" class="form-input enhanced-input" />
             </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label">Description / Instructions</label>
+            <label class="form-label">
+              <span class="label-icon">📋</span>
+              Description / Instructions
+            </label>
             <textarea v-model="quiz.description" rows="4" placeholder="Add instructions or context for this quiz..." class="form-input form-textarea enhanced-input"></textarea>
           </div>
 
@@ -130,43 +157,67 @@
         </div>
       </div>
 
-      <!-- Simple Questions Section -->
+      <!-- Add Questions with Enhanced Design -->
       <div v-if="currentStep === 'questions'" class="content-card slide-up">
-        <div class="card-header">
-          <h3>Build Your Questions</h3>
-          <p class="card-desc">{{ quiz.questions.length }} / {{ quiz.numberOfQuestions }} questions added</p>
+        <div class="section-header">
+          <div class="section-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <div class="section-content">
+            <h2 class="section-title">Build Your Questions</h2>
+            <div class="question-counter">
+              <span class="counter-icon">🎯</span>
+              {{ quiz.questions.length }} / {{ quiz.numberOfQuestions }}
+            </div>
+          </div>
         </div>
 
         <!-- Question Cards with Enhanced Design -->
         <div class="questions-container">
-          <div v-for="(question, index) in quiz.questions" :key="index" class="question-card">
+          <div v-for="(question, index) in quiz.questions" :key="index" class="question-card enhanced-card">
             <div class="question-header">
-              <h4>Question {{ index + 1 }}</h4>
-              <button @click="removeQuestion(index)" class="remove-btn">×</button>
+              <div class="question-number">
+                <div class="question-badge">{{ index + 1 }}</div>
+                <h3 class="question-title">Question {{ index + 1 }}</h3>
+              </div>
+              <button @click="removeQuestion(index)" class="btn btn-danger delete-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+              </button>
             </div>
 
-            <div class="question-body">
-              <!-- Question Type -->
+            <div class="question-content">
               <div class="form-group">
-                <label class="form-label">Type</label>
-                <select v-model="question.type" class="form-select">
-                  <option value="multiple_choice">Multiple Choice</option>
-                  <option value="true_false">True/False</option>
-                  <option value="fill_blank">Fill in the Blank</option>
+                <label class="form-label">
+                  <span class="label-icon">🔧</span>
+                  Question Type
+                </label>
+                <select v-model="question.type" class="form-input form-select enhanced-input">
+                  <option value="multiple_choice">📝 Multiple Choice</option>
+                  <option value="true_false">✅ True/False</option>
+                  <option value="fill_blank">📝 Fill in the Blanks</option>
                 </select>
               </div>
 
-              <!-- Question Text -->
               <div class="form-group">
-                <label class="form-label">Question</label>
-                <textarea v-model="question.text" rows="3" placeholder="Enter your question here..." class="form-input"></textarea>
+                <label class="form-label">
+                  <span class="label-icon">❓</span>
+                  Question Text
+                </label>
+                <textarea v-model="question.text" rows="3" placeholder="Enter your question here..." class="form-input form-textarea enhanced-input"></textarea>
               </div>
 
-              <!-- Multiple Choice Options -->
+              <!-- Multiple Choice Options with Enhanced Design -->
               <div v-if="question.type === 'multiple_choice'" class="option-group">
-                <label class="form-label">Answer Options</label>
+                <label class="form-label">
+                  <span class="label-icon">📋</span>
+                  Answer Options
+                </label>
                 <div class="options-container">
-                  <div v-for="(option, optIndex) in question.options" :key="optIndex" class="option-item">
+                  <div v-for="(option, optIndex) in question.options" :key="optIndex" class="option-item enhanced-option">
                     <input 
                       type="radio" 
                       :name="'correct-' + index" 
@@ -174,38 +225,59 @@
                       @change="question.correctAnswer = optIndex" 
                       class="option-radio"
                     />
-                    <span class="option-letter">{{ String.fromCharCode(65 + optIndex) }}</span>
+                    <div class="option-letter">{{ String.fromCharCode(65 + optIndex) }}</div>
                     <input 
                       v-model="question.options[optIndex]" 
                       type="text" 
                       :placeholder="'Option ' + String.fromCharCode(65 + optIndex)" 
                       class="option-input"
                     />
-                    <button v-if="question.options.length > 2" @click="removeOption(index, optIndex)" class="remove-option-btn">×</button>
+                    <button v-if="question.options.length > 2" @click="removeOption(index, optIndex)" class="remove-option-btn">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M6 18L18 6M6 6l12 12"/>
+                      </svg>
+                    </button>
                   </div>
                 </div>
-                <button @click="addOption(index)" class="btn-add">+ Add Option</button>
+                <button @click="addOption(index)" class="btn btn-success add-option-btn">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                  </svg>
+                  Add Option
+                </button>
               </div>
 
-              <!-- True/False Options -->
+              <!-- True/False Options with Enhanced Design -->
               <div v-if="question.type === 'true_false'" class="option-group">
-                <label class="form-label">Correct Answer</label>
+                <label class="form-label">
+                  <span class="label-icon">✅</span>
+                  Correct Answer
+                </label>
                 <div class="tf-options">
                   <label class="tf-option" :class="question.correctAnswer === 'true' ? 'selected' : ''">
-                    <input type="radio" v-model="question.correctAnswer" value="true" />
-                    <span>True</span>
+                    <input type="radio" v-model="question.correctAnswer" value="true" class="hidden" />
+                    <div class="tf-content">
+                      <div class="tf-icon">✅</div>
+                      <div class="tf-label">True</div>
+                    </div>
                   </label>
                   <label class="tf-option" :class="question.correctAnswer === 'false' ? 'selected' : ''">
-                    <input type="radio" v-model="question.correctAnswer" value="false" />
-                    <span>False</span>
+                    <input type="radio" v-model="question.correctAnswer" value="false" class="hidden" />
+                    <div class="tf-content">
+                      <div class="tf-icon">❌</div>
+                      <div class="tf-label">False</div>
+                    </div>
                   </label>
                 </div>
               </div>
 
-              <!-- Fill in the Blank -->
+              <!-- Fill in the Blanks with Enhanced Design -->
               <div v-if="question.type === 'fill_blank'" class="form-group">
-                <label class="form-label">Correct Answer</label>
-                <input v-model="question.correctAnswer" type="text" placeholder="Enter the correct answer..." class="form-input" />
+                <label class="form-label">
+                  <span class="label-icon">✏️</span>
+                  Correct Answer (exact match)
+                </label>
+                <input v-model="question.correctAnswer" type="text" placeholder="Enter the correct answer..." class="form-input enhanced-input" />
               </div>
             </div>
           </div>
@@ -213,9 +285,13 @@
           <!-- Add Question Card -->
           <div v-if="quiz.questions.length < quiz.numberOfQuestions" class="add-question-card" @click="addQuestion">
             <div class="add-question-content">
-              <div class="add-question-icon">+</div>
-              <h4>Add Question {{ quiz.questions.length + 1 }}</h4>
-              <p>Click to add a new question</p>
+              <div class="add-question-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
+              </div>
+              <h3>Add Another Question</h3>
+              <p>Click to create question {{ quiz.questions.length + 1 }}</p>
             </div>
           </div>
         </div>
@@ -237,20 +313,30 @@
         </div>
       </div>
 
-      <!-- Simple Quiz Settings -->
+      <!-- Quiz Settings with Enhanced Design -->
       <div v-if="currentStep === 'settings'" class="content-card slide-up">
-        <div class="card-header">
-          <h3>Quiz Settings</h3>
-          <p class="card-desc">Configure how your quiz will work</p>
+        <div class="section-header">
+          <div class="section-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            </svg>
+          </div>
+          <div class="section-content">
+            <h2 class="section-title">Quiz Settings</h2>
+            <p class="section-subtitle">Configure how your quiz will work</p>
+          </div>
         </div>
 
-        <div class="settings-container">
+        <div class="settings-grid">
           <!-- Time Limit Setting -->
-          <div class="setting-group">
+          <div class="setting-card enhanced-setting">
             <div class="setting-header">
-              <div>
-                <h4>Time Limit</h4>
-                <p>Set a time constraint for this quiz</p>
+              <div class="setting-info">
+                <span class="setting-emoji">⏱️</span>
+                <div class="setting-details">
+                  <h3>Time Limit</h3>
+                  <p>Set a time constraint for this quiz</p>
+                </div>
               </div>
               <label class="toggle-switch">
                 <input v-model="quiz.settings.hasTimeLimit" type="checkbox" />
@@ -259,44 +345,53 @@
             </div>
             <div v-if="quiz.settings.hasTimeLimit" class="setting-content">
               <div class="time-input-group">
-                <input v-model.number="quiz.settings.timeLimit" type="number" min="1" max="180" placeholder="30" class="form-input" />
+                <input v-model.number="quiz.settings.timeLimit" type="number" min="1" max="180" placeholder="30" class="form-input time-input" />
                 <span class="time-unit">minutes</span>
               </div>
             </div>
           </div>
 
           <!-- Attempts Setting -->
-          <div class="setting-group">
+          <div class="setting-card enhanced-setting">
             <div class="setting-header">
-              <div>
-                <h4>Attempts Allowed</h4>
-                <p>How many times can students retake?</p>
+              <div class="setting-info">
+                <span class="setting-emoji">🔁</span>
+                <div class="setting-details">
+                  <h3>Attempts Allowed</h3>
+                  <p>How many times can students retake?</p>
+                </div>
               </div>
             </div>
             <div class="setting-content">
               <div class="attempts-options">
                 <label class="attempt-option" :class="quiz.settings.attemptsAllowed === 1 ? 'selected' : ''">
-                  <input type="radio" v-model.number="quiz.settings.attemptsAllowed" :value="1" />
-                  <span>Once</span>
+                  <input type="radio" v-model.number="quiz.settings.attemptsAllowed" :value="1" class="hidden" />
+                  <span class="attempt-number">1</span>
+                  <span class="attempt-label">Once</span>
                 </label>
                 <label class="attempt-option" :class="quiz.settings.attemptsAllowed === 2 ? 'selected' : ''">
-                  <input type="radio" v-model.number="quiz.settings.attemptsAllowed" :value="2" />
-                  <span>Twice</span>
+                  <input type="radio" v-model.number="quiz.settings.attemptsAllowed" :value="2" class="hidden" />
+                  <span class="attempt-number">2</span>
+                  <span class="attempt-label">Twice</span>
                 </label>
                 <label class="attempt-option" :class="quiz.settings.attemptsAllowed === 999 ? 'selected' : ''">
-                  <input type="radio" v-model.number="quiz.settings.attemptsAllowed" :value="999" />
-                  <span>Unlimited</span>
+                  <input type="radio" v-model.number="quiz.settings.attemptsAllowed" :value="999" class="hidden" />
+                  <span class="attempt-number">∞</span>
+                  <span class="attempt-label">Unlimited</span>
                 </label>
               </div>
             </div>
           </div>
 
           <!-- Shuffle Setting -->
-          <div class="setting-group">
+          <div class="setting-card enhanced-setting">
             <div class="setting-header">
-              <div>
-                <h4>Shuffle Questions</h4>
-                <p>Randomize question and answer order</p>
+              <div class="setting-info">
+                <span class="setting-emoji">🔀</span>
+                <div class="setting-details">
+                  <h3>Shuffle Questions</h3>
+                  <p>Randomize question and answer order</p>
+                </div>
               </div>
               <label class="toggle-switch">
                 <input v-model="quiz.settings.shuffle" type="checkbox" />
@@ -306,22 +401,31 @@
           </div>
 
           <!-- Schedule Setting -->
-          <div class="setting-group">
+          <div class="setting-card enhanced-setting schedule-card">
             <div class="setting-header">
-              <div>
-                <h4>Schedule</h4>
-                <p>Set when students can access this quiz</p>
+              <div class="setting-info">
+                <span class="setting-emoji">📅</span>
+                <div class="setting-details">
+                  <h3>Schedule</h3>
+                  <p>Set when students can access this quiz</p>
+                </div>
               </div>
             </div>
             <div class="setting-content">
               <div class="schedule-grid">
                 <div class="form-group">
-                  <label class="form-label">Start Date & Time</label>
-                  <input v-model="quiz.settings.startDate" type="datetime-local" class="form-input" />
+                  <label class="form-label-small">
+                    <span class="label-icon">🕐</span>
+                    Start Date & Time
+                  </label>
+                  <input v-model="quiz.settings.startDate" type="datetime-local" class="form-input enhanced-input" />
                 </div>
                 <div class="form-group">
-                  <label class="form-label">End Date & Time</label>
-                  <input v-model="quiz.settings.endDate" type="datetime-local" class="form-input" />
+                  <label class="form-label-small">
+                    <span class="label-icon">🕕</span>
+                    End Date & Time
+                  </label>
+                  <input v-model="quiz.settings.endDate" type="datetime-local" class="form-input enhanced-input" />
                 </div>
               </div>
             </div>
@@ -344,80 +448,81 @@
         </div>
       </div>
 
-      <!-- Simple Preview Section -->
+      <!-- Preview with Enhanced Design -->
       <div v-if="currentStep === 'preview'" class="content-card slide-up">
-        <div class="card-header">
-          <h3>Quiz Preview</h3>
-          <p class="card-desc">Review your quiz before publishing</p>
-        </div>
-
-        <!-- Quiz Info -->
-        <div class="quiz-preview-info">
-          <h4 class="preview-title">{{ quiz.title }}</h4>
+        <div class="preview-header">
+          <div class="preview-badge">
+            <span class="badge-icon">👁️</span>
+            PREVIEW MODE
+          </div>
+          <h2 class="preview-title">{{ quiz.title }}</h2>
           <p class="preview-description">{{ quiz.description }}</p>
-          
           <div class="preview-stats">
-            <div class="stat-item">
-              <span class="stat-label">Time Limit:</span>
-              <span class="stat-value">
-                <span v-if="quiz.settings.hasTimeLimit">{{ quiz.settings.timeLimit }} minutes</span>
+            <div class="stat-card">
+              <div class="stat-icon">⏱️</div>
+              <div class="stat-value">
+                <span v-if="quiz.settings.hasTimeLimit">{{ quiz.settings.timeLimit }} min</span>
                 <span v-else>No limit</span>
-              </span>
+              </div>
+              <div class="stat-label">Time</div>
             </div>
-            <div class="stat-item">
-              <span class="stat-label">Questions:</span>
-              <span class="stat-value">{{ quiz.questions.length }}</span>
+            <div class="stat-card">
+              <div class="stat-icon">📝</div>
+              <div class="stat-value">{{ quiz.questions.length }}</div>
+              <div class="stat-label">Questions</div>
             </div>
-            <div class="stat-item">
-              <span class="stat-label">Attempts:</span>
-              <span class="stat-value">{{ quiz.settings.attemptsAllowed === 999 ? 'Unlimited' : quiz.settings.attemptsAllowed }}</span>
+            <div class="stat-card">
+              <div class="stat-icon">🔁</div>
+              <div class="stat-value">{{ quiz.settings.attemptsAllowed === 999 ? '∞' : quiz.settings.attemptsAllowed }}</div>
+              <div class="stat-label">Attempts</div>
             </div>
           </div>
         </div>
 
-        <!-- Questions Preview -->
         <div class="preview-questions">
-          <div v-for="(question, index) in quiz.questions" :key="index" class="preview-question">
-            <div class="question-preview-header">
-              <span class="question-number">{{ index + 1 }}</span>
-              <span class="question-type-tag" :class="question.type">
-                <span v-if="question.type === 'multiple_choice'">MCQ</span>
-                <span v-else-if="question.type === 'true_false'">T/F</span>
-                <span v-else>Fill</span>
-              </span>
+          <div v-for="(question, index) in quiz.questions" :key="index" class="preview-card enhanced-preview">
+            <div class="preview-question-header">
+              <div class="preview-question-number">{{ index + 1 }}</div>
+              <div class="question-type-badge" :class="question.type">
+                <span v-if="question.type === 'multiple_choice'">📝 MCQ</span>
+                <span v-else-if="question.type === 'true_false'">✅ T/F</span>
+                <span v-else>✏️ Fill</span>
+              </div>
             </div>
-            
-            <h5 class="question-preview-text">{{ question.text }}</h5>
+            <h3 class="preview-question-text">{{ question.text }}</h3>
             
             <!-- MCQ Preview -->
             <div v-if="question.type === 'multiple_choice'" class="preview-options">
               <div v-for="(option, optIndex) in question.options" :key="optIndex" 
-                   class="preview-option" :class="{ 'correct': question.correctAnswer === optIndex }">
-                <span class="option-letter">{{ String.fromCharCode(65 + optIndex) }}</span>
+                   :class="['preview-option', question.correctAnswer === optIndex ? 'correct-option' : '']">
+                <div class="option-marker">{{ String.fromCharCode(65 + optIndex) }}</div>
                 <span class="option-text">{{ option }}</span>
-                <span v-if="question.correctAnswer === optIndex" class="correct-indicator">✓</span>
+                <span v-if="question.correctAnswer === optIndex" class="correct-mark">✓</span>
               </div>
             </div>
 
             <!-- True/False Preview -->
             <div v-if="question.type === 'true_false'" class="preview-options">
-              <div class="preview-option" :class="{ 'correct': question.correctAnswer === 'true' }">
-                <span class="option-letter">T</span>
+              <div :class="['preview-option', question.correctAnswer === 'true' ? 'correct-option' : '']">
+                <div class="option-marker">✅</div>
                 <span class="option-text">True</span>
-                <span v-if="question.correctAnswer === 'true'" class="correct-indicator">✓</span>
+                <span v-if="question.correctAnswer === 'true'" class="correct-mark">✓</span>
               </div>
-              <div class="preview-option" :class="{ 'correct': question.correctAnswer === 'false' }">
-                <span class="option-letter">F</span>
+              <div :class="['preview-option', question.correctAnswer === 'false' ? 'correct-option' : '']">
+                <div class="option-marker">❌</div>
                 <span class="option-text">False</span>
-                <span v-if="question.correctAnswer === 'false'" class="correct-indicator">✓</span>
+                <span v-if="question.correctAnswer === 'false'" class="correct-mark">✓</span>
               </div>
             </div>
 
             <!-- Fill Blank Preview -->
             <div v-if="question.type === 'fill_blank'" class="preview-fill-blank">
-              <div class="fill-answer-display">
-                <span class="answer-label">Correct Answer:</span>
-                <span class="answer-text">{{ question.correctAnswer }}</span>
+              <div class="fill-blank-input">
+                <input type="text" disabled placeholder="Student answer here..." class="form-input" />
+              </div>
+              <div class="correct-answer-display">
+                <span class="correct-label">✓ Correct Answer:</span>
+                <span class="correct-text">{{ question.correctAnswer }}</span>
               </div>
             </div>
           </div>
@@ -443,37 +548,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Custom Confirmation Modal -->
-    <div v-if="showConfirmModal" class="modal-overlay" @click="showConfirmModal = false">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h3>Publish Quiz</h3>
-          <button @click="showConfirmModal = false" class="modal-close">×</button>
-        </div>
-        
-        <div class="modal-body">
-          <div class="modal-icon">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-            </svg>
-          </div>
-          
-          <div class="modal-text">
-            <p class="modal-title">Are you sure you want to publish "{{ quiz.title }}"?</p>
-            <p class="modal-description">Students will be able to see and take this quiz immediately.</p>
-          </div>
-        </div>
-        
-        <div class="modal-actions">
-          <button @click="showConfirmModal = false" class="btn btn-secondary">Cancel</button>
-          <button @click="confirmPublish" :disabled="isPublishing" class="btn btn-primary">
-            <span v-if="isPublishing">Publishing...</span>
-            <span v-else>OK</span>
-          </button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -491,7 +565,6 @@ export default {
     const currentStep = ref('landing');
     const steps = ['Details', 'Questions', 'Settings', 'Preview'];
     const isPublishing = ref(false);
-    const showConfirmModal = ref(false);
     
     const teacherInfo = ref({
       full_name: 'Loading...',
@@ -634,21 +707,13 @@ export default {
     };
 
     const goBack = () => {
-      // Go back to MySubjects.vue and set viewMode to 'section-detail' with correct params
-      router.push({
-        name: 'MySubjects',
-        params: {
-          subjectId: section.value.id ? subject.value.id : '',
-          sectionId: section.value.id ? section.value.id : ''
-        },
-        query: {
-          viewMode: 'section-detail',
-          subjectName: subject.value.name,
-          sectionName: section.value.name,
-          gradeLevel: route.query.gradeLevel || '',
-          sectionCode: route.query.sectionCode || ''
+      if (currentStep.value === 'landing') {
+        router.back();
+      } else {
+        if (confirm('Are you sure you want to go back? Unsaved changes will be lost.')) {
+          router.back();
         }
-      });
+      }
     };
 
     const getStepIndex = (step) => {
@@ -797,11 +862,10 @@ export default {
         return;
       }
 
-      showConfirmModal.value = true;
-    };
+      if (!confirm(`Are you sure you want to publish "${quiz.value.title}"?\n\nStudents will be able to see and take this quiz immediately.`)) {
+        return;
+      }
 
-    const confirmPublish = async () => {
-      showConfirmModal.value = false;
       isPublishing.value = true;
 
       try {
@@ -840,7 +904,7 @@ export default {
 
         console.log('Inserting quiz:', quizData);
 
-        // Insert quiz into database
+        // Insert quiz into database (quiz_code will be auto-generated by trigger)
         const { data: newQuiz, error: quizError } = await supabase
           .from('quizzes')
           .insert([quizData])
@@ -857,6 +921,7 @@ export default {
         }
 
         console.log('Quiz created with ID:', newQuiz.id);
+        console.log('Quiz Code generated:', newQuiz.quiz_code); // NEW: Log the quiz code
 
         // Prepare questions data
         const questionsData = quiz.value.questions.map((q, index) => ({
@@ -935,14 +1000,26 @@ export default {
 
         console.log('All questions, options, and answers created successfully');
         
-        // Success!
-        alert('✅ Quiz published successfully!\n\nStudents can now see and take this quiz.\n\nRedirecting to My Subjects...');
+        // Success! Show quiz code in alert
+        alert(`✅ Quiz published successfully!\n\n📝 Quiz Title: ${newQuiz.title}\n🔑 Quiz Code: ${newQuiz.quiz_code}\n\nStudents can now see and take this quiz.\n\nRedirecting to View Quizzes...`);
         
         // Small delay
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Navigate back
-        await router.push('/teacher/subjects');
+        // Navigate to View Quizzes page
+        await router.push({
+          name: 'ViewQuizzes',
+          params: {
+            subjectId: subject.value.id,
+            sectionId: section.value.id
+          },
+          query: {
+            subjectName: subject.value.name,
+            sectionName: section.value.name,
+            gradeLevel: route.query.gradeLevel,
+            sectionCode: route.query.sectionCode
+          }
+        });
         
       } catch (error) {
         console.error('Error publishing quiz:', error);
@@ -1009,7 +1086,6 @@ export default {
       section,
       quiz,
       isPublishing,
-      showConfirmModal,
       goBack,
       getStepIndex,
       proceedToQuestions,
@@ -1017,8 +1093,7 @@ export default {
       removeQuestion,
       addOption,
       removeOption,
-      publishQuiz,
-      confirmPublish
+      publishQuiz
     };
   }
 };
