@@ -416,16 +416,18 @@
                 <div class="form-group">
                   <label class="form-label-small">
                     <span class="label-icon">🕐</span>
-                    Start Date & Time
+                    Start Date & Time (PHT)
                   </label>
                   <input v-model="quiz.settings.startDate" type="datetime-local" class="form-input enhanced-input" />
+                  <small class="timezone-note">Philippines Time (UTC+8)</small>
                 </div>
                 <div class="form-group">
                   <label class="form-label-small">
                     <span class="label-icon">🕕</span>
-                    End Date & Time
+                    End Date & Time (PHT)
                   </label>
                   <input v-model="quiz.settings.endDate" type="datetime-local" class="form-input enhanced-input" />
+                  <small class="timezone-note">Philippines Time (UTC+8)</small>
                 </div>
               </div>
             </div>
@@ -597,6 +599,24 @@ export default {
         endDate: ''
       }
     });
+
+    // Helper function to convert UTC to Philippines time for display
+    const formatToPHTime = (utcDateString) => {
+      if (!utcDateString) return '';
+      const date = new Date(utcDateString);
+      // Convert to Philippines time (UTC+8)
+      const phTime = new Date(date.getTime() + (8 * 60 * 60 * 1000));
+      return phTime.toISOString().slice(0, 16); // Format for datetime-local input
+    };
+
+    // Helper function to convert Philippines time to UTC for storage
+    const convertPHTimeToUTC = (phDateString) => {
+      if (!phDateString) return null;
+      const phDate = new Date(phDateString);
+      // Convert from Philippines time to UTC (subtract 8 hours)
+      const utcTime = new Date(phDate.getTime() - (8 * 60 * 60 * 1000));
+      return utcTime.toISOString();
+    };
 
     // Real-time subscription
     let quizSubscription = null;
@@ -892,8 +912,8 @@ export default {
           attempts_allowed: parseInt(quiz.value.settings.attemptsAllowed),
           shuffle_questions: quiz.value.settings.shuffle,
           shuffle_options: quiz.value.settings.shuffle,
-          start_date: quiz.value.settings.startDate || null,
-          end_date: quiz.value.settings.endDate || null,
+          start_date: quiz.value.settings.startDate ? convertPHTimeToUTC(quiz.value.settings.startDate) : null,
+          end_date: quiz.value.settings.endDate ? convertPHTimeToUTC(quiz.value.settings.endDate) : null,
           has_time_limit: quiz.value.settings.hasTimeLimit,
           time_limit_minutes: quiz.value.settings.hasTimeLimit 
             ? parseInt(quiz.value.settings.timeLimit) 
@@ -1804,6 +1824,35 @@ input[type="datetime-local"]::-webkit-clear-button {
   resize: vertical;
   min-height: 80px;
   max-height: 200px;
+}
+
+/* Timezone Note Styling */
+.timezone-note {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-style: italic;
+  margin-top: 0.25rem;
+  display: block;
+}
+.dark .timezone-note {
+  color: #A3D1C6;
+}
+
+.form-label-small {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #3D8D7A;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.dark .form-label-small {
+  color: #A3D1C6;
+}
+
+.label-icon {
+  font-size: 1rem;
 }
   .action-buttons {
     display: flex;
