@@ -197,9 +197,9 @@ const routes = [
       }
     ]
   },
-  // TakeQuiz as standalone route (moved outside StudentLayout children)
+  // TakeQuiz Route - UPDATED with both subjectId and sectionId
   {
-    path: '/student/take-quiz/:sectionId',
+    path: '/student/take-quiz/:subjectId/:sectionId',
     name: 'TakeQuiz',
     component: TakeQuiz,
     meta: { requiresAuth: true, role: 'student' }
