@@ -218,7 +218,7 @@
           </button>
 
           <div class="forgot-section">
-            <a href="#" @click.prevent="forgotPassword">Forgot your password?</a>
+            <router-link to="/forgot-password">Forgot your password?</router-link>
           </div>
         </form>
 

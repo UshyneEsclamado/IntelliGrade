@@ -1,3 +1,11 @@
+from pydantic_settings import BaseSettings
+
+class Settings(BaseSettings):
+    secret_key: str = "your-secret-key"
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 30
+
+settings = Settings()
 import os
 from typing import List
 from pydantic_settings import BaseSettings
