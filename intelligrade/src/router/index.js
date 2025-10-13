@@ -31,6 +31,7 @@ import AssessmentHistory from '../views/teacher/AssessmentHistory.vue'
 import AssessmentDetails from '../views/teacher/AssessmentDetails.vue'
 import ViewQuizzes from '../views/teacher/ViewQuizzes.vue'
 import ViewStudents from '../views/teacher/ViewStudents.vue'
+import Gradebook from '../views/teacher/Gradebook.vue'
 
 // Student subfolder components
 import Subjects from '../views/student/Subjects.vue'
@@ -166,6 +167,12 @@ const routes = [
         path: 'view-students/:subjectId/:sectionId',
         name: 'ViewStudents',
         component: ViewStudents
+      },
+      {
+        path: 'gradebook',
+        name: 'TeacherGradebook',
+        component: Gradebook,
+        meta: { requiresAuth: true, role: 'teacher' }
       }
     ]
   },
