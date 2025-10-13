@@ -22,7 +22,6 @@
             </svg>
             Mark All Read
           </button>
-          <button @click="debugMode = true" class="debug-btn" v-if="!debugMode">Debug</button>
         </div>
       </div>
     </div>
@@ -78,8 +77,9 @@
           </div>
         </div>
 
-          <!-- Students Tab -->
-          <div v-if="currentTab === 'students' && !showArchive" class="tab-content">
+          <div class="tab-contents-wrapper">
+            <!-- Students Tab -->
+            <div v-if="currentTab === 'students' && !showArchive" class="tab-content">
             <!-- Section Students View -->
             <div v-if="showStudentsInSection" class="section-students-view">
               <div class="section-students-header">
@@ -150,7 +150,7 @@
                   </svg>
                   <input type="text" v-model="searchQuery" placeholder="Search students or sections..." class="search-input" />
                 </div>
-                <div class="action-buttons">
+                <div class="action-buttons horizontal-align">
                   <div class="filter-section">
                     <select v-model="selectedSection" class="section-filter">
                       <option value="">All Sections</option>
@@ -166,6 +166,7 @@
                     Mark all read
                   </button>
                 </div>
+<!-- ...existing code... -->
               </div>
               
               <!-- Students grouped by section -->
@@ -182,42 +183,58 @@
               </div>
 
               <div v-else class="sections-overview">
-                <div v-for="section in groupedStudents" :key="section.section_id" class="section-overview-card">
-                  <div class="section-overview-header" @click="viewSectionStudents(section)">
-                    <div class="section-overview-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                        <path d="M9 22V12h6v10"/>
-                      </svg>
+                <div v-for="section in groupedStudents" :key="section.section_id" class="section-overview-card" @click="viewSectionStudents(section)">
+                  <!-- Subject Icon and Title -->
+                  <div class="section-card-header">
+                    <div class="section-icon">
+                      <span>{{ section.subject_name.charAt(0) }}</span>
                     </div>
-                    <div class="section-overview-info">
-                      <h3 class="section-overview-title">{{ section.subject_name }}</h3>
-                      <p class="section-overview-subtitle">{{ section.section_name }} - {{ section.section_code }}</p>
-                      <p class="section-overview-grade">Grade {{ section.grade_level }}</p>
+                    <div class="section-title-area">
+                      <h3 class="section-title">{{ section.subject_name }}</h3>
+                      <p class="section-grade">Grade {{ section.grade_level }}</p>
                     </div>
-                    <div class="section-overview-stats">
-                      <div class="section-overview-count">
-                        <span class="count-number">{{ section.students.length }}</span>
-                        <span class="count-label">Students</span>
-                      </div>
-                      <div v-if="section.total_unread > 0" class="section-overview-unread">
-                        <span class="unread-number">{{ section.total_unread }}</span>
-                        <span class="unread-label">Unread</span>
-                      </div>
-                    </div>
-                    <div class="section-overview-arrow">
+                    <button class="section-options-btn" @click.stop>
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="9 18 15 12 9 6"></polyline>
+                        <circle cx="12" cy="12" r="1"></circle>
+                        <circle cx="12" cy="5" r="1"></circle>
+                        <circle cx="12" cy="19" r="1"></circle>
                       </svg>
+                    </button>
+                  </div>
+
+                  <!-- Section Stats -->
+                  <div class="section-stats">
+                    <span class="section-students-count">{{ section.students.length }} sections • {{ section.students.length }} students</span>
+                  </div>
+
+                  <!-- Section Code -->
+                  <div class="section-code-display">
+                    <div class="section-code-label">SECTION CODE</div>
+                    <div class="section-code-value" @click.stop="copyToClipboard(section.section_code)">
+                      {{ section.section_code }}
+                      <button class="copy-code-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        Copy
+                      </button>
                     </div>
                   </div>
-                  <div class="section-overview-actions">
-                    <button 
-                      class="section-overview-broadcast-btn" 
-                      @click.stop="openBroadcastModal(); broadcastSection = section.section_id"
-                    >
+
+                  <!-- Quick Actions -->
+                  <div class="section-card-actions">
+                    <span class="students-count-badge">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 11l18-5v12L3 14v-3z"/>
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="8.5" cy="7" r="4"/>
+                        <path d="M20 8v6M23 11h-6"/>
+                      </svg>
+                      {{ section.students.length }} students
+                    </span>
+                    <button class="broadcast-quick-btn" @click.stop="openBroadcastModal(); broadcastSection = section.section_id">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
                       </svg>
                       Broadcast
                     </button>
@@ -227,8 +244,8 @@
             </div>
           </div>
 
-          <!-- Archive Tab -->
-          <div v-else-if="currentTab === 'students' && showArchive" class="tab-content">
+            <!-- Archive Tab -->
+            <div v-else-if="currentTab === 'students' && showArchive" class="tab-content">
             <div class="archive-header">
               <h3>Archived Conversations</h3>
               <p>View and restore archived student conversations</p>
@@ -273,8 +290,8 @@
             </div>
           </div>
 
-          <!-- Broadcast Tab -->
-          <div v-else-if="currentTab === 'broadcast'" class="tab-content">
+            <!-- Broadcast Tab -->
+            <div v-else-if="currentTab === 'broadcast'" class="tab-content">
             <div v-if="!showBroadcastHistory" class="broadcast-section">
               <div class="broadcast-header">
                 <h3>Send Section Announcement</h3>
@@ -505,6 +522,7 @@
                 </div>
               </div>
             </div>
+            </div>
           </div>
         </div>
       </div>
@@ -704,7 +722,7 @@
         <p>{{ loadingMessage }}</p>
       </div>
     </div>
-</template>
+ </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
@@ -914,6 +932,27 @@ const getCurrentUser = async () => {
     alert(`Authentication error: ${error.message}`)
     await router.push('/login')
     return null
+  }
+}
+
+// ================================
+// UTILITY METHODS
+// ================================
+
+const copyToClipboard = async (text) => {
+  try {
+    await navigator.clipboard.writeText(text)
+    // Simple feedback - you could add a toast notification here
+    console.log('Section code copied to clipboard:', text)
+  } catch (err) {
+    console.error('Failed to copy to clipboard:', err)
+    // Fallback for older browsers
+    const textArea = document.createElement('textarea')
+    textArea.value = text
+    document.body.appendChild(textArea)
+    textArea.select()
+    document.execCommand('copy')
+    document.body.removeChild(textArea)
   }
 }
 
@@ -1969,10 +2008,10 @@ onUnmounted(() => {
   box-sizing: border-box;
 }
 
-/* Main Container */
+/* Main Container - Enhanced to match MySubjects.vue */
 .messages-container {
   min-height: 100vh;
-  background: #FBFFE4;
+  background: #181c20;
   padding: 1.5rem;
   font-family: 'Inter', sans-serif;
 }
@@ -1980,18 +2019,19 @@ onUnmounted(() => {
   background: #181c20;
 }
 
-/* Header Card */
+/* Header Card - Enhanced to match MySubjects.vue style */
 .header-card {
-  background: white;
+  background: #2a2d35;
+  border: 1.5px solid #20c997;
   border-radius: 16px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.1);
 }
 .messages-container.dark .header-card {
-  background: #23272b;
-  border: 1px solid #20c997;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  background: #2a2d35;
+  border: 1.5px solid #20c997;
+  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.1);
 }
 
 .header-content {
@@ -2009,7 +2049,7 @@ onUnmounted(() => {
 .header-icon {
   width: 56px;
   height: 56px;
-  background: #3D8D7A;
+  background: #20c997;
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -2020,19 +2060,19 @@ onUnmounted(() => {
 .header-title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1f2937;
+  color: #ffffff;
   margin-bottom: 0.25rem;
 }
 .messages-container.dark .header-title {
-  color: #A3D1C6;
+  color: #ffffff;
 }
 
 .header-subtitle {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: #20c997;
 }
 .messages-container.dark .header-subtitle {
-  color: #A3D1C6;
+  color: #20c997;
 }
 
 .header-actions {
@@ -2103,7 +2143,7 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.25rem; 
 }
 
 .card-header h3 {
@@ -2116,10 +2156,11 @@ onUnmounted(() => {
   color: #A3D1C6;
 }
 
-/* Tabs */
+/* Tabs - Enhanced to match MySubjects.vue */
 .tabs {
   display: flex;
   gap: 0.5rem;
+  margin-bottom: 1.5rem;
 }
 
 .tab-btn {
@@ -2127,38 +2168,46 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.25rem;
-  border: none;
+  border: 1.5px solid #A3D1C6;
   border-radius: 8px;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
-  background: #f9fafb;
-  color: #6b7280;
+  transition: all 0.2s ease;
+  background: #FBFFE4;
+  color: #3D8D7A;
   font-family: 'Inter', sans-serif;
 }
 
 .tab-btn.active {
   background: #3D8D7A;
   color: white;
+  border-color: #3D8D7A;
+  box-shadow: 0 2px 4px rgba(61, 141, 122, 0.1);
 }
 
 .tab-btn:hover:not(.active) {
-  background: #e5e7eb;
+  background: white;
+  border-color: #3D8D7A;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.15);
 }
 
 .messages-container.dark .tab-btn {
-  background: #374151;
+  background: #181c1f;
+  border: 1.5px solid #20c997;
   color: #A3D1C6;
 }
 
 .messages-container.dark .tab-btn.active {
   background: #20c997;
   color: #181c20;
+  border-color: #20c997;
 }
 
 .messages-container.dark .tab-btn:hover:not(.active) {
-  background: #4b5563;
+  background: #20242a;
+  border-color: #20c997;
 }
 
 /* Tab Content */
@@ -2166,54 +2215,211 @@ onUnmounted(() => {
   min-height: 400px;
 }
 
-/* Section Overview Cards */
+/* Section Overview Cards - Complete MySubjects.vue Style */
 .sections-overview {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.5rem;
+  max-width: 100%;
+  margin-top: 1.5rem;
 }
 
 .section-overview-card {
-  background: white;
+  background: #2a2d35;
+  border: 1.5px solid #3a3f47;
   border-radius: 12px;
-  overflow: hidden;
-  transition: all 0.2s;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e5e7eb;
+  padding: 1.5rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
 }
 
 .section-overview-card:hover {
+  border-color: #20c997;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px rgba(32, 201, 151, 0.15);
 }
 
 .messages-container.dark .section-overview-card {
-  background: #23272b;
-  border-color: #374151;
+  background: #2a2d35;
+  border: 1.5px solid #3a3f47;
 }
 
 .messages-container.dark .section-overview-card:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  border-color: #20c997;
+  box-shadow: 0 4px 16px rgba(32, 201, 151, 0.15);
 }
 
-.section-overview-header {
-  padding: 1.25rem;
+/* Section Card Header */
+.section-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.section-icon {
+  width: 48px;
+  height: 48px;
+  background: #20c997;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: white;
+  flex-shrink: 0;
+}
+
+.section-title-area {
+  flex: 1;
+  min-width: 0;
+}
+
+.section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0 0 0.25rem 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.section-grade {
+  font-size: 0.875rem;
+  color: #20c997;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.section-options-btn {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.section-options-btn:hover {
+  background: #374151;
+  color: #20c997;
+}
+
+/* Section Stats */
+.section-stats {
+  margin-bottom: 1rem;
+}
+
+.section-students-count {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Section Code Display */
+.section-code-display {
+  margin-bottom: 1rem;
+}
+
+.section-code-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.section-code-value {
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  padding: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.copy-code-btn {
+  background: #20c997;
+  border: none;
+  border-radius: 6px;
+  padding: 0.25rem 0.5rem;
+  color: #1f2937;
+  font-size: 0.75rem;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
+  gap: 0.25rem;
+  transition: all 0.2s ease;
+}
+
+.copy-code-btn:hover {
+  background: #18b087;
+  transform: scale(1.05);
+}
+
+/* Section Card Actions */
+.section-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.students-count-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #9ca3af;
+}
+
+.broadcast-quick-btn {
+  background: #374151;
+  border: 1px solid #4b5563;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  color: #d1d5db;
+  font-size: 0.875rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.broadcast-quick-btn:hover {
+  background: #4b5563;
+  border-color: #20c997;
+  color: #20c997;
+}
+
+.section-overview-header {
+  display: flex;
+  align-items: flex-start;
   gap: 1rem;
 }
 
 .section-overview-icon {
   width: 48px;
   height: 48px;
-  background: #B3D8A8;
+  background: #3D8D7A;
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #1f2937;
+  color: white;
   flex-shrink: 0;
+  font-weight: 600;
+  font-size: 1.25rem;
 }
 
 .section-overview-info {
@@ -2221,13 +2427,15 @@ onUnmounted(() => {
 }
 
 .section-overview-title {
-  font-size: 1.125rem;
+  color: #3D8D7A;
+  font-size: 1rem;
   font-weight: 600;
-  color: #1f2937;
   margin-bottom: 0.25rem;
+  line-height: 1.3;
 }
 .messages-container.dark .section-overview-title {
-  color: #A3D1C6;
+  color: #20c997;
+  font-weight: 700;
 }
 
 .section-overview-subtitle {
@@ -2247,11 +2455,45 @@ onUnmounted(() => {
   color: #A3D1C6;
 }
 
-.section-overview-stats {
+/* Section Code Inline - Like MySubjects.vue */
+.section-code-inline {
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 0.5rem;
+  background: #F8F9FA;
+  border: 1px solid #A3D1C6;
+  border-radius: 6px;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.messages-container.dark .section-code-inline {
+  background: #181c1f;
+  border: 1px solid #20c997;
+}
+
+.code-label {
+  color: #3D8D7A;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.messages-container.dark .code-label {
+  color: #20c997;
+}
+
+.section-code-text {
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+
+.section-overview-stats {
+  color: #b5b5b5;
+  font-size: 0.95rem;
+  margin-top: 0.2rem;
 }
 
 .section-overview-count {
@@ -2295,52 +2537,57 @@ onUnmounted(() => {
   font-size: 0.688rem;
 }
 
-/* Student List Items */
+/* Student List Items - Enhanced to match MySubjects.vue */
 .students-list, .section-students-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
 .student-item, .section-student-item {
-  background: white;
-  border-radius: 10px;
-  padding: 1rem;
+  background: #FBFFE4;
+  border: 1.5px solid #A3D1C6;
+  border-radius: 12px;
+  padding: 1.25rem;
   display: flex;
   align-items: center;
   gap: 1rem;
-  transition: all 0.2s;
-  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
   cursor: pointer;
+  font-family: 'Inter', sans-serif;
 }
 
 .student-item:hover, .section-student-item:hover {
-  background: #f9fafb;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: white;
+  border-color: #3D8D7A;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.15);
 }
 
 .student-item.has-unread, .section-student-item.has-unread {
   border-color: #3D8D7A;
   background: #f0fdf4;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.1);
 }
 
 .messages-container.dark .student-item, 
 .messages-container.dark .section-student-item {
-  background: #23272b;
-  border-color: #374151;
+  background: #181c1f;
+  border: 1.5px solid #20c997;
 }
 
 .messages-container.dark .student-item:hover, 
 .messages-container.dark .section-student-item:hover {
-  background: #1f2937;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  background: #20242a;
+  border-color: #20c997;
+  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.15);
 }
 
 .messages-container.dark .student-item.has-unread, 
 .messages-container.dark .section-student-item.has-unread {
   border-color: #20c997;
   background: #0f1b16;
+  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.1);
 }
 
 .student-avatar, .section-student-avatar {
@@ -2419,6 +2666,31 @@ onUnmounted(() => {
 
 .chat-icon, .section-chat-icon {
   color: #3D8D7A;
+}
+
+/* Archived Items - MySubjects.vue style */
+.student-item.archived {
+  background: #f3f4f6;
+  border: 1.5px solid #d1d5db;
+  opacity: 0.8;
+}
+
+.student-item.archived:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+  opacity: 1;
+}
+
+.messages-container.dark .student-item.archived {
+  background: #111;
+  border: 1.5px solid #374151;
+  opacity: 0.8;
+}
+
+.messages-container.dark .student-item.archived:hover {
+  background: #1f2937;
+  border-color: #4b5563;
+  opacity: 1;
 }
 
 /* Back to Sections Button */
@@ -3594,9 +3866,19 @@ onUnmounted(() => {
   transform: scale(1.1);
 }
 
-/* Broadcast Form Styling */
+/* Broadcast Form Styling - Enhanced to match MySubjects.vue */
 .broadcast-form {
   max-width: 600px;
+  background: #FBFFE4;
+  border: 1.5px solid #A3D1C6;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.messages-container.dark .broadcast-form {
+  background: #181c1f;
+  border: 1.5px solid #20c997;
 }
 
 .broadcast-header {
@@ -3606,13 +3888,13 @@ onUnmounted(() => {
 .broadcast-header h3 {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1f2937;
+  color: #3D8D7A;
   margin-bottom: 0.5rem;
   font-family: 'Inter', sans-serif;
 }
 
 .messages-container.dark .broadcast-header h3 {
-  color: #A3D1C6;
+  color: #20c997;
 }
 
 .broadcast-header p {
@@ -3649,6 +3931,56 @@ onUnmounted(() => {
 .messages-container.dark .view-history-btn {
   background: #20c997;
   color: #181c20;
+}
+
+/* Broadcast Messages - Enhanced to match MySubjects.vue */
+.broadcast-messages-view {
+  max-width: 800px;
+}
+
+.broadcast-messages-header {
+  background: #FBFFE4;
+  border: 1.5px solid #A3D1C6;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.messages-container.dark .broadcast-messages-header {
+  background: #181c1f;
+  border: 1.5px solid #20c997;
+}
+
+.broadcast-messages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.broadcast-message-item {
+  background: #FBFFE4;
+  border: 1.5px solid #A3D1C6;
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition: all 0.2s ease;
+}
+
+.broadcast-message-item:hover {
+  background: white;
+  border-color: #3D8D7A;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.15);
+}
+
+.messages-container.dark .broadcast-message-item {
+  background: #181c1f;
+  border: 1.5px solid #20c997;
+}
+
+.messages-container.dark .broadcast-message-item:hover {
+  background: #20242a;
+  border-color: #20c997;
+  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.15);
 }
 
 /* Empty State */
