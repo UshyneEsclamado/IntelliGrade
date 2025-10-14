@@ -12,210 +12,299 @@
           <input 
             v-model="searchQuery" 
             type="text" 
-            placeholder="Search by student name or quiz..."
+            placeholder="Search..."
           >
         </div>
-        <select v-model="selectedStatus" class="filter-select">
-          <option value="">All Status</option>
-          <option value="submitted">Pending Review</option>
-          <option value="graded">Graded</option>
-          <option value="reviewed">Reviewed</option>
-        </select>
-        <button @click="fetchSubmissions" class="refresh-btn" :disabled="loading">
+        <button @click="refreshData" class="refresh-btn" :disabled="loading">
           <i class="fas fa-sync-alt" :class="{ 'spinning': loading }"></i>
         </button>
       </div>
     </div>
 
+    <!-- Breadcrumb Navigation -->
+    <div class="breadcrumb" v-if="selectedSubject || selectedSection">
+      <button @click="resetToSubjects" class="breadcrumb-item">
+        <i class="fas fa-book"></i> Subjects
+      </button>
+      <span v-if="selectedSubject" class="breadcrumb-separator">/</span>
+      <button v-if="selectedSubject" @click="resetToSections" class="breadcrumb-item">
+        {{ selectedSubject.name }}
+      </button>
+      <span v-if="selectedSection" class="breadcrumb-separator">/</span>
+      <span v-if="selectedSection" class="breadcrumb-item active">
+        {{ selectedSection.name }}
+      </span>
+    </div>
+
     <!-- Loading State -->
     <div v-if="loading" class="loading-container">
       <div class="spinner"></div>
-      <p>Loading submissions...</p>
+      <p>Loading...</p>
     </div>
 
     <!-- Error State -->
     <div v-else-if="error" class="error-container">
       <i class="fas fa-exclamation-triangle"></i>
-      <h3>Error Loading Submissions</h3>
+      <h3>Error Loading Data</h3>
       <p>{{ error }}</p>
-      <button @click="fetchSubmissions" class="btn-retry">Retry</button>
+      <button @click="refreshData" class="btn-retry">Retry</button>
     </div>
 
     <!-- Main Content -->
     <div v-else class="gradebook-content">
-      <!-- Stats Cards -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon pending">
-            <i class="fas fa-clock"></i>
+      <!-- LEVEL 1: Subject Selection -->
+      <div v-if="!selectedSubject" class="subjects-grid">
+        <div 
+          v-for="subject in filteredSubjects" 
+          :key="subject.id"
+          class="subject-card"
+          @click="selectSubject(subject)"
+        >
+          <div class="subject-icon">
+            <i class="fas fa-book"></i>
           </div>
-          <div class="stat-info">
-            <h3>{{ stats.pendingReview }}</h3>
-            <p>Pending Review</p>
+          <div class="subject-info">
+            <h3>{{ subject.name }}</h3>
+            <p>Grade {{ subject.grade_level }}</p>
+            <div class="subject-stats">
+              <span class="stat-badge">
+                <i class="fas fa-users"></i>
+                {{ subject.section_count }} Sections
+              </span>
+              <span class="stat-badge pending">
+                <i class="fas fa-clock"></i>
+                {{ subject.pending_count }} Pending
+              </span>
+            </div>
+          </div>
+          <div class="card-arrow">
+            <i class="fas fa-chevron-right"></i>
           </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon graded">
-            <i class="fas fa-check-circle"></i>
-          </div>
-          <div class="stat-info">
-            <h3>{{ stats.graded }}</h3>
-            <p>Graded</p>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon reviewed">
-            <i class="fas fa-user-check"></i>
-          </div>
-          <div class="stat-info">
-            <h3>{{ stats.reviewed }}</h3>
-            <p>Reviewed</p>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon average">
-            <i class="fas fa-chart-line"></i>
-          </div>
-          <div class="stat-info">
-            <h3>{{ stats.averageScore }}%</h3>
-            <p>Average Score</p>
-          </div>
+
+        <div v-if="filteredSubjects.length === 0" class="empty-state">
+          <i class="fas fa-book"></i>
+          <h3>No subjects found</h3>
+          <p>You don't have any subjects assigned yet.</p>
         </div>
       </div>
 
-      <!-- Quiz Submissions Table -->
-      <div class="submissions-section">
-        <div class="section-header">
-          <h2>Quiz Submissions ({{ filteredSubmissions.length }})</h2>
-        </div>
-
-        <div v-if="filteredSubmissions.length === 0" class="empty-state">
-          <i class="fas fa-clipboard-list"></i>
-          <h3>No submissions found</h3>
-          <p v-if="submissions.length === 0">There are no quiz submissions yet.</p>
-          <p v-else>There are no quiz submissions matching your filters.</p>
-        </div>
-
-        <div v-else class="submissions-table-container">
-          <table class="submissions-table">
-            <thead>
-              <tr>
-                <th @click="sortBy('student_name')" class="sortable">
-                  Student Name
-                  <i class="fas fa-sort" :class="getSortIcon('student_name')"></i>
-                </th>
-                <th @click="sortBy('quiz_title')" class="sortable">
-                  Quiz
-                  <i class="fas fa-sort" :class="getSortIcon('quiz_title')"></i>
-                </th>
-                <th @click="sortBy('submitted_at')" class="sortable">
-                  Submitted
-                  <i class="fas fa-sort" :class="getSortIcon('submitted_at')"></i>
-                </th>
-                <th @click="sortBy('percentage')" class="sortable">
-                  Score
-                  <i class="fas fa-sort" :class="getSortIcon('percentage')"></i>
-                </th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr 
-                v-for="submission in paginatedSubmissions" 
-                :key="submission.id"
-              >
-                <td>
-                  <div class="student-info">
-                    <div class="student-avatar">
-                      {{ getInitials(submission.student_name) }}
-                    </div>
-                    <div>
-                      <div class="student-name">{{ submission.student_name }}</div>
-                      <div class="student-email">{{ submission.student_email }}</div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div class="quiz-info">
-                    <div class="quiz-title">{{ submission.quiz_title }}</div>
-                    <div class="quiz-code">{{ submission.quiz_code }}</div>
-                  </div>
-                </td>
-                <td>
-                  <div class="date-info">
-                    <div class="date">{{ formatDate(submission.submitted_at) }}</div>
-                    <div class="time">{{ formatTime(submission.submitted_at) }}</div>
-                  </div>
-                </td>
-                <td>
-                  <div class="score-display">
-                    <div class="score-percentage" :class="getScoreClass(submission.percentage)">
-                      {{ submission.percentage }}%
-                    </div>
-                    <div class="score-fraction">
-                      {{ submission.total_score }}/{{ submission.max_score }}
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <span class="status-badge" :class="submission.status">
-                    {{ getStatusText(submission.status) }}
-                  </span>
-                </td>
-                <td>
-                  <div class="action-buttons">
-                    <button 
-                      @click="reviewSubmission(submission)" 
-                      class="btn-action review"
-                      title="Review & Grade"
-                    >
-                      <i class="fas fa-eye"></i>
-                    </button>
-                    <button 
-                      v-if="submission.status === 'submitted'"
-                      @click="autoGradeSubmission(submission)" 
-                      class="btn-action auto-grade"
-                      title="Auto Grade"
-                    >
-                      <i class="fas fa-wand-magic-sparkles"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Pagination -->
-        <div v-if="totalPages > 1" class="pagination">
-          <button 
-            @click="currentPage--" 
-            :disabled="currentPage === 1"
-            class="pagination-btn"
-          >
-            <i class="fas fa-chevron-left"></i>
-          </button>
-          <span class="pagination-info">
-            Page {{ currentPage }} of {{ totalPages }}
-          </span>
-          <button 
-            @click="currentPage++" 
-            :disabled="currentPage === totalPages"
-            class="pagination-btn"
-          >
+      <!-- LEVEL 2: Section Selection -->
+      <div v-else-if="selectedSubject && !selectedSection" class="sections-grid">
+        <div 
+          v-for="section in filteredSections" 
+          :key="section.id"
+          class="section-card"
+          @click="selectSection(section)"
+        >
+          <div class="section-icon">
+            <i class="fas fa-users"></i>
+          </div>
+          <div class="section-info">
+            <h3>{{ section.name }}</h3>
+            <p>{{ section.section_code }}</p>
+            <div class="section-stats">
+              <span class="stat-badge">
+                <i class="fas fa-clipboard-list"></i>
+                {{ section.quiz_count }} Quizzes
+              </span>
+              <span class="stat-badge pending">
+                <i class="fas fa-clock"></i>
+                {{ section.pending_count }} Pending
+              </span>
+            </div>
+          </div>
+          <div class="card-arrow">
             <i class="fas fa-chevron-right"></i>
-          </button>
+          </div>
+        </div>
+
+        <div v-if="filteredSections.length === 0" class="empty-state">
+          <i class="fas fa-users"></i>
+          <h3>No sections found</h3>
+          <p>No sections available for this subject.</p>
+        </div>
+      </div>
+
+      <!-- LEVEL 3: Submissions Table -->
+      <div v-else-if="selectedSection" class="submissions-view">
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon pending">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-info">
+              <h3>{{ sectionStats.pendingReview }}</h3>
+              <p>Pending Review</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon graded">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-info">
+              <h3>{{ sectionStats.graded }}</h3>
+              <p>Graded</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon total">
+              <i class="fas fa-clipboard-list"></i>
+            </div>
+            <div class="stat-info">
+              <h3>{{ sectionStats.total }}</h3>
+              <p>Total Submissions</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon average">
+              <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-info">
+              <h3>{{ sectionStats.averageScore }}%</h3>
+              <p>Average Score</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="submissions-filters">
+          <select v-model="selectedStatus" class="filter-select">
+            <option value="">All Status</option>
+            <option value="submitted">Pending Review</option>
+            <option value="graded">Graded</option>
+          </select>
+        </div>
+
+        <!-- Submissions Table -->
+        <div class="submissions-section">
+          <div v-if="filteredSubmissions.length === 0" class="empty-state">
+            <i class="fas fa-clipboard-list"></i>
+            <h3>No submissions found</h3>
+            <p>There are no quiz submissions for this section yet.</p>
+          </div>
+
+          <div v-else class="submissions-table-container">
+            <table class="submissions-table">
+              <thead>
+                <tr>
+                  <th @click="sortBy('student_name')" class="sortable">
+                    Student Name
+                    <i class="fas fa-sort" :class="getSortIcon('student_name')"></i>
+                  </th>
+                  <th @click="sortBy('quiz_title')" class="sortable">
+                    Quiz
+                    <i class="fas fa-sort" :class="getSortIcon('quiz_title')"></i>
+                  </th>
+                  <th @click="sortBy('submitted_at')" class="sortable">
+                    Submitted
+                    <i class="fas fa-sort" :class="getSortIcon('submitted_at')"></i>
+                  </th>
+                  <th @click="sortBy('percentage')" class="sortable">
+                    Score
+                    <i class="fas fa-sort" :class="getSortIcon('percentage')"></i>
+                  </th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr 
+                  v-for="submission in paginatedSubmissions" 
+                  :key="submission.id"
+                >
+                  <td>
+                    <div class="student-info">
+                      <div class="student-avatar">
+                        {{ getInitials(submission.student_name) }}
+                      </div>
+                      <div>
+                        <div class="student-name">{{ submission.student_name }}</div>
+                        <div class="student-email">{{ submission.student_email }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="quiz-info">
+                      <div class="quiz-title">{{ submission.quiz_title }}</div>
+                      <div class="quiz-code">{{ submission.quiz_code }}</div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="date-info">
+                      <div class="date">{{ formatDate(submission.submitted_at) }}</div>
+                      <div class="time">{{ formatTime(submission.submitted_at) }}</div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="score-display">
+                      <div class="score-percentage" :class="getScoreClass(submission.percentage)">
+                        {{ submission.percentage }}%
+                      </div>
+                      <div class="score-fraction">
+                        {{ submission.total_score }}/{{ submission.max_score }}
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="status-badge" :class="submission.status">
+                      {{ getStatusText(submission.status) }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="action-buttons">
+                      <button 
+                        @click="reviewSubmission(submission)" 
+                        class="btn-action review"
+                        title="Review & Grade"
+                      >
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button 
+                        @click="viewSubmission(submission)" 
+                        class="btn-action view"
+                        title="View Details"
+                      >
+                        <i class="fas fa-eye"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div v-if="totalPages > 1" class="pagination">
+            <button 
+              @click="currentPage--" 
+              :disabled="currentPage === 1"
+              class="pagination-btn"
+            >
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <span class="pagination-info">
+              Page {{ currentPage }} of {{ totalPages }}
+            </span>
+            <button 
+              @click="currentPage++" 
+              :disabled="currentPage === totalPages"
+              class="pagination-btn"
+            >
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Review Modal -->
+    <!-- Review/Grade Modal -->
     <div v-if="showReviewModal" class="modal-overlay" @click="closeReviewModal">
       <div class="review-modal" @click.stop>
         <div class="modal-header">
           <div>
-            <h3>Grade Submission</h3>
+            <h3>{{ modalMode === 'view' ? 'View Submission' : 'Grade Submission' }}</h3>
             <p class="modal-subtitle" v-if="selectedSubmission">
               {{ selectedSubmission.student_name }} - {{ selectedSubmission.quiz_title }}
             </p>
@@ -232,7 +321,7 @@
           </div>
 
           <div v-else-if="reviewQuestions.length === 0" class="no-questions">
-            <p>No questions found.</p>
+            <p>No questions found for this quiz.</p>
           </div>
 
           <div v-else class="submission-review">
@@ -255,90 +344,138 @@
               <div v-for="(question, index) in reviewQuestions" :key="question.id" class="question-review-item">
                 <div class="question-header">
                   <div class="question-number">Q{{ index + 1 }}</div>
-                  <div class="question-result" :class="question.studentAnswer?.is_correct ? 'correct' : 'incorrect'">
-                    {{ question.studentAnswer?.is_correct ? '✓ Correct' : '✗ Incorrect' }}
+                  <div class="question-result" :class="question.is_correct ? 'correct' : 'incorrect'">
+                    {{ question.is_correct ? '✓ Correct' : '✗ Incorrect' }}
                   </div>
-                  <div class="question-points">
-                    {{ question.studentAnswer?.points_earned || 0 }} / {{ question.points }} pts
+                  <div class="question-points" v-if="modalMode === 'grade'">
+                    <input 
+                      v-model.number="question.manualPoints"
+                      type="number"
+                      :max="question.points"
+                      min="0"
+                      step="0.5"
+                      class="points-input"
+                      @input="updateQuestionPoints(question)"
+                    /> / {{ question.points }} pts
+                  </div>
+                  <div class="question-points" v-else>
+                    {{ question.points_earned }} / {{ question.points }} pts
                   </div>
                 </div>
 
                 <div class="question-text">{{ question.question_text }}</div>
 
+                <!-- Multiple Choice -->
                 <div v-if="question.question_type === 'multiple_choice'" class="answer-section">
+                  <div class="answer-key-label">
+                    <strong>Answer Key:</strong> {{ getCorrectOptionLabel(question) }}
+                  </div>
                   <div class="options-grid">
                     <div 
                       v-for="option in question.options" 
                       :key="option.id" 
                       class="option-item"
                       :class="{
-                        'selected': question.studentAnswer?.selected_option_id === option.id,
+                        'selected': question.selected_option_id === option.id,
                         'correct': option.is_correct,
-                        'incorrect': question.studentAnswer?.selected_option_id === option.id && !option.is_correct
+                        'incorrect': question.selected_option_id === option.id && !option.is_correct
                       }"
                     >
                       <div class="option-letter">{{ String.fromCharCode(65 + option.option_number - 1) }}</div>
                       <div class="option-content">
                         <div class="option-text">{{ option.option_text }}</div>
+                        <div v-if="option.is_correct" class="correct-tag">✓ Correct Answer</div>
+                        <div v-if="question.selected_option_id === option.id" class="selected-tag">Student's Answer</div>
                       </div>
                     </div>
                   </div>
                 </div>
 
+                <!-- True/False -->
                 <div v-else-if="question.question_type === 'true_false'" class="answer-section">
+                  <div class="answer-key-label">
+                    <strong>Answer Key:</strong> {{ question.correct_answer }}
+                  </div>
                   <div class="true-false-options">
-                    <div class="tf-option" :class="{ 'student-selected': question.studentAnswer?.answer_text === 'true', 'correct-answer': question.correctAnswer === 'true' }">
+                    <div class="tf-option" :class="{ 
+                      'student-selected': question.answer_text === 'true', 
+                      'correct-answer': question.correct_answer === 'true',
+                      'wrong-answer': question.answer_text === 'true' && question.correct_answer !== 'true'
+                    }">
                       <strong>True</strong>
+                      <span v-if="question.correct_answer === 'true'" class="correct-tag">✓ Correct</span>
+                      <span v-if="question.answer_text === 'true'" class="selected-tag">Student's Answer</span>
                     </div>
-                    <div class="tf-option" :class="{ 'student-selected': question.studentAnswer?.answer_text === 'false', 'correct-answer': question.correctAnswer === 'false' }">
+                    <div class="tf-option" :class="{ 
+                      'student-selected': question.answer_text === 'false', 
+                      'correct-answer': question.correct_answer === 'false',
+                      'wrong-answer': question.answer_text === 'false' && question.correct_answer !== 'false'
+                    }">
                       <strong>False</strong>
+                      <span v-if="question.correct_answer === 'false'" class="correct-tag">✓ Correct</span>
+                      <span v-if="question.answer_text === 'false'" class="selected-tag">Student's Answer</span>
                     </div>
                   </div>
                 </div>
 
+                <!-- Fill in the Blank -->
                 <div v-else-if="question.question_type === 'fill_blank'" class="answer-section">
                   <div class="fill-blank-answers">
-                    <div class="student-answer-box">
-                      <div class="answer-label">Student Answer:</div>
-                      <div class="answer-text" :class="question.studentAnswer?.is_correct ? 'correct' : 'incorrect'">
-                        {{ question.studentAnswer?.answer_text || 'No answer' }}
+                    <div class="answer-key-box">
+                      <div class="answer-label">Answer Key:</div>
+                      <div class="answer-text correct">
+                        {{ question.correct_answer }}
                       </div>
                     </div>
-                    <div class="correct-answer-box">
-                      <div class="answer-label">Correct Answer:</div>
-                      <div class="answer-text correct">
-                        {{ question.correctAnswer }}
+                    <div class="student-answer-box">
+                      <div class="answer-label">Student's Answer:</div>
+                      <div class="answer-text" :class="question.is_correct ? 'correct' : 'incorrect'">
+                        {{ question.answer_text || 'No answer' }}
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div class="teacher-comment-section">
+                <!-- Teacher Comment -->
+                <div class="teacher-comment-section" v-if="modalMode === 'grade'">
                   <textarea 
                     v-model="question.teacherComment"
                     class="comment-input"
-                    placeholder="Add feedback..."
+                    placeholder="Add feedback for this question..."
                     rows="2"
                   ></textarea>
+                </div>
+                <div class="teacher-comment-section" v-else-if="question.teacher_comment">
+                  <div class="comment-display">
+                    <strong>Teacher's Feedback:</strong>
+                    <p>{{ question.teacher_comment }}</p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div class="overall-feedback-section">
+            <!-- Overall Feedback -->
+            <div class="overall-feedback-section" v-if="modalMode === 'grade'">
               <h4>Overall Feedback</h4>
               <textarea 
                 v-model="reviewFeedback" 
                 class="feedback-textarea"
-                placeholder="Overall feedback..."
+                placeholder="Add overall feedback for the student..."
                 rows="3"
               ></textarea>
+            </div>
+            <div class="overall-feedback-section" v-else-if="selectedSubmission?.teacher_feedback">
+              <h4>Overall Feedback</h4>
+              <div class="feedback-display">
+                <p>{{ selectedSubmission.teacher_feedback }}</p>
+              </div>
             </div>
           </div>
         </div>
 
         <div class="modal-actions">
-          <button @click="closeReviewModal" class="btn-modal cancel">Cancel</button>
-          <button @click="saveGrade" class="btn-modal primary" :disabled="savingGrade">
+          <button @click="closeReviewModal" class="btn-modal cancel">Close</button>
+          <button v-if="modalMode === 'grade'" @click="saveGrade" class="btn-modal primary" :disabled="savingGrade">
             {{ savingGrade ? 'Saving...' : 'Save Grade' }}
           </button>
         </div>
@@ -348,7 +485,7 @@
 </template>
 
 <script>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { supabase } from '@/supabase.js'
 
 export default {
@@ -358,34 +495,65 @@ export default {
     const loadingQuestions = ref(false)
     const savingGrade = ref(false)
     const error = ref(null)
-    const submissions = ref([])
     const searchQuery = ref('')
+    const teacherId = ref(null)
+
+    // Hierarchy state
+    const subjects = ref([])
+    const selectedSubject = ref(null)
+    const sections = ref([])
+    const selectedSection = ref(null)
+    const submissions = ref([])
+
+    // Table state
     const selectedStatus = ref('')
     const currentPage = ref(1)
     const itemsPerPage = ref(10)
     const sortField = ref('submitted_at')
     const sortDirection = ref('desc')
+
+    // Review modal state
     const showReviewModal = ref(false)
     const selectedSubmission = ref(null)
-    const teacherId = ref(null)
-    const userId = ref(null)
     const reviewQuestions = ref([])
     const reviewFeedback = ref('')
-    let submissionsSubscription = null
+    const modalMode = ref('view') // 'view' or 'grade'
 
-    const stats = ref({
-      pendingReview: 0,
-      graded: 0,
-      reviewed: 0,
-      averageScore: 0
+    const sectionStats = computed(() => {
+      const pending = submissions.value.filter(s => s.status === 'submitted').length
+      const graded = submissions.value.filter(s => s.status === 'graded').length
+      const total = submissions.value.length
+      const averageScore = total > 0 
+        ? Math.round(submissions.value.reduce((sum, s) => sum + (s.percentage || 0), 0) / total)
+        : 0
+
+      return { pendingReview: pending, graded, total, averageScore }
     })
 
     const correctAnswerCount = computed(() => {
-      return reviewQuestions.value.filter(q => q.studentAnswer?.is_correct).length
+      return reviewQuestions.value.filter(q => q.is_correct).length
     })
 
     const maxReviewScore = computed(() => {
       return reviewQuestions.value.reduce((sum, q) => sum + (q.points || 1), 0)
+    })
+
+    const filteredSubjects = computed(() => {
+      if (!searchQuery.value) return subjects.value
+      const query = searchQuery.value.toLowerCase()
+      return subjects.value.filter(s => 
+        s.name.toLowerCase().includes(query) || 
+        s.grade_level.toString().includes(query)
+      )
+    })
+
+    const filteredSections = computed(() => {
+      if (!searchQuery.value) return sections.value
+      const query = searchQuery.value.toLowerCase()
+      return sections.value.filter(s => 
+        s.name.toLowerCase().includes(query) || 
+        s.section_code.toLowerCase().includes(query)
+      )
     })
 
     const filteredSubmissions = computed(() => {
@@ -441,13 +609,9 @@ export default {
       try {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession()
         if (sessionError || !session) {
-          console.error('Session error:', sessionError)
           error.value = 'Authentication error'
           return false
         }
-
-        userId.value = session.user.id
-        console.log('Auth user ID:', userId.value)
 
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
@@ -455,15 +619,7 @@ export default {
           .eq('auth_user_id', session.user.id)
           .single()
 
-        if (profileError || !profile) {
-          console.error('Profile error:', profileError)
-          error.value = 'Profile not found'
-          return false
-        }
-
-        console.log('Profile:', profile)
-
-        if (profile.role !== 'teacher') {
+        if (profileError || !profile || profile.role !== 'teacher') {
           error.value = 'Access denied - Teacher role required'
           return false
         }
@@ -475,13 +631,11 @@ export default {
           .single()
 
         if (teacherError || !teacher) {
-          console.error('Teacher error:', teacherError)
           error.value = 'Teacher record not found'
           return false
         }
 
         teacherId.value = teacher.id
-        console.log('Teacher ID:', teacherId.value)
         return true
       } catch (err) {
         console.error('Error in getTeacherInfo:', err)
@@ -490,198 +644,298 @@ export default {
       }
     }
 
-    const fetchSubmissions = async () => {
+    const fetchSubjects = async () => {
       try {
         loading.value = true
         error.value = null
 
-        if (!teacherId.value) {
-          console.error('No teacher ID')
-          error.value = 'Teacher ID not found'
-          return
-        }
-
-        console.log('Fetching submissions for teacher:', teacherId.value)
-
-        // Get teacher's quizzes
-        const { data: teacherQuizzes, error: quizzesError } = await supabase
-          .from('quizzes')
-          .select('id')
+        // Get subjects first
+        const { data: subjectsData, error: subjectsError } = await supabase
+          .from('subjects')
+          .select('id, name, grade_level, description')
           .eq('teacher_id', teacherId.value)
+          .eq('is_active', true)
 
-        if (quizzesError) {
-          console.error('Quizzes error:', quizzesError)
-          throw quizzesError
-        }
+        if (subjectsError) throw subjectsError
 
-        console.log('Teacher quizzes:', teacherQuizzes?.length)
+        // For each subject, count sections and pending submissions
+        const subjectsWithStats = await Promise.all(
+          (subjectsData || []).map(async (subject) => {
+            // Count sections
+            const { count: sectionCount } = await supabase
+              .from('sections')
+              .select('id', { count: 'exact', head: true })
+              .eq('subject_id', subject.id)
+              .eq('is_active', true)
 
-        if (!teacherQuizzes || teacherQuizzes.length === 0) {
-          submissions.value = []
-          calculateStats()
-          return
-        }
+            // Get quiz IDs for this subject's sections
+            const { data: quizzes } = await supabase
+              .from('quizzes')
+              .select('id')
+              .eq('subject_id', subject.id)
 
-        const quizIds = teacherQuizzes.map(q => q.id)
+            const quizIds = quizzes?.map(q => q.id) || []
 
-        // Get attempts
-        const { data: attempts, error: attemptsError } = await supabase
-          .from('quiz_attempts')
-          .select('id, quiz_id, student_id, attempt_number, total_score, max_score, percentage, status, submitted_at, time_taken_minutes, teacher_feedback')
-          .in('quiz_id', quizIds)
-          .not('submitted_at', 'is', null)
-          .order('submitted_at', { ascending: false })
+            // Count pending submissions
+            let pendingCount = 0
+            if (quizIds.length > 0) {
+              const { count } = await supabase
+                .from('quiz_attempts')
+                .select('id', { count: 'exact', head: true })
+                .in('quiz_id', quizIds)
+                .eq('status', 'submitted')
+                .not('submitted_at', 'is', null)
 
-        if (attemptsError) {
-          console.error('Attempts error:', attemptsError)
-          throw attemptsError
-        }
+              pendingCount = count || 0
+            }
 
-        console.log('Attempts found:', attempts?.length)
+            return {
+              id: subject.id,
+              name: subject.name,
+              grade_level: subject.grade_level,
+              description: subject.description || '',
+              section_count: sectionCount || 0,
+              pending_count: pendingCount
+            }
+          })
+        )
 
-        if (!attempts || attempts.length === 0) {
-          submissions.value = []
-          calculateStats()
-          return
-        }
-
-        const studentIds = [...new Set(attempts.map(a => a.student_id))]
-        const attemptQuizIds = [...new Set(attempts.map(a => a.quiz_id))]
-
-        console.log('Fetching student details for IDs:', studentIds)
-
-        // Get students - THIS IS THE KEY PART THAT WAS FAILING
-        const { data: students, error: studentsError } = await supabase
-          .from('students')
-          .select('id, full_name, email')
-          .in('id', studentIds)
-
-        if (studentsError) {
-          console.error('Students fetch error:', studentsError)
-          // Don't throw - continue with partial data
-        }
-
-        console.log('Students fetched:', students?.length)
-
-        const { data: quizzes, error: quizzesDetailError } = await supabase
-          .from('quizzes')
-          .select('id, title, quiz_code')
-          .in('id', attemptQuizIds)
-
-        if (quizzesDetailError) {
-          console.error('Quiz details error:', quizzesDetailError)
-        }
-
-        console.log('Quizzes fetched:', quizzes?.length)
-
-        const studentMap = {}
-        students?.forEach(s => { studentMap[s.id] = s })
-
-        const quizMap = {}
-        quizzes?.forEach(q => { quizMap[q.id] = q })
-
-        submissions.value = attempts.map(attempt => {
-          const student = studentMap[attempt.student_id] || {}
-          const quiz = quizMap[attempt.quiz_id] || {}
-
-          return {
-            id: attempt.id,
-            quiz_id: attempt.quiz_id,
-            student_id: attempt.student_id,
-            attempt_number: attempt.attempt_number,
-            student_name: student.full_name || 'Unknown Student',
-            student_email: student.email || '',
-            quiz_title: quiz.title || 'Unknown Quiz',
-            quiz_code: quiz.quiz_code || '',
-            total_score: attempt.total_score || 0,
-            max_score: attempt.max_score || 0,
-            percentage: Math.round(attempt.percentage || 0),
-            status: attempt.status || 'submitted',
-            submitted_at: attempt.submitted_at,
-            time_taken_minutes: attempt.time_taken_minutes,
-            teacher_feedback: attempt.teacher_feedback
-          }
-        })
-
-        console.log('Final submissions processed:', submissions.value.length)
-        calculateStats()
+        subjects.value = subjectsWithStats
       } catch (err) {
-        console.error('Error in fetchSubmissions:', err)
-        error.value = `Failed to load: ${err.message}`
+        console.error('Error fetching subjects:', err)
+        error.value = `Failed to load subjects: ${err.message}`
       } finally {
         loading.value = false
       }
     }
 
-    const setupRealtimeSubscription = () => {
-      if (!teacherId.value) return
+    const selectSubject = async (subject) => {
+      selectedSubject.value = subject
+      await fetchSections(subject.id)
+    }
 
-      submissionsSubscription = supabase
-        .channel(`teacher-${teacherId.value}-submissions`)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'quiz_attempts' }, 
-          () => fetchSubmissions()
+    const fetchSections = async (subjectId) => {
+      try {
+        loading.value = true
+        error.value = null
+
+        // Get sections
+        const { data: sectionsData, error: sectionsError } = await supabase
+          .from('sections')
+          .select('id, name, section_code, max_students')
+          .eq('subject_id', subjectId)
+          .eq('is_active', true)
+
+        if (sectionsError) throw sectionsError
+
+        // For each section, count quizzes and pending submissions
+        const sectionsWithStats = await Promise.all(
+          (sectionsData || []).map(async (section) => {
+            // Count quizzes
+            const { count: quizCount } = await supabase
+              .from('quizzes')
+              .select('id', { count: 'exact', head: true })
+              .eq('section_id', section.id)
+
+            // Get quiz IDs
+            const { data: quizzes } = await supabase
+              .from('quizzes')
+              .select('id')
+              .eq('section_id', section.id)
+
+            const quizIds = quizzes?.map(q => q.id) || []
+
+            // Count pending submissions
+            let pendingCount = 0
+            if (quizIds.length > 0) {
+              const { count } = await supabase
+                .from('quiz_attempts')
+                .select('id', { count: 'exact', head: true })
+                .in('quiz_id', quizIds)
+                .eq('status', 'submitted')
+                .not('submitted_at', 'is', null)
+
+              pendingCount = count || 0
+            }
+
+            return {
+              id: section.id,
+              name: section.name,
+              section_code: section.section_code,
+              max_students: section.max_students,
+              quiz_count: quizCount || 0,
+              pending_count: pendingCount
+            }
+          })
         )
-        .subscribe()
-    }
 
-    const calculateStats = () => {
-      const pending = submissions.value.filter(s => s.status === 'submitted').length
-      const graded = submissions.value.filter(s => s.status === 'graded').length
-      const reviewed = submissions.value.filter(s => s.status === 'reviewed').length
-      const total = submissions.value.length
-      const averageScore = total > 0 
-        ? Math.round(submissions.value.reduce((sum, s) => sum + (s.percentage || 0), 0) / total)
-        : 0
-
-      stats.value = { pendingReview: pending, graded, reviewed, averageScore }
-    }
-
-    const sortBy = (field) => {
-      if (sortField.value === field) {
-        sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
-      } else {
-        sortField.value = field
-        sortDirection.value = 'asc'
+        sections.value = sectionsWithStats
+      } catch (err) {
+        console.error('Error fetching sections:', err)
+        error.value = `Failed to load sections: ${err.message}`
+      } finally {
+        loading.value = false
       }
     }
 
-    const getSortIcon = (field) => {
-      if (sortField.value !== field) return ''
-      return sortDirection.value === 'asc' ? 'fa-sort-up' : 'fa-sort-down'
+    const selectSection = async (section) => {
+      selectedSection.value = section
+      await fetchSubmissions(section.id)
+    }
+
+    const fetchSubmissions = async (sectionId) => {
+      try {
+        loading.value = true
+        error.value = null
+
+        // Get quizzes for this section
+        const { data: quizzes, error: quizzesError } = await supabase
+          .from('quizzes')
+          .select('id, title, quiz_code')
+          .eq('section_id', sectionId)
+
+        if (quizzesError) throw quizzesError
+
+        if (!quizzes || quizzes.length === 0) {
+          submissions.value = []
+          return
+        }
+
+        const quizIds = quizzes.map(q => q.id)
+
+        // Get attempts
+        const { data: attempts, error: attemptsError } = await supabase
+          .from('quiz_attempts')
+          .select('*')
+          .in('quiz_id', quizIds)
+          .not('submitted_at', 'is', null)
+          .order('submitted_at', { ascending: false })
+
+        if (attemptsError) throw attemptsError
+
+        if (!attempts || attempts.length === 0) {
+          submissions.value = []
+          return
+        }
+
+        // Get student IDs
+        const studentIds = [...new Set(attempts.map(a => a.student_id))]
+
+        // Get students
+        const { data: students, error: studentsError } = await supabase
+          .from('students')
+          .select('id, full_name, email')
+          .in('id', studentIds)
+
+        if (studentsError) console.error('Students error:', studentsError)
+
+        // Create lookup maps
+        const quizMap = {}
+        quizzes.forEach(q => { quizMap[q.id] = q })
+
+        const studentMap = {}
+        students?.forEach(s => { studentMap[s.id] = s })
+
+        // Map submissions
+        submissions.value = attempts.map(attempt => ({
+          id: attempt.id,
+          quiz_id: attempt.quiz_id,
+          student_id: attempt.student_id,
+          attempt_number: attempt.attempt_number,
+          student_name: studentMap[attempt.student_id]?.full_name || 'Unknown Student',
+          student_email: studentMap[attempt.student_id]?.email || '',
+          quiz_title: quizMap[attempt.quiz_id]?.title || 'Unknown Quiz',
+          quiz_code: quizMap[attempt.quiz_id]?.quiz_code || '',
+          total_score: attempt.total_score || 0,
+          max_score: attempt.max_score || 0,
+          percentage: Math.round(attempt.percentage || 0),
+          status: attempt.status || 'submitted',
+          submitted_at: attempt.submitted_at,
+          time_taken_minutes: attempt.time_taken_minutes,
+          teacher_feedback: attempt.teacher_feedback
+        }))
+      } catch (err) {
+        console.error('Error fetching submissions:', err)
+        error.value = `Failed to load submissions: ${err.message}`
+      } finally {
+        loading.value = false
+      }
+    }
+
+    const resetToSubjects = () => {
+      selectedSubject.value = null
+      selectedSection.value = null
+      sections.value = []
+      submissions.value = []
+      searchQuery.value = ''
+    }
+
+    const resetToSections = () => {
+      selectedSection.value = null
+      submissions.value = []
+      searchQuery.value = ''
+    }
+
+    const refreshData = async () => {
+      if (!selectedSubject && !selectedSection) {
+        await fetchSubjects()
+      } else if (selectedSubject && !selectedSection) {
+        await fetchSections(selectedSubject.id)
+      } else if (selectedSection) {
+        await fetchSubmissions(selectedSection.id)
+      }
     }
 
     const loadQuestionsAndAnswers = async (submission) => {
       try {
         loadingQuestions.value = true
 
+        // Get questions
         const { data: questions, error: questionsError } = await supabase
           .from('quiz_questions')
-          .select(`
-            id, question_number, question_type, question_text, points,
-            question_options (id, option_number, option_text, is_correct),
-            question_answers (correct_answer, case_sensitive)
-          `)
+          .select('id, question_number, question_type, question_text, points')
           .eq('quiz_id', submission.quiz_id)
           .order('question_number')
 
         if (questionsError) throw questionsError
 
-        const { data: studentAnswers, error: answersError } = await supabase
+        if (!questions || questions.length === 0) {
+          reviewQuestions.value = []
+          return
+        }
+
+        const questionIds = questions.map(q => q.id)
+
+        // Get options
+        const { data: options, error: optionsError } = await supabase
+          .from('question_options')
+          .select('*')
+          .in('question_id', questionIds)
+          .order('option_number')
+
+        if (optionsError) console.error('Options error:', optionsError)
+
+        // Get answers (for true/false and fill blank)
+        const { data: answers, error: answersError } = await supabase
+          .from('question_answers')
+          .select('*')
+          .in('question_id', questionIds)
+
+        if (answersError) console.error('Answers error:', answersError)
+
+        // Get student answers
+        const { data: studentAnswers, error: studentAnswersError } = await supabase
           .from('student_answers')
           .select('*')
           .eq('attempt_id', submission.id)
 
-        if (answersError) throw answersError
+        if (studentAnswersError) throw studentAnswersError
 
-        reviewQuestions.value = (questions || []).map(q => {
+        // Map everything together
+        reviewQuestions.value = questions.map(q => {
           const studentAnswer = (studentAnswers || []).find(sa => sa.question_id === q.id)
-          let correctAnswer = null
-
-          if (q.question_type === 'multiple_choice') {
-            correctAnswer = q.question_options?.find(opt => opt.is_correct)
-          } else if (q.question_answers && q.question_answers.length > 0) {
-            correctAnswer = q.question_answers[0].correct_answer
-          }
+          const questionOptions = (options || []).filter(opt => opt.question_id === q.id)
+          const questionAnswer = (answers || []).find(ans => ans.question_id === q.id)
 
           return {
             id: q.id,
@@ -689,39 +943,57 @@ export default {
             question_type: q.question_type,
             question_text: q.question_text,
             points: q.points || 1,
-            options: q.question_options || [],
-            correctAnswer,
-            studentAnswer,
-            teacherComment: studentAnswer?.teacher_comment || ''
+            options: questionOptions,
+            correct_answer: questionAnswer?.correct_answer || null,
+            selected_option_id: studentAnswer?.selected_option_id || null,
+            answer_text: studentAnswer?.answer_text || null,
+            is_correct: studentAnswer?.is_correct || false,
+            points_earned: studentAnswer?.points_earned || 0,
+            teacher_comment: studentAnswer?.teacher_comment || '',
+            manualPoints: studentAnswer?.points_earned || 0,
+            student_answer_id: studentAnswer?.id || null
           }
         })
 
       } catch (err) {
         console.error('Error loading questions:', err)
-        alert('Failed to load questions')
+        alert('Failed to load questions: ' + err.message)
       } finally {
         loadingQuestions.value = false
       }
     }
 
     const reviewSubmission = async (submission) => {
+      modalMode.value = 'grade'
       selectedSubmission.value = submission
       reviewFeedback.value = submission.teacher_feedback || ''
       showReviewModal.value = true
       await loadQuestionsAndAnswers(submission)
     }
 
-    const autoGradeSubmission = async (submission) => {
-      if (!confirm('Auto-grade this submission?')) return
-      await loadQuestionsAndAnswers(submission)
+    const viewSubmission = async (submission) => {
+      modalMode.value = 'view'
       selectedSubmission.value = submission
-      reviewFeedback.value = ''
+      reviewFeedback.value = submission.teacher_feedback || ''
       showReviewModal.value = true
-      setTimeout(() => alert('Auto-grading complete!'), 500)
+      await loadQuestionsAndAnswers(submission)
+    }
+
+    const updateQuestionPoints = (question) => {
+      if (question.manualPoints > question.points) {
+        question.manualPoints = question.points
+      }
+      if (question.manualPoints < 0) {
+        question.manualPoints = 0
+      }
     }
 
     const calculateReviewScore = () => {
-      return reviewQuestions.value.reduce((sum, q) => sum + (q.studentAnswer?.points_earned || 0), 0)
+      if (modalMode.value === 'grade') {
+        return reviewQuestions.value.reduce((sum, q) => sum + (parseFloat(q.manualPoints) || 0), 0)
+      } else {
+        return reviewQuestions.value.reduce((sum, q) => sum + (parseFloat(q.points_earned) || 0), 0)
+      }
     }
 
     const calculateReviewPercentage = () => {
@@ -734,6 +1006,15 @@ export default {
       selectedSubmission.value = null
       reviewQuestions.value = []
       reviewFeedback.value = ''
+      modalMode.value = 'view'
+    }
+
+    const getCorrectOptionLabel = (question) => {
+      const correctOption = question.options.find(opt => opt.is_correct)
+      if (correctOption) {
+        return String.fromCharCode(65 + correctOption.option_number - 1)
+      }
+      return 'N/A'
     }
 
     const saveGrade = async () => {
@@ -744,6 +1025,7 @@ export default {
         const finalScore = calculateReviewScore()
         const finalPercentage = calculateReviewPercentage()
 
+        // Update quiz attempt
         const { error: updateError } = await supabase
           .from('quiz_attempts')
           .update({
@@ -759,16 +1041,25 @@ export default {
 
         if (updateError) throw updateError
 
+        // Update student answers
         for (const question of reviewQuestions.value) {
-          if (question.teacherComment && question.studentAnswer?.id) {
-            await supabase
+          if (question.student_answer_id) {
+            const { error: answerError } = await supabase
               .from('student_answers')
-              .update({ teacher_comment: question.teacherComment })
-              .eq('id', question.studentAnswer.id)
+              .update({
+                teacher_comment: question.teacherComment || null,
+                points_earned: parseFloat(question.manualPoints) || 0
+              })
+              .eq('id', question.student_answer_id)
+
+            if (answerError) {
+              console.error('Error updating answer:', answerError)
+            }
           }
         }
 
-        await supabase
+        // Update quiz results
+        const { error: resultError } = await supabase
           .from('quiz_results')
           .upsert({
             quiz_id: selectedSubmission.value.quiz_id,
@@ -781,8 +1072,16 @@ export default {
             status: 'graded',
             finalized: true,
             visible_to_student: true
-          }, { onConflict: 'quiz_id,student_id' })
+          }, {
+            onConflict: 'quiz_id,student_id',
+            ignoreDuplicates: false
+          })
 
+        if (resultError) {
+          console.error('Error updating result:', resultError)
+        }
+
+        // Update local data
         const index = submissions.value.findIndex(s => s.id === selectedSubmission.value.id)
         if (index !== -1) {
           submissions.value[index].status = 'graded'
@@ -791,15 +1090,28 @@ export default {
           submissions.value[index].teacher_feedback = reviewFeedback.value
         }
 
-        calculateStats()
         closeReviewModal()
         alert('Grade saved successfully!')
       } catch (err) {
         console.error('Error saving grade:', err)
-        alert(`Error: ${err.message}`)
+        alert(`Error saving grade: ${err.message}`)
       } finally {
         savingGrade.value = false
       }
+    }
+
+    const sortBy = (field) => {
+      if (sortField.value === field) {
+        sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
+      } else {
+        sortField.value = field
+        sortDirection.value = 'asc'
+      }
+    }
+
+    const getSortIcon = (field) => {
+      if (sortField.value !== field) return ''
+      return sortDirection.value === 'asc' ? 'fa-sort-up' : 'fa-sort-down'
     }
 
     const getInitials = (name) => {
@@ -834,30 +1146,65 @@ export default {
       return 'needs-improvement'
     }
 
-    watch([searchQuery, selectedStatus], () => { currentPage.value = 1 })
+    watch([searchQuery, selectedStatus], () => {
+      currentPage.value = 1
+    })
 
     onMounted(async () => {
-      console.log('Gradebook mounted')
       const success = await getTeacherInfo()
       if (success) {
-        await fetchSubmissions()
-        setupRealtimeSubscription()
+        await fetchSubjects()
       } else {
         loading.value = false
       }
     })
 
-    onUnmounted(() => {
-      if (submissionsSubscription) supabase.removeChannel(submissionsSubscription)
-    })
-
     return {
-      loading, loadingQuestions, savingGrade, error, submissions, searchQuery, selectedStatus, 
-      currentPage, totalPages, filteredSubmissions, paginatedSubmissions, stats, showReviewModal, 
-      selectedSubmission, reviewQuestions, reviewFeedback, correctAnswerCount, maxReviewScore,
-      sortBy, getSortIcon, reviewSubmission, autoGradeSubmission, closeReviewModal, 
-      saveGrade, calculateReviewScore, calculateReviewPercentage, getInitials, formatDate, 
-      formatTime, getStatusText, getScoreClass, fetchSubmissions
+      loading,
+      loadingQuestions,
+      savingGrade,
+      error,
+      searchQuery,
+      subjects,
+      selectedSubject,
+      sections,
+      selectedSection,
+      submissions,
+      selectedStatus,
+      currentPage,
+      totalPages,
+      filteredSubjects,
+      filteredSections,
+      filteredSubmissions,
+      paginatedSubmissions,
+      sectionStats,
+      showReviewModal,
+      selectedSubmission,
+      reviewQuestions,
+      reviewFeedback,
+      correctAnswerCount,
+      maxReviewScore,
+      modalMode,
+      selectSubject,
+      selectSection,
+      resetToSubjects,
+      resetToSections,
+      refreshData,
+      sortBy,
+      getSortIcon,
+      reviewSubmission,
+      viewSubmission,
+      updateQuestionPoints,
+      closeReviewModal,
+      saveGrade,
+      calculateReviewScore,
+      calculateReviewPercentage,
+      getInitials,
+      formatDate,
+      formatTime,
+      getStatusText,
+      getScoreClass,
+      getCorrectOptionLabel
     }
   }
 }
@@ -1748,6 +2095,273 @@ export default {
 
   .review-summary {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Breadcrumb Navigation */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 0;
+  margin-bottom: 1rem;
+}
+
+.breadcrumb-item {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.breadcrumb-item:hover {
+  background: #f1f5f9;
+  color: #3b82f6;
+}
+
+.breadcrumb-item.active {
+  color: #1a202c;
+  font-weight: 600;
+  cursor: default;
+}
+
+.breadcrumb-item.active:hover {
+  background: none;
+}
+
+.breadcrumb-separator {
+  color: #cbd5e1;
+}
+
+/* Subject Cards */
+.subjects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.subject-card {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.subject-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.subject-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.subject-info {
+  flex: 1;
+}
+
+.subject-info h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0 0 0.25rem 0;
+}
+
+.subject-info p {
+  color: #64748b;
+  font-size: 0.875rem;
+  margin: 0 0 0.75rem 0;
+  font-family: monospace;
+}
+
+.subject-stats {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.stat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  background: #f1f5f9;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  color: #475569;
+  font-weight: 500;
+}
+
+.stat-badge.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.stat-badge i {
+  font-size: 0.625rem;
+}
+
+.card-arrow {
+  color: #cbd5e1;
+  font-size: 1.25rem;
+}
+
+/* Section Cards */
+.sections-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.section-card {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.section-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.section-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.section-info {
+  flex: 1;
+}
+
+.section-info h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0 0 0.25rem 0;
+}
+
+.section-info p {
+  color: #64748b;
+  font-size: 0.875rem;
+  margin: 0 0 0.75rem 0;
+}
+
+.section-stats {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Submissions View */
+.submissions-view {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.submissions-filters {
+  padding: 1rem 0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.stat-card .stat-icon.total {
+  background: #6366f1;
+}
+
+/* Points Input in Modal */
+.points-input {
+  width: 60px;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.25rem;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.points-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* True/False styling updates */
+.tf-option.wrong-answer {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.tf-option.correct-answer.student-selected {
+  border-color: #10b981;
+  background: #ecfdf5;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .subjects-grid,
+  .sections-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .breadcrumb {
+    flex-wrap: wrap;
+  }
+
+  .subject-card,
+  .section-card {
+    padding: 1rem;
+  }
+
+  .subject-icon,
+  .section-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.25rem;
   }
 }
 </style>
