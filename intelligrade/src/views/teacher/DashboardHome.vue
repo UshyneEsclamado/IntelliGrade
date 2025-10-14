@@ -131,7 +131,7 @@
             <span>Upload Assessment</span>
           </router-link>
           
-          <button @click="navigateToClasses" class="quick-link">
+          <router-link to="/teacher/subjects" class="quick-link">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
               <circle cx="9" cy="7" r="4"></circle>
@@ -139,69 +139,13 @@
               <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
             </svg>
             <span>My Classes</span>
-          </button>
+          </router-link>
           
-          <button @click="navigateToGradebook" class="quick-link">
+          <router-link to="/teacher/gradebook" class="quick-link">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M19,3H14.82C14.4,1.84 13.3,1 12,1C10.7,1 9.6,1.84 9.18,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M12,3A1,1 0 0,1 13,4A1,1 0 0,1 12,5A1,1 0 0,1 11,4A1,1 0 0,1 12,3Z" />
             </svg>
             <span>Gradebook</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Quick Actions Grid -->
-      <div class="quick-actions">
-        <h2>Quick Actions</h2>
-        <div class="actions-grid">
-          <router-link to="/teacher/quizzes/create" class="action-card">
-            <div class="action-icon">
-              <i class="fas fa-plus-circle"></i>
-            </div>
-            <div class="action-content">
-              <h3>Create Quiz</h3>
-              <p>Create a new quiz for your students</p>
-            </div>
-          </router-link>
-
-          <router-link to="/teacher/gradebook" class="action-card">
-            <div class="action-icon">
-              <i class="fas fa-clipboard-check"></i>
-            </div>
-            <div class="action-content">
-              <h3>Gradebook</h3>
-              <p>Review and grade quiz submissions</p>
-            </div>
-          </router-link>
-
-          <router-link to="/teacher/students" class="action-card">
-            <div class="action-icon">
-              <i class="fas fa-users"></i>
-            </div>
-            <div class="action-content">
-              <h3>Manage Students</h3>
-              <p>View and manage your students</p>
-            </div>
-          </router-link>
-
-          <router-link to="/teacher/subjects" class="action-card">
-            <div class="action-icon">
-              <i class="fas fa-book"></i>
-            </div>
-            <div class="action-content">
-              <h3>View Subjects</h3>
-              <p>Manage your teaching subjects</p>
-            </div>
-          </router-link>
-
-          <router-link to="/teacher/schedule" class="action-card">
-            <div class="action-icon">
-              <i class="fas fa-calendar"></i>
-            </div>
-            <div class="action-content">
-              <h3>Schedule</h3>
-              <p>View your teaching schedule</p>
-            </div>
           </router-link>
         </div>
       </div>
@@ -445,14 +389,6 @@ export default {
 
     gradeAssessment(assessment) {
       console.log('Grading assessment:', assessment.title);
-    },
-
-    navigateToClasses() {
-      this.$parent.navigateTo('subjects');
-    },
-
-    navigateToGradebook() {
-      console.log('Navigate to gradebook');
     },
 
     async fetchAllData() {
