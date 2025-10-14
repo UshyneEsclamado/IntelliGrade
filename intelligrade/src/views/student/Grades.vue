@@ -126,11 +126,11 @@
               </div>
 
               <div class="grade-actions">
-                <button v-if="quiz.status === 'completed' && quiz.visible_to_student" @click="viewAnswerHistory(quiz)" class="btn btn-secondary">
+                <button v-if="quiz.status === 'completed' || quiz.status === 'graded'" @click="viewQuizPreview(quiz)" class="btn btn-secondary">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                   </svg>
-                  View Answers
+                  Preview
                 </button>
                 <button @click="retakeQuiz(quiz)" :disabled="!canRetake(quiz)" class="btn btn-primary">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -192,7 +192,7 @@
                   </td>
                   <td class="actions-cell">
                     <div class="table-actions">
-                      <button v-if="quiz.status === 'completed' && quiz.visible_to_student" @click="viewAnswerHistory(quiz)" class="btn-icon" title="View Answers">
+                      <button v-if="quiz.status === 'completed' || quiz.status === 'graded'" @click="viewQuizPreview(quiz)" class="btn-icon" title="Preview Quiz">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                           <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                         </svg>
@@ -225,20 +225,39 @@
       </div>
     </div>
 
-    <!-- Answer History Modal -->
-    <div v-if="showAnswerModal" class="modal-overlay" @click.self="showAnswerModal = false">
-      <div class="answer-modal">
+    <!-- Quiz Preview Modal -->
+    <div v-if="showPreviewModal" class="modal-overlay" @click.self="showPreviewModal = false">
+      <div class="preview-modal">
         <div class="modal-header">
-          <h3>Answer History - {{ selectedQuiz?.title }}</h3>
-          <button @click="showAnswerModal = false" class="modal-close">×</button>
+          <h3>{{ selectedQuiz?.title }} - Preview</h3>
+          <button @click="showPreviewModal = false" class="modal-close">×</button>
         </div>
         <div class="modal-body">
-          <div v-if="loadingAnswers" class="loading-answers">
+          <div v-if="loadingPreview" class="loading-answers">
             <div class="spinner"></div>
-            <p>Loading answer history...</p>
+            <p>Loading quiz preview...</p>
           </div>
-          <div v-else class="answers-content">
-            <div v-for="(answer, index) in answerHistory" :key="answer.question_id" class="answer-item">
+          <div v-else class="preview-content">
+            <!-- Score Summary -->
+            <div class="preview-summary">
+              <div class="summary-item">
+                <span class="summary-label">Your Score:</span>
+                <span class="summary-value" :class="getScoreClass(selectedQuiz.best_percentage)">
+                  {{ selectedQuiz.best_percentage }}% ({{ calculateScore(selectedQuiz.best_percentage, selectedQuiz.number_of_questions) }}/{{ selectedQuiz.number_of_questions }})
+                </span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Status:</span>
+                <span class="summary-value">{{ getStatusText(selectedQuiz.status) }}</span>
+              </div>
+              <div v-if="selectedQuiz.latest_attempt_date" class="summary-item">
+                <span class="summary-label">Submitted:</span>
+                <span class="summary-value">{{ formatPHTime(selectedQuiz.latest_attempt_date) }}</span>
+              </div>
+            </div>
+
+            <!-- Questions and Answers -->
+            <div v-for="(answer, index) in previewAnswers" :key="answer.question_id" class="answer-item">
               <div class="answer-header">
                 <div class="question-number">Q{{ answer.question_number }}</div>
                 <div class="answer-result" :class="answer.is_correct ? 'correct' : 'incorrect'">
@@ -256,7 +275,7 @@
               </div>
 
               <!-- Correct Answer (if wrong) -->
-              <div v-if="!answer.is_correct" class="correct-answer">
+              <div v-if="!answer.is_correct" class="correct-answer-section">
                 <div class="answer-label">Correct Answer:</div>
                 <div class="answer-content correct-answer">
                   {{ getCorrectAnswerText(answer) }}
@@ -272,7 +291,7 @@
           </div>
         </div>
         <div class="modal-actions">
-          <button @click="showAnswerModal = false" class="btn btn-secondary">Close</button>
+          <button @click="showPreviewModal = false" class="btn btn-secondary">Close</button>
         </div>
       </div>
     </div>
@@ -309,10 +328,10 @@ export default {
     });
 
     const grades = ref([]);
-    const showAnswerModal = ref(false);
+    const showPreviewModal = ref(false);
     const selectedQuiz = ref(null);
-    const answerHistory = ref([]);
-    const loadingAnswers = ref(false);
+    const previewAnswers = ref([]);
+    const loadingPreview = ref(false);
 
     // Real-time subscription
     let gradesSubscription = null;
@@ -331,7 +350,7 @@ export default {
     });
 
     const completedQuizzes = computed(() => {
-      return grades.value.filter(g => g.status === 'completed' && g.best_percentage !== null).length;
+      return grades.value.filter(g => g.status === 'completed' || g.status === 'graded').length;
     });
 
     const averageGrade = computed(() => {
@@ -451,7 +470,7 @@ export default {
 
     const loadGrades = async () => {
       try {
-        // Get all quizzes for this section first
+        // Get all quizzes for this section
         const { data: allQuizzes, error: quizzesError } = await supabase
           .from('quizzes')
           .select('id, title, quiz_code, description, number_of_questions, attempts_allowed, status')
@@ -596,14 +615,31 @@ export default {
       });
     };
 
-    const viewAnswerHistory = async (quiz) => {
+    const viewQuizPreview = async (quiz) => {
       selectedQuiz.value = quiz;
-      showAnswerModal.value = true;
-      loadingAnswers.value = true;
+      showPreviewModal.value = true;
+      loadingPreview.value = true;
 
       try {
-        // Get student answers for this quiz
-        const { data: answers, error } = await supabase
+        // Get the latest attempt for this quiz and student
+        const { data: attempts, error: attemptsError } = await supabase
+          .from('quiz_attempts')
+          .select('id')
+          .eq('quiz_id', quiz.id)
+          .eq('student_id', studentInfo.value.student_id)
+          .order('attempt_number', { ascending: false })
+          .limit(1);
+
+        if (attemptsError) throw attemptsError;
+
+        if (!attempts || attempts.length === 0) {
+          throw new Error('No quiz attempt found');
+        }
+
+        const attemptId = attempts[0].id;
+
+        // Get student answers for this attempt
+        const { data: answers, error: answersError } = await supabase
           .from('student_answers')
           .select(`
             id,
@@ -625,13 +661,12 @@ export default {
               )
             )
           `)
-          .eq('quiz_id', quiz.id)
-          .eq('student_id', studentInfo.value.student_id)
+          .eq('attempt_id', attemptId)
           .order('quiz_questions(question_number)');
 
-        if (error) throw error;
+        if (answersError) throw answersError;
 
-        answerHistory.value = (answers || []).map(answer => ({
+        previewAnswers.value = (answers || []).map(answer => ({
           question_id: answer.question_id,
           question_number: answer.quiz_questions?.question_number || 0,
           question_type: answer.quiz_questions?.question_type || 'multiple_choice',
@@ -644,10 +679,10 @@ export default {
         }));
 
       } catch (error) {
-        console.error('Error loading answer history:', error);
-        alert('Failed to load answer history.');
+        console.error('Error loading quiz preview:', error);
+        alert('Failed to load quiz preview.');
       } finally {
-        loadingAnswers.value = false;
+        loadingPreview.value = false;
       }
     };
 
@@ -738,10 +773,10 @@ export default {
       averageGrade,
       highestGrade,
       lowestGrade,
-      showAnswerModal,
+      showPreviewModal,
       selectedQuiz,
-      answerHistory,
-      loadingAnswers,
+      previewAnswers,
+      loadingPreview,
       formatPHTime,
       formatShortDate,
       getStatusClass,
@@ -750,7 +785,7 @@ export default {
       calculateScore,
       canRetake,
       retakeQuiz,
-      viewAnswerHistory,
+      viewQuizPreview,
       getStudentAnswerText,
       getCorrectAnswerText,
       goBack,
@@ -1100,6 +1135,10 @@ export default {
   margin-bottom: 1rem;
 }
 
+.grade-info {
+  flex: 1;
+}
+
 .score-display {
   display: flex;
   align-items: center;
@@ -1201,7 +1240,6 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  align-items: flex-end;
 }
 
 .info-item {
@@ -1250,14 +1288,20 @@ export default {
 
 .btn-secondary {
   background: transparent;
-  color: #A3D1C6;
+  color: #20c997;
   border: 2px solid #20c997;
 }
 
 .btn-secondary:hover {
+  background: #f0f9f7;
+  color: #3D8D7A;
+  border-color: #3D8D7A;
+}
+
+.dark .btn-secondary:hover {
   background: #23272b;
-  color: #20c997;
-  border-color: #20c997;
+  color: #A3D1C6;
+  border-color: #A3D1C6;
 }
 
 .btn:disabled {
@@ -1448,7 +1492,7 @@ export default {
   color: #A3D1C6;
 }
 
-/* Answer Modal */
+/* Preview Modal */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -1463,18 +1507,20 @@ export default {
   backdrop-filter: blur(4px);
 }
 
-.answer-modal {
+.preview-modal {
   background: white;
   border-radius: 16px;
-  max-width: 800px;
+  max-width: 900px;
   width: 90%;
   max-height: 90vh;
   overflow: hidden;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
   animation: modalSlideIn 0.3s ease-out;
+  display: flex;
+  flex-direction: column;
 }
 
-.dark .answer-modal {
+.dark .preview-modal {
   background: #23272b;
   border: 1px solid #3D8D7A;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
@@ -1492,11 +1538,7 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.dark .modal-header {
-  border-bottom-color: #3D8D7A;
+  border-bottom: 2px solid #3D8D7A;
 }
 
 .modal-header h3 {
@@ -1541,6 +1583,7 @@ export default {
   padding: 1.5rem;
   max-height: 60vh;
   overflow-y: auto;
+  flex: 1;
 }
 
 .loading-answers {
@@ -1560,17 +1603,56 @@ export default {
   animation: spin 1s linear infinite;
 }
 
-.answers-content {
+.preview-content {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+}
+
+.preview-summary {
+  background: #f0f9f7;
+  border: 2px solid #3D8D7A;
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dark .preview-summary {
+  background: #181c20;
+  border-color: #3D8D7A;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.summary-label {
+  font-weight: 600;
+  color: #3D8D7A;
+}
+
+.dark .summary-label {
+  color: #A3D1C6;
+}
+
+.summary-value {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.dark .summary-value {
+  color: #A3D1C6;
 }
 
 .answer-item {
   background: #FBFFE4;
   border-radius: 12px;
   padding: 1.5rem;
-  border: 1px solid #A3D1C6;
+  border: 1px solid #3D8D7A;
 }
 
 .dark .answer-item {
@@ -1624,7 +1706,7 @@ export default {
 }
 
 .student-answer,
-.correct-answer,
+.correct-answer-section,
 .teacher-comment {
   margin-bottom: 1rem;
 }
@@ -1646,18 +1728,25 @@ export default {
   padding: 0.75rem;
   border-radius: 8px;
   font-size: 0.875rem;
+  line-height: 1.5;
 }
 
-.correct-answer .answer-content {
+.answer-content.correct-answer {
   background: rgba(34, 197, 94, 0.1);
   color: #16a34a;
   border: 1px solid #22c55e;
 }
 
-.wrong-answer {
+.answer-content.wrong-answer {
   background: rgba(239, 68, 68, 0.1);
   color: #dc2626;
   border: 1px solid #ef4444;
+}
+
+.correct-answer {
+  background: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+  border: 1px solid #22c55e;
 }
 
 .comment-text {
@@ -1667,6 +1756,7 @@ export default {
   font-size: 0.875rem;
   color: #1f2937;
   border: 1px solid #e5e7eb;
+  line-height: 1.5;
 }
 
 .dark .comment-text {
@@ -1679,12 +1769,8 @@ export default {
   display: flex;
   gap: 0.75rem;
   padding: 1.5rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: 2px solid #3D8D7A;
   justify-content: flex-end;
-}
-
-.dark .modal-actions {
-  border-top-color: #3D8D7A;
 }
 
 /* Responsive */
@@ -1709,11 +1795,12 @@ export default {
   }
 
   .submission-info {
-    align-items: flex-start;
+    width: 100%;
   }
 
   .grade-actions {
     justify-content: flex-start;
+    flex-wrap: wrap;
   }
 
   .grades-table-container {
@@ -1724,7 +1811,7 @@ export default {
     min-width: 600px;
   }
 
-  .answer-modal {
+  .preview-modal {
     width: 95%;
   }
 
@@ -1735,11 +1822,24 @@ export default {
   .modal-actions .btn {
     width: 100%;
   }
+
+  .summary-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 @media (max-width: 480px) {
   .stats-grid {
     grid-template-columns: 1fr;
+  }
+
+  .grade-actions {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
   }
 }
 </style>
