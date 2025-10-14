@@ -62,7 +62,6 @@
           { 'favorite-card': favoriteSubjects.has(subject.id) },
           { 'archived-card': archivedSubjects.has(subject.id) }
         ]"
-        @click="viewSubjectDetails(subject)"
       >
         <div class="subject-header">
           <div class="subject-header-left">
@@ -137,8 +136,8 @@
           <button 
             v-if="subject.availableQuizzes > 0"
             class="action-btn primary pulse" 
-            @click.stop.prevent="takeQuiz(subject)"
-            :title="`${subject.availableQuizzes} quiz${subject.availableQuizzes > 1 ? 'es' : ''} available`"
+            @click.stop="takeQuiz(subject)"
+            :title="`${subject.availableQuizzes} quiz${subject.availableQuizzes > 1 ? 'zes' : ''} available`"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
@@ -161,7 +160,7 @@
           <button 
             v-else
             class="action-btn clickable"
-            @click.stop.prevent="takeQuiz(subject)"
+            @click.stop="takeQuiz(subject)"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17Z" />
@@ -236,7 +235,7 @@
                 <h4>{{ previewSubject.name }}</h4>
                 <p>Grade {{ previewSubject.grade_level }}</p>
                 <p>Section: {{ previewSubject.section }}</p>
-                <p>Teacher: {{ previewSubject.instructor }}</p>  <!-- CHANGED from "Instructor:" to "Teacher:" -->
+                <p>Teacher: {{ previewSubject.instructor }}</p>
               </div>
             </div>
           </div>
@@ -565,7 +564,7 @@ export default {
           subject.showOptions = false;
         });
         
-        this.subjects = [...newSubjects] // Force reactivity update
+        this.subjects = [...newSubjects]
         
         console.log('Successfully updated subjects:', this.subjects.length, 'subjects loaded')
 
@@ -916,7 +915,6 @@ export default {
       }
     },
 
-    // UPDATED METHOD - This is the only change to your original code
     takeQuiz(subject) {
       // Navigate to TakeQuiz with both subjectId and sectionId
       console.log('Navigating to TakeQuiz for subject:', subject)
@@ -967,7 +965,10 @@ export default {
           currentGrade: subject.currentGrade,
           overallScore: subject.overallScore
         }
-      })
+      }).catch(error => {
+        console.error('Navigation error:', error);
+        alert('Unable to navigate to grades page. Please try again.');
+      });
     },
 
     // Favorite and Archive functionality methods

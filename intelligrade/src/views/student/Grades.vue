@@ -285,7 +285,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { supabase } from '@/supabase.js';
 
 export default {
-  name: 'Grades',
+  name: 'StudentGrades',
   setup() {
     const router = useRouter();
     const route = useRoute();
@@ -451,69 +451,68 @@ export default {
 
     const loadGrades = async () => {
       try {
-        // Load quiz results with quiz details and attempt information
-        const { data, error } = await supabase
+        // Get all quizzes for this section first
+        const { data: allQuizzes, error: quizzesError } = await supabase
+          .from('quizzes')
+          .select('id, title, quiz_code, description, number_of_questions, attempts_allowed, status')
+          .eq('section_id', section.value.id)
+          .eq('status', 'published');
+
+        if (quizzesError) throw quizzesError;
+
+        if (!allQuizzes || allQuizzes.length === 0) {
+          grades.value = [];
+          return;
+        }
+
+        const quizIds = allQuizzes.map(q => q.id);
+
+        // Load quiz results for this student
+        const { data: results, error: resultsError } = await supabase
           .from('quiz_results')
           .select(`
-            *,
-            quiz:quizzes (
-              id,
-              title,
-              quiz_code,
-              description,
-              number_of_questions,
-              attempts_allowed,
-              has_time_limit,
-              time_limit_minutes
-            ),
-            best_attempt:quiz_attempts!quiz_results_best_attempt_id_fkey (
-              time_taken_minutes,
-              submitted_at
-            )
+            quiz_id,
+            best_score,
+            best_percentage,
+            total_attempts,
+            latest_attempt_date,
+            status,
+            visible_to_student
           `)
           .eq('student_id', studentInfo.value.student_id)
-          .in('quiz_id', await getQuizIdsForSection());
+          .in('quiz_id', quizIds);
 
-        if (error) throw error;
+        if (resultsError) throw resultsError;
 
-        // Transform data for easier use
-        grades.value = (data || []).map(result => ({
-          id: result.quiz.id,
-          title: result.quiz.title,
-          quiz_code: result.quiz.quiz_code,
-          description: result.quiz.description,
-          number_of_questions: result.quiz.number_of_questions,
-          attempts_allowed: result.quiz.attempts_allowed,
-          has_time_limit: result.quiz.has_time_limit,
-          time_limit_minutes: result.quiz.time_limit_minutes,
-          best_score: result.best_score,
-          best_percentage: result.best_percentage,
-          total_attempts: result.total_attempts,
-          latest_attempt_date: result.latest_attempt_date,
-          status: result.status,
-          visible_to_student: result.visible_to_student,
-          time_taken_minutes: result.best_attempt?.time_taken_minutes || null
-        }));
+        // Merge quiz data with results
+        const resultsMap = {};
+        (results || []).forEach(r => {
+          resultsMap[r.quiz_id] = r;
+        });
+
+        // Transform data - include quizzes with or without results
+        grades.value = allQuizzes.map(quiz => {
+          const result = resultsMap[quiz.id] || {};
+          return {
+            id: quiz.id,
+            title: quiz.title,
+            quiz_code: quiz.quiz_code,
+            description: quiz.description,
+            number_of_questions: quiz.number_of_questions || 1,
+            attempts_allowed: quiz.attempts_allowed || 999,
+            best_score: result.best_score || null,
+            best_percentage: result.best_percentage || null,
+            total_attempts: result.total_attempts || 0,
+            latest_attempt_date: result.latest_attempt_date || null,
+            status: result.status || 'not_taken',
+            visible_to_student: result.visible_to_student !== false,
+            time_taken_minutes: null
+          };
+        });
 
       } catch (error) {
         console.error('Error loading grades:', error);
         alert('Failed to load grades. Please refresh the page.');
-      }
-    };
-
-    const getQuizIdsForSection = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('quizzes')
-          .select('id')
-          .eq('section_id', section.value.id)
-          .eq('status', 'published');
-
-        if (error) throw error;
-        return (data || []).map(q => q.id);
-      } catch (error) {
-        console.error('Error getting quiz IDs:', error);
-        return [];
       }
     };
 
@@ -530,21 +529,8 @@ export default {
             table: 'quiz_results',
             filter: `student_id=eq.${studentInfo.value.student_id}`
           },
-          async (payload) => {
-            console.log('Grade updated (real-time):', payload);
-            await loadGrades();
-          }
-        )
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'quiz_attempts',
-            filter: `student_id=eq.${studentInfo.value.student_id}`
-          },
-          async (payload) => {
-            console.log('Attempt updated (real-time):', payload);
+          async () => {
+            console.log('Grade updated (real-time)');
             await loadGrades();
           }
         )
@@ -596,7 +582,6 @@ export default {
         return;
       }
 
-      // Navigate back to take quiz page
       router.push({
         name: 'TakeQuiz',
         params: {
@@ -617,37 +602,46 @@ export default {
       loadingAnswers.value = true;
 
       try {
-        // Get the best attempt details with questions and answers
-        const { data, error } = await supabase
+        // Get student answers for this quiz
+        const { data: answers, error } = await supabase
           .from('student_answers')
           .select(`
-            *,
-            question:quiz_questions (
+            id,
+            question_id,
+            selected_option_id,
+            answer_text,
+            is_correct,
+            teacher_comment,
+            quiz_questions (
               id,
               question_number,
               question_type,
               question_text,
-              options:question_options (
+              question_options (
                 id,
                 option_number,
                 option_text,
                 is_correct
-              ),
-              answer:question_answers (
-                correct_answer
               )
-            ),
-            attempt:quiz_attempts (
-              id,
-              quiz_id
             )
           `)
-          .eq('attempt_id', quiz.best_attempt_id)
-          .order('question.question_number');
+          .eq('quiz_id', quiz.id)
+          .eq('student_id', studentInfo.value.student_id)
+          .order('quiz_questions(question_number)');
 
         if (error) throw error;
 
-        answerHistory.value = data || [];
+        answerHistory.value = (answers || []).map(answer => ({
+          question_id: answer.question_id,
+          question_number: answer.quiz_questions?.question_number || 0,
+          question_type: answer.quiz_questions?.question_type || 'multiple_choice',
+          question_text: answer.quiz_questions?.question_text || 'Question',
+          is_correct: answer.is_correct,
+          selected_option_id: answer.selected_option_id,
+          answer_text: answer.answer_text,
+          teacher_comment: answer.teacher_comment,
+          options: answer.quiz_questions?.question_options || []
+        }));
 
       } catch (error) {
         console.error('Error loading answer history:', error);
@@ -658,19 +652,19 @@ export default {
     };
 
     const getStudentAnswerText = (answer) => {
-      if (answer.selected_option_id) {
-        const option = answer.question.options.find(opt => opt.id === answer.selected_option_id);
+      if (answer.selected_option_id && answer.options.length > 0) {
+        const option = answer.options.find(opt => opt.id === answer.selected_option_id);
         return option ? `${String.fromCharCode(65 + option.option_number - 1)}. ${option.option_text}` : 'Unknown option';
       }
       return answer.answer_text || 'No answer provided';
     };
 
     const getCorrectAnswerText = (answer) => {
-      if (answer.question.question_type === 'multiple_choice') {
-        const correctOption = answer.question.options.find(opt => opt.is_correct);
+      if (answer.question_type === 'multiple_choice' && answer.options.length > 0) {
+        const correctOption = answer.options.find(opt => opt.is_correct);
         return correctOption ? `${String.fromCharCode(65 + correctOption.option_number - 1)}. ${correctOption.option_text}` : 'Unknown';
       }
-      return answer.question.answer?.correct_answer || 'Unknown';
+      return 'See correct answer above';
     };
 
     const goBack = () => {
