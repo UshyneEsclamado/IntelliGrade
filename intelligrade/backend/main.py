@@ -22,7 +22,7 @@ app.add_middleware(
 # Import routes AFTER CORS setup
 
 # from backend.routes.assessments import router as assessments_router
-from backend.routes.auth_simple import router as auth_router
+from backend.routes.auth import router as auth_router
 
 # Include routers
 
