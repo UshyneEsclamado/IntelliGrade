@@ -9,6 +9,8 @@ import Signup from '../views/Signup.vue'
 import SignupStudent from '../views/SignupStudent.vue'
 import Landing from '../views/Landing.vue'
 import Intro from '../views/Intro.vue'
+import ForgotPassword from '../views/ForgotPassword.vue'
+import ResetPassword from '../views/ResetPassword.vue'
 
 // Dashboard views
 import TeacherDashboard from '../views/TeacherDashboard.vue'
@@ -74,6 +76,16 @@ const routes = [
     path: '/email-verified',
     name: 'EmailVerified',
     component: EmailVerified
+  },
+  {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: ForgotPassword
+  },
+  {
+    path: '/reset-password',
+    name: 'ResetPassword',
+    component: ResetPassword
   },
   // Teacher Dashboard Routes
   {
