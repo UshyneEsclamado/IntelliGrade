@@ -37,6 +37,7 @@ import Gradebook from '../views/teacher/Gradebook.vue'
 import Subjects from '../views/student/Subjects.vue'
 import Messages from '../views/student/Messages.vue'
 import TakeQuiz from '../views/student/TakeQuiz.vue'
+import StudentGrades from '../views/student/Grades.vue'
 
 const routes = [
   {
@@ -204,28 +205,24 @@ const routes = [
       }
     ]
   },
-  // TakeQuiz Route - UPDATED with both subjectId and sectionId
+  // TakeQuiz Route - with both subjectId and sectionId
   {
     path: '/student/take-quiz/:subjectId/:sectionId',
     name: 'TakeQuiz',
     component: TakeQuiz,
     meta: { requiresAuth: true, role: 'student' }
   },
+  // StudentGrades Route - NEW ROUTE
+  {
+    path: '/student/grades/:subjectId/:sectionId',
+    name: 'StudentGrades',
+    component: StudentGrades,
+    meta: { requiresAuth: true, role: 'student' }
+  },
   // Legacy student dashboard route (for backward compatibility)
   {
     path: '/student-dashboard',
     redirect: '/student/dashboard'
-  },
-  // Forgot/Reset Password routes
-  {
-    path: '/forgot-password',
-    name: 'ForgotPassword',
-    component: () => import('../views/ForgotPassword.vue')
-  },
-  {
-    path: '/reset-password',
-    name: 'ResetPassword',
-    component: () => import('../views/ResetPassword.vue')
   },
   // Catch-all redirect to Intro
   {
