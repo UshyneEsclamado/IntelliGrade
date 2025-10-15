@@ -19,7 +19,7 @@
           <select v-model="selectedSection" @change="filterBySection" class="section-filter">
             <option value="">All Sections</option>
             <option v-for="section in sections" :key="section.id" :value="section.id">
-              {{ section.name }} - {{ section.subject }}
+              {{ section.name }} - {{ section.subject_name }}
             </option>
           </select>
           <button @click="exportData" class="grade-btn export-btn">
@@ -32,8 +32,14 @@
       </div>
     </div>
 
+    <!-- Loading State -->
+    <div v-if="loading" class="loading-container">
+      <div class="spinner-large"></div>
+      <p>Loading analytics data...</p>
+    </div>
+
     <!-- Stats Cards -->
-    <div class="stats-grid">
+    <div v-else class="stats-grid">
       <div class="stat-card">
         <div class="stat-icon stat-average">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -65,53 +71,74 @@
           </svg>
         </div>
         <div>
-          <div class="stat-number">{{ overallStats.totalAssessments }}</div>
-          <div class="stat-label">Assessments Given</div>
+          <div class="stat-number">{{ overallStats.totalQuizzes }}</div>
+          <div class="stat-label">Quizzes Created</div>
         </div>
       </div>
-
     </div>
 
     <!-- Content Grid -->
-    <div class="content-grid">
-      <!-- Performance Charts -->
+    <div v-if="!loading" class="content-grid">
+      <!-- Quiz Performance -->
       <div class="content-card">
         <div class="card-header">
-          <h3>Performance Trends</h3>
-          <p class="card-desc">Track student performance over time</p>
-        </div>
-        <div class="chart-controls">
-          <button 
-            v-for="period in timePeriods" 
-            :key="period.value"
-            @click="selectedTimePeriod = period.value"
-            :class="['period-btn', { active: selectedTimePeriod === period.value }]"
-          >
-            {{ period.label }}
-          </button>
+          <h3>Quiz Performance Summary</h3>
+          <p class="card-desc">Average scores across all quizzes</p>
         </div>
         <div class="chart-placeholder">
-          <canvas ref="performanceChart"></canvas>
+          <div v-if="quizPerformanceData.length > 0" class="performance-list">
+            <div v-for="quiz in quizPerformanceData" :key="quiz.quiz_id" class="performance-item">
+              <div class="quiz-info">
+                <div class="quiz-title">{{ quiz.quiz_title }}</div>
+                <div class="quiz-meta">{{ quiz.total_attempts }} attempts • {{ quiz.students_attempted }} students</div>
+              </div>
+              <div class="quiz-score">
+                <span :class="['score-badge', getScoreClass(quiz.average_score)]">
+                  {{ quiz.average_score }}%
+                </span>
+              </div>
+            </div>
+          </div>
+          <div v-else class="empty-state">
+            No quiz data available yet. Students need to take quizzes first.
+          </div>
         </div>
       </div>
 
-      <!-- Score Distribution -->
+      <!-- Student Distribution -->
       <div class="content-card">
         <div class="card-header">
-          <h3>Score Distribution</h3>
-          <p class="card-desc">Distribution of student scores</p>
+          <h3>Student Performance Distribution</h3>
+          <p class="card-desc">Count of students by performance level</p>
         </div>
         <div class="chart-placeholder">
-          <canvas ref="distributionChart"></canvas>
+          <div v-if="performanceDistribution" class="distribution-list">
+            <div class="dist-item">
+              <span class="dist-label excellent">Excellent (90+)</span>
+              <span class="dist-count">{{ performanceDistribution.excellent }}</span>
+            </div>
+            <div class="dist-item">
+              <span class="dist-label good">Good (80-89)</span>
+              <span class="dist-count">{{ performanceDistribution.good }}</span>
+            </div>
+            <div class="dist-item">
+              <span class="dist-label satisfactory">Satisfactory (75-79)</span>
+              <span class="dist-count">{{ performanceDistribution.satisfactory }}</span>
+            </div>
+            <div class="dist-item">
+              <span class="dist-label warning">Needs Help (<75)</span>
+              <span class="dist-count">{{ performanceDistribution.needsHelp }}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Student Performance Table -->
-    <div class="content-card">
+    <div v-if="!loading" class="content-card">
       <div class="card-header">
-        <h3>Individual Student Performance</h3>
-        <p class="card-desc">Detailed performance data for each student</p>
+        <h3>Student Performance Overview</h3>
+        <p class="card-desc">Quiz results and performance data for each student</p>
         <div class="table-controls">
           <input 
             v-model="searchQuery" 
@@ -121,9 +148,8 @@
           >
           <select v-model="sortBy" @change="sortStudents" class="sort-select">
             <option value="name">Sort by Name</option>
-            <option value="average">Sort by Average</option>
-            <option value="latest">Sort by Latest Score</option>
-            <option value="improvement">Sort by Improvement</option>
+            <option value="average">Sort by Average Score</option>
+            <option value="quizzes">Sort by Quizzes Taken</option>
           </select>
         </div>
       </div>
@@ -134,75 +160,61 @@
             <tr>
               <th>Student</th>
               <th>Section</th>
-              <th>Assessments</th>
+              <th>Subject</th>
+              <th>Quizzes Taken</th>
               <th>Average Score</th>
-              <th>Latest Score</th>
-              <th>Improvement</th>
+              <th>Best Score</th>
               <th>Status</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="student in filteredStudents" :key="student.id" class="student-row">
+            <tr v-for="student in filteredStudents" :key="student.student_id" class="student-row">
               <td class="student-cell">
                 <div class="student-info">
                   <div class="student-avatar">
-                    <img v-if="student.avatar_url" :src="student.avatar_url" :alt="student.full_name">
-                    <div v-else class="avatar-placeholder">
-                      {{ getInitials(student.full_name) }}
+                    <div class="avatar-placeholder">
+                      {{ getInitials(student.student_name) }}
                     </div>
                   </div>
                   <div>
-                    <div class="student-name">{{ student.full_name }}</div>
-                    <div class="student-id">ID: {{ student.student_id }}</div>
+                    <div class="student-name">{{ student.student_name }}</div>
+                    <div class="student-id">ID: {{ student.student_number }}</div>
                   </div>
                 </div>
               </td>
               <td>{{ student.section_name }}</td>
-              <td>{{ student.assessments_count }}</td>
-              <td>{{ student.average_score }}%</td>
+              <td>{{ student.subject_name }}</td>
+              <td>{{ student.quizzes_attempted }}</td>
+              <td>{{ student.average_score || 0 }}%</td>
               <td>
-                <span :class="['score-badge', getScoreClass(student.latest_score)]">
-                  {{ student.latest_score }}%
+                <span :class="['score-badge', getScoreClass(student.best_score || 0)]">
+                  {{ student.best_score || 0 }}%
                 </span>
               </td>
               <td>
-                <span :class="['improvement-badge', student.improvement >= 0 ? 'positive' : 'negative']">
-                  {{ student.improvement >= 0 ? '+' : '' }}{{ student.improvement }}%
-                </span>
-              </td>
-              <td>
-                <span :class="['status-badge', getStatusClass(student.average_score)]">
-                  {{ getStatusText(student.average_score) }}
+                <span :class="['status-badge', getStatusClass(student.average_score || 0)]">
+                  {{ student.performance_status }}
                 </span>
               </td>
               <td class="actions-cell">
-                <button @click="viewStudentDetails(student)" class="action-btn view-btn">
+                <button @click="viewStudentDetails(student)" class="action-btn view-btn" title="View Details">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
                   </svg>
                 </button>
-                <button @click="updateScore(student)" class="action-btn edit-btn">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
-                  </svg>
-                </button>
-                <button 
-                  v-if="student.average_score < 75" 
-                  @click="flagForRemediation(student)" 
-                  class="action-btn warning-btn"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M14.4,6L14,4H5V21H7V14H12.6L13,16H20V6H14.4Z" />
-                  </svg>
-                </button>
+              </td>
+            </tr>
+            <tr v-if="filteredStudents.length === 0">
+              <td colspan="8" style="text-align: center; padding: 2rem; color: #999;">
+                {{ studentData.length === 0 ? 'No student data yet. Students need to take quizzes first.' : 'No students match your search.' }}
               </td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <!-- Simple Pagination -->
+      <!-- Pagination -->
       <div class="pagination">
         <button 
           @click="currentPage = Math.max(1, currentPage - 1)"
@@ -228,179 +240,194 @@
     <div v-if="selectedStudent" class="modal-overlay" @click.self="selectedStudent = null">
       <div class="modal student-detail-modal">
         <div class="modal-header">
-          <h3>{{ selectedStudent.full_name }} - Performance Details</h3>
-          <button @click="selectedStudent = null" class="close-btn">
-            <i class="fas fa-times"></i>
-          </button>
+          <h3>{{ selectedStudent.student_name }} - Quiz Results</h3>
+          <button @click="selectedStudent = null" class="close-btn">✕</button>
         </div>
         
         <div class="modal-content">
           <div class="student-summary">
             <div class="summary-stat">
-              <h4>{{ selectedStudent.average_score }}%</h4>
+              <h4>{{ selectedStudent.average_score || 0 }}%</h4>
               <p>Average Score</p>
             </div>
             <div class="summary-stat">
-              <h4>{{ selectedStudent.assessments_count }}</h4>
-              <p>Assessments</p>
+              <h4>{{ selectedStudent.total_quiz_attempts }}</h4>
+              <p>Total Attempts</p>
             </div>
             <div class="summary-stat">
-              <h4>{{ selectedStudent.improvement }}%</h4>
-              <p>Improvement</p>
+              <h4>{{ selectedStudent.best_score || 0 }}%</h4>
+              <p>Best Score</p>
             </div>
           </div>
 
-          <div class="assessment-history">
-            <h4>Assessment History</h4>
-            <div class="history-list">
-              <div v-for="assessment in selectedStudent.assessments" :key="assessment.id" class="history-item">
-                <div class="assessment-info">
-                  <h5>{{ assessment.title }}</h5>
-                  <p>{{ formatDate(assessment.created_at) }}</p>
+          <div class="quiz-history">
+            <h4>Quiz Attempts</h4>
+            <div v-if="studentQuizResults.length > 0" class="history-list">
+              <div v-for="result in studentQuizResults" :key="result.attempt_id" class="history-item">
+                <div class="quiz-info">
+                  <h5>{{ result.quiz_title }}</h5>
+                  <p>Attempt {{ result.attempt_number }} • {{ formatDate(result.submitted_at) }}</p>
                 </div>
-                <div class="assessment-score">
-                  <span :class="['score-badge', getScoreClass(assessment.score)]">
-                    {{ assessment.score }}%
+                <div class="quiz-score">
+                  <span :class="['score-badge', getScoreClass(result.percentage)]">
+                    {{ Math.round(result.percentage) }}%
                   </span>
                 </div>
               </div>
             </div>
-          </div>
-
-          <div class="remediation-notes">
-            <h4>Notes & Comments</h4>
-            <textarea 
-              v-model="studentNotes" 
-              rows="4" 
-              placeholder="Add notes about this student's performance..."
-              class="notes-textarea"
-            ></textarea>
-            <button @click="saveStudentNotes" class="save-notes-btn">
-              Save Notes
-            </button>
+            <div v-else class="empty-state">
+              No quiz attempts yet
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- Update Score Modal -->
-    <div v-if="showUpdateModal" class="modal-overlay" @click.self="showUpdateModal = false">
-      <div class="modal">
-        <div class="modal-header">
-          <h3>Update Score</h3>
-          <button @click="showUpdateModal = false" class="close-btn">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-        
-        <form @submit.prevent="saveScoreUpdate" class="modal-form">
-          <div class="form-group">
-            <label>Student: {{ updateStudent?.full_name }}</label>
-          </div>
-          
-          <div class="form-group">
-            <label>Assessment</label>
-            <select v-model="scoreUpdate.assessment_id" required>
-              <option v-for="assessment in updateStudent?.assessments" :key="assessment.id" :value="assessment.id">
-                {{ assessment.title }}
-              </option>
-            </select>
-          </div>
-          
-          <div class="form-group">
-            <label>New Score (%)</label>
-            <input v-model="scoreUpdate.score" type="number" min="0" max="100" required>
-          </div>
-          
-          <div class="form-group">
-            <label>Comment (Optional)</label>
-            <textarea v-model="scoreUpdate.comment" rows="3"></textarea>
-          </div>
-          
-          <div class="modal-actions">
-            <button type="button" @click="showUpdateModal = false" class="cancel-btn">Cancel</button>
-            <button type="submit" :disabled="loading" class="submit-btn">
-              {{ loading ? 'Updating...' : 'Update Score' }}
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { ref, onMounted, computed, nextTick } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { supabase } from '../../supabase.js'
 import { useDarkMode } from '../../composables/useDarkMode.js'
+
+interface Section {
+  id: string
+  name: string
+  subject_name: string
+}
+
+interface StudentData {
+  student_id: string
+  student_name: string
+  student_number: string
+  student_email: string
+  grade_level: number
+  section_id: string
+  section_name: string
+  section_code: string
+  subject_id: string
+  subject_name: string
+  teacher_id: string
+  teacher_name: string
+  total_quiz_attempts: number
+  quizzes_attempted: number
+  average_score: number
+  best_score: number
+  lowest_score: number
+  last_quiz_date: string
+  attempts_last_week: number
+  performance_status: string
+}
+
+interface QuizPerformance {
+  quiz_id: string
+  quiz_title: string
+  quiz_code: string
+  section_id: string
+  section_name: string
+  subject_id: string
+  subject_name: string
+  teacher_id: string
+  teacher_name: string
+  total_attempts: number
+  students_attempted: number
+  average_score: number
+  highest_score: number
+  lowest_score: number
+  count_excellent: number
+  count_good: number
+  count_satisfactory: number
+  count_needs_help: number
+}
+
+interface QuizResult {
+  attempt_id: string
+  quiz_id: string
+  quiz_title: string
+  attempt_number: number
+  percentage: number
+  submitted_at: string
+}
 
 export default {
   name: 'AnalyticsView',
   setup() {
-    // Dark mode
     const { isDarkMode, initDarkMode } = useDarkMode()
     
-    const sections = ref([])
-    const students = ref([])
-    const assessments = ref([])
+    const sections = ref<Section[]>([])
+    const studentData = ref<StudentData[]>([])
+    const quizPerformanceData = ref<QuizPerformance[]>([])
     const selectedSection = ref('')
-    const selectedTimePeriod = ref('month')
     const searchQuery = ref('')
     const sortBy = ref('name')
     const currentPage = ref(1)
     const itemsPerPage = 10
     const loading = ref(false)
-    const selectedStudent = ref(null)
-    const showUpdateModal = ref(false)
-    const updateStudent = ref(null)
-    const studentNotes = ref('')
-    
-    const scoreUpdate = ref({
-      assessment_id: '',
-      score: '',
-      comment: ''
-    })
-
-    const timePeriods = [
-      { value: 'week', label: 'This Week' },
-      { value: 'month', label: 'This Month' },
-      { value: 'quarter', label: 'This Quarter' },
-      { value: 'year', label: 'This Year' }
-    ]
-
-    // Chart references
-    const performanceChart = ref(null)
-    const distributionChart = ref(null)
+    const selectedStudent = ref<StudentData | null>(null)
+    const studentQuizResults = ref<QuizResult[]>([])
+    const teacherId = ref<string>('')
 
     // Computed properties
     const overallStats = computed(() => {
-      const totalStudents = students.value.length
-      const totalAssessments = assessments.value.length
-      const averageScore = totalStudents > 0 
-        ? Math.round(students.value.reduce((sum, student) => sum + student.average_score, 0) / totalStudents)
-        : 0
-      const studentsNeedingHelp = students.value.filter(student => student.average_score < 75).length
+      let students = studentData.value
+      if (selectedSection.value) {
+        students = students.filter(s => s.section_id === selectedSection.value)
+      }
+
+      const totalStudents = students.length
       
+      // Count unique quizzes from quiz performance data
+      let quizzes = quizPerformanceData.value
+      if (selectedSection.value) {
+        quizzes = quizzes.filter(q => q.section_id === selectedSection.value)
+      }
+      const totalQuizzes = quizzes.length
+      
+      // Calculate average score from students who have taken quizzes
+      const studentsWithScores = students.filter(s => s.average_score > 0)
+      const averageScore = studentsWithScores.length > 0 
+        ? Math.round(studentsWithScores.reduce((sum, s) => sum + s.average_score, 0) / studentsWithScores.length)
+        : 0
+
       return {
         totalStudents,
-        totalAssessments,
-        averageScore,
-        studentsNeedingHelp,
-        trend: Math.floor(Math.random() * 20) - 10 // Mock trend data
+        totalQuizzes,
+        averageScore
+      }
+    })
+
+    const performanceDistribution = computed(() => {
+      let students = studentData.value
+      if (selectedSection.value) {
+        students = students.filter(s => s.section_id === selectedSection.value)
+      }
+
+      // Only count students who have taken at least one quiz
+      const studentsWithScores = students.filter(s => s.average_score > 0)
+
+      return {
+        excellent: studentsWithScores.filter(s => s.average_score >= 90).length,
+        good: studentsWithScores.filter(s => s.average_score >= 80 && s.average_score < 90).length,
+        satisfactory: studentsWithScores.filter(s => s.average_score >= 75 && s.average_score < 80).length,
+        needsHelp: studentsWithScores.filter(s => s.average_score < 75).length
       }
     })
 
     const filteredStudents = computed(() => {
-      let filtered = students.value
+      let filtered = studentData.value
 
+      // Filter by section
       if (selectedSection.value) {
-        filtered = filtered.filter(student => student.section_id === selectedSection.value)
+        filtered = filtered.filter(s => s.section_id === selectedSection.value)
       }
 
+      // Filter by search query
       if (searchQuery.value) {
-        filtered = filtered.filter(student => 
-          student.full_name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-          student.student_id.toLowerCase().includes(searchQuery.value.toLowerCase())
+        const query = searchQuery.value.toLowerCase()
+        filtered = filtered.filter(s => 
+          s.student_name.toLowerCase().includes(query) ||
+          s.student_number.toLowerCase().includes(query) ||
+          s.student_email.toLowerCase().includes(query)
         )
       }
 
@@ -408,105 +435,135 @@ export default {
       filtered.sort((a, b) => {
         switch (sortBy.value) {
           case 'average':
-            return b.average_score - a.average_score
-          case 'latest':
-            return b.latest_score - a.latest_score
-          case 'improvement':
-            return b.improvement - a.improvement
-          default:
-            return a.full_name.localeCompare(b.full_name)
+            return (b.average_score || 0) - (a.average_score || 0)
+          case 'quizzes':
+            return b.quizzes_attempted - a.quizzes_attempted
+          default: // 'name'
+            return a.student_name.localeCompare(b.student_name)
         }
       })
 
-      // Pagination
+      // Paginate
       const start = (currentPage.value - 1) * itemsPerPage
       return filtered.slice(start, start + itemsPerPage)
     })
 
     const totalPages = computed(() => {
-      let filtered = students.value
+      let filtered = studentData.value
+      
       if (selectedSection.value) {
-        filtered = filtered.filter(student => student.section_id === selectedSection.value)
+        filtered = filtered.filter(s => s.section_id === selectedSection.value)
       }
+      
       if (searchQuery.value) {
-        filtered = filtered.filter(student => 
-          student.full_name.toLowerCase().includes(searchQuery.value.toLowerCase())
+        const query = searchQuery.value.toLowerCase()
+        filtered = filtered.filter(s => 
+          s.student_name.toLowerCase().includes(query) ||
+          s.student_number.toLowerCase().includes(query)
         )
       }
-      return Math.ceil(filtered.length / itemsPerPage)
+      
+      return Math.ceil(filtered.length / itemsPerPage) || 1
     })
 
-    // Methods
+    // Get current teacher ID
+    const getCurrentTeacherId = async () => {
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        
+        if (sessionError || !session?.user) {
+          console.error('No session found')
+          return null
+        }
+
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, role')
+          .eq('auth_user_id', session.user.id)
+          .single()
+
+        if (profileError || !profile || profile.role !== 'teacher') {
+          console.error('Teacher profile not found')
+          return null
+        }
+
+        const { data: teacher, error: teacherError } = await supabase
+          .from('teachers')
+          .select('id')
+          .eq('profile_id', profile.id)
+          .single()
+
+        if (teacherError || !teacher) {
+          console.error('Teacher not found')
+          return null
+        }
+
+        return teacher.id
+      } catch (error) {
+        console.error('Error getting teacher ID:', error)
+        return null
+      }
+    }
+
+    // Fetch analytics data using database views
     const fetchData = async () => {
       loading.value = true
       try {
-        const { data: user } = await supabase.auth.getUser()
-        if (!user.user) return
+        const currentTeacherId = await getCurrentTeacherId()
+        if (!currentTeacherId) {
+          console.error('Could not get teacher ID')
+          loading.value = false
+          return
+        }
 
-        // Fetch sections
-        const { data: sectionsData } = await supabase
-          .from('sections')
+        teacherId.value = currentTeacherId
+
+        // Fetch student performance data from view
+        const { data: students, error: studentsError } = await supabase
+          .from('student_performance_analytics')
           .select('*')
-          .eq('teacher_id', user.user.id)
+          .eq('teacher_id', teacherId.value)
+          .order('student_name')
 
-        sections.value = sectionsData || []
+        if (studentsError) {
+          console.error('Error fetching student data:', studentsError)
+          throw studentsError
+        }
 
-        // Fetch students with their performance data
-        const { data: studentsData } = await supabase
-          .from('profiles')
-          .select(`
-            *,
-            student_enrollments!inner(
-              section:sections!inner(
-                id, name, subject,
-                teacher_id
-              )
-            ),
-            assessment_results(
-              score,
-              assessment:assessments(
-                id, title, created_at
-              )
-            )
-          `)
-          .eq('role', 'student')
-          .eq('student_enrollments.section.teacher_id', user.user.id)
+        studentData.value = students || []
 
-        // Process student data
-        students.value = (studentsData || []).map(student => {
-          const results = student.assessment_results || []
-          const scores = results.map(r => r.score).filter(s => s != null)
-          
-          const average_score = scores.length > 0 
-            ? Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length)
-            : 0
-          
-          const latest_score = scores.length > 0 ? scores[scores.length - 1] : 0
-          const first_score = scores.length > 0 ? scores[0] : 0
-          const improvement = latest_score - first_score
-          
-          return {
-            ...student,
-            section_id: student.student_enrollments[0]?.section?.id,
-            section_name: student.student_enrollments[0]?.section?.name,
-            assessments: results.map(r => ({
-              ...r.assessment,
-              score: r.score
-            })),
-            assessments_count: results.length,
-            average_score,
-            latest_score,
-            improvement
+        // Fetch quiz performance data from view
+        const { data: quizzes, error: quizzesError } = await supabase
+          .from('quiz_performance_analytics')
+          .select('*')
+          .eq('teacher_id', teacherId.value)
+          .order('quiz_title')
+
+        if (quizzesError) {
+          console.error('Error fetching quiz data:', quizzesError)
+          throw quizzesError
+        }
+
+        quizPerformanceData.value = quizzes || []
+
+        // Build unique sections list for filter
+        const uniqueSections = new Map()
+        studentData.value.forEach(s => {
+          if (!uniqueSections.has(s.section_id)) {
+            uniqueSections.set(s.section_id, {
+              id: s.section_id,
+              name: s.section_name,
+              subject_name: s.subject_name
+            })
           }
         })
+        sections.value = Array.from(uniqueSections.values())
 
-        // Fetch assessments
-        const { data: assessmentsData } = await supabase
-          .from('assessments')
-          .select('*')
-          .eq('teacher_id', user.user.id)
-
-        assessments.value = assessmentsData || []
+        console.log('Data loaded successfully:', {
+          students: studentData.value.length,
+          quizzes: quizPerformanceData.value.length,
+          sections: sections.value.length
+        })
 
       } catch (error) {
         console.error('Error fetching analytics data:', error)
@@ -515,105 +572,74 @@ export default {
       }
     }
 
+    // View student details
+    const viewStudentDetails = async (student: StudentData) => {
+      selectedStudent.value = student
+
+      try {
+        // Fetch individual quiz attempts for this student
+        const { data: attempts, error } = await supabase
+          .from('quiz_attempts')
+          .select(`
+            id,
+            quiz_id,
+            attempt_number,
+            percentage,
+            submitted_at,
+            quizzes (
+              title
+            )
+          `)
+          .eq('student_id', student.student_id)
+          .in('status', ['submitted', 'graded'])
+          .order('submitted_at', { ascending: false })
+
+        if (error) throw error
+
+        if (attempts) {
+          studentQuizResults.value = attempts.map((a: any) => ({
+            attempt_id: a.id,
+            quiz_id: a.quiz_id,
+            quiz_title: a.quizzes?.title || `Quiz ${a.quiz_id.slice(0, 8)}`,
+            attempt_number: a.attempt_number,
+            percentage: a.percentage || 0,
+            submitted_at: a.submitted_at
+          }))
+        }
+      } catch (error) {
+        console.error('Error fetching student details:', error)
+        studentQuizResults.value = []
+      }
+    }
+
+    // Filter by section
     const filterBySection = () => {
       currentPage.value = 1
     }
 
+    // Sort students
     const sortStudents = () => {
       currentPage.value = 1
     }
 
-    const viewStudentDetails = (student) => {
-      selectedStudent.value = student
-      studentNotes.value = student.notes || ''
-    }
-
-    const updateScore = (student) => {
-      updateStudent.value = student
-      showUpdateModal.value = true
-      scoreUpdate.value = {
-        assessment_id: '',
-        score: '',
-        comment: ''
-      }
-    }
-
-    const saveScoreUpdate = async () => {
-      loading.value = true
-      try {
-        const { error } = await supabase
-          .from('assessment_results')
-          .update({
-            score: parseInt(scoreUpdate.value.score),
-            comment: scoreUpdate.value.comment
-          })
-          .eq('assessment_id', scoreUpdate.value.assessment_id)
-          .eq('student_id', updateStudent.value.id)
-
-        if (error) throw error
-
-        showUpdateModal.value = false
-        await fetchData() // Refresh data
-        alert('Score updated successfully!')
-      } catch (error) {
-        console.error('Error updating score:', error)
-        alert('Error updating score')
-      } finally {
-        loading.value = false
-      }
-    }
-
-    const flagForRemediation = async (student) => {
-      try {
-        const { error } = await supabase
-          .from('profiles')
-          .update({
-            needs_remediation: true,
-            remediation_flagged_at: new Date().toISOString()
-          })
-          .eq('id', student.id)
-
-        if (error) throw error
-        
-        alert(`${student.full_name} has been flagged for remediation`)
-        await fetchData()
-      } catch (error) {
-        console.error('Error flagging student:', error)
-      }
-    }
-
-    const saveStudentNotes = async () => {
-      try {
-        const { error } = await supabase
-          .from('profiles')
-          .update({ notes: studentNotes.value })
-          .eq('id', selectedStudent.value.id)
-
-        if (error) throw error
-        
-        alert('Notes saved successfully!')
-      } catch (error) {
-        console.error('Error saving notes:', error)
-      }
-    }
-
+    // Export data to CSV
     const exportData = () => {
-      // Create CSV data
-      const headers = ['Student Name', 'Section', 'Average Score', 'Latest Score', 'Assessments Count', 'Status']
-      const csvData = students.value.map(student => [
-        student.full_name,
+      const headers = ['Student Name', 'ID', 'Section', 'Subject', 'Average Score', 'Best Score', 'Quizzes Taken', 'Status']
+      const csvData = studentData.value.map(student => [
+        student.student_name,
+        student.student_number,
         student.section_name,
-        student.average_score,
-        student.latest_score,
-        student.assessments_count,
-        getStatusText(student.average_score)
+        student.subject_name,
+        student.average_score || 0,
+        student.best_score || 0,
+        student.quizzes_attempted,
+        student.performance_status
       ])
 
       const csvContent = [headers, ...csvData]
         .map(row => row.map(field => `"${field}"`).join(','))
         .join('\n')
 
-      // Download CSV
       const blob = new Blob([csvContent], { type: 'text/csv' })
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
@@ -623,84 +649,65 @@ export default {
       window.URL.revokeObjectURL(url)
     }
 
-    const getInitials = (name) => {
-      return name.split(' ').map(n => n[0]).join('').toUpperCase()
+    // Helper functions
+    const getInitials = (name: string) => {
+      return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
     }
 
-    const getScoreClass = (score) => {
+    const getScoreClass = (score: number) => {
       if (score >= 90) return 'excellent'
       if (score >= 80) return 'good'
       if (score >= 75) return 'satisfactory'
       return 'needs-improvement'
     }
 
-    const getStatusClass = (score) => {
+    const getStatusClass = (score: number) => {
       if (score >= 90) return 'excellent'
       if (score >= 80) return 'good'
       if (score >= 75) return 'satisfactory'
       return 'warning'
     }
 
-    const getStatusText = (score) => {
-      if (score >= 90) return 'Excellent'
-      if (score >= 80) return 'Good'
-      if (score >= 75) return 'Satisfactory'
-      return 'Needs Help'
+    const formatDate = (dateString: string) => {
+      if (!dateString) return 'N/A'
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      })
     }
 
-    const formatDate = (dateString) => {
-      return new Date(dateString).toLocaleDateString()
-    }
-
-    const initializeCharts = () => {
-      // This would integrate with Chart.js or similar library
-      // For now, we'll just show placeholders
-      console.log('Charts would be initialized here')
-    }
-
+    // Lifecycle
     onMounted(async () => {
       initDarkMode()
       await fetchData()
-      await nextTick()
-      initializeCharts()
     })
 
     return {
       isDarkMode,
       sections,
-      students,
-      assessments,
+      studentData,
+      quizPerformanceData,
       selectedSection,
-      selectedTimePeriod,
       searchQuery,
       sortBy,
       currentPage,
       itemsPerPage,
       loading,
       selectedStudent,
-      showUpdateModal,
-      updateStudent,
-      studentNotes,
-      scoreUpdate,
-      timePeriods,
-      performanceChart,
-      distributionChart,
+      studentQuizResults,
       overallStats,
+      performanceDistribution,
       filteredStudents,
       totalPages,
       fetchData,
       filterBySection,
       sortStudents,
       viewStudentDetails,
-      updateScore,
-      saveScoreUpdate,
-      flagForRemediation,
-      saveStudentNotes,
       exportData,
       getInitials,
       getScoreClass,
       getStatusClass,
-      getStatusText,
       formatDate
     }
   }
@@ -1578,5 +1585,161 @@ export default {
   .student-summary {
     grid-template-columns: 1fr;
   }
+}
+
+/* New styles for quiz performance list */
+.performance-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.performance-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #FBFFE4;
+  border-radius: 8px;
+  border-left: 4px solid #3D8D7A;
+}
+
+.dark .performance-item {
+  background: #181c20;
+  border-left-color: #20c997;
+}
+
+.quiz-info {
+  flex: 1;
+}
+
+.quiz-title {
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+
+.dark .quiz-title {
+  color: #A3D1C6;
+}
+
+.quiz-meta {
+  font-size: 0.813rem;
+  color: #6b7280;
+}
+
+.dark .quiz-meta {
+  color: #9ca3af;
+}
+
+.quiz-score {
+  margin-left: 1rem;
+}
+
+/* Distribution list styles */
+.distribution-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.dist-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #FBFFE4;
+  border-radius: 8px;
+}
+
+.dark .dist-item {
+  background: #181c20;
+}
+
+.dist-label {
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.dist-label.excellent {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.dist-label.good {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.dist-label.satisfactory {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.dist-label.warning {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.dist-count {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #3D8D7A;
+  margin-left: 1rem;
+}
+
+.dark .dist-count {
+  color: #A3D1C6;
+}
+
+.empty-state {
+  padding: 2rem;
+  text-align: center;
+  color: #6b7280;
+}
+
+.dark .empty-state {
+  color: #9ca3af;
+}
+
+.history-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+}
+
+.dark .history-item {
+  border-color: #374151;
+}
+
+.quiz-info h5 {
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+  margin-bottom: 0.25rem;
+}
+
+.dark .quiz-info h5 {
+  color: #A3D1C6;
+}
+
+.quiz-info p {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.dark .quiz-info p {
+  color: #9ca3af;
 }
 </style>
