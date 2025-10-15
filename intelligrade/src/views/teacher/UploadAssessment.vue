@@ -515,7 +515,7 @@
               📄 Download Report
             </button>
             <button @click="viewAllAssessments" class="btn-primary">
-              � View All Assessments
+                View All Assessments
             </button>
             <button @click="resetForm" class="btn-secondary">
               🔄 Check Another Assessment
@@ -833,72 +833,76 @@ Enter pattern:`);
       };
 
       // Process Answer Key File
-      const processAnswerKeyFile = async (file) => {
-        isLoading.value = true;
-        loadingMessage.value = "Processing answer key...";
-        
-        try {
-          const formData = new FormData();
-          formData.append('file', file);
-          
-          console.log('🔗 Attempting to connect to backend...');
-          
-          const response = await fetch('http://localhost:8000/api/assessments/process-answer-key', {
-            method: 'POST',
-            body: formData
-          });
+      // Update the processAnswerKeyFile function around line 850-890
+const processAnswerKeyFile = async (file) => {
+  isLoading.value = true;
+  loadingMessage.value = "Processing answer key...";
+  
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    console.log('🔗 Attempting to connect to backend...');
+    
+    const response = await fetch('http://localhost:8000/api/assessments/process-answer-key', {
+      method: 'POST',
+      body: formData
+    });
 
-          console.log('📡 Response status:', response.status);
+    console.log('📡 Response status:', response.status);
 
-          if (!response.ok) {
-            if (response.status === 0 || !response.status) {
-              throw new Error('Backend server is not running. Please start the backend server at http://localhost:8000');
-            }
-            const errorText = await response.text();
-            throw new Error(`Server error: ${response.status} - ${errorText}`);
-          }
+    if (!response.ok) {
+      if (response.status === 0 || !response.status) {
+        throw new Error('Backend server is not running. Please start the backend server at http://localhost:8000');
+      }
+      const errorText = await response.text();
+      throw new Error(`Server error: ${response.status} - ${errorText}`);
+    }
 
-          const result = await response.json();
-          console.log('✅ Answer key processed:', result);
-          
-          if (result.questions && result.questions.length > 0) {
-            // Update questions list with detected answers
-            questionsList.value = result.questions.map((q, index) => ({
-              id: q.id || index + 1,
-              type: q.type || 'multiple-choice',
-              correctAnswer: q.answer || q.correctAnswer || '',
-              points: q.points || parseInt(pointsPerQuestion.value) || 1
-            }));
-            
-            // Update number of questions to match detected count
-            numQuestions.value = result.questions.length;
-            calculateTotalPoints();
-            
-            // Clear any previous errors
-            error.value = "";
-            
-            // Switch to manual mode to show the preview immediately
-            answerKeyMethod.value = 'manual';
-            manualInputMethod.value = 'individual';
-            
-            console.log('📋 Questions list updated:', questionsList.value);
-            console.log('🎯 Answer key preview should now be visible!');
-            
-            alert(`✅ Successfully processed ${result.questions.length} questions!\n\nFormat detected: ${result.format_detected || result.format_type || 'flexible'}\n\n✨ Check the Answer Key Preview below!`);
-          } else {
-            throw new Error("No questions found in the uploaded answer key file");
-          }
-        } catch (err) {
-          console.error('❌ Error processing answer key:', err);
-          if (err.message.includes('Failed to fetch') || err.message.includes('Backend server')) {
-            error.value = "🚫 Backend server is not running!\n\nPlease start the backend server:\n1. Open terminal in backend folder\n2. Run: python run.py\n3. Server should start at http://localhost:8000";
-          } else {
-            error.value = "Failed to process answer key: " + err.message;
-          }
-        } finally {
-          isLoading.value = false;
-        }
-      };
+    const result = await response.json();
+    console.log('✅ Answer key processed:', result);
+    
+    if (result.questions && result.questions.length > 0) {
+      // IMPORTANT: Keep the file reference so canSubmit works
+      answerKeyFile.value = file;
+      
+      // Update questions list with detected answers
+      questionsList.value = result.questions.map((q, index) => ({
+        id: q.id || index + 1,
+        type: q.type || 'multiple-choice',
+        correctAnswer: q.answer || q.correctAnswer || '',
+        points: q.points || parseInt(pointsPerQuestion.value) || 1
+      }));
+      
+      // Update number of questions to match detected count
+      numQuestions.value = result.questions.length;
+      calculateTotalPoints();
+      
+      // Clear any previous errors
+      error.value = "";
+      
+      // Keep the upload method active so the button works
+      // answerKeyMethod.value stays as 'upload'
+      
+      console.log('📋 Questions list updated:', questionsList.value);
+      console.log('🔑 Answer key file reference maintained:', answerKeyFile.value?.name);
+      console.log('🎯 Can submit should now be TRUE!');
+      
+      alert(`✅ Successfully processed ${result.questions.length} questions!\n\nFormat detected: ${result.format_detected || result.format_type || 'flexible'}\n\n✨ You can now upload student assessment and start grading!`);
+    } else {
+      throw new Error("No questions found in the uploaded answer key file");
+    }
+  } catch (err) {
+    console.error('❌ Error processing answer key:', err);
+    if (err.message.includes('Failed to fetch') || err.message.includes('Backend server')) {
+      error.value = "🚫 Backend server is not running!\n\nPlease start the backend server:\n1. Open terminal in backend folder\n2. Run: python main.py\n3. Server should start at http://localhost:8000";
+    } else {
+      error.value = "Failed to process answer key: " + err.message;
+    }
+  } finally {
+    isLoading.value = false;
+  }
+};
 
       // File Handling
       const handleFileUpload = (event) => {
@@ -1473,30 +1477,45 @@ C
       };
 
       // Computed Properties
-      const canSubmit = computed(() => {
-        const hasBasicInfo = subject.value && 
-                            assessmentTitle.value &&
-                            numQuestions.value &&
-                            pointsPerQuestion.value &&
-                            selectedTemplate.value && 
-                            assessmentFile.value &&
-                            !isLoading.value;
-        
-        // Check answer key - either file uploaded OR some manual answers
-        const hasAnswerKeySetup = (answerKeyMethod.value === 'upload' && !!answerKeyFile.value) ||
-                                  (answerKeyMethod.value === 'manual' && questionsList.value.length > 0);
-        
-        console.log('🔍 Can Submit Check:', {
-          hasBasicInfo,
-          hasAnswerKeySetup,
-          answerKeyMethod: answerKeyMethod.value,
-          answerKeyFile: !!answerKeyFile.value,
-          questionsListLength: questionsList.value.length,
-          canSubmit: hasBasicInfo && hasAnswerKeySetup
-        });
-        
-        return hasBasicInfo && hasAnswerKeySetup;
-      });
+      // Update the canSubmit computed property around line 1470
+const canSubmit = computed(() => {
+  const hasBasicInfo = subject.value && 
+                      assessmentTitle.value &&
+                      numQuestions.value &&
+                      pointsPerQuestion.value &&
+                      selectedTemplate.value && 
+                      assessmentFile.value &&
+                      !isLoading.value;
+  
+  // Check answer key setup
+  const hasAnswerKeyFile = answerKeyMethod.value === 'upload' && !!answerKeyFile.value;
+  const hasManualAnswers = answerKeyMethod.value === 'manual' && 
+                          questionsList.value.length > 0 &&
+                          questionsList.value.some(q => q.correctAnswer);
+  
+  const hasAnswerKeySetup = hasAnswerKeyFile || hasManualAnswers;
+  
+  // Debug logging
+  console.log('🔍 Can Submit Check:', {
+    subject: !!subject.value,
+    assessmentTitle: !!assessmentTitle.value,
+    numQuestions: !!numQuestions.value,
+    pointsPerQuestion: !!pointsPerQuestion.value,
+    selectedTemplate: !!selectedTemplate.value,
+    assessmentFile: !!assessmentFile.value,
+    isLoading: isLoading.value,
+    answerKeyMethod: answerKeyMethod.value,
+    answerKeyFile: !!answerKeyFile.value,
+    answerKeyFileName: answerKeyFile.value?.name,
+    questionsListLength: questionsList.value.length,
+    questionsWithAnswers: questionsList.value.filter(q => q.correctAnswer).length,
+    hasBasicInfo,
+    hasAnswerKeySetup,
+    FINAL_CAN_SUBMIT: hasBasicInfo && hasAnswerKeySetup
+  });
+  
+  return hasBasicInfo && hasAnswerKeySetup;
+});
 
       return {
         isLoading,
