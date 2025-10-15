@@ -20,13 +20,14 @@ app.add_middleware(
 )
 
 # Import routes AFTER CORS setup
-
-# from backend.routes.assessments import router as assessments_router
-from backend.routes.auth import router as auth_router
+from routes.auth import router as auth_router
+from routes.assessments import router as assessments_router_old
+from app.api.endpoints.assessments import router as assessments_router_new
 
 # Include routers
-
-app.include_router(auth_router)
+app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
+app.include_router(assessments_router_old, tags=["assessments-v1"])
+app.include_router(assessments_router_new, prefix="/api/assessments", tags=["assessments-v2"])
 
 @app.get("/")
 async def root():
@@ -46,7 +47,7 @@ if __name__ == "__main__":
     print(f"🌐 Server will start on {host}:{port}")
     
     uvicorn.run(
-        "backend.main:app", 
+        "main:app",  # Changed from "backend.main:app"
         host=host, 
         port=port, 
         reload=True,

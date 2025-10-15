@@ -1,35 +1,34 @@
 <template>
   <div class="messages-container" :class="{ 'dark': isDarkMode }">
-    <!-- Simple Header -->
+    <!-- Consistent Header Card -->
     <div class="header-card">
       <div class="header-content">
         <div class="header-left">
-          <div class="header-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          <div class="header-icon" style="background:#43907A;width:56px;height:56px;display:flex;align-items:center;justify-content:center;border-radius:14px;margin-right:1.5rem;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+              <rect width="24" height="24" rx="6" fill="none"/>
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="#fff"/>
             </svg>
           </div>
           <div>
-            <h1 class="header-title">Class Messaging</h1>
-            <p class="header-subtitle">Communicate with your students</p>
+            <h1 class="header-title" style="font-size:2rem;font-weight:800;color:#222;margin-bottom:0.1rem;">Class Messaging</h1>
+            <p class="header-subtitle" style="font-size:1.1rem;color:#6b7a89;font-weight:500;">Communicate with your students</p>
           </div>
         </div>
-        
         <div class="header-actions">
+          <button class="dark-mode-toggle" @click="toggleDarkMode">
+            <svg v-if="!isDarkMode" width="24" height="24" fill="none" viewBox="0 0 24 24">
+              <path fill="currentColor" d="M12 2a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0V3a1 1 0 0 1 1-1Zm6.364 3.636a1 1 0 0 1 1.414 1.414l-1.414 1.414a1 1 0 1 1-1.414-1.414l1.414-1.414ZM21 11a1 1 0 1 1 0 2h-2a1 1 0 1 1 0-2h2Zm-2.222 7.364a1 1 0 0 1-1.415 1.415l-1.414-1.415a1 1 0 1 1 1.415-1.414l1.414 1.414ZM13 21a1 1 0 1 1-2 0v-2a1 1 0 1 1 2 0v2Zm-7.364-2.222a1 1 0 0 1-1.414-1.415l1.414-1.414a1 1 0 1 1 1.414 1.415l-1.414 1.414ZM3 13a1 1 0 1 1 0-2h2a1 1 0 1 1 0 2H3Zm2.222-7.364a1 1 0 0 1 1.415-1.414l1.414 1.414A1 1 0 1 1 6.05 6.05L4.636 4.636Z"/>
+            </svg>
+            <svg v-else width="24" height="24" fill="none" viewBox="0 0 24 24">
+              <path fill="currentColor" d="M21 12.79A9 9 0 0 1 11.21 3a1 1 0 0 0-1.21 1v.09A9 9 0 1 0 20.91 13a1 1 0 0 0 1-1.21ZM12 21a7 7 0 0 1 0-14V5a7 7 0 0 1 0 14Z"/>
+            </svg>
+          </button>
           <button @click="markAllAsRead" class="action-btn">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <polyline points="20,6 9,17 4,12"/>
             </svg>
             Mark All Read
-          </button>
-          
-          <button class="dark-mode-toggle" @click="toggleDarkMode">
-            <svg v-if="!isDarkMode" width="20" height="20" fill="none" viewBox="0 0 24 24">
-              <path fill="currentColor" d="M12 2a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0V3a1 1 0 0 1 1-1Zm6.364 3.636a1 1 0 0 1 1.414 1.414l-1.414 1.414a1 1 0 1 1-1.414-1.414l1.414-1.414ZM21 11a1 1 0 1 1 0 2h-2a1 1 0 1 1 0-2h2Zm-2.222 7.364a1 1 0 0 1-1.415 1.415l-1.414-1.415a1 1 0 1 1 1.415-1.414l1.414 1.414ZM13 21a1 1 0 1 1-2 0v-2a1 1 0 1 1 2 0v2Zm-7.364-2.222a1 1 0 0 1-1.414-1.415l1.414-1.414a1 1 0 1 1 1.414 1.415l-1.414 1.414ZM3 13a1 1 0 1 1 0-2h2a1 1 0 1 1 0 2H3Zm2.222-7.364a1 1 0 0 1 1.415-1.414l1.414 1.414A1 1 0 1 1 6.05 6.05L4.636 4.636Z"/>
-            </svg>
-            <svg v-else width="20" height="20" fill="none" viewBox="0 0 24 24">
-              <path fill="currentColor" d="M21 12.79A9 9 0 0 1 11.21 3a1 1 0 0 0-1.21 1v.09A9 9 0 1 0 20.91 13a1 1 0 0 0 1-1.21ZM12 21a7 7 0 0 1 0-14V5a7 7 0 0 1 0 14Z"/>
-            </svg>
           </button>
         </div>
       </div>
@@ -168,12 +167,6 @@
                       </option>
                     </select>
                   </div>
-                  <button class="action-btn" @click="markAllAsRead">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="20,6 9,17 4,12"/>
-                    </svg>
-                    Mark all read
-                  </button>
                 </div>
 <!-- ...existing code... -->
               </div>
@@ -2326,18 +2319,26 @@ onUnmounted(() => {
 }
 
 .section-title {
-  font-size: 1.125rem;
+  font-size: 0.92rem;
   font-weight: 600;
-  color: #ffffff;
-  margin: 0 0 0.25rem 0;
+  color: #23423a;
+  margin: 0;
   font-family: 'Inter', sans-serif;
+}
+
+.dark .section-title {
+  color: #fff;
 }
 
 .section-grade {
   font-size: 0.875rem;
-  color: #20c997;
+  color: #3D8D7A;
   margin: 0;
   font-family: 'Inter', sans-serif;
+}
+
+.dark .section-grade {
+  color: #B3D8A8;
 }
 
 .section-options-btn {
@@ -2381,17 +2382,24 @@ onUnmounted(() => {
 }
 
 .section-code-value {
-  background: #1f2937;
-  border: 1px solid #374151;
+  background: #fff;
+  border: 1.5px solid #B3D8A8;
   border-radius: 8px;
   padding: 0.75rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-family: 'Courier New', monospace;
-  font-size: 0.875rem;
-  color: #ffffff;
+  font-size: 0.95rem;
+  color: #1f2937;
   font-weight: 600;
+  transition: background 0.2s, border 0.2s;
+}
+
+.dark .section-code-value {
+  background: #1f2937;
+  border: 1.5px solid #374151;
+  color: #fff;
 }
 
 .copy-code-btn {
@@ -2532,21 +2540,22 @@ onUnmounted(() => {
   color: #20c997;
 }
 
-.section-code-text {
-  color: #fff;
-  font-weight: 600;
-  letter-spacing: 1px;
-  cursor: pointer;
-}
-
-.section-overview-stats {
-  color: #b5b5b5;
-  font-size: 0.95rem;
-  margin-top: 0.2rem;
-}
-
-.section-overview-count {
-  text-align: center;
+.section-code-value {
+  background: #fff;
+  border: 1.5px solid #B3D8A8;
+  border-radius: 8px;
+  padding: 0.6rem 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'Fira Mono', 'Consolas', 'Courier New', monospace;
+  font-size: 0.85rem;
+  color: #23423a;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  transition: background 0.2s, border 0.2s;
+  white-space: nowrap;
+  overflow-x: auto;
 }
 
 .count-number {
