@@ -1,4 +1,6 @@
 
+@import './base.css';
+
 .notifications-card.system-style {
   background: #f8fffe;
   border-radius: 18px;
@@ -208,7 +210,6 @@
   color: var(--text-muted);
   padding: 1rem 0;
 }
-@import './base.css';
 
 #app {
   max-width: 1280px;

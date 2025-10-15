@@ -472,14 +472,6 @@ onMounted(() => {
   padding: 1.5rem;
   font-family: 'Inter', sans-serif;
 }
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-.students-home-container {
-  min-height: 100vh;
-  background: #FBFFE4;
-  padding: 1.5rem;
-  font-family: 'Inter', sans-serif;
-}
 .dark .students-home-container {
   background: #181c20;
 }
