@@ -1,372 +1,443 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
-    <!-- Animated Background Shapes -->
-    <div class="fixed inset-0 overflow-hidden pointer-events-none">
-      <div class="floating-shape shape-1"></div>
-      <div class="floating-shape shape-2"></div>
-      <div class="floating-shape shape-3"></div>
+  <div class="take-quiz-page">
+    <!-- Header Section -->
+    <div class="section-header-card">
+      <div class="section-header-content">
+        <div class="section-header-left">
+          <div class="section-header-icon">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 14l9-5-9-5-9 5 9 5z"/>
+              <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>
+            </svg>
+          </div>
+          
+          <div class="header-text">
+            <h1 class="section-header-title">{{ subject.name }} - Quizzes</h1>
+            <p class="section-header-subtitle">{{ section.name }}</p>
+            <p class="section-header-description">{{ studentInfo.full_name }} • Grade {{ studentInfo.grade_level }}</p>
+          </div>
+        </div>
+        
+        <div class="header-actions">
+          <button @click="goBack" class="back-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
+            </svg>
+            Back to Subjects
+          </button>
+        </div>
+      </div>
     </div>
 
-    <div class="max-w-6xl mx-auto relative z-10">
-      <!-- Loading State -->
-      <div v-if="isLoading" class="glass-card p-12 text-center slide-up">
-        <div class="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-        <p class="text-gray-600 font-semibold">Loading quizzes...</p>
+    <!-- Loading State -->
+    <div v-if="loading" class="loading-container">
+      <div class="spinner-large"></div>
+      <p>Loading quizzes...</p>
+    </div>
+
+    <!-- Quiz List View -->
+    <div v-else-if="!selectedQuiz && !takingQuiz" class="main-content">
+      <!-- Stats Overview -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">📝</div>
+          <div class="stat-value">{{ quizzes.length }}</div>
+          <div class="stat-label">Available Quizzes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">✅</div>
+          <div class="stat-value">{{ completedQuizzes.length }}</div>
+          <div class="stat-label">Completed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📊</div>
+          <div class="stat-value">{{ averageScore }}%</div>
+          <div class="stat-label">Average Score</div>
+        </div>
       </div>
 
-      <!-- Quiz History View (Default when not taking quiz) -->
-      <div v-else-if="!quizStarted && !isLoading" class="slide-up space-y-6">
-        <!-- Header -->
-        <div class="glass-card p-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <h2 class="text-3xl font-bold text-gray-800">{{ subjectName }}</h2>
-              <p class="text-gray-600">{{ sectionName }}</p>
+      <!-- Quizzes Categories -->
+      <div class="quizzes-section">
+        <!-- New Quizzes -->
+        <div v-if="newQuizzes.length > 0" class="quiz-category">
+          <div class="category-header">
+            <h2 class="category-title">
+              <span class="category-icon">🆕</span>
+              New Quizzes
+            </h2>
+            <span class="category-count">{{ newQuizzes.length }}</span>
+          </div>
+          <div class="quiz-grid">
+            <div v-for="quiz in newQuizzes" :key="quiz.id" class="quiz-card new-quiz">
+              <div class="quiz-badge new-badge">New</div>
+              <div class="quiz-header">
+                <h3 class="quiz-title">{{ quiz.title }}</h3>
+                <div class="quiz-code">
+                  <span class="code-label">Code:</span>
+                  <span class="code-value">{{ quiz.quiz_code }}</span>
+                </div>
+              </div>
+              <p class="quiz-description">{{ quiz.description || 'No description provided' }}</p>
+              <div class="quiz-meta">
+                <div class="meta-item">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span>{{ quiz.number_of_questions }} Questions</span>
+                </div>
+                <div class="meta-item">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span>{{ quiz.has_time_limit ? `${quiz.time_limit_minutes} min` : 'No limit' }}</span>
+                </div>
+                <div class="meta-item">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                  </svg>
+                  <span>{{ quiz.attempts_allowed === 999 ? 'Unlimited' : `${quiz.attempts_allowed} attempt(s)` }}</span>
+                </div>
+              </div>
+              <div class="quiz-schedule" v-if="quiz.start_date || quiz.end_date">
+                <div v-if="quiz.start_date" class="schedule-item">
+                  <span class="schedule-label">Starts:</span>
+                  <span class="schedule-time">{{ formatPHTime(quiz.start_date) }}</span>
+                </div>
+                <div v-if="quiz.end_date" class="schedule-item">
+                  <span class="schedule-label">Ends:</span>
+                  <span class="schedule-time">{{ formatPHTime(quiz.end_date) }}</span>
+                </div>
+              </div>
+              <div class="quiz-actions">
+                <button @click="viewQuizDetails(quiz)" class="btn btn-primary">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                  View Quiz
+                </button>
+              </div>
             </div>
-            <button @click="goBackToSubjects" class="btn-secondary">
-              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-              </svg>
-              Back to Subjects
-            </button>
           </div>
         </div>
 
-        <!-- Available Quizzes -->
-        <div v-if="availableQuizzes.length > 0" class="glass-card p-6">
-          <h3 class="text-2xl font-bold text-gray-800 mb-4">📝 Available Quizzes</h3>
-          <div class="space-y-3">
-            <div v-for="quiz in availableQuizzes" :key="quiz.quiz_id" 
-     class="quiz-item available"
-     style="cursor: default;">
-              <div class="flex-1">
-                <div class="flex items-center gap-3 mb-2">
-                  <h4 class="text-xl font-bold text-gray-800">{{ quiz.title }}</h4>
-                  <span class="badge badge-new">New</span>
-                </div>
-                <p class="text-gray-600 text-sm mb-3">{{ quiz.description }}</p>
-                <div class="flex items-center gap-4 text-sm">
-                  <span class="quiz-stat">📝 {{ quiz.number_of_questions }} Questions</span>
-                  <span v-if="quiz.has_time_limit" class="quiz-stat">⏱️ {{ quiz.time_limit_minutes }} min</span>
-                  <span class="quiz-stat">🔁 {{ quiz.attempts_used }}/{{ quiz.attempts_allowed === 999 ? '∞' : quiz.attempts_allowed }} Attempts</span>
+        <!-- Past Quizzes -->
+        <div v-if="pastQuizzes.length > 0" class="quiz-category">
+          <div class="category-header">
+            <h2 class="category-title">
+              <span class="category-icon">📚</span>
+              Past Quizzes
+            </h2>
+            <span class="category-count">{{ pastQuizzes.length }}</span>
+          </div>
+          <div class="quiz-grid">
+            <div v-for="quiz in pastQuizzes" :key="quiz.id" class="quiz-card past-quiz">
+              <div v-if="getQuizStatus(quiz) === 'completed'" class="quiz-badge completed-badge">Completed</div>
+              <div v-else-if="getQuizStatus(quiz) === 'expired'" class="quiz-badge expired-badge">Expired</div>
+              <div class="quiz-header">
+                <h3 class="quiz-title">{{ quiz.title }}</h3>
+                <div class="quiz-code">
+                  <span class="code-label">Code:</span>
+                  <span class="code-value">{{ quiz.quiz_code }}</span>
                 </div>
               </div>
-              <button @click="selectQuiz(quiz)" class="btn-take-quiz" style="pointer-events: auto;">
-                Start Quiz
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              <p class="quiz-description">{{ quiz.description || 'No description provided' }}</p>
+              <div class="quiz-meta">
+                <div class="meta-item">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span>{{ quiz.number_of_questions }} Questions</span>
+                </div>
+                <div class="meta-item">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span>{{ quiz.has_time_limit ? `${quiz.time_limit_minutes} min` : 'No limit' }}</span>
+                </div>
+              </div>
+              <div v-if="getQuizResult(quiz.id)" class="quiz-result">
+                <div class="result-score">
+                  <span class="score-label">Your Score:</span>
+                  <span class="score-value">{{ getQuizResult(quiz.id).best_percentage }}%</span>
+                </div>
+                <div class="result-attempts">
+                  <span>{{ getQuizResult(quiz.id).total_attempts }} attempt(s)</span>
+                </div>
+              </div>
+              <div class="quiz-actions">
+                <button @click="viewQuizDetails(quiz)" class="btn btn-secondary">
+                  View Details
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div v-if="quizzes.length === 0" class="empty-state">
+          <div class="empty-icon">📝</div>
+          <h3>No Quizzes Available</h3>
+          <p>There are no quizzes available for this subject yet.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quiz Details View -->
+    <div v-else-if="selectedQuiz && !takingQuiz" class="quiz-details-view">
+      <div class="content-card slide-up">
+        <div class="details-header">
+          <button @click="selectedQuiz = null" class="back-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M15 19l-7-7 7-7"/>
+            </svg>
+            Back to Quizzes
+          </button>
+          <div class="quiz-status-badge" :class="getQuizAvailabilityClass()">
+            {{ getQuizAvailabilityText() }}
+          </div>
+        </div>
+
+        <div class="details-content">
+          <div class="details-main">
+            <div class="quiz-info-card">
+              <h1 class="details-title">{{ selectedQuiz.title }}</h1>
+              <div class="quiz-code-display">
+                <span class="code-label">Quiz Code:</span>
+                <span class="code-value">{{ selectedQuiz.quiz_code }}</span>
+              </div>
+              <p class="details-description">{{ selectedQuiz.description || 'No description provided' }}</p>
+              
+              <div class="info-grid">
+                <div class="info-item">
+                  <div class="info-icon">📝</div>
+                  <div class="info-content">
+                    <span class="info-label">Questions</span>
+                    <span class="info-value">{{ selectedQuiz.number_of_questions }}</span>
+                  </div>
+                </div>
+                <div class="info-item">
+                  <div class="info-icon">⏱️</div>
+                  <div class="info-content">
+                    <span class="info-label">Time Limit</span>
+                    <span class="info-value">{{ selectedQuiz.has_time_limit ? `${selectedQuiz.time_limit_minutes} minutes` : 'No limit' }}</span>
+                  </div>
+                </div>
+                <div class="info-item">
+                  <div class="info-icon">🔁</div>
+                  <div class="info-content">
+                    <span class="info-label">Attempts</span>
+                    <span class="info-value">{{ selectedQuiz.attempts_allowed === 999 ? 'Unlimited' : selectedQuiz.attempts_allowed }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="selectedQuiz.start_date || selectedQuiz.end_date" class="schedule-info">
+                <h3 class="schedule-title">Schedule</h3>
+                <div class="schedule-details">
+                  <div v-if="selectedQuiz.start_date" class="schedule-row">
+                    <span class="schedule-icon">🕐</span>
+                    <span class="schedule-label">Available from:</span>
+                    <span class="schedule-value">{{ formatPHTime(selectedQuiz.start_date) }}</span>
+                  </div>
+                  <div v-if="selectedQuiz.end_date" class="schedule-row">
+                    <span class="schedule-icon">🕕</span>
+                    <span class="schedule-label">Available until:</span>
+                    <span class="schedule-value">{{ formatPHTime(selectedQuiz.end_date) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="previousAttempts.length > 0" class="attempts-history">
+                <h3 class="attempts-title">Your Previous Attempts</h3>
+                <div class="attempts-list">
+                  <div v-for="(attempt, index) in previousAttempts" :key="attempt.id" class="attempt-item">
+                    <div class="attempt-number">Attempt {{ attempt.attempt_number }}</div>
+                    <div class="attempt-score">{{ attempt.percentage }}%</div>
+                    <div class="attempt-date">{{ formatPHTime(attempt.submitted_at) }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="action-card">
+              <div v-if="!canTakeCurrentQuiz" class="warning-message">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                 </svg>
+                <span>{{ quizUnavailableReason }}</span>
+              </div>
+              <button 
+                v-else
+                @click="startQuiz" 
+                :disabled="isStarting"
+                class="btn btn-start-quiz"
+              >
+                <svg v-if="!isStarting" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                  <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div v-else class="spinner"></div>
+                <span>{{ isStarting ? 'Starting Quiz...' : 'Start Quiz Now' }}</span>
               </button>
             </div>
           </div>
         </div>
+      </div>
+    </div>
 
-        <!-- Completed Quizzes -->
-        <div v-if="completedQuizzes.length > 0" class="glass-card p-6">
-          <h3 class="text-2xl font-bold text-gray-800 mb-4">✅ Completed Quizzes</h3>
-          <div class="space-y-3">
-            <div v-for="quiz in completedQuizzes" :key="quiz.quiz_id" 
-                 class="quiz-item completed"
-                 @click="viewQuizResult(quiz)">
-              <div class="flex-1">
-                <div class="flex items-center gap-3 mb-2">
-                  <h4 class="text-lg font-bold text-gray-800">{{ quiz.title }}</h4>
-                  <span :class="['badge', getScoreBadgeClass(quiz.best_percentage)]">
-                    {{ quiz.best_percentage }}%
-                  </span>
-                </div>
-                <div class="flex items-center gap-4 text-sm text-gray-600">
-                  <span>Best Score: {{ quiz.best_score }}/{{ quiz.max_score }} points</span>
-                  <span>Attempts: {{ quiz.total_attempts }}</span>
-                  <span>Last taken: {{ formatDate(quiz.latest_attempt_date) }}</span>
-                </div>
-              </div>
-              <button class="btn-view-result">
-                View Results
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                </svg>
-              </button>
-            </div>
+    <!-- Quiz Taking View -->
+    <div v-else-if="takingQuiz && currentAttempt" class="quiz-taking-view">
+      <!-- Quiz Timer Header -->
+      <div class="quiz-timer-header">
+        <div class="timer-info">
+          <div class="timer-label">Time Remaining:</div>
+          <div class="timer-display" :class="{ 'timer-warning': timeRemaining < 300 }">
+            {{ formatTime(timeRemaining) }}
           </div>
         </div>
-
-        <!-- No Quizzes Available -->
-        <div v-if="availableQuizzes.length === 0 && completedQuizzes.length === 0" class="glass-card p-12 text-center">
-          <div class="w-32 h-32 mx-auto mb-6 bg-gradient-to-br from-gray-300 to-gray-400 rounded-full flex items-center justify-center shadow-lg">
-            <svg class="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
+        <div class="progress-info">
+          <span>Question {{ currentQuestionIndex + 1 }} of {{ questions.length }}</span>
+          <div class="progress-bar">
+            <div class="progress-fill" :style="{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }"></div>
           </div>
-          <h2 class="text-3xl font-bold text-gray-800 mb-4">No Quizzes Available Yet</h2>
-          <p class="text-gray-600 mb-6">Your teacher hasn't published any quizzes for this section yet.</p>
         </div>
       </div>
 
-      <!-- Quiz Start Screen -->
-      <div v-else-if="selectedQuiz && !quizStarted" class="slide-up">
-        <div class="glass-card p-8">
-          <button @click="backToList" class="btn-back mb-6">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      <!-- Question Display -->
+      <div class="question-container">
+        <div class="question-card" v-if="questions[currentQuestionIndex]">
+          <div class="question-header">
+            <div class="question-number-badge">
+              Question {{ currentQuestionIndex + 1 }}
+            </div>
+            <div class="question-type-badge" :class="questions[currentQuestionIndex].question_type">
+              {{ getQuestionTypeLabel(questions[currentQuestionIndex].question_type) }}
+            </div>
+          </div>
+
+          <h2 class="question-text">{{ questions[currentQuestionIndex].question_text }}</h2>
+
+          <!-- Multiple Choice -->
+          <div v-if="questions[currentQuestionIndex].question_type === 'multiple_choice'" class="answer-options">
+            <div 
+              v-for="option in questions[currentQuestionIndex].options" 
+              :key="option.id"
+              :class="['option-item', { 'selected': studentAnswers[questions[currentQuestionIndex].id]?.selected_option_id === option.id }]"
+              @click="selectOption(questions[currentQuestionIndex].id, option.id)"
+            >
+              <div class="option-radio"></div>
+              <div class="option-letter">{{ String.fromCharCode(65 + option.option_number - 1) }}</div>
+              <div class="option-text">{{ option.option_text }}</div>
+            </div>
+          </div>
+
+          <!-- True/False -->
+          <div v-else-if="questions[currentQuestionIndex].question_type === 'true_false'" class="answer-options tf-options">
+            <div 
+              :class="['tf-option', { 'selected': studentAnswers[questions[currentQuestionIndex].id]?.answer_text === 'true' }]"
+              @click="selectTrueFalse(questions[currentQuestionIndex].id, 'true')"
+            >
+              <div class="tf-icon">✅</div>
+              <div class="tf-label">True</div>
+            </div>
+            <div 
+              :class="['tf-option', { 'selected': studentAnswers[questions[currentQuestionIndex].id]?.answer_text === 'false' }]"
+              @click="selectTrueFalse(questions[currentQuestionIndex].id, 'false')"
+            >
+              <div class="tf-icon">❌</div>
+              <div class="tf-label">False</div>
+            </div>
+          </div>
+
+          <!-- Fill in the Blank -->
+          <div v-else-if="questions[currentQuestionIndex].question_type === 'fill_blank'" class="answer-input">
+            <input 
+              v-model="studentAnswers[questions[currentQuestionIndex].id].answer_text"
+              @input="autoSaveAnswer(questions[currentQuestionIndex].id)"
+              type="text" 
+              placeholder="Type your answer here..."
+              class="fill-blank-input"
+            />
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="question-navigation">
+          <button 
+            @click="previousQuestion" 
+            :disabled="currentQuestionIndex === 0"
+            class="btn btn-secondary"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M15 19l-7-7 7-7"/>
             </svg>
-            Back to Quiz List
+            Previous
           </button>
 
-          <h2 class="text-3xl font-bold text-gray-800 mb-2">{{ selectedQuiz.title }}</h2>
-          <p class="text-gray-600 mb-6">{{ selectedQuiz.description }}</p>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div class="info-card">
-              <div class="text-4xl mb-2">📝</div>
-              <div class="text-2xl font-bold text-gray-800">{{ selectedQuiz.number_of_questions }}</div>
-              <div class="text-sm text-gray-600">Questions</div>
-            </div>
-            <div class="info-card">
-              <div class="text-4xl mb-2">⏱️</div>
-              <div class="text-2xl font-bold text-gray-800">
-                {{ selectedQuiz.has_time_limit ? selectedQuiz.time_limit_minutes + ' min' : 'No Limit' }}
-              </div>
-              <div class="text-sm text-gray-600">Time Limit</div>
-            </div>
-            <div class="info-card">
-              <div class="text-4xl mb-2">🔁</div>
-              <div class="text-2xl font-bold text-gray-800">
-                {{ attemptsUsed }}/{{ selectedQuiz.attempts_allowed === 999 ? '∞' : selectedQuiz.attempts_allowed }}
-              </div>
-              <div class="text-sm text-gray-600">Attempts</div>
-            </div>
-          </div>
-
-          <!-- Previous Attempts -->
-          <div v-if="previousAttempts.length > 0" class="mb-6">
-            <h3 class="text-lg font-bold text-gray-800 mb-3">Your Previous Attempts</h3>
-            <div class="space-y-2">
-              <div v-for="attempt in previousAttempts" :key="attempt.id" class="attempt-card">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <span class="font-semibold">Attempt {{ attempt.attempt_number }}</span>
-                    <span class="text-gray-600 ml-3">{{ formatDateTime(attempt.submitted_at) }}</span>
-                  </div>
-                  <div class="text-right">
-                    <div :class="['text-2xl font-bold', getScoreColor(attempt.percentage)]">
-                      {{ attempt.percentage }}%
-                    </div>
-                    <div class="text-sm text-gray-600">{{ attempt.total_score }}/{{ attempt.max_score }} points</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Warnings -->
-          <div v-if="selectedQuiz.attempts_allowed !== 999 && attemptsUsed >= selectedQuiz.attempts_allowed" class="alert-danger mb-6">
-            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-            </svg>
-            <div>
-              <strong>No Attempts Remaining</strong>
-              <p>You have used all {{ selectedQuiz.attempts_allowed }} attempts for this quiz.</p>
-            </div>
-          </div>
-
-          <div v-else-if="selectedQuiz.has_time_limit" class="alert-warning mb-6">
-            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
-            </svg>
-            <div>
-              <strong>Time Limit: {{ selectedQuiz.time_limit_minutes }} minutes</strong>
-              <p>Once you start, the timer will begin. Make sure you have enough time to complete the quiz.</p>
-            </div>
+          <div class="question-indicators">
+            <div 
+              v-for="(q, index) in questions" 
+              :key="q.id"
+              :class="['indicator-dot', { 
+                'active': index === currentQuestionIndex,
+                'answered': studentAnswers[q.id] && (studentAnswers[q.id].selected_option_id || studentAnswers[q.id].answer_text)
+              }]"
+              @click="goToQuestion(index)"
+            ></div>
           </div>
 
           <button 
-            @click="startQuiz" 
-            :disabled="selectedQuiz.attempts_allowed !== 999 && attemptsUsed >= selectedQuiz.attempts_allowed"
-            class="btn-start"
-            :class="{ 'opacity-50 cursor-not-allowed': selectedQuiz.attempts_allowed !== 999 && attemptsUsed >= selectedQuiz.attempts_allowed }">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            v-if="currentQuestionIndex < questions.length - 1"
+            @click="nextQuestion" 
+            class="btn btn-primary"
+          >
+            Next
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9 5l7 7-7 7"/>
             </svg>
-            Start Quiz
           </button>
-        </div>
-      </div>
 
-      <!-- Quiz Taking Interface -->
-      <div v-else-if="quizStarted && !quizSubmitted" class="slide-up space-y-6">
-        <!-- Timer and Progress -->
-        <div class="glass-card p-6">
-          <div class="flex items-center justify-between mb-4">
-            <div>
-              <h3 class="text-xl font-bold text-gray-800">{{ selectedQuiz.title }}</h3>
-              <p class="text-sm text-gray-600">Question {{ currentQuestionIndex + 1 }} of {{ questions.length }}</p>
-            </div>
-            <div v-if="selectedQuiz.has_time_limit" class="text-right">
-              <div class="text-3xl font-bold" :class="timeRemaining < 60 ? 'text-red-600' : 'text-blue-600'">
-                {{ formatTime(timeRemaining) }}
-              </div>
-              <div class="text-sm text-gray-600">Time Remaining</div>
-            </div>
-          </div>
-          <div class="progress-bar">
-            <div class="progress-fill" :style="{ width: progressPercentage + '%' }"></div>
-          </div>
-        </div>
-
-        <!-- Question Card -->
-        <div class="glass-card p-8">
-          <div class="flex items-start gap-4 mb-6">
-            <div class="question-number">{{ currentQuestionIndex + 1 }}</div>
-            <div class="flex-1">
-              <h2 class="text-2xl font-bold text-gray-800 mb-4">{{ currentQuestion.question_text }}</h2>
-
-              <!-- Multiple Choice -->
-              <div v-if="currentQuestion.question_type === 'multiple_choice'" class="space-y-3">
-                <div v-for="(option, index) in currentQuestion.options" :key="option.id"
-                     @click="selectAnswer(option.id)"
-                     :class="['answer-option', { 'selected': studentAnswers[currentQuestion.id]?.selected_option_id === option.id }]">
-                  <div class="option-indicator">{{ String.fromCharCode(65 + index) }}</div>
-                  <span class="flex-1">{{ option.option_text }}</span>
-                  <svg class="check-icon w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-              </div>
-
-              <!-- True/False -->
-              <div v-else-if="currentQuestion.question_type === 'true_false'" class="grid grid-cols-2 gap-4">
-                <div @click="selectTrueFalse('true')"
-                     :class="['tf-answer-option', { 'selected': studentAnswers[currentQuestion.id]?.answer_text === 'true' }]">
-                  <div class="text-6xl mb-3">✅</div>
-                  <div class="text-2xl font-bold">True</div>
-                </div>
-                <div @click="selectTrueFalse('false')"
-                     :class="['tf-answer-option', { 'selected': studentAnswers[currentQuestion.id]?.answer_text === 'false' }]">
-                  <div class="text-6xl mb-3">❌</div>
-                  <div class="text-2xl font-bold">False</div>
-                </div>
-              </div>
-
-              <!-- Fill in the Blank -->
-              <div v-else-if="currentQuestion.question_type === 'fill_blank'">
-                <input 
-                  v-model="studentAnswers[currentQuestion.id].answer_text"
-                  @input="autoSaveAnswer"
-                  type="text" 
-                  placeholder="Type your answer here..." 
-                  class="fill-input"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- Navigation -->
-          <div class="flex items-center justify-between pt-6 border-t border-gray-200">
-            <button 
-              @click="previousQuestion" 
-              :disabled="currentQuestionIndex === 0"
-              class="btn-nav"
-              :class="{ 'opacity-50 cursor-not-allowed': currentQuestionIndex === 0 }">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-              </svg>
-              Previous
-            </button>
-
-            <div class="flex items-center gap-2 flex-wrap justify-center">
-              <button 
-                v-for="(q, index) in questions" 
-                :key="q.id"
-                @click="goToQuestion(index)"
-                :class="['question-dot', { 
-                  'active': index === currentQuestionIndex,
-                  'answered': isQuestionAnswered(q.id)
-                }]">
-                {{ index + 1 }}
-              </button>
-            </div>
-
-            <button 
-              v-if="currentQuestionIndex < questions.length - 1"
-              @click="nextQuestion" 
-              class="btn-nav-primary">
-              Next
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-              </svg>
-            </button>
-
-            <button 
-              v-else
-              @click="showSubmitModal = true" 
-              class="btn-nav-primary">
-              Submit Quiz
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Quiz Submitted -->
-      <div v-else-if="quizSubmitted" class="slide-up">
-        <div class="glass-card p-12 text-center">
-          <div class="w-32 h-32 mx-auto mb-6 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center shadow-lg animate-bounce-slow">
-            <svg class="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          <button 
+            v-else
+            @click="showSubmitConfirmation" 
+            class="btn btn-submit"
+          >
+            Submit Quiz
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
-          </div>
-          
-          <h2 class="text-3xl font-bold text-gray-800 mb-4">Quiz Submitted Successfully!</h2>
-          <p class="text-gray-600 mb-8">Your answers have been recorded and automatically graded.</p>
-          
-          <div class="flex justify-center gap-4">
-            <button @click="backToQuizList" class="btn-primary">
-              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-              </svg>
-              View Quiz List
-            </button>
-          </div>
+          </button>
         </div>
       </div>
     </div>
 
     <!-- Submit Confirmation Modal -->
-    <div v-if="showSubmitModal" class="modal-overlay" @click="showSubmitModal = false">
-      <div class="modal-content" @click.stop>
+    <div v-if="showSubmitModal" class="modal-overlay" @click.self="showSubmitModal = false">
+      <div class="modal-content">
         <div class="modal-header">
-          <svg class="w-12 h-12 text-yellow-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-          </svg>
-          <h3 class="text-2xl font-bold text-gray-800">Submit Quiz?</h3>
+          <h3>Submit Quiz?</h3>
+          <button @click="showSubmitModal = false" class="modal-close">×</button>
         </div>
         <div class="modal-body">
-          <p class="text-gray-600 mb-4">Are you sure you want to submit? You cannot change your answers after submission.</p>
-          <div class="bg-blue-50 rounded-lg p-4 border-l-4 border-blue-500">
-            <div class="flex items-center justify-between text-sm">
-              <span class="text-gray-700">Answered Questions:</span>
-              <span class="font-bold text-blue-600">{{ answeredCount }} / {{ questions.length }}</span>
-            </div>
-            <div v-if="answeredCount < questions.length" class="flex items-center justify-between text-sm mt-2">
-              <span class="text-gray-700">Unanswered:</span>
-              <span class="font-bold text-red-600">{{ questions.length - answeredCount }}</span>
-            </div>
+          <div class="modal-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <div class="modal-text">
+            <p class="modal-title">Are you sure you want to submit?</p>
+            <p class="modal-description">
+              You have answered {{ answeredCount }} out of {{ questions.length }} questions.
+              {{ unansweredCount > 0 ? `${unansweredCount} question(s) remain unanswered.` : '' }}
+            </p>
           </div>
         </div>
-        <div class="modal-footer">
-          <button @click="showSubmitModal = false" class="btn-secondary-modal flex-1">
-            Cancel
-          </button>
-          <button @click="submitQuiz" :disabled="isSubmitting" class="btn-submit flex-1">
-            <div v-if="isSubmitting" class="spinner-small"></div>
-            <svg v-else class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-            </svg>
-            {{ isSubmitting ? 'Submitting...' : 'Yes, Submit' }}
+        <div class="modal-actions">
+          <button @click="showSubmitModal = false" class="btn btn-secondary">Cancel</button>
+          <button @click="submitQuiz" :disabled="isSubmitting" class="btn btn-primary">
+            <div v-if="isSubmitting" class="spinner"></div>
+            <span>{{ isSubmitting ? 'Submitting...' : 'Yes, Submit' }}</span>
           </button>
         </div>
       </div>
@@ -375,9 +446,9 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { supabase } from '@/supabase';
+import { supabase } from '@/supabase.js';
 
 export default {
   name: 'TakeQuiz',
@@ -386,461 +457,531 @@ export default {
     const route = useRoute();
 
     // State
-    const isLoading = ref(true);
-    const sectionId = ref(null);
-    const sectionName = ref('Loading...');
-    const subjectName = ref('Loading...');
-    const studentId = ref(null);
-    const availableQuizzes = ref([]);
-    const completedQuizzes = ref([]);
-    const selectedQuiz = ref(null);
-    const questions = ref([]);
-    const currentQuestionIndex = ref(0);
-    const studentAnswers = ref({});
-    const quizStarted = ref(false);
-    const quizSubmitted = ref(false);
-    const showSubmitModal = ref(false);
-    const timeRemaining = ref(0);
-    const timerInterval = ref(null);
-    const attemptsUsed = ref(0);
-    const previousAttempts = ref([]);
-    const attemptId = ref(null);
-    const isSubmitting = ref(false);
-    const quizStartTime = ref(null);
-
-    // Computed
-    const currentQuestion = computed(() => {
-      return questions.value[currentQuestionIndex.value] || {};
+    const loading = ref(true);
+    const studentInfo = ref({
+      full_name: 'Loading...',
+      grade_level: '',
+      student_id: null
     });
 
-    const progressPercentage = computed(() => {
-      return ((currentQuestionIndex.value + 1) / questions.value.length) * 100;
+    const subject = ref({
+      id: '',
+      name: 'Subject'
+    });
+
+    const section = ref({
+      id: '',
+      name: ''
+    });
+
+    const quizzes = ref([]);
+    const selectedQuiz = ref(null);
+    const takingQuiz = ref(false);
+    const currentAttempt = ref(null);
+    const questions = ref([]);
+    const studentAnswers = ref({});
+    const currentQuestionIndex = ref(0);
+    const timeRemaining = ref(0);
+    const timerInterval = ref(null);
+    const startTime = ref(null);
+    const previousAttempts = ref([]);
+    const quizResults = ref([]);
+    const canTakeCurrentQuiz = ref(true);
+    const quizUnavailableReason = ref('');
+    const isStarting = ref(false);
+    const showSubmitModal = ref(false);
+    const isSubmitting = ref(false);
+    const autoSaveTimeout = ref(null);
+
+    let quizSubscription = null;
+
+    // Computed
+    const newQuizzes = computed(() => {
+      const now = getPHTime();
+      return quizzes.value.filter(quiz => {
+        const result = quizResults.value.find(r => r.quiz_id === quiz.id);
+        const isNotTaken = !result || result.total_attempts === 0;
+        const isNotExpired = !quiz.end_date || new Date(quiz.end_date) > now;
+        return isNotTaken && isNotExpired;
+      }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    });
+
+    const pastQuizzes = computed(() => {
+      const now = getPHTime();
+      return quizzes.value.filter(quiz => {
+        const result = quizResults.value.find(r => r.quiz_id === quiz.id);
+        const isTaken = result && result.total_attempts > 0;
+        const isExpired = quiz.end_date && new Date(quiz.end_date) <= now;
+        return isTaken || isExpired;
+      }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    });
+
+    const completedQuizzes = computed(() => {
+      return quizResults.value.filter(r => r.status === 'completed');
+    });
+
+    const averageScore = computed(() => {
+      if (completedQuizzes.value.length === 0) return 0;
+      const sum = completedQuizzes.value.reduce((acc, r) => acc + r.best_percentage, 0);
+      return Math.round(sum / completedQuizzes.value.length);
     });
 
     const answeredCount = computed(() => {
-      return Object.values(studentAnswers.value).filter(answer => 
-        answer.selected_option_id || answer.answer_text
-      ).length;
+      return Object.keys(studentAnswers.value).filter(qId => {
+        const answer = studentAnswers.value[qId];
+        return answer.selected_option_id || (answer.answer_text && answer.answer_text.trim());
+      }).length;
+    });
+
+    const unansweredCount = computed(() => {
+      return questions.value.length - answeredCount.value;
     });
 
     // Methods
-    const fetchCurrentUser = async () => {
+    const getPHTime = () => {
+      const now = new Date();
+      const phTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+      return phTime;
+    };
+
+    const formatPHTime = (utcDateString) => {
+      if (!utcDateString) return 'Not set';
+      const date = new Date(utcDateString);
+      const options = {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Asia/Manila'
+      };
+      return date.toLocaleString('en-PH', options) + ' PHT';
+    };
+
+    const formatTime = (seconds) => {
+      if (!seconds || seconds < 0) return '00:00';
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    const loadStudentInfo = async () => {
       try {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError || !session?.user) {
-          throw new Error('No active session');
+          router.push('/login');
+          return false;
         }
 
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('id, role')
+          .select('id, role, full_name, email')
           .eq('auth_user_id', session.user.id)
           .single();
 
         if (profileError || !profile || profile.role !== 'student') {
-          throw new Error('Student profile not found');
+          alert('Student profile not found');
+          return false;
         }
 
         const { data: student, error: studentError } = await supabase
           .from('students')
-          .select('id')
+          .select('*')
           .eq('profile_id', profile.id)
-          .eq('is_active', true)
           .single();
 
         if (studentError || !student) {
-          throw new Error('Student record not found');
+          alert('Student information not found');
+          return false;
         }
 
-        studentId.value = student.id;
+        studentInfo.value = {
+          full_name: student.full_name,
+          grade_level: student.grade_level,
+          student_id: student.id
+        };
+
         return true;
       } catch (error) {
-        console.error('Error fetching current user:', error);
-        alert('Error: Could not identify student. Please log in again.');
-        router.push('/login');
+        console.error('Error loading student info:', error);
         return false;
       }
     };
 
-    const loadAllQuizzes = async () => {
-      isLoading.value = true;
-      
+    const loadRouteParams = () => {
+      const subjectId = route.params.subjectId;
+      const sectionId = route.params.sectionId;
+      const subjectName = route.query.subjectName || 'Subject';
+      const sectionName = route.query.sectionName || '';
+
+      if (!subjectId || !sectionId) {
+        console.error('Missing required route parameters');
+        return false;
+      }
+
+      subject.value = {
+        id: subjectId,
+        name: subjectName
+      };
+
+      section.value = {
+        id: sectionId,
+        name: sectionName
+      };
+
+      return true;
+    };
+
+    const loadQuizzes = async () => {
       try {
-        const userSuccess = await fetchCurrentUser();
-        if (!userSuccess) return;
-
-        if (!studentId.value || !sectionId.value) {
-          throw new Error('Missing student or section information');
-        }
-
-        const { data: allQuizzes, error: quizError } = await supabase
+        const { data, error } = await supabase
           .from('quizzes')
           .select('*')
-          .eq('section_id', sectionId.value)
+          .eq('section_id', section.value.id)
           .eq('status', 'published')
           .order('created_at', { ascending: false });
 
-        if (quizError) throw quizError;
+        if (error) throw error;
 
-        if (!allQuizzes || allQuizzes.length === 0) {
-          availableQuizzes.value = [];
-          completedQuizzes.value = [];
-          isLoading.value = false;
-          return;
-        }
+        quizzes.value = data || [];
+        await loadQuizResults();
 
-        const quizIds = allQuizzes.map(q => q.id);
-        const { data: results } = await supabase
-          .from('quiz_results')
-          .select('*')
-          .eq('student_id', studentId.value)
-          .in('quiz_id', quizIds);
-
-        const resultsMap = {};
-        (results || []).forEach(r => {
-          resultsMap[r.quiz_id] = r;
-        });
-
-        const { data: attempts } = await supabase
-          .from('quiz_attempts')
-          .select('quiz_id, attempt_number, status')
-          .eq('student_id', studentId.value)
-          .in('quiz_id', quizIds);
-
-        const attemptsMap = {};
-        (attempts || []).forEach(a => {
-          if (!attemptsMap[a.quiz_id]) attemptsMap[a.quiz_id] = [];
-          attemptsMap[a.quiz_id].push(a);
-        });
-
-        const now = new Date();
-        const available = [];
-        const completed = [];
-
-        allQuizzes.forEach(quiz => {
-          const startOk = !quiz.start_date || new Date(quiz.start_date) <= now;
-          const endOk = !quiz.end_date || new Date(quiz.end_date) >= now;
-          
-          if (!startOk || !endOk) return;
-
-          const quizAttempts = (attemptsMap[quiz.id] || []).filter(a =>  
-            ['submitted', 'graded', 'reviewed'].includes(a.status)
-          );
-          const attemptsUsedCount = quizAttempts.length;
-          const hasAttemptsRemaining = quiz.attempts_allowed === 999 || attemptsUsedCount < quiz.attempts_allowed;
-
-          const result = resultsMap[quiz.id];
-
-          if (result && result.status === 'completed') {
-            completed.push({
-              ...quiz,
-              quiz_id: quiz.id,
-              best_score: result.best_score,
-              best_percentage: result.best_percentage,
-              max_score: quizAttempts[0]?.max_score || quiz.number_of_questions,
-              total_attempts: result.total_attempts,
-              latest_attempt_date: result.latest_attempt_date,
-              can_retake: hasAttemptsRemaining
-            });
-          } else if (hasAttemptsRemaining) {
-            available.push({
-              ...quiz,
-              quiz_id: quiz.id,
-              attempts_used: attemptsUsedCount,
-              is_available: true
-            });
-          }
-        });
-
-        availableQuizzes.value = available;
-        completedQuizzes.value = completed;
-        
       } catch (error) {
         console.error('Error loading quizzes:', error);
-        alert('Failed to load quizzes: ' + error.message);
-      } finally {
-        isLoading.value = false;
+        alert('Failed to load quizzes. Please refresh the page.');
       }
     };
-    
-    const goBackToSubjects = () => {
-      router.push('/student/subjects');
+
+    const loadQuizResults = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('quiz_results')
+          .select('*')
+          .eq('student_id', studentInfo.value.student_id)
+          .in('quiz_id', quizzes.value.map(q => q.id));
+
+        if (error) throw error;
+        quizResults.value = data || [];
+
+      } catch (error) {
+        console.error('Error loading quiz results:', error);
+      }
     };
 
-    const backToList = () => {
-      selectedQuiz.value = null;
-      previousAttempts.value = [];
-      attemptsUsed.value = 0;
+    const setupRealtimeSubscription = () => {
+      if (!section.value.id) return;
+
+      quizSubscription = supabase
+        .channel(`section-${section.value.id}-quizzes`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'quizzes',
+            filter: `section_id=eq.${section.value.id}`
+          },
+          async (payload) => {
+            console.log('Quiz updated (real-time):', payload);
+            
+            if (payload.eventType === 'INSERT') {
+              quizzes.value.unshift(payload.new);
+            } else if (payload.eventType === 'UPDATE') {
+              const index = quizzes.value.findIndex(q => q.id === payload.new.id);
+              if (index !== -1) {
+                quizzes.value[index] = payload.new;
+              }
+            } else if (payload.eventType === 'DELETE') {
+              quizzes.value = quizzes.value.filter(q => q.id !== payload.old.id);
+            }
+
+            await loadQuizResults();
+          }
+        )
+        .subscribe();
     };
 
-    const backToQuizList = () => {
-      quizSubmitted.value = false;
-      quizStarted.value = false;
-      selectedQuiz.value = null;
-      currentQuestionIndex.value = 0;
-      questions.value = [];
-      studentAnswers.value = {};
-      loadAllQuizzes();
+    const getQuizStatus = (quiz) => {
+      const result = quizResults.value.find(r => r.quiz_id === quiz.id);
+      const now = getPHTime();
+      
+      if (result && result.total_attempts > 0) {
+        return 'completed';
+      }
+      
+      if (quiz.end_date && new Date(quiz.end_date) <= now) {
+        return 'expired';
+      }
+      
+      return 'available';
     };
-    
-    const selectQuiz = async (quiz, event) => {
-      // Prevent if clicking the button directly
-      if (event && event.target.closest('.btn-take-quiz')) {
+
+    const getQuizResult = (quizId) => {
+      return quizResults.value.find(r => r.quiz_id === quizId);
+    };
+
+    const getQuizAvailabilityClass = () => {
+      if (!selectedQuiz.value) return '';
+      const now = getPHTime();
+      
+      if (selectedQuiz.value.start_date && new Date(selectedQuiz.value.start_date) > now) {
+        return 'not-started';
+      }
+      
+      if (selectedQuiz.value.end_date && new Date(selectedQuiz.value.end_date) <= now) {
+        return 'expired';
+      }
+      
+      return 'available';
+    };
+
+    const getQuizAvailabilityText = () => {
+      if (!selectedQuiz.value) return '';
+      const now = getPHTime();
+      
+      if (selectedQuiz.value.start_date && new Date(selectedQuiz.value.start_date) > now) {
+        return 'Not Yet Available';
+      }
+      
+      if (selectedQuiz.value.end_date && new Date(selectedQuiz.value.end_date) <= now) {
+        return 'Quiz Expired';
+      }
+      
+      return 'Available Now';
+    };
+
+    const viewQuizDetails = async (quiz) => {
+      selectedQuiz.value = quiz;
+      await checkQuizEligibility(quiz);
+      await loadPreviousAttempts(quiz.id);
+    };
+
+    const checkQuizEligibility = async (quiz) => {
+      const now = getPHTime();
+      
+      if (quiz.start_date && new Date(quiz.start_date) > now) {
+        canTakeCurrentQuiz.value = false;
+        quizUnavailableReason.value = 'This quiz is not yet available. Please check back later.';
         return;
       }
-      selectedQuiz.value = quiz;
-      await loadQuizDetails();
+      
+      if (quiz.end_date && new Date(quiz.end_date) <= now) {
+        canTakeCurrentQuiz.value = false;
+        quizUnavailableReason.value = 'This quiz has expired and is no longer available.';
+        return;
+      }
+      
+      const result = quizResults.value.find(r => r.quiz_id === quiz.id);
+      if (result && quiz.attempts_allowed !== 999) {
+        if (result.total_attempts >= quiz.attempts_allowed) {
+          canTakeCurrentQuiz.value = false;
+          quizUnavailableReason.value = `You have used all ${quiz.attempts_allowed} attempt(s) for this quiz.`;
+          return;
+        }
+      }
+      
+      canTakeCurrentQuiz.value = true;
+      quizUnavailableReason.value = '';
     };
 
-    const viewQuizResult = (quiz) => {
-      alert('View quiz results feature coming soon!');
-    };
-    
-    const loadQuizDetails = async () => {
-      if (!selectedQuiz.value) return;
-      
+    const loadPreviousAttempts = async (quizId) => {
       try {
-        const { data: attempts, error: attemptsError } = await supabase
+        const { data, error } = await supabase
           .from('quiz_attempts')
           .select('*')
-          .eq('quiz_id', selectedQuiz.value.quiz_id)
-          .eq('student_id', studentId.value)
+          .eq('quiz_id', quizId)
+          .eq('student_id', studentInfo.value.student_id)
           .in('status', ['submitted', 'graded', 'reviewed'])
           .order('attempt_number', { ascending: false });
 
-        if (attemptsError) {
-          console.warn('Error loading attempts:', attemptsError);
-        } else {
-          previousAttempts.value = attempts || [];
-          attemptsUsed.value = previousAttempts.value.length;
-        }
+        if (error) throw error;
+        previousAttempts.value = data || [];
+
       } catch (error) {
-        console.error('Error loading quiz details:', error);
+        console.error('Error loading previous attempts:', error);
       }
     };
-    
-    const startQuiz = async (event) => {
-      // Stop event propagation
-      if (event) {
-        event.stopPropagation();
-        event.preventDefault();
-      }
 
+    const startQuiz = async () => {
+      if (!canTakeCurrentQuiz.value) return;
+      
+      isStarting.value = true;
+      
       try {
-        console.log('🎯 Starting quiz...', selectedQuiz.value);
-        
-        const canTake = selectedQuiz.value.attempts_allowed === 999 || 
-                       attemptsUsed.value < selectedQuiz.value.attempts_allowed;
-
-        if (!canTake) {
-          alert('You have no attempts remaining for this quiz.');
-          return;
-        }
-
-        const quizId = selectedQuiz.value.quiz_id || selectedQuiz.value.id;
-        console.log('📝 Fetching questions for quiz_id:', quizId);
-        
-        const { data: quizQuestions, error: questionsError } = await supabase
+        // SIMPLE QUERY - Get quiz questions without nested selects
+        const { data: questionsData, error: questionsError } = await supabase
           .from('quiz_questions')
-          .select(`
-            id,
-            question_number,
-            question_type,
-            question_text,
-            points,
-            question_options (
-              id,
-              option_number,
-              option_text,
-              is_correct
-            )
-          `)
-          .eq('quiz_id', quizId)
-          .order('question_number', { ascending: true });
-        
-        console.log('✅ Questions fetched:', quizQuestions);
-        console.log('❌ Error:', questionsError);
-        
-        if (questionsError) {
-          throw new Error('Failed to load quiz questions: ' + questionsError.message);
+          .select('id, question_number, question_type, question_text, points')
+          .eq('quiz_id', selectedQuiz.value.id)
+          .order('question_number');
+
+        if (questionsError) throw questionsError;
+
+        if (!questionsData || questionsData.length === 0) {
+          throw new Error('No questions found for this quiz');
         }
 
-        if (!quizQuestions || quizQuestions.length === 0) {
-          throw new Error('This quiz has no questions. Please contact your teacher.');
-        }
+        // Get options for multiple choice questions
+        const questionsWithOptions = await Promise.all(
+          questionsData.map(async (question) => {
+            if (question.question_type === 'multiple_choice') {
+              const { data: options, error: optionsError } = await supabase
+                .from('question_options')
+                .select('id, option_number, option_text')
+                .eq('question_id', question.id)
+                .order('option_number');
 
-        questions.value = quizQuestions.map(q => ({
-          ...q,
-          options: (q.question_options || []).sort((a, b) => a.option_number - b.option_number)
-        }));
+              if (optionsError) throw optionsError;
+              return { ...question, options: options || [] };
+            }
+            return { ...question, options: [] };
+          })
+        );
 
-        console.log('📋 Processed questions:', questions.value);
+        questions.value = questionsWithOptions;
 
+        // Calculate max score
         const maxScore = questions.value.reduce((sum, q) => sum + (q.points || 1), 0);
 
-        console.log('🎬 Creating quiz attempt...');
-
-        const { data: newAttempt, error: attemptError } = await supabase
+        // Create new attempt
+        const { data: attempt, error: attemptError } = await supabase
           .from('quiz_attempts')
-          .insert([{
-            quiz_id: quizId,
-            student_id: studentId.value,
-            attempt_number: attemptsUsed.value + 1,
+          .insert({
+            quiz_id: selectedQuiz.value.id,
+            student_id: studentInfo.value.student_id,
+            attempt_number: previousAttempts.value.length + 1,
             max_score: maxScore,
             status: 'in_progress'
-          }])
+          })
           .select()
           .single();
 
-        console.log('✅ Attempt created:', newAttempt);
-        console.log('❌ Attempt error:', attemptError);
-
         if (attemptError) {
-          throw new Error('Failed to start quiz attempt: ' + attemptError.message);
+          console.error('Attempt creation error:', attemptError);
+          throw new Error(`Failed to create quiz attempt: ${attemptError.message}`);
         }
 
-        attemptId.value = newAttempt.id;
-        quizStartTime.value = Date.now();
+        currentAttempt.value = attempt;
 
-        // Initialize student answers
+        // Initialize answers
+        studentAnswers.value = {};
         questions.value.forEach(q => {
           studentAnswers.value[q.id] = {
-            question_id: q.id,
             selected_option_id: null,
-            answer_text: '',
-            points_possible: q.points || 1
+            answer_text: ''
           };
         });
 
-        console.log('🚀 Starting quiz interface...');
-        quizStarted.value = true;
-
+        // Start timer if time limit exists
         if (selectedQuiz.value.has_time_limit) {
           timeRemaining.value = selectedQuiz.value.time_limit_minutes * 60;
           startTimer();
         }
 
-        console.log('🎉 Quiz started successfully!');
+        startTime.value = Date.now();
+        takingQuiz.value = true;
+        currentQuestionIndex.value = 0;
 
       } catch (error) {
-        console.error('💥 Error starting quiz:', error);
-        alert(`Failed to start quiz: ${error.message}`);
+        console.error('Error starting quiz:', error);
+        alert(`Failed to start quiz: ${error.message || 'Please try again.'}`);
+      } finally {
+        isStarting.value = false;
       }
     };
-    
+
     const startTimer = () => {
+      if (timerInterval.value) {
+        clearInterval(timerInterval.value);
+      }
+
       timerInterval.value = setInterval(() => {
-        if (timeRemaining.value > 0) {
-          timeRemaining.value--;
-        } else {
-          autoSubmitQuiz();
+        timeRemaining.value--;
+
+        if (timeRemaining.value <= 0) {
+          clearInterval(timerInterval.value);
+          alert('Time is up! Your quiz will be automatically submitted.');
+          submitQuiz();
         }
       }, 1000);
     };
-    
-    const formatTime = (seconds) => {
-      const mins = Math.floor(seconds / 60);
-      const secs = seconds % 60;
-      return `${mins}:${secs.toString().padStart(2, '0')}`;
-    };
-    
-    const formatDateTime = (dateString) => {
-      return new Date(dateString).toLocaleString();
+
+    const selectOption = async (questionId, optionId) => {
+      studentAnswers.value[questionId].selected_option_id = optionId;
+      studentAnswers.value[questionId].answer_text = '';
+      await saveAnswer(questionId);
     };
 
-    const formatDate = (dateString) => {
-      return new Date(dateString).toLocaleDateString();
-    };
-    
-    const getScoreColor = (percentage) => {
-      if (percentage >= 90) return 'text-green-600';
-      if (percentage >= 75) return 'text-blue-600';
-      if (percentage >= 60) return 'text-yellow-600';
-      return 'text-red-600';
+    const selectTrueFalse = async (questionId, value) => {
+      studentAnswers.value[questionId].answer_text = value;
+      studentAnswers.value[questionId].selected_option_id = null;
+      await saveAnswer(questionId);
     };
 
-    const getScoreBadgeClass = (percentage) => {
-      if (percentage >= 90) return 'badge-excellent';
-      if (percentage >= 75) return 'badge-good';
-      if (percentage >= 60) return 'badge-fair';
-      return 'badge-poor';
-    };
-    
-    const selectAnswer = async (optionId) => {
-      studentAnswers.value[currentQuestion.value.id].selected_option_id = optionId;
-      studentAnswers.value[currentQuestion.value.id].answer_text = null;
-      await autoSaveAnswer();
+    const autoSaveAnswer = (questionId) => {
+      if (autoSaveTimeout.value) {
+        clearTimeout(autoSaveTimeout.value);
+      }
+
+      autoSaveTimeout.value = setTimeout(async () => {
+        await saveAnswer(questionId);
+      }, 1000);
     };
 
-    const selectTrueFalse = async (value) => {
-      studentAnswers.value[currentQuestion.value.id].answer_text = value;
-      studentAnswers.value[currentQuestion.value.id].selected_option_id = null;
-      await autoSaveAnswer();
-    };
-
-    const autoSaveAnswer = async () => {
-      if (!attemptId.value || !currentQuestion.value.id) return;
-
+    const saveAnswer = async (questionId) => {
       try {
-        const answer = studentAnswers.value[currentQuestion.value.id];
-        
-        const { data: existing } = await supabase
-          .from('student_answers')
-          .select('id')
-          .eq('attempt_id', attemptId.value)
-          .eq('question_id', currentQuestion.value.id)
-          .maybeSingle();
+        const question = questions.value.find(q => q.id === questionId);
+        const answer = studentAnswers.value[questionId];
 
-        if (existing) {
-          await supabase
-            .from('student_answers')
-            .update({
-              selected_option_id: answer.selected_option_id,
-              answer_text: answer.answer_text,
-              points_possible: answer.points_possible
-            })
-            .eq('id', existing.id);
-        } else {
-          await supabase
-            .from('student_answers')
-            .insert([{
-              attempt_id: attemptId.value,
-              question_id: currentQuestion.value.id,
-              selected_option_id: answer.selected_option_id,
-              answer_text: answer.answer_text,
-              points_possible: answer.points_possible
-            }]);
+        const pointsValue = question?.points || 1.00;
+
+        const { error } = await supabase
+          .from('student_answers')
+          .upsert({
+            attempt_id: currentAttempt.value.id,
+            question_id: questionId,
+            selected_option_id: answer.selected_option_id || null,
+            answer_text: answer.answer_text ? answer.answer_text.trim() : null,
+            points_possible: pointsValue,
+            is_correct: false,
+            points_earned: 0
+          }, {
+            onConflict: 'attempt_id,question_id'
+          });
+
+        if (error) {
+          console.error('Error saving answer:', error);
         }
+
       } catch (error) {
-        console.error('Error auto-saving answer:', error);
+        console.error('Error in saveAnswer:', error);
       }
     };
-    
-    const nextQuestion = () => {
-      if (currentQuestionIndex.value < questions.value.length - 1) {
-        currentQuestionIndex.value++;
-      }
-    };
-    
+
     const previousQuestion = () => {
       if (currentQuestionIndex.value > 0) {
         currentQuestionIndex.value--;
       }
     };
-    
+
+    const nextQuestion = () => {
+      if (currentQuestionIndex.value < questions.value.length - 1) {
+        currentQuestionIndex.value++;
+      }
+    };
+
     const goToQuestion = (index) => {
       currentQuestionIndex.value = index;
     };
-    
-    const isQuestionAnswered = (questionId) => {
-      const answer = studentAnswers.value[questionId];
-      return !!(answer?.selected_option_id || answer?.answer_text);
+
+    const showSubmitConfirmation = () => {
+      showSubmitModal.value = true;
     };
-    
+
     const submitQuiz = async () => {
       if (isSubmitting.value) return;
-
+      
       isSubmitting.value = true;
       showSubmitModal.value = false;
 
@@ -849,786 +990,1080 @@ export default {
           clearInterval(timerInterval.value);
         }
 
-        const timeTaken = Math.floor((Date.now() - quizStartTime.value) / 1000);
-        const timeTakenMinutes = Math.ceil(timeTaken / 60);
+        const timeTaken = Math.floor((Date.now() - startTime.value) / 1000);
 
-        for (const questionId in studentAnswers.value) {
-          const answer = studentAnswers.value[questionId];
-          if (answer.selected_option_id || answer.answer_text) {
-            const { data: existing } = await supabase
-              .from('student_answers')
-              .select('id')
-              .eq('attempt_id', attemptId.value)
-              .eq('question_id', questionId)
-              .maybeSingle();
+        console.log('Submitting quiz with attempt ID:', currentAttempt.value.id);
 
-            if (existing) {
-              await supabase
-                .from('student_answers')
-                .update({
-                  selected_option_id: answer.selected_option_id,
-                  answer_text: answer.answer_text,
-                  points_possible: answer.points_possible
-                })
-                .eq('id', existing.id);
-            } else {
-              await supabase
-                .from('student_answers')
-                .insert([{
-                  attempt_id: attemptId.value,
-                  question_id: questionId,
-                  selected_option_id: answer.selected_option_id,
-                  answer_text: answer.answer_text,
-                  points_possible: answer.points_possible
-                }]);
-            }
-          }
-        }
-
-        const { error: submitError } = await supabase
+        const { data, error: submitError } = await supabase
           .from('quiz_attempts')
           .update({
             status: 'submitted',
             submitted_at: new Date().toISOString(),
-            time_taken_minutes: timeTakenMinutes
+            time_taken_minutes: Math.ceil(timeTaken / 60)
           })
-          .eq('id', attemptId.value);
+          .eq('id', currentAttempt.value.id)
+          .select();
 
         if (submitError) {
-          throw new Error('Failed to submit quiz: ' + submitError.message);
+          console.error('Submit error object:', submitError);
+          console.error('Error message:', submitError.message);
+          throw new Error(`Submission failed: ${submitError.message || 'Unknown error'}`);
         }
 
-        quizSubmitted.value = true;
+        if (!data || data.length === 0) {
+          console.error('No data returned from update');
+          throw new Error('Quiz update returned no data. Please try again.');
+        }
+
+        console.log('Quiz submitted successfully:', data);
+        alert('Quiz submitted successfully! Your results are being processed.');
+
+        takingQuiz.value = false;
+        selectedQuiz.value = null;
+        currentAttempt.value = null;
+        questions.value = [];
+        studentAnswers.value = {};
+        currentQuestionIndex.value = 0;
+
+        await loadQuizzes();
 
       } catch (error) {
         console.error('Error submitting quiz:', error);
-        alert(`Failed to submit quiz: ${error.message}. Please try again.`);
-        showSubmitModal.value = false;
+        alert(`Failed to submit quiz: ${error.message || 'Please try again.'}`);
       } finally {
         isSubmitting.value = false;
       }
     };
-    
-    const autoSubmitQuiz = () => {
-      alert('Time is up! Your quiz will be automatically submitted.');
-      submitQuiz();
+
+    const getQuestionTypeLabel = (type) => {
+      const labels = {
+        'multiple_choice': '📝 Multiple Choice',
+        'true_false': '✅ True/False',
+        'fill_blank': '✏️ Fill in the Blank'
+      };
+      return labels[type] || type;
     };
 
-    onMounted(async () => {
-      sectionId.value = route.params.sectionId;
-      sectionName.value = route.query.sectionName || 'Section';
-      subjectName.value = route.query.subjectName || 'Subject';
+    const goBack = () => {
+      if (takingQuiz.value) {
+        if (confirm('Are you sure you want to leave? Your progress will be lost.')) {
+          if (timerInterval.value) {
+            clearInterval(timerInterval.value);
+          }
+          router.back();
+        }
+      } else {
+        router.back();
+      }
+    };
 
-      if (!sectionId.value) {
-        alert('Error: Missing section information. Redirecting to subjects page.');
+    // Lifecycle
+    onMounted(async () => {
+      console.log('TakeQuiz component mounted');
+
+      const studentLoaded = await loadStudentInfo();
+      if (!studentLoaded) {
+        router.push('/login');
+        return;
+      }
+
+      const paramsLoaded = loadRouteParams();
+      if (!paramsLoaded) {
+        alert('Missing subject or section information');
         router.push('/student/subjects');
         return;
       }
 
-      await loadAllQuizzes();
+      await loadQuizzes();
+      setupRealtimeSubscription();
+
+      loading.value = false;
     });
 
-    onBeforeUnmount(() => {
+    onUnmounted(() => {
       if (timerInterval.value) {
         clearInterval(timerInterval.value);
+      }
+
+      if (quizSubscription) {
+        supabase.removeChannel(quizSubscription);
+      }
+
+      if (autoSaveTimeout.value) {
+        clearTimeout(autoSaveTimeout.value);
       }
     });
 
     return {
-      isLoading,
-      sectionName,
-      subjectName,
-      availableQuizzes,
+      loading,
+      studentInfo,
+      subject,
+      section,
+      quizzes,
+      newQuizzes,
+      pastQuizzes,
       completedQuizzes,
+      averageScore,
       selectedQuiz,
+      takingQuiz,
+      currentAttempt,
       questions,
-      currentQuestionIndex,
       studentAnswers,
-      quizStarted,
-      quizSubmitted,
-      showSubmitModal,
+      currentQuestionIndex,
       timeRemaining,
-      attemptsUsed,
       previousAttempts,
+      canTakeCurrentQuiz,
+      quizUnavailableReason,
+      isStarting,
+      showSubmitModal,
       isSubmitting,
-      currentQuestion,
-      progressPercentage,
       answeredCount,
-      goBackToSubjects,
-      backToList,
-      backToQuizList,
-      selectQuiz,
-      viewQuizResult,
-      startQuiz,
+      unansweredCount,
+      formatPHTime,
       formatTime,
-      formatDateTime,
-      formatDate,
-      getScoreColor,
-      getScoreBadgeClass,
-      selectAnswer,
+      getQuizStatus,
+      getQuizResult,
+      getQuizAvailabilityClass,
+      getQuizAvailabilityText,
+      viewQuizDetails,
+      startQuiz,
+      selectOption,
       selectTrueFalse,
       autoSaveAnswer,
-      nextQuestion,
       previousQuestion,
+      nextQuestion,
       goToQuestion,
-      isQuestionAnswered,
-      submitQuiz
+      showSubmitConfirmation,
+      submitQuiz,
+      getQuestionTypeLabel,
+      goBack
     };
   }
 };
 </script>
 
 <style scoped>
-.glass-card {
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(20px);
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.floating-shape {
-  position: absolute;
+.take-quiz-page {
+  min-height: 100vh;
+  background: #FBFFE4;
+  padding: 1.5rem;
+  font-family: 'Inter', sans-serif;
+}
+
+.dark .take-quiz-page {
+  background: #181c20;
+}
+
+/* Header */
+.section-header-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.dark .section-header-card {
+  background: #23272b;
+  border: 1px solid #3D8D7A;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.section-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.section-header-icon {
+  width: 56px;
+  height: 56px;
+  background: #3D8D7A;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.section-header-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+
+.dark .section-header-title {
+  color: #A3D1C6;
+}
+
+.section-header-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.dark .section-header-subtitle {
+  color: #A3D1C6;
+}
+
+.section-header-description {
+  font-size: 0.813rem;
+  color: #94a3b8;
+}
+
+.dark .section-header-description {
+  color: #A3D1C6;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  cursor: pointer;
+  border: 2px solid #20c997;
+  background: #20c997;
+  color: #181c20;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
+}
+
+.back-btn:hover {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
+  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.18);
+}
+
+.dark .back-btn {
+  background: #20c997;
+  color: #181c20;
+  border-color: #A3D1C6;
+}
+
+.dark .back-btn:hover {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
+}
+
+/* Loading */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  gap: 1rem;
+}
+
+.spinner-large {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #3D8D7A;
   border-radius: 50%;
-  filter: blur(60px);
-  opacity: 0.3;
-  animation: float 20s infinite ease-in-out;
+  animation: spin 1s linear infinite;
 }
-
-.shape-1 {
-  width: 400px;
-  height: 400px;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  top: -100px;
-  right: -100px;
-}
-
-.shape-2 {
-  width: 350px;
-  height: 350px;
-  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
-  bottom: -100px;
-  left: -50px;
-}
-
-.shape-3 {
-  width: 300px;
-  height: 300px;
-  background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
-  top: 50%;
-  left: 30%;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  25% { transform: translateY(-30px) rotate(5deg); }
-  50% { transform: translateY(0) rotate(0deg); }
-  75% { transform: translateY(30px) rotate(-5deg); }
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(30px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.slide-up { animation: slideUp 0.5s ease-out; }
-
-@keyframes pulse-slow {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
-.animate-pulse-slow { animation: pulse-slow 3s ease-in-out infinite; }
-
-@keyframes bounce-slow {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-20px); }
-}
-
-.animate-bounce-slow { animation: bounce-slow 2s ease-in-out infinite; }
 
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
 
-.animate-spin { animation: spin 1s linear infinite; }
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
 
-.quiz-selection-card {
+.stat-card {
   background: white;
-  border: 3px solid #e5e7eb;
-  border-radius: 16px;
+  border: 2px solid #3D8D7A;
+  border-radius: 12px;
   padding: 1.5rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.quiz-selection-card:hover {
-  border-color: #3b82f6;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  transform: translateX(8px);
-  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
-}
-
-.quiz-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.375rem 0.75rem;
-  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-  color: #1e40af;
-  font-size: 0.875rem;
-  font-weight: 600;
-  border-radius: 8px;
-}
-
-.info-card {
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  border: 2px solid #bae6fd;
-  border-radius: 16px;
-  padding: 1.25rem;
-  text-align: center;
-  transition: all 0.3s ease;
-}
-
-.info-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
-}
-
-.alert-warning {
-  display: flex;
-  align-items: start;
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border: 2px solid #fbbf24;
-  border-radius: 12px;
-  padding: 1rem;
-  color: #92400e;
-}
-
-.alert-danger {
-  display: flex;
-  align-items: start;
-  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-  border: 2px solid #f87171;
-  border-radius: 12px;
-  padding: 1rem;
-  color: #991b1b;
-}
-
-.btn-start {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 1.25rem 2rem;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  color: white;
-  font-weight: 700;
-  font-size: 1.125rem;
-  border-radius: 16px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5);
-}
-
-.btn-start:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 35px rgba(59, 130, 246, 0.7);
-}
-
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.875rem 2rem;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  color: white;
-  font-weight: 600;
-  border-radius: 12px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
-}
-
-.btn-secondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.875rem 1.5rem;
-  background: white;
-  color: #4b5563;
-  font-weight: 600;
-  border-radius: 12px;
-  border: 2px solid #e5e7eb;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-secondary:hover {
-  background: #f9fafb;
-  border-color: #cbd5e1;
-  transform: translateY(-2px);
-}
-
-.btn-nav {
-  display: flex;
-  align-items: center;
-  padding: 0.75rem 1.5rem;
-  background: white;
-  color: #4b5563;
-  font-weight: 600;
-  border-radius: 10px;
-  border: 2px solid #e5e7eb;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-nav:hover:not(:disabled) {
-  background: #f9fafb;
-  border-color: #cbd5e1;
-  transform: translateY(-1px);
-}
-
-.btn-nav-primary {
-  display: flex;
-  align-items: center;
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  color: white;
-  font-weight: 600;
-  border-radius: 10px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
-}
-
-.btn-nav-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
-}
-
-.btn-submit {
-  display: flex;
-  align-items: center;
-  padding: 0.875rem 2rem;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  font-weight: 700;
-  border-radius: 12px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
-}
-
-.btn-submit:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
-}
-
-.question-number {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: 700;
-  font-size: 1.25rem;
-  margin-right: 1rem;
-  flex-shrink: 0;
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
-}
-
-.answer-option {
-  display: flex;
-  align-items: center;
-  padding: 1.25rem;
-  background: white;
-  border: 3px solid #e5e7eb;
-  border-radius: 16px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.answer-option:hover {
-  border-color: #c7d2fe;
-  background: #f9fafb;
-  transform: translateX(4px);
-}
-
-.answer-option.selected {
-  border-color: #3b82f6;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-}
-
-.option-indicator {
-  width: 36px;
-  height: 36px;
-  background: linear-gradient(135deg, #e0e7ff 0%, #ddd6fe 100%);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  color: #4c1d95;
-  margin-right: 1rem;
-  flex-shrink: 0;
-  transition: all 0.3s ease;
-}
-
-.answer-option.selected .option-indicator {
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  color: white;
-}
-
-.check-icon {
-  width: 32px;
-  height: 32px;
-  margin-left: 1rem;
-  color: transparent;
-  transition: all 0.3s ease;
-}
-
-.answer-option.selected .check-icon {
-  color: #10b981;
-}
-
-.tf-answer-option {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  background: white;
-  border: 3px solid #e5e7eb;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  gap: 0.5rem;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
 }
 
-.tf-answer-option:hover {
-  border-color: #c7d2fe;
-  background: #f9fafb;
-  transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.2);
+.dark .stat-card {
+  background: #23272b;
+  border-color: #3D8D7A;
 }
 
-.tf-answer-option.selected {
-  border-color: #3b82f6;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
-  transform: scale(1.05);
+.stat-icon {
+  font-size: 2rem;
 }
 
-.fill-input {
-  width: 100%;
-  padding: 1rem 1.25rem;
-  border: 3px solid #e5e7eb;
-  border-radius: 12px;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  background: white;
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #3D8D7A;
 }
 
-.fill-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+.dark .stat-value {
+  color: #A3D1C6;
 }
 
-.progress-bar {
-  width: 100%;
-  height: 8px;
-  background: #e5e7eb;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
-  border-radius: 10px;
-  transition: width 0.3s ease;
-}
-
-.question-dot {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-  border: 2px solid #e5e7eb;
-  background: white;
-  color: #6b7280;
-  font-weight: 600;
+.stat-label {
   font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  color: #6b7280;
+  font-weight: 500;
 }
 
-.question-dot:hover {
-  border-color: #c7d2fe;
-  transform: scale(1.1);
+.dark .stat-label {
+  color: #A3D1C6;
 }
 
-.question-dot.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  border-color: #3b82f6;
-  color: white;
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+/* Quiz Categories */
+.quiz-category {
+  margin-bottom: 2.5rem;
 }
 
-.question-dot.answered {
-  background: #d1fae5;
-  border-color: #10b981;
-  color: #065f46;
-}
-
-.question-dot.answered.active {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border-color: #10b981;
-  color: white;
-}
-
-.attempt-card {
-  background: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 1rem;
-  transition: all 0.3s ease;
-}
-
-.attempt-card:hover {
-  border-color: #c7d2fe;
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.1);
-  transform: translateY(-2px);
-}
-
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 50;
-  animation: fadeIn 0.3s ease;
-}
-
-.modal-content {
-  background: white;
-  border-radius: 24px;
-  max-width: 500px;
-  width: 90%;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  animation: slideUp 0.3s ease;
-}
-
-.modal-header {
-  padding: 2rem 2rem 1rem;
-  text-align: center;
-}
-
-.modal-body {
-  padding: 0 2rem 1.5rem;
-}
-
-.modal-footer {
-  padding: 1.5rem 2rem;
-  border-top: 1px solid #e5e7eb;
-  display: flex;
-  gap: 1rem;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@media (max-width: 768px) {
-  .glass-card { padding: 1.5rem; }
-  .btn-start, .btn-primary, .btn-secondary, .btn-submit { width: 100%; }
-  .info-card { padding: 1rem; }
-  .question-dot { width: 36px; height: 36px; font-size: 0.75rem; }
-  .modal-content { margin: 1rem; }
-  .floating-shape { display: none; }
-}
-
-::-webkit-scrollbar { width: 10px; }
-::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
-::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%); }
-
-.quiz-item {
+.category-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.5rem;
-  background: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 16px;
-  transition: all 0.3s ease;
-  cursor: pointer;
+  margin-bottom: 1.5rem;
 }
 
-.quiz-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-}
-
-.quiz-item.available {
-  border-left: 4px solid #3b82f6;
-}
-
-.quiz-item.available:hover {
-  border-color: #3b82f6;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-}
-
-.quiz-item.completed {
-  border-left: 4px solid #10b981;
-}
-
-.quiz-item.completed:hover {
-  border-color: #10b981;
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-}
-
-.quiz-stat {
-  display: inline-flex;
+.category-title {
+  display: flex;
   align-items: center;
-  padding: 0.25rem 0.75rem;
-  background: #f3f4f6;
-  border-radius: 8px;
-  font-weight: 600;
-  color: #6b7280;
-}
-
-.badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 8px;
-  font-size: 0.875rem;
+  gap: 0.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
+  color: #1f2937;
 }
 
-.badge-new {
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+.dark .category-title {
+  color: #A3D1C6;
+}
+
+.category-icon {
+  font-size: 1.75rem;
+}
+
+.category-count {
+  background: #3D8D7A;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* Quiz Grid */
+.quiz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .quiz-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Quiz Cards */
+.quiz-card {
+  background: white;
+  border: 2px solid #3D8D7A;
+  border-radius: 12px;
+  padding: 1.5rem;
+  position: relative;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
+}
+
+.quiz-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.18);
+}
+
+.dark .quiz-card {
+  background: #23272b;
+  border-color: #3D8D7A;
+}
+
+.quiz-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.new-badge {
+  background: #B3D8A8;
+  color: #1f2937;
+}
+
+.completed-badge {
+  background: #3D8D7A;
   color: white;
 }
 
-.badge-excellent {
-  background: #10b981;
-  color: white;
-}
-
-.badge-good {
-  background: #3b82f6;
-  color: white;
-}
-
-.badge-fair {
-  background: #f59e0b;
-  color: white;
-}
-
-.badge-poor {
+.expired-badge {
   background: #ef4444;
   color: white;
 }
 
-.btn-take-quiz {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  color: white;
+.quiz-header {
+  margin-bottom: 1rem;
+}
+
+.quiz-title {
+  font-size: 1.25rem;
   font-weight: 600;
-  border-radius: 12px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+  color: #1f2937;
+  margin-bottom: 0.5rem;
 }
 
-.btn-take-quiz:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
+.dark .quiz-title {
+  color: #A3D1C6;
 }
 
-.btn-view-result {
+.quiz-code {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  background: white;
-  color: #10b981;
-  font-weight: 600;
-  border-radius: 12px;
-  border: 2px solid #10b981;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  font-size: 0.875rem;
 }
 
-.btn-view-result:hover {
-  background: #10b981;
-  color: white;
-  transform: translateY(-2px);
-}
-
-.btn-back {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  background: white;
+.code-label {
   color: #6b7280;
+  font-weight: 500;
+}
+
+.dark .code-label {
+  color: #A3D1C6;
+}
+
+.code-value {
+  background: #FBFFE4;
+  color: #3D8D7A;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
   font-weight: 600;
-  border-radius: 12px;
-  border: 2px solid #e5e7eb;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  font-family: 'Courier New', monospace;
 }
 
-.btn-back:hover {
-  background: #f9fafb;
-  border-color: #cbd5e1;
-  color: #3b82f6;
+.dark .code-value {
+  background: #181c20;
+  color: #A3D1C6;
 }
 
-.btn-secondary-modal {
+.quiz-description {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.dark .quiz-description {
+  color: #A3D1C6;
+}
+
+.quiz-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dark .quiz-meta {
+  border-bottom-color: #3D8D7A;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.813rem;
+  color: #6b7280;
+}
+
+.dark .meta-item {
+  color: #A3D1C6;
+}
+
+.quiz-schedule {
+  background: #FBFFE4;
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dark .quiz-schedule {
+  background: #181c20;
+}
+
+.schedule-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.813rem;
+}
+
+.schedule-label {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.dark .schedule-label {
+  color: #A3D1C6;
+}
+
+.schedule-time {
+  color: #3D8D7A;
+  font-weight: 600;
+}
+
+.dark .schedule-time {
+  color: #A3D1C6;
+}
+
+.quiz-result {
+  background: #FBFFE4;
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.dark .quiz-result {
+  background: #181c20;
+}
+
+.result-score {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.score-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.dark .score-label {
+  color: #A3D1C6;
+}
+
+.score-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #3D8D7A;
+}
+
+.dark .score-value {
+  color: #A3D1C6;
+}
+
+.result-attempts {
+  font-size: 0.813rem;
+  color: #6b7280;
+}
+
+.dark .result-attempts {
+  color: #A3D1C6;
+}
+
+.quiz-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.875rem 1.5rem;
-  background: white;
-  color: #4b5563;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
   font-weight: 600;
-  border-radius: 12px;
-  border: 2px solid #e5e7eb;
+  font-size: 0.875rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s;
+  border: none;
+  flex: 1;
 }
 
-.btn-secondary-modal:hover {
-  background: #f9fafb;
-  border-color: #cbd5e1;
+.btn-primary {
+  background: #20c997;
+  color: #181c20;
+  border: 2px solid #20c997;
 }
 
-.spinner-small {
+.btn-primary:hover {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #A3D1C6;
+  border: 2px solid #20c997;
+}
+
+.btn-secondary:hover {
+  background: #23272b;
+  color: #20c997;
+  border-color: #20c997;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: white;
+  border-radius: 12px;
+  border: 2px dashed #A3D1C6;
+}
+
+.dark .empty-state {
+  background: #23272b;
+  border-color: #3D8D7A;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.dark .empty-state h3 {
+  color: #A3D1C6;
+}
+
+.empty-state p {
+  font-size: 1rem;
+  color: #6b7280;
+}
+
+.dark .empty-state p {
+  color: #A3D1C6;
+}
+
+/* Quiz Details View */
+.content-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.dark .content-card {
+  background: #23272b;
+  border: 1px solid #3D8D7A;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+
+.details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.back-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: #3D8D7A;
+}
+
+.back-link:hover {
+  background: rgba(61, 141, 122, 0.1);
+}
+
+.dark .back-link {
+  color: #A3D1C6;
+}
+
+.quiz-status-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.quiz-status-badge.available {
+  background: #B3D8A8;
+  color: #1f2937;
+}
+
+.quiz-status-badge.not-started {
+  background: #fbbf24;
+  color: #1f2937;
+}
+
+.quiz-status-badge.expired {
+  background: #ef4444;
+  color: white;
+}
+
+.quiz-info-card {
+  background: #FBFFE4;
+  border: 1px solid #A3D1C6;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.dark .quiz-info-card {
+  background: #181c20;
+  border-color: #3D8D7A;
+}
+
+.details-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.dark .details-title {
+  color: #A3D1C6;
+}
+
+.quiz-code-display {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: white;
+  border-radius: 8px;
+  border: 2px solid #3D8D7A;
+}
+
+.dark .quiz-code-display {
+  background: #23272b;
+  border-color: #3D8D7A;
+}
+
+.quiz-code-display .code-label {
+  font-size: 1rem;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.dark .quiz-code-display .code-label {
+  color: #A3D1C6;
+}
+
+.quiz-code-display .code-value {
+  font-size: 1.25rem;
+  background: #FBFFE4;
+  color: #3D8D7A;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.1em;
+}
+
+.dark .quiz-code-display .code-value {
+  background: #181c20;
+  color: #A3D1C6;
+}
+
+.details-description {
+  font-size: 1rem;
+  color: #6b7280;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.dark .details-description {
+  color: #A3D1C6;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #A3D1C6;
+}
+
+.dark .info-item {
+  background: #23272b;
+  border-color: #3D8D7A;
+}
+
+.info-icon {
+  font-size: 2rem;
+}
+
+.info-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.info-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.dark .info-label {
+  color: #A3D1C6;
+}
+
+.info-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #3D8D7A;
+}
+
+.dark .info-value {
+  color: #A3D1C6;
+}
+
+.schedule-info {
+  margin-bottom: 2rem;
+}
+
+.schedule-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.dark .schedule-title {
+  color: #A3D1C6;
+}
+
+.schedule-details {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid #A3D1C6;
+}
+
+.dark .schedule-details {
+  background: #23272b;
+  border-color: #3D8D7A;
+}
+
+.schedule-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  font-size: 0.875rem;
+}
+
+.schedule-row:not(:last-child) {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dark .schedule-row:not(:last-child) {
+  border-bottom-color: #3D8D7A;
+}
+
+.schedule-icon {
+  font-size: 1.25rem;
+}
+
+.schedule-row .schedule-label {
+  flex: 0 0 120px;
+}
+
+.schedule-row .schedule-value {
+  font-weight: 600;
+}
+
+.attempts-history {
+  margin-top: 2rem;
+}
+
+.attempts-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.dark .attempts-title {
+  color: #A3D1C6;
+}
+
+.attempts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.attempt-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #A3D1C6;
+}
+
+.dark .attempt-item {
+  background: #23272b;
+  border-color: #3D8D7A;
+}
+
+.attempt-number {
+  font-weight: 600;
+  color: #3D8D7A;
+}
+
+.dark .attempt-number {
+  color: #A3D1C6;
+}
+
+.attempt-score {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #3D8D7A;
+}
+
+.dark .attempt-score {
+  color: #A3D1C6;
+}
+
+.attempt-date {
+  font-size: 0.813rem;
+  color: #6b7280;
+}
+
+.dark .attempt-date {
+  color: #A3D1C6;
+}
+
+.action-card {
+  background: #FBFFE4;
+  border: 2px solid #3D8D7A;
+  border-radius: 12px;
+  padding: 2rem;
+}
+
+.dark .action-card {
+  background: #181c20;
+  border-color: #3D8D7A;
+}
+
+.warning-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #fef3c7;
+  border: 2px solid #fbbf24;
+  border-radius: 8px;
+  color: #92400e;
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.dark .warning-message {
+  background: rgba(251, 191, 36, 0.1);
+  border-color: #fbbf24;
+  color: #fbbf24;
+}
+
+.btn-start-quiz {
+  width: 100%;
+  padding: 1rem 2rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  background: #20c997;
+  color: #181c20;
+  border: 2px solid #20c997;
+}
+
+.btn-start-quiz:hover {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
+  transform: translateY(-2px);
+}
+
+.spinner {
   width: 20px;
   height: 20px;
   border: 3px solid rgba(255, 255, 255, 0.3);
@@ -1637,11 +2072,637 @@ export default {
   animation: spin 1s linear infinite;
 }
 
-.quiz-item {
-  pointer-events: none;
+/* Quiz Taking View */
+.quiz-taking-view {
+  max-width: 900px;
+  margin: 0 auto;
 }
 
-.btn-take-quiz {
-  pointer-events: auto;
+.quiz-timer-header {
+  background: white;
+  border: 2px solid #3D8D7A;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
+}
+
+.dark .quiz-timer-header {
+  background: #23272b;
+  border-color: #3D8D7A;
+}
+
+.timer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.timer-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.dark .timer-label {
+  color: #A3D1C6;
+}
+
+.timer-display {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #3D8D7A;
+  font-family: 'Courier New', monospace;
+}
+
+.dark .timer-display {
+  color: #A3D1C6;
+}
+
+.timer-warning {
+  color: #ef4444 !important;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.progress-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 200px;
+}
+
+.progress-info > span {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 600;
+  text-align: right;
+}
+
+.dark .progress-info > span {
+  color: #A3D1C6;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.dark .progress-bar {
+  background: #3D8D7A;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #3D8D7A;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.dark .progress-fill {
+  background: #A3D1C6;
+}
+
+/* Question Container */
+.question-container {
+  background: white;
+  border: 2px solid #3D8D7A;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
+}
+
+.dark .question-container {
+  background: #23272b;
+  border-color: #3D8D7A;
+}
+
+.question-card {
+  margin-bottom: 2rem;
+}
+
+.question-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.question-number-badge {
+  background: #3D8D7A;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.question-type-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.813rem;
+  font-weight: 600;
+}
+
+.question-type-badge.multiple_choice {
+  background: #B3D8A8;
+  color: #1f2937;
+}
+
+.question-type-badge.true_false {
+  background: #A3D1C6;
+  color: #1f2937;
+}
+
+.question-type-badge.fill_blank {
+  background: #FBFFE4;
+  color: #1f2937;
+  border: 2px solid #A3D1C6;
+}
+
+.question-text {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.dark .question-text {
+  color: #A3D1C6;
+}
+
+/* Answer Options */
+.answer-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.option-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: #FBFFE4;
+  border: 2px solid #A3D1C6;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.option-item:hover {
+  background: white;
+  border-color: #3D8D7A;
+  transform: translateX(4px);
+}
+
+.option-item.selected {
+  background: white;
+  border-color: #3D8D7A;
+  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.2);
+}
+
+.dark .option-item {
+  background: #181c20;
+  border-color: #3D8D7A;
+}
+
+.dark .option-item:hover,
+.dark .option-item.selected {
+  background: #23272b;
+  border-color: #A3D1C6;
+  box-shadow: 0 0 0 3px rgba(163, 209, 198, 0.2);
+}
+
+.option-radio {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #A3D1C6;
+  border-radius: 50%;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.option-item.selected .option-radio {
+  border-color: #3D8D7A;
+}
+
+.option-item.selected .option-radio::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 10px;
+  background: #3D8D7A;
+  border-radius: 50%;
+}
+
+.dark .option-item.selected .option-radio::after {
+  background: #A3D1C6;
+}
+
+.option-letter {
+  background: #3D8D7A;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.option-text {
+  flex: 1;
+  font-size: 1rem;
+  color: #1f2937;
+}
+
+.dark .option-text {
+  color: #A3D1C6;
+}
+
+/* True/False Options */
+.tf-options {
+  flex-direction: row;
+  gap: 1.5rem;
+}
+
+.tf-option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 2rem 1rem;
+  background: #FBFFE4;
+  border: 2px solid #A3D1C6;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tf-option:hover {
+  background: white;
+  border-color: #3D8D7A;
+  transform: scale(1.05);
+}
+
+.tf-option.selected {
+  background: white;
+  border-color: #3D8D7A;
+  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.2);
+}
+
+.dark .tf-option {
+  background: #181c20;
+  border-color: #3D8D7A;
+}
+
+.dark .tf-option:hover,
+.dark .tf-option.selected {
+  background: #23272b;
+  border-color: #A3D1C6;
+  box-shadow: 0 0 0 3px rgba(163, 209, 198, 0.2);
+}
+
+.tf-icon {
+  font-size: 3rem;
+}
+
+.tf-label {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.dark .tf-label {
+  color: #A3D1C6;
+}
+
+/* Fill in the Blank */
+.answer-input {
+  margin-top: 1rem;
+}
+
+.fill-blank-input {
+  width: 100%;
+  padding: 1rem 1.25rem;
+  border: 2px solid #A3D1C6;
+  border-radius: 8px;
+  background: #FBFFE4;
+  font-size: 1rem;
+  color: #1f2937;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.2s;
+}
+
+.fill-blank-input:focus {
+  outline: none;
+  border-color: #3D8D7A;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.2);
+}
+
+.dark .fill-blank-input {
+  background: #181c20;
+  color: #A3D1C6;
+  border-color: #3D8D7A;
+}
+
+.dark .fill-blank-input:focus {
+  background: #23272b;
+  border-color: #A3D1C6;
+  box-shadow: 0 0 0 3px rgba(163, 209, 198, 0.2);
+}
+
+/* Question Navigation */
+.question-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 2px solid #e5e7eb;
+}
+
+.dark .question-navigation {
+  border-top-color: #3D8D7A;
+}
+
+.question-indicators {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  flex: 1;
+}
+
+.indicator-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.indicator-dot:hover {
+  transform: scale(1.2);
+}
+
+.indicator-dot.active {
+  background: #3D8D7A;
+  transform: scale(1.3);
+}
+
+.indicator-dot.answered {
+  background: #B3D8A8;
+}
+
+.indicator-dot.answered.active {
+  background: #3D8D7A;
+}
+
+.dark .indicator-dot {
+  background: #3D8D7A;
+}
+
+.dark .indicator-dot.active {
+  background: #A3D1C6;
+}
+
+.dark .indicator-dot.answered {
+  background: #B3D8A8;
+}
+
+.btn-submit {
+  background: #3D8D7A;
+  color: white;
+  border: 2px solid #3D8D7A;
+}
+
+.btn-submit:hover {
+  background: #A3D1C6;
+  color: #1f2937;
+  border-color: #3D8D7A;
+  transform: translateY(-2px);
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  max-width: 480px;
+  width: 90%;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+.dark .modal-content {
+  background: #23272b;
+  border: 1px solid #3D8D7A;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dark .modal-header {
+  border-bottom-color: #3D8D7A;
+}
+
+.modal-header h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.dark .modal-header h3 {
+  color: #A3D1C6;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #6b7280;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.modal-close:hover {
+  background: rgba(107, 114, 128, 0.1);
+  color: #374151;
+}
+
+.dark .modal-close {
+  color: #A3D1C6;
+}
+
+.dark .modal-close:hover {
+  background: rgba(163, 209, 198, 0.1);
+}
+
+.modal-body {
+  padding: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.modal-icon {
+  color: #3D8D7A;
+  flex-shrink: 0;
+}
+
+.dark .modal-icon {
+  color: #A3D1C6;
+}
+
+.modal-text {
+  flex: 1;
+}
+
+.modal-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.dark .modal-title {
+  color: #A3D1C6;
+}
+
+.modal-description {
+  font-size: 0.875rem;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.dark .modal-description {
+  color: #A3D1C6;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  justify-content: flex-end;
+}
+
+.dark .modal-actions {
+  border-top-color: #3D8D7A;
+}
+
+.modal-actions .btn {
+  min-width: 100px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .take-quiz-page {
+    padding: 1rem;
+  }
+
+  .section-header-content {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .quiz-timer-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .progress-info {
+    width: 100%;
+  }
+
+  .progress-info > span {
+    text-align: left;
+  }
+
+  .tf-options {
+    flex-direction: column;
+  }
+
+  .question-navigation {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .question-navigation .btn {
+    width: 100%;
+  }
+
+  .modal-content {
+    width: 95%;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .modal-actions .btn {
+    width: 100%;
+  }
 }
 </style>

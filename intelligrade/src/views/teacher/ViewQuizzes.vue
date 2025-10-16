@@ -1,34 +1,47 @@
 <template>
-  <div class="view-quizzes-container" :class="{ 'dark': isDarkMode }">
-    <!-- Simple Header -->
-    <div class="header-card">
-      <div class="header-content">
-        <div class="header-left">
-          <div class="quiz-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+  <div class="view-quizzes-container" :class="{ 'dark-mode': isDarkMode }">
+    <!-- Enhanced Header Section -->
+    <div class="section-header-card">
+      <div class="header-bg-decoration"></div>
+      <div class="floating-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+      </div>
+      
+      <div class="section-header-content">
+        <div class="section-header-left">
+          <div class="section-header-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
               <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
             </svg>
           </div>
-          <div>
-            <h1 class="header-title">Quiz Management</h1>
-            <p class="header-subtitle">{{ subjectName }} (Grade {{ gradeLevel }}) - {{ sectionName }}</p>
+          <div class="header-text">
+            <div class="section-header-title">Quiz Management</div>
+            <div class="section-header-subtitle">{{ subjectName }} (Grade {{ gradeLevel }})</div>
+            <div class="section-header-description">{{ sectionName }} - {{ sectionCode }}</div>
           </div>
         </div>
         
         <div class="header-actions">
-          
-          <button @click="goBack" class="back-btn">
+          <button @click="navigateToCreateQuiz" class="create-quiz-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+            </svg>
+            Create New Quiz
+          </button>
+          <button @click="goBack" class="back-button">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M10 19l-7-7 7-7m-7 7h18"></path>
             </svg>
-            Back to Section
+            Back to Subjects
           </button>
         </div>
       </div>
     </div>
 
     <!-- Main Content -->
-    <div class="content-card">
+    <div class="main-wrapper">
       <!-- Loading State -->
       <div v-if="isLoading" class="loading-state">
         <div class="loading-spinner"></div>
@@ -56,7 +69,7 @@
         </div>
         <h3>No Quizzes Available</h3>
         <p>You haven't created any quizzes for this section yet.</p>
-        <button @click="navigateToCreateQuiz" class="create-first-btn">
+        <button @click="navigateToCreateQuiz" class="create-first-quiz-btn">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
           </svg>
@@ -64,44 +77,93 @@
         </button>
       </div>
 
-      <!-- Quizzes Grid -->
+      <!-- Quizzes List -->
       <div v-else class="quizzes-grid">
         <div v-for="quiz in quizzes" :key="quiz.id" class="quiz-card">
           <div class="quiz-header">
-            <h3 class="quiz-title">{{ quiz.title }}</h3>
-            <span :class="['status-badge', quiz.status]">
-              {{ formatStatus(quiz.status) }}
-            </span>
+            <div class="quiz-info">
+              <h3 class="quiz-title">{{ quiz.title }}</h3>
+              <div class="quiz-code-display">
+                <span class="code-label">Quiz Code:</span>
+                <span class="code-value">{{ quiz.quiz_code || 'N/A' }}</span>
+              </div>
+              <p v-if="quiz.description" class="quiz-description">{{ quiz.description }}</p>
+              <div class="quiz-meta">
+                <span class="quiz-questions">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9,22A1,1 0 0,1 8,21V18H4A2,2 0 0,1 2,16V4C2,2.89 2.9,2 4,2H20A2,2 0 0,1 22,4V16A2,2 0 0,1 20,18H13.9L10.2,21.71C10,21.9 9.75,22 9.5,22V22H9M10,16V19.08L13.08,16H20V4H4V16H10Z" />
+                  </svg>
+                  {{ quiz.question_count || 0 }} Questions
+                </span>
+                <span class="quiz-points">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z" />
+                  </svg>
+                  {{ quiz.total_points || 0 }} Points
+                </span>
+                <span v-if="quiz.has_time_limit && quiz.time_limit_minutes" class="quiz-time">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
+                  </svg>
+                  {{ quiz.time_limit_minutes }} Minutes
+                </span>
+              </div>
+            </div>
+            <div class="quiz-status">
+              <span :class="['status-badge', quiz.status]">
+                {{ formatStatus(quiz.status) }}
+              </span>
+            </div>
           </div>
-          
-          <p v-if="quiz.description" class="quiz-description">{{ quiz.description }}</p>
-          
-          <div class="quiz-meta">
-            <span class="meta-item">
-              {{ quiz.question_count || 0 }} Questions
-            </span>
-            <span class="meta-item">
-              {{ quiz.total_points || 0 }} Points
-            </span>
-            <span v-if="quiz.has_time_limit && quiz.time_limit_minutes" class="meta-item">
-              {{ quiz.time_limit_minutes }} Minutes
-            </span>
+
+          <div class="quiz-stats">
+            <div class="stat">
+              <span class="stat-icon">🔁</span>
+              <span class="stat-number">{{ quiz.attempts_allowed === 999 ? '∞' : quiz.attempts_allowed }}</span>
+              <span class="stat-label">Attempts</span>
+            </div>
+            <div class="stat">
+              <span class="stat-icon">📅</span>
+              <span class="stat-number">{{ formatDate(quiz.created_at) }}</span>
+              <span class="stat-label">Created</span>
+            </div>
+            <div class="stat">
+              <span class="stat-icon">🔀</span>
+              <span class="stat-number">{{ quiz.shuffle_questions ? 'Yes' : 'No' }}</span>
+              <span class="stat-label">Shuffle</span>
+            </div>
           </div>
 
           <div class="quiz-actions">
             <button @click="viewQuizDetails(quiz)" class="action-btn primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
+              </svg>
               View Details
             </button>
+            
             <button @click="editQuiz(quiz)" class="action-btn secondary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
+              </svg>
               Edit
             </button>
+
             <button 
               @click="toggleQuizStatus(quiz)" 
               :class="['action-btn', quiz.status === 'published' ? 'warning' : 'success']"
             >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path v-if="quiz.status === 'published'" d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M14.5,9L12,11.5L9.5,9L8,10.5L10.5,13L8,15.5L9.5,17L12,14.5L14.5,17L16,15.5L13.5,13L16,10.5L14.5,9Z" />
+                <path v-else d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M11,16.5L18,9.5L16.5,8L11,13.5L7.5,10L6,11.5L11,16.5Z" />
+              </svg>
               {{ quiz.status === 'published' ? 'Unpublish' : 'Publish' }}
             </button>
+
             <button @click="deleteQuiz(quiz)" class="action-btn danger">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
+              </svg>
               Delete
             </button>
           </div>
@@ -123,6 +185,14 @@
 
         <div class="modal-body">
           <div class="quiz-overview">
+            <!-- Quiz Code Display -->
+            <div class="quiz-code-section">
+              <div class="code-display-box">
+                <span class="code-label-large">Quiz Code</span>
+                <span class="code-value-large">{{ selectedQuiz.quiz_code || 'N/A' }}</span>
+              </div>
+            </div>
+
             <p v-if="selectedQuiz.description" class="quiz-description-modal">{{ selectedQuiz.description }}</p>
             
             <div class="overview-stats">
@@ -148,7 +218,7 @@
           <div class="questions-preview">
             <h4>Questions Preview</h4>
             <div v-if="selectedQuizQuestions.length > 0" class="questions-list">
-              <div v-for="question in selectedQuizQuestions" :key="question.id" class="question-preview">
+              <div v-for="(question, index) in selectedQuizQuestions" :key="question.id" class="question-preview">
                 <div class="question-number">{{ question.question_number }}</div>
                 <div class="question-content">
                   <p class="question-text">{{ question.question_text }}</p>
@@ -247,7 +317,7 @@ const fetchQuizzes = async () => {
       await loadTeacherInfo()
     }
 
-    // Fetch quizzes with question count
+    // Fetch quizzes with question count - NOW INCLUDING quiz_code
     const { data: quizzesData, error: quizzesError } = await supabase
       .from('quizzes')
       .select(`
@@ -400,21 +470,12 @@ const navigateToCreateQuiz = async () => {
 }
 
 const goBack = async () => {
-  // Go back to MySubjects.vue and set viewMode to 'section-detail' with correct params
-  router.push({
-    name: 'MySubjects',
-    params: {
-      subjectId: subjectId.value,
-      sectionId: sectionId.value
-    },
-    query: {
-      viewMode: 'section-detail',
-      subjectName: subjectName.value,
-      sectionName: sectionName.value,
-      gradeLevel: gradeLevel.value,
-      sectionCode: sectionCode.value
-    }
-  });
+  try {
+    await router.push({ name: 'MySubjects' })
+  } catch (error) {
+    console.error('Navigation error:', error)
+    router.back()
+  }
 }
 
 const closeModal = () => {
@@ -425,6 +486,16 @@ const closeModal = () => {
 const formatStatus = (status) => {
   if (!status) return 'Unknown'
   return status.charAt(0).toUpperCase() + status.slice(1)
+}
+
+const formatDate = (dateString) => {
+  if (!dateString) return 'N/A'
+  const date = new Date(dateString)
+  return date.toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric' 
+  })
 }
 
 const formatQuestionType = (type) => {
@@ -1098,5 +1169,102 @@ onMounted(async () => {
   .overview-stats {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+.quiz-code-display {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.code-label {
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.code-value {
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  color: #3b82f6;
+  letter-spacing: 1px;
+}
+
+.quiz-code-section {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.code-display-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 2px solid #3b82f6;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+}
+
+.code-label-large {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 0.5rem;
+}
+
+.code-value-large {
+  font-family: 'Courier New', monospace;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #3b82f6;
+  letter-spacing: 3px;
+  text-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+/* Dark mode styles for quiz code */
+.dark-mode .quiz-code-display {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.dark-mode .code-label {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .code-value {
+  color: #60a5fa;
+}
+
+.dark-mode .code-display-box {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+  border-color: #3b82f6;
+}
+
+.dark-mode .code-label-large {
+  color: var(--secondary-text-color);
+}
+
+.dark-mode .code-value-large {
+  color: #60a5fa;
+}
+
+.view-quizzes-container {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-primary);
+  min-height: 100vh;
+  color: var(--primary-text-color);
+  transition: all 0.3s ease;
 }
 </style>

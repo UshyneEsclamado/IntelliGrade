@@ -62,7 +62,6 @@
           { 'favorite-card': favoriteSubjects.has(subject.id) },
           { 'archived-card': archivedSubjects.has(subject.id) }
         ]"
-        @click="viewSubjectDetails(subject)"
       >
         <div class="subject-header">
           <div class="subject-header-left">
@@ -137,8 +136,8 @@
           <button 
             v-if="subject.availableQuizzes > 0"
             class="action-btn primary pulse" 
-            @click.stop.prevent="takeQuiz(subject)"
-            :title="`${subject.availableQuizzes} quiz${subject.availableQuizzes > 1 ? 'es' : ''} available`"
+            @click.stop="takeQuiz(subject)"
+            :title="`${subject.availableQuizzes} quiz${subject.availableQuizzes > 1 ? 'zes' : ''} available`"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
@@ -161,7 +160,7 @@
           <button 
             v-else
             class="action-btn clickable"
-            @click.stop.prevent="takeQuiz(subject)"
+            @click.stop="takeQuiz(subject)"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17Z" />
@@ -236,7 +235,7 @@
                 <h4>{{ previewSubject.name }}</h4>
                 <p>Grade {{ previewSubject.grade_level }}</p>
                 <p>Section: {{ previewSubject.section }}</p>
-                <p>Teacher: {{ previewSubject.instructor }}</p>  <!-- CHANGED from "Instructor:" to "Teacher:" -->
+                <p>Teacher: {{ previewSubject.instructor }}</p>
               </div>
             </div>
           </div>
@@ -275,7 +274,7 @@ export default {
       isLoading: false,
       loadingMessage: '',
       joinError: '',
-      joinSuccess: '', // Add success message state
+      joinSuccess: '',
       previewSubject: null,
       filters: [
         { key: 'all', label: 'All Subjects' },
@@ -293,7 +292,6 @@ export default {
       validationTimeout: null,
       currentUser: null,
       studentInfo: null,
-      // Favorite and Archive functionality
       favoriteSubjects: new Set(),
       archivedSubjects: new Set(),
     };
@@ -342,7 +340,6 @@ export default {
       
       return filtered;
     },
-    // Add computed property for button state
     canJoinClass() {
       return this.joinForm.sectionCode && 
              this.joinForm.sectionCode.length >= 8 && 
@@ -441,7 +438,6 @@ export default {
           return
         }
 
-
         console.log('Fetching subjects for student:', this.studentInfo.id, `(attempt ${retryCount + 1})`)
 
         // Add small delay for database consistency
@@ -490,9 +486,9 @@ export default {
                 // Get all published quizzes for this section
                 const { data: quizData } = await supabase
                   .from('quizzes')
-                  .select('id, title, is_published, due_date, created_at')
+                  .select('id, title, status, end_date, created_at')
                   .eq('section_id', sectionId)
-                  .eq('is_published', true)
+                  .eq('status', 'published')
                 
                 allQuizzes = quizData || []
 
@@ -501,7 +497,7 @@ export default {
                   const quizIds = allQuizzes.map(q => q.id)
                   const { data: results } = await supabase
                     .from('quiz_results')
-                    .select('quiz_id, score, submitted_at')
+                    .select('quiz_id, best_score, best_percentage, latest_attempt_date')
                     .eq('student_id', this.studentInfo.id)
                     .in('quiz_id', quizIds)
                   
@@ -522,7 +518,7 @@ export default {
               let overallScore = null
               
               if (completedQuizResults.length > 0) {
-                const totalScore = completedQuizResults.reduce((sum, result) => sum + (result.score || 0), 0)
+                const totalScore = completedQuizResults.reduce((sum, result) => sum + (result.best_percentage || 0), 0)
                 overallScore = totalScore / completedQuizResults.length
                 
                 if (overallScore >= 95) currentGrade = 'A+'
@@ -568,7 +564,7 @@ export default {
           subject.showOptions = false;
         });
         
-        this.subjects = [...newSubjects] // Force reactivity update
+        this.subjects = [...newSubjects]
         
         console.log('Successfully updated subjects:', this.subjects.length, 'subjects loaded')
 
@@ -894,13 +890,13 @@ export default {
         // Refresh quiz data for this specific subject
         const { data: quizzes } = await supabase
           .from('quizzes')
-          .select('id, title, is_published')
+          .select('id, title, status')
           .eq('section_id', subject.sectionId)
-          .eq('is_published', true)
+          .eq('status', 'published')
 
         const { data: results } = await supabase
           .from('quiz_results')
-          .select('quiz_id, score')
+          .select('quiz_id, best_score, best_percentage')
           .eq('student_id', this.studentInfo.id)
           .in('quiz_id', (quizzes || []).map(q => q.id))
 
@@ -910,7 +906,7 @@ export default {
         subject.availableQuizzes = Math.max(0, subject.totalQuizzes - subject.completedQuizzes)
 
         if (results && results.length > 0) {
-          const avgScore = results.reduce((sum, r) => sum + r.score, 0) / results.length
+          const avgScore = results.reduce((sum, r) => sum + r.best_percentage, 0) / results.length
           subject.overallScore = avgScore
           // Update grade based on score...
         }
@@ -920,12 +916,9 @@ export default {
     },
 
     takeQuiz(subject) {
-  // Navigate to TakeQuiz regardless of availableQuizzes count
-  // TakeQuiz component will handle the "no quizzes" display
-  console.log('Taking quiz for subject:', subject); // Debug log
-    
-    // Check if the route exists
-    if (this.$router.hasRoute('TakeQuiz')) {
+      // Navigate to TakeQuiz with both subjectId and sectionId
+      console.log('Navigating to TakeQuiz for subject:', subject)
+      
       this.$router.push({
         name: 'TakeQuiz',
         params: {
@@ -935,21 +928,15 @@ export default {
         query: {
           subjectName: subject.name,
           sectionName: subject.section,
+          gradeLevel: subject.gradeLevel,
+          sectionCode: subject.code,
           availableQuizzes: subject.availableQuizzes || 0
         }
       }).catch(error => {
         console.error('Navigation error:', error);
         alert('Unable to navigate to quiz page. Please try again.');
       });
-    } else {
-      // Fallback navigation
-      console.log('TakeQuiz route not found, using fallback path');
-      this.$router.push(`/student/take-quiz/${subject.id}/${subject.sectionId}`).catch(error => {
-        console.error('Fallback navigation error:', error);
-        alert('Quiz page not found. Please contact support.');
-      });
-    }
-},
+    },
 
     viewCompletedQuizzes(subject) {
       this.$router.push({
@@ -978,7 +965,10 @@ export default {
           currentGrade: subject.currentGrade,
           overallScore: subject.overallScore
         }
-      })
+      }).catch(error => {
+        console.error('Navigation error:', error);
+        alert('Unable to navigate to grades page. Please try again.');
+      });
     },
 
     // Favorite and Archive functionality methods

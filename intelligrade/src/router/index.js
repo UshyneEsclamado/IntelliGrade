@@ -9,6 +9,8 @@ import Signup from '../views/Signup.vue'
 import SignupStudent from '../views/SignupStudent.vue'
 import Landing from '../views/Landing.vue'
 import Intro from '../views/Intro.vue'
+import ForgotPassword from '../views/ForgotPassword.vue'
+import ResetPassword from '../views/ResetPassword.vue'
 
 // Dashboard views
 import TeacherDashboard from '../views/TeacherDashboard.vue'
@@ -31,47 +33,82 @@ import AssessmentHistory from '../views/teacher/AssessmentHistory.vue'
 import AssessmentDetails from '../views/teacher/AssessmentDetails.vue'
 import ViewQuizzes from '../views/teacher/ViewQuizzes.vue'
 import ViewStudents from '../views/teacher/ViewStudents.vue'
+import Gradebook from '../views/teacher/Gradebook.vue'
 
 // Student subfolder components
 import Subjects from '../views/student/Subjects.vue'
 import Messages from '../views/student/Messages.vue'
 import TakeQuiz from '../views/student/TakeQuiz.vue'
+import StudentGrades from '../views/student/Grades.vue'
+import Calendar from '../views/student/Calendar.vue'
+import StudentHome from '../views/student/Home.vue'
 
 const routes = [
   {
     path: '/',
     name: 'Intro',
-    component: Intro
+    component: Intro,
+    meta: { public: true }
   },
   {
     path: '/landing',
     name: 'Landing',
-    component: Landing
+    component: Landing,
+    meta: { public: true }
   },
   {
     path: '/login',
     name: 'Login',
-    component: Login
+    component: Login,
+    meta: { 
+      public: true,
+      guestOnly: true
+    }
   },
   {
     path: '/signup',
     name: 'Signup',
-    component: Signup
+    component: Signup,
+    meta: { 
+      public: true,
+      guestOnly: true
+    }
   },
   {
     path: '/signup-student',
     name: 'SignupStudent',
-    component: SignupStudent
+    component: SignupStudent,
+    meta: { 
+      public: true,
+      guestOnly: true
+    }
   },
   {
     path: '/role-selection',
     name: 'RoleSelection',
-    component: RoleSelection
+    component: RoleSelection,
+    meta: { 
+      public: true,
+      guestOnly: true
+    }
   },
   {
     path: '/email-verified',
     name: 'EmailVerified',
-    component: EmailVerified
+    component: EmailVerified,
+    meta: { public: true }
+  },
+  {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: ForgotPassword,
+    meta: { public: true }
+  },
+  {
+    path: '/reset-password',
+    name: 'ResetPassword',
+    component: ResetPassword,
+    meta: { public: true }
   },
   // Teacher Dashboard Routes
   {
@@ -166,6 +203,12 @@ const routes = [
         path: 'view-students/:subjectId/:sectionId',
         name: 'ViewStudents',
         component: ViewStudents
+      },
+      {
+        path: 'gradebook',
+        name: 'TeacherGradebook',
+        component: Gradebook,
+        meta: { requiresAuth: true, role: 'teacher' }
       }
     ]
   },
@@ -183,12 +226,17 @@ const routes = [
       {
         path: 'dashboard',
         name: 'StudentDashboardHome',
-        component: StudentDashboard
+        component: StudentHome
       },
       {
         path: 'subjects',
         name: 'StudentSubjects',
         component: Subjects
+      },
+      {
+        path: 'calendar',
+        name: 'StudentCalendar',
+        component: Calendar
       },
       {
         path: 'messages',
@@ -197,11 +245,18 @@ const routes = [
       }
     ]
   },
-  // TakeQuiz as standalone route (moved outside StudentLayout children)
+  // TakeQuiz Route - with both subjectId and sectionId
   {
-    path: '/student/take-quiz/:sectionId',
+    path: '/student/take-quiz/:subjectId/:sectionId',
     name: 'TakeQuiz',
     component: TakeQuiz,
+    meta: { requiresAuth: true, role: 'student' }
+  },
+  // StudentGrades Route
+  {
+    path: '/student/grades/:subjectId/:sectionId',
+    name: 'StudentGrades',
+    component: StudentGrades,
     meta: { requiresAuth: true, role: 'student' }
   },
   // Legacy student dashboard route (for backward compatibility)
@@ -221,28 +276,71 @@ const router = createRouter({
   routes
 })
 
-// Navigation guard
+// Enhanced Navigation Guard with Better Error Handling
 router.beforeEach(async (to, from, next) => {
-  console.log('=== ROUTER NAVIGATION ===')
-  console.log('Going to:', to.path)
-  console.log('Coming from:', from.path)
+  console.log('=== ROUTER NAVIGATION START ===')
+  console.log('From:', from.path)
+  console.log('To:', to.path)
   console.log('Route meta:', to.meta)
   
-  if (to.meta.requiresAuth) {
-    try {
-      const { data: { session }, error } = await supabase.auth.getSession()
+  try {
+    // Get current session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    
+    if (sessionError) {
+      console.error('Session error:', sessionError)
+      // Clear potentially corrupted session
+      await supabase.auth.signOut()
+    }
+
+    const isAuthenticated = !!session?.user
+    console.log('Is authenticated:', isAuthenticated)
+
+    // Handle guest-only routes (login, signup) - IMPORTANT FIX
+    if (to.meta.guestOnly && isAuthenticated) {
+      console.log('Guest-only route but user is authenticated, checking role...')
       
-      if (error || !session) {
-        console.log('No valid session, redirecting to login')
+      // Get user profile to determine redirect
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('auth_user_id', session.user.id)
+        .single()
+
+      if (profileError) {
+        console.error('Profile fetch error on guest-only route:', profileError)
+        // If profile fetch fails, sign out and allow access to login
+        await supabase.auth.signOut()
+        console.log('Signed out due to profile error, allowing access to:', to.path)
+        next()
+        return
+      }
+
+      if (profile) {
+        console.log('User already logged in with role:', profile.role)
+        const redirectPath = profile.role === 'student' 
+          ? '/student/dashboard' 
+          : '/teacher/dashboard'
+        console.log('→ Redirecting authenticated user to:', redirectPath)
+        next(redirectPath)
+        return
+      }
+    }
+
+    // Handle routes that require authentication
+    if (to.meta.requiresAuth) {
+      if (!isAuthenticated) {
+        console.log('Authentication required but not authenticated')
+        console.log('→ Redirecting to login')
         next('/login')
         return
       }
 
       console.log('Valid session found for user:', session.user.email)
 
-      // Check user role if required
+      // Handle role-based access
       if (to.meta.role) {
-        console.log('Checking user role requirement:', to.meta.role)
+        console.log('Checking role requirement:', to.meta.role)
         
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
@@ -252,37 +350,63 @@ router.beforeEach(async (to, from, next) => {
 
         if (profileError) {
           console.error('Profile fetch error:', profileError)
+          console.log('→ Redirecting to login due to profile error')
+          await supabase.auth.signOut()
           next('/login')
           return
         }
 
-        console.log('User profile role:', profile?.role)
-
-        if (!profile || profile.role !== to.meta.role) {
-          console.log('Role mismatch or no profile')
-          if (profile?.role === 'student') {
-            console.log('Redirecting to student dashboard')
-            next('/student/dashboard')
-          } else if (profile?.role === 'teacher') {
-            console.log('Redirecting to teacher dashboard')
-            next('/teacher/dashboard')
-          } else {
-            console.log('No valid role, redirecting to login')
-            next('/login')
-          }
+        if (!profile) {
+          console.error('No profile found for authenticated user')
+          console.log('→ Redirecting to login due to missing profile')
+          await supabase.auth.signOut()
+          next('/login')
           return
         }
+
+        console.log('User profile role:', profile.role)
+
+        if (profile.role !== to.meta.role) {
+          console.log('Role mismatch! Required:', to.meta.role, 'Got:', profile.role)
+          // Redirect to appropriate dashboard based on actual role
+          const redirectPath = profile.role === 'student' 
+            ? '/student/dashboard' 
+            : '/teacher/dashboard'
+          console.log('→ Redirecting to correct dashboard:', redirectPath)
+          next(redirectPath)
+          return
+        }
+
+        console.log('✓ Role check passed')
       }
       
-      console.log('Authorization successful, proceeding to:', to.path)
+      console.log('✓ Authorization successful, proceeding to:', to.path)
       next()
-    } catch (error) {
-      console.error('Auth check error:', error)
-      next('/login')
+      return
     }
-  } else {
-    console.log('No auth required, proceeding to:', to.path)
+
+    // Public routes - no restrictions
+    console.log('Public route, no auth required')
     next()
+
+  } catch (error) {
+    console.error('=== NAVIGATION GUARD ERROR ===')
+    console.error('Error details:', error)
+    
+    // On any error, clear session and redirect to login for protected routes
+    if (to.meta.requiresAuth) {
+      console.log('→ Error on protected route, redirecting to login')
+      try {
+        await supabase.auth.signOut()
+      } catch (signOutError) {
+        console.error('Sign out error:', signOutError)
+      }
+      next('/login')
+    } else {
+      // Allow access to public routes even on error
+      console.log('→ Error on public route, allowing access')
+      next()
+    }
   }
 })
 

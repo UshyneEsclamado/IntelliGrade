@@ -41,204 +41,130 @@
         </div>
       </div>
 
-    <!-- Status Legend -->
-    <div class="status-legend">
-      <div class="legend-item">
-        <div class="legend-color upcoming"></div>
-        <span>Upcoming Deadline</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-color due-today"></div>
-        <span>Due Today</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-color completed"></div>
-        <span>Completed</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-color overdue"></div>
-        <span>Overdue</span>
-      </div>
-    </div>
-
-    <!-- Calendar Navigation -->
-    <div class="calendar-nav">
-      <div class="nav-controls">
-        <button @click="previousMonth" class="nav-btn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z" />
-          </svg>
-        </button>
-        <h2 class="current-month">{{ currentMonthYear }}</h2>
-        <button @click="nextMonth" class="nav-btn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" />
-          </svg>
-        </button>
-      </div>
-      <div class="view-toggle">
-        <button 
-          v-for="view in views" 
-          :key="view.key"
-          @click="currentView = view.key"
-          :class="['view-btn', { 'active': currentView === view.key }]"
-        >
-          {{ view.label }}
-        </button>
-      </div>
-    </div>
-
-    <!-- Calendar Grid -->
-    <div class="calendar-content">
-      <div v-if="currentView === 'month'" class="calendar-grid">
-        <!-- Days of Week Header -->
-        <div class="calendar-header">
-          <div v-for="day in daysOfWeek" :key="day" class="day-header">
-            {{ day }}
-          </div>
+      <!-- Status Legend -->
+      <div class="status-legend">
+        <div class="legend-item">
+          <div class="legend-color upcoming"></div>
+          <span>Upcoming Deadline</span>
         </div>
-        
-        <!-- Calendar Days -->
-        <div class="calendar-body">
-          <div 
-            v-for="day in calendarDays" 
-            :key="day.date"
-            :class="['calendar-day', {
-              'other-month': !day.isCurrentMonth,
-              'today': day.isToday,
-              'has-events': day.events.length > 0,
-              'has-due-today': day.hasDueToday,
-              'has-overdue': day.hasOverdue,
-              'has-upcoming': day.hasUpcoming,
-              'clickable': day.events.length > 0
-            }]"
-            @click="selectDay(day)"
-          >
-            <span class="day-number">{{ day.day }}</span>
-            <div class="day-events">
-              <div 
-                v-for="event in day.events.slice(0, 2)" 
-                :key="event.id"
-                :class="['event-dot', getEventStatus(event)]"
-                :title="`${event.title} - ${getEventStatusText(event)}`"
-              ></div>
-              <span v-if="day.events.length > 2" class="more-events">
-                +{{ day.events.length - 2 }}
-              </span>
-            </div>
-            <div v-if="day.events.length > 0" class="event-count">
-              {{ day.events.length }}
-            </div>
-          </div>
+        <div class="legend-item">
+          <div class="legend-color due-today"></div>
+          <span>Due Today</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color completed"></div>
+          <span>Completed</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color overdue"></div>
+          <span>Overdue</span>
         </div>
       </div>
 
-      <!-- List View -->
-      <div v-if="currentView === 'list'" class="events-list">
-        <div v-for="(dayEvents, date) in groupedEvents" :key="date" class="day-group">
-          <h3 class="day-title">{{ formatDate(date) }}</h3>
-          <div class="events-container">
-            <div 
-              v-for="event in dayEvents" 
-              :key="event.id"
-              :class="['event-item', event.type, getEventStatus(event)]"
-            >
-              <div class="event-time">{{ event.time }}</div>
-              <div class="event-content">
-                <h4 class="event-title">{{ event.title }}</h4>
-                <p class="event-subject">{{ event.subject }}</p>
-                <p class="event-description">{{ event.description }}</p>
-                <div class="event-status-badge">
-                  <span :class="['status-badge', getEventStatus(event)]">
-                    {{ getEventStatusText(event) }}
-                  </span>
-                </div>
-              </div>
-              <div class="event-actions">
-                <button v-if="getEventStatus(event) === 'upcoming' || getEventStatus(event) === 'due-today'" 
-                        class="answer-btn" 
-                        @click="markAsCompleted(event)">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
-                  </svg>
-                  Answer
-                </button>
-                <button class="view-btn-small" @click="viewEvent(event)">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Day Details Modal -->
-    <div v-if="selectedDay" class="modal-overlay" @click="closeDayModal">
-      <div class="day-modal-content" @click.stop>
-        <div class="day-modal-header">
-          <h3>{{ formatSelectedDayDate() }}</h3>
-          <button @click="closeDayModal" class="close-btn">
+      <!-- Calendar Navigation -->
+      <div class="calendar-nav">
+        <div class="nav-controls">
+          <button @click="previousMonth" class="nav-btn">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+              <path d="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z" />
+            </svg>
+          </button>
+          <h2 class="current-month">{{ currentMonthYear }}</h2>
+          <button @click="nextMonth" class="nav-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" />
             </svg>
           </button>
         </div>
-        <div class="day-modal-body">
-          <div class="day-events-summary">
-            <div class="summary-stats">
-              <div class="summary-stat">
-                <span class="summary-number">{{ selectedDay.events.length }}</span>
-                <span class="summary-label">Total Events</span>
-              </div>
-              <div class="summary-stat">
-                <span class="summary-number">{{ getCompletedCount(selectedDay.events) }}</span>
-                <span class="summary-label">Completed</span>
-              </div>
-              <div class="summary-stat">
-                <span class="summary-number">{{ getPendingCount(selectedDay.events) }}</span>
-                <span class="summary-label">Pending</span>
-              </div>
+        <div class="view-toggle">
+          <button 
+            v-for="view in views" 
+            :key="view.key"
+            @click="currentView = view.key"
+            :class="['view-btn', { 'active': currentView === view.key }]"
+          >
+            {{ view.label }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Calendar Grid -->
+      <div class="calendar-content">
+        <div v-if="currentView === 'month'" class="calendar-grid">
+          <!-- Days of Week Header -->
+          <div class="calendar-header">
+            <div v-for="day in daysOfWeek" :key="day" class="day-header">
+              {{ day }}
             </div>
           </div>
           
-          <div class="day-events-list">
-            <h4>Deadlines & Events</h4>
-            <div class="day-event-items">
+          <!-- Calendar Days -->
+          <div class="calendar-body">
+            <div 
+              v-for="day in calendarDays" 
+              :key="day.date"
+              :class="['calendar-day', {
+                'other-month': !day.isCurrentMonth,
+                'today': day.isToday,
+                'has-events': day.events.length > 0,
+                'has-due-today': day.hasDueToday,
+                'has-overdue': day.hasOverdue,
+                'has-upcoming': day.hasUpcoming,
+                'clickable': day.events.length > 0
+              }]"
+              @click="selectDay(day)"
+            >
+              <span class="day-number">{{ day.day }}</span>
+              <div class="day-events">
+                <div 
+                  v-for="event in day.events.slice(0, 2)" 
+                  :key="event.id"
+                  :class="['event-dot', getEventStatus(event)]"
+                  :title="`${event.title} - ${getEventStatusText(event)}`"
+                ></div>
+                <span v-if="day.events.length > 2" class="more-events">
+                  +{{ day.events.length - 2 }}
+                </span>
+              </div>
+              <div v-if="day.events.length > 0" class="event-count">
+                {{ day.events.length }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- List View -->
+        <div v-if="currentView === 'list'" class="events-list">
+          <div v-for="(dayEvents, date) in groupedEvents" :key="date" class="day-group">
+            <h3 class="day-title">{{ formatDate(date) }}</h3>
+            <div class="events-container">
               <div 
-                v-for="event in selectedDay.events" 
+                v-for="event in dayEvents" 
                 :key="event.id"
-                :class="['day-event-item', getEventStatus(event)]"
+                :class="['event-item', event.type, getEventStatus(event)]"
               >
-                <div class="event-status-indicator">
-                  <div :class="['status-dot', getEventStatus(event)]"></div>
+                <div class="event-time">{{ event.time }}</div>
+                <div class="event-content">
+                  <h4 class="event-title">{{ event.title }}</h4>
+                  <p class="event-subject">{{ event.subject }}</p>
+                  <p class="event-description">{{ event.description }}</p>
+                  <div class="event-status-badge">
+                    <span :class="['status-badge', getEventStatus(event)]">
+                      {{ getEventStatusText(event) }}
+                    </span>
+                  </div>
                 </div>
-                <div class="event-details">
-                  <h5 class="event-name">{{ event.title }}</h5>
-                  <p class="event-subject-small">{{ event.subject }}</p>
-                  <p class="event-time-small">{{ event.time }}</p>
-                  <p class="event-desc-small">{{ event.description }}</p>
-                </div>
-                <div class="event-status-text">
-                  <span :class="['status-badge-small', getEventStatus(event)]">
-                    {{ getEventStatusText(event) }}
-                  </span>
-                </div>
-                <div class="event-quick-actions">
-                  <button v-if="getEventStatus(event) === 'upcoming' || getEventStatus(event) === 'due-today'" 
-                          class="quick-answer-btn" 
-                          @click="markAsCompleted(event)"
-                          :title="'Mark ' + event.title + ' as completed'">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
+                <div class="event-actions">
+                  <button v-if="canTakeQuiz(event)" 
+                          class="take-quiz-btn" 
+                          @click="takeQuiz(event)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M13,9H18.5L13,3.5V9M6,2H14L20,8V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V4C4,2.89 4.89,2 6,2M15,18V16H6V18H15M18,14V12H6V14H18Z" />
                     </svg>
+                    Take Quiz
                   </button>
-                  <button class="quick-view-btn" 
-                          @click="viewEventFromDay(event)"
-                          :title="'View ' + event.title + ' details'">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <button class="view-btn-small" @click="viewEvent(event)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
                     </svg>
                   </button>
@@ -248,52 +174,151 @@
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Event Details Modal -->
-    <div v-if="selectedEvent" class="modal-overlay" @click="closeModal">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h3>{{ selectedEvent.title }}</h3>
-          <button @click="closeModal" class="close-btn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
-            </svg>
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="event-detail">
-            <strong>Subject:</strong> {{ selectedEvent.subject }}
-          </div>
-          <div class="event-detail">
-            <strong>Date:</strong> {{ formatEventDate(selectedEvent.date) }}
-          </div>
-          <div class="event-detail">
-            <strong>Time:</strong> {{ selectedEvent.time }}
-          </div>
-          <div class="event-detail">
-            <strong>Type:</strong> {{ selectedEvent.type }}
-          </div>
-          <div class="event-detail">
-            <strong>Status:</strong> 
-            <span :class="['status-badge', getEventStatus(selectedEvent)]">
-              {{ getEventStatusText(selectedEvent) }}
-            </span>
-          </div>
-          <div class="event-detail">
-            <strong>Description:</strong> {{ selectedEvent.description }}
-          </div>
-          <div v-if="getEventStatus(selectedEvent) === 'upcoming' || getEventStatus(selectedEvent) === 'due-today'" class="modal-actions">
-            <button class="answer-btn-modal" @click="markAsCompleted(selectedEvent)">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
+      <!-- Day Details Modal -->
+      <div v-if="selectedDay" class="modal-overlay" @click="closeDayModal">
+        <div class="day-modal-content" @click.stop>
+          <div class="day-modal-header">
+            <h3>{{ formatSelectedDayDate() }}</h3>
+            <button @click="closeDayModal" class="close-btn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
               </svg>
-              Mark as Completed
             </button>
+          </div>
+          <div class="day-modal-body">
+            <div class="day-events-summary">
+              <div class="summary-stats">
+                <div class="summary-stat">
+                  <span class="summary-number">{{ selectedDay.events.length }}</span>
+                  <span class="summary-label">Total Events</span>
+                </div>
+                <div class="summary-stat">
+                  <span class="summary-number">{{ getCompletedCount(selectedDay.events) }}</span>
+                  <span class="summary-label">Completed</span>
+                </div>
+                <div class="summary-stat">
+                  <span class="summary-number">{{ getPendingCount(selectedDay.events) }}</span>
+                  <span class="summary-label">Pending</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="day-events-list">
+              <h4>Deadlines & Events</h4>
+              <div class="day-event-items">
+                <div 
+                  v-for="event in selectedDay.events" 
+                  :key="event.id"
+                  :class="['day-event-item', getEventStatus(event)]"
+                >
+                  <div class="event-status-indicator">
+                    <div :class="['status-dot', getEventStatus(event)]"></div>
+                  </div>
+                  <div class="event-details">
+                    <h5 class="event-name">{{ event.title }}</h5>
+                    <p class="event-subject-small">{{ event.subject }}</p>
+                    <p class="event-time-small">{{ event.time }}</p>
+                    <p class="event-desc-small">{{ event.description }}</p>
+                  </div>
+                  <div class="event-status-text">
+                    <span :class="['status-badge-small', getEventStatus(event)]">
+                      {{ getEventStatusText(event) }}
+                    </span>
+                  </div>
+                  <div class="event-quick-actions">
+                    <button v-if="canTakeQuiz(event)" 
+                            class="quick-take-quiz-btn" 
+                            @click="takeQuiz(event)"
+                            :title="'Take quiz: ' + event.title">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M13,9H18.5L13,3.5V9M6,2H14L20,8V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V4C4,2.89 4.89,2 6,2M15,18V16H6V18H15M18,14V12H6V14H18Z" />
+                      </svg>
+                    </button>
+                    <button class="quick-view-btn" 
+                            @click="viewEventFromDay(event)"
+                            :title="'View ' + event.title + ' details'">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      <!-- Event Details Modal -->
+      <div v-if="selectedEvent" class="modal-overlay" @click="closeModal">
+        <div class="modal-content" @click.stop>
+          <div class="modal-header">
+            <h3>{{ selectedEvent.title }}</h3>
+            <button @click="closeModal" class="close-btn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+              </svg>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="event-detail">
+              <strong>Subject:</strong> {{ selectedEvent.subject }}
+            </div>
+            <div class="event-detail">
+              <strong>Date:</strong> {{ formatEventDate(selectedEvent.date) }}
+            </div>
+            <div class="event-detail">
+              <strong>Time:</strong> {{ selectedEvent.time }}
+            </div>
+            <div class="event-detail">
+              <strong>Type:</strong> {{ selectedEvent.type }}
+            </div>
+            <div class="event-detail">
+              <strong>Status:</strong> 
+              <span :class="['status-badge', getEventStatus(selectedEvent)]">
+                {{ getEventStatusText(selectedEvent) }}
+              </span>
+            </div>
+            <div class="event-detail">
+              <strong>Description:</strong> {{ selectedEvent.description }}
+            </div>
+            <div v-if="selectedEvent.quizCode" class="event-detail">
+              <strong>Quiz Code:</strong> {{ selectedEvent.quizCode }}
+            </div>
+            <div v-if="selectedEvent.attemptsAllowed" class="event-detail">
+              <strong>Attempts:</strong> {{ selectedEvent.totalAttempts }} / {{ selectedEvent.attemptsAllowed }} used
+            </div>
+            <div v-if="selectedEvent.isCompleted && selectedEvent.bestScore" class="event-detail">
+              <strong>Best Score:</strong> {{ selectedEvent.bestScore.toFixed(1) }}%
+            </div>
+            <div v-if="canTakeQuiz(selectedEvent)" class="modal-actions">
+              <button class="take-quiz-btn-modal" @click="takeQuiz(selectedEvent)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M13,9H18.5L13,3.5V9M6,2H14L20,8V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V4C4,2.89 4.89,2 6,2M15,18V16H6V18H15M18,14V12H6V14H18Z" />
+                </svg>
+                Take Quiz Now
+              </button>
+            </div>
+            <div v-else-if="selectedEvent.isCompleted" class="modal-info">
+              <div class="completed-message">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
+                </svg>
+                <span>Quiz Completed!</span>
+              </div>
+            </div>
+            <div v-else-if="getEventStatus(selectedEvent) === 'overdue'" class="modal-info">
+              <div class="overdue-message">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z" />
+                </svg>
+                <span>Quiz Deadline Passed</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Notifications Area -->
@@ -316,7 +341,7 @@
   </div>
 </template>
 
-<script lang="ts">
+<script>
 import { supabase } from '@/supabase.js'
 
 export default {
@@ -329,6 +354,7 @@ export default {
       selectedDay: null,
       currentTime: new Date(),
       statusUpdateInterval: null,
+      fastUpdateInterval: null,
       realTimeSubscription: null,
       loading: true,
       error: null,
@@ -339,7 +365,8 @@ export default {
       ],
       daysOfWeek: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
       events: [],
-      user: null
+      user: null,
+      studentId: null
     };
   },
   computed: {
@@ -363,12 +390,10 @@ export default {
       const today = new Date(this.currentTime);
       today.setHours(0, 0, 0, 0);
       
-      // First day of the month
       const firstDay = new Date(year, month, 1);
       const startDate = new Date(firstDay);
       startDate.setDate(startDate.getDate() - firstDay.getDay());
       
-      // Generate 42 days (6 weeks)
       const days = [];
       for (let i = 0; i < 42; i++) {
         const date = new Date(startDate);
@@ -381,7 +406,6 @@ export default {
           return eventDate.getTime() === date.getTime();
         });
         
-        // Check day status
         const hasDueToday = dayEvents.some(event => this.getEventStatus(event) === 'due-today');
         const hasOverdue = dayEvents.some(event => this.getEventStatus(event) === 'overdue');
         const hasUpcoming = dayEvents.some(event => this.getEventStatus(event) === 'upcoming');
@@ -416,7 +440,6 @@ export default {
     }
   },
   watch: {
-    // Watch for changes in event completion status to update the calendar
     events: {
       handler() {
         this.$forceUpdate();
@@ -425,7 +448,6 @@ export default {
     }
   },
   methods: {
-    // Real-time API methods
     async initializeData() {
       try {
         this.loading = true;
@@ -436,6 +458,35 @@ export default {
         if (userError) throw userError;
         
         this.user = user;
+        console.log('Current user:', user.id);
+        
+        // Get student ID from profile
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, role')
+          .eq('auth_user_id', user.id)
+          .single();
+          
+        if (profileError) throw profileError;
+        
+        console.log('Profile data:', profileData);
+        
+        if (profileData.role !== 'student') {
+          throw new Error('This calendar is only available for students');
+        }
+        
+        // Get student details
+        const { data: studentData, error: studentError } = await supabase
+          .from('students')
+          .select('id, full_name, grade_level')
+          .eq('profile_id', profileData.id)
+          .single();
+          
+        if (studentError) throw studentError;
+        
+        this.studentId = studentData.id;
+        console.log('Student ID:', this.studentId);
+        console.log('Student grade level:', studentData.grade_level);
         
         // Load initial events
         await this.loadEvents();
@@ -445,8 +496,8 @@ export default {
         
       } catch (error) {
         console.error('Error initializing calendar:', error);
-        this.error = 'Failed to load calendar data';
-        this.showNotification('Error loading calendar data', 'error');
+        this.error = error.message || 'Failed to load calendar data';
+        this.showNotification('Error loading calendar data: ' + error.message, 'error');
       } finally {
         this.loading = false;
       }
@@ -454,176 +505,295 @@ export default {
 
     async loadEvents() {
       try {
-        // Fetch events from Supabase
-        const { data: eventsData, error } = await supabase
-          .from('assignments')
+        if (!this.studentId) {
+          console.error('Student ID not found');
+          return;
+        }
+
+        console.log('Loading events for student:', this.studentId);
+
+        // STEP 1: Get all section IDs the student is enrolled in
+        const { data: enrollments, error: enrollError } = await supabase
+          .from('enrollments')
+          .select('section_id')
+          .eq('student_id', this.studentId)
+          .eq('status', 'active');
+
+        if (enrollError) {
+          console.error('Enrollment error:', enrollError);
+          throw enrollError;
+        }
+
+        console.log('Total enrolled subjects:', enrollments?.length || 0);
+
+        if (!enrollments || enrollments.length === 0) {
+          console.log('Student is not enrolled in any sections');
+          this.events = [];
+          this.showNotification('You are not enrolled in any subjects yet.', 'info');
+          return;
+        }
+
+        const sectionIds = enrollments.map(e => e.section_id);
+        console.log('Enrolled section IDs:', sectionIds);
+
+        // STEP 2: Get all published quizzes for those sections
+        const { data: quizzesData, error: quizzesError } = await supabase
+          .from('quizzes')
           .select(`
             id,
             title,
             description,
-            due_date,
-            due_time,
-            type,
-            is_completed,
-            submitted_at,
-            subjects (
-              id,
-              name,
-              code
-            )
+            start_date,
+            end_date,
+            status,
+            number_of_questions,
+            time_limit_minutes,
+            attempts_allowed,
+            quiz_code,
+            subject_id,
+            section_id
           `)
-          .eq('student_id', this.user?.id)
-          .order('due_date', { ascending: true });
+          .in('section_id', sectionIds)
+          .eq('status', 'published')
+          .order('end_date', { ascending: true });
 
-        if (error) throw error;
+        if (quizzesError) {
+          console.error('Quizzes error:', quizzesError);
+          throw quizzesError;
+        }
 
-        // Transform data for calendar
-        this.events = eventsData.map(event => ({
-          id: event.id,
-          title: event.title,
-          subject: `${event.subjects?.name} (${event.subjects?.code})` || 'Unknown Subject',
-          date: new Date(event.due_date),
-          time: event.due_time || '11:59 PM',
-          type: event.type || 'assignment',
-          description: event.description || '',
-          isCompleted: event.is_completed || false,
-          submittedAt: event.submitted_at ? new Date(event.submitted_at) : null
-        }));
+        console.log('Published quizzes found:', quizzesData?.length || 0);
 
-        console.log('Events loaded:', this.events.length);
+        if (!quizzesData || quizzesData.length === 0) {
+          this.events = [];
+          this.showNotification('No quizzes available yet. Check back later!', 'info');
+          return;
+        }
+
+        // STEP 3: Get subject details for each quiz
+        const subjectIds = [...new Set(quizzesData.map(q => q.subject_id))];
+        const { data: subjectsData, error: subjectsError } = await supabase
+          .from('subjects')
+          .select('id, name, grade_level')
+          .in('id', subjectIds);
+
+        if (subjectsError) {
+          console.error('Subjects error:', subjectsError);
+          throw subjectsError;
+        }
+
+        const subjectsMap = {};
+        subjectsData?.forEach(subj => {
+          subjectsMap[subj.id] = subj;
+        });
+
+        // STEP 4: Get section details
+        const { data: sectionsData, error: sectionsError } = await supabase
+          .from('sections')
+          .select('id, name, section_code')
+          .in('id', sectionIds);
+
+        if (sectionsError) {
+          console.error('Sections error:', sectionsError);
+          throw sectionsError;
+        }
+
+        const sectionsMap = {};
+        sectionsData?.forEach(sec => {
+          sectionsMap[sec.id] = sec;
+        });
+
+        // STEP 5: Get student's quiz results
+        const quizIds = quizzesData.map(q => q.id);
+        const { data: resultsData, error: resultsError } = await supabase
+          .from('quiz_results')
+          .select('quiz_id, status, best_percentage, total_attempts')
+          .eq('student_id', this.studentId)
+          .in('quiz_id', quizIds);
+
+        if (resultsError) {
+          console.error('Results error:', resultsError);
+        }
+
+        const resultsMap = {};
+        resultsData?.forEach(result => {
+          resultsMap[result.quiz_id] = result;
+        });
+
+        console.log('Quiz results found:', resultsData?.length || 0);
+
+        // STEP 6: Transform data for calendar
+        this.events = quizzesData.map(quiz => {
+          const result = resultsMap[quiz.id];
+          const subject = subjectsMap[quiz.subject_id];
+          const section = sectionsMap[quiz.section_id];
+          const isCompleted = result && (result.status === 'completed' || result.status === 'graded');
+          
+          const deadlineDate = quiz.end_date ? new Date(quiz.end_date) : null;
+          
+          return {
+            id: quiz.id,
+            title: quiz.title,
+            subject: subject?.name || 'Unknown Subject',
+            subjectCode: `Grade ${subject?.grade_level || '?'}`,
+            date: deadlineDate || new Date(),
+            time: deadlineDate ? deadlineDate.toLocaleTimeString('en-US', { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            }) : '11:59 PM',
+            type: 'quiz',
+            description: quiz.description || `${quiz.number_of_questions} questions${quiz.time_limit_minutes ? ` • ${quiz.time_limit_minutes} minutes` : ''} • ${quiz.attempts_allowed} attempt${quiz.attempts_allowed > 1 ? 's' : ''} allowed`,
+            isCompleted: isCompleted,
+            submittedAt: isCompleted ? new Date() : null,
+            quizCode: quiz.quiz_code,
+            sectionName: section?.name || '',
+            sectionCode: section?.section_code || '',
+            numberOfQuestions: quiz.number_of_questions,
+            timeLimit: quiz.time_limit_minutes,
+            attemptsAllowed: quiz.attempts_allowed,
+            totalAttempts: result?.total_attempts || 0,
+            bestScore: result?.best_percentage || 0,
+            startDate: quiz.start_date ? new Date(quiz.start_date) : null
+          };
+        }).filter(event => event.date);
+
+        console.log('Events loaded successfully:', this.events.length);
+        
+        if (this.events.length > 0) {
+          this.showNotification(`Loaded ${this.events.length} quiz${this.events.length > 1 ? 'zes' : ''}`, 'success');
+        }
         
       } catch (error) {
         console.error('Error loading events:', error);
-        this.showNotification('Failed to load events', 'error');
+        this.showNotification('Failed to load quizzes: ' + error.message, 'error');
       }
     },
 
     setupRealTimeSubscription() {
-      // Subscribe to real-time changes
+      if (!this.studentId) return;
+
+      console.log('Setting up real-time subscription...');
+
+      // Subscribe to changes in quizzes table
       this.realTimeSubscription = supabase
-        .channel('calendar-changes')
+        .channel('calendar-quiz-changes')
         .on('postgres_changes', {
           event: '*',
           schema: 'public',
-          table: 'assignments',
-          filter: `student_id=eq.${this.user?.id}`
+          table: 'quizzes',
+          filter: `status=eq.published`
         }, (payload) => {
-          console.log('Real-time update:', payload);
-          this.handleRealTimeUpdate(payload);
+          console.log('Real-time quiz update:', payload);
+          this.handleQuizUpdate(payload);
+        })
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'quiz_results',
+          filter: `student_id=eq.${this.studentId}`
+        }, (payload) => {
+          console.log('Real-time quiz result update:', payload);
+          this.handleQuizResultUpdate(payload);
         })
         .subscribe((status) => {
           console.log('Real-time subscription status:', status);
         });
     },
 
-    handleRealTimeUpdate(payload) {
+    async handleQuizUpdate(payload) {
       const { eventType, new: newRecord, old: oldRecord } = payload;
       
       switch (eventType) {
         case 'INSERT':
-          this.handleEventInsert(newRecord);
+          await this.loadEvents();
+          if (newRecord?.title) {
+            this.showNotification(`New quiz available: ${newRecord.title}`, 'info');
+          }
           break;
         case 'UPDATE':
-          this.handleEventUpdate(newRecord, oldRecord);
+          await this.loadEvents();
+          if (newRecord?.title) {
+            this.showNotification(`Quiz updated: ${newRecord.title}`, 'info');
+          }
           break;
         case 'DELETE':
-          this.handleEventDelete(oldRecord);
+          if (oldRecord?.id) {
+            this.events = this.events.filter(e => e.id !== oldRecord.id);
+            this.showNotification('A quiz has been removed', 'warning');
+          }
           break;
       }
     },
 
-    handleEventInsert(record) {
-      const newEvent = {
-        id: record.id,
-        title: record.title,
-        subject: 'Loading...', // Will be updated when subject data loads
-        date: new Date(record.due_date),
-        time: record.due_time || '11:59 PM',
-        type: record.type || 'assignment',
-        description: record.description || '',
-        isCompleted: record.is_completed || false,
-        submittedAt: record.submitted_at ? new Date(record.submitted_at) : null
-      };
+    async handleQuizResultUpdate(payload) {
+      const { new: newRecord } = payload;
       
-      this.events.push(newEvent);
-      this.showNotification(`New assignment added: ${record.title}`, 'info');
+      if (!newRecord?.quiz_id) return;
       
-      // Load subject name
-      this.loadSubjectForEvent(newEvent, record.subject_id);
-    },
-
-    handleEventUpdate(newRecord) {
-      const eventIndex = this.events.findIndex(e => e.id === newRecord.id);
+      const eventIndex = this.events.findIndex(e => e.id === newRecord.quiz_id);
       if (eventIndex !== -1) {
-        this.events[eventIndex] = {
-          ...this.events[eventIndex],
-          title: newRecord.title,
-          date: new Date(newRecord.due_date),
-          time: newRecord.due_time || '11:59 PM',
-          type: newRecord.type || 'assignment',
-          description: newRecord.description || '',
-          isCompleted: newRecord.is_completed || false,
-          submittedAt: newRecord.submitted_at ? new Date(newRecord.submitted_at) : null
-        };
+        const isCompleted = newRecord.status === 'completed' || newRecord.status === 'graded';
+        this.events[eventIndex].isCompleted = isCompleted;
+        this.events[eventIndex].totalAttempts = newRecord.total_attempts || 0;
+        this.events[eventIndex].bestScore = newRecord.best_percentage || 0;
         
-        this.showNotification(`Assignment updated: ${newRecord.title}`, 'info');
-      }
-    },
-
-    handleEventDelete(record) {
-      const eventIndex = this.events.findIndex(e => e.id === record.id);
-      if (eventIndex !== -1) {
-        const eventTitle = this.events[eventIndex].title;
-        this.events.splice(eventIndex, 1);
-        this.showNotification(`Assignment removed: ${eventTitle}`, 'warning');
-      }
-    },
-
-    async loadSubjectForEvent(event, subjectId) {
-      try {
-        const { data: subject, error } = await supabase
-          .from('subjects')
-          .select('name, code')
-          .eq('id', subjectId)
-          .single();
-
-        if (!error && subject) {
-          event.subject = `${subject.name} (${subject.code})`;
+        if (isCompleted) {
+          this.showNotification(`Quiz completed: ${this.events[eventIndex].title}`, 'success');
         }
-      } catch (error) {
-        console.error('Error loading subject:', error);
       }
     },
 
-    async markAsCompleted(event) {
-      try {
-        // Update in database
-        const { error } = await supabase
-          .from('assignments')
-          .update({
-            is_completed: true,
-            submitted_at: new Date().toISOString()
+    canTakeQuiz(event) {
+      if (!event) return false;
+      
+      // Can't take if already completed
+      if (event.isCompleted) return false;
+      
+      // Can't take if no more attempts left
+      if (event.totalAttempts >= event.attemptsAllowed) return false;
+      
+      // Can't take if overdue (past deadline)
+      const status = this.getEventStatus(event);
+      if (status === 'overdue') return false;
+      
+      // Can take if it's upcoming or due today
+      return status === 'upcoming' || status === 'due-today';
+    },
+
+    takeQuiz(event) {
+      // Close any open modals
+      this.selectedEvent = null;
+      this.selectedDay = null;
+      
+      console.log('Current route:', this.$route.path);
+      console.log('Attempting to navigate to subjects page for quiz:', {
+        id: event.id,
+        code: event.quizCode,
+        title: event.title
+      });
+      
+      // Check if we're already on subjects page
+      if (this.$route.path === '/student/subjects' || this.$route.name === 'StudentSubjects') {
+        console.log('Already on subjects page, reloading...');
+        // Force a reload of the current page
+        this.$router.go(0);
+        this.showNotification(`Refreshing Subjects page - ${event.title}`, 'info');
+      } else {
+        // Navigate to subjects page
+        this.$router.push('/student/subjects')
+          .then(() => {
+            console.log('Successfully navigated to subjects page');
+            this.showNotification(`Opening Subjects page - ${event.title}`, 'info');
           })
-          .eq('id', event.id);
-
-        if (error) throw error;
-
-        // Update local state (will also be updated via real-time subscription)
-        const eventIndex = this.events.findIndex(e => e.id === event.id);
-        if (eventIndex !== -1) {
-          this.events[eventIndex].isCompleted = true;
-          this.events[eventIndex].submittedAt = new Date();
-        }
-
-        // Close modals
-        this.selectedEvent = null;
-        this.selectedDay = null;
-
-        this.showNotification(`${event.title} marked as completed!`, 'success');
-        
-      } catch (error) {
-        console.error('Error marking as completed:', error);
-        this.showNotification('Failed to update assignment', 'error');
+          .catch(err => {
+            console.error('Navigation error:', err);
+            // Try with name-based navigation as fallback
+            this.$router.push({ name: 'StudentSubjects' })
+              .catch(err2 => {
+                console.error('Fallback navigation also failed:', err2);
+                this.showNotification('Unable to navigate to subjects page', 'error');
+              });
+          });
       }
     },
 
@@ -637,7 +807,6 @@ export default {
 
       this.notifications.push(notification);
       
-      // Auto-remove notification after 5 seconds
       setTimeout(() => {
         this.removeNotification(notification.id);
       }, 5000);
@@ -662,79 +831,9 @@ export default {
       }
     },
 
-    // WebSocket connection for real-time updates
-    setupWebSocket() {
-      if (window.WebSocket) {
-        try {
-          const wsUrl = process.env.VUE_APP_WS_URL || 'ws://localhost:8080/ws/calendar';
-          this.websocket = new WebSocket(wsUrl);
-          
-          this.websocket.onopen = () => {
-            console.log('WebSocket connected');
-            // Send authentication
-            this.websocket.send(JSON.stringify({
-              type: 'auth',
-              token: this.user?.access_token
-            }));
-          };
-          
-          this.websocket.onmessage = (event) => {
-            try {
-              const data = JSON.parse(event.data);
-              this.handleWebSocketMessage(data);
-            } catch (error) {
-              console.error('Error parsing WebSocket message:', error);
-            }
-          };
-          
-          this.websocket.onclose = () => {
-            console.log('WebSocket disconnected');
-            // Attempt to reconnect after 5 seconds
-            setTimeout(() => {
-              if (!this.websocket || this.websocket.readyState === WebSocket.CLOSED) {
-                this.setupWebSocket();
-              }
-            }, 5000);
-          };
-          
-          this.websocket.onerror = (error) => {
-            console.error('WebSocket error:', error);
-          };
-          
-        } catch (error) {
-          console.error('Failed to setup WebSocket:', error);
-        }
-      }
-    },
-
-    handleWebSocketMessage(data) {
-      switch (data.type) {
-        case 'assignment_created':
-          this.handleEventInsert(data.assignment);
-          break;
-        case 'assignment_updated':
-          this.handleEventUpdate(data.assignment);
-          break;
-        case 'assignment_deleted':
-          this.handleEventDelete(data.assignment);
-          break;
-        case 'deadline_reminder':
-          this.showNotification(
-            `Reminder: ${data.assignment.title} is due ${data.time_remaining}`,
-            'warning'
-          );
-          break;
-        case 'grade_posted':
-          this.showNotification(
-            `Grade posted for: ${data.assignment.title}`,
-            'info'
-          );
-          break;
-      }
-    },
-
-    // Existing methods with real-time updates
     getEventStatus(event) {
+      if (!event.date) return 'unknown';
+      
       const eventDate = new Date(event.date);
       const today = new Date(this.currentTime);
       today.setHours(0, 0, 0, 0);
@@ -759,11 +858,11 @@ export default {
       const status = this.getEventStatus(event);
       switch (status) {
         case 'completed':
-          return 'Completed';
+          return `Completed (${event.bestScore.toFixed(0)}%)`;
         case 'overdue':
-          return 'Overdue';
+          return `Overdue (${event.totalAttempts}/${event.attemptsAllowed} attempts)`;
         case 'due-today':
-          return 'Due Today';
+          return 'Due Today!';
         case 'upcoming':
           return 'Upcoming';
         default:
@@ -785,8 +884,6 @@ export default {
 
     updateCurrentTime() {
       this.currentTime = new Date();
-      
-      // Check for deadline reminders
       this.checkDeadlineReminders();
     },
 
@@ -796,12 +893,11 @@ export default {
       const oneDay = 24 * oneHour;
 
       this.events.forEach(event => {
-        if (event.isCompleted) return;
+        if (event.isCompleted || !event.date) return;
 
         const eventDateTime = new Date(event.date);
         const timeDiff = eventDateTime.getTime() - now.getTime();
 
-        // Show reminders for events due in 1 hour or 1 day
         if (timeDiff > 0 && timeDiff <= oneHour) {
           this.showNotification(
             `⏰ ${event.title} is due in less than 1 hour!`,
@@ -872,6 +968,7 @@ export default {
     },
 
     formatEventDate(date) {
+      if (!date) return 'No deadline set';
       return date.toLocaleDateString('en-US', {
         weekday: 'long',
         year: 'numeric',
@@ -880,43 +977,28 @@ export default {
       });
     },
 
-    // Cleanup methods
     cleanup() {
-      // Clear intervals
       if (this.statusUpdateInterval) {
         clearInterval(this.statusUpdateInterval);
       }
       if (this.fastUpdateInterval) {
         clearInterval(this.fastUpdateInterval);
       }
-
-      // Close real-time subscription
       if (this.realTimeSubscription) {
         this.realTimeSubscription.unsubscribe();
-      }
-
-      // Close WebSocket
-      if (this.websocket) {
-        this.websocket.close();
       }
     }
   },
   mounted() {
-    // Initialize real-time data
     this.initializeData();
     
-    // Update current time every minute for real-time status updates
     this.statusUpdateInterval = setInterval(() => {
       this.updateCurrentTime();
-    }, 60000); // Update every minute
+    }, 60000);
     
-    // More frequent updates for testing (every 10 seconds)
     this.fastUpdateInterval = setInterval(() => {
       this.updateCurrentTime();
-    }, 10000);
-
-    // Setup WebSocket for additional real-time features
-    this.setupWebSocket();
+    }, 30000);
   },
 
   beforeUnmount() {
@@ -928,9 +1010,112 @@ export default {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
+/* === NEW STYLES FOR TAKE QUIZ BUTTONS === */
+.take-quiz-btn {
+  background: linear-gradient(135deg, #3D8D7A 0%, #4dbb98 100%);
+  color: var(--text-inverse);
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Inter', sans-serif;
+}
 
+.take-quiz-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(61, 141, 122, 0.3);
+}
 
-/* Flex alignment for header stat */
+.take-quiz-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.take-quiz-btn-modal {
+  background: linear-gradient(135deg, #3D8D7A 0%, #4dbb98 100%);
+  color: var(--text-inverse);
+  border: none;
+  border-radius: 12px;
+  padding: 0.875rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Inter', sans-serif;
+  width: 100%;
+  justify-content: center;
+}
+
+.take-quiz-btn-modal:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(61, 141, 122, 0.3);
+}
+
+.quick-take-quiz-btn {
+  background: linear-gradient(135deg, #3D8D7A 0%, #4dbb98 100%);
+  color: var(--text-inverse);
+  border: none;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quick-take-quiz-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
+}
+
+.modal-info {
+  padding-top: 1rem;
+  border-top: 1px solid rgba(61, 141, 122, 0.1);
+}
+
+.completed-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(34, 197, 94, 0.1);
+  border-radius: 12px;
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.completed-message svg {
+  color: #16a34a;
+}
+
+.overdue-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(245, 158, 11, 0.1);
+  border-radius: 12px;
+  color: #d97706;
+  font-weight: 600;
+}
+
+.overdue-message svg {
+  color: #d97706;
+}
+
+/* === EXISTING STYLES === */
 .header-flex-align {
   display: flex;
   justify-content: space-between;
@@ -940,7 +1125,6 @@ export default {
   align-items: flex-start;
   margin-top: 0.1rem;
 }
-/* --- Minimal Header Card Styles (from Subjects.vue) --- */
 .minimal-header-card {
   border-radius: 28px;
   box-shadow: 0 8px 32px 0 var(--shadow-strong);
@@ -1033,7 +1217,6 @@ export default {
   box-sizing: border-box;
 }
 
-/* Loading States */
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -1063,7 +1246,6 @@ export default {
   100% { transform: rotate(360deg); }
 }
 
-/* Error States */
 .error-container {
   display: flex;
   flex-direction: column;
@@ -1109,7 +1291,6 @@ export default {
   box-shadow: 0 8px 25px rgba(61, 141, 122, 0.3);
 }
 
-/* Notifications */
 .notifications-container {
   position: fixed;
   top: 2rem;
@@ -1202,7 +1383,6 @@ export default {
   }
 }
 
-/* Live Indicator */
 .live-indicator {
   animation: pulse 2s infinite;
 }
@@ -1223,88 +1403,6 @@ export default {
   font-family: 'Inter', sans-serif;
   background: var(--bg-primary);
   min-height: 100vh;
-}
-
-.page-header {
-  background: var(--bg-card-translucent);
-  backdrop-filter: blur(20px);
-  border-radius: 24px;
-  padding: 2.5rem;
-  margin-bottom: 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 12px 40px var(--shadow-medium);
-  border: 1px solid var(--border-color-light);
-}
-
-.header-content {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.header-icon {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-inverse);
-  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.3);
-}
-
-.page-title {
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: #3D8D7A;
-  margin-bottom: 0.5rem;
-  text-shadow: 0 2px 4px rgba(61, 141, 122, 0.1);
-}
-
-.page-subtitle {
-  font-size: 1.1rem;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-.header-stats {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.stat-card {
-  background: var(--bg-card-translucent);
-  border-radius: 16px;
-  padding: 1rem 1.5rem;
-  text-align: center;
-  border: 1px solid var(--border-color-light);
-  min-width: 80px;
-  transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(61, 141, 122, 0.15);
-}
-
-.stat-number {
-  font-size: 2rem;
-  font-weight: 800;
-  color: #3D8D7A;
-  line-height: 1;
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #777;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-top: 0.5rem;
 }
 
 .status-legend {
@@ -1351,28 +1449,6 @@ export default {
 
 .legend-color.overdue {
   background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-}
-
-.today-btn {
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  color: var(--text-inverse);
-  border: none;
-  border-radius: 12px;
-  padding: 0.875rem 1.5rem;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.875rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.2);
-  font-family: 'Inter', sans-serif;
-}
-
-.today-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(61, 141, 122, 0.3);
 }
 
 .calendar-nav {
@@ -1603,7 +1679,6 @@ export default {
   box-shadow: 0 2px 8px rgba(61, 141, 122, 0.3);
 }
 
-/* Modal Styles */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -1847,25 +1922,6 @@ export default {
   gap: 0.5rem;
 }
 
-.quick-answer-btn {
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-  color: var(--text-inverse);
-  border: none;
-  border-radius: 8px;
-  width: 32px;
-  height: 32px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.quick-answer-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-}
-
 .quick-view-btn {
   background: rgba(61, 141, 122, 0.1);
   border: 1px solid rgba(61, 141, 122, 0.2);
@@ -1885,7 +1941,6 @@ export default {
   transform: scale(1.1);
 }
 
-/* List View Styles */
 .events-list {
   display: flex;
   flex-direction: column;
@@ -2013,27 +2068,6 @@ export default {
   align-items: center;
 }
 
-.answer-btn {
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-  color: var(--text-inverse);
-  border: none;
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 600;
-  font-size: 0.875rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-family: 'Inter', sans-serif;
-}
-
-.answer-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(34, 197, 94, 0.3);
-}
-
 .view-btn-small {
   background: rgba(61, 141, 122, 0.1);
   border: 1px solid rgba(61, 141, 122, 0.2);
@@ -2104,7 +2138,7 @@ export default {
 }
 
 .event-detail strong {
-  min-width: 80px;
+  min-width: 100px;
   color: #3D8D7A;
   font-weight: 600;
 }
@@ -2114,53 +2148,29 @@ export default {
   border-top: 1px solid rgba(61, 141, 122, 0.1);
 }
 
-.answer-btn-modal {
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-  color: var(--text-inverse);
-  border: none;
-  border-radius: 12px;
-  padding: 0.875rem 1.5rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 600;
-  font-size: 0.875rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-family: 'Inter', sans-serif;
-  width: 100%;
-  justify-content: center;
-}
-
-.answer-btn-modal:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(34, 197, 94, 0.3);
-}
-
-/* Responsive Design */
 @media (max-width: 768px) {
   .calendar-container {
     padding: 1rem;
   }
   
-  .page-header {
+  .minimal-header-card {
     flex-direction: column;
     text-align: center;
     gap: 2rem;
     padding: 2rem;
   }
   
-  .header-content {
+  .section-header-left {
     flex-direction: column;
     text-align: center;
   }
   
-  .header-stats {
+  .section-header-stats {
     flex-direction: row;
     justify-content: center;
   }
   
-  .page-title {
+  .minimal-header-title {
     font-size: 2rem;
   }
   
@@ -2224,155 +2234,3 @@ export default {
   }
 }
 </style>
-
-/* --- Modern Card Header Styles (from Home.vue) --- */
-.section-header-card {
-  position: relative;
-  background: var(--bg-primary);
-  border-radius: 32px;
-  padding: 3.5rem;
-  margin-bottom: 2.5rem;
-  min-height: 180px;
-  box-shadow: 
-    0 24px 48px rgba(61, 141, 122, 0.08),
-    0 12px 24px rgba(61, 141, 122, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  border: 2px solid rgba(61, 141, 122, 0.08);
-  overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.section-header-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 
-    0 32px 64px rgba(61, 141, 122, 0.12),
-    0 16px 32px rgba(61, 141, 122, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-}
-.header-bg-decoration {
-  position: absolute;
-  top: -50%;
-  right: -20%;
-  width: 120%;
-  height: 200%;
-  background: radial-gradient(ellipse at center, rgba(77, 187, 152, 0.08) 0%, transparent 70%);
-  z-index: 1;
-}
-.floating-shapes {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1;
-  pointer-events: none;
-}
-.shape {
-  position: absolute;
-  border-radius: 50%;
-  background: linear-gradient(135deg, rgba(77, 187, 152, 0.1) 0%, rgba(51, 128, 107, 0.05) 100%);
-}
-.shape-1 {
-  width: 120px;
-  height: 120px;
-  top: -30px;
-  right: 10%;
-  animation: float 6s ease-in-out infinite;
-}
-.shape-2 {
-  width: 80px;
-  height: 80px;
-  bottom: -20px;
-  right: 25%;
-  animation: float 8s ease-in-out infinite reverse;
-}
-.shape-3 {
-  width: 60px;
-  height: 60px;
-  top: 50%;
-  right: 5%;
-  animation: float 7s ease-in-out infinite;
-}
-@keyframes float {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-20px) rotate(10deg); }
-}
-.section-header-content {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-}
-.section-header-left {
-  display: flex;
-  align-items: center;
-  gap: 2.5rem;
-}
-.section-header-icon {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, #4dbb98 0%, #33806b 100%);
-  border-radius: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-inverse);
-  box-shadow: 
-    0 12px 24px rgba(61, 141, 122, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
-}
-.section-header-icon:hover {
-  transform: scale(1.05);
-}
-.header-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-.section-header-title {
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: #2d6a57;
-  letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #33806b 0%, #4dbb98 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-bottom: 0.25rem;
-}
-.section-header-subtitle {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #5e8c7a;
-  margin-bottom: 0.25rem;
-}
-.section-header-description {
-  font-size: 1rem;
-  color: #7a9c8f;
-  font-weight: 400;
-  opacity: 0.9;
-}
-.header-badge {
-  background: rgba(77, 187, 152, 0.1);
-  border: 2px solid rgba(77, 187, 152, 0.2);
-  border-radius: 20px;
-  padding: 1rem 1.5rem;
-  backdrop-filter: blur(10px);
-}
-.badge-content {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-.badge-icon {
-  font-size: 1.5rem;
-}
-.badge-text {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #33806b;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
