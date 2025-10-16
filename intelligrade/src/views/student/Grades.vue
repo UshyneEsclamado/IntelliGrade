@@ -22,7 +22,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
             </svg>
-            Back to Quizzes
+            Back to Subjects
           </button>
         </div>
       </div>
@@ -38,26 +38,22 @@
     <div v-else class="main-content">
       <!-- Stats Overview -->
       <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon">📊</div>
-          <div class="stat-value">{{ averageGrade }}%</div>
-          <div class="stat-label">Average Score</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">🎯</div>
-          <div class="stat-value">{{ completedQuizzes }}</div>
-          <div class="stat-label">Completed Quizzes</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">⭐</div>
-          <div class="stat-value">{{ highestGrade }}%</div>
-          <div class="stat-label">Highest Score</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">📈</div>
-          <div class="stat-value">{{ lowestGrade }}%</div>
-          <div class="stat-label">Lowest Score</div>
-        </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ averageGrade }}%</div>
+            <div class="stat-label">Average Score</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ completedQuizzes }}</div>
+            <div class="stat-label">Completed Quizzes</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ highestGrade }}%</div>
+            <div class="stat-label">Highest Score</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ lowestGrade }}%</div>
+            <div class="stat-label">Lowest Score</div>
+          </div>
       </div>
 
       <!-- Grades List -->
@@ -66,7 +62,11 @@
         <div v-if="recentQuizzes.length > 0" class="quiz-category">
           <div class="category-header">
             <h2 class="category-title">
-              <span class="category-icon">🕒</span>
+              <span class="category-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </span>
               Recent Submissions
             </h2>
             <span class="category-count">{{ recentQuizzes.length }}</span>
@@ -98,7 +98,11 @@
                     </div>
                   </div>
                   <div v-else class="score-pending">
-                    <div class="pending-icon">⏳</div>
+                    <div class="pending-icon">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                    </div>
                     <div class="pending-text">Grade Pending</div>
                   </div>
                 </div>
@@ -147,7 +151,11 @@
         <div v-if="allGrades.length > 0" class="quiz-category">
           <div class="category-header">
             <h2 class="category-title">
-              <span class="category-icon">📋</span>
+              <span class="category-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+              </span>
               Grade History
             </h2>
             <span class="category-count">{{ allGrades.length }}</span>
@@ -157,11 +165,11 @@
               <thead>
                 <tr>
                   <th>Quiz</th>
-                  <th>Score</th>
-                  <th>Status</th>
+                  <th class="center-header">Score</th>
+                  <th class="center-header">Status</th>
                   <th>Submitted</th>
-                  <th>Attempts</th>
-                  <th>Actions</th>
+                  <th class="center-header">Attempts</th>
+                  <th class="center-header">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -212,7 +220,11 @@
 
         <!-- Empty State -->
         <div v-if="allGrades.length === 0" class="empty-state">
-          <div class="empty-icon">📊</div>
+          <div class="empty-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9 17H7v-2a3 3 0 013-3h4a3 3 0 013 3v2h-2v-2a1 1 0 00-1-1h-4a1 1 0 00-1 1v2zM6 3h12a3 3 0 013 3v12a3 3 0 01-3 3H6a3 3 0 01-3-3V6a3 3 0 013-3zm0 2a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V6a1 1 0 00-1-1H6z"/>
+            </svg>
+          </div>
           <h3>No Grades Yet</h3>
           <p>You haven't submitted any quizzes for this subject yet.</p>
           <button @click="goToQuizzes" class="btn btn-primary">
@@ -257,7 +269,7 @@
             </div>
 
             <!-- Questions and Answers -->
-            <div v-for="(answer, index) in previewAnswers" :key="answer.question_id" class="answer-item">
+            <div v-for="answer in previewAnswers" :key="answer.question_id" class="answer-item">
               <div class="answer-header">
                 <div class="question-number">Q{{ answer.question_number }}</div>
                 <div class="answer-result" :class="answer.is_correct ? 'correct' : 'incorrect'">
@@ -298,7 +310,7 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { supabase } from '@/supabase.js';
@@ -344,7 +356,8 @@ export default {
     });
 
     const allGrades = computed(() => {
-      return grades.value
+      // Create a sorted copy to avoid mutating the original array
+      return [...grades.value]
         .sort((a, b) => new Date(b.latest_attempt_date || 0) - new Date(a.latest_attempt_date || 0));
     });
 
@@ -773,16 +786,7 @@ export default {
 
     const goBack = () => {
       router.push({
-        name: 'TakeQuiz',
-        params: {
-          subjectId: subject.value.id,
-          sectionId: section.value.id
-        },
-        query: {
-          subjectName: subject.value.name,
-          sectionName: section.value.name,
-          gradeLevel: route.query.gradeLevel
-        }
+        name: 'StudentDashboard'
       });
     };
 
@@ -878,15 +882,15 @@ export default {
 
 .grades-page {
   min-height: 100vh;
-  background: var(--bg-primary, #ffffff);
-  padding: 2rem 4%;
+  background: #FBFFE4;
+  padding: 1.5rem;
   font-family: 'Inter', sans-serif;
   width: 100%;
   margin: 0;
 }
 
 .dark .grades-page {
-  background: #0f1419;
+  background: #181c20;
 }
 
 .main-content {
@@ -898,63 +902,40 @@ export default {
    ============================================ */
 
 .section-header-card {
-  position: relative;
-  background: var(--bg-secondary, #f9fafb);
-  backdrop-filter: blur(20px);
-  border-radius: 24px;
-  padding: 2rem;
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
   margin-bottom: 1.5rem;
-  min-height: 120px;
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.05);
-  border: 2px solid var(--border-color, #e5e7eb);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: visible;
-  z-index: 1;
-}
-
-.section-header-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.15), 0 16px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .dark .section-header-card {
-  background: rgba(35, 39, 43, 0.95);
-  border: 2px solid #3D8D7A;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+  background: #23272b;
+  border: 1px solid #3D8D7A;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
 .section-header-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 100%;
-  gap: 2rem;
-  flex-wrap: wrap;
 }
 
 .section-header-left {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  flex: 1;
+  gap: 1rem;
 }
 
 .section-header-icon {
-  width: 60px;
-  height: 60px;
-  min-width: 60px;
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  border-radius: 16px;
+  width: 56px;
+  height: 56px;
+  background: #3D8D7A;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
-}
-
-.section-header-icon:hover {
-  transform: scale(1.05);
 }
 
 .header-text {
@@ -962,14 +943,9 @@ export default {
 }
 
 .section-header-title {
-  font-size: 1.75rem;
-  font-weight: 800;
-  color: var(--text-accent, #1f2937);
-  letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
   margin-bottom: 0.25rem;
 }
 
@@ -978,9 +954,8 @@ export default {
 }
 
 .section-header-subtitle {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-secondary, #6b7280);
+  font-size: 0.875rem;
+  color: #6b7280;
 }
 
 .dark .section-header-subtitle {
@@ -988,10 +963,8 @@ export default {
 }
 
 .section-header-description {
-  font-size: 0.875rem;
-  color: var(--text-muted, #9ca3af);
-  font-weight: 400;
-  opacity: 0.9;
+  font-size: 0.813rem;
+  color: #94a3b8;
 }
 
 .dark .section-header-description {
@@ -1007,22 +980,35 @@ export default {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
-  font-weight: 600;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 500;
   font-size: 0.875rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s;
   cursor: pointer;
-  border: 2px solid #3D8D7A;
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  color: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  white-space: nowrap;
+  border: 2px solid #20c997;
+  background: #20c997;
+  color: #181c20;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
 }
 
 .back-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
+  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.18);
+}
+
+.dark .back-btn {
+  background: #20c997;
+  color: #181c20;
+  border-color: #A3D1C6;
+}
+
+.dark .back-btn:hover {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
 }
 
 /* ============================================
@@ -1057,33 +1043,30 @@ export default {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1.5rem;
   margin-bottom: 2rem;
-  width: 100%;
 }
 
 .stat-card {
-  background: var(--bg-card, #ffffff);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
-  padding: 2rem;
+  background: white;
+  border: 2px solid #3D8D7A;
+  border-radius: 12px;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-  border: 1px solid var(--border-color, #e5e7eb);
-  transition: all 0.3s ease;
+  gap: 0.5rem;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
 }
 
 .stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.18);
 }
 
 .dark .stat-card {
-  background: rgba(35, 39, 43, 0.8);
+  background: #23272b;
   border-color: #3D8D7A;
 }
 
@@ -1092,9 +1075,9 @@ export default {
 }
 
 .stat-value {
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: var(--text-accent, #3D8D7A);
+  font-size: 2rem;
+  font-weight: 700;
+  color: #3D8D7A;
   line-height: 1;
 }
 
@@ -1104,11 +1087,12 @@ export default {
 
 .stat-label {
   font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-muted, #9ca3af);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  text-align: center;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.dark .stat-label {
+  color: #A3D1C6;
 }
 
 /* ============================================
@@ -1170,22 +1154,21 @@ export default {
 }
 
 .grade-card {
-  background: var(--bg-card, #ffffff);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
+  background: white;
+  border: 2px solid #3D8D7A;
+  border-radius: 12px;
   padding: 1.5rem;
-  transition: all 0.3s ease;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-  border: 1px solid var(--border-color, #e5e7eb);
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
 }
 
 .grade-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.18);
 }
 
 .dark .grade-card {
-  background: rgba(35, 39, 43, 0.8);
+  background: #23272b;
   border-color: #3D8D7A;
 }
 
@@ -1442,15 +1425,15 @@ export default {
 }
 
 .btn-secondary:hover {
-  background: #f0f9f7;
-  color: #3D8D7A;
-  border-color: #3D8D7A;
+  background: #e6fcf7;
+  color: #20c997;
+  border-color: #20c997;
 }
 
 .dark .btn-secondary:hover {
-  background: #23272b;
-  color: #A3D1C6;
-  border-color: #A3D1C6;
+  background: #e6fcf7;
+  color: #20c997;
+  border-color: #20c997;
 }
 
 .btn:disabled {
@@ -1463,18 +1446,17 @@ export default {
    ============================================ */
 
 .grades-table-container {
-  background: var(--bg-card, #ffffff);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
-  border: 1px solid var(--border-color, #e5e7eb);
+  background: white;
+  border: 2px solid #3D8D7A;
+  border-radius: 12px;
   overflow: auto;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
   width: 100%;
   -webkit-overflow-scrolling: touch;
 }
 
 .dark .grades-table-container {
-  background: rgba(35, 39, 43, 0.8);
+  background: #23272b;
   border-color: #3D8D7A;
 }
 
@@ -1491,9 +1473,12 @@ export default {
   padding: 1rem;
   text-align: left;
   border-bottom: 2px solid var(--border-color, #e5e7eb);
-  text-transform: uppercase;
   font-size: 0.875rem;
-  letter-spacing: 0.5px;
+  vertical-align: middle;
+}
+
+.grades-table th.center-header {
+  text-align: center;
 }
 
 .dark .grades-table th {
@@ -1505,6 +1490,7 @@ export default {
 .grades-table td {
   padding: 1rem;
   border-bottom: 1px solid var(--border-color, #e5e7eb);
+  vertical-align: middle;
 }
 
 .dark .grades-table td {
@@ -1544,36 +1530,56 @@ export default {
 
 .score-cell {
   text-align: center;
+  vertical-align: middle;
 }
 
 .score-badge {
-  display: inline-block;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  min-width: 80px;
+  padding: 0 18px;
+  border-radius: 18px;
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 1rem;
+  line-height: 1.2;
+  box-sizing: border-box;
 }
 
 .score-pending-small {
-  display: inline-block;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  min-width: 80px;
+  padding: 0 18px;
+  border-radius: 18px;
   background: #e5e7eb;
   color: #6b7280;
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 1rem;
+  line-height: 1.2;
+  box-sizing: border-box;
 }
 
 .status-cell {
   text-align: center;
+  vertical-align: middle;
 }
 
 .status-badge {
-  display: inline-block;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  min-width: 80px;
+  padding: 0 18px;
+  border-radius: 18px;
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 1rem;
+  line-height: 1.2;
+  box-sizing: border-box;
 }
 
 .date-cell {
