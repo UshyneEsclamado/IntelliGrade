@@ -3,11 +3,9 @@
     <aside class="sidebar">
       <div class="user-info">
         <div class="profile-pic-container">
-          <div class="profile-pic-placeholder">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
-            </svg>
-          </div>
+          <div class="profile-pic-placeholder" :style="{ background: currentAvatar.color }">
+  <span class="avatar-emoji">{{ currentAvatar.emoji }}</span>
+</div>
         </div>
         <div class="user-details">
           <!-- Fixed: Better loading and fallback states -->
@@ -154,7 +152,22 @@ export default {
         grade: null,
         email: null,
         role: null,
+        avatar: '1' // Default avatar
       },
+      avatarOptions: [
+        { id: '1', emoji: '😊', color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+        { id: '2', emoji: '🎓', color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
+        { id: '3', emoji: '📚', color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' },
+        { id: '4', emoji: '✨', color: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)' },
+        { id: '5', emoji: '🚀', color: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)' },
+        { id: '6', emoji: '🎨', color: 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)' },
+        { id: '7', emoji: '🌟', color: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)' },
+        { id: '8', emoji: '💡', color: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)' },
+        { id: '9', emoji: '🎯', color: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)' },
+        { id: '10', emoji: '🏆', color: 'linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)' },
+        { id: '11', emoji: '🎵', color: 'linear-gradient(135deg, #fdcbf1 0%, #e6dee9 100%)' },
+        { id: '12', emoji: '🌈', color: 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)' }
+      ],
       currentView: 'home',
       isLogoutModalVisible: false,
       isLoading: true,
@@ -180,16 +193,24 @@ export default {
           return Home;
       }
     },
+    currentAvatar() {
+      const avatar = this.avatarOptions.find(a => a.id === this.userProfile.avatar);
+      return avatar || this.avatarOptions[0];
+    }
   },
   async mounted() {
     await this.loadUserProfile();
     this.setupProfileSubscription();
     this.initializeDarkMode();
+    
+    // Listen for profile updates from Settings component
+    window.addEventListener('profileUpdated', this.handleProfileUpdate);
   },
   beforeUnmount() {
     if (this.profileSubscription) {
       this.profileSubscription.unsubscribe();
     }
+    window.removeEventListener('profileUpdated', this.handleProfileUpdate);
   },
   methods: {
     async loadUserProfile() {
@@ -208,6 +229,13 @@ export default {
 
         // Fetch student profile using the new database structure
         await this.fetchStudentProfile(user.id);
+        
+        // Load avatar from localStorage
+        const savedAvatar = localStorage.getItem('userAvatar');
+        if (savedAvatar) {
+          this.userProfile.avatar = savedAvatar;
+          console.log('Loaded avatar from localStorage:', savedAvatar);
+        }
 
       } catch (error) {
         console.error('Error loading user profile:', error);
@@ -275,7 +303,8 @@ export default {
             email: profile.email || '',
             studentId: tempStudentId,
             grade: null,
-            role: profile.role
+            role: profile.role,
+            avatar: this.userProfile.avatar
           };
           return;
         }
@@ -296,7 +325,8 @@ export default {
           email: studentData.email || profile.email || '',
           studentId: finalStudentId,
           grade: studentData.grade_level || null,
-          role: profile.role
+          role: profile.role,
+          avatar: this.userProfile.avatar
         };
         
         console.log('Final profile data set:', this.userProfile);
@@ -364,7 +394,8 @@ export default {
             email: profile.email || '',
             studentId: newStudentId,
             grade: defaultGrade,
-            role: profile.role
+            role: profile.role,
+            avatar: this.userProfile.avatar
           };
           return;
         }
@@ -377,7 +408,8 @@ export default {
           email: data.email,
           studentId: data.student_id,
           grade: data.grade_level,
-          role: profile.role
+          role: profile.role,
+          avatar: this.userProfile.avatar
         };
         
       } catch (error) {
@@ -389,7 +421,8 @@ export default {
           email: profile.email || '',
           studentId: tempStudentId,
           grade: null,
-          role: profile.role
+          role: profile.role,
+          avatar: this.userProfile.avatar
         };
       }
     },
@@ -424,7 +457,8 @@ export default {
           email: user?.email || '',
           studentId: tempStudentId,
           grade: null,
-          role: 'student'
+          role: 'student',
+          avatar: this.userProfile.avatar
         };
         
         console.log('Using fallback profile with temp ID:', this.userProfile);
@@ -441,7 +475,8 @@ export default {
         email: '',
         studentId: 'AUTH_ERROR',
         grade: null,
-        role: null
+        role: null,
+        avatar: '1'
       };
       setTimeout(() => {
         this.$router.push('/login');
@@ -454,8 +489,14 @@ export default {
         email: 'Error loading data',
         studentId: 'ERROR_LOADING',
         grade: null,
-        role: null
+        role: null,
+        avatar: '1'
       };
+    },
+
+    handleProfileUpdate() {
+      console.log('Profile update event received, reloading profile...');
+      this.loadUserProfile();
     },
 
     setupProfileSubscription() {
@@ -546,6 +587,7 @@ export default {
         
         localStorage.removeItem('userProfile');
         localStorage.removeItem('darkMode');
+        localStorage.removeItem('userAvatar');
         
         console.log('User logged out');
         this.$router.push('/');
@@ -1304,5 +1346,9 @@ html, body {
   --shadow-light: rgba(0, 0, 0, 0.1);
   --shadow-medium: rgba(0, 0, 0, 0.2);
   --shadow-strong: rgba(0, 0, 0, 0.3);
+}
+
+.avatar-emoji {
+  font-size: 32px;
 }
 </style>

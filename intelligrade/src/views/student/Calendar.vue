@@ -339,7 +339,8 @@ export default {
       ],
       daysOfWeek: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
       events: [],
-      user: null
+      user: null,
+      studentId: null
     };
   },
   computed: {
@@ -363,12 +364,10 @@ export default {
       const today = new Date(this.currentTime);
       today.setHours(0, 0, 0, 0);
       
-      // First day of the month
       const firstDay = new Date(year, month, 1);
       const startDate = new Date(firstDay);
       startDate.setDate(startDate.getDate() - firstDay.getDay());
       
-      // Generate 42 days (6 weeks)
       const days = [];
       for (let i = 0; i < 42; i++) {
         const date = new Date(startDate);
@@ -381,7 +380,6 @@ export default {
           return eventDate.getTime() === date.getTime();
         });
         
-        // Check day status
         const hasDueToday = dayEvents.some(event => this.getEventStatus(event) === 'due-today');
         const hasOverdue = dayEvents.some(event => this.getEventStatus(event) === 'overdue');
         const hasUpcoming = dayEvents.some(event => this.getEventStatus(event) === 'upcoming');
@@ -416,7 +414,6 @@ export default {
     }
   },
   watch: {
-    // Watch for changes in event completion status to update the calendar
     events: {
       handler() {
         this.$forceUpdate();
@@ -425,7 +422,6 @@ export default {
     }
   },
   methods: {
-    // Real-time API methods
     async initializeData() {
       try {
         this.loading = true;
@@ -436,6 +432,35 @@ export default {
         if (userError) throw userError;
         
         this.user = user;
+        console.log('Current user:', user.id);
+        
+        // Get student ID from profile
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, role')
+          .eq('auth_user_id', user.id)
+          .single();
+          
+        if (profileError) throw profileError;
+        
+        console.log('Profile data:', profileData);
+        
+        if (profileData.role !== 'student') {
+          throw new Error('This calendar is only available for students');
+        }
+        
+        // Get student details
+        const { data: studentData, error: studentError } = await supabase
+          .from('students')
+          .select('id, full_name, grade_level')
+          .eq('profile_id', profileData.id)
+          .single();
+          
+        if (studentError) throw studentError;
+        
+        this.studentId = studentData.id;
+        console.log('Student ID:', this.studentId);
+        console.log('Student grade level:', studentData.grade_level);
         
         // Load initial events
         await this.loadEvents();
@@ -445,8 +470,8 @@ export default {
         
       } catch (error) {
         console.error('Error initializing calendar:', error);
-        this.error = 'Failed to load calendar data';
-        this.showNotification('Error loading calendar data', 'error');
+        this.error = error.message || 'Failed to load calendar data';
+        this.showNotification('Error loading calendar data: ' + error.message, 'error');
       } finally {
         this.loading = false;
       }
@@ -454,177 +479,251 @@ export default {
 
     async loadEvents() {
       try {
-        // Fetch events from Supabase
-        const { data: eventsData, error } = await supabase
-          .from('assignments')
+        if (!this.studentId) {
+          console.error('Student ID not found');
+          return;
+        }
+
+        console.log('Loading events for student:', this.studentId);
+
+        // STEP 1: Get all section IDs the student is enrolled in
+        const { data: enrollments, error: enrollError } = await supabase
+          .from('enrollments')
+          .select('section_id')
+          .eq('student_id', this.studentId)
+          .eq('status', 'active');
+
+        if (enrollError) {
+          console.error('Enrollment error:', enrollError);
+          throw enrollError;
+        }
+
+        console.log('Total enrolled subjects:', enrollments?.length || 0);
+
+        if (!enrollments || enrollments.length === 0) {
+          console.log('Student is not enrolled in any sections');
+          this.events = [];
+          this.showNotification('You are not enrolled in any subjects yet.', 'info');
+          return;
+        }
+
+        const sectionIds = enrollments.map(e => e.section_id);
+        console.log('Enrolled section IDs:', sectionIds);
+
+        // STEP 2: Get all published quizzes for those sections
+        const { data: quizzesData, error: quizzesError } = await supabase
+          .from('quizzes')
           .select(`
             id,
             title,
             description,
-            due_date,
-            due_time,
-            type,
-            is_completed,
-            submitted_at,
-            subjects (
-              id,
-              name,
-              code
-            )
+            start_date,
+            end_date,
+            status,
+            number_of_questions,
+            time_limit_minutes,
+            attempts_allowed,
+            quiz_code,
+            subject_id,
+            section_id
           `)
-          .eq('student_id', this.user?.id)
-          .order('due_date', { ascending: true });
+          .in('section_id', sectionIds)
+          .eq('status', 'published')
+          .order('end_date', { ascending: true });
 
-        if (error) throw error;
+        if (quizzesError) {
+          console.error('Quizzes error:', quizzesError);
+          throw quizzesError;
+        }
 
-        // Transform data for calendar
-        this.events = eventsData.map(event => ({
-          id: event.id,
-          title: event.title,
-          subject: `${event.subjects?.name} (${event.subjects?.code})` || 'Unknown Subject',
-          date: new Date(event.due_date),
-          time: event.due_time || '11:59 PM',
-          type: event.type || 'assignment',
-          description: event.description || '',
-          isCompleted: event.is_completed || false,
-          submittedAt: event.submitted_at ? new Date(event.submitted_at) : null
-        }));
+        console.log('Published quizzes found:', quizzesData?.length || 0);
 
-        console.log('Events loaded:', this.events.length);
+        if (!quizzesData || quizzesData.length === 0) {
+          this.events = [];
+          this.showNotification('No quizzes available yet. Check back later!', 'info');
+          return;
+        }
+
+        // STEP 3: Get subject details for each quiz
+        const subjectIds = [...new Set(quizzesData.map(q => q.subject_id))];
+        const { data: subjectsData, error: subjectsError } = await supabase
+          .from('subjects')
+          .select('id, name, grade_level')
+          .in('id', subjectIds);
+
+        if (subjectsError) {
+          console.error('Subjects error:', subjectsError);
+          throw subjectsError;
+        }
+
+        const subjectsMap = {};
+        subjectsData?.forEach(subj => {
+          subjectsMap[subj.id] = subj;
+        });
+
+        // STEP 4: Get section details
+        const { data: sectionsData, error: sectionsError } = await supabase
+          .from('sections')
+          .select('id, name, section_code')
+          .in('id', sectionIds);
+
+        if (sectionsError) {
+          console.error('Sections error:', sectionsError);
+          throw sectionsError;
+        }
+
+        const sectionsMap = {};
+        sectionsData?.forEach(sec => {
+          sectionsMap[sec.id] = sec;
+        });
+
+        // STEP 5: Get student's quiz results
+        const quizIds = quizzesData.map(q => q.id);
+        const { data: resultsData, error: resultsError } = await supabase
+          .from('quiz_results')
+          .select('quiz_id, status, best_percentage, total_attempts')
+          .eq('student_id', this.studentId)
+          .in('quiz_id', quizIds);
+
+        if (resultsError) {
+          console.error('Results error:', resultsError);
+        }
+
+        const resultsMap = {};
+        resultsData?.forEach(result => {
+          resultsMap[result.quiz_id] = result;
+        });
+
+        console.log('Quiz results found:', resultsData?.length || 0);
+
+        // STEP 6: Transform data for calendar
+        this.events = quizzesData.map(quiz => {
+          const result = resultsMap[quiz.id];
+          const subject = subjectsMap[quiz.subject_id];
+          const section = sectionsMap[quiz.section_id];
+          const isCompleted = result && (result.status === 'completed' || result.status === 'graded');
+          
+          const deadlineDate = quiz.end_date ? new Date(quiz.end_date) : null;
+          
+          return {
+            id: quiz.id,
+            title: quiz.title,
+            subject: subject?.name || 'Unknown Subject',
+            subjectCode: `Grade ${subject?.grade_level || '?'}`,
+            date: deadlineDate || new Date(),
+            time: deadlineDate ? deadlineDate.toLocaleTimeString('en-US', { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            }) : '11:59 PM',
+            type: 'quiz',
+            description: quiz.description || `${quiz.number_of_questions} questions${quiz.time_limit_minutes ? ` • ${quiz.time_limit_minutes} minutes` : ''} • ${quiz.attempts_allowed} attempt${quiz.attempts_allowed > 1 ? 's' : ''} allowed`,
+            isCompleted: isCompleted,
+            submittedAt: isCompleted ? new Date() : null,
+            quizCode: quiz.quiz_code,
+            sectionName: section?.name || '',
+            sectionCode: section?.section_code || '',
+            numberOfQuestions: quiz.number_of_questions,
+            timeLimit: quiz.time_limit_minutes,
+            attemptsAllowed: quiz.attempts_allowed,
+            totalAttempts: result?.total_attempts || 0,
+            bestScore: result?.best_percentage || 0,
+            startDate: quiz.start_date ? new Date(quiz.start_date) : null
+          };
+        }).filter(event => event.date);
+
+        console.log('Events loaded successfully:', this.events.length);
+        
+        if (this.events.length > 0) {
+          this.showNotification(`Loaded ${this.events.length} quiz${this.events.length > 1 ? 'zes' : ''}`, 'success');
+        }
         
       } catch (error) {
         console.error('Error loading events:', error);
-        this.showNotification('Failed to load events', 'error');
+        this.showNotification('Failed to load quizzes: ' + error.message, 'error');
       }
     },
 
     setupRealTimeSubscription() {
-      // Subscribe to real-time changes
+      if (!this.studentId) return;
+
+      console.log('Setting up real-time subscription...');
+
+      // Subscribe to changes in quizzes table
       this.realTimeSubscription = supabase
-        .channel('calendar-changes')
+        .channel('calendar-quiz-changes')
         .on('postgres_changes', {
           event: '*',
           schema: 'public',
-          table: 'assignments',
-          filter: `student_id=eq.${this.user?.id}`
+          table: 'quizzes',
+          filter: `status=eq.published`
         }, (payload) => {
-          console.log('Real-time update:', payload);
-          this.handleRealTimeUpdate(payload);
+          console.log('Real-time quiz update:', payload);
+          this.handleQuizUpdate(payload);
+        })
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'quiz_results',
+          filter: `student_id=eq.${this.studentId}`
+        }, (payload) => {
+          console.log('Real-time quiz result update:', payload);
+          this.handleQuizResultUpdate(payload);
         })
         .subscribe((status) => {
           console.log('Real-time subscription status:', status);
         });
     },
 
-    handleRealTimeUpdate(payload) {
+    async handleQuizUpdate(payload) {
       const { eventType, new: newRecord, old: oldRecord } = payload;
       
       switch (eventType) {
         case 'INSERT':
-          this.handleEventInsert(newRecord);
+          await this.loadEvents();
+          if (newRecord?.title) {
+            this.showNotification(`New quiz available: ${newRecord.title}`, 'info');
+          }
           break;
         case 'UPDATE':
-          this.handleEventUpdate(newRecord, oldRecord);
+          await this.loadEvents();
+          if (newRecord?.title) {
+            this.showNotification(`Quiz updated: ${newRecord.title}`, 'info');
+          }
           break;
         case 'DELETE':
-          this.handleEventDelete(oldRecord);
+          if (oldRecord?.id) {
+            this.events = this.events.filter(e => e.id !== oldRecord.id);
+            this.showNotification('A quiz has been removed', 'warning');
+          }
           break;
       }
     },
 
-    handleEventInsert(record) {
-      const newEvent = {
-        id: record.id,
-        title: record.title,
-        subject: 'Loading...', // Will be updated when subject data loads
-        date: new Date(record.due_date),
-        time: record.due_time || '11:59 PM',
-        type: record.type || 'assignment',
-        description: record.description || '',
-        isCompleted: record.is_completed || false,
-        submittedAt: record.submitted_at ? new Date(record.submitted_at) : null
-      };
+    async handleQuizResultUpdate(payload) {
+      const { new: newRecord } = payload;
       
-      this.events.push(newEvent);
-      this.showNotification(`New assignment added: ${record.title}`, 'info');
+      if (!newRecord?.quiz_id) return;
       
-      // Load subject name
-      this.loadSubjectForEvent(newEvent, record.subject_id);
-    },
-
-    handleEventUpdate(newRecord) {
-      const eventIndex = this.events.findIndex(e => e.id === newRecord.id);
+      const eventIndex = this.events.findIndex(e => e.id === newRecord.quiz_id);
       if (eventIndex !== -1) {
-        this.events[eventIndex] = {
-          ...this.events[eventIndex],
-          title: newRecord.title,
-          date: new Date(newRecord.due_date),
-          time: newRecord.due_time || '11:59 PM',
-          type: newRecord.type || 'assignment',
-          description: newRecord.description || '',
-          isCompleted: newRecord.is_completed || false,
-          submittedAt: newRecord.submitted_at ? new Date(newRecord.submitted_at) : null
-        };
+        const isCompleted = newRecord.status === 'completed' || newRecord.status === 'graded';
+        this.events[eventIndex].isCompleted = isCompleted;
+        this.events[eventIndex].totalAttempts = newRecord.total_attempts || 0;
+        this.events[eventIndex].bestScore = newRecord.best_percentage || 0;
         
-        this.showNotification(`Assignment updated: ${newRecord.title}`, 'info');
-      }
-    },
-
-    handleEventDelete(record) {
-      const eventIndex = this.events.findIndex(e => e.id === record.id);
-      if (eventIndex !== -1) {
-        const eventTitle = this.events[eventIndex].title;
-        this.events.splice(eventIndex, 1);
-        this.showNotification(`Assignment removed: ${eventTitle}`, 'warning');
-      }
-    },
-
-    async loadSubjectForEvent(event, subjectId) {
-      try {
-        const { data: subject, error } = await supabase
-          .from('subjects')
-          .select('name, code')
-          .eq('id', subjectId)
-          .single();
-
-        if (!error && subject) {
-          event.subject = `${subject.name} (${subject.code})`;
+        if (isCompleted) {
+          this.showNotification(`Quiz completed: ${this.events[eventIndex].title}`, 'success');
         }
-      } catch (error) {
-        console.error('Error loading subject:', error);
       }
     },
 
     async markAsCompleted(event) {
-      try {
-        // Update in database
-        const { error } = await supabase
-          .from('assignments')
-          .update({
-            is_completed: true,
-            submitted_at: new Date().toISOString()
-          })
-          .eq('id', event.id);
-
-        if (error) throw error;
-
-        // Update local state (will also be updated via real-time subscription)
-        const eventIndex = this.events.findIndex(e => e.id === event.id);
-        if (eventIndex !== -1) {
-          this.events[eventIndex].isCompleted = true;
-          this.events[eventIndex].submittedAt = new Date();
-        }
-
-        // Close modals
-        this.selectedEvent = null;
-        this.selectedDay = null;
-
-        this.showNotification(`${event.title} marked as completed!`, 'success');
-        
-      } catch (error) {
-        console.error('Error marking as completed:', error);
-        this.showNotification('Failed to update assignment', 'error');
-      }
+      this.showNotification(`Click to take quiz: ${event.title}`, 'info');
+      
+      this.selectedEvent = null;
+      this.selectedDay = null;
+      
+      console.log('Navigate to quiz:', event.id, 'Code:', event.quizCode);
     },
 
     showNotification(message, type = 'info') {
@@ -637,7 +736,6 @@ export default {
 
       this.notifications.push(notification);
       
-      // Auto-remove notification after 5 seconds
       setTimeout(() => {
         this.removeNotification(notification.id);
       }, 5000);
@@ -662,79 +760,9 @@ export default {
       }
     },
 
-    // WebSocket connection for real-time updates
-    setupWebSocket() {
-      if (window.WebSocket) {
-        try {
-          const wsUrl = process.env.VUE_APP_WS_URL || 'ws://localhost:8080/ws/calendar';
-          this.websocket = new WebSocket(wsUrl);
-          
-          this.websocket.onopen = () => {
-            console.log('WebSocket connected');
-            // Send authentication
-            this.websocket.send(JSON.stringify({
-              type: 'auth',
-              token: this.user?.access_token
-            }));
-          };
-          
-          this.websocket.onmessage = (event) => {
-            try {
-              const data = JSON.parse(event.data);
-              this.handleWebSocketMessage(data);
-            } catch (error) {
-              console.error('Error parsing WebSocket message:', error);
-            }
-          };
-          
-          this.websocket.onclose = () => {
-            console.log('WebSocket disconnected');
-            // Attempt to reconnect after 5 seconds
-            setTimeout(() => {
-              if (!this.websocket || this.websocket.readyState === WebSocket.CLOSED) {
-                this.setupWebSocket();
-              }
-            }, 5000);
-          };
-          
-          this.websocket.onerror = (error) => {
-            console.error('WebSocket error:', error);
-          };
-          
-        } catch (error) {
-          console.error('Failed to setup WebSocket:', error);
-        }
-      }
-    },
-
-    handleWebSocketMessage(data) {
-      switch (data.type) {
-        case 'assignment_created':
-          this.handleEventInsert(data.assignment);
-          break;
-        case 'assignment_updated':
-          this.handleEventUpdate(data.assignment);
-          break;
-        case 'assignment_deleted':
-          this.handleEventDelete(data.assignment);
-          break;
-        case 'deadline_reminder':
-          this.showNotification(
-            `Reminder: ${data.assignment.title} is due ${data.time_remaining}`,
-            'warning'
-          );
-          break;
-        case 'grade_posted':
-          this.showNotification(
-            `Grade posted for: ${data.assignment.title}`,
-            'info'
-          );
-          break;
-      }
-    },
-
-    // Existing methods with real-time updates
     getEventStatus(event) {
+      if (!event.date) return 'unknown';
+      
       const eventDate = new Date(event.date);
       const today = new Date(this.currentTime);
       today.setHours(0, 0, 0, 0);
@@ -759,11 +787,11 @@ export default {
       const status = this.getEventStatus(event);
       switch (status) {
         case 'completed':
-          return 'Completed';
+          return `Completed (${event.bestScore.toFixed(0)}%)`;
         case 'overdue':
-          return 'Overdue';
+          return `Overdue (${event.totalAttempts}/${event.attemptsAllowed} attempts)`;
         case 'due-today':
-          return 'Due Today';
+          return 'Due Today!';
         case 'upcoming':
           return 'Upcoming';
         default:
@@ -785,8 +813,6 @@ export default {
 
     updateCurrentTime() {
       this.currentTime = new Date();
-      
-      // Check for deadline reminders
       this.checkDeadlineReminders();
     },
 
@@ -796,12 +822,11 @@ export default {
       const oneDay = 24 * oneHour;
 
       this.events.forEach(event => {
-        if (event.isCompleted) return;
+        if (event.isCompleted || !event.date) return;
 
         const eventDateTime = new Date(event.date);
         const timeDiff = eventDateTime.getTime() - now.getTime();
 
-        // Show reminders for events due in 1 hour or 1 day
         if (timeDiff > 0 && timeDiff <= oneHour) {
           this.showNotification(
             `⏰ ${event.title} is due in less than 1 hour!`,
@@ -872,6 +897,7 @@ export default {
     },
 
     formatEventDate(date) {
+      if (!date) return 'No deadline set';
       return date.toLocaleDateString('en-US', {
         weekday: 'long',
         year: 'numeric',
@@ -880,43 +906,28 @@ export default {
       });
     },
 
-    // Cleanup methods
     cleanup() {
-      // Clear intervals
       if (this.statusUpdateInterval) {
         clearInterval(this.statusUpdateInterval);
       }
       if (this.fastUpdateInterval) {
         clearInterval(this.fastUpdateInterval);
       }
-
-      // Close real-time subscription
       if (this.realTimeSubscription) {
         this.realTimeSubscription.unsubscribe();
-      }
-
-      // Close WebSocket
-      if (this.websocket) {
-        this.websocket.close();
       }
     }
   },
   mounted() {
-    // Initialize real-time data
     this.initializeData();
     
-    // Update current time every minute for real-time status updates
     this.statusUpdateInterval = setInterval(() => {
       this.updateCurrentTime();
-    }, 60000); // Update every minute
+    }, 60000);
     
-    // More frequent updates for testing (every 10 seconds)
     this.fastUpdateInterval = setInterval(() => {
       this.updateCurrentTime();
-    }, 10000);
-
-    // Setup WebSocket for additional real-time features
-    this.setupWebSocket();
+    }, 30000);
   },
 
   beforeUnmount() {
