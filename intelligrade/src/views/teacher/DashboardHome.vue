@@ -171,13 +171,15 @@ export default {
       userId: null,
       profileId: null,
       teacherId: null,
-      showNotifDropdown: false
+      showNotifDropdown: false,
+      subscriptions: []
     };
   },
   methods: {
     toggleNotifDropdown() {
       this.showNotifDropdown = !this.showNotifDropdown;
     },
+    
     async loadTeacherProfile() {
       try {
         this.isLoadingName = true;
@@ -284,6 +286,8 @@ export default {
         this.teacherId = data.id;
         this.fullName = data.full_name;
         
+        await this.loadDashboardStats();
+        
       } catch (error) {
         console.error('Error in createMissingTeacherRecord:', error);
         this.fullName = profile.full_name || 'Teacher';
@@ -325,21 +329,39 @@ export default {
           return;
         }
 
+        // Get total classes (unique subjects taught by this teacher)
         const { data: subjects, error: subjectsError } = await supabase
-          .from('teacher_dashboard')
-          .select('subject_id')
-          .eq('teacher_id', this.teacherId);
+          .from('subjects')
+          .select('id')
+          .eq('teacher_id', this.teacherId)
+          .eq('is_active', true);
 
         if (subjectsError) {
           console.error('Error loading teacher subjects:', subjectsError);
         } else {
-          const uniqueSubjects = new Set(subjects?.map(s => s.subject_id) || []);
-          this.totalClasses = uniqueSubjects.size;
+          this.totalClasses = subjects?.length || 0;
           console.log('Total classes:', this.totalClasses);
         }
 
-        this.gradedToday = 0;
-        this.pendingReviews = 0;
+        // Get graded today count (quiz attempts graded today)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayISO = today.toISOString();
+
+        const { data: gradedToday, error: gradedError } = await supabase
+          .from('quiz_attempts')
+          .select('id, quiz_id!inner(teacher_id)')
+          .eq('quiz_id.teacher_id', this.teacherId)
+          .eq('status', 'graded')
+          .gte('graded_at', todayISO);
+
+        if (gradedError) {
+          console.error('Error loading graded today:', gradedError);
+          this.gradedToday = 0;
+        } else {
+          this.gradedToday = gradedToday?.length || 0;
+          console.log('Graded today:', this.gradedToday);
+        }
 
         await this.loadAssessmentsToGrade();
 
@@ -353,28 +375,85 @@ export default {
 
     async loadAssessmentsToGrade() {
       try {
-        this.assessmentsToGrade = [
-          { 
-            id: 1, 
-            title: 'Mathematics Quiz 1', 
-            className: 'Grade 7 Math', 
-            studentsSubmitted: 15, 
-            totalStudents: 20 
-          },
-          { 
-            id: 2, 
-            title: 'Science Test', 
-            className: 'Grade 8 Science', 
-            studentsSubmitted: 18, 
-            totalStudents: 22 
-          }
-        ];
+        if (!this.teacherId) {
+          console.warn('No teacher ID for assessments');
+          this.assessmentsToGrade = [];
+          this.pendingReviews = 0;
+          return;
+        }
+
+        // Get all quizzes by this teacher with submitted attempts
+        const { data: quizzes, error: quizzesError } = await supabase
+          .from('quizzes')
+          .select(`
+            id,
+            title,
+            subject_id,
+            section_id,
+            status,
+            subjects!inner(name),
+            sections!inner(name)
+          `)
+          .eq('teacher_id', this.teacherId)
+          .eq('status', 'published');
+
+        if (quizzesError) {
+          console.error('Error loading quizzes:', quizzesError);
+          this.assessmentsToGrade = [];
+          this.pendingReviews = 0;
+          return;
+        }
+
+        // For each quiz, get attempt counts
+        const assessmentsWithCounts = await Promise.all(
+          (quizzes || []).map(async (quiz) => {
+            // Get total enrolled students in this section
+            const { data: enrollments, error: enrollError } = await supabase
+              .from('enrollments')
+              .select('student_id')
+              .eq('section_id', quiz.section_id)
+              .eq('status', 'active');
+
+            const totalStudents = enrollments?.length || 0;
+
+            // Get submitted attempts count
+            const { data: attempts, error: attemptsError } = await supabase
+              .from('quiz_attempts')
+              .select('id, student_id')
+              .eq('quiz_id', quiz.id)
+              .eq('status', 'submitted');
+
+            const studentsSubmitted = attempts?.length || 0;
+
+            // Only include if there are submissions to grade
+            if (studentsSubmitted > 0) {
+              return {
+                id: quiz.id,
+                title: quiz.title,
+                className: `${quiz.subjects.name} - ${quiz.sections.name}`,
+                studentsSubmitted: studentsSubmitted,
+                totalStudents: totalStudents,
+                sectionId: quiz.section_id,
+                subjectId: quiz.subject_id
+              };
+            }
+            return null;
+          })
+        );
+
+        // Filter out null values and sort by most submissions
+        this.assessmentsToGrade = assessmentsWithCounts
+          .filter(a => a !== null)
+          .sort((a, b) => b.studentsSubmitted - a.studentsSubmitted);
 
         this.pendingReviews = this.assessmentsToGrade.length;
+
+        console.log('Assessments to grade:', this.assessmentsToGrade);
 
       } catch (error) {
         console.error('Error loading assessments to grade:', error);
         this.assessmentsToGrade = [];
+        this.pendingReviews = 0;
       }
     },
 
@@ -389,6 +468,14 @@ export default {
 
     gradeAssessment(assessment) {
       console.log('Grading assessment:', assessment.title);
+      // Navigate to grading page
+      this.$router.push({
+        path: '/teacher/grade-quiz',
+        query: {
+          quizId: assessment.id,
+          sectionId: assessment.sectionId
+        }
+      });
     },
 
     async fetchAllData() {
@@ -399,42 +486,137 @@ export default {
     },
 
     async loadNotifications() {
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', this.userId)
-        .order('created_at', { ascending: false })
-        .limit(10);
-      if (!error && data) {
-        this.notifications = data.map(n => ({
-          id: n.id,
-          title: n.title,
-          body: n.body,
-          date: n.created_at ? new Date(n.created_at).toLocaleString() : ''
-        }));
+      try {
+        if (!this.teacherId || !this.profileId) {
+          console.warn('No teacher ID or profile ID for notifications');
+          return;
+        }
+
+        const notifications = [];
+
+        // 1. Get quiz submission notifications (students who submitted quizzes)
+        const { data: submissions, error: submissionsError } = await supabase
+          .from('quiz_attempts')
+          .select(`
+            id,
+            submitted_at,
+            status,
+            student_id,
+            quiz_id,
+            students!inner(full_name),
+            quizzes!inner(title, teacher_id)
+          `)
+          .eq('quizzes.teacher_id', this.teacherId)
+          .eq('status', 'submitted')
+          .order('submitted_at', { ascending: false })
+          .limit(10);
+
+        if (!submissionsError && submissions) {
+          submissions.forEach(sub => {
+            notifications.push({
+              id: `submission-${sub.id}`,
+              title: 'New Quiz Submission',
+              body: `${sub.students.full_name} submitted "${sub.quizzes.title}"`,
+              date: new Date(sub.submitted_at).toLocaleString(),
+              type: 'submission',
+              created_at: sub.submitted_at
+            });
+          });
+        }
+
+        // 2. Get message notifications (students who sent messages)
+        const { data: messages, error: messagesError } = await supabase
+          .from('messages')
+          .select(`
+            id,
+            sent_at,
+            message_text,
+            sender_id,
+            section_id,
+            sections!inner(
+              subject_id,
+              subjects!inner(teacher_id)
+            )
+          `)
+          .eq('sections.subjects.teacher_id', this.teacherId)
+          .eq('recipient_id', this.teacherId)
+          .is('message_reads.id', null)
+          .order('sent_at', { ascending: false })
+          .limit(5);
+
+        if (!messagesError && messages) {
+          for (const msg of messages) {
+            // Get student name
+            const { data: student } = await supabase
+              .from('students')
+              .select('full_name')
+              .eq('id', msg.sender_id)
+              .single();
+
+            if (student) {
+              notifications.push({
+                id: `message-${msg.id}`,
+                title: 'New Message',
+                body: `${student.full_name}: ${msg.message_text.substring(0, 50)}${msg.message_text.length > 50 ? '...' : ''}`,
+                date: new Date(msg.sent_at).toLocaleString(),
+                type: 'message',
+                created_at: msg.sent_at
+              });
+            }
+          }
+        }
+
+        // 3. Get quiz deadline reminders (quizzes ending in next 24 hours)
+        const tomorrow = new Date();
+        tomorrow.setHours(tomorrow.getHours() + 24);
+        const tomorrowISO = tomorrow.toISOString();
+
+        const { data: endingQuizzes, error: endingError } = await supabase
+          .from('quizzes')
+          .select(`
+            id,
+            title,
+            end_date,
+            sections!inner(name)
+          `)
+          .eq('teacher_id', this.teacherId)
+          .eq('status', 'published')
+          .lte('end_date', tomorrowISO)
+          .gte('end_date', new Date().toISOString());
+
+        if (!endingError && endingQuizzes) {
+          endingQuizzes.forEach(quiz => {
+            notifications.push({
+              id: `deadline-${quiz.id}`,
+              title: 'Quiz Deadline Approaching',
+              body: `"${quiz.title}" ends soon in ${quiz.sections.name}`,
+              date: new Date(quiz.end_date).toLocaleString(),
+              type: 'deadline',
+              created_at: quiz.end_date
+            });
+          });
+        }
+
+        // Sort all notifications by date (newest first)
+        notifications.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        this.notifications = notifications.slice(0, 15); // Keep only 15 most recent
+
+        console.log('Loaded notifications:', this.notifications.length);
+
+      } catch (error) {
+        console.error('Error loading notifications:', error);
+        this.notifications = [];
       }
     },
 
     setupRealtimeSubscriptions() {
-      if (!this.userId) return;
+      if (!this.userId || !this.teacherId) {
+        console.warn('Cannot setup subscriptions without user/teacher ID');
+        return;
+      }
 
-      const notifSubscription = supabase
-        .channel('teacher_home_notifications')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'notifications',
-            filter: `user_id=eq.${this.userId}`
-          },
-          (payload) => {
-            console.log('Notification update:', payload);
-            this.loadNotifications();
-          }
-        )
-        .subscribe();
-
+      // Subscribe to profile changes (name updates)
       const profileSubscription = supabase
         .channel('teacher_home_profile_changes')
         .on(
@@ -452,6 +634,7 @@ export default {
         )
         .subscribe();
 
+      // Subscribe to teacher table changes (name updates)
       const teacherSubscription = supabase
         .channel('teacher_home_teacher_changes')
         .on(
@@ -459,32 +642,100 @@ export default {
           {
             event: '*',
             schema: 'public',
-            table: 'teachers'
+            table: 'teachers',
+            filter: `id=eq.${this.teacherId}`
           },
           (payload) => {
             console.log('Teacher data updated in Teacher Home:', payload);
-            this.loadTeacherProfile();
+            if (payload.eventType === 'UPDATE' && payload.new.full_name) {
+              this.fullName = payload.new.full_name;
+            }
           }
         )
         .subscribe();
 
-      const subjectsSubscription = supabase
-        .channel('teacher_home_subjects_changes')
+      // Subscribe to quiz attempts (new submissions)
+      const attemptsSubscription = supabase
+        .channel('teacher_home_attempts')
         .on(
           'postgres_changes',
           {
             event: '*',
             schema: 'public',
-            table: 'subjects'
+            table: 'quiz_attempts'
           },
           (payload) => {
-            console.log('Subjects updated in Teacher Home:', payload);
+            console.log('Quiz attempt change:', payload);
+            this.loadDashboardStats();
+            this.loadNotifications();
+          }
+        )
+        .subscribe();
+
+      // Subscribe to messages (new messages from students)
+      const messagesSubscription = supabase
+        .channel('teacher_home_messages')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages',
+            filter: `recipient_id=eq.${this.teacherId}`
+          },
+          (payload) => {
+            console.log('New message received:', payload);
+            this.loadNotifications();
+          }
+        )
+        .subscribe();
+
+      // Subscribe to quizzes changes
+      const quizzesSubscription = supabase
+        .channel('teacher_home_quizzes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'quizzes',
+            filter: `teacher_id=eq.${this.teacherId}`
+          },
+          (payload) => {
+            console.log('Quiz updated:', payload);
             this.loadDashboardStats();
           }
         )
         .subscribe();
 
-      this.subscriptions = [notifSubscription, profileSubscription, teacherSubscription, subjectsSubscription];
+      // Subscribe to subjects changes
+      const subjectsSubscription = supabase
+        .channel('teacher_home_subjects')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'subjects',
+            filter: `teacher_id=eq.${this.teacherId}`
+          },
+          (payload) => {
+            console.log('Subjects updated:', payload);
+            this.loadDashboardStats();
+          }
+        )
+        .subscribe();
+
+      this.subscriptions = [
+        profileSubscription,
+        teacherSubscription,
+        attemptsSubscription,
+        messagesSubscription,
+        quizzesSubscription,
+        subjectsSubscription
+      ];
+
+      console.log('Real-time subscriptions setup complete');
     }
   },
 
@@ -493,6 +744,8 @@ export default {
     await this.loadTeacherProfile();
     await this.loadNotifications();
     this.setupRealtimeSubscriptions();
+    
+    // Poll for updates every 30 seconds as backup
     this.pollInterval = setInterval(() => {
       this.fetchAllData();
       this.loadNotifications();
@@ -506,9 +759,9 @@ export default {
       clearInterval(this.pollInterval);
     }
     
-    if (this.subscriptions) {
+    if (this.subscriptions && this.subscriptions.length > 0) {
       this.subscriptions.forEach(subscription => {
-        subscription.unsubscribe();
+        supabase.removeChannel(subscription);
       });
     }
   }

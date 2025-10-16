@@ -70,15 +70,6 @@
                 </label>
               </div>
             </li>
-            <li>
-              <div class="setting-item">
-                <span>Notifications</span>
-                <label class="switch">
-                  <input type="checkbox" v-model="notificationsEnabled" @change="toggleNotifications">
-                  <span class="slider round"></span>
-                </label>
-              </div>
-            </li>
           </ul>
         </div>
 
@@ -95,23 +86,25 @@
             <li>
               <div class="setting-item">
                 <span>Privacy Policy</span>
-                <a href="#" class="action-btn">
+                <button @click="showPrivacyPolicy" class="action-btn">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="16" x2="12" y2="12"/>
+                    <line x1="12" y1="8" x2="12.01" y2="8"/>
                   </svg>
-                </a>
+                </button>
               </div>
             </li>
             <li>
               <div class="setting-item">
                 <span>Terms of Service</span>
-                <a href="#" class="action-btn">
+                <button @click="showTermsOfService" class="action-btn">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="16" x2="12" y2="12"/>
+                    <line x1="12" y1="8" x2="12.01" y2="8"/>
                   </svg>
-                </a>
+                </button>
               </div>
             </li>
           </ul>
@@ -132,7 +125,7 @@
             <li>
               <div class="setting-item">
                 <span class="danger-text">Delete Account</span>
-                <button @click="confirmDeleteAccount" class="action-btn danger-btn">
+                <button @click="openDeleteAccountModal" class="action-btn danger-btn">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M3 6l3 0l0 15a2 2 0 0 0 2 2l8 0a2 2 0 0 0 2 -2l0 -15l3 0"/>
                     <path d="M14 10l0 5"/>
@@ -169,9 +162,9 @@
         <div class="form-group">
           <label>Profile Picture</label>
           <div class="avatar-upload-section">
-            <div v-if="profileData.profile || imagePreview" class="current-avatar">
+            <div v-if="imagePreview || currentProfilePicture" class="current-avatar">
               <img 
-                :src="imagePreview || profileData.profile" 
+                :src="imagePreview || currentProfilePicture" 
                 alt="Profile Picture" 
                 class="avatar-preview"
               >
@@ -211,17 +204,6 @@
             placeholder="Enter your full name"
             class="form-input"
           >
-        </div>
-        
-        <!-- Bio Section -->
-        <div class="form-group">
-          <label>Bio</label>
-          <textarea 
-            v-model="profileData.bio" 
-            placeholder="Tell us about yourself"
-            class="form-input"
-            rows="4"
-          ></textarea>
         </div>
         
         <!-- Error/Success Messages -->
@@ -279,14 +261,135 @@
       </div>
       <div class="modal-footer">
         <button @click="closePasswordModal" class="btn-secondary">Cancel</button>
-        <button @click="changePassword" class="btn-primary">Update Password</button>
+        <button @click="changePassword" class="btn-primary" :disabled="isChangingPassword">
+          {{ isChangingPassword ? 'Updating...' : 'Update Password' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Privacy Policy Modal -->
+  <div v-if="showPrivacyModal" class="modal-overlay" @click="showPrivacyModal = false">
+    <div class="modal-content info-modal" @click.stop>
+      <div class="modal-header">
+        <h3>Privacy Policy</h3>
+        <button @click="showPrivacyModal = false" class="close-btn">×</button>
+      </div>
+      <div class="modal-body info-content">
+        <h4>IntelliGrade Privacy Policy</h4>
+        <p><strong>Last Updated:</strong> January 2025</p>
+        
+        <h5>1. Information We Collect</h5>
+        <p>We collect information you provide directly to us, including your name, email address, and profile information when you create an account.</p>
+        
+        <h5>2. How We Use Your Information</h5>
+        <p>We use the information we collect to provide, maintain, and improve our services, to communicate with you, and to protect IntelliGrade and our users.</p>
+        
+        <h5>3. Information Sharing</h5>
+        <p>We do not share your personal information with third parties except as described in this privacy policy or with your consent.</p>
+        
+        <h5>4. Data Security</h5>
+        <p>We implement appropriate technical and organizational measures to protect your personal information against unauthorized access, alteration, or destruction.</p>
+        
+        <h5>5. Your Rights</h5>
+        <p>You have the right to access, update, or delete your personal information at any time through your account settings.</p>
+        
+        <h5>6. Contact Us</h5>
+        <p>If you have any questions about this Privacy Policy, please contact us at privacy@intelligrade.com</p>
+      </div>
+      <div class="modal-footer">
+        <button @click="showPrivacyModal = false" class="btn-primary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Terms of Service Modal -->
+  <div v-if="showTermsModal" class="modal-overlay" @click="showTermsModal = false">
+    <div class="modal-content info-modal" @click.stop>
+      <div class="modal-header">
+        <h3>Terms of Service</h3>
+        <button @click="showTermsModal = false" class="close-btn">×</button>
+      </div>
+      <div class="modal-body info-content">
+        <h4>IntelliGrade Terms of Service</h4>
+        <p><strong>Last Updated:</strong> January 2025</p>
+        
+        <h5>1. Acceptance of Terms</h5>
+        <p>By accessing and using IntelliGrade, you accept and agree to be bound by the terms and provisions of this agreement.</p>
+        
+        <h5>2. User Accounts</h5>
+        <p>You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account.</p>
+        
+        <h5>3. Acceptable Use</h5>
+        <p>You agree to use IntelliGrade only for lawful purposes and in accordance with these Terms. You must not use our service to transmit harmful, offensive, or illegal content.</p>
+        
+        <h5>4. Intellectual Property</h5>
+        <p>The service and its original content, features, and functionality are owned by IntelliGrade and are protected by international copyright, trademark, and other intellectual property laws.</p>
+        
+        <h5>5. Termination</h5>
+        <p>We may terminate or suspend your account immediately, without prior notice, for conduct that we believe violates these Terms or is harmful to other users, us, or third parties.</p>
+        
+        <h5>6. Limitation of Liability</h5>
+        <p>IntelliGrade shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of or inability to use the service.</p>
+        
+        <h5>7. Changes to Terms</h5>
+        <p>We reserve the right to modify these terms at any time. We will notify users of any material changes via email or through the service.</p>
+        
+        <h5>8. Contact Information</h5>
+        <p>For questions about these Terms, please contact us at terms@intelligrade.com</p>
+      </div>
+      <div class="modal-footer">
+        <button @click="showTermsModal = false" class="btn-primary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Account Confirmation Modal -->
+  <div v-if="showDeleteModal" class="modal-overlay" @click="showDeleteModal = false">
+    <div class="modal-content" @click.stop>
+      <div class="modal-header">
+        <h3>Delete Account</h3>
+        <button @click="showDeleteModal = false" class="close-btn">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="warning-box">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <h4>Are you absolutely sure?</h4>
+          <p>This action <strong>cannot be undone</strong>. This will permanently delete your account and remove all your data from our servers.</p>
+        </div>
+        
+        <div class="form-group">
+          <label>Type "DELETE" to confirm</label>
+          <input 
+            type="text" 
+            v-model="deleteConfirmation" 
+            placeholder="Type DELETE"
+            class="form-input"
+          >
+        </div>
+        
+        <div v-if="deleteError" class="error-message">{{ deleteError }}</div>
+      </div>
+      <div class="modal-footer">
+        <button @click="showDeleteModal = false" class="btn-secondary">Cancel</button>
+        <button 
+          @click="deleteAccount" 
+          class="btn-danger" 
+          :disabled="deleteConfirmation !== 'DELETE' || isDeleting"
+        >
+          {{ isDeleting ? 'Deleting...' : 'Delete Account' }}
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted } from 'vue';
 import { supabase } from '../../supabase.js';
 
 // ===== THEME MANAGEMENT =====
@@ -295,7 +398,6 @@ const isDarkMode = ref(false);
 const handleDarkModeToggle = () => {
   localStorage.setItem('darkMode', isDarkMode.value.toString());
   applyTheme();
-  console.log('Dark Mode:', isDarkMode.value ? 'Enabled' : 'Disabled');
 };
 
 const applyTheme = () => {
@@ -316,30 +418,27 @@ const initializeTheme = () => {
   }
 };
 
-// ===== APP PREFERENCES =====
-const notificationsEnabled = ref(false);
-
-const toggleNotifications = () => {
-  localStorage.setItem('notifications', notificationsEnabled.value.toString());
-  console.log('Notifications:', notificationsEnabled.value ? 'Enabled' : 'Disabled');
-};
-
 // ===== MODAL STATES =====
 const showProfileModal = ref(false);
 const showPasswordModal = ref(false);
+const showPrivacyModal = ref(false);
+const showTermsModal = ref(false);
+const showDeleteModal = ref(false);
 
 // ===== PROFILE MANAGEMENT =====
 const profileData = ref({
   full_name: '',
-  bio: '',
-  profile: ''
+  profile_id: null,
+  auth_user_id: null
 });
 
 const selectedImage = ref(null);
 const imagePreview = ref(null);
+const currentProfilePicture = ref(null);
 const isSaving = ref(false);
 const profileError = ref('');
 const profileSuccess = ref('');
+const userRole = ref('');
 
 // Profile Modal Functions
 const openProfileModal = async () => {
@@ -359,20 +458,47 @@ const closeProfileModal = () => {
 const loadUserProfile = async () => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      return;
+    }
 
-    const { data: profile } = await supabase
+    // Get profile data
+    const { data: profile, error: fetchError } = await supabase
       .from('profiles')
-      .select('full_name, bio, profile')
-      .eq('id', user.id)
+      .select('id, full_name, role, auth_user_id')
+      .eq('auth_user_id', user.id)
       .single();
 
+    if (fetchError) throw fetchError;
+
     if (profile) {
-      profileData.value = {
-        full_name: profile.full_name || '',
-        bio: profile.bio || '',
-        profile: profile.profile || ''
-      };
+      profileData.value.profile_id = profile.id;
+      profileData.value.auth_user_id = profile.auth_user_id;
+      profileData.value.full_name = profile.full_name || '';
+      userRole.value = profile.role;
+
+      // Load role-specific data (students or teachers table)
+      if (profile.role === 'student') {
+        const { data: studentData } = await supabase
+          .from('students')
+          .select('full_name')
+          .eq('profile_id', profile.id)
+          .single();
+        
+        if (studentData) {
+          profileData.value.full_name = studentData.full_name;
+        }
+      } else if (profile.role === 'teacher') {
+        const { data: teacherData } = await supabase
+          .from('teachers')
+          .select('full_name')
+          .eq('profile_id', profile.id)
+          .single();
+        
+        if (teacherData) {
+          profileData.value.full_name = teacherData.full_name;
+        }
+      }
     }
   } catch (error) {
     console.error('Error loading profile:', error);
@@ -385,13 +511,11 @@ const handleImageSelect = (event) => {
   const file = event.target.files[0];
   if (!file) return;
 
-  // Validate file type
   if (!file.type.startsWith('image/')) {
     profileError.value = 'Please select an image file';
     return;
   }
 
-  // Validate file size (max 5MB)
   if (file.size > 5 * 1024 * 1024) {
     profileError.value = 'File size must be less than 5MB';
     return;
@@ -400,7 +524,6 @@ const handleImageSelect = (event) => {
   selectedImage.value = file;
   profileError.value = '';
 
-  // Create preview
   const reader = new FileReader();
   reader.onload = (e) => {
     imagePreview.value = e.target.result;
@@ -419,14 +542,14 @@ const uploadImage = async () => {
     const fileExt = selectedImage.value.name.split('.').pop();
     const fileName = `${user.id}-${Date.now()}.${fileExt}`;
 
-    const { data, error } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from('profiles')
       .upload(fileName, selectedImage.value, { 
         cacheControl: '3600', 
         upsert: true 
       });
 
-    if (error) throw new Error(`Upload failed: ${error.message}`);
+    if (uploadError) throw uploadError;
 
     const { data: { publicUrl } } = supabase.storage
       .from('profiles')
@@ -455,40 +578,50 @@ const saveProfile = async () => {
     if (!user) throw new Error('No user logged in');
 
     // Upload new image if selected
-    let profileUrl = profileData.value.profile;
+    let profileUrl = currentProfilePicture.value;
     if (selectedImage.value) {
       profileUrl = await uploadImage();
     }
 
-    const updateData = {
-      full_name: profileData.value.full_name.trim(),
-      bio: profileData.value.bio.trim(),
-      profile: profileUrl
-    };
-
-    // Check if profile exists
-    const { data: existingProfile } = await supabase
+    // Update profiles table
+    const { error: profileUpdateError } = await supabase
       .from('profiles')
-      .select('id')
-      .eq('id', user.id)
-      .single();
+      .update({ 
+        full_name: profileData.value.full_name.trim(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('auth_user_id', user.id);
 
-    let result;
-    if (existingProfile) {
-      result = await supabase
-        .from('profiles')
-        .update(updateData)
-        .eq('id', user.id);
-    } else {
-      result = await supabase
-        .from('profiles')
-        .insert({ id: user.id, ...updateData });
+    if (profileUpdateError) throw profileUpdateError;
+
+    // Update role-specific table
+    if (userRole.value === 'student') {
+      const { error: studentError } = await supabase
+        .from('students')
+        .update({ 
+          full_name: profileData.value.full_name.trim(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('profile_id', profileData.value.profile_id);
+      
+      if (studentError) throw studentError;
+    } else if (userRole.value === 'teacher') {
+      const { error: teacherError } = await supabase
+        .from('teachers')
+        .update({ 
+          full_name: profileData.value.full_name.trim(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('profile_id', profileData.value.profile_id);
+      
+      if (teacherError) throw teacherError;
     }
 
-    if (result.error) throw new Error(result.error.message);
+    if (profileUrl) {
+      currentProfilePicture.value = profileUrl;
+    }
 
     profileSuccess.value = 'Profile updated successfully!';
-    profileData.value.profile = profileUrl;
 
     setTimeout(() => {
       closeProfileModal();
@@ -511,6 +644,7 @@ const passwordData = ref({
 
 const passwordError = ref('');
 const passwordSuccess = ref('');
+const isChangingPassword = ref(false);
 
 // Password Modal Functions
 const openPasswordModal = () => {
@@ -536,7 +670,6 @@ const resetPasswordForm = () => {
 const changePassword = async () => {
   clearMessages();
 
-  // Validation
   if (!passwordData.value.newPassword || !passwordData.value.confirmPassword) {
     passwordError.value = 'All fields are required';
     return;
@@ -552,19 +685,121 @@ const changePassword = async () => {
     return;
   }
 
+  isChangingPassword.value = true;
+
   try {
     const { error } = await supabase.auth.updateUser({ 
       password: passwordData.value.newPassword 
     });
     
     if (error) throw error;
+
+    // Update password_changed_at in profiles table
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase
+        .from('profiles')
+        .update({ 
+          password_changed_at: new Date().toISOString() 
+        })
+        .eq('auth_user_id', user.id);
+    }
     
     passwordSuccess.value = 'Password updated successfully!';
     setTimeout(() => {
       closePasswordModal();
     }, 1500);
   } catch (error) {
-    passwordError.value = error.message;
+    passwordError.value = error.message || 'Failed to update password';
+  } finally {
+    isChangingPassword.value = false;
+  }
+};
+
+// ===== PRIVACY & LEGAL =====
+const showPrivacyPolicy = () => {
+  showPrivacyModal.value = true;
+};
+
+const showTermsOfService = () => {
+  showTermsModal.value = true;
+};
+
+// ===== DELETE ACCOUNT =====
+const deleteConfirmation = ref('');
+const deleteError = ref('');
+const isDeleting = ref(false);
+
+const openDeleteAccountModal = () => {
+  showDeleteModal.value = true;
+  deleteConfirmation.value = '';
+  deleteError.value = '';
+};
+
+const deleteAccount = async () => {
+  if (deleteConfirmation.value !== 'DELETE') {
+    deleteError.value = 'Please type DELETE to confirm';
+    return;
+  }
+
+  isDeleting.value = true;
+  deleteError.value = '';
+
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('No user logged in');
+
+    // Get profile data
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id, role')
+      .eq('auth_user_id', user.id)
+      .single();
+
+    if (!profile) throw new Error('Profile not found');
+
+    // Delete from role-specific table (cascades will handle related data)
+    if (profile.role === 'student') {
+      const { error: deleteStudentError } = await supabase
+        .from('students')
+        .delete()
+        .eq('profile_id', profile.id);
+      
+      if (deleteStudentError) throw deleteStudentError;
+    } else if (profile.role === 'teacher') {
+      const { error: deleteTeacherError } = await supabase
+        .from('teachers')
+        .delete()
+        .eq('profile_id', profile.id);
+      
+      if (deleteTeacherError) throw deleteTeacherError;
+    }
+
+    // Delete from profiles table
+    const { error: deleteProfileError } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('auth_user_id', user.id);
+
+    if (deleteProfileError) throw deleteProfileError;
+
+    // Delete auth user (this should be the last step)
+    const { error: deleteAuthError } = await supabase.auth.admin.deleteUser(user.id);
+    
+    // Note: admin.deleteUser might not be available in client-side
+    // You may need to call a server function or edge function for this
+    
+    // Sign out the user
+    await supabase.auth.signOut();
+
+    // Redirect to login or home page
+    window.location.href = '/login';
+
+  } catch (error) {
+    console.error('Delete account error:', error);
+    deleteError.value = error.message || 'Failed to delete account. Please contact support.';
+  } finally {
+    isDeleting.value = false;
   }
 };
 
@@ -576,25 +811,10 @@ const clearMessages = () => {
   passwordSuccess.value = '';
 };
 
-const confirmDeleteAccount = () => {
-  if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-    if (confirm('This will permanently delete all your data. Are you absolutely sure?')) {
-      console.log('Account deletion initiated');
-      // Add your account deletion logic here
-    }
-  }
-};
-
 // ===== INITIALIZATION =====
 onMounted(() => {
-  // Load saved notifications preference
-  const savedNotifications = localStorage.getItem('notifications');
-  if (savedNotifications !== null) {
-    notificationsEnabled.value = savedNotifications === 'true';
-  }
-  
-  // Initialize theme
   initializeTheme();
+  loadUserProfile();
 });
 </script>
 
@@ -681,61 +901,6 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 2rem;
-}
-
-/* Profile Display Card */
-.profile-display-card {
-  grid-column: 1 / -1;
-  padding: 2rem;
-}
-
-.profile-display {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  margin-top: 1rem;
-}
-
-.profile-avatar {
-  flex-shrink: 0;
-}
-
-.profile-image {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 3px solid var(--accent-color);
-}
-
-.profile-placeholder {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: var(--action-btn-bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--accent-color);
-  border: 2px dashed var(--accent-color);
-}
-
-.profile-info {
-  flex: 1;
-}
-
-.profile-name {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--primary-text-color);
-  margin: 0 0 0.5rem 0;
-}
-
-.profile-bio {
-  font-size: 1rem;
-  color: var(--secondary-text-color);
-  margin: 0;
-  line-height: 1.5;
 }
 
 .settings-card {
@@ -933,6 +1098,10 @@ input:checked + .slider:before {
   color: var(--primary-text-color);
 }
 
+.info-modal {
+  max-width: 700px;
+}
+
 .modal-header {
   padding: 1.5rem;
   border-bottom: 1px solid var(--card-border-color);
@@ -943,6 +1112,7 @@ input:checked + .slider:before {
   top: 0;
   background: var(--card-background);
   border-radius: 16px 16px 0 0;
+  z-index: 10;
 }
 
 .modal-header h3 {
@@ -969,6 +1139,27 @@ input:checked + .slider:before {
 
 .modal-body {
   padding: 1.5rem;
+}
+
+.info-content {
+  line-height: 1.6;
+}
+
+.info-content h4 {
+  color: var(--accent-color);
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.info-content h5 {
+  color: var(--primary-text-color);
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.info-content p {
+  color: var(--secondary-text-color);
+  margin-bottom: 1rem;
 }
 
 .form-group {
@@ -1074,6 +1265,31 @@ input:checked + .slider:before {
   white-space: nowrap;
 }
 
+/* Warning Box */
+.warning-box {
+  background: rgba(217, 83, 79, 0.1);
+  border: 2px solid #d9534f;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.warning-box svg {
+  color: #d9534f;
+  margin-bottom: 1rem;
+}
+
+.warning-box h4 {
+  color: #d9534f;
+  margin: 0.5rem 0;
+}
+
+.warning-box p {
+  color: var(--secondary-text-color);
+  margin: 0.5rem 0 0 0;
+}
+
 /* Messages */
 .error-message {
   color: #d9534f;
@@ -1105,7 +1321,7 @@ input:checked + .slider:before {
   border-radius: 0 0 16px 16px;
 }
 
-.btn-primary, .btn-secondary {
+.btn-primary, .btn-secondary, .btn-danger {
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
   font-size: 1rem;
@@ -1139,6 +1355,22 @@ input:checked + .slider:before {
 .btn-secondary:hover {
   background: var(--accent-color);
   color: white;
+}
+
+.btn-danger {
+  background: #d9534f;
+  color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #c9302c;
+  transform: translateY(-1px);
+}
+
+.btn-danger:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* Dark mode adjustments */
