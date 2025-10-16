@@ -1,21 +1,24 @@
+
+<!-- TEMPLATE SECTION -->
 <template>
   <div class="dashboard-container">
     <aside class="sidebar">
       <div class="user-info">
         <div class="profile-pic-container">
-          <div class="profile-pic-placeholder">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+          <img 
+            v-if="userProfile.profilePhoto" 
+            :src="userProfile.profilePhoto" 
+            alt="Profile Photo"
+            class="profile-photo"
+          />
+          <div v-else class="profile-photo-placeholder">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
             </svg>
           </div>
         </div>
         <div class="user-details">
-          <!-- Fixed: Better loading and fallback states -->
-          <h3 v-if="isLoading" class="loading-text">
-            <span class="loading-spinner"></span>
-            Loading...
-          </h3>
-          <h3 v-else-if="userProfile.fullName" class="user-name">
+          <h3 v-if="userProfile.fullName" class="user-name">
             {{ userProfile.fullName }}
           </h3>
           <h3 v-else class="no-name-text">
@@ -24,23 +27,19 @@
           
           <p class="role">STUDENT</p>
           
-          <!-- Fixed: Better grade display -->
-          <p v-if="!isLoading && userProfile.grade" class="grade">
+          <p v-if="userProfile.grade" class="grade">
             GRADE {{ userProfile.grade }}
           </p>
-          <p v-else-if="!isLoading" class="grade grade-missing">
+          <p v-else class="grade grade-missing">
             GRADE NOT SET
           </p>
-          <div v-else class="grade-skeleton"></div>
           
-          <!-- Fixed: Better student ID display -->
-          <p v-if="!isLoading && userProfile.studentId" class="student-id">
+          <p v-if="userProfile.studentId" class="student-id">
             STUDENT ID: {{ userProfile.studentId }}
           </p>
-          <p v-else-if="!isLoading" class="student-id student-id-missing">
+          <p v-else class="student-id student-id-missing">
             STUDENT ID: NOT SET
           </p>
-          <div v-else class="student-id-skeleton"></div>
         </div>
       </div>
 
@@ -135,7 +134,7 @@
   </div>
 </template>
 
-
+<!-- SCRIPT SECTION -->
 <script>
 import Home from './student/Home.vue';
 import Subjects from './student/Subjects.vue';
@@ -146,6 +145,13 @@ import { supabase } from '../supabase.js';
 
 export default {
   name: 'StudentDashboard',
+  components: {
+    Home,
+    Subjects,
+    Calendar,
+    Messages,
+    Settings
+  },
   data() {
     return {
       userProfile: {
@@ -154,13 +160,13 @@ export default {
         grade: null,
         email: null,
         role: null,
+        profilePhoto: null
       },
       currentView: 'home',
       isLogoutModalVisible: false,
-      isLoading: true,
       profileSubscription: null,
-      retryCount: 0,
-      maxRetries: 3
+      studentSubscription: null,
+      currentProfileId: null
     };
   },
   computed: {
@@ -179,65 +185,59 @@ export default {
         default:
           return Home;
       }
-    },
+    }
   },
   async mounted() {
     await this.loadUserProfile();
-    this.setupProfileSubscription();
+    this.setupRealtimeSubscription();
     this.initializeDarkMode();
+    
+    // Listen for profile updates from Settings component
+    window.addEventListener('profileUpdated', this.handleProfileUpdate);
   },
   beforeUnmount() {
     if (this.profileSubscription) {
-      this.profileSubscription.unsubscribe();
+      supabase.removeChannel(this.profileSubscription);
     }
+    if (this.studentSubscription) {
+      supabase.removeChannel(this.studentSubscription);
+    }
+    window.removeEventListener('profileUpdated', this.handleProfileUpdate);
   },
   methods: {
     async loadUserProfile() {
       try {
-        this.isLoading = true;
-        
-        // Get the current user from Supabase auth
+        // Get the current authenticated user
         const { data: { user }, error: authError } = await supabase.auth.getUser();
-        console.log('Current user:', user);
         
         if (authError || !user) {
           console.error('Auth error:', authError);
-          this.handleAuthError();
+          this.$router.push('/login');
           return;
         }
 
-        // Fetch student profile using the new database structure
+        // Fetch profile and student data
         await this.fetchStudentProfile(user.id);
 
       } catch (error) {
         console.error('Error loading user profile:', error);
         this.handleProfileError();
-      } finally {
-        this.isLoading = false;
       }
     },
 
     async fetchStudentProfile(userId) {
       try {
-        console.log(`Fetching student profile for user ID: ${userId}`);
-        
-        // First, get profile data and verify role
+        // Get profile data with profile_photo
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('id, full_name, email, role')
+          .select('id, full_name, email, role, profile_photo')
           .eq('auth_user_id', userId)
           .single();
 
-        console.log('Profile data:', profile);
-        console.log('Profile error:', profileError);
-
         if (profileError) {
-          if (profileError.code === 'PGRST116') {
-            console.warn('No profile found for user');
-            await this.handleMissingStudentRecord(userId);
-            return;
-          }
-          throw profileError;
+          console.error('Profile error:', profileError);
+          this.$router.push('/login');
+          return;
         }
 
         // Verify user is a student
@@ -247,59 +247,39 @@ export default {
           return;
         }
 
-        console.log('Profile data from DB:', profile);
+        this.currentProfileId = profile.id;
 
-        // Now fetch student-specific data with better error handling
+        // Get student-specific data
         const { data: studentData, error: studentError } = await supabase
           .from('students')
           .select('student_id, grade_level, full_name, email')
           .eq('profile_id', profile.id)
           .single();
 
-        console.log('Student data query result:', { studentData, studentError });
-
-        if (studentError) {
-          console.warn('Student data fetch error:', studentError);
-          
-          // Check if it's a missing record (no rows returned)
-          if (studentError.code === 'PGRST116') {
-            console.log('No student record found, creating one...');
-            await this.createMissingStudentRecord(profile);
-            return;
-          }
-          
-          // For other errors, use profile data as fallback with generated student ID
-          const tempStudentId = await this.generateStudentId(profile.id);
-          this.userProfile = {
-            fullName: profile.full_name || 'Student',
-            email: profile.email || '',
-            studentId: tempStudentId,
-            grade: null,
-            role: profile.role
-          };
+        if (studentError && studentError.code === 'PGRST116') {
+          // Create missing student record
+          await this.createMissingStudentRecord(profile);
           return;
         }
 
-        console.log('Student data from DB:', studentData);
-        
         // Check if student_id is missing and generate one if needed
-        let finalStudentId = studentData.student_id;
+        let finalStudentId = studentData?.student_id;
         if (!finalStudentId) {
-          console.log('Student ID missing, generating new one...');
           finalStudentId = await this.generateStudentId(profile.id);
           await this.updateStudentId(profile.id, finalStudentId);
         }
-        
-        // Combine profile and student data - ensure student_id is always visible
+
+        // Set user profile with smooth update
         this.userProfile = {
-          fullName: studentData.full_name || profile.full_name || 'Student',
-          email: studentData.email || profile.email || '',
+          fullName: studentData?.full_name || profile.full_name || 'Student',
+          email: studentData?.email || profile.email || '',
           studentId: finalStudentId,
-          grade: studentData.grade_level || null,
-          role: profile.role
+          grade: studentData?.grade_level || null,
+          role: profile.role,
+          profilePhoto: profile.profile_photo || null
         };
-        
-        console.log('Final profile data set:', this.userProfile);
+
+        console.log('Profile loaded successfully:', this.userProfile);
 
       } catch (error) {
         console.error('Error fetching student profile:', error);
@@ -307,15 +287,69 @@ export default {
       }
     },
 
+    setupRealtimeSubscription() {
+      if (!this.currentProfileId) return;
+
+      console.log('Setting up real-time subscriptions for profile:', this.currentProfileId);
+
+      // Subscribe to profiles table changes
+      this.profileSubscription = supabase
+        .channel('profile_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'profiles',
+            filter: `id=eq.${this.currentProfileId}`
+          },
+          async (payload) => {
+            console.log('Profile updated via real-time:', payload);
+            
+            // Smoothly update profile data without full reload
+            if (payload.new) {
+              this.userProfile.fullName = payload.new.full_name || this.userProfile.fullName;
+              this.userProfile.email = payload.new.email || this.userProfile.email;
+              this.userProfile.profilePhoto = payload.new.profile_photo || null;
+            }
+          }
+        )
+        .subscribe();
+
+      // Subscribe to students table changes
+      this.studentSubscription = supabase
+        .channel('student_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'students',
+            filter: `profile_id=eq.${this.currentProfileId}`
+          },
+          async (payload) => {
+            console.log('Student data updated via real-time:', payload);
+            
+            // Smoothly update student data without full reload
+            if (payload.new) {
+              this.userProfile.fullName = payload.new.full_name || this.userProfile.fullName;
+              this.userProfile.email = payload.new.email || this.userProfile.email;
+              this.userProfile.studentId = payload.new.student_id || this.userProfile.studentId;
+              this.userProfile.grade = payload.new.grade_level || this.userProfile.grade;
+            }
+          }
+        )
+        .subscribe();
+    },
+
     async generateStudentId(profileId) {
       try {
-        // Generate a student ID using current year + last 6 chars of profile ID + random 2 digits
         const year = new Date().getFullYear();
         const shortId = profileId.slice(-6).toUpperCase();
         const random = Math.floor(Math.random() * 99).toString().padStart(2, '0');
         const studentId = `${year}${shortId}${random}`;
         
-        // Check if this ID already exists, if so, generate a new one
+        // Check if this ID already exists
         const { data: existingStudent } = await supabase
           .from('students')
           .select('student_id')
@@ -333,6 +367,23 @@ export default {
         console.error('Error generating student ID:', error);
         // Fallback to a simpler format if there's an error
         return `ST${Date.now().toString().slice(-8)}`;
+      }
+    },
+
+    async updateStudentId(profileId, studentId) {
+      try {
+        const { error } = await supabase
+          .from('students')
+          .update({ student_id: studentId })
+          .eq('profile_id', profileId);
+
+        if (error) {
+          console.error('Error updating student ID:', error);
+        } else {
+          console.log('Student ID updated successfully:', studentId);
+        }
+      } catch (error) {
+        console.error('Error in updateStudentId:', error);
       }
     },
 
@@ -364,7 +415,8 @@ export default {
             email: profile.email || '',
             studentId: newStudentId,
             grade: defaultGrade,
-            role: profile.role
+            role: profile.role,
+            profilePhoto: profile.profile_photo || null
           };
           return;
         }
@@ -377,7 +429,8 @@ export default {
           email: data.email,
           studentId: data.student_id,
           grade: data.grade_level,
-          role: profile.role
+          role: profile.role,
+          profilePhoto: profile.profile_photo || null
         };
         
       } catch (error) {
@@ -388,64 +441,11 @@ export default {
           fullName: profile.full_name || 'Student',
           email: profile.email || '',
           studentId: tempStudentId,
-          grade: null,
-          role: profile.role
+          grade: 7,
+          role: profile.role,
+          profilePhoto: profile.profile_photo || null
         };
       }
-    },
-
-    async updateStudentId(profileId, studentId) {
-      try {
-        const { error } = await supabase
-          .from('students')
-          .update({ student_id: studentId })
-          .eq('profile_id', profileId);
-
-        if (error) {
-          console.error('Error updating student ID:', error);
-        } else {
-          console.log('Student ID updated successfully:', studentId);
-        }
-      } catch (error) {
-        console.error('Error in updateStudentId:', error);
-      }
-    },
-
-    async handleMissingStudentRecord(userId) {
-      try {
-        // Get user email from auth
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        // Create a temporary student ID
-        const tempStudentId = await this.generateStudentId(userId);
-        
-        this.userProfile = {
-          fullName: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Student',
-          email: user?.email || '',
-          studentId: tempStudentId,
-          grade: null,
-          role: 'student'
-        };
-        
-        console.log('Using fallback profile with temp ID:', this.userProfile);
-        
-      } catch (error) {
-        console.error('Error handling missing student record:', error);
-        this.handleProfileError();
-      }
-    },
-
-    handleAuthError() {
-      this.userProfile = {
-        fullName: 'Authentication Error',
-        email: '',
-        studentId: 'AUTH_ERROR',
-        grade: null,
-        role: null
-      };
-      setTimeout(() => {
-        this.$router.push('/login');
-      }, 2000);
     },
 
     handleProfileError() {
@@ -454,60 +454,15 @@ export default {
         email: 'Error loading data',
         studentId: 'ERROR_LOADING',
         grade: null,
-        role: null
+        role: null,
+        profilePhoto: null
       };
     },
 
-    setupProfileSubscription() {
-      supabase.auth.getUser().then(({ data: { user } }) => {
-        if (user) {
-          console.log('Setting up profile subscription...');
-          
-          // Subscribe to profiles table changes
-          const profilesSubscription = supabase
-            .channel('profile_changes')
-            .on(
-              'postgres_changes',
-              {
-                event: '*',
-                schema: 'public',
-                table: 'profiles',
-                filter: `auth_user_id=eq.${user.id}`
-              },
-              (payload) => {
-                console.log('Profile updated via subscription:', payload);
-                if (payload.new) {
-                  this.loadUserProfile(); // Reload full profile data
-                }
-              }
-            )
-            .subscribe();
-
-          // Subscribe to students table changes
-          const studentsSubscription = supabase
-            .channel('student_changes')
-            .on(
-              'postgres_changes',
-              {
-                event: '*',
-                schema: 'public',
-                table: 'students'
-              },
-              (payload) => {
-                console.log('Student data updated via subscription:', payload);
-                this.loadUserProfile(); // Reload full profile data
-              }
-            )
-            .subscribe();
-
-          this.profileSubscription = {
-            unsubscribe: () => {
-              profilesSubscription.unsubscribe();
-              studentsSubscription.unsubscribe();
-            }
-          };
-        }
-      });
+    handleProfileUpdate() {
+      console.log('Profile update event received');
+      // The realtime subscription will handle the update automatically
+      // No need to reload, updates happen via real-time listeners
     },
 
     navigateTo(view) {
@@ -535,26 +490,32 @@ export default {
       this.isLogoutModalVisible = false;
       
       try {
+        // Clean up subscriptions
         if (this.profileSubscription) {
-          this.profileSubscription.unsubscribe();
+          supabase.removeChannel(this.profileSubscription);
+        }
+        if (this.studentSubscription) {
+          supabase.removeChannel(this.studentSubscription);
         }
         
+        // Sign out from Supabase
         const { error } = await supabase.auth.signOut();
         if (error) {
           console.error('Logout error:', error);
         }
         
+        // Clear local storage
         localStorage.removeItem('userProfile');
         localStorage.removeItem('darkMode');
         
-        console.log('User logged out');
+        console.log('User logged out successfully');
         this.$router.push('/');
       } catch (error) {
         console.error('Error during logout:', error);
         this.$router.push('/');
       }
-    },
-  },
+    }
+  }
 };
 </script>
 
@@ -1304,5 +1265,59 @@ html, body {
   --shadow-light: rgba(0, 0, 0, 0.1);
   --shadow-medium: rgba(0, 0, 0, 0.2);
   --shadow-strong: rgba(0, 0, 0, 0.3);
+}
+
+.profile-photo {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 4px 16px var(--shadow-strong);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.profile-photo-placeholder {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #3D8D7A 0%, #5FB3A0 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 4px 16px var(--shadow-strong);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.profile-photo-placeholder svg {
+  width: 32px;
+  height: 32px;
+}
+
+/* Update mobile responsive styles for profile photo */
+@media (max-width: 768px) {
+  .profile-photo,
+  .profile-photo-placeholder {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .profile-photo-placeholder svg {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-photo,
+  .profile-photo-placeholder {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .profile-photo-placeholder svg {
+    width: 24px;
+    height: 24px;
+  }
 }
 </style>

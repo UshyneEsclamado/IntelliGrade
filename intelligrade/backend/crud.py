@@ -1,6 +1,24 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, func, desc, or_
-from models import Assessment, AssessmentResult, StudentFeedback, GradingAnalytics, User, Conversation, Message
+from backend.models import User, PasswordResetToken
+
+# Password Reset Token CRUD
+def create_password_reset_token(db: Session, user_id: int, token: str, expires_at):
+    reset_token = PasswordResetToken(user_id=user_id, token=token, expires_at=expires_at)
+    db.add(reset_token)
+    db.commit()
+    db.refresh(reset_token)
+    return reset_token
+
+def get_password_reset_token(db: Session, token: str):
+    return db.query(PasswordResetToken).filter(PasswordResetToken.token == token, PasswordResetToken.used == False).first()
+
+def mark_password_reset_token_used(db: Session, token: str):
+    reset_token = db.query(PasswordResetToken).filter(PasswordResetToken.token == token).first()
+    if reset_token:
+        reset_token.used = True
+        db.commit()
+    return reset_token
 from typing import List, Dict, Optional
 import json
 from datetime import datetime

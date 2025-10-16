@@ -218,7 +218,7 @@
           </button>
 
           <div class="forgot-section">
-            <a href="#" @click.prevent="forgotPassword">Forgot your password?</a>
+            <router-link to="/forgot-password">Forgot your password?</router-link>
           </div>
         </form>
 
@@ -263,11 +263,23 @@ export default {
       passwordErrors: [],
     };
   },
+  
+  // IMPORTANT: Clear any existing session on mount
+  async mounted() {
+    console.log('Login page mounted - clearing any existing session');
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Error clearing session:', error);
+    }
+  },
+  
   watch: {
     password(newPassword) {
       this.validatePassword(newPassword);
     }
   },
+  
   methods: {
     togglePasswordVisibility() {
       this.showPassword = !this.showPassword;
@@ -294,40 +306,50 @@ export default {
     },
 
     async handleLogin() {
+      console.log('=== LOGIN ATTEMPT START ===');
+      
+      // Clear any previous errors
+      this.error = null;
+
+      // Basic validation
       if (!this.email || !this.password) {
         this.error = "Please enter both email and password.";
         return;
       }
 
       this.isLoading = true;
-      this.error = null;
 
       try {
-        console.log('=== LOGIN ATTEMPT ===');
-        console.log('Email:', this.email);
+        console.log('Step 1: Authenticating with email:', this.email);
         
-        // Step 1: Authenticate with Supabase Auth
+        // Step 1: Sign out any existing session first
+        await supabase.auth.signOut();
+        
+        // Step 2: Authenticate with Supabase Auth
         const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-          email: this.email,
+          email: this.email.trim(),
           password: this.password,
         });
 
         if (authError) {
           console.error('Auth error:', authError);
-          throw new Error('Invalid email or password');
+          throw authError;
+        }
+
+        if (!authData?.user) {
+          throw new Error('No user data returned from authentication');
         }
 
         console.log('✓ Auth successful');
         console.log('Auth user ID:', authData.user.id);
 
-        // Step 2: Get user profile from profiles table
+        // Step 3: Get user profile from profiles table
+        console.log('Step 2: Fetching user profile...');
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('id, auth_user_id, role, full_name, email')
           .eq('auth_user_id', authData.user.id)
           .single();
-
-        console.log('Profile query result:', { profile, profileError });
 
         if (profileError) {
           console.error('Profile error:', profileError);
@@ -336,28 +358,69 @@ export default {
         }
 
         if (!profile) {
-          console.error('No profile found for auth user');
+          console.error('No profile found for auth_user_id:', authData.user.id);
           await supabase.auth.signOut();
-          throw new Error('Account setup incomplete. Please complete your registration.');
+          throw new Error('User profile not found. Please contact support.');
         }
 
         console.log('✓ Profile loaded');
-        console.log('Profile ID:', profile.id);
-        console.log('User role:', profile.role);
-        console.log('Full name:', profile.full_name);
+        console.log('Profile details:', {
+          id: profile.id,
+          role: profile.role,
+          name: profile.full_name,
+          email: profile.email
+        });
 
-        // Step 3: Route based on role
+        // Step 4: Verify role-specific record exists and route accordingly
+        console.log('Step 3: Verifying role-specific data...');
+        
         if (profile.role === 'student') {
+          // Check if student record exists
+          const { data: studentData, error: studentError } = await supabase
+            .from('students')
+            .select('id, student_id, grade_level')
+            .eq('profile_id', profile.id)
+            .single();
+
+          if (studentError || !studentData) {
+            console.error('Student record error:', studentError);
+            await supabase.auth.signOut();
+            throw new Error('Student account setup incomplete. Please contact support.');
+          }
+
+          console.log('✓ Student record verified:', studentData);
           console.log('→ Redirecting to student dashboard');
-          this.$router.push('/student-dashboard');
+          
+          // Use replace to prevent back button issues
+          await this.$router.replace('/student-dashboard');
+
         } else if (profile.role === 'teacher') {
+          // Check if teacher record exists
+          const { data: teacherData, error: teacherError } = await supabase
+            .from('teachers')
+            .select('id, employee_id, department')
+            .eq('profile_id', profile.id)
+            .single();
+
+          if (teacherError || !teacherData) {
+            console.error('Teacher record error:', teacherError);
+            await supabase.auth.signOut();
+            throw new Error('Teacher account setup incomplete. Please contact support.');
+          }
+
+          console.log('✓ Teacher record verified:', teacherData);
           console.log('→ Redirecting to teacher dashboard');
-          this.$router.push('/teacher/dashboard');
+          
+          // Use replace to prevent back button issues
+          await this.$router.replace('/teacher/dashboard');
+
         } else {
-          console.warn('Unknown role:', profile.role);
+          console.error('Invalid role:', profile.role);
           await supabase.auth.signOut();
-          throw new Error('Invalid user role. Please contact support.');
+          throw new Error('Invalid user role: ' + profile.role);
         }
+
+        console.log('=== LOGIN SUCCESS ===');
 
       } catch (err) {
         console.error('=== LOGIN FAILED ===');
@@ -369,14 +432,17 @@ export default {
           this.error = "Invalid email or password. Please check your credentials and try again.";
         } else if (err.message?.includes("Email not confirmed")) {
           this.error = "Please verify your email address before logging in. Check your inbox for the verification link.";
-        } else if (err.message?.includes("Account setup incomplete")) {
-          this.error = "Account setup incomplete. Please complete your registration.";
+        } else if (err.message?.includes("account setup incomplete") || 
+                   err.message?.includes("Unable to load user profile") ||
+                   err.message?.includes("profile not found")) {
+          this.error = err.message;
         } else if (err.message?.includes("Invalid user role")) {
-          this.error = "Invalid user role. Please contact support.";
-        } else if (err.message?.includes("Unable to load user profile")) {
-          this.error = "Unable to load user profile. Please contact support.";
-        } else if (err.message?.includes("Network request failed")) {
+          this.error = err.message;
+        } else if (err.message?.includes("Network request failed") || 
+                   err.message?.toLowerCase().includes("fetch")) {
           this.error = "Network error. Please check your connection and try again.";
+        } else if (err.message?.includes("Too many requests")) {
+          this.error = "Too many login attempts. Please wait a moment and try again.";
         } else {
           this.error = err.message || "Login failed. Please try again.";
         }

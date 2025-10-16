@@ -1,8 +1,10 @@
+import ResetPassword from '@/views/ResetPassword.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { supabase } from '@/supabase'
 
 // Import all necessary components
 import Intro from '@/views/Intro.vue'
+import ForgotPassword from '@/views/ForgotPassword.vue'
 import Landing from '@/views/Landing.vue'
 import Login from '@/views/Login.vue'
 import Signup from '@/views/Signup.vue'
@@ -37,23 +39,18 @@ const router = createRouter({
     { path: '/signup-student', name: 'signupStudent', component: SignupStudent },
     { path: '/role-selection', name: 'roleSelection', component: RoleSelection },
     { path: '/student-dashboard', name: 'studentDashboard', component: StudentDashboard, meta: { requiresAuth: true } },
-
-    // Add the new route for /email-verified
+    { path: '/forgot-password', name: 'forgotPassword', component: ForgotPassword },
+    { path: '/reset-password', name: 'resetPassword', component: ResetPassword },
     {
       path: '/email-verified',
       name: 'EmailVerified',
       component: () => import('../views/EmailVerified.vue')
     },
-
-    // Join Class Routes (Manual Entry from Login) - Updated flow
     {
       path: '/join-class',
       name: 'JoinClass',
       component: JoinSection
     },
-    // Other routes...
-
-    // Teacher Dashboard with all routes
     {
       path: '/teacher',
       component: TeacherDashboard,

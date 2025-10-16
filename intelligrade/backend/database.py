@@ -1,11 +1,14 @@
-# backend/app/database.py
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session
 
-# Use your actual Supabase URL directly
-SQLALCHEMY_DATABASE_URL = "postgresql://postgres:777thesisDEFENDEDlLOcKtaponsusi!!@db.aheyuzhgllmwntjdaimi.supabase.co:5432/postgres"
-
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
+def get_db():
+    from .models import SessionLocal
+    if SessionLocal is None:
+        # Return a mock session for offline mode
+        yield None
+        return
+    
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
