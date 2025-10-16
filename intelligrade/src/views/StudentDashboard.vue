@@ -44,56 +44,51 @@
       </div>
 
       <nav class="nav-links">
-        <a
-          href="#"
-          @click.prevent="navigateTo('home')"
-          :class="['nav-item', { 'is-active': currentView === 'home' }]"
+        <router-link
+          to="/student/dashboard"
+          :class="['nav-item', { 'is-active': $route.name === 'StudentDashboardHome' }]"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" />
           </svg>
           <span>Home</span>
-        </a>
-        <a
-          href="#"
-          @click.prevent="navigateTo('subjects')"
-          :class="['nav-item', { 'is-active': currentView === 'subjects' }]"
+        </router-link>
+        <router-link
+          to="/student/subjects"
+          :class="['nav-item', { 'is-active': $route.name === 'StudentSubjects' || $route.name === 'TakeQuiz' || $route.name === 'StudentGrades' }]"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M3,5.5V18.5A2.5,2.5 0 0,0 5.5,21A2.5,2.5 0 0,0 8,18.5V5.5A2.5,2.5 0 0,0 5.5,3A2.5,2.5 0 0,0 3,5.5M12,5.5V18.5A2.5,2.5 0 0,0 14.5,21A2.5,2.5 0 0,0 17,18.5V5.5A2.5,2.5 0 0,0 14.5,3A2.5,2.5 0 0,0 12,5.5M21,5.5V18.5A2.5,2.5 0 0,0 23.5,21A2.5,2.5 0 0,0 26,18.5V5.5A2.5,2.5 0 0,0 23.5,3A2.5,2.5 0 0,0 21,5.5Z" />
           </svg>
           <span>Subjects</span>
-        </a>
-        <a
-          href="#"
-          @click.prevent="navigateTo('calendar')"
-          :class="['nav-item', { 'is-active': currentView === 'calendar' }]"
+        </router-link>
+        <router-link
+          to="/student/calendar"
+          :class="['nav-item', { 'is-active': $route.name === 'StudentCalendar' }]"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M19,19H5V8H19M19,3H18V1H16V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M16.5,13.5H11V18.5H16.5V13.5Z" />
           </svg>
           <span>Calendar</span>
-        </a>
-        <a
-          href="#"
-          @click.prevent="navigateTo('messages')"
-          :class="['nav-item', { 'is-active': currentView === 'messages' }]"
+        </router-link>
+        <router-link
+          to="/student/messages"
+          :class="['nav-item', { 'is-active': $route.name === 'StudentMessages' }]"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="messages-icon">
             <path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zM4 6h16v.5l-8 5-8-5V6zm0 13.5V8l8 5 8-5v11.5H4z"/>
           </svg>
           <span>Messages</span>
-        </a>
-        <a
-          href="#"
-          @click.prevent="navigateTo('settings')"
-          :class="['nav-item', { 'is-active': currentView === 'settings' }]"
+        </router-link>
+        <router-link
+          to="/student/settings"
+          :class="['nav-item', { 'is-active': $route.name === 'StudentSettings' }]"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11.03L21.54,9.37C21.73,9.22 21.78,8.95 21.67,8.75L19.67,5.27C19.56,5.08 19.3,5.03 19.1,5.12L16.9,6C16.5,5.65 16.08,5.36 15.61,5.1L15.2,2.83C15.15,2.56 14.9,2.33 14.62,2.33L9.38,2.33C9.1,2.33 8.85,2.56 8.8,2.83L8.39,5.09C7.92,5.34 7.5,5.65 7.1,6L4.9,5.12C4.7,5.03 4.44,5.08 4.33,5.27L2.33,8.75C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11.03C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.33,15.25L4.33,18.73C4.44,18.92 4.7,18.97 4.9,18.88L7.1,18C7.5,18.35 7.92,18.64 8.39,18.9L8.8,21.17C8.85,21.44 9.1,21.67 9.38,21.67L14.62,21.67C14.9,21.67 15.15,21.44 15.2,21.17L15.61,18.91C16.08,18.66 16.5,18.35 16.9,18L19.1,18.88C19.3,18.97 19.56,18.92 19.67,18.73L21.67,15.25C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" />
           </svg>
           <span>Settings</span>
-        </a>
+        </router-link>
       </nav>
 
       <button @click="showLogoutModal" class="logout-btn">
@@ -105,7 +100,7 @@
     </aside>
 
     <main class="main-content">
-      <component :is="currentComponent" />
+      <router-view />
     </main>
 
     <!-- Logout Confirmation Modal -->
@@ -136,11 +131,6 @@
 
 <!-- SCRIPT SECTION -->
 <script>
-import Home from './student/Home.vue';
-import Subjects from './student/Subjects.vue';
-import Calendar from './student/Calendar.vue';
-import Messages from './student/Messages.vue';
-import Settings from './student/Settings.vue';
 import { supabase } from '../supabase.js';
 
 export default {
@@ -162,7 +152,20 @@ export default {
         role: null,
         profilePhoto: null
       },
-      currentView: 'home',
+      avatarOptions: [
+        { id: '1', emoji: '😊', color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+        { id: '2', emoji: '🎓', color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
+        { id: '3', emoji: '📚', color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' },
+        { id: '4', emoji: '✨', color: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)' },
+        { id: '5', emoji: '🚀', color: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)' },
+        { id: '6', emoji: '🎨', color: 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)' },
+        { id: '7', emoji: '🌟', color: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)' },
+        { id: '8', emoji: '💡', color: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)' },
+        { id: '9', emoji: '🎯', color: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)' },
+        { id: '10', emoji: '🏆', color: 'linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)' },
+        { id: '11', emoji: '🎵', color: 'linear-gradient(135deg, #fdcbf1 0%, #e6dee9 100%)' },
+        { id: '12', emoji: '🌈', color: 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)' }
+      ],
       isLogoutModalVisible: false,
       profileSubscription: null,
       studentSubscription: null,
@@ -170,21 +173,9 @@ export default {
     };
   },
   computed: {
-    currentComponent() {
-      switch (this.currentView) {
-        case 'home':
-          return Home;
-        case 'subjects':
-          return Subjects;
-        case 'calendar':
-          return Calendar;
-        case 'messages':
-          return Messages;
-        case 'settings':
-          return Settings;
-        default:
-          return Home;
-      }
+    currentAvatar() {
+      const avatar = this.avatarOptions.find(a => a.id === this.userProfile.avatar);
+      return avatar || this.avatarOptions[0];
     }
   },
   async mounted() {
@@ -463,10 +454,6 @@ export default {
       console.log('Profile update event received');
       // The realtime subscription will handle the update automatically
       // No need to reload, updates happen via real-time listeners
-    },
-
-    navigateTo(view) {
-      this.currentView = view;
     },
 
     initializeDarkMode() {
