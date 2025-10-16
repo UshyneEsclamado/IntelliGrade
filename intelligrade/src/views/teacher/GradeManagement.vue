@@ -14,7 +14,7 @@
             <p class="header-subtitle">{{ subject?.name }} - {{ section?.name }}</p>
           </div>
         </div>
-        <button @click="goBack" class="back-btn back-btn-black">
+        <button @click="goBack" class="back-btn">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
           </svg>
@@ -31,7 +31,7 @@
       <div class="controls-content">
         <div class="filters">
           <select v-model="selectedQuiz" @change="filterByQuiz" class="filter-select">
-            <option value="">All Quizzes</option>
+            <option value="">All Quizzes ({{ quizzes.length }})</option>
             <option v-for="quiz in quizzes" :key="quiz.id" :value="quiz.id">
               {{ quiz.title }}
             </option>
@@ -41,7 +41,7 @@
             <option value="view">View Only</option>
           </select>
         </div>
-        <button @click="exportGrades" class="secondary-btn">
+        <button @click="exportGrades" class="secondary-btn" :disabled="students.length === 0">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
           </svg>
@@ -59,52 +59,54 @@
     <!-- Grade Table -->
     <div class="table-container">
       <div class="table-header">
-        <h2 class="table-title">Student Grades</h2>
+        <h2 class="table-title">Student Grades ({{ students.length }} Students)</h2>
       </div>
 
-      <div v-if="filteredStudents.length > 0">
+      <div v-if="filteredStudents.length > 0" class="table-wrapper">
         <table class="grade-table">
           <thead>
             <tr>
-              <th>Student</th>
-              <th v-for="quiz in quizzes" :key="quiz.id" class="quiz-column">
+              <th class="student-column">Student</th>
+              <th v-for="quiz in displayedQuizzes" :key="quiz.id" class="quiz-column">
                 {{ quiz.title }}
                 <br>
-                <small>({{ quiz.total_points }} pts)</small>
+                <small>({{ quiz.total_points || 100 }} pts)</small>
               </th>
               <th class="average-column">Average</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="student in filteredStudents" :key="student.id">
-              <td>
+              <td class="student-column">
                 <div class="student-info">
                   <div class="student-avatar">
-                    {{ student.first_name?.charAt(0) || 'S' }}{{ student.last_name?.charAt(0) || 'T' }}
+                    {{ getInitials(student.first_name, student.last_name) }}
                   </div>
                   <div class="student-details">
                     <div class="student-name">{{ student.first_name }} {{ student.last_name }}</div>
+                    <div class="student-email">{{ student.email }}</div>
                   </div>
                 </div>
               </td>
-              <td v-for="quiz in quizzes" :key="quiz.id" class="quiz-column">
+              <td v-for="quiz in displayedQuizzes" :key="quiz.id" class="quiz-column">
                 <input
                   v-if="viewMode === 'edit'"
                   :value="getGradeValue(student.id, quiz.id)"
                   @input="updateGrade(student.id, quiz.id, $event)"
+                  @blur="saveGradeToDatabase(student.id, quiz.id)"
                   type="number"
                   :min="0"
-                  :max="quiz.total_points"
+                  :max="quiz.total_points || 100"
                   class="grade-input"
-                  :placeholder="`/${quiz.total_points}`"
+                  :placeholder="`0/${quiz.total_points || 100}`"
                 />
-                <div v-else class="grade-display" :class="getGradeClass(getGradeValue(student.id, quiz.id), quiz.total_points)">
-                  {{ getGradePercentage(getGradeValue(student.id, quiz.id), quiz.total_points) }}%
+                <div v-else class="grade-display" :class="getGradeClass(getGradeValue(student.id, quiz.id), quiz.total_points || 100)">
+                  {{ formatGrade(getGradeValue(student.id, quiz.id), quiz.total_points || 100) }}
                 </div>
               </td>
               <td class="average-column">
                 <div class="average-display" :class="getAverageClass(student.average)">
-                  {{ student.average ? Math.round(student.average) + '%' : 'N/A' }}
+                  {{ student.average !== null ? Math.round(student.average) + '%' : 'N/A' }}
                 </div>
               </td>
             </tr>
@@ -113,6 +115,9 @@
       </div>
 
       <div v-else class="empty-state">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor" style="opacity: 0.3; margin-bottom: 1rem;">
+          <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z" />
+        </svg>
         <h3>No Students Found</h3>
         <p>No students are enrolled in this section yet.</p>
       </div>
@@ -136,19 +141,19 @@
             <div class="grade-scale">
               <div class="scale-item">
                 <label>A (Excellent):</label>
-                <input type="number" v-model="gradeScale.A" min="0" max="100">%
+                <input type="number" v-model.number="gradeScale.A" min="0" max="100">%
               </div>
               <div class="scale-item">
                 <label>B (Good):</label>
-                <input type="number" v-model="gradeScale.B" min="0" max="100">%
+                <input type="number" v-model.number="gradeScale.B" min="0" max="100">%
               </div>
               <div class="scale-item">
                 <label>C (Satisfactory):</label>
-                <input type="number" v-model="gradeScale.C" min="0" max="100">%
+                <input type="number" v-model.number="gradeScale.C" min="0" max="100">%
               </div>
               <div class="scale-item">
                 <label>D (Needs Improvement):</label>
-                <input type="number" v-model="gradeScale.D" min="0" max="100">%
+                <input type="number" v-model.number="gradeScale.D" min="0" max="100">%
               </div>
             </div>
           </div>
@@ -190,81 +195,106 @@
         <p>{{ loadingMessage }}</p>
       </div>
     </div>
+
+    <!-- Success Toast -->
+    <transition name="toast">
+      <div v-if="showToast" class="toast" :class="toastType">
+        {{ toastMessage }}
+      </div>
+    </transition>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { supabase } from '../../supabase'
 import { useDarkMode } from '../../composables/useDarkMode.js'
 
-// Interfaces
-interface Enrollment {
-  student_id: string
-  students: {
-    id: string
-    first_name: string
-    last_name: string
-    email: string
-  }[]
+interface Student {
+  id: string
+  first_name: string
+  last_name: string
+  email: string
+  average: number | null
 }
 
-// Dark mode
-const { isDarkMode, initDarkMode } = useDarkMode()
+interface Quiz {
+  id: string
+  title: string
+  total_points: number
+  created_at: string
+  status?: string
+}
 
+interface QuizResult {
+  id: string
+  quiz_id: string
+  student_id: string
+  best_score: number
+  best_percentage: number
+}
+
+const { isDarkMode, initDarkMode } = useDarkMode()
 const router = useRouter()
 const route = useRoute()
 
-// Data
-const students = ref([])
-const quizzes = ref([])
-const grades = ref({})
-const subject = ref(null)
-const section = ref(null)
-const subjectId = ref(route.params.subjectId)
-const sectionId = ref(route.params.sectionId)
+const students = ref<Student[]>([])
+const quizzes = ref<Quiz[]>([])
+const grades = ref<Record<string, Record<string, number>>>({})
+const quizResults = ref<QuizResult[]>([])
+const subject = ref<any>(null)
+const section = ref<any>(null)
+const subjectId = ref(route.params.subjectId as string)
+const sectionId = ref(route.params.sectionId as string)
 
-// UI State
 const isLoading = ref(false)
 const loadingMessage = ref('')
 const viewMode = ref('edit')
 const selectedQuiz = ref('')
 const showGradeSettings = ref(false)
+const showToast = ref(false)
+const toastMessage = ref('')
+const toastType = ref('success')
 
-// Grade Settings
-const gradeScale = ref({
-  A: 90,
-  B: 80,
-  C: 70,
-  D: 60
-})
+const gradeScale = ref({ A: 90, B: 80, C: 70, D: 60 })
+const displayOptions = ref({ showPercentages: true, showLetterGrades: false, roundToWhole: true })
 
-const displayOptions = ref({
-  showPercentages: true,
-  showLetterGrades: false,
-  roundToWhole: true
-})
+const filteredStudents = computed(() => [...students.value])
+const displayedQuizzes = computed(() => selectedQuiz.value ? quizzes.value.filter(q => q.id === selectedQuiz.value) : quizzes.value)
 
-// Computed
-const filteredStudents = computed(() => {
-  const filtered = [...students.value]
+const getInitials = (firstName: string, lastName: string): string => {
+  const first = firstName?.charAt(0)?.toUpperCase() || 'S'
+  const last = lastName?.charAt(0)?.toUpperCase() || 'T'
+  return first + last
+}
+
+const getGradeValue = (studentId: string, quizId: string): number => grades.value[studentId]?.[quizId] || 0
+
+const formatGrade = (grade: number, totalPoints: number): string => {
+  if (!grade || !totalPoints) return '0%'
+  const percentage = (grade / totalPoints) * 100
   
-  if (selectedQuiz.value) {
-    // Filter logic for specific quiz if needed
+  if (displayOptions.value.showLetterGrades) {
+    const letter = getLetterGrade(percentage)
+    if (displayOptions.value.showPercentages) return `${Math.round(percentage)}% (${letter})`
+    return letter
   }
   
-  return filtered
-})
+  return displayOptions.value.roundToWhole ? `${Math.round(percentage)}%` : `${percentage.toFixed(1)}%`
+}
 
-// Functions
-const getGradePercentage = (grade: number, totalPoints: number): string => {
-  if (!grade || !totalPoints) return '0'
-  return Math.round((grade / totalPoints) * 100).toString()
+const getLetterGrade = (percentage: number): string => {
+  if (percentage >= gradeScale.value.A) return 'A'
+  if (percentage >= gradeScale.value.B) return 'B'
+  if (percentage >= gradeScale.value.C) return 'C'
+  if (percentage >= gradeScale.value.D) return 'D'
+  return 'F'
 }
 
 const getGradeClass = (grade: number, totalPoints: number): string => {
-  const percentage = Number(getGradePercentage(grade, totalPoints))
+  if (!grade || !totalPoints) return 'grade-f'
+  const percentage = (grade / totalPoints) * 100
   if (percentage >= 90) return 'grade-a'
   if (percentage >= 80) return 'grade-b'
   if (percentage >= 70) return 'grade-c'
@@ -272,7 +302,7 @@ const getGradeClass = (grade: number, totalPoints: number): string => {
   return 'grade-f'
 }
 
-const getAverageClass = (average: number): string => {
+const getAverageClass = (average: number | null): string => {
   if (!average) return ''
   if (average >= 90) return 'grade-a'
   if (average >= 80) return 'grade-b'
@@ -281,42 +311,38 @@ const getAverageClass = (average: number): string => {
   return 'grade-f'
 }
 
-const getGradeValue = (studentId: string, quizId: string): number => {
-  return grades.value[studentId]?.[quizId] || 0
-}
-
-const updateGrade = async (studentId: string, quizId: string, event: Event) => {
+const updateGrade = (studentId: string, quizId: string, event: Event) => {
   const target = event.target as HTMLInputElement
   const newGrade = Number(target.value)
   
-  if (!grades.value[studentId]) {
-    grades.value[studentId] = {}
-  }
-  
+  if (!grades.value[studentId]) grades.value[studentId] = {}
   grades.value[studentId][quizId] = newGrade
-  
-  // Save to database
-  await saveGrade(studentId, quizId, newGrade)
-  
-  // Recalculate student average
   calculateStudentAverage(studentId)
 }
 
-const saveGrade = async (studentId: string, quizId: string, grade: number) => {
+const saveGradeToDatabase = async (studentId: string, quizId: string) => {
+  const grade = getGradeValue(studentId, quizId)
+  const quiz = quizzes.value.find(q => q.id === quizId)
+  if (!quiz) return
+  
   try {
-    const { error } = await supabase
-      .from('quiz_results')
-      .upsert({
-        student_id: studentId,
-        quiz_id: quizId,
-        score: grade,
-        updated_at: new Date()
-      })
+    const percentage = (grade / quiz.total_points) * 100
+    const { error } = await supabase.from('quiz_results').upsert({
+      quiz_id: quizId,
+      student_id: studentId,
+      best_score: grade,
+      best_percentage: percentage,
+      status: 'graded',
+      finalized: true,
+      visible_to_student: true,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'quiz_id,student_id' })
     
     if (error) throw error
+    showToastMessage('Grade saved successfully!', 'success')
   } catch (error) {
     console.error('Error saving grade:', error)
-    alert('Failed to save grade. Please try again.')
+    showToastMessage('Failed to save grade. Please try again.', 'error')
   }
 }
 
@@ -327,19 +353,16 @@ const calculateStudentAverage = (studentId: string) => {
   const gradeValues = Object.entries(studentGrades).map(([quizId, grade]) => {
     const quiz = quizzes.value.find(q => q.id === quizId)
     return quiz ? (Number(grade) / quiz.total_points) * 100 : 0
-  })
+  }).filter(val => val > 0)
 
   if (gradeValues.length > 0) {
     const average = gradeValues.reduce((a, b) => a + b, 0) / gradeValues.length
     const student = students.value.find(s => s.id === studentId)
-    if (student) {
-      student.average = average
-    }
+    if (student) student.average = average
   }
 }
 
 const filterByQuiz = () => {
-  // Filter implementation if needed
   console.log('Filtering by quiz:', selectedQuiz.value)
 }
 
@@ -348,9 +371,15 @@ const changeViewMode = () => {
 }
 
 const saveGradeSettings = () => {
-  console.log('Saving grade settings:', { gradeScale: gradeScale.value, displayOptions: displayOptions.value })
   showGradeSettings.value = false
-  alert('Grade settings saved successfully!')
+  showToastMessage('Grade settings saved successfully!', 'success')
+}
+
+const showToastMessage = (message: string, type: string = 'success') => {
+  toastMessage.value = message
+  toastType.value = type
+  showToast.value = true
+  setTimeout(() => showToast.value = false, 3000)
 }
 
 const fetchData = async () => {
@@ -358,98 +387,130 @@ const fetchData = async () => {
   loadingMessage.value = 'Loading grade data...'
   
   try {
-    // Fetch subject and section info
-    const { data: subjectData } = await supabase
-      .from('subjects')
-      .select('*')
-      .eq('id', subjectId.value)
-      .single()
+    const [subjectRes, sectionRes] = await Promise.all([
+      supabase.from('subjects').select('*').eq('id', subjectId.value).single(),
+      supabase.from('sections').select('*').eq('id', sectionId.value).single()
+    ])
     
-    const { data: sectionData } = await supabase
-      .from('sections')
-      .select('*')
-      .eq('id', sectionId.value)
-      .single()
+    subject.value = subjectRes.data
+    section.value = sectionRes.data
     
-    subject.value = subjectData
-    section.value = sectionData
+    const { data: enrollmentsData, error: enrollError } = await supabase
+      .from('enrollments').select('student_id, students(id, full_name, email)')
+      .eq('section_id', sectionId.value).eq('status', 'active')
     
-    // Fetch students in this section
-    const { data: studentsData } = await supabase
-      .from('section_enrollments')
-      .select(`
-        student_id,
-        students (
-          id,
-          first_name,
-          last_name,
-          email
-        )
-      `)
-      .eq('section_id', sectionId.value)
+    if (enrollError) throw enrollError
     
-    students.value = studentsData?.map((enrollment: Enrollment) => ({
-      id: enrollment.students[0].id,
-      first_name: enrollment.students[0].first_name,
-      last_name: enrollment.students[0].last_name,
-      email: enrollment.students[0].email,
-      average: null
-    })) || []
-    
-    // Fetch quizzes for this subject/section
-    const { data: quizzesData } = await supabase
-      .from('quizzes')
-      .select('*')
-      .eq('subject_id', subjectId.value)
-      .eq('section_id', sectionId.value)
-    
-    quizzes.value = quizzesData || []
-    
-    // Fetch existing grades
-    const { data: gradesData } = await supabase
-      .from('quiz_results')
-      .select('*')
-      .in('quiz_id', quizzes.value.map(q => q.id))
-      .in('student_id', students.value.map(s => s.id))
-    
-    // Organize grades by student and quiz
-    grades.value = {}
-    gradesData?.forEach(result => {
-      if (!grades.value[result.student_id]) {
-        grades.value[result.student_id] = {}
+    students.value = enrollmentsData?.map((enrollment: any) => {
+      const studentData = enrollment.students
+      const fullName = studentData.full_name || ''
+      const nameParts = fullName.split(' ')
+      
+      return {
+        id: studentData.id,
+        first_name: nameParts[0] || 'Unknown',
+        last_name: nameParts.slice(1).join(' ') || 'Student',
+        email: studentData.email || '',
+        average: null
       }
-      grades.value[result.student_id][result.quiz_id] = result.score
-    })
+    }) || []
     
-    // Calculate averages for each student
-    students.value.forEach(student => {
-      calculateStudentAverage(student.id)
-    })
+    const { data: quizzesData, error: quizzesError } = await supabase
+      .from('quizzes').select('id, title, created_at, status')
+      .eq('subject_id', subjectId.value).eq('section_id', sectionId.value)
+      .eq('status', 'published').order('created_at', { ascending: true })
     
+    if (quizzesError) throw quizzesError
+    
+    const quizzesWithPoints: Quiz[] = []
+    for (const quiz of quizzesData || []) {
+      const { data: questionsData } = await supabase
+        .from('quiz_questions').select('points').eq('quiz_id', quiz.id)
+      
+      const totalPoints = questionsData?.reduce((sum, q) => sum + (q.points || 0), 0) || 100
+      
+      quizzesWithPoints.push({
+        id: quiz.id,
+        title: quiz.title,
+        created_at: quiz.created_at,
+        status: quiz.status,
+        total_points: totalPoints
+      })
+    }
+    
+    quizzes.value = quizzesWithPoints
+    
+    if (quizzes.value.length > 0 && students.value.length > 0) {
+      const { data: resultsData, error: resultsError } = await supabase
+        .from('quiz_results').select('*')
+        .in('quiz_id', quizzes.value.map(q => q.id))
+        .in('student_id', students.value.map(s => s.id))
+      
+      if (resultsError) throw resultsError
+      
+      quizResults.value = resultsData || []
+      grades.value = {}
+      resultsData?.forEach((result: QuizResult) => {
+        if (!grades.value[result.student_id]) grades.value[result.student_id] = {}
+        grades.value[result.student_id][result.quiz_id] = result.best_score || 0
+      })
+    }
+    
+    students.value.forEach(student => calculateStudentAverage(student.id))
   } catch (error) {
     console.error('Error fetching data:', error)
-    alert('Failed to load grade data. Please try again.')
+    showToastMessage('Failed to load grade data. Please try again.', 'error')
   } finally {
     isLoading.value = false
   }
 }
 
-// Actions
-const goBack = async () => {
-  try {
-    await router.push({
-      name: 'ViewStudents',
-      params: { subjectId: subjectId.value, sectionId: sectionId.value }
-    })
-  } catch (error) {
-    console.error('Navigation error:', error)
-  }
+const goBack = () => {
+  router.push({ 
+    name: 'ViewStudents', 
+    params: { subjectId: subjectId.value, sectionId: sectionId.value } 
+  })
 }
 
 const exportGrades = () => {
-  console.log('Exporting grades...')
-  alert('Export grades functionality will be implemented - this will generate a CSV/Excel file with all student grades.')
+  if (students.value.length === 0) {
+    showToastMessage('No data to export', 'error')
+    return
+  }
+  
+  try {
+    let csv = 'Student Name,Email,' + quizzes.value.map(q => q.title).join(',') + ',Average\n'
+    
+    students.value.forEach(student => {
+      csv += `"${student.first_name} ${student.last_name}","${student.email}",`
+      quizzes.value.forEach(quiz => {
+        const grade = getGradeValue(student.id, quiz.id)
+        const percentage = quiz.total_points ? Math.round((grade / quiz.total_points) * 100) : 0
+        csv += `${percentage}%,`
+      })
+      csv += `${student.average ? Math.round(student.average) + '%' : 'N/A'}\n`
+    })
+    
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${subject.value?.name}_${section.value?.name}_grades.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+    
+    showToastMessage('Grades exported successfully!', 'success')
+  } catch (error) {
+    console.error('Error exporting grades:', error)
+    showToastMessage('Failed to export grades', 'error')
+  }
 }
+
+watch(() => grades.value, () => {
+  students.value.forEach(student => calculateStudentAverage(student.id))
+}, { deep: true })
 
 onMounted(async () => {
   initDarkMode()
@@ -460,305 +521,103 @@ onMounted(async () => {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-.grade-management-page {
-  min-height: 100vh;
-  background: #FBFFE4;
-  padding: 1.5rem;
-  font-family: 'Inter', sans-serif;
-}
-.dark .grade-management-page {
-  background: #181c20;
-}
+.grade-management-page { min-height: 100vh; background: #FBFFE4; padding: 1.5rem; font-family: 'Inter', sans-serif; }
+.dark .grade-management-page { background: #181c20; }
 
-/* Header */
-.header-card {
-  background: white;
-  border-radius: 16px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-.dark .header-card {
-  background: #23272b;
-  border: 1px solid #3D8D7A;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-}
+.header-card { background: white; border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+.dark .header-card { background: #23272b; border: 1px solid #3D8D7A; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
 
-.header-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
+.header-content { display: flex; align-items: center; justify-content: space-between; }
+.header-left { display: flex; align-items: center; gap: 1rem; }
+.header-icon { width: 56px; height: 56px; background: #3D8D7A; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; }
+.header-title { font-size: 1.5rem; font-weight: 700; color: #1f2937; margin-bottom: 0.25rem; }
+.dark .header-title { color: #A3D1C6; }
+.header-subtitle { font-size: 0.875rem; color: #6b7280; }
+.dark .header-subtitle { color: #A3D1C6; }
 
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
+.back-btn { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.25rem; border-radius: 8px; font-weight: 500; font-size: 0.875rem; transition: all 0.2s; cursor: pointer; border: 2px solid #3D8D7A; background: #3D8D7A; color: white; box-shadow: 0 2px 8px rgba(61,141,122,0.1); }
+.back-btn:hover { background: #A3D1C6; color: #23272b; border-color: #3D8D7A; box-shadow: 0 4px 16px rgba(61,141,122,0.18); }
 
-.header-icon {
-  width: 56px;
-  height: 56px;
-  background: #3D8D7A;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
+.controls-card { background: white; border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+.dark .controls-card { background: #23272b; border: 1px solid #3D8D7A; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
 
-.header-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 0.25rem;
-}
-.dark .header-title {
-  color: #A3D1C6;
-}
+.controls-title { font-size: 1.125rem; font-weight: 600; color: #1f2937; margin-bottom: 1rem; }
+.dark .controls-title { color: #A3D1C6; }
 
-.header-subtitle {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-.dark .header-subtitle {
-  color: #A3D1C6;
-}
+.controls-content { display: grid; grid-template-columns: 1fr auto auto; gap: 1rem; align-items: center; }
+.filters { display: flex; gap: 1rem; align-items: center; }
 
-.back-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1.25rem;
-  border-radius: 8px;
-  font-weight: 500;
-  font-size: 0.875rem;
-  transition: all 0.2s;
-  cursor: pointer;
-  text-decoration: none;
-  outline: none;
-  border: 2px solid #3D8D7A;
-  background: #3D8D7A;
-  color: white;
-  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
-}
-.back-btn:hover {
-  background: #A3D1C6;
-  color: #23272b;
-  border-color: #3D8D7A;
-  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.18);
-}
-.dark .back-btn {
-  background: #3D8D7A;
-  color: white;
-  border-color: #A3D1C6;
-}
-.dark .back-btn:hover {
-  background: #A3D1C6;
-  color: #23272b;
-  border-color: #3D8D7A;
-}
+.filter-select { padding: 0.5rem 1rem; border: 1px solid #d1d5db; border-radius: 8px; background: white; color: #374151; font-size: 0.875rem; outline: none; transition: all 0.2s; min-width: 150px; cursor: pointer; }
+.filter-select:focus { border-color: #3D8D7A; box-shadow: 0 0 0 3px rgba(61,141,122,0.1); }
+.dark .filter-select { background: #374151; border-color: #4b5563; color: #e5e7eb; }
 
-/* Controls */
-.controls-card {
-  background: white;
-  border-radius: 16px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-.dark .controls-card {
-  background: #23272b;
-  border: 1px solid #3D8D7A;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-}
+.primary-btn, .secondary-btn { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 500; font-size: 0.875rem; cursor: pointer; transition: all 0.2s; border: none; }
+.primary-btn { background: #3D8D7A; color: white; }
+.primary-btn:hover { background: #B3D8A8; color: #1f2937; }
 
-.controls-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-}
+.secondary-btn { background: white; color: #374151; border: 1px solid #d1d5db; }
+.secondary-btn:hover:not(:disabled) { background: #B3D8A8; border-color: #3D8D7A; color: #1f2937; }
+.secondary-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.dark .secondary-btn { background: #374151; color: #e5e7eb; border-color: #4b5563; }
 
-.controls-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1f2937;
-}
-.dark .controls-title {
-  color: #A3D1C6;
-}
+.table-container { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+.dark .table-container { background: #23272b; border: 1px solid #3D8D7A; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
 
-.controls-content {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 1rem;
-  align-items: center;
-}
+.table-header { background: #B3D8A8; padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb; }
+.dark .table-header { background: #3D8D7A; border-bottom-color: #4b5563; }
+.table-title { font-size: 1.125rem; font-weight: 600; color: #1f2937; }
+.dark .table-title { color: white; }
 
-.filters {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-}
+.table-wrapper { overflow-x: auto; }
+.grade-table { width: 100%; border-collapse: collapse; min-width: 800px; }
 
-.filter-select {
-  padding: 0.5rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: white;
-  color: #374151;
-  font-size: 0.875rem;
-  outline: none;
-  transition: all 0.2s;
-  min-width: 150px;
+/* Table Styling */
+.grade-table thead tr {
+  background: #f3f4f6;
+  border-bottom: 2px solid #e5e7eb;
 }
-.filter-select:focus {
-  border-color: #3D8D7A;
-  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
-}
-.dark .filter-select {
+.dark .grade-table thead tr {
   background: #374151;
-  border-color: #4b5563;
-  color: #e5e7eb;
-}
-.dark .filter-select:focus {
-  border-color: #A3D1C6;
-  box-shadow: 0 0 0 3px rgba(163, 209, 198, 0.1);
-}
-
-.primary-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  background: #3D8D7A;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 500;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-decoration: none;
-}
-.primary-btn:hover {
-  background: #B3D8A8;
-  color: #1f2937;
-}
-.dark .primary-btn {
-  background: #3D8D7A;
-  color: white;
-}
-.dark .primary-btn:hover {
-  background: #A3D1C6;
-  color: #1f2937;
-}
-
-.secondary-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  background: white;
-  color: #374151;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-weight: 500;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-decoration: none;
-}
-.secondary-btn:hover {
-  background: #B3D8A8;
-  border-color: #3D8D7A;
-  color: #1f2937;
-}
-.dark .secondary-btn {
-  background: #374151;
-  color: #e5e7eb;
-  border-color: #4b5563;
-}
-.dark .secondary-btn:hover {
-  background: #A3D1C6;
-  border-color: #3D8D7A;
-  color: #1f2937;
-}
-
-/* Table */
-.table-container {
-  background: white;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-.dark .table-container {
-  background: #23272b;
-  border: 1px solid #3D8D7A;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-}
-
-.table-header {
-  background: #B3D8A8;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-}
-.dark .table-header {
-  background: #3D8D7A;
   border-bottom-color: #4b5563;
 }
 
-.table-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1f2937;
-}
-.dark .table-title {
-  color: white;
-}
-
-.grade-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.grade-table th,
-.grade-table td {
+.grade-table th {
   padding: 1rem;
   text-align: left;
-  border-bottom: 1px solid #e5e7eb;
-}
-.dark .grade-table th,
-.dark .grade-table td {
-  border-bottom-color: #374151;
-}
-
-.grade-table th {
-  background: #FBFFE4;
   font-weight: 600;
-  color: #374151;
+  color: #1f2937;
   font-size: 0.875rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.5px;
 }
 .dark .grade-table th {
-  background: #374151;
-  color: #A3D1C6;
+  color: #e5e7eb;
+}
+
+.grade-table tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+  transition: background-color 0.2s;
+}
+.grade-table tbody tr:hover {
+  background: #fafafa;
+}
+.dark .grade-table tbody tr:hover {
+  background: #2d3135;
 }
 
 .grade-table td {
-  color: #6b7280;
-  font-size: 0.875rem;
+  padding: 1rem;
+  color: #374151;
 }
 .dark .grade-table td {
-  color: #d1d5db;
+  color: #e5e7eb;
+}
+
+.student-column {
+  min-width: 250px;
+  width: 250px;
 }
 
 .student-info {
@@ -768,38 +627,70 @@ onMounted(async () => {
 }
 
 .student-avatar {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: #3D8D7A;
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
   font-weight: 600;
   font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.student-details {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .student-name {
-  font-weight: 500;
+  font-weight: 600;
   color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .dark .student-name {
   color: #e5e7eb;
 }
 
+.student-email {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dark .student-email {
+  color: #9ca3af;
+}
+
+.quiz-column {
+  min-width: 120px;
+  text-align: center;
+  font-size: 0.8rem;
+}
+
+.average-column {
+  min-width: 100px;
+  text-align: center;
+  font-weight: 600;
+}
+
 .grade-input {
-  width: 80px;
-  padding: 0.375rem 0.5rem;
+  width: 100%;
+  padding: 0.5rem;
   border: 1px solid #d1d5db;
   border-radius: 6px;
-  text-align: center;
   font-size: 0.875rem;
-  background: white;
-  color: #374151;
+  text-align: center;
+  outline: none;
+  transition: all 0.2s;
 }
 .grade-input:focus {
-  outline: none;
   border-color: #3D8D7A;
   box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
 }
@@ -808,30 +699,88 @@ onMounted(async () => {
   border-color: #4b5563;
   color: #e5e7eb;
 }
-.dark .grade-input:focus {
-  border-color: #A3D1C6;
-  box-shadow: 0 0 0 3px rgba(163, 209, 198, 0.1);
-}
 
 .grade-display {
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-weight: 500;
-  font-size: 0.875rem;
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-weight: 600;
   text-align: center;
+  font-size: 0.875rem;
+  transition: all 0.2s;
 }
 
-.grade-a { background: #dcfce7; color: #166534; }
-.grade-b { background: #dbeafe; color: #1d4ed8; }
-.grade-c { background: #fef3c7; color: #d97706; }
-.grade-d { background: #fed7d7; color: #dc2626; }
-.grade-f { background: #fee2e2; color: #dc2626; }
+.grade-a {
+  background: #dcfce7;
+  color: #166534;
+}
+.dark .grade-a {
+  background: rgba(34, 197, 94, 0.2);
+  color: #86efac;
+}
 
-.dark .grade-a { background: #166534; color: #dcfce7; }
-.dark .grade-b { background: #1d4ed8; color: #dbeafe; }
-.dark .grade-c { background: #d97706; color: #fef3c7; }
-.dark .grade-d { background: #dc2626; color: #fed7d7; }
-.dark .grade-f { background: #dc2626; color: #fee2e2; }
+.grade-b {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.dark .grade-b {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+}
+
+.grade-c {
+  background: #fef3c7;
+  color: #92400e;
+}
+.dark .grade-c {
+  background: rgba(251, 146, 60, 0.2);
+  color: #fed7aa;
+}
+
+.grade-d {
+  background: #fee2e2;
+  color: #7f1d1d;
+}
+.dark .grade-d {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+}
+
+.grade-f {
+  background: #fecaca;
+  color: #7f1d1d;
+}
+.dark .grade-f {
+  background: rgba(220, 38, 38, 0.2);
+  color: #fca5a5;
+}
+
+.average-display {
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: #9ca3af;
+}
+.dark .empty-state {
+  color: #6b7280;
+}
+
+.empty-state h3 {
+  font-size: 1.125rem;
+  margin-bottom: 0.5rem;
+  color: #374151;
+}
+.dark .empty-state h3 {
+  color: #e5e7eb;
+}
 
 /* Modal */
 .modal-overlay {
@@ -845,16 +794,17 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 1rem;
 }
 
 .modal-content {
   background: white;
   border-radius: 16px;
+  box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
   max-width: 500px;
-  width: 90%;
-  max-height: 80vh;
+  width: 100%;
+  max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 }
 .dark .modal-content {
   background: #23272b;
@@ -869,12 +819,12 @@ onMounted(async () => {
   border-bottom: 1px solid #e5e7eb;
 }
 .dark .modal-header {
-  border-bottom-color: #374151;
+  border-bottom-color: #3D8D7A;
 }
 
 .modal-header h2 {
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #1f2937;
 }
 .dark .modal-header h2 {
@@ -882,23 +832,17 @@ onMounted(async () => {
 }
 
 .close-btn {
-  padding: 0.5rem;
   background: none;
   border: none;
   cursor: pointer;
+  padding: 0.5rem;
   color: #6b7280;
-  border-radius: 8px;
-  transition: all 0.2s;
+  transition: color 0.2s;
 }
 .close-btn:hover {
-  background: #f3f4f6;
-  color: #374151;
-}
-.dark .close-btn {
-  color: #9ca3af;
+  color: #1f2937;
 }
 .dark .close-btn:hover {
-  background: #374151;
   color: #e5e7eb;
 }
 
@@ -907,14 +851,14 @@ onMounted(async () => {
 }
 
 .setting-group {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .setting-group h3 {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  color: #1f2937;
   margin-bottom: 1rem;
+  color: #1f2937;
 }
 .dark .setting-group h3 {
   color: #A3D1C6;
@@ -922,7 +866,7 @@ onMounted(async () => {
 
 .grade-scale {
   display: grid;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .scale-item {
@@ -932,12 +876,13 @@ onMounted(async () => {
 }
 
 .scale-item label {
-  min-width: 120px;
-  font-weight: 500;
+  min-width: 150px;
   color: #374151;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 .dark .scale-item label {
-  color: #d1d5db;
+  color: #e5e7eb;
 }
 
 .scale-item input {
@@ -945,12 +890,11 @@ onMounted(async () => {
   padding: 0.5rem;
   border: 1px solid #d1d5db;
   border-radius: 6px;
+  font-size: 0.875rem;
   text-align: center;
-  background: white;
-  color: #374151;
+  outline: none;
 }
 .scale-item input:focus {
-  outline: none;
   border-color: #3D8D7A;
   box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
 }
@@ -959,151 +903,174 @@ onMounted(async () => {
   border-color: #4b5563;
   color: #e5e7eb;
 }
-.dark .scale-item input:focus {
-  border-color: #A3D1C6;
-}
 
 .option-item {
+  display: flex;
+  align-items: center;
   margin-bottom: 0.75rem;
+}
+
+.option-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin-right: 0.75rem;
+  cursor: pointer;
+  accent-color: #3D8D7A;
 }
 
 .option-item label {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
   cursor: pointer;
+  font-size: 0.875rem;
   color: #374151;
 }
 .dark .option-item label {
-  color: #d1d5db;
+  color: #e5e7eb;
 }
 
 .modal-actions {
   display: flex;
   gap: 1rem;
-  justify-content: flex-end;
-  padding-top: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
   border-top: 1px solid #e5e7eb;
 }
 .dark .modal-actions {
-  border-top-color: #374151;
+  border-top-color: #3D8D7A;
 }
 
-.cancel-btn {
-  padding: 0.75rem 1.5rem;
-  background: white;
-  color: #374151;
-  border: 1px solid #d1d5db;
+.cancel-btn, .save-btn {
+  flex: 1;
+  padding: 0.75rem;
   border-radius: 8px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  border: none;
+  font-size: 0.875rem;
+}
+
+.cancel-btn {
+  background: #e5e7eb;
+  color: #374151;
 }
 .cancel-btn:hover {
-  background: #f9fafb;
+  background: #d1d5db;
 }
 .dark .cancel-btn {
   background: #374151;
   color: #e5e7eb;
-  border-color: #4b5563;
 }
 .dark .cancel-btn:hover {
   background: #4b5563;
 }
 
 .save-btn {
-  padding: 0.75rem 1.5rem;
   background: #3D8D7A;
   color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
 }
 .save-btn:hover {
-  background: #B3D8A8;
-  color: #1f2937;
-}
-.dark .save-btn:hover {
-  background: #A3D1C6;
-  color: #1f2937;
+  background: #2a6257;
 }
 
-/* Loading */
+/* Loading Overlay */
 .loading-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 999;
 }
 
 .loading-content {
-  background: white;
-  border-radius: 12px;
-  padding: 2rem;
   text-align: center;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-}
-.dark .loading-content {
-  background: #23272b;
-  border: 1px solid #3D8D7A;
+  color: white;
 }
 
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid #e5e7eb;
-  border-top: 3px solid #3D8D7A;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: spin 0.8s linear infinite;
   margin: 0 auto 1rem;
-}
-.dark .loading-spinner {
-  border-color: #374151;
-  border-top-color: #A3D1C6;
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  to { transform: rotate(360deg); }
 }
 
 .loading-content p {
-  color: #6b7280;
+  font-size: 0.95rem;
+  margin-top: 0.5rem;
+}
+
+/* Toast Notification */
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
   font-weight: 500;
-}
-.dark .loading-content p {
-  color: #9ca3af;
-}
-
-/* Empty State */
-.empty-state {
-  text-align: center;
-  padding: 3rem 1rem;
-  color: #6b7280;
-}
-.dark .empty-state {
-  color: #9ca3af;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1001;
+  max-width: 400px;
 }
 
-.empty-state h3 {
-  font-size: 1.125rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: #374151;
+.toast.success {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
 }
-.dark .empty-state h3 {
-  color: #d1d5db;
+
+.toast.error {
+  background: #fee2e2;
+  color: #7f1d1d;
+  border: 1px solid #fca5a5;
+}
+
+.toast-enter-active, .toast-leave-active {
+  transition: all 0.3s ease;
+}
+
+.toast-enter-from {
+  transform: translateX(400px);
+  opacity: 0;
+}
+
+.toast-leave-to {
+  transform: translateX(400px);
+  opacity: 0;
 }
 
 /* Responsive */
+@media (max-width: 1024px) {
+  .controls-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .filters {
+    flex-wrap: wrap;
+  }
+  
+  .student-column {
+    min-width: 200px;
+    width: 200px;
+  }
+  
+  .quiz-column {
+    min-width: 100px;
+  }
+}
+
 @media (max-width: 768px) {
   .grade-management-page {
     padding: 1rem;
@@ -1112,40 +1079,91 @@ onMounted(async () => {
   .header-content {
     flex-direction: column;
     gap: 1rem;
-    text-align: center;
+    align-items: flex-start;
   }
   
-  .controls-content {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  
-  .filters {
-    flex-direction: column;
+  .back-btn {
     width: 100%;
+    justify-content: center;
   }
   
-  .filter-select {
-    width: 100%;
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
   
-  .grade-table {
-    font-size: 0.8rem;
+  .student-column {
+    min-width: 180px;
   }
   
-  .grade-table th,
-  .grade-table td {
+  .quiz-column {
+    min-width: 90px;
+    font-size: 0.75rem;
     padding: 0.75rem 0.5rem;
   }
   
+  .grade-input, .grade-display {
+    padding: 0.4rem 0.25rem;
+    font-size: 0.75rem;
+  }
+  
   .modal-content {
-    width: 95%;
-    margin: 1rem;
+    margin: 0 1rem;
+  }
+  
+  .toast {
+    bottom: 1rem;
+    right: 1rem;
+    left: 1rem;
+    max-width: none;
   }
 }
-  .back-btn-black {
-    color: #111 !important;
-    border-color: #A3D1C6;
-    background: none;
+
+@media (max-width: 480px) {
+  .header-icon {
+    width: 48px;
+    height: 48px;
   }
+  
+  .header-title {
+    font-size: 1.25rem;
+  }
+  
+  .controls-title {
+    font-size: 1rem;
+  }
+  
+  .filter-select {
+    min-width: 120px;
+  }
+  
+  .student-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 0.75rem;
+  }
+  
+  .student-column {
+    min-width: 150px;
+  }
+  
+  .quiz-column {
+    min-width: 80px;
+  }
+  
+  .modal-body {
+    padding: 1rem;
+  }
+  
+  .scale-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .scale-item label {
+    min-width: auto;
+    margin-bottom: 0.25rem;
+  }
+}
+
 </style>
