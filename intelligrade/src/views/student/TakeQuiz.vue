@@ -40,17 +40,14 @@
       <!-- Stats Overview -->
       <div class="stats-grid">
         <div class="stat-card">
-          <div class="stat-icon">📝</div>
           <div class="stat-value">{{ quizzes.length }}</div>
           <div class="stat-label">Available Quizzes</div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon">✅</div>
           <div class="stat-value">{{ completedQuizzes.length }}</div>
           <div class="stat-label">Completed</div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon">📊</div>
           <div class="stat-value">{{ averageScore }}%</div>
           <div class="stat-label">Average Score</div>
         </div>
@@ -62,7 +59,11 @@
         <div v-if="newQuizzes.length > 0" class="quiz-category">
           <div class="category-header">
             <h2 class="category-title">
-              <span class="category-icon">🆕</span>
+              <span class="category-icon">
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </span>
               New Quizzes
             </h2>
             <span class="category-count">{{ newQuizzes.length }}</span>
@@ -125,7 +126,11 @@
         <div v-if="pastQuizzes.length > 0" class="quiz-category">
           <div class="category-header">
             <h2 class="category-title">
-              <span class="category-icon">📚</span>
+              <span class="category-icon">
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C20.832 18.477 19.247 18 17.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </span>
               Past Quizzes
             </h2>
             <span class="category-count">{{ pastQuizzes.length }}</span>
@@ -176,7 +181,11 @@
 
         <!-- Empty State -->
         <div v-if="quizzes.length === 0" class="empty-state">
-          <div class="empty-icon">📝</div>
+          <div class="empty-icon">
+            <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
           <h3>No Quizzes Available</h3>
           <p>There are no quizzes available for this subject yet.</p>
         </div>
@@ -210,21 +219,33 @@
               
               <div class="info-grid">
                 <div class="info-item">
-                  <div class="info-icon">📝</div>
+                  <div class="info-icon">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
                   <div class="info-content">
                     <span class="info-label">Questions</span>
                     <span class="info-value">{{ selectedQuiz.number_of_questions }}</span>
                   </div>
                 </div>
                 <div class="info-item">
-                  <div class="info-icon">⏱️</div>
+                  <div class="info-icon">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
                   <div class="info-content">
                     <span class="info-label">Time Limit</span>
                     <span class="info-value">{{ selectedQuiz.has_time_limit ? `${selectedQuiz.time_limit_minutes} minutes` : 'No limit' }}</span>
                   </div>
                 </div>
                 <div class="info-item">
-                  <div class="info-icon">🔁</div>
+                  <div class="info-icon">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </div>
                   <div class="info-content">
                     <span class="info-label">Attempts</span>
                     <span class="info-value">{{ selectedQuiz.attempts_allowed === 999 ? 'Unlimited' : selectedQuiz.attempts_allowed }}</span>
@@ -236,12 +257,20 @@
                 <h3 class="schedule-title">Schedule</h3>
                 <div class="schedule-details">
                   <div v-if="selectedQuiz.start_date" class="schedule-row">
-                    <span class="schedule-icon">🕐</span>
+                    <span class="schedule-icon">
+                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </span>
                     <span class="schedule-label">Available from:</span>
                     <span class="schedule-value">{{ formatPHTime(selectedQuiz.start_date) }}</span>
                   </div>
                   <div v-if="selectedQuiz.end_date" class="schedule-row">
-                    <span class="schedule-icon">🕕</span>
+                    <span class="schedule-icon">
+                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </span>
                     <span class="schedule-label">Available until:</span>
                     <span class="schedule-value">{{ formatPHTime(selectedQuiz.end_date) }}</span>
                   </div>
@@ -251,7 +280,7 @@
               <div v-if="previousAttempts.length > 0" class="attempts-history">
                 <h3 class="attempts-title">Your Previous Attempts</h3>
                 <div class="attempts-list">
-                  <div v-for="(attempt, index) in previousAttempts" :key="attempt.id" class="attempt-item">
+                  <div v-for="attempt in previousAttempts" :key="attempt.id" class="attempt-item">
                     <div class="attempt-number">Attempt {{ attempt.attempt_number }}</div>
                     <div class="attempt-score">{{ attempt.percentage }}%</div>
                     <div class="attempt-date">{{ formatPHTime(attempt.submitted_at) }}</div>
@@ -338,14 +367,22 @@
               :class="['tf-option', { 'selected': studentAnswers[questions[currentQuestionIndex].id]?.answer_text === 'true' }]"
               @click="selectTrueFalse(questions[currentQuestionIndex].id, 'true')"
             >
-              <div class="tf-icon">✅</div>
+              <div class="tf-icon">
+                <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
               <div class="tf-label">True</div>
             </div>
             <div 
               :class="['tf-option', { 'selected': studentAnswers[questions[currentQuestionIndex].id]?.answer_text === 'false' }]"
               @click="selectTrueFalse(questions[currentQuestionIndex].id, 'false')"
             >
-              <div class="tf-icon">❌</div>
+              <div class="tf-icon">
+                <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
               <div class="tf-label">False</div>
             </div>
           </div>
@@ -1037,9 +1074,9 @@ export default {
 
     const getQuestionTypeLabel = (type) => {
       const labels = {
-        'multiple_choice': '📝 Multiple Choice',
-        'true_false': '✅ True/False',
-        'fill_blank': '✏️ Fill in the Blank'
+        'multiple_choice': 'Multiple Choice',
+        'true_false': 'True/False',
+        'fill_blank': 'Fill in the Blank'
       };
       return labels[type] || type;
     };
@@ -1640,7 +1677,7 @@ export default {
 }
 
 .btn-secondary:hover {
-  background: #23272b;
+  background: #e6fcf7;
   color: #20c997;
   border-color: #20c997;
 }
@@ -1648,6 +1685,9 @@ export default {
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  background: #e6fcf7;
+  color: #20c997;
+  border-color: #20c997;
 }
 
 /* Empty State */
