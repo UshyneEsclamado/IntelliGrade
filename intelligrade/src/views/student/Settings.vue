@@ -174,21 +174,51 @@
         <button @click="closeProfileModal" class="close-btn">×</button>
       </div>
       <div class="modal-body">
-        <!-- Avatar Selection Section -->
+        <!-- Profile Picture Upload Section -->
         <div class="form-group">
-          <label>Choose Avatar</label>
-          <div class="avatar-grid">
-            <div 
-              v-for="avatar in avatarOptions" 
-              :key="avatar.id"
-              @click="selectAvatar(avatar.id)"
-              :class="['avatar-option', { 'selected': profileData.avatar === avatar.id }]"
-            >
-              <div class="avatar-icon" :style="{ background: avatar.color }">
-                {{ avatar.emoji }}
+          <label>Profile Picture</label>
+          <div class="photo-upload-container">
+            <!-- Image Preview -->
+            <div class="photo-preview-wrapper">
+              <div v-if="imagePreview" class="photo-preview">
+                <img :src="imagePreview" alt="Profile preview" />
+                <button @click="removeImage" class="remove-photo-btn" type="button">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+              <div v-else class="photo-placeholder">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <p>No photo selected</p>
               </div>
             </div>
+            
+            <!-- Upload Button -->
+            <div class="upload-actions">
+              <input 
+                type="file" 
+                id="profilePictureInput" 
+                accept="image/*" 
+                @change="handleFileSelect"
+                style="display: none;"
+              />
+              <label for="profilePictureInput" class="btn-upload">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                {{ imagePreview ? 'Change Photo' : 'Upload Photo' }}
+              </label>
+              <p class="upload-hint">JPG, PNG, GIF or WebP (Max 5MB)</p>
+            </div>
           </div>
+          <p v-if="isUploading" class="upload-status">Uploading image...</p>
         </div>
         
         <!-- Full Name Section -->
@@ -281,7 +311,7 @@
             <p>We collect information that you provide directly to us, including:</p>
             <ul>
               <li>Account information (name, email, student ID)</li>
-              <li>Profile information (grade level)</li>
+              <li>Profile information (grade level, profile picture)</li>
               <li>Academic records and grades</li>
               <li>Messages and communications within the platform</li>
               <li>Usage data and analytics</li>
@@ -452,9 +482,12 @@ export default {
       // Profile management
       profileData: {
         full_name: '',
-        avatar: '1'
+        profile_picture: null
       },
+      selectedFile: null,
+      imagePreview: null,
       isSaving: false,
+      isUploading: false,
       profileError: '',
       profileSuccess: '',
       
@@ -466,23 +499,7 @@ export default {
       },
       isChangingPassword: false,
       passwordError: '',
-      passwordSuccess: '',
-      
-      // Avatar options
-      avatarOptions: [
-        { id: '1', emoji: '😊', color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
-        { id: '2', emoji: '🎓', color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
-        { id: '3', emoji: '📚', color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' },
-        { id: '4', emoji: '✨', color: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)' },
-        { id: '5', emoji: '🚀', color: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)' },
-        { id: '6', emoji: '🎨', color: 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)' },
-        { id: '7', emoji: '🌟', color: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)' },
-        { id: '8', emoji: '💡', color: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)' },
-        { id: '9', emoji: '🎯', color: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)' },
-        { id: '10', emoji: '🏆', color: 'linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)' },
-        { id: '11', emoji: '🎵', color: 'linear-gradient(135deg, #fdcbf1 0%, #e6dee9 100%)' },
-        { id: '12', emoji: '🌈', color: 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)' }
-      ]
+      passwordSuccess: ''
     };
   },
   async mounted() {
@@ -545,10 +562,9 @@ export default {
         if (studentError) throw studentError;
         this.userProfile = { ...this.userProfile, ...studentData };
         
-        // Load saved avatar
-        const savedAvatar = localStorage.getItem('userAvatar');
-        if (savedAvatar) {
-          this.userProfile.avatar = savedAvatar;
+        // Load profile picture if exists
+        if (this.userProfile.profile_picture) {
+          this.imagePreview = this.userProfile.profile_picture;
         }
         
       } catch (error) {
@@ -585,19 +601,65 @@ export default {
       // Load REAL user data into the form
       this.profileData = {
         full_name: this.userProfile.full_name || '',
-        avatar: this.userProfile.avatar || localStorage.getItem('userAvatar') || '1'
+        profile_picture: this.userProfile.profile_picture || null
       };
+      
+      // Set image preview
+      this.imagePreview = this.userProfile.profile_picture || null;
+      this.selectedFile = null;
+      
       this.showProfileModal = true;
       this.clearMessages();
     },
     
     closeProfileModal() {
       this.showProfileModal = false;
+      this.selectedFile = null;
+      this.imagePreview = null;
       this.clearMessages();
     },
     
-    selectAvatar(avatarId) {
-      this.profileData.avatar = avatarId;
+    // Handle file selection
+    handleFileSelect(event) {
+      const file = event.target.files[0];
+      
+      if (!file) return;
+      
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        this.profileError = 'Please select a valid image file (JPEG, PNG, GIF, or WebP)';
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        this.profileError = 'File size must be less than 5MB';
+        return;
+      }
+      
+      this.selectedFile = file;
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.imagePreview = e.target.result;
+      };
+      reader.readAsDataURL(file);
+      
+      this.clearMessages();
+    },
+    
+    // Remove selected image
+    removeImage() {
+      this.selectedFile = null;
+      this.imagePreview = null;
+      this.profileData.profile_picture = null;
+      
+      // Clear file input
+      const fileInput = document.getElementById('profilePictureInput');
+      if (fileInput) fileInput.value = '';
     },
     
     async saveProfile() {
@@ -609,13 +671,51 @@ export default {
       }
 
       this.isSaving = true;
+      let profilePictureUrl = this.profileData.profile_picture;
 
       try {
+        // Upload new image if selected
+        if (this.selectedFile) {
+          this.isUploading = true;
+          
+          // Generate unique filename
+          const fileExt = this.selectedFile.name.split('.').pop();
+          const fileName = `${this.userProfile.id}_${Date.now()}.${fileExt}`;
+          const filePath = `profile-pictures/${fileName}`;
+          
+          // Delete old profile picture if exists
+          if (this.userProfile.profile_picture) {
+            const oldPath = this.userProfile.profile_picture.split('/').pop();
+            await supabase.storage
+              .from('profile-pictures')
+              .remove([`profile-pictures/${oldPath}`]);
+          }
+          
+          // Upload new image
+          const { error: uploadError } = await supabase.storage
+            .from('profile-pictures')
+            .upload(filePath, this.selectedFile, {
+              cacheControl: '3600',
+              upsert: true
+            });
+          
+          if (uploadError) throw uploadError;
+          
+          // Get public URL
+          const { data: { publicUrl } } = supabase.storage
+            .from('profile-pictures')
+            .getPublicUrl(filePath);
+          
+          profilePictureUrl = publicUrl;
+          this.isUploading = false;
+        }
+
         // Update profiles table
         const { error: profileError } = await supabase
           .from('profiles')
           .update({
             full_name: this.profileData.full_name.trim(),
+            profile_picture: profilePictureUrl,
             updated_at: new Date().toISOString()
           })
           .eq('id', this.userProfile.id);
@@ -627,14 +727,12 @@ export default {
           .from('students')
           .update({
             full_name: this.profileData.full_name.trim(),
+            profile_picture: profilePictureUrl,
             updated_at: new Date().toISOString()
           })
           .eq('profile_id', this.userProfile.id);
 
         if (studentError) throw studentError;
-
-        // Save avatar preference to localStorage
-        localStorage.setItem('userAvatar', this.profileData.avatar);
 
         this.profileSuccess = 'Profile updated successfully!';
         
@@ -650,6 +748,7 @@ export default {
         this.profileError = 'Failed to save profile. Please try again.';
       } finally {
         this.isSaving = false;
+        this.isUploading = false;
       }
     },
     
@@ -791,6 +890,14 @@ export default {
       if (!secondConfirm) return;
       
       try {
+        // Delete profile picture from storage if exists
+        if (this.userProfile.profile_picture) {
+          const filePath = this.userProfile.profile_picture.split('/').pop();
+          await supabase.storage
+            .from('profile-pictures')
+            .remove([`profile-pictures/${filePath}`]);
+        }
+        
         // Log the deletion event first
         await supabase
           .from('security_events')
@@ -1242,43 +1349,126 @@ input:checked + .slider:before {
   color: var(--secondary-text-color);
 }
 
-/* Avatar Grid */
-.avatar-grid {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 1rem;
-  padding: 1rem;
+/* Photo Upload Styles */
+.photo-upload-container {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+  padding: 1.5rem;
   background: var(--action-btn-bg);
   border-radius: 12px;
+  border: 1px solid var(--card-border-color);
 }
 
-.avatar-option {
-  cursor: pointer;
-  transition: all 0.2s;
-  border-radius: 12px;
-  padding: 0.5rem;
-  border: 2px solid transparent;
+.photo-preview-wrapper {
+  flex-shrink: 0;
 }
 
-.avatar-option:hover {
-  transform: scale(1.1);
-  border-color: var(--accent-color);
-}
-
-.avatar-option.selected {
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.2);
-}
-
-.avatar-icon {
-  width: 50px;
-  height: 50px;
+.photo-preview {
+  position: relative;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
+  overflow: hidden;
+  border: 4px solid var(--accent-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.remove-photo-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #d9534f;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.8rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  color: white;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.remove-photo-btn:hover {
+  background: #c9302c;
+  transform: scale(1.1);
+}
+
+.photo-placeholder {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 3px dashed var(--card-border-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--secondary-text-color);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.photo-placeholder svg {
+  margin-bottom: 0.5rem;
+  opacity: 0.5;
+}
+
+.photo-placeholder p {
+  font-size: 0.85rem;
+  margin: 0;
+  text-align: center;
+  padding: 0 0.5rem;
+}
+
+.upload-actions {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.btn-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--accent-color);
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  border: none;
+  text-align: center;
+  justify-content: center;
+}
+
+.btn-upload:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.upload-hint {
+  font-size: 0.85rem;
+  color: var(--secondary-text-color);
+  margin: 0;
+  font-style: italic;
+}
+
+.upload-status {
+  font-size: 0.9rem;
+  color: var(--accent-color);
+  margin-top: 0.5rem;
+  font-weight: 500;
 }
 
 /* Messages */
@@ -1354,10 +1544,6 @@ input:checked + .slider:before {
   .settings-grid {
     grid-template-columns: 1fr;
   }
-  
-  .avatar-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
 }
 
 @media (max-width: 768px) {
@@ -1395,8 +1581,19 @@ input:checked + .slider:before {
     padding: 1rem;
   }
   
-  .avatar-grid {
-    grid-template-columns: repeat(3, 1fr);
+  .photo-upload-container {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .photo-preview, .photo-placeholder {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .upload-actions {
+    width: 100%;
   }
   
   .document-modal {
