@@ -866,8 +866,8 @@ export default {
 }
 
 .assessment-item:hover {
-  background: #181c20;
-  border-color: #A3D1C6;
+  background: #A3D1C6;
+  border-color: #3D8D7A;
 }
 .dark .assessment-item:hover {
   background: #23272b;
@@ -987,9 +987,9 @@ export default {
 }
 
 .quick-link:hover {
-  background: #20c997;
+  background: #A3D1C6;
   color: #181c20;
-  border-color: #A3D1C6;
+  border-color: #3D8D7A;
   transform: translateY(-2px);
 }
 .dark .quick-link:hover {
