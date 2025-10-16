@@ -600,14 +600,21 @@ export default {
       }
     });
 
-    // Helper function to convert Philippines time to UTC for storage
+    // Timeout wrapper for database operations
+    const withTimeout = (promise, timeoutMs = 15000) => {
+      return Promise.race([
+        promise,
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Operation timed out')), timeoutMs)
+        )
+      ]);
+    };
+
+    // Convert Philippines time to UTC for storage
     const convertPHTimeToUTC = (phDateString) => {
       if (!phDateString) return null;
       try {
-        // The datetime-local input gives us a string like "2024-12-31T23:59"
-        // We treat this as Philippines time (UTC+8)
         const phDate = new Date(phDateString);
-        // Subtract 8 hours to convert to UTC
         const utcTime = new Date(phDate.getTime() - (8 * 60 * 60 * 1000));
         return utcTime.toISOString();
       } catch (error) {
@@ -660,7 +667,7 @@ export default {
           teacher_id: teacher.id
         };
 
-        console.log('Teacher info loaded:', teacherInfo.value);
+        console.log('✅ Teacher info loaded:', teacherInfo.value.teacher_id);
         return true;
       } catch (error) {
         console.error('Error loading teacher info:', error);
@@ -670,10 +677,6 @@ export default {
     };
 
     const loadRouteParams = () => {
-      console.log('Loading route params...');
-      console.log('Route params:', route.params);
-      console.log('Route query:', route.query);
-
       const subjectId = route.params.subjectId;
       const sectionId = route.params.sectionId;
       const subjectName = route.query.subjectName || 'Subject';
@@ -684,21 +687,10 @@ export default {
         return false;
       }
 
-      subject.value = {
-        id: subjectId,
-        name: subjectName
-      };
+      subject.value = { id: subjectId, name: subjectName };
+      section.value = { id: sectionId, name: sectionName };
 
-      section.value = {
-        id: sectionId,
-        name: sectionName
-      };
-
-      console.log('Route params loaded:', {
-        subject: subject.value,
-        section: section.value
-      });
-
+      console.log('✅ Route params loaded:', { subjectId, sectionId });
       return true;
     };
 
@@ -716,12 +708,10 @@ export default {
             filter: `teacher_id=eq.${teacherInfo.value.teacher_id}`
           },
           (payload) => {
-            console.log('New quiz created (real-time):', payload.new);
+            console.log('📡 New quiz created (real-time):', payload.new);
           }
         )
-        .subscribe((status) => {
-          console.log('Real-time subscription status:', status);
-        });
+        .subscribe();
     };
 
     const goBack = () => {
@@ -872,36 +862,38 @@ export default {
       return true;
     };
 
+    // ============================================
+    // BULLETPROOF PUBLISH FUNCTION WITH TIMEOUTS
+    // ============================================
     const publishQuiz = async () => {
-      console.log('=== STARTING QUIZ PUBLICATION ===');
+      console.log('🚀 Starting quiz publication...');
       
       if (!validateQuiz()) {
-        console.log('Validation failed');
+        console.log('❌ Validation failed');
         return;
       }
 
-      if (!confirm(`Are you sure you want to publish "${quiz.value.title}"?\n\nStudents will be able to see and take this quiz immediately.`)) {
+      if (!confirm(`Publish "${quiz.value.title}"?\n\nStudents will be able to see and take this quiz immediately.`)) {
         return;
       }
 
       isPublishing.value = true;
 
       try {
-        // Step 1: Verify all required data
-        console.log('Step 1: Verifying data...');
+        // Verify required data
         if (!subject.value.id || !section.value.id || !teacherInfo.value.teacher_id) {
           throw new Error('Missing required information: subject_id, section_id, or teacher_id');
         }
 
-        console.log('Data verified:', {
+        console.log('📋 Data verified:', {
           subjectId: subject.value.id,
           sectionId: section.value.id,
           teacherId: teacherInfo.value.teacher_id,
-          questionsCount: quiz.value.questions.length
+          questions: quiz.value.questions.length
         });
 
-        // Step 2: Prepare quiz data matching exact database schema
-        console.log('Step 2: Preparing quiz data...');
+        // Step 1: Create Quiz with timeout
+        console.log('📝 Creating quiz...');
         const quizData = {
           subject_id: subject.value.id,
           section_id: section.value.id,
@@ -919,134 +911,100 @@ export default {
           status: 'published'
         };
 
-        console.log('Quiz data prepared:', JSON.stringify(quizData, null, 2));
-
-        // Step 3: Insert quiz with timeout
-        console.log('Step 3: Inserting quiz into database...');
-        
-        const insertPromise = supabase
+        const quizInsert = supabase
           .from('quizzes')
           .insert([quizData])
           .select()
           .single();
 
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Database timeout - insert took too long')), 10000)
-        );
+        const { data: newQuiz, error: quizError } = await withTimeout(quizInsert, 10000);
 
-        const { data: newQuiz, error: quizError } = await Promise.race([insertPromise, timeoutPromise]);
+        if (quizError) throw quizError;
+        if (!newQuiz || !newQuiz.id) throw new Error('Quiz creation failed');
 
-        if (quizError) {
-          console.error('Quiz insertion error:', quizError);
-          console.error('Error code:', quizError.code);
-          console.error('Error details:', quizError.details);
-          console.error('Error hint:', quizError.hint);
-          throw new Error(`Failed to create quiz: ${quizError.message || 'Unknown error'}`);
-        }
+        console.log('✅ Quiz created:', newQuiz.id, newQuiz.quiz_code);
 
-        if (!newQuiz || !newQuiz.id) {
-          throw new Error('Quiz was not created - no ID returned');
-        }
-
-        console.log('✅ Quiz created successfully:', {
-          id: newQuiz.id,
-          quiz_code: newQuiz.quiz_code,
-          title: newQuiz.title
-        });
-
-        // Step 4: Prepare and insert questions
-        console.log('Step 4: Preparing questions...');
+        // Step 2: Insert questions with timeout
+        console.log('📝 Creating questions...');
         const questionsData = quiz.value.questions.map((q, index) => ({
           quiz_id: newQuiz.id,
           question_number: index + 1,
           question_type: q.type,
           question_text: q.text.trim(),
-          points: 1.00,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          points: 1.00
         }));
 
-        console.log(`Inserting ${questionsData.length} questions...`);
-        const { data: insertedQuestions, error: questionsError } = await supabase
+        const questionsInsert = supabase
           .from('quiz_questions')
           .insert(questionsData)
           .select();
 
-        if (questionsError) {
-          console.error('Questions insertion error:', questionsError);
-          // Cleanup: delete the quiz
-          await supabase.from('quizzes').delete().eq('id', newQuiz.id);
-          throw new Error(`Failed to add questions: ${questionsError.message}`);
+        const { data: insertedQuestions, error: questionsError } = await withTimeout(questionsInsert, 10000);
+
+        if (questionsError) throw questionsError;
+        if (!insertedQuestions || insertedQuestions.length !== questionsData.length) {
+          throw new Error('Failed to insert all questions');
         }
 
-        console.log(`✅ ${insertedQuestions.length} questions created successfully`);
+        console.log(`✅ ${insertedQuestions.length} questions created`);
 
-        // Step 5: Insert options and answers for each question
-        console.log('Step 5: Inserting options and answers...');
+        // Step 3: Insert options and answers
+        const allOptions = [];
+        const allAnswers = [];
+
         for (let i = 0; i < quiz.value.questions.length; i++) {
           const question = quiz.value.questions[i];
           const questionId = insertedQuestions[i].id;
-          
-          console.log(`Processing question ${i + 1} (${question.type})...`);
 
           if (question.type === 'multiple_choice') {
-            // Insert options for multiple choice
-            const optionsData = question.options.map((opt, optIndex) => ({
-              question_id: questionId,
-              option_number: optIndex + 1,
-              option_text: opt.trim(),
-              is_correct: question.correctAnswer === optIndex,
-              created_at: new Date().toISOString()
-            }));
-
-            console.log(`Inserting ${optionsData.length} options for question ${i + 1}...`);
-            const { error: optionsError } = await supabase
-              .from('question_options')
-              .insert(optionsData);
-
-            if (optionsError) {
-              console.error(`Options insertion error for question ${i + 1}:`, optionsError);
-              // Cleanup
-              await supabase.from('quizzes').delete().eq('id', newQuiz.id);
-              throw new Error(`Failed to add options for question ${i + 1}: ${optionsError.message}`);
-            }
-            console.log(`✅ Options created for question ${i + 1}`);
-
+            question.options.forEach((opt, optIndex) => {
+              allOptions.push({
+                question_id: questionId,
+                option_number: optIndex + 1,
+                option_text: opt.trim(),
+                is_correct: question.correctAnswer === optIndex
+              });
+            });
           } else if (question.type === 'true_false' || question.type === 'fill_blank') {
-            // Insert answer for true/false and fill-in-blank
-            const answerData = {
+            allAnswers.push({
               question_id: questionId,
               correct_answer: String(question.correctAnswer).trim(),
-              case_sensitive: question.type === 'fill_blank',
-              created_at: new Date().toISOString()
-            };
-
-            console.log(`Inserting answer for question ${i + 1}:`, answerData);
-            const { error: answerError } = await supabase
-              .from('question_answers')
-              .insert([answerData]);
-
-            if (answerError) {
-              console.error(`Answer insertion error for question ${i + 1}:`, answerError);
-              // Cleanup
-              await supabase.from('quizzes').delete().eq('id', newQuiz.id);
-              throw new Error(`Failed to add answer for question ${i + 1}: ${answerError.message}`);
-            }
-            console.log(`✅ Answer created for question ${i + 1}`);
+              case_sensitive: question.type === 'fill_blank'
+            });
           }
         }
 
-        console.log('✅ All questions, options, and answers created successfully');
-        console.log('=== QUIZ PUBLICATION COMPLETED ===');
-        
-        // Success message
-        alert(`✅ Quiz published successfully!\n\n📝 Quiz Title: ${newQuiz.title}\n🔑 Quiz Code: ${newQuiz.quiz_code}\n\nStudents can now see and take this quiz.\n\nRedirecting to View Quizzes...`);
-        
-        // Small delay before redirect
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Navigate to View Quizzes page
-        await router.push({
+        // Insert options with timeout
+        if (allOptions.length > 0) {
+          console.log(`📝 Creating ${allOptions.length} options...`);
+          const optionsInsert = supabase
+            .from('question_options')
+            .insert(allOptions);
+
+          const { error: optionsError } = await withTimeout(optionsInsert, 10000);
+          if (optionsError) throw optionsError;
+          console.log('✅ Options created');
+        }
+
+        // Insert answers with timeout
+        if (allAnswers.length > 0) {
+          console.log(`📝 Creating ${allAnswers.length} answers...`);
+          const answersInsert = supabase
+            .from('question_answers')
+            .insert(allAnswers);
+
+          const { error: answersError } = await withTimeout(answersInsert, 10000);
+          if (answersError) throw answersError;
+          console.log('✅ Answers created');
+        }
+
+        console.log('✅✅✅ QUIZ PUBLISHED SUCCESSFULLY ✅✅✅');
+
+        // Success alert
+        alert(`✅ Quiz published successfully!\n\n📝 ${newQuiz.title}\n🔑 Quiz Code: ${newQuiz.quiz_code}\n\nStudents can now take this quiz.`);
+
+        // Navigate immediately
+        router.push({
           name: 'ViewQuizzes',
           params: {
             subjectId: subject.value.id,
@@ -1059,71 +1017,58 @@ export default {
             sectionCode: route.query.sectionCode
           }
         });
-        
+
       } catch (error) {
-        console.error('=== QUIZ PUBLICATION FAILED ===');
-        console.error('Error details:', error);
-        
-        let errorMessage = 'Failed to publish quiz.\n\n';
-        
-        if (error.message) {
-          errorMessage += `Error: ${error.message}\n\n`;
+        console.error('❌ ERROR:', error);
+
+        let errorMessage = '❌ Failed to publish quiz.\n\n';
+
+        if (error.message === 'Operation timed out') {
+          errorMessage += '⏱️ The request took too long.\n\n';
+          errorMessage += 'Possible causes:\n';
+          errorMessage += '• Slow internet connection\n';
+          errorMessage += '• Database is busy\n';
+          errorMessage += '• Too many questions\n\n';
+          errorMessage += '💡 Try reducing the number of questions or retry in a moment.';
+        } else if (error.code === '23505') {
+          errorMessage += '⚠️ Duplicate entry.\nTry a different quiz title.';
+        } else if (error.code === '23503') {
+          errorMessage += '⚠️ Invalid data reference.\nPlease refresh and try again.';
+        } else {
+          errorMessage += `Error: ${error.message}`;
+          if (error.code) errorMessage += `\nCode: ${error.code}`;
         }
-        
-        if (error.code) {
-          errorMessage += `Error Code: ${error.code}\n\n`;
-        }
-        
-        if (error.hint) {
-          errorMessage += `Hint: ${error.hint}\n\n`;
-        }
-        
-        if (error.details) {
-          errorMessage += `Details: ${error.details}\n\n`;
-        }
-        
-        errorMessage += 'Please check your connection and try again.\n\n';
-        errorMessage += 'If the problem persists, please contact support.';
-        
+
         alert(errorMessage);
       } finally {
         isPublishing.value = false;
+        console.log('🏁 Publishing finished');
       }
     };
 
     onMounted(async () => {
-      console.log('CreateQuiz component mounted');
-      
-      // Load teacher information first
+      console.log('🎬 CreateQuiz mounted');
+
       const teacherLoaded = await loadTeacherInfo();
       if (!teacherLoaded) {
         router.push('/login');
         return;
       }
-      
-      // Load route parameters
+
       const paramsLoaded = loadRouteParams();
       if (!paramsLoaded) {
-        console.error('Failed to load route parameters');
-        alert('Missing subject or section information. Redirecting back...');
+        alert('Missing information. Redirecting...');
         router.push('/teacher/subjects');
         return;
       }
 
-      // Setup real-time subscription
       setupRealtimeSubscription();
-      
-      console.log('Component initialized successfully:', {
-        teacher: teacherInfo.value,
-        subject: subject.value,
-        section: section.value
-      });
+      console.log('✅ Initialized');
     });
 
     onUnmounted(() => {
       if (quizSubscription) {
         supabase.removeChannel(quizSubscription);
-        console.log('Real-time subscription cleaned up');
       }
     });
 
@@ -1147,6 +1092,7 @@ export default {
   }
 };
 </script>
+
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 

@@ -172,7 +172,7 @@ export default {
   name: 'StudentHome',
   data() {
     return {
-      studentName: 'Student', // Default fallback
+      studentName: 'Student',
       totalSubjects: 0,
       pendingAssessments: 0,
       recentAssessments: [],
@@ -181,6 +181,7 @@ export default {
       isLoadingName: true,
       userId: null,
       profileId: null,
+      studentRecordId: null,
       showNotifDropdown: false,
       subscriptions: [],
       isActive: false
@@ -192,45 +193,191 @@ export default {
     },
 
     async loadNotifications() {
-      if (!this.userId) return;
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', this.userId)
-        .order('created_at', { ascending: false })
-        .limit(10);
-      if (!error && data) {
-        this.notifications = data.map(n => ({
-          id: n.id,
-          title: n.title,
-          body: n.body,
-          date: n.created_at ? new Date(n.created_at).toLocaleString() : ''
-        }));
+      if (!this.studentRecordId) return;
+      
+      try {
+        const notifications = [];
+        
+        // Get unread direct messages
+        const { data: messages, error: msgError } = await supabase
+          .from('messages')
+          .select('id, message_text, message_type, sent_at, sender_id, section_id')
+          .eq('recipient_id', this.studentRecordId)
+          .is('read_at', null)
+          .order('sent_at', { ascending: false })
+          .limit(5);
+
+        if (!msgError && messages && messages.length > 0) {
+          for (const msg of messages) {
+            try {
+              const { data: section } = await supabase
+                .from('sections')
+                .select('name, subject_id')
+                .eq('id', msg.section_id)
+                .single();
+
+              let subjectName = 'Unknown Subject';
+              if (section && section.subject_id) {
+                const { data: subject } = await supabase
+                  .from('subjects')
+                  .select('name')
+                  .eq('id', section.subject_id)
+                  .single();
+                subjectName = subject?.name || 'Unknown Subject';
+              }
+
+              const sectionName = section?.name || 'Unknown Section';
+              const messagePreview = msg.message_text.substring(0, 100);
+              const messageSuffix = msg.message_text.length > 100 ? '...' : '';
+              
+              notifications.push({
+                id: `msg-${msg.id}`,
+                title: msg.message_type === 'announcement' ? 'New Announcement' : 'New Message',
+                body: `${subjectName} - ${sectionName}: ${messagePreview}${messageSuffix}`,
+                date: new Date(msg.sent_at).toLocaleString(),
+                type: 'message'
+              });
+            } catch (err) {
+              console.error('Error processing message:', err);
+            }
+          }
+        }
+
+        // Get broadcast announcements
+        const { data: broadcasts, error: broadcastError } = await supabase
+          .from('messages')
+          .select('id, message_text, sent_at, section_id')
+          .eq('message_type', 'announcement')
+          .is('recipient_id', null)
+          .order('sent_at', { ascending: false })
+          .limit(5);
+
+        if (!broadcastError && broadcasts && broadcasts.length > 0) {
+          const { data: enrollments } = await supabase
+            .from('enrollments')
+            .select('section_id')
+            .eq('student_id', this.studentRecordId)
+            .eq('status', 'active');
+
+          const enrolledSectionIds = enrollments?.map(e => e.section_id) || [];
+
+          for (const msg of broadcasts) {
+            if (enrolledSectionIds.includes(msg.section_id)) {
+              try {
+                const { data: section } = await supabase
+                  .from('sections')
+                  .select('name, subject_id')
+                  .eq('id', msg.section_id)
+                  .single();
+
+                let subjectName = 'Unknown Subject';
+                if (section && section.subject_id) {
+                  const { data: subject } = await supabase
+                    .from('subjects')
+                    .select('name')
+                    .eq('id', section.subject_id)
+                    .single();
+                  subjectName = subject?.name || 'Unknown Subject';
+                }
+
+                const sectionName = section?.name || 'Unknown Section';
+                const messagePreview = msg.message_text.substring(0, 100);
+                const messageSuffix = msg.message_text.length > 100 ? '...' : '';
+                
+                notifications.push({
+                  id: `broadcast-${msg.id}`,
+                  title: 'Class Announcement',
+                  body: `${subjectName} - ${sectionName}: ${messagePreview}${messageSuffix}`,
+                  date: new Date(msg.sent_at).toLocaleString(),
+                  type: 'announcement'
+                });
+              } catch (err) {
+                console.error('Error processing broadcast:', err);
+              }
+            }
+          }
+        }
+
+        // Get available quizzes
+        const now = new Date().toISOString();
+        const { data: availableQuizzes, error: quizError } = await supabase
+          .from('quizzes')
+          .select('id, title, start_date, end_date, section_id, subject_id')
+          .eq('status', 'published')
+          .lte('start_date', now)
+          .gte('end_date', now);
+
+        if (!quizError && availableQuizzes && availableQuizzes.length > 0) {
+          const { data: enrollments } = await supabase
+            .from('enrollments')
+            .select('section_id')
+            .eq('student_id', this.studentRecordId)
+            .eq('status', 'active');
+
+          const enrolledSectionIds = enrollments?.map(e => e.section_id) || [];
+
+          for (const quiz of availableQuizzes) {
+            if (enrolledSectionIds.includes(quiz.section_id)) {
+              const { data: attempts } = await supabase
+                .from('quiz_attempts')
+                .select('id, status')
+                .eq('quiz_id', quiz.id)
+                .eq('student_id', this.studentRecordId);
+
+              const hasCompleted = attempts?.some(a => 
+                a.status === 'submitted' || a.status === 'graded' || a.status === 'reviewed'
+              );
+              
+              if (!hasCompleted) {
+                try {
+                  const { data: section } = await supabase
+                    .from('sections')
+                    .select('name')
+                    .eq('id', quiz.section_id)
+                    .single();
+
+                  const { data: subject } = await supabase
+                    .from('subjects')
+                    .select('name')
+                    .eq('id', quiz.subject_id)
+                    .single();
+
+                  const sectionName = section?.name || 'Unknown Section';
+                  const subjectName = subject?.name || 'Unknown Subject';
+                  const dueDate = new Date(quiz.end_date).toLocaleDateString();
+                  
+                  notifications.push({
+                    id: `quiz-${quiz.id}`,
+                    title: 'New Quiz Available',
+                    body: `${subjectName} - ${quiz.title} in ${sectionName}. Due: ${dueDate}`,
+                    date: new Date(quiz.start_date).toLocaleString(),
+                    type: 'quiz'
+                  });
+                } catch (err) {
+                  console.error('Error processing quiz notification:', err);
+                }
+              }
+            }
+          }
+        }
+
+        // Sort by date and limit
+        this.notifications = notifications
+          .sort((a, b) => {
+            const dateA = new Date(a.date);
+            const dateB = new Date(b.date);
+            return dateB.getTime() - dateA.getTime();
+          })
+          .slice(0, 10);
+
+      } catch (error) {
+        console.error('Error loading notifications:', error);
       }
     },
 
     setupRealtimeSubscriptions() {
-      if (!this.userId) return;
+      if (!this.userId || !this.studentRecordId) return;
 
-      // Notifications subscription
-      const notifSubscription = supabase
-        .channel('student_home_notifications')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'notifications',
-            filter: `user_id=eq.${this.userId}`
-          },
-          (payload) => {
-            console.log('Notification update:', payload);
-            this.loadNotifications();
-          }
-        )
-        .subscribe();
-
-      // Subscribe to profile changes
       const profileSubscription = supabase
         .channel('home_profile_changes')
         .on(
@@ -241,14 +388,12 @@ export default {
             table: 'profiles',
             filter: `auth_user_id=eq.${this.userId}`
           },
-          (payload) => {
-            console.log('Profile updated in Home component:', payload);
+          () => {
             this.loadStudentProfile();
           }
         )
         .subscribe();
 
-      // Subscribe to student record changes
       const studentSubscription = supabase
         .channel('home_student_changes')
         .on(
@@ -256,24 +401,92 @@ export default {
           {
             event: '*',
             schema: 'public',
-            table: 'students'
+            table: 'students',
+            filter: `id=eq.${this.studentRecordId}`
           },
-          (payload) => {
-            console.log('Student data updated in Home component:', payload);
+          () => {
             this.loadStudentProfile();
           }
         )
         .subscribe();
 
-      // Store all subscriptions for cleanup
-      this.subscriptions = [notifSubscription, profileSubscription, studentSubscription];
+      const quizSubscription = supabase
+        .channel('home_quiz_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'quizzes'
+          },
+          () => {
+            this.loadAvailableQuizzes();
+            this.loadNotifications();
+          }
+        )
+        .subscribe();
+
+      const quizAttemptSubscription = supabase
+        .channel('home_quiz_attempt_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'quiz_attempts',
+            filter: `student_id=eq.${this.studentRecordId}`
+          },
+          () => {
+            this.loadAvailableQuizzes();
+          }
+        )
+        .subscribe();
+
+      const messageSubscription = supabase
+        .channel('home_message_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages'
+          },
+          () => {
+            this.loadNotifications();
+          }
+        )
+        .subscribe();
+
+      const enrollmentSubscription = supabase
+        .channel('home_enrollment_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'enrollments',
+            filter: `student_id=eq.${this.studentRecordId}`
+          },
+          () => {
+            this.loadDashboardStats();
+          }
+        )
+        .subscribe();
+
+      this.subscriptions = [
+        profileSubscription,
+        studentSubscription,
+        quizSubscription,
+        quizAttemptSubscription,
+        messageSubscription,
+        enrollmentSubscription
+      ];
     },
 
     async loadStudentProfile() {
       try {
         this.isLoadingName = true;
         
-        // Get the current user from Supabase auth
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         
         if (authError || !user) {
@@ -283,20 +496,17 @@ export default {
         }
 
         this.userId = user.id;
-        console.log('Loading profile for user:', user.id);
 
-        // First, get the profile using auth_user_id (the correct foreign key)
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('id, full_name, email, role')
-          .eq('auth_user_id', user.id)  // This is the correct foreign key
+          .eq('auth_user_id', user.id)
           .single();
 
         if (profileError) {
           console.error('Profile error in Home component:', profileError);
           
           if (profileError.code === 'PGRST116') {
-            console.warn('No profile found for user in Home component');
             this.studentName = user.email?.split('@')[0] || 'Student';
             return;
           }
@@ -305,44 +515,30 @@ export default {
           return;
         }
 
-        console.log('Profile found in Home component:', profile);
         this.profileId = profile.id;
 
-        // Verify this is a student
         if (profile.role !== 'student') {
           console.warn('User is not a student in Home component');
           this.studentName = profile.full_name || 'User';
           return;
         }
 
-        // Now get the student-specific data using profile_id
         const { data: studentData, error: studentError } = await supabase
           .from('students')
-          .select('student_id, grade_level, full_name, email, is_active')
+          .select('id, student_id, grade_level, full_name, email, is_active')
           .eq('profile_id', profile.id)
           .single();
 
         if (studentError) {
           console.warn('Student data error in Home component:', studentError);
-          // Use profile name as fallback
           this.studentName = profile.full_name || 'Student';
           return;
         }
 
-        console.log('Student data found in Home component:', studentData);
-        
-        // Set the active status
+        this.studentRecordId = studentData.id;
         this.isActive = studentData.is_active || false;
-        console.log('Student active status:', this.isActive);
-        
-        if (!studentData.is_active) {
-          console.warn('Student account is not active');
-        }
-        
-        // Use the most complete name available
         this.studentName = studentData.full_name || profile.full_name || 'Student';
         
-        // Load additional dashboard data
         await this.loadDashboardStats();
 
       } catch (error) {
@@ -355,80 +551,256 @@ export default {
 
     async loadDashboardStats() {
       try {
-        if (!this.profileId) {
-          console.warn('No profile ID available for dashboard stats');
+        if (!this.studentRecordId) {
+          console.warn('No student record ID available for dashboard stats');
           return;
         }
 
-        // Get student's enrolled subjects count using the student_dashboard view
         const { data: enrollments, error: enrollmentError } = await supabase
-          .from('student_dashboard')
-          .select('subject_id')
-          .eq('student_id', this.profileId);
+          .from('enrollments')
+          .select('section_id, subject_id')
+          .eq('student_id', this.studentRecordId)
+          .eq('status', 'active');
 
         if (enrollmentError) {
           console.error('Error loading enrollment stats:', enrollmentError);
         } else {
-          this.totalSubjects = enrollments?.length || 0;
-          console.log('Total subjects:', this.totalSubjects);
+          const uniqueSubjects = new Set(enrollments?.map(e => e.subject_id) || []);
+          this.totalSubjects = uniqueSubjects.size;
+          console.log('Total enrolled subjects:', this.totalSubjects);
         }
 
-        // For now, set pending assessments to a placeholder
-        // This would be replaced with actual assessment data from your system
-        this.pendingAssessments = 0;
-
-        // Load recent assessments (placeholder data for now)
-        this.recentAssessments = [
-          {
-            id: 1,
-            title: 'Mathematics Quiz',
-            subject: 'Algebra',
-            dueDate: new Date(Date.now() + 86400000), // Tomorrow
-            status: 'pending'
-          },
-          {
-            id: 2,
-            title: 'Science Project',
-            subject: 'Biology',
-            dueDate: new Date(Date.now() + 259200000), // 3 days
-            status: 'in-progress'
-          }
-        ];
+        await this.loadAvailableQuizzes();
 
       } catch (error) {
         console.error('Error loading dashboard stats:', error);
       }
     },
 
+    async loadAvailableQuizzes() {
+      try {
+        if (!this.studentRecordId) return;
+
+        const { data: enrollments, error: enrollError } = await supabase
+          .from('enrollments')
+          .select('section_id, subject_id')
+          .eq('student_id', this.studentRecordId)
+          .eq('status', 'active');
+
+        if (enrollError || !enrollments || enrollments.length === 0) {
+          this.recentAssessments = [];
+          this.pendingAssessments = 0;
+          return;
+        }
+
+        const sectionIds = enrollments.map(e => e.section_id);
+
+        const { data: quizzes, error: quizError } = await supabase
+          .from('quizzes')
+          .select('id, title, description, start_date, end_date, section_id, subject_id, attempts_allowed')
+          .in('section_id', sectionIds)
+          .eq('status', 'published')
+          .order('end_date', { ascending: true });
+
+        if (quizError) {
+          console.error('Error loading quizzes:', quizError);
+          this.recentAssessments = [];
+          this.pendingAssessments = 0;
+          return;
+        }
+
+        if (!quizzes || quizzes.length === 0) {
+          this.recentAssessments = [];
+          this.pendingAssessments = 0;
+          return;
+        }
+
+        const { data: attempts, error: attemptsError } = await supabase
+          .from('quiz_attempts')
+          .select('quiz_id, attempt_number, status, submitted_at')
+          .eq('student_id', this.studentRecordId);
+
+        if (attemptsError) {
+          console.error('Error loading quiz attempts:', attemptsError);
+        }
+
+        const attemptMap = {};
+        if (attempts) {
+          attempts.forEach(attempt => {
+            if (!attemptMap[attempt.quiz_id]) {
+              attemptMap[attempt.quiz_id] = [];
+            }
+            attemptMap[attempt.quiz_id].push(attempt);
+          });
+        }
+
+        const nowDate = new Date();
+        let pendingCount = 0;
+        const processedQuizzes = [];
+
+        for (const quiz of quizzes) {
+          try {
+            const { data: subject } = await supabase
+              .from('subjects')
+              .select('name')
+              .eq('id', quiz.subject_id)
+              .single();
+
+            const { data: section } = await supabase
+              .from('sections')
+              .select('name')
+              .eq('id', quiz.section_id)
+              .single();
+
+            const startDate = quiz.start_date ? new Date(quiz.start_date) : null;
+            const endDate = quiz.end_date ? new Date(quiz.end_date) : null;
+            const quizAttempts = attemptMap[quiz.id] || [];
+            
+            const isAvailable = (!startDate || startDate <= nowDate) && (!endDate || endDate >= nowDate);
+            
+            let status = 'pending';
+            let canTakeQuiz = false;
+
+            const completedAttempts = quizAttempts.filter(a => 
+              a.status === 'submitted' || a.status === 'graded' || a.status === 'reviewed'
+            ).length;
+
+            const hasInProgress = quizAttempts.some(a => a.status === 'in_progress');
+
+            if (hasInProgress) {
+              status = 'in-progress';
+              canTakeQuiz = true;
+            } else if (completedAttempts >= quiz.attempts_allowed) {
+              status = 'completed';
+              canTakeQuiz = false;
+            } else if (endDate && endDate < nowDate) {
+              status = 'overdue';
+              canTakeQuiz = false;
+            } else if (isAvailable) {
+              status = 'available';
+              canTakeQuiz = true;
+            } else if (startDate && startDate > nowDate) {
+              status = 'upcoming';
+              canTakeQuiz = false;
+            }
+
+            if (status === 'available' || status === 'in-progress') {
+              pendingCount++;
+            }
+
+            processedQuizzes.push({
+              id: quiz.id,
+              title: quiz.title || 'Untitled Quiz',
+              subject: subject?.name || 'Unknown Subject',
+              section: section?.name || 'Unknown Section',
+              startDate: startDate,
+              dueDate: endDate,
+              status: status,
+              canTake: canTakeQuiz,
+              attemptsUsed: completedAttempts,
+              attemptsAllowed: quiz.attempts_allowed,
+              type: 'quiz'
+            });
+          } catch (err) {
+            console.error('Error processing quiz:', err);
+          }
+        }
+
+        this.recentAssessments = processedQuizzes
+          .sort((a, b) => {
+            const statusPriority = {
+              'in-progress': 1,
+              'available': 2,
+              'upcoming': 3,
+              'overdue': 4,
+              'completed': 5
+            };
+            
+            if (statusPriority[a.status] !== statusPriority[b.status]) {
+              return statusPriority[a.status] - statusPriority[b.status];
+            }
+            
+            // If same status, sort by due date
+            if (a.dueDate && b.dueDate) {
+              return a.dueDate.getTime() - b.dueDate.getTime();
+            }
+            return 0;
+          })
+          .slice(0, 5);
+
+        this.pendingAssessments = pendingCount;
+        console.log('Pending assessments:', this.pendingAssessments);
+
+      } catch (error) {
+        console.error('Error loading available quizzes:', error);
+        this.recentAssessments = [];
+        this.pendingAssessments = 0;
+      }
+    },
+
     formatDate(date) {
       if (!date) return '';
       const d = typeof date === 'string' ? new Date(date) : date;
+      
+      if (isNaN(d.getTime())) return '';
+      
+      const now = new Date();
+      const diffMs = d.getTime() - now.getTime();
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 0) {
+        return 'Today';
+      } else if (diffDays === 1) {
+        return 'Tomorrow';
+      } else if (diffDays === -1) {
+        return 'Yesterday';
+      } else if (diffDays > 1 && diffDays <= 7) {
+        return `In ${diffDays} days`;
+      } else if (diffDays < -1 && diffDays >= -7) {
+        return `${Math.abs(diffDays)} days ago`;
+      }
+      
       return d.toLocaleDateString('en-US', {
         month: 'short',
-        day: 'numeric'
+        day: 'numeric',
+        year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
       });
     },
 
     navigateToSubjects() {
-      this.$parent.navigateTo('subjects');
+      const parent = this.$parent as any;
+      if (parent && typeof parent.navigateTo === 'function') {
+        parent.navigateTo('subjects');
+      } else {
+        this.$emit('navigate', 'subjects');
+      }
     },
 
     navigateToCalendar() {
-      this.$parent.navigateTo('calendar');
+      const parent = this.$parent as any;
+      if (parent && typeof parent.navigateTo === 'function') {
+        parent.navigateTo('calendar');
+      } else {
+        this.$emit('navigate', 'calendar');
+      }
     },
 
     navigateToMessages() {
-      this.$parent.navigateTo('messages');
+      const parent = this.$parent as any;
+      if (parent && typeof parent.navigateTo === 'function') {
+        parent.navigateTo('messages');
+      } else {
+        this.$emit('navigate', 'messages');
+      }
     },
 
     navigateToSettings() {
-      this.$parent.navigateTo('settings');
-    },
-
-    async fetchDashboardData() {
-      // This method is kept for backward compatibility
-      // The actual data loading is now handled by loadStudentProfile and loadDashboardStats
-      console.log('Dashboard data refresh triggered');
+      const parent = this.$parent as any;
+      if (parent && typeof parent.navigateTo === 'function') {
+        parent.navigateTo('settings');
+      } else {
+        this.$emit('navigate', 'settings');
+      }
     }
   },
 
@@ -438,11 +810,10 @@ export default {
     await this.loadNotifications();
     this.setupRealtimeSubscriptions();
     
-    // Set up polling for dashboard data and notifications
     this.pollInterval = setInterval(() => {
       this.loadDashboardStats();
       this.loadNotifications();
-    }, 30000); // Every 30 seconds
+    }, 30000);
   },
 
   beforeUnmount() {
@@ -452,10 +823,11 @@ export default {
       clearInterval(this.pollInterval);
     }
     
-    // Clean up subscriptions
-    if (this.subscriptions) {
+    if (this.subscriptions && this.subscriptions.length > 0) {
       this.subscriptions.forEach(subscription => {
-        subscription.unsubscribe();
+        if (subscription && typeof subscription.unsubscribe === 'function') {
+          subscription.unsubscribe();
+        }
       });
     }
   }
@@ -877,7 +1249,7 @@ export default {
   margin-top: 0.25rem;
 }
 
-/* Rest of the styles remain the same */
+/* Stats Grid */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));

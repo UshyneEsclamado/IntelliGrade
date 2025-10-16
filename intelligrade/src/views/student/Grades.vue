@@ -333,10 +333,9 @@ export default {
     const previewAnswers = ref([]);
     const loadingPreview = ref(false);
 
-    // Real-time subscription
     let gradesSubscription = null;
 
-    // Computed
+    // Computed Properties
     const recentQuizzes = computed(() => {
       return grades.value
         .filter(g => g.latest_attempt_date)
@@ -374,7 +373,10 @@ export default {
       return scores.length > 0 ? Math.min(...scores) : 0;
     });
 
-    // Methods
+    // ============================================
+    // UTILITY FUNCTIONS
+    // ============================================
+
     const formatPHTime = (utcDateString) => {
       if (!utcDateString) return 'Not available';
       const date = new Date(utcDateString);
@@ -399,6 +401,10 @@ export default {
       };
       return date.toLocaleString('en-PH', options);
     };
+
+    // ============================================
+    // LOAD DATA FUNCTIONS
+    // ============================================
 
     const loadStudentInfo = async () => {
       try {
@@ -503,15 +509,32 @@ export default {
 
         if (resultsError) throw resultsError;
 
-        // Merge quiz data with results
+        // Get time taken info from attempts
+        const { data: attempts, error: attemptsError } = await supabase
+          .from('quiz_attempts')
+          .select('quiz_id, time_taken_minutes')
+          .eq('student_id', studentInfo.value.student_id)
+          .in('quiz_id', quizIds);
+
+        if (attemptsError) throw attemptsError;
+
+        // Create maps for faster lookup
         const resultsMap = {};
         (results || []).forEach(r => {
           resultsMap[r.quiz_id] = r;
         });
 
-        // Transform data - include quizzes with or without results
+        const attemptsMap = {};
+        (attempts || []).forEach(a => {
+          if (!attemptsMap[a.quiz_id] || a.time_taken_minutes > attemptsMap[a.quiz_id].time_taken_minutes) {
+            attemptsMap[a.quiz_id] = a;
+          }
+        });
+
+        // Transform data
         grades.value = allQuizzes.map(quiz => {
           const result = resultsMap[quiz.id] || {};
+          const attempt = attemptsMap[quiz.id] || {};
           return {
             id: quiz.id,
             title: quiz.title,
@@ -525,7 +548,7 @@ export default {
             latest_attempt_date: result.latest_attempt_date || null,
             status: result.status || 'not_taken',
             visible_to_student: result.visible_to_student !== false,
-            time_taken_minutes: null
+            time_taken_minutes: attempt.time_taken_minutes || null
           };
         });
 
@@ -555,6 +578,10 @@ export default {
         )
         .subscribe();
     };
+
+    // ============================================
+    // STATUS & SCORE FUNCTIONS
+    // ============================================
 
     const getStatusClass = (status) => {
       const classes = {
@@ -595,6 +622,135 @@ export default {
       return quiz.total_attempts < quiz.attempts_allowed;
     };
 
+    // ============================================
+    // QUIZ PREVIEW - FIXED FOR PERFORMANCE
+    // ============================================
+
+    const viewQuizPreview = async (quiz) => {
+      selectedQuiz.value = quiz;
+      showPreviewModal.value = true;
+      loadingPreview.value = true;
+
+      try {
+        // Step 1: Get the latest attempt ID
+        const { data: attempts, error: attemptsError } = await supabase
+          .from('quiz_attempts')
+          .select('id')
+          .eq('quiz_id', quiz.id)
+          .eq('student_id', studentInfo.value.student_id)
+          .order('attempt_number', { ascending: false })
+          .limit(1);
+
+        if (attemptsError) throw attemptsError;
+
+        if (!attempts || attempts.length === 0) {
+          throw new Error('No quiz attempt found');
+        }
+
+        const attemptId = attempts[0].id;
+
+        // Step 2: Get student answers (simple query - no nested selects)
+        const { data: answers, error: answersError } = await supabase
+          .from('student_answers')
+          .select('id, question_id, selected_option_id, answer_text, is_correct, teacher_comment')
+          .eq('attempt_id', attemptId)
+          .order('id');
+
+        if (answersError) throw answersError;
+
+        if (!answers || answers.length === 0) {
+          previewAnswers.value = [];
+          loadingPreview.value = false;
+          return;
+        }
+
+        const questionIds = answers.map(a => a.question_id);
+
+        // Step 3: Get question details separately
+        const { data: questions, error: questionsError } = await supabase
+          .from('quiz_questions')
+          .select('id, question_number, question_type, question_text')
+          .in('id', questionIds);
+
+        if (questionsError) throw questionsError;
+
+        // Step 4: Get all options for these questions
+        const { data: options, error: optionsError } = await supabase
+          .from('question_options')
+          .select('id, question_id, option_number, option_text, is_correct')
+          .in('question_id', questionIds);
+
+        if (optionsError) throw optionsError;
+
+        // Create maps for fast lookup
+        const questionsMap = {};
+        (questions || []).forEach(q => {
+          questionsMap[q.id] = q;
+        });
+
+        const optionsMap = {};
+        (options || []).forEach(opt => {
+          if (!optionsMap[opt.question_id]) {
+            optionsMap[opt.question_id] = [];
+          }
+          optionsMap[opt.question_id].push(opt);
+        });
+
+        // Step 5: Build preview data
+        previewAnswers.value = (answers || []).map(answer => {
+          const question = questionsMap[answer.question_id] || {};
+          const questionOptions = optionsMap[answer.question_id] || [];
+
+          return {
+            question_id: answer.question_id,
+            question_number: question.question_number || 0,
+            question_type: question.question_type || 'multiple_choice',
+            question_text: question.question_text || 'Question',
+            is_correct: answer.is_correct,
+            selected_option_id: answer.selected_option_id,
+            answer_text: answer.answer_text,
+            teacher_comment: answer.teacher_comment,
+            options: questionOptions
+          };
+        });
+
+        console.log('Preview loaded successfully:', previewAnswers.value.length, 'answers');
+
+      } catch (error) {
+        console.error('Error loading quiz preview:', error);
+        alert('Failed to load quiz preview: ' + error.message);
+        previewAnswers.value = [];
+      } finally {
+        loadingPreview.value = false;
+      }
+    };
+
+    const getStudentAnswerText = (answer) => {
+      if (answer.selected_option_id && answer.options.length > 0) {
+        const option = answer.options.find(opt => opt.id === answer.selected_option_id);
+        if (option) {
+          return `${String.fromCharCode(65 + option.option_number - 1)}. ${option.option_text}`;
+        }
+        return 'Unknown option';
+      }
+      return answer.answer_text || 'No answer provided';
+    };
+
+    const getCorrectAnswerText = (answer) => {
+      if (answer.question_type === 'multiple_choice' && answer.options.length > 0) {
+        const correctOption = answer.options.find(opt => opt.is_correct);
+        if (correctOption) {
+          return `${String.fromCharCode(65 + correctOption.option_number - 1)}. ${correctOption.option_text}`;
+        }
+        return 'Unknown';
+      }
+      return 'See correct answer above';
+    };
+
+    // ============================================
+    // NAVIGATION FUNCTIONS
+    // ============================================
+
     const retakeQuiz = (quiz) => {
       if (!canRetake(quiz)) {
         alert('You have used all available attempts for this quiz.');
@@ -613,93 +769,6 @@ export default {
           gradeLevel: route.query.gradeLevel
         }
       });
-    };
-
-    const viewQuizPreview = async (quiz) => {
-      selectedQuiz.value = quiz;
-      showPreviewModal.value = true;
-      loadingPreview.value = true;
-
-      try {
-        // Get the latest attempt for this quiz and student
-        const { data: attempts, error: attemptsError } = await supabase
-          .from('quiz_attempts')
-          .select('id')
-          .eq('quiz_id', quiz.id)
-          .eq('student_id', studentInfo.value.student_id)
-          .order('attempt_number', { ascending: false })
-          .limit(1);
-
-        if (attemptsError) throw attemptsError;
-
-        if (!attempts || attempts.length === 0) {
-          throw new Error('No quiz attempt found');
-        }
-
-        const attemptId = attempts[0].id;
-
-        // Get student answers for this attempt
-        const { data: answers, error: answersError } = await supabase
-          .from('student_answers')
-          .select(`
-            id,
-            question_id,
-            selected_option_id,
-            answer_text,
-            is_correct,
-            teacher_comment,
-            quiz_questions (
-              id,
-              question_number,
-              question_type,
-              question_text,
-              question_options (
-                id,
-                option_number,
-                option_text,
-                is_correct
-              )
-            )
-          `)
-          .eq('attempt_id', attemptId)
-          .order('quiz_questions(question_number)');
-
-        if (answersError) throw answersError;
-
-        previewAnswers.value = (answers || []).map(answer => ({
-          question_id: answer.question_id,
-          question_number: answer.quiz_questions?.question_number || 0,
-          question_type: answer.quiz_questions?.question_type || 'multiple_choice',
-          question_text: answer.quiz_questions?.question_text || 'Question',
-          is_correct: answer.is_correct,
-          selected_option_id: answer.selected_option_id,
-          answer_text: answer.answer_text,
-          teacher_comment: answer.teacher_comment,
-          options: answer.quiz_questions?.question_options || []
-        }));
-
-      } catch (error) {
-        console.error('Error loading quiz preview:', error);
-        alert('Failed to load quiz preview.');
-      } finally {
-        loadingPreview.value = false;
-      }
-    };
-
-    const getStudentAnswerText = (answer) => {
-      if (answer.selected_option_id && answer.options.length > 0) {
-        const option = answer.options.find(opt => opt.id === answer.selected_option_id);
-        return option ? `${String.fromCharCode(65 + option.option_number - 1)}. ${option.option_text}` : 'Unknown option';
-      }
-      return answer.answer_text || 'No answer provided';
-    };
-
-    const getCorrectAnswerText = (answer) => {
-      if (answer.question_type === 'multiple_choice' && answer.options.length > 0) {
-        const correctOption = answer.options.find(opt => opt.is_correct);
-        return correctOption ? `${String.fromCharCode(65 + correctOption.option_number - 1)}. ${correctOption.option_text}` : 'Unknown';
-      }
-      return 'See correct answer above';
     };
 
     const goBack = () => {
@@ -732,7 +801,10 @@ export default {
       });
     };
 
-    // Lifecycle
+    // ============================================
+    // LIFECYCLE HOOKS
+    // ============================================
+
     onMounted(async () => {
       console.log('Grades component mounted');
 
@@ -806,57 +878,98 @@ export default {
 
 .grades-page {
   min-height: 100vh;
-  background: #FBFFE4;
-  padding: 1.5rem;
+  background: var(--bg-primary, #ffffff);
+  padding: 2rem 4%;
   font-family: 'Inter', sans-serif;
+  width: 100%;
+  margin: 0;
 }
 
 .dark .grades-page {
-  background: #181c20;
+  background: #0f1419;
 }
 
-/* Header */
+.main-content {
+  width: 100%;
+}
+
+/* ============================================
+   HEADER SECTION
+   ============================================ */
+
 .section-header-card {
-  background: white;
-  border-radius: 16px;
-  padding: 1.5rem;
+  position: relative;
+  background: var(--bg-secondary, #f9fafb);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 2rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  min-height: 120px;
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.05);
+  border: 2px solid var(--border-color, #e5e7eb);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: visible;
+  z-index: 1;
+}
+
+.section-header-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.15), 0 16px 32px rgba(0, 0, 0, 0.1);
 }
 
 .dark .section-header-card {
-  background: #23272b;
-  border: 1px solid #3D8D7A;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  background: rgba(35, 39, 43, 0.95);
+  border: 2px solid #3D8D7A;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
 }
 
 .section-header-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  width: 100%;
+  gap: 2rem;
+  flex-wrap: wrap;
 }
 
 .section-header-left {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.5rem;
+  flex: 1;
 }
 
 .section-header-icon {
-  width: 56px;
-  height: 56px;
-  background: #3D8D7A;
-  border-radius: 12px;
+  width: 60px;
+  height: 60px;
+  min-width: 60px;
+  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.section-header-icon:hover {
+  transform: scale(1.05);
+}
+
+.header-text {
+  flex: 1;
 }
 
 .section-header-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1f2937;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text-accent, #1f2937);
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   margin-bottom: 0.25rem;
 }
 
@@ -865,8 +978,9 @@ export default {
 }
 
 .section-header-subtitle {
-  font-size: 0.875rem;
-  color: #6b7280;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
 }
 
 .dark .section-header-subtitle {
@@ -874,50 +988,47 @@ export default {
 }
 
 .section-header-description {
-  font-size: 0.813rem;
-  color: #94a3b8;
+  font-size: 0.875rem;
+  color: var(--text-muted, #9ca3af);
+  font-weight: 400;
+  opacity: 0.9;
 }
 
 .dark .section-header-description {
   color: #A3D1C6;
 }
 
+.header-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .back-btn {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1.25rem;
-  border-radius: 8px;
-  font-weight: 500;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
   font-size: 0.875rem;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
-  border: 2px solid #20c997;
-  background: #20c997;
-  color: #181c20;
-  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
+  border: 2px solid #3D8D7A;
+  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
 }
 
 .back-btn:hover {
-  background: #A3D1C6;
-  color: #23272b;
-  border-color: #20c997;
-  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.18);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
-.dark .back-btn {
-  background: #20c997;
-  color: #181c20;
-  border-color: #A3D1C6;
-}
+/* ============================================
+   LOADING STATE
+   ============================================ */
 
-.dark .back-btn:hover {
-  background: #A3D1C6;
-  color: #23272b;
-  border-color: #20c997;
-}
-
-/* Loading */
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -940,39 +1051,51 @@ export default {
   to { transform: rotate(360deg); }
 }
 
-/* Stats Grid */
+/* ============================================
+   STATS GRID
+   ============================================ */
+
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1.5rem;
   margin-bottom: 2rem;
+  width: 100%;
 }
 
 .stat-card {
-  background: white;
-  border: 2px solid #3D8D7A;
-  border-radius: 12px;
-  padding: 1.5rem;
+  background: var(--bg-card, #ffffff);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 2rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
-  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
+  gap: 0.75rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border-color, #e5e7eb);
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
 }
 
 .dark .stat-card {
-  background: #23272b;
+  background: rgba(35, 39, 43, 0.8);
   border-color: #3D8D7A;
 }
 
 .stat-icon {
-  font-size: 2rem;
+  font-size: 2.5rem;
 }
 
 .stat-value {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #3D8D7A;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--text-accent, #3D8D7A);
+  line-height: 1;
 }
 
 .dark .stat-value {
@@ -981,15 +1104,21 @@ export default {
 
 .stat-label {
   font-size: 0.875rem;
-  color: #6b7280;
-  font-weight: 500;
+  font-weight: 600;
+  color: var(--text-muted, #9ca3af);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
 }
 
-.dark .stat-label {
-  color: #A3D1C6;
+/* ============================================
+   GRADES SECTION
+   ============================================ */
+
+.grades-section {
+  width: 100%;
 }
 
-/* Quiz Categories */
 .quiz-category {
   margin-bottom: 2.5rem;
 }
@@ -999,6 +1128,8 @@ export default {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .category-title {
@@ -1027,29 +1158,34 @@ export default {
   font-weight: 600;
 }
 
-/* Grades List */
+/* ============================================
+   GRADES LIST
+   ============================================ */
+
 .grades-list {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  width: 100%;
 }
 
 .grade-card {
-  background: white;
-  border: 2px solid #3D8D7A;
-  border-radius: 12px;
+  background: var(--bg-card, #ffffff);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
   padding: 1.5rem;
-  transition: all 0.2s;
-  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border-color, #e5e7eb);
 }
 
 .grade-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.18);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
 }
 
 .dark .grade-card {
-  background: #23272b;
+  background: rgba(35, 39, 43, 0.8);
   border-color: #3D8D7A;
 }
 
@@ -1058,6 +1194,8 @@ export default {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 1rem;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .quiz-info h3 {
@@ -1076,6 +1214,7 @@ export default {
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
+  flex-wrap: wrap;
 }
 
 .code-label {
@@ -1106,6 +1245,7 @@ export default {
   border-radius: 20px;
   font-size: 0.875rem;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .status-completed {
@@ -1133,10 +1273,13 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+  gap: 1.5rem;
+  flex-wrap: wrap;
 }
 
 .grade-info {
   flex: 1;
+  min-width: 150px;
 }
 
 .score-display {
@@ -1154,6 +1297,7 @@ export default {
   justify-content: center;
   font-weight: 700;
   border: 4px solid;
+  flex-shrink: 0;
 }
 
 .score-excellent {
@@ -1240,6 +1384,8 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  flex: 1;
+  min-width: 150px;
 }
 
 .info-item {
@@ -1258,6 +1404,8 @@ export default {
   display: flex;
   gap: 0.75rem;
   justify-content: flex-end;
+  flex-wrap: wrap;
+  width: 100%;
 }
 
 .btn {
@@ -1272,6 +1420,7 @@ export default {
   cursor: pointer;
   transition: all 0.2s;
   border: none;
+  white-space: nowrap;
 }
 
 .btn-primary {
@@ -1309,127 +1458,174 @@ export default {
   cursor: not-allowed;
 }
 
-/* Grades Table */
+/* ============================================
+   GRADES TABLE
+   ============================================ */
+
 .grades-table-container {
-  background: white;
-  border-radius: 12px;
-  border: 2px solid #3D8D7A;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
+  background: var(--bg-card, #ffffff);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  overflow: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 .dark .grades-table-container {
-  background: #23272b;
+  background: rgba(35, 39, 43, 0.8);
   border-color: #3D8D7A;
 }
 
 .grades-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: auto;
 }
 
 .grades-table th {
-  background: #FBFFE4;
-  color: #3D8D7A;
-  font-weight: 600;
+  background: var(--bg-accent, #f9fafb);
+  color: var(--text-accent, #3D8D7A);
+  font-weight: 700;
   padding: 1rem;
   text-align: left;
-  border-bottom: 2px solid #3D8D7A;
+  border-bottom: 2px solid var(--border-color, #e5e7eb);
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  letter-spacing: 0.5px;
 }
 
 .dark .grades-table th {
-  background: #181c20;
+  background: rgba(61, 141, 122, 0.1);
   color: #A3D1C6;
   border-bottom-color: #3D8D7A;
 }
 
 .grades-table td {
   padding: 1rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-color, #e5e7eb);
 }
 
 .dark .grades-table td {
-  border-bottom-color: #3D8D7A;
+  border-bottom-color: rgba(61, 141, 122, 0.2);
 }
 
 .grade-row:hover {
-  background: #FBFFE4;
+  background: rgba(61, 141, 122, 0.05);
 }
 
 .dark .grade-row:hover {
-  background: #181c20;
+  background: rgba(61, 141, 122, 0.08);
 }
 
-.quiz-cell .quiz-name {
-  font-weight: 600;
+.quiz-cell {
+  font-weight: 500;
   color: #1f2937;
 }
 
-.dark .quiz-cell .quiz-name {
+.dark .quiz-cell {
   color: #A3D1C6;
 }
 
+.quiz-name {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
 .quiz-code-small {
-  font-size: 0.75rem;
+  font-size: 0.813rem;
   color: #6b7280;
-  font-family: 'Courier New', monospace;
 }
 
 .dark .quiz-code-small {
   color: #A3D1C6;
 }
 
+.score-cell {
+  text-align: center;
+}
+
 .score-badge {
   display: inline-block;
-  padding: 0.25rem 0.75rem;
+  padding: 0.5rem 1rem;
   border-radius: 20px;
   font-weight: 600;
   font-size: 0.875rem;
 }
 
 .score-pending-small {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  background: #e5e7eb;
   color: #6b7280;
-  font-style: italic;
+  font-weight: 600;
+  font-size: 0.875rem;
 }
 
-.dark .score-pending-small {
-  color: #A3D1C6;
+.status-cell {
+  text-align: center;
 }
 
 .status-badge {
   display: inline-block;
-  padding: 0.25rem 0.75rem;
+  padding: 0.5rem 1rem;
   border-radius: 20px;
-  font-size: 0.75rem;
   font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.date-cell {
+  text-align: center;
+  color: #6b7280;
+}
+
+.dark .date-cell {
+  color: #A3D1C6;
 }
 
 .date-text {
   font-size: 0.875rem;
-  color: #6b7280;
 }
 
-.dark .date-text {
+.attempts-cell {
+  text-align: center;
+  font-weight: 600;
+  color: #3D8D7A;
+}
+
+.dark .attempts-cell {
   color: #A3D1C6;
+}
+
+.actions-cell {
+  text-align: center;
 }
 
 .table-actions {
   display: flex;
+  justify-content: center;
   gap: 0.5rem;
 }
 
 .btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 32px;
   height: 32px;
   border-radius: 6px;
   border: none;
-  background: #FBFFE4;
+  background: #f0f9f7;
   color: #3D8D7A;
   cursor: pointer;
   transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+}
+
+.dark .btn-icon {
+  background: rgba(61, 141, 122, 0.1);
+  color: #A3D1C6;
 }
 
 .btn-icon:hover:not(:disabled) {
@@ -1437,22 +1633,20 @@ export default {
   color: white;
 }
 
+.dark .btn-icon:hover:not(:disabled) {
+  background: #A3D1C6;
+  color: #23272b;
+}
+
 .btn-icon:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.dark .btn-icon {
-  background: #181c20;
-  color: #A3D1C6;
-}
+/* ============================================
+   EMPTY STATE
+   ============================================ */
 
-.dark .btn-icon:hover:not(:disabled) {
-  background: #A3D1C6;
-  color: #181c20;
-}
-
-/* Empty State */
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
@@ -1492,7 +1686,10 @@ export default {
   color: #A3D1C6;
 }
 
-/* Preview Modal */
+/* ============================================
+   PREVIEW MODAL
+   ============================================ */
+
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -1505,13 +1702,14 @@ export default {
   justify-content: center;
   z-index: 1000;
   backdrop-filter: blur(4px);
+  padding: 1rem;
 }
 
 .preview-modal {
   background: white;
   border-radius: 16px;
   max-width: 900px;
-  width: 90%;
+  width: 100%;
   max-height: 90vh;
   overflow: hidden;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
@@ -1531,6 +1729,10 @@ export default {
     opacity: 0;
     transform: translateY(-20px) scale(0.95);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .modal-header {
@@ -1539,6 +1741,8 @@ export default {
   justify-content: space-between;
   padding: 1.5rem;
   border-bottom: 2px solid #3D8D7A;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .modal-header h3 {
@@ -1564,6 +1768,7 @@ export default {
   justify-content: center;
   border-radius: 4px;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .modal-close:hover {
@@ -1628,6 +1833,8 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .summary-label {
@@ -1665,6 +1872,8 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .question-number {
@@ -1674,6 +1883,7 @@ export default {
   border-radius: 20px;
   font-weight: 600;
   font-size: 0.875rem;
+  white-space: nowrap;
 }
 
 .answer-result {
@@ -1681,6 +1891,7 @@ export default {
   border-radius: 20px;
   font-weight: 600;
   font-size: 0.875rem;
+  white-space: nowrap;
 }
 
 .answer-result.correct {
@@ -1771,21 +1982,43 @@ export default {
   padding: 1.5rem;
   border-top: 2px solid #3D8D7A;
   justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 480px) {
   .grades-page {
+    padding: 1rem;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+  }
+
+  .section-header-card {
     padding: 1rem;
   }
 
   .section-header-content {
     flex-direction: column;
     gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .section-header-left {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .section-header-title {
+    font-size: 1.5rem;
   }
 
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
   }
 
   .grade-content {
@@ -1794,52 +2027,120 @@ export default {
     gap: 1rem;
   }
 
-  .submission-info {
+  .grade-actions {
+    justify-content: flex-start;
     width: 100%;
   }
 
-  .grade-actions {
-    justify-content: flex-start;
-    flex-wrap: wrap;
-  }
-
-  .grades-table-container {
-    overflow-x: auto;
+  .btn {
+    flex: 1;
+    min-width: 120px;
   }
 
   .grades-table {
-    min-width: 600px;
+    font-size: 0.813rem;
+  }
+
+  .grades-table th,
+  .grades-table td {
+    padding: 0.75rem 0.5rem;
   }
 
   .preview-modal {
-    width: 95%;
+    max-height: 95vh;
+    width: 98%;
+  }
+
+  .modal-header {
+    padding: 1rem;
+  }
+
+  .modal-header h3 {
+    font-size: 1.125rem;
+  }
+
+  .modal-body {
+    padding: 1rem;
+    max-height: 70vh;
+  }
+
+  .answer-item {
+    padding: 1rem;
   }
 
   .modal-actions {
+    padding: 1rem;
     flex-direction: column-reverse;
   }
 
   .modal-actions .btn {
     width: 100%;
   }
+}
 
-  .summary-item {
+@media (min-width: 481px) and (max-width: 768px) {
+  .grades-page {
+    padding: 1.5rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .grade-content {
     flex-direction: column;
-    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .preview-modal {
+    max-width: 90vw;
   }
 }
 
-@media (max-width: 480px) {
+@media (min-width: 769px) {
+  .grades-page {
+    padding: 2rem;
+  }
+
   .stats-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(4, 1fr);
   }
 
-  .grade-actions {
-    flex-direction: column;
+  .grades-list {
+    gap: 2rem;
   }
 
-  .btn {
-    width: 100%;
+  .grade-content {
+    flex-direction: row;
+  }
+
+  .preview-modal {
+    max-width: 900px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .grades-page {
+    padding: 2rem 3%;
+  }
+
+  .stats-grid {
+    gap: 2rem;
+  }
+
+  .grades-list {
+    gap: 2.5rem;
+  }
+}
+
+@media (min-width: 1400px) {
+  .section-header-title {
+    font-size: 2rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2.5rem;
   }
 }
 </style>
