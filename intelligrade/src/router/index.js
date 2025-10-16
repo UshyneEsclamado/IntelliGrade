@@ -40,6 +40,8 @@ import Subjects from '../views/student/Subjects.vue'
 import Messages from '../views/student/Messages.vue'
 import TakeQuiz from '../views/student/TakeQuiz.vue'
 import StudentGrades from '../views/student/Grades.vue'
+import Calendar from '../views/student/Calendar.vue'
+import StudentHome from '../views/student/Home.vue'
 
 const routes = [
   {
@@ -60,7 +62,7 @@ const routes = [
     component: Login,
     meta: { 
       public: true,
-      guestOnly: true  // NEW: Redirect if already logged in
+      guestOnly: true
     }
   },
   {
@@ -69,7 +71,7 @@ const routes = [
     component: Signup,
     meta: { 
       public: true,
-      guestOnly: true  // NEW: Redirect if already logged in
+      guestOnly: true
     }
   },
   {
@@ -78,7 +80,7 @@ const routes = [
     component: SignupStudent,
     meta: { 
       public: true,
-      guestOnly: true  // NEW: Redirect if already logged in
+      guestOnly: true
     }
   },
   {
@@ -87,7 +89,7 @@ const routes = [
     component: RoleSelection,
     meta: { 
       public: true,
-      guestOnly: true  // NEW: Redirect if already logged in
+      guestOnly: true
     }
   },
   {
@@ -224,12 +226,17 @@ const routes = [
       {
         path: 'dashboard',
         name: 'StudentDashboardHome',
-        component: StudentDashboard
+        component: StudentHome
       },
       {
         path: 'subjects',
         name: 'StudentSubjects',
         component: Subjects
+      },
+      {
+        path: 'calendar',
+        name: 'StudentCalendar',
+        component: Calendar
       },
       {
         path: 'messages',

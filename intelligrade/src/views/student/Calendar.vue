@@ -41,204 +41,130 @@
         </div>
       </div>
 
-    <!-- Status Legend -->
-    <div class="status-legend">
-      <div class="legend-item">
-        <div class="legend-color upcoming"></div>
-        <span>Upcoming Deadline</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-color due-today"></div>
-        <span>Due Today</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-color completed"></div>
-        <span>Completed</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-color overdue"></div>
-        <span>Overdue</span>
-      </div>
-    </div>
-
-    <!-- Calendar Navigation -->
-    <div class="calendar-nav">
-      <div class="nav-controls">
-        <button @click="previousMonth" class="nav-btn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z" />
-          </svg>
-        </button>
-        <h2 class="current-month">{{ currentMonthYear }}</h2>
-        <button @click="nextMonth" class="nav-btn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" />
-          </svg>
-        </button>
-      </div>
-      <div class="view-toggle">
-        <button 
-          v-for="view in views" 
-          :key="view.key"
-          @click="currentView = view.key"
-          :class="['view-btn', { 'active': currentView === view.key }]"
-        >
-          {{ view.label }}
-        </button>
-      </div>
-    </div>
-
-    <!-- Calendar Grid -->
-    <div class="calendar-content">
-      <div v-if="currentView === 'month'" class="calendar-grid">
-        <!-- Days of Week Header -->
-        <div class="calendar-header">
-          <div v-for="day in daysOfWeek" :key="day" class="day-header">
-            {{ day }}
-          </div>
+      <!-- Status Legend -->
+      <div class="status-legend">
+        <div class="legend-item">
+          <div class="legend-color upcoming"></div>
+          <span>Upcoming Deadline</span>
         </div>
-        
-        <!-- Calendar Days -->
-        <div class="calendar-body">
-          <div 
-            v-for="day in calendarDays" 
-            :key="day.date"
-            :class="['calendar-day', {
-              'other-month': !day.isCurrentMonth,
-              'today': day.isToday,
-              'has-events': day.events.length > 0,
-              'has-due-today': day.hasDueToday,
-              'has-overdue': day.hasOverdue,
-              'has-upcoming': day.hasUpcoming,
-              'clickable': day.events.length > 0
-            }]"
-            @click="selectDay(day)"
-          >
-            <span class="day-number">{{ day.day }}</span>
-            <div class="day-events">
-              <div 
-                v-for="event in day.events.slice(0, 2)" 
-                :key="event.id"
-                :class="['event-dot', getEventStatus(event)]"
-                :title="`${event.title} - ${getEventStatusText(event)}`"
-              ></div>
-              <span v-if="day.events.length > 2" class="more-events">
-                +{{ day.events.length - 2 }}
-              </span>
-            </div>
-            <div v-if="day.events.length > 0" class="event-count">
-              {{ day.events.length }}
-            </div>
-          </div>
+        <div class="legend-item">
+          <div class="legend-color due-today"></div>
+          <span>Due Today</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color completed"></div>
+          <span>Completed</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color overdue"></div>
+          <span>Overdue</span>
         </div>
       </div>
 
-      <!-- List View -->
-      <div v-if="currentView === 'list'" class="events-list">
-        <div v-for="(dayEvents, date) in groupedEvents" :key="date" class="day-group">
-          <h3 class="day-title">{{ formatDate(date) }}</h3>
-          <div class="events-container">
-            <div 
-              v-for="event in dayEvents" 
-              :key="event.id"
-              :class="['event-item', event.type, getEventStatus(event)]"
-            >
-              <div class="event-time">{{ event.time }}</div>
-              <div class="event-content">
-                <h4 class="event-title">{{ event.title }}</h4>
-                <p class="event-subject">{{ event.subject }}</p>
-                <p class="event-description">{{ event.description }}</p>
-                <div class="event-status-badge">
-                  <span :class="['status-badge', getEventStatus(event)]">
-                    {{ getEventStatusText(event) }}
-                  </span>
-                </div>
-              </div>
-              <div class="event-actions">
-                <button v-if="getEventStatus(event) === 'upcoming' || getEventStatus(event) === 'due-today'" 
-                        class="answer-btn" 
-                        @click="markAsCompleted(event)">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
-                  </svg>
-                  Answer
-                </button>
-                <button class="view-btn-small" @click="viewEvent(event)">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Day Details Modal -->
-    <div v-if="selectedDay" class="modal-overlay" @click="closeDayModal">
-      <div class="day-modal-content" @click.stop>
-        <div class="day-modal-header">
-          <h3>{{ formatSelectedDayDate() }}</h3>
-          <button @click="closeDayModal" class="close-btn">
+      <!-- Calendar Navigation -->
+      <div class="calendar-nav">
+        <div class="nav-controls">
+          <button @click="previousMonth" class="nav-btn">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+              <path d="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z" />
+            </svg>
+          </button>
+          <h2 class="current-month">{{ currentMonthYear }}</h2>
+          <button @click="nextMonth" class="nav-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" />
             </svg>
           </button>
         </div>
-        <div class="day-modal-body">
-          <div class="day-events-summary">
-            <div class="summary-stats">
-              <div class="summary-stat">
-                <span class="summary-number">{{ selectedDay.events.length }}</span>
-                <span class="summary-label">Total Events</span>
-              </div>
-              <div class="summary-stat">
-                <span class="summary-number">{{ getCompletedCount(selectedDay.events) }}</span>
-                <span class="summary-label">Completed</span>
-              </div>
-              <div class="summary-stat">
-                <span class="summary-number">{{ getPendingCount(selectedDay.events) }}</span>
-                <span class="summary-label">Pending</span>
-              </div>
+        <div class="view-toggle">
+          <button 
+            v-for="view in views" 
+            :key="view.key"
+            @click="currentView = view.key"
+            :class="['view-btn', { 'active': currentView === view.key }]"
+          >
+            {{ view.label }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Calendar Grid -->
+      <div class="calendar-content">
+        <div v-if="currentView === 'month'" class="calendar-grid">
+          <!-- Days of Week Header -->
+          <div class="calendar-header">
+            <div v-for="day in daysOfWeek" :key="day" class="day-header">
+              {{ day }}
             </div>
           </div>
           
-          <div class="day-events-list">
-            <h4>Deadlines & Events</h4>
-            <div class="day-event-items">
+          <!-- Calendar Days -->
+          <div class="calendar-body">
+            <div 
+              v-for="day in calendarDays" 
+              :key="day.date"
+              :class="['calendar-day', {
+                'other-month': !day.isCurrentMonth,
+                'today': day.isToday,
+                'has-events': day.events.length > 0,
+                'has-due-today': day.hasDueToday,
+                'has-overdue': day.hasOverdue,
+                'has-upcoming': day.hasUpcoming,
+                'clickable': day.events.length > 0
+              }]"
+              @click="selectDay(day)"
+            >
+              <span class="day-number">{{ day.day }}</span>
+              <div class="day-events">
+                <div 
+                  v-for="event in day.events.slice(0, 2)" 
+                  :key="event.id"
+                  :class="['event-dot', getEventStatus(event)]"
+                  :title="`${event.title} - ${getEventStatusText(event)}`"
+                ></div>
+                <span v-if="day.events.length > 2" class="more-events">
+                  +{{ day.events.length - 2 }}
+                </span>
+              </div>
+              <div v-if="day.events.length > 0" class="event-count">
+                {{ day.events.length }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- List View -->
+        <div v-if="currentView === 'list'" class="events-list">
+          <div v-for="(dayEvents, date) in groupedEvents" :key="date" class="day-group">
+            <h3 class="day-title">{{ formatDate(date) }}</h3>
+            <div class="events-container">
               <div 
-                v-for="event in selectedDay.events" 
+                v-for="event in dayEvents" 
                 :key="event.id"
-                :class="['day-event-item', getEventStatus(event)]"
+                :class="['event-item', event.type, getEventStatus(event)]"
               >
-                <div class="event-status-indicator">
-                  <div :class="['status-dot', getEventStatus(event)]"></div>
+                <div class="event-time">{{ event.time }}</div>
+                <div class="event-content">
+                  <h4 class="event-title">{{ event.title }}</h4>
+                  <p class="event-subject">{{ event.subject }}</p>
+                  <p class="event-description">{{ event.description }}</p>
+                  <div class="event-status-badge">
+                    <span :class="['status-badge', getEventStatus(event)]">
+                      {{ getEventStatusText(event) }}
+                    </span>
+                  </div>
                 </div>
-                <div class="event-details">
-                  <h5 class="event-name">{{ event.title }}</h5>
-                  <p class="event-subject-small">{{ event.subject }}</p>
-                  <p class="event-time-small">{{ event.time }}</p>
-                  <p class="event-desc-small">{{ event.description }}</p>
-                </div>
-                <div class="event-status-text">
-                  <span :class="['status-badge-small', getEventStatus(event)]">
-                    {{ getEventStatusText(event) }}
-                  </span>
-                </div>
-                <div class="event-quick-actions">
-                  <button v-if="getEventStatus(event) === 'upcoming' || getEventStatus(event) === 'due-today'" 
-                          class="quick-answer-btn" 
-                          @click="markAsCompleted(event)"
-                          :title="'Mark ' + event.title + ' as completed'">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
+                <div class="event-actions">
+                  <button v-if="canTakeQuiz(event)" 
+                          class="take-quiz-btn" 
+                          @click="takeQuiz(event)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M13,9H18.5L13,3.5V9M6,2H14L20,8V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V4C4,2.89 4.89,2 6,2M15,18V16H6V18H15M18,14V12H6V14H18Z" />
                     </svg>
+                    Take Quiz
                   </button>
-                  <button class="quick-view-btn" 
-                          @click="viewEventFromDay(event)"
-                          :title="'View ' + event.title + ' details'">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <button class="view-btn-small" @click="viewEvent(event)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
                     </svg>
                   </button>
@@ -248,52 +174,151 @@
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Event Details Modal -->
-    <div v-if="selectedEvent" class="modal-overlay" @click="closeModal">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h3>{{ selectedEvent.title }}</h3>
-          <button @click="closeModal" class="close-btn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
-            </svg>
-          </button>
-        </div>
-        <div class="modal-body">
-          <div class="event-detail">
-            <strong>Subject:</strong> {{ selectedEvent.subject }}
-          </div>
-          <div class="event-detail">
-            <strong>Date:</strong> {{ formatEventDate(selectedEvent.date) }}
-          </div>
-          <div class="event-detail">
-            <strong>Time:</strong> {{ selectedEvent.time }}
-          </div>
-          <div class="event-detail">
-            <strong>Type:</strong> {{ selectedEvent.type }}
-          </div>
-          <div class="event-detail">
-            <strong>Status:</strong> 
-            <span :class="['status-badge', getEventStatus(selectedEvent)]">
-              {{ getEventStatusText(selectedEvent) }}
-            </span>
-          </div>
-          <div class="event-detail">
-            <strong>Description:</strong> {{ selectedEvent.description }}
-          </div>
-          <div v-if="getEventStatus(selectedEvent) === 'upcoming' || getEventStatus(selectedEvent) === 'due-today'" class="modal-actions">
-            <button class="answer-btn-modal" @click="markAsCompleted(selectedEvent)">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
+      <!-- Day Details Modal -->
+      <div v-if="selectedDay" class="modal-overlay" @click="closeDayModal">
+        <div class="day-modal-content" @click.stop>
+          <div class="day-modal-header">
+            <h3>{{ formatSelectedDayDate() }}</h3>
+            <button @click="closeDayModal" class="close-btn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
               </svg>
-              Mark as Completed
             </button>
+          </div>
+          <div class="day-modal-body">
+            <div class="day-events-summary">
+              <div class="summary-stats">
+                <div class="summary-stat">
+                  <span class="summary-number">{{ selectedDay.events.length }}</span>
+                  <span class="summary-label">Total Events</span>
+                </div>
+                <div class="summary-stat">
+                  <span class="summary-number">{{ getCompletedCount(selectedDay.events) }}</span>
+                  <span class="summary-label">Completed</span>
+                </div>
+                <div class="summary-stat">
+                  <span class="summary-number">{{ getPendingCount(selectedDay.events) }}</span>
+                  <span class="summary-label">Pending</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="day-events-list">
+              <h4>Deadlines & Events</h4>
+              <div class="day-event-items">
+                <div 
+                  v-for="event in selectedDay.events" 
+                  :key="event.id"
+                  :class="['day-event-item', getEventStatus(event)]"
+                >
+                  <div class="event-status-indicator">
+                    <div :class="['status-dot', getEventStatus(event)]"></div>
+                  </div>
+                  <div class="event-details">
+                    <h5 class="event-name">{{ event.title }}</h5>
+                    <p class="event-subject-small">{{ event.subject }}</p>
+                    <p class="event-time-small">{{ event.time }}</p>
+                    <p class="event-desc-small">{{ event.description }}</p>
+                  </div>
+                  <div class="event-status-text">
+                    <span :class="['status-badge-small', getEventStatus(event)]">
+                      {{ getEventStatusText(event) }}
+                    </span>
+                  </div>
+                  <div class="event-quick-actions">
+                    <button v-if="canTakeQuiz(event)" 
+                            class="quick-take-quiz-btn" 
+                            @click="takeQuiz(event)"
+                            :title="'Take quiz: ' + event.title">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M13,9H18.5L13,3.5V9M6,2H14L20,8V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V4C4,2.89 4.89,2 6,2M15,18V16H6V18H15M18,14V12H6V14H18Z" />
+                      </svg>
+                    </button>
+                    <button class="quick-view-btn" 
+                            @click="viewEventFromDay(event)"
+                            :title="'View ' + event.title + ' details'">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      <!-- Event Details Modal -->
+      <div v-if="selectedEvent" class="modal-overlay" @click="closeModal">
+        <div class="modal-content" @click.stop>
+          <div class="modal-header">
+            <h3>{{ selectedEvent.title }}</h3>
+            <button @click="closeModal" class="close-btn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+              </svg>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="event-detail">
+              <strong>Subject:</strong> {{ selectedEvent.subject }}
+            </div>
+            <div class="event-detail">
+              <strong>Date:</strong> {{ formatEventDate(selectedEvent.date) }}
+            </div>
+            <div class="event-detail">
+              <strong>Time:</strong> {{ selectedEvent.time }}
+            </div>
+            <div class="event-detail">
+              <strong>Type:</strong> {{ selectedEvent.type }}
+            </div>
+            <div class="event-detail">
+              <strong>Status:</strong> 
+              <span :class="['status-badge', getEventStatus(selectedEvent)]">
+                {{ getEventStatusText(selectedEvent) }}
+              </span>
+            </div>
+            <div class="event-detail">
+              <strong>Description:</strong> {{ selectedEvent.description }}
+            </div>
+            <div v-if="selectedEvent.quizCode" class="event-detail">
+              <strong>Quiz Code:</strong> {{ selectedEvent.quizCode }}
+            </div>
+            <div v-if="selectedEvent.attemptsAllowed" class="event-detail">
+              <strong>Attempts:</strong> {{ selectedEvent.totalAttempts }} / {{ selectedEvent.attemptsAllowed }} used
+            </div>
+            <div v-if="selectedEvent.isCompleted && selectedEvent.bestScore" class="event-detail">
+              <strong>Best Score:</strong> {{ selectedEvent.bestScore.toFixed(1) }}%
+            </div>
+            <div v-if="canTakeQuiz(selectedEvent)" class="modal-actions">
+              <button class="take-quiz-btn-modal" @click="takeQuiz(selectedEvent)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M13,9H18.5L13,3.5V9M6,2H14L20,8V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V4C4,2.89 4.89,2 6,2M15,18V16H6V18H15M18,14V12H6V14H18Z" />
+                </svg>
+                Take Quiz Now
+              </button>
+            </div>
+            <div v-else-if="selectedEvent.isCompleted" class="modal-info">
+              <div class="completed-message">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
+                </svg>
+                <span>Quiz Completed!</span>
+              </div>
+            </div>
+            <div v-else-if="getEventStatus(selectedEvent) === 'overdue'" class="modal-info">
+              <div class="overdue-message">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z" />
+                </svg>
+                <span>Quiz Deadline Passed</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Notifications Area -->
@@ -316,7 +341,7 @@
   </div>
 </template>
 
-<script lang="ts">
+<script>
 import { supabase } from '@/supabase.js'
 
 export default {
@@ -329,6 +354,7 @@ export default {
       selectedDay: null,
       currentTime: new Date(),
       statusUpdateInterval: null,
+      fastUpdateInterval: null,
       realTimeSubscription: null,
       loading: true,
       error: null,
@@ -717,13 +743,58 @@ export default {
       }
     },
 
-    async markAsCompleted(event) {
-      this.showNotification(`Click to take quiz: ${event.title}`, 'info');
+    canTakeQuiz(event) {
+      if (!event) return false;
       
+      // Can't take if already completed
+      if (event.isCompleted) return false;
+      
+      // Can't take if no more attempts left
+      if (event.totalAttempts >= event.attemptsAllowed) return false;
+      
+      // Can't take if overdue (past deadline)
+      const status = this.getEventStatus(event);
+      if (status === 'overdue') return false;
+      
+      // Can take if it's upcoming or due today
+      return status === 'upcoming' || status === 'due-today';
+    },
+
+    takeQuiz(event) {
+      // Close any open modals
       this.selectedEvent = null;
       this.selectedDay = null;
       
-      console.log('Navigate to quiz:', event.id, 'Code:', event.quizCode);
+      console.log('Current route:', this.$route.path);
+      console.log('Attempting to navigate to subjects page for quiz:', {
+        id: event.id,
+        code: event.quizCode,
+        title: event.title
+      });
+      
+      // Check if we're already on subjects page
+      if (this.$route.path === '/student/subjects' || this.$route.name === 'StudentSubjects') {
+        console.log('Already on subjects page, reloading...');
+        // Force a reload of the current page
+        this.$router.go(0);
+        this.showNotification(`Refreshing Subjects page - ${event.title}`, 'info');
+      } else {
+        // Navigate to subjects page
+        this.$router.push('/student/subjects')
+          .then(() => {
+            console.log('Successfully navigated to subjects page');
+            this.showNotification(`Opening Subjects page - ${event.title}`, 'info');
+          })
+          .catch(err => {
+            console.error('Navigation error:', err);
+            // Try with name-based navigation as fallback
+            this.$router.push({ name: 'StudentSubjects' })
+              .catch(err2 => {
+                console.error('Fallback navigation also failed:', err2);
+                this.showNotification('Unable to navigate to subjects page', 'error');
+              });
+          });
+      }
     },
 
     showNotification(message, type = 'info') {
@@ -939,9 +1010,112 @@ export default {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
+/* === NEW STYLES FOR TAKE QUIZ BUTTONS === */
+.take-quiz-btn {
+  background: linear-gradient(135deg, #3D8D7A 0%, #4dbb98 100%);
+  color: var(--text-inverse);
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Inter', sans-serif;
+}
 
+.take-quiz-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(61, 141, 122, 0.3);
+}
 
-/* Flex alignment for header stat */
+.take-quiz-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.take-quiz-btn-modal {
+  background: linear-gradient(135deg, #3D8D7A 0%, #4dbb98 100%);
+  color: var(--text-inverse);
+  border: none;
+  border-radius: 12px;
+  padding: 0.875rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Inter', sans-serif;
+  width: 100%;
+  justify-content: center;
+}
+
+.take-quiz-btn-modal:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(61, 141, 122, 0.3);
+}
+
+.quick-take-quiz-btn {
+  background: linear-gradient(135deg, #3D8D7A 0%, #4dbb98 100%);
+  color: var(--text-inverse);
+  border: none;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quick-take-quiz-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
+}
+
+.modal-info {
+  padding-top: 1rem;
+  border-top: 1px solid rgba(61, 141, 122, 0.1);
+}
+
+.completed-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(34, 197, 94, 0.1);
+  border-radius: 12px;
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.completed-message svg {
+  color: #16a34a;
+}
+
+.overdue-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(245, 158, 11, 0.1);
+  border-radius: 12px;
+  color: #d97706;
+  font-weight: 600;
+}
+
+.overdue-message svg {
+  color: #d97706;
+}
+
+/* === EXISTING STYLES === */
 .header-flex-align {
   display: flex;
   justify-content: space-between;
@@ -951,7 +1125,6 @@ export default {
   align-items: flex-start;
   margin-top: 0.1rem;
 }
-/* --- Minimal Header Card Styles (from Subjects.vue) --- */
 .minimal-header-card {
   border-radius: 28px;
   box-shadow: 0 8px 32px 0 var(--shadow-strong);
@@ -1044,7 +1217,6 @@ export default {
   box-sizing: border-box;
 }
 
-/* Loading States */
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -1074,7 +1246,6 @@ export default {
   100% { transform: rotate(360deg); }
 }
 
-/* Error States */
 .error-container {
   display: flex;
   flex-direction: column;
@@ -1120,7 +1291,6 @@ export default {
   box-shadow: 0 8px 25px rgba(61, 141, 122, 0.3);
 }
 
-/* Notifications */
 .notifications-container {
   position: fixed;
   top: 2rem;
@@ -1213,7 +1383,6 @@ export default {
   }
 }
 
-/* Live Indicator */
 .live-indicator {
   animation: pulse 2s infinite;
 }
@@ -1234,88 +1403,6 @@ export default {
   font-family: 'Inter', sans-serif;
   background: var(--bg-primary);
   min-height: 100vh;
-}
-
-.page-header {
-  background: var(--bg-card-translucent);
-  backdrop-filter: blur(20px);
-  border-radius: 24px;
-  padding: 2.5rem;
-  margin-bottom: 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 12px 40px var(--shadow-medium);
-  border: 1px solid var(--border-color-light);
-}
-
-.header-content {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.header-icon {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-inverse);
-  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.3);
-}
-
-.page-title {
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: #3D8D7A;
-  margin-bottom: 0.5rem;
-  text-shadow: 0 2px 4px rgba(61, 141, 122, 0.1);
-}
-
-.page-subtitle {
-  font-size: 1.1rem;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-.header-stats {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.stat-card {
-  background: var(--bg-card-translucent);
-  border-radius: 16px;
-  padding: 1rem 1.5rem;
-  text-align: center;
-  border: 1px solid var(--border-color-light);
-  min-width: 80px;
-  transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(61, 141, 122, 0.15);
-}
-
-.stat-number {
-  font-size: 2rem;
-  font-weight: 800;
-  color: #3D8D7A;
-  line-height: 1;
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #777;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-top: 0.5rem;
 }
 
 .status-legend {
@@ -1362,28 +1449,6 @@ export default {
 
 .legend-color.overdue {
   background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-}
-
-.today-btn {
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  color: var(--text-inverse);
-  border: none;
-  border-radius: 12px;
-  padding: 0.875rem 1.5rem;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.875rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.2);
-  font-family: 'Inter', sans-serif;
-}
-
-.today-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(61, 141, 122, 0.3);
 }
 
 .calendar-nav {
@@ -1614,7 +1679,6 @@ export default {
   box-shadow: 0 2px 8px rgba(61, 141, 122, 0.3);
 }
 
-/* Modal Styles */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -1858,25 +1922,6 @@ export default {
   gap: 0.5rem;
 }
 
-.quick-answer-btn {
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-  color: var(--text-inverse);
-  border: none;
-  border-radius: 8px;
-  width: 32px;
-  height: 32px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.quick-answer-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-}
-
 .quick-view-btn {
   background: rgba(61, 141, 122, 0.1);
   border: 1px solid rgba(61, 141, 122, 0.2);
@@ -1896,7 +1941,6 @@ export default {
   transform: scale(1.1);
 }
 
-/* List View Styles */
 .events-list {
   display: flex;
   flex-direction: column;
@@ -2024,27 +2068,6 @@ export default {
   align-items: center;
 }
 
-.answer-btn {
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-  color: var(--text-inverse);
-  border: none;
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 600;
-  font-size: 0.875rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-family: 'Inter', sans-serif;
-}
-
-.answer-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(34, 197, 94, 0.3);
-}
-
 .view-btn-small {
   background: rgba(61, 141, 122, 0.1);
   border: 1px solid rgba(61, 141, 122, 0.2);
@@ -2115,7 +2138,7 @@ export default {
 }
 
 .event-detail strong {
-  min-width: 80px;
+  min-width: 100px;
   color: #3D8D7A;
   font-weight: 600;
 }
@@ -2125,53 +2148,29 @@ export default {
   border-top: 1px solid rgba(61, 141, 122, 0.1);
 }
 
-.answer-btn-modal {
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-  color: var(--text-inverse);
-  border: none;
-  border-radius: 12px;
-  padding: 0.875rem 1.5rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 600;
-  font-size: 0.875rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-family: 'Inter', sans-serif;
-  width: 100%;
-  justify-content: center;
-}
-
-.answer-btn-modal:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(34, 197, 94, 0.3);
-}
-
-/* Responsive Design */
 @media (max-width: 768px) {
   .calendar-container {
     padding: 1rem;
   }
   
-  .page-header {
+  .minimal-header-card {
     flex-direction: column;
     text-align: center;
     gap: 2rem;
     padding: 2rem;
   }
   
-  .header-content {
+  .section-header-left {
     flex-direction: column;
     text-align: center;
   }
   
-  .header-stats {
+  .section-header-stats {
     flex-direction: row;
     justify-content: center;
   }
   
-  .page-title {
+  .minimal-header-title {
     font-size: 2rem;
   }
   
@@ -2235,155 +2234,3 @@ export default {
   }
 }
 </style>
-
-/* --- Modern Card Header Styles (from Home.vue) --- */
-.section-header-card {
-  position: relative;
-  background: var(--bg-primary);
-  border-radius: 32px;
-  padding: 3.5rem;
-  margin-bottom: 2.5rem;
-  min-height: 180px;
-  box-shadow: 
-    0 24px 48px rgba(61, 141, 122, 0.08),
-    0 12px 24px rgba(61, 141, 122, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  border: 2px solid rgba(61, 141, 122, 0.08);
-  overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.section-header-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 
-    0 32px 64px rgba(61, 141, 122, 0.12),
-    0 16px 32px rgba(61, 141, 122, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-}
-.header-bg-decoration {
-  position: absolute;
-  top: -50%;
-  right: -20%;
-  width: 120%;
-  height: 200%;
-  background: radial-gradient(ellipse at center, rgba(77, 187, 152, 0.08) 0%, transparent 70%);
-  z-index: 1;
-}
-.floating-shapes {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1;
-  pointer-events: none;
-}
-.shape {
-  position: absolute;
-  border-radius: 50%;
-  background: linear-gradient(135deg, rgba(77, 187, 152, 0.1) 0%, rgba(51, 128, 107, 0.05) 100%);
-}
-.shape-1 {
-  width: 120px;
-  height: 120px;
-  top: -30px;
-  right: 10%;
-  animation: float 6s ease-in-out infinite;
-}
-.shape-2 {
-  width: 80px;
-  height: 80px;
-  bottom: -20px;
-  right: 25%;
-  animation: float 8s ease-in-out infinite reverse;
-}
-.shape-3 {
-  width: 60px;
-  height: 60px;
-  top: 50%;
-  right: 5%;
-  animation: float 7s ease-in-out infinite;
-}
-@keyframes float {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-20px) rotate(10deg); }
-}
-.section-header-content {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-}
-.section-header-left {
-  display: flex;
-  align-items: center;
-  gap: 2.5rem;
-}
-.section-header-icon {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, #4dbb98 0%, #33806b 100%);
-  border-radius: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-inverse);
-  box-shadow: 
-    0 12px 24px rgba(61, 141, 122, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
-}
-.section-header-icon:hover {
-  transform: scale(1.05);
-}
-.header-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-.section-header-title {
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: #2d6a57;
-  letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #33806b 0%, #4dbb98 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-bottom: 0.25rem;
-}
-.section-header-subtitle {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #5e8c7a;
-  margin-bottom: 0.25rem;
-}
-.section-header-description {
-  font-size: 1rem;
-  color: #7a9c8f;
-  font-weight: 400;
-  opacity: 0.9;
-}
-.header-badge {
-  background: rgba(77, 187, 152, 0.1);
-  border: 2px solid rgba(77, 187, 152, 0.2);
-  border-radius: 20px;
-  padding: 1rem 1.5rem;
-  backdrop-filter: blur(10px);
-}
-.badge-content {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-.badge-icon {
-  font-size: 1.5rem;
-}
-.badge-text {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #33806b;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
