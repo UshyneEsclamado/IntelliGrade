@@ -1761,9 +1761,10 @@ onUnmounted(() => {
   color: #2a2d35;
 }
 
+
 .header-title {
   font-size: 1.5rem;
-  font-weight: 700;
+  font-weight: 400;
   color: #1f2937;
   margin-bottom: 0.25rem;
 }
