@@ -90,7 +90,9 @@
             </div>
             <div class="assessment-due">
               <span class="due-date">{{ formatDate(assessment.dueDate) }}</span>
-              <span :class="['status', assessment.status]">{{ assessment.status }}</span>
+              <span v-if="assessment.status" class="status" :class="getStatusClass(assessment.status)">
+                {{ formatStatus(assessment.status) }}
+              </span>
             </div>
           </div>
         </div>
@@ -735,6 +737,28 @@ export default {
       });
     },
 
+    formatStatus(status) {
+      if (!status) return '';
+      // Split camelCase and add spaces
+      return status
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .replace(/-/g, ' ')
+        .toLowerCase()
+        .replace(/\b\w/g, l => l.toUpperCase());
+    },
+
+    getStatusClass(status) {
+      if (!status) return '';
+      const lowerStatus = status.toLowerCase();
+      
+      if (lowerStatus.includes('progress') || lowerStatus.includes('available') || lowerStatus.includes('pending')) {
+        return 'actionable';
+      } else if (lowerStatus.includes('completed') || lowerStatus.includes('finished')) {
+        return 'completed';
+      }
+      return 'default';
+    },
+
     navigateToSubjects() {
       const parent = this.$parent as any;
       if (parent && typeof parent.navigateTo === 'function') {
@@ -1076,6 +1100,7 @@ export default {
   gap: 1.5rem;
 }
 
+
 .content-card {
   background: white;
   border-radius: 12px;
@@ -1084,10 +1109,11 @@ export default {
   display: flex;
   flex-direction: column;
   max-height: 500px;
+  border: 2px solid #A3D1C6;
 }
 .dark .content-card {
   background: #23272b;
-  border: 1px solid #20c997;
+  border: 2px solid #20c997;
   box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
 
@@ -1186,6 +1212,66 @@ export default {
 }
 .dark .assessment-progress {
   color: #A3D1C6;
+}
+
+/* Assessment Due and Status */
+.assessment-due {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.due-date {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+.dark .due-date {
+  color: #A3D1C6;
+}
+
+.status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.status.actionable {
+  background: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fbbf24;
+}
+.dark .status.actionable {
+  background: #451a03;
+  color: #fbbf24;
+  border-color: #d97706;
+}
+
+.status.completed {
+  background: #d1fae5;
+  color: #059669;
+  border: 1px solid #10b981;
+}
+.dark .status.completed {
+  background: #022c22;
+  color: #34d399;
+  border-color: #059669;
+}
+
+.status.default {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+}
+.dark .status.default {
+  background: #374151;
+  color: #9ca3af;
+  border-color: #4b5563;
 }
 
 .grade-btn {
