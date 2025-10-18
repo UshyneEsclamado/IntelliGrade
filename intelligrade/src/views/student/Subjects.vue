@@ -179,7 +179,7 @@
     </div>
 
     <!-- Empty State -->
-    <div v-if="filteredSubjects.length === 0" class="empty-state">
+    <div v-if="filteredSubjects.length === 0 && !isLoading" class="empty-state">
       <div class="empty-icon">
         <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
           <path d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M5,19V5H19V19H5Z" />
@@ -253,8 +253,11 @@
     <!-- Loading Overlay -->
     <div v-if="isLoading" class="loading-overlay">
       <div class="loading-content">
-        <div class="loading-spinner"></div>
-        <p>{{ loadingMessage }}</p>
+        <div class="loading-spinner-container">
+          <div class="loading-spinner"></div>
+        </div>
+        <p class="loading-text">{{ loadingMessage }}</p>
+        <p class="loading-subtext">Please wait a moment...</p>
       </div>
     </div>
   </div>
@@ -271,8 +274,8 @@ export default {
       activeFilter: 'all',
       showJoinModal: false,
       isJoining: false,
-      isLoading: false,
-      loadingMessage: '',
+      isLoading: true, // Start with loading true
+      loadingMessage: 'Loading your subjects...',
       joinError: '',
       joinSuccess: '',
       previewSubject: null,
@@ -428,24 +431,20 @@ export default {
       return colors[Math.abs(hash) % colors.length];
     },
 
-    // Fetch student's enrolled subjects using new schema
-    async fetchSubjects(retryCount = 0) {
-      const maxRetries = 3
-      
+    // Optimized fetch with single batch query
+    async fetchSubjects() {
       try {
         if (!this.studentInfo?.id) {
           console.log('No student info available, skipping fetch')
+          this.isLoading = false
           return
         }
 
-        console.log('Fetching subjects for student:', this.studentInfo.id, `(attempt ${retryCount + 1})`)
+        console.log('Fetching subjects for student:', this.studentInfo.id)
+        this.isLoading = true
+        this.loadingMessage = 'Loading your subjects...'
 
-        // Add small delay for database consistency
-        if (retryCount > 0) {
-          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount))
-        }
-
-        // Fetch enrollments using the student_dashboard view (from your schema)
+        // Fetch enrollments using the student_dashboard view
         const { data: enrollments, error } = await supabase
           .from('student_dashboard')
           .select('*')
@@ -454,135 +453,129 @@ export default {
 
         if (error) {
           console.error('Database error fetching enrollments:', error)
-          
-          // Retry on certain errors
-          if ((error.code === 'PGRST000' || error.message?.includes('network')) && retryCount < maxRetries) {
-            console.log('Retrying fetchSubjects due to network error...')
-            return await this.fetchSubjects(retryCount + 1)
-          }
-          
           throw error
         }
 
         if (!enrollments || enrollments.length === 0) {
           this.subjects = []
+          this.isLoading = false
           return
         }
 
-        console.log('Raw enrollment data:', enrollments.length, 'enrollments found')
+        console.log('Found', enrollments.length, 'enrollments')
 
-        // Process enrollments to create subject cards
-        const subjectsWithStats = await Promise.all(
-          enrollments.map(async (enrollment) => {
-            try {
-              const sectionId = enrollment.section_id
-              const subjectId = enrollment.subject_id
+        // Extract all section IDs for batch queries
+        const sectionIds = enrollments.map(e => e.section_id)
 
-              // Get quiz statistics - check if quizzes table exists
-              let allQuizzes = []
-              let completedQuizResults = []
-              
-              try {
-                // Get all published quizzes for this section
-                const { data: quizData } = await supabase
-                  .from('quizzes')
-                  .select('id, title, status, end_date, created_at')
-                  .eq('section_id', sectionId)
-                  .eq('status', 'published')
-                
-                allQuizzes = quizData || []
+        // BATCH FETCH: Get all quizzes for all sections in ONE query
+        const { data: allQuizzes } = await supabase
+          .from('quizzes')
+          .select('id, section_id, title, status')
+          .in('section_id', sectionIds)
+          .eq('status', 'published')
 
-                // Get completed quiz results for this student
-                if (allQuizzes.length > 0) {
-                  const quizIds = allQuizzes.map(q => q.id)
-                  const { data: results } = await supabase
-                    .from('quiz_results')
-                    .select('quiz_id, best_score, best_percentage, latest_attempt_date')
-                    .eq('student_id', this.studentInfo.id)
-                    .in('quiz_id', quizIds)
-                  
-                  completedQuizResults = results || []
-                }
-              } catch (quizError) {
-                console.warn('Quiz data not available:', quizError)
-                // Continue without quiz data
-              }
-
-              // Calculate statistics
-              const totalQuizzes = allQuizzes.length
-              const completedQuizzes = completedQuizResults.length
-              const availableQuizzes = Math.max(0, totalQuizzes - completedQuizzes)
-
-              // Calculate grade
-              let currentGrade = '--'
-              let overallScore = null
-              
-              if (completedQuizResults.length > 0) {
-                const totalScore = completedQuizResults.reduce((sum, result) => sum + (result.best_percentage || 0), 0)
-                overallScore = totalScore / completedQuizResults.length
-                
-                if (overallScore >= 95) currentGrade = 'A+'
-                else if (overallScore >= 90) currentGrade = 'A'
-                else if (overallScore >= 85) currentGrade = 'B+'
-                else if (overallScore >= 80) currentGrade = 'B'
-                else if (overallScore >= 75) currentGrade = 'C+'
-                else if (overallScore >= 70) currentGrade = 'C'
-                else if (overallScore >= 65) currentGrade = 'D+'
-                else if (overallScore >= 60) currentGrade = 'D'
-                else currentGrade = 'F'
-              }
-
-              return {
-                id: subjectId,
-                name: enrollment.subject_name || 'Unknown Subject',
-                code: enrollment.section_code || 'NO-CODE',
-                section: enrollment.section_name || 'Unknown Section',
-                instructor: enrollment.teacher_name || 'Teacher Not Available',
-                gradeLevel: enrollment.subject_grade_level || 'N/A',
-                color: this.generateSubjectColor(enrollment.subject_name || 'default'),
-                status: 'active',
-                completedQuizzes,
-                availableQuizzes,
-                totalQuizzes,
-                currentGrade,
-                overallScore,
-                enrollmentId: enrollment.enrollment_id,
-                sectionId: sectionId
-              }
-
-            } catch (err) {
-              console.error(`Error processing enrollment ${enrollment.enrollment_id}:`, err)
-              return null
+        // Group quizzes by section for quick lookup
+        const quizzesBySection = {}
+        if (allQuizzes) {
+          allQuizzes.forEach(quiz => {
+            if (!quizzesBySection[quiz.section_id]) {
+              quizzesBySection[quiz.section_id] = []
             }
+            quizzesBySection[quiz.section_id].push(quiz)
           })
-        )
+        }
 
-        const newSubjects = subjectsWithStats.filter(subject => subject !== null)
+        // BATCH FETCH: Get all quiz results for this student in ONE query
+        const allQuizIds = allQuizzes ? allQuizzes.map(q => q.id) : []
+        let resultsByQuizId = {}
         
-        // Initialize showOptions property for each subject
-        newSubjects.forEach(subject => {
-          subject.showOptions = false;
-        });
+        if (allQuizIds.length > 0) {
+          const { data: allResults } = await supabase
+            .from('quiz_results')
+            .select('quiz_id, best_score, best_percentage')
+            .eq('student_id', this.studentInfo.id)
+            .in('quiz_id', allQuizIds)
+          
+          // Group results by quiz ID for quick lookup
+          if (allResults) {
+            allResults.forEach(result => {
+              resultsByQuizId[result.quiz_id] = result
+            })
+          }
+        }
+
+        // Process all enrollments with pre-fetched data
+        const newSubjects = enrollments.map(enrollment => {
+          const sectionId = enrollment.section_id
+          const subjectId = enrollment.subject_id
+
+          // Get quizzes for this section
+          const sectionQuizzes = quizzesBySection[sectionId] || []
+          
+          // Get completed quiz results for this section
+          const completedQuizIds = sectionQuizzes
+            .map(q => q.id)
+            .filter(quizId => resultsByQuizId[quizId])
+
+          const totalQuizzes = sectionQuizzes.length
+          const completedQuizzes = completedQuizIds.length
+          const availableQuizzes = Math.max(0, totalQuizzes - completedQuizzes)
+
+          // Calculate grade
+          let currentGrade = '--'
+          let overallScore = null
+          
+          if (completedQuizIds.length > 0) {
+            const scores = completedQuizIds.map(qId => resultsByQuizId[qId].best_percentage || 0)
+            overallScore = scores.reduce((sum, score) => sum + score, 0) / scores.length
+            
+            if (overallScore >= 95) currentGrade = 'A+'
+            else if (overallScore >= 90) currentGrade = 'A'
+            else if (overallScore >= 85) currentGrade = 'B+'
+            else if (overallScore >= 80) currentGrade = 'B'
+            else if (overallScore >= 75) currentGrade = 'C+'
+            else if (overallScore >= 70) currentGrade = 'C'
+            else if (overallScore >= 65) currentGrade = 'D+'
+            else if (overallScore >= 60) currentGrade = 'D'
+            else currentGrade = 'F'
+          }
+
+          return {
+            id: subjectId,
+            name: enrollment.subject_name || 'Unknown Subject',
+            code: enrollment.section_code || 'NO-CODE',
+            section: enrollment.section_name || 'Unknown Section',
+            instructor: enrollment.teacher_name || 'Teacher Not Available',
+            gradeLevel: enrollment.subject_grade_level || 'N/A',
+            color: this.generateSubjectColor(enrollment.subject_name || 'default'),
+            status: 'active',
+            completedQuizzes,
+            availableQuizzes,
+            totalQuizzes,
+            currentGrade,
+            overallScore,
+            enrollmentId: enrollment.enrollment_id,
+            sectionId: sectionId,
+            showOptions: false
+          }
+        })
         
-        this.subjects = [...newSubjects]
-        
-        console.log('Successfully updated subjects:', this.subjects.length, 'subjects loaded')
+        this.subjects = newSubjects
+        console.log('Successfully loaded', this.subjects.length, 'subjects')
 
       } catch (error) {
         console.error('Error fetching subjects:', error)
         
-        // Show user-friendly error message
         if (error.code === 'PGRST301' || error.message?.includes('JWT')) {
           alert('Your session has expired. Please log in again.')
           await this.$router.push('/login')
-        } else if (retryCount < maxRetries) {
-          console.log('Retrying fetchSubjects after error...')
-          return await this.fetchSubjects(retryCount + 1)
         } else {
           alert(`Unable to load subjects: ${error.message}`)
           this.subjects = []
         }
-      } 
+      } finally {
+        this.isLoading = false
+      }
     },
 
     // Validate section code using new schema
@@ -771,7 +764,7 @@ export default {
         // Wait a moment for database to sync, then refresh subjects
         await new Promise(resolve => setTimeout(resolve, 1500))
         
-        // Force a fresh fetch with retries to ensure we get the new enrollment
+        // Force a fresh fetch to ensure we get the new enrollment
         await this.fetchSubjects()
         
         // Wait a bit more for UI to update
@@ -798,17 +791,15 @@ export default {
     clearJoinError() {
       this.joinError = ''
       this.joinSuccess = ''
-      // Don't clear preview immediately - let validation handle it
       
       clearTimeout(this.validationTimeout)
       this.validationTimeout = setTimeout(() => {
         if (this.joinForm.sectionCode.length >= 8) {
           this.validateSectionCode()
         } else {
-          // Only clear preview if code is too short
           this.previewSubject = null
         }
-      }, 800) // Increased delay to reduce flickering
+      }, 800)
     },
 
     closeJoinModal() {
@@ -825,7 +816,6 @@ export default {
     },
 
     viewSubjectDetails(subject) {
-      // Navigate to detailed subject view
       this.$router.push({
         name: 'SubjectDetails',
         params: {
@@ -842,52 +832,11 @@ export default {
       })
     },
 
-    // Add more detailed error handling
-    async handleDatabaseError(error, operation) {
-      console.error(`Database error during ${operation}:`, error)
-      
-      if (error.code === 'PGRST301' || error.message?.includes('JWT')) {
-        alert('Your session has expired. Please log in again.')
-        await this.$router.push('/login')
-        return false
-      } else if (error.code === 'PGRST116') {
-        alert('No data found. Please refresh the page.')
-        return false
-      } else if (error.message?.includes('network')) {
-        alert('Network error. Please check your connection and try again.')
-        return false
-      } else {
-        alert(`Error during ${operation}: ${error.message}`)
-        return false
-      }
-    },
-
-    // Add retry logic for network issues
-    async fetchWithRetry(operation, maxRetries = 3) {
-      let lastError = null
-      
-      for (let i = 0; i < maxRetries; i++) {
-        try {
-          return await operation()
-        } catch (error) {
-          lastError = error
-          if (i < maxRetries - 1) {
-            console.log(`Attempt ${i + 1} failed, retrying...`)
-            await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)))
-          }
-        }
-      }
-      
-      throw lastError
-    },
-
-    // Add subject statistics refresh
     async refreshSubjectStats(subjectId) {
       try {
         const subject = this.subjects.find(s => s.id === subjectId)
         if (!subject) return
 
-        // Refresh quiz data for this specific subject
         const { data: quizzes } = await supabase
           .from('quizzes')
           .select('id, title, status')
@@ -900,7 +849,6 @@ export default {
           .eq('student_id', this.studentInfo.id)
           .in('quiz_id', (quizzes || []).map(q => q.id))
 
-        // Update subject stats
         subject.totalQuizzes = (quizzes || []).length
         subject.completedQuizzes = (results || []).length
         subject.availableQuizzes = Math.max(0, subject.totalQuizzes - subject.completedQuizzes)
@@ -908,7 +856,6 @@ export default {
         if (results && results.length > 0) {
           const avgScore = results.reduce((sum, r) => sum + r.best_percentage, 0) / results.length
           subject.overallScore = avgScore
-          // Update grade based on score...
         }
       } catch (error) {
         console.warn('Failed to refresh subject stats:', error)
@@ -916,7 +863,6 @@ export default {
     },
 
     takeQuiz(subject) {
-      // Navigate to TakeQuiz with both subjectId and sectionId
       console.log('Navigating to TakeQuiz for subject:', subject)
       
       this.$router.push({
@@ -986,7 +932,6 @@ export default {
         this.archivedSubjects.delete(subjectId);
       } else {
         this.archivedSubjects.add(subjectId);
-        // Remove from favorites if archiving
         this.favoriteSubjects.delete(subjectId);
       }
       this.saveUserPreferences();
@@ -994,14 +939,12 @@ export default {
     },
 
     toggleOptionsMenu(subjectId) {
-      // Close all other menus first
       this.subjects.forEach(subject => {
         if (subject.id !== subjectId) {
           subject.showOptions = false;
         }
       });
       
-      // Toggle current menu
       const subject = this.subjects.find(s => s.id === subjectId);
       if (subject) {
         subject.showOptions = !subject.showOptions;
@@ -1076,7 +1019,6 @@ export default {
         return
       }
 
-      // Load user preferences after authentication
       this.loadUserPreferences()
       
       await this.fetchSubjects()
@@ -1088,7 +1030,6 @@ export default {
       
       console.log('Component initialization complete')
       
-      // Add click listener to close menus when clicking outside
       document.addEventListener('click', this.closeAllOptionsMenus)
       
     } catch (error) {
@@ -1120,7 +1061,6 @@ export default {
     if (this.validationTimeout) {
       clearTimeout(this.validationTimeout)
     }
-    // Clean up event listeners
     document.removeEventListener('click', this.closeAllOptionsMenus)
   }
 }
@@ -2085,4 +2025,97 @@ export default {
     align-items: center;
   }
 
+/* ==================== NEW LOADING STYLES - ADD THIS ==================== */
+
+/* Loading Overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(251, 255, 228, 0.95);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.loading-content {
+  background: white;
+  padding: 3rem 4rem;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(61, 141, 122, 0.15);
+  border: 2px solid #a3d1c6;
+  animation: slideUp 0.4s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.loading-spinner-container {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
+}
+
+.loading-spinner {
+  width: 80px;
+  height: 80px;
+  border: 5px solid rgba(61, 141, 122, 0.1);
+  border-left: 5px solid #3d8d7a;
+  border-top: 5px solid #20c997;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+  box-shadow: 0 0 20px rgba(61, 141, 122, 0.1);
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #181c20;
+  margin: 0 0 0.5rem 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.loading-subtext {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #3d8d7a;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+/* ==================== END NEW LOADING STYLES ==================== */
 </style>
