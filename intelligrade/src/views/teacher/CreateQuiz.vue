@@ -600,16 +600,6 @@ export default {
       }
     });
 
-    // Timeout wrapper for database operations
-    const withTimeout = (promise, timeoutMs = 15000) => {
-      return Promise.race([
-        promise,
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Operation timed out')), timeoutMs)
-        )
-      ]);
-    };
-
     // Convert Philippines time to UTC for storage
     const convertPHTimeToUTC = (phDateString) => {
       if (!phDateString) return null;
@@ -667,7 +657,6 @@ export default {
           teacher_id: teacher.id
         };
 
-        console.log('✅ Teacher info loaded:', teacherInfo.value.teacher_id);
         return true;
       } catch (error) {
         console.error('Error loading teacher info:', error);
@@ -690,7 +679,6 @@ export default {
       subject.value = { id: subjectId, name: subjectName };
       section.value = { id: sectionId, name: sectionName };
 
-      console.log('✅ Route params loaded:', { subjectId, sectionId });
       return true;
     };
 
@@ -708,7 +696,7 @@ export default {
             filter: `teacher_id=eq.${teacherInfo.value.teacher_id}`
           },
           (payload) => {
-            console.log('📡 New quiz created (real-time):', payload.new);
+            console.log('📡 New quiz created:', payload.new);
           }
         )
         .subscribe();
@@ -863,15 +851,10 @@ export default {
     };
 
     // ============================================
-    // BULLETPROOF PUBLISH FUNCTION WITH TIMEOUTS
+    // PRODUCTION-READY PUBLISH FUNCTION
     // ============================================
     const publishQuiz = async () => {
-      console.log('🚀 Starting quiz publication...');
-      
-      if (!validateQuiz()) {
-        console.log('❌ Validation failed');
-        return;
-      }
+      if (!validateQuiz()) return;
 
       if (!confirm(`Publish "${quiz.value.title}"?\n\nStudents will be able to see and take this quiz immediately.`)) {
         return;
@@ -880,20 +863,7 @@ export default {
       isPublishing.value = true;
 
       try {
-        // Verify required data
-        if (!subject.value.id || !section.value.id || !teacherInfo.value.teacher_id) {
-          throw new Error('Missing required information: subject_id, section_id, or teacher_id');
-        }
-
-        console.log('📋 Data verified:', {
-          subjectId: subject.value.id,
-          sectionId: section.value.id,
-          teacherId: teacherInfo.value.teacher_id,
-          questions: quiz.value.questions.length
-        });
-
-        // Step 1: Create Quiz with timeout
-        console.log('📝 Creating quiz...');
+        // Prepare quiz data
         const quizData = {
           subject_id: subject.value.id,
           section_id: section.value.id,
@@ -911,21 +881,17 @@ export default {
           status: 'published'
         };
 
-        const quizInsert = supabase
+        // Step 1: Create Quiz
+        const { data: newQuiz, error: quizError } = await supabase
           .from('quizzes')
           .insert([quizData])
           .select()
           .single();
 
-        const { data: newQuiz, error: quizError } = await withTimeout(quizInsert, 10000);
-
         if (quizError) throw quizError;
-        if (!newQuiz || !newQuiz.id) throw new Error('Quiz creation failed');
+        if (!newQuiz?.id) throw new Error('Quiz creation failed');
 
-        console.log('✅ Quiz created:', newQuiz.id, newQuiz.quiz_code);
-
-        // Step 2: Insert questions with timeout
-        console.log('📝 Creating questions...');
+        // Step 2: Prepare all questions
         const questionsData = quiz.value.questions.map((q, index) => ({
           quiz_id: newQuiz.id,
           question_number: index + 1,
@@ -934,21 +900,18 @@ export default {
           points: 1.00
         }));
 
-        const questionsInsert = supabase
+        // Step 3: Insert all questions
+        const { data: insertedQuestions, error: questionsError } = await supabase
           .from('quiz_questions')
           .insert(questionsData)
           .select();
-
-        const { data: insertedQuestions, error: questionsError } = await withTimeout(questionsInsert, 10000);
 
         if (questionsError) throw questionsError;
         if (!insertedQuestions || insertedQuestions.length !== questionsData.length) {
           throw new Error('Failed to insert all questions');
         }
 
-        console.log(`✅ ${insertedQuestions.length} questions created`);
-
-        // Step 3: Insert options and answers
+        // Step 4: Prepare options and answers
         const allOptions = [];
         const allAnswers = [];
 
@@ -974,36 +937,28 @@ export default {
           }
         }
 
-        // Insert options with timeout
+        // Step 5: Insert all options (if any)
         if (allOptions.length > 0) {
-          console.log(`📝 Creating ${allOptions.length} options...`);
-          const optionsInsert = supabase
+          const { error: optionsError } = await supabase
             .from('question_options')
             .insert(allOptions);
 
-          const { error: optionsError } = await withTimeout(optionsInsert, 10000);
           if (optionsError) throw optionsError;
-          console.log('✅ Options created');
         }
 
-        // Insert answers with timeout
+        // Step 6: Insert all answers (if any)
         if (allAnswers.length > 0) {
-          console.log(`📝 Creating ${allAnswers.length} answers...`);
-          const answersInsert = supabase
+          const { error: answersError } = await supabase
             .from('question_answers')
             .insert(allAnswers);
 
-          const { error: answersError } = await withTimeout(answersInsert, 10000);
           if (answersError) throw answersError;
-          console.log('✅ Answers created');
         }
 
-        console.log('✅✅✅ QUIZ PUBLISHED SUCCESSFULLY ✅✅✅');
-
-        // Success alert
+        // Success!
         alert(`✅ Quiz published successfully!\n\n📝 ${newQuiz.title}\n🔑 Quiz Code: ${newQuiz.quiz_code}\n\nStudents can now take this quiz.`);
 
-        // Navigate immediately
+        // Navigate to quizzes page
         router.push({
           name: 'ViewQuizzes',
           params: {
@@ -1019,36 +974,27 @@ export default {
         });
 
       } catch (error) {
-        console.error('❌ ERROR:', error);
+        console.error('Publication error:', error);
 
-        let errorMessage = '❌ Failed to publish quiz.\n\n';
+        let errorMessage = '❌ Failed to publish quiz\n\n';
 
-        if (error.message === 'Operation timed out') {
-          errorMessage += '⏱️ The request took too long.\n\n';
-          errorMessage += 'Possible causes:\n';
-          errorMessage += '• Slow internet connection\n';
-          errorMessage += '• Database is busy\n';
-          errorMessage += '• Too many questions\n\n';
-          errorMessage += '💡 Try reducing the number of questions or retry in a moment.';
-        } else if (error.code === '23505') {
-          errorMessage += '⚠️ Duplicate entry.\nTry a different quiz title.';
+        if (error.code === '23505') {
+          errorMessage += 'A quiz with this title already exists.\nPlease use a different title.';
         } else if (error.code === '23503') {
-          errorMessage += '⚠️ Invalid data reference.\nPlease refresh and try again.';
+          errorMessage += 'Invalid reference detected.\nPlease refresh the page and try again.';
+        } else if (error.message) {
+          errorMessage += error.message;
         } else {
-          errorMessage += `Error: ${error.message}`;
-          if (error.code) errorMessage += `\nCode: ${error.code}`;
+          errorMessage += 'An unexpected error occurred.\nPlease try again or contact support.';
         }
 
         alert(errorMessage);
       } finally {
         isPublishing.value = false;
-        console.log('🏁 Publishing finished');
       }
     };
 
     onMounted(async () => {
-      console.log('🎬 CreateQuiz mounted');
-
       const teacherLoaded = await loadTeacherInfo();
       if (!teacherLoaded) {
         router.push('/login');
@@ -1063,7 +1009,6 @@ export default {
       }
 
       setupRealtimeSubscription();
-      console.log('✅ Initialized');
     });
 
     onUnmounted(() => {
