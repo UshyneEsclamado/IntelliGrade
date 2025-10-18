@@ -310,7 +310,7 @@
   </div>
 </template>
 
-<script lang="ts">
+<script>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { supabase } from '@/supabase.js';
@@ -321,24 +321,10 @@ export default {
     const router = useRouter();
     const route = useRoute();
 
-    // State
     const loading = ref(true);
-    const studentInfo = ref({
-      full_name: 'Loading...',
-      grade_level: '',
-      student_id: null
-    });
-
-    const subject = ref({
-      id: '',
-      name: 'Subject'
-    });
-
-    const section = ref({
-      id: '',
-      name: ''
-    });
-
+    const studentInfo = ref({ full_name: 'Loading...', grade_level: '', student_id: null });
+    const subject = ref({ id: '', name: 'Subject' });
+    const section = ref({ id: '', name: '' });
     const grades = ref([]);
     const showPreviewModal = ref(false);
     const selectedQuiz = ref(null);
@@ -347,7 +333,7 @@ export default {
 
     let gradesSubscription = null;
 
-    // Computed Properties
+    // Computed
     const recentQuizzes = computed(() => {
       return grades.value
         .filter(g => g.latest_attempt_date)
@@ -356,7 +342,6 @@ export default {
     });
 
     const allGrades = computed(() => {
-      // Create a sorted copy to avoid mutating the original array
       return [...grades.value]
         .sort((a, b) => new Date(b.latest_attempt_date || 0) - new Date(a.latest_attempt_date || 0));
     });
@@ -373,23 +358,16 @@ export default {
     });
 
     const highestGrade = computed(() => {
-      const scores = grades.value
-        .filter(g => g.best_percentage !== null)
-        .map(g => g.best_percentage);
+      const scores = grades.value.filter(g => g.best_percentage !== null).map(g => g.best_percentage);
       return scores.length > 0 ? Math.max(...scores) : 0;
     });
 
     const lowestGrade = computed(() => {
-      const scores = grades.value
-        .filter(g => g.best_percentage !== null)
-        .map(g => g.best_percentage);
+      const scores = grades.value.filter(g => g.best_percentage !== null).map(g => g.best_percentage);
       return scores.length > 0 ? Math.min(...scores) : 0;
     });
 
-    // ============================================
-    // UTILITY FUNCTIONS
-    // ============================================
-
+    // Utility Functions
     const formatPHTime = (utcDateString) => {
       if (!utcDateString) return 'Not available';
       const date = new Date(utcDateString);
@@ -407,45 +385,37 @@ export default {
     const formatShortDate = (utcDateString) => {
       if (!utcDateString) return '-';
       const date = new Date(utcDateString);
-      const options = {
-        month: 'short',
-        day: 'numeric',
-        timeZone: 'Asia/Manila'
-      };
+      const options = { month: 'short', day: 'numeric', timeZone: 'Asia/Manila' };
       return date.toLocaleString('en-PH', options);
     };
 
-    // ============================================
-    // LOAD DATA FUNCTIONS
-    // ============================================
-
+    // Load Functions
     const loadStudentInfo = async () => {
       try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError || !session?.user) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) {
           router.push('/login');
           return false;
         }
 
-        const { data: profile, error: profileError } = await supabase
+        const { data: profile } = await supabase
           .from('profiles')
-          .select('id, role, full_name, email')
+          .select('id, role')
           .eq('auth_user_id', session.user.id)
           .single();
 
-        if (profileError || !profile || profile.role !== 'student') {
+        if (!profile || profile.role !== 'student') {
           alert('Student profile not found');
           return false;
         }
 
-        const { data: student, error: studentError } = await supabase
+        const { data: student } = await supabase
           .from('students')
           .select('*')
           .eq('profile_id', profile.id)
           .single();
 
-        if (studentError || !student) {
+        if (!student) {
           alert('Student information not found');
           return false;
         }
@@ -474,29 +444,19 @@ export default {
         return false;
       }
 
-      subject.value = {
-        id: subjectId,
-        name: subjectName
-      };
-
-      section.value = {
-        id: sectionId,
-        name: sectionName
-      };
-
+      subject.value = { id: subjectId, name: subjectName };
+      section.value = { id: sectionId, name: sectionName };
       return true;
     };
 
     const loadGrades = async () => {
       try {
-        // Get all quizzes for this section
-        const { data: allQuizzes, error: quizzesError } = await supabase
+        // Get all published quizzes
+        const { data: allQuizzes } = await supabase
           .from('quizzes')
-          .select('id, title, quiz_code, description, number_of_questions, attempts_allowed, status')
+          .select('id, title, quiz_code, description, number_of_questions, attempts_allowed')
           .eq('section_id', section.value.id)
           .eq('status', 'published');
-
-        if (quizzesError) throw quizzesError;
 
         if (!allQuizzes || allQuizzes.length === 0) {
           grades.value = [];
@@ -505,49 +465,50 @@ export default {
 
         const quizIds = allQuizzes.map(q => q.id);
 
-        // Load quiz results for this student
-        const { data: results, error: resultsError } = await supabase
-          .from('quiz_results')
-          .select(`
-            quiz_id,
-            best_score,
-            best_percentage,
-            total_attempts,
-            latest_attempt_date,
-            status,
-            visible_to_student
-          `)
-          .eq('student_id', studentInfo.value.student_id)
-          .in('quiz_id', quizIds);
-
-        if (resultsError) throw resultsError;
-
-        // Get time taken info from attempts
-        const { data: attempts, error: attemptsError } = await supabase
+        // Get all attempts for these quizzes
+        const { data: attempts } = await supabase
           .from('quiz_attempts')
-          .select('quiz_id, time_taken_minutes')
+          .select('quiz_id, attempt_number, total_score, percentage, submitted_at, time_taken_minutes, status')
           .eq('student_id', studentInfo.value.student_id)
-          .in('quiz_id', quizIds);
+          .in('quiz_id', quizIds)
+          .in('status', ['submitted', 'graded', 'reviewed']);
 
-        if (attemptsError) throw attemptsError;
-
-        // Create maps for faster lookup
-        const resultsMap = {};
-        (results || []).forEach(r => {
-          resultsMap[r.quiz_id] = r;
-        });
-
+        // Build grades data
         const attemptsMap = {};
-        (attempts || []).forEach(a => {
-          if (!attemptsMap[a.quiz_id] || a.time_taken_minutes > attemptsMap[a.quiz_id].time_taken_minutes) {
-            attemptsMap[a.quiz_id] = a;
+        (attempts || []).forEach(att => {
+          if (!attemptsMap[att.quiz_id]) {
+            attemptsMap[att.quiz_id] = {
+              total_attempts: 0,
+              best_percentage: null,
+              latest_date: null,
+              time_taken: null,
+              status: 'not_taken'
+            };
+          }
+
+          const current = attemptsMap[att.quiz_id];
+          current.total_attempts++;
+
+          if (att.percentage !== null && (current.best_percentage === null || att.percentage > current.best_percentage)) {
+            current.best_percentage = att.percentage;
+          }
+
+          if (!current.latest_date || new Date(att.submitted_at) > new Date(current.latest_date)) {
+            current.latest_date = att.submitted_at;
+            current.time_taken = att.time_taken_minutes;
+            current.status = att.status === 'graded' || att.status === 'reviewed' ? 'graded' : 'completed';
           }
         });
 
-        // Transform data
         grades.value = allQuizzes.map(quiz => {
-          const result = resultsMap[quiz.id] || {};
-          const attempt = attemptsMap[quiz.id] || {};
+          const attemptData = attemptsMap[quiz.id] || {
+            total_attempts: 0,
+            best_percentage: null,
+            latest_date: null,
+            time_taken: null,
+            status: 'not_taken'
+          };
+
           return {
             id: quiz.id,
             title: quiz.title,
@@ -555,19 +516,20 @@ export default {
             description: quiz.description,
             number_of_questions: quiz.number_of_questions || 1,
             attempts_allowed: quiz.attempts_allowed || 999,
-            best_score: result.best_score || null,
-            best_percentage: result.best_percentage || null,
-            total_attempts: result.total_attempts || 0,
-            latest_attempt_date: result.latest_attempt_date || null,
-            status: result.status || 'not_taken',
-            visible_to_student: result.visible_to_student !== false,
-            time_taken_minutes: attempt.time_taken_minutes || null
+            best_percentage: attemptData.best_percentage,
+            total_attempts: attemptData.total_attempts,
+            latest_attempt_date: attemptData.latest_date,
+            status: attemptData.status,
+            time_taken_minutes: attemptData.time_taken,
+            visible_to_student: true
           };
         });
 
+        console.log('Loaded grades:', grades.value.length);
+
       } catch (error) {
         console.error('Error loading grades:', error);
-        alert('Failed to load grades. Please refresh the page.');
+        alert('Failed to load grades');
       }
     };
 
@@ -576,26 +538,19 @@ export default {
 
       gradesSubscription = supabase
         .channel(`student-${studentInfo.value.student_id}-grades`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'quiz_results',
-            filter: `student_id=eq.${studentInfo.value.student_id}`
-          },
-          async () => {
-            console.log('Grade updated (real-time)');
-            await loadGrades();
-          }
-        )
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'quiz_attempts',
+          filter: `student_id=eq.${studentInfo.value.student_id}`
+        }, async () => {
+          console.log('Quiz attempt updated - reloading grades');
+          await loadGrades();
+        })
         .subscribe();
     };
 
-    // ============================================
-    // STATUS & SCORE FUNCTIONS
-    // ============================================
-
+    // Status & Score Functions
     const getStatusClass = (status) => {
       const classes = {
         'not_taken': 'status-not-taken',
@@ -635,18 +590,15 @@ export default {
       return quiz.total_attempts < quiz.attempts_allowed;
     };
 
-    // ============================================
-    // QUIZ PREVIEW - FIXED FOR PERFORMANCE
-    // ============================================
-
+    // Quiz Preview
     const viewQuizPreview = async (quiz) => {
       selectedQuiz.value = quiz;
       showPreviewModal.value = true;
       loadingPreview.value = true;
 
       try {
-        // Step 1: Get the latest attempt ID
-        const { data: attempts, error: attemptsError } = await supabase
+        // Get latest attempt
+        const { data: attempts } = await supabase
           .from('quiz_attempts')
           .select('id')
           .eq('quiz_id', quiz.id)
@@ -654,22 +606,18 @@ export default {
           .order('attempt_number', { ascending: false })
           .limit(1);
 
-        if (attemptsError) throw attemptsError;
-
         if (!attempts || attempts.length === 0) {
           throw new Error('No quiz attempt found');
         }
 
         const attemptId = attempts[0].id;
 
-        // Step 2: Get student answers (simple query - no nested selects)
-        const { data: answers, error: answersError } = await supabase
+        // Get student answers
+        const { data: answers } = await supabase
           .from('student_answers')
           .select('id, question_id, selected_option_id, answer_text, is_correct, teacher_comment')
           .eq('attempt_id', attemptId)
           .order('id');
-
-        if (answersError) throw answersError;
 
         if (!answers || answers.length === 0) {
           previewAnswers.value = [];
@@ -679,23 +627,19 @@ export default {
 
         const questionIds = answers.map(a => a.question_id);
 
-        // Step 3: Get question details separately
-        const { data: questions, error: questionsError } = await supabase
+        // Get questions
+        const { data: questions } = await supabase
           .from('quiz_questions')
           .select('id, question_number, question_type, question_text')
           .in('id', questionIds);
 
-        if (questionsError) throw questionsError;
-
-        // Step 4: Get all options for these questions
-        const { data: options, error: optionsError } = await supabase
+        // Get options
+        const { data: options } = await supabase
           .from('question_options')
           .select('id, question_id, option_number, option_text, is_correct')
           .in('question_id', questionIds);
 
-        if (optionsError) throw optionsError;
-
-        // Create maps for fast lookup
+        // Build maps
         const questionsMap = {};
         (questions || []).forEach(q => {
           questionsMap[q.id] = q;
@@ -709,8 +653,8 @@ export default {
           optionsMap[opt.question_id].push(opt);
         });
 
-        // Step 5: Build preview data
-        previewAnswers.value = (answers || []).map(answer => {
+        // Build preview
+        previewAnswers.value = answers.map(answer => {
           const question = questionsMap[answer.question_id] || {};
           const questionOptions = optionsMap[answer.question_id] || [];
 
@@ -727,11 +671,9 @@ export default {
           };
         });
 
-        console.log('Preview loaded successfully:', previewAnswers.value.length, 'answers');
-
       } catch (error) {
         console.error('Error loading quiz preview:', error);
-        alert('Failed to load quiz preview: ' + error.message);
+        alert('Failed to load quiz preview');
         previewAnswers.value = [];
       } finally {
         loadingPreview.value = false;
@@ -760,10 +702,7 @@ export default {
       return 'See correct answer above';
     };
 
-    // ============================================
-    // NAVIGATION FUNCTIONS
-    // ============================================
-
+    // Navigation
     const retakeQuiz = (quiz) => {
       if (!canRetake(quiz)) {
         alert('You have used all available attempts for this quiz.');
@@ -772,10 +711,7 @@ export default {
 
       router.push({
         name: 'TakeQuiz',
-        params: {
-          subjectId: subject.value.id,
-          sectionId: section.value.id
-        },
+        params: { subjectId: subject.value.id, sectionId: section.value.id },
         query: {
           subjectName: subject.value.name,
           sectionName: section.value.name,
@@ -785,18 +721,13 @@ export default {
     };
 
     const goBack = () => {
-      router.push({
-        name: 'StudentDashboard'
-      });
+      router.push({ name: 'StudentDashboard' });
     };
 
     const goToQuizzes = () => {
       router.push({
         name: 'TakeQuiz',
-        params: {
-          subjectId: subject.value.id,
-          sectionId: section.value.id
-        },
+        params: { subjectId: subject.value.id, sectionId: section.value.id },
         query: {
           subjectName: subject.value.name,
           sectionName: section.value.name,
@@ -805,13 +736,8 @@ export default {
       });
     };
 
-    // ============================================
-    // LIFECYCLE HOOKS
-    // ============================================
-
+    // Lifecycle
     onMounted(async () => {
-      console.log('Grades component mounted');
-
       const studentLoaded = await loadStudentInfo();
       if (!studentLoaded) {
         router.push('/login');
@@ -820,14 +746,13 @@ export default {
 
       const paramsLoaded = loadRouteParams();
       if (!paramsLoaded) {
-        alert('Missing subject or section information');
+        alert('Missing information');
         router.push('/student/subjects');
         return;
       }
 
       await loadGrades();
       setupRealtimeSubscription();
-
       loading.value = false;
     });
 
@@ -838,34 +763,12 @@ export default {
     });
 
     return {
-      loading,
-      studentInfo,
-      subject,
-      section,
-      grades,
-      recentQuizzes,
-      allGrades,
-      completedQuizzes,
-      averageGrade,
-      highestGrade,
-      lowestGrade,
-      showPreviewModal,
-      selectedQuiz,
-      previewAnswers,
-      loadingPreview,
-      formatPHTime,
-      formatShortDate,
-      getStatusClass,
-      getStatusText,
-      getScoreClass,
-      calculateScore,
-      canRetake,
-      retakeQuiz,
-      viewQuizPreview,
-      getStudentAnswerText,
-      getCorrectAnswerText,
-      goBack,
-      goToQuizzes
+      loading, studentInfo, subject, section, grades, recentQuizzes, allGrades,
+      completedQuizzes, averageGrade, highestGrade, lowestGrade, showPreviewModal,
+      selectedQuiz, previewAnswers, loadingPreview, formatPHTime, formatShortDate,
+      getStatusClass, getStatusText, getScoreClass, calculateScore, canRetake,
+      retakeQuiz, viewQuizPreview, getStudentAnswerText, getCorrectAnswerText,
+      goBack, goToQuizzes
     };
   }
 };
