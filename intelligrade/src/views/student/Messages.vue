@@ -46,18 +46,31 @@
           </button>
           <button 
             :class="['tab-btn', { 'active': currentTab === 'notifications' }]"
-              @click="currentTab = 'notifications'; showArchive = false"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-              </svg>
-              Notifications
+            @click="currentTab = 'notifications'; showArchive = false"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            Notifications
           </button>
+        </div>
+
+        <!-- Teachers Tab -->
+        <div v-if="currentTab === 'teachers' || currentTab === 'archive'" class="tab-content">
+          <!-- Loading Overlay matching Subjects.vue -->
+          <div v-if="isLoading" class="loading-overlay">
+            <div class="loading-content">
+              <div class="loading-spinner-container">
+                <div class="loading-spinner"></div>
+              </div>
+              <p class="loading-text">Loading your teachers...</p>
+              <p class="loading-subtext">Please wait a moment...</p>
+            </div>
           </div>
 
-          <!-- Teachers Tab -->
-          <div v-if="currentTab === 'teachers' || currentTab === 'archive'" class="tab-content">
+          <!-- Content when not loading -->
+          <template v-else>
             <div class="section-actions">
               <div class="search-bar">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
@@ -66,7 +79,6 @@
                 </svg>
                 <input type="text" v-model="searchQuery" placeholder="Search teachers or subjects..." class="search-input" />
               </div>
-              <!-- Subject filter dropdown removed as requested -->
             </div>
 
             <!-- Empty state when no deleted conversations -->
@@ -159,10 +171,24 @@
                 </div>
               </div>
             </div>
+          </template>
+        </div>
+
+        <!-- Notifications Tab -->
+        <div v-else-if="currentTab === 'notifications'" class="tab-content">
+          <!-- Loading Overlay matching Subjects.vue -->
+          <div v-if="isLoadingNotifications" class="loading-overlay">
+            <div class="loading-content">
+              <div class="loading-spinner-container">
+                <div class="loading-spinner"></div>
+              </div>
+              <p class="loading-text">Loading notifications...</p>
+              <p class="loading-subtext">Please wait a moment...</p>
+            </div>
           </div>
 
-          <!-- Notifications Tab -->
-          <div v-else-if="currentTab === 'notifications'" class="tab-content">
+          <!-- Content when not loading -->
+          <template v-else>
             <div class="section-actions">
               <div class="notification-filters">
                 <button 
@@ -218,12 +244,15 @@
                     <span class="count-badge">{{ group.announcements.length }}</span>
                     <span v-if="group.announcements.some(a => !a.is_read)" class="unread-indicator"></span>
                   </div>
+                </div>
               </div>
             </div>
-          </div>
+          </template>
         </div>
       </div>
-    </div>    <!-- Chat Modal -->
+    </div>
+
+    <!-- Chat Modal -->
     <div v-if="isModalOpen" class="modal-overlay" @click.self="closeModal">
       <div class="modal-content">
         <div class="modal-header">
@@ -522,6 +551,7 @@ const newMessage = ref('')
 const messagesContainer = ref(null)
 const fileInput = ref(null)
 const isLoading = ref(false)
+const isLoadingNotifications = ref(false)
 const activeTeacherOptionsId = ref(null)
 const showArchive = ref(false)
 const selectedFile = ref(null)
@@ -993,6 +1023,7 @@ const loadEnrolledSubjectsAndTeachers = async () => {
       console.log('No enrollments found for this student')
       enrolledSubjects.value = []
       enrolledTeachers.value = []
+      isLoading.value = false
       return
     }
     
@@ -1019,6 +1050,7 @@ const loadEnrolledSubjectsAndTeachers = async () => {
     if (!sections || sections.length === 0) {
       enrolledSubjects.value = []
       enrolledTeachers.value = []
+      isLoading.value = false
       return
     }
     
@@ -1048,6 +1080,9 @@ const loadEnrolledSubjectsAndTeachers = async () => {
     const subjectsDataMap = new Map(subjects.map(s => [s.id, s]))
     const teachersDataMap = new Map(teachers.map(t => [t.id, t]))
     
+    // Use Promise.all to fetch unread counts in parallel
+    const teacherPromises = []
+    
     for (const section of sections) {
       const subject = subjectsDataMap.get(section.subject_id)
       if (!subject) continue
@@ -1064,41 +1099,49 @@ const loadEnrolledSubjectsAndTeachers = async () => {
         subjectMap.set(subject.id, true)
       }
       
-      const { count: unreadCount } = await supabase
-        .from('messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('section_id', section.id)
-        .eq('sender_id', teacher.id)
-        .eq('recipient_id', currentStudentId.value)
-        .eq('message_type', 'direct')
-        .eq('is_read', false)
-      
-      const { data: lastMsgData } = await supabase
-        .from('messages')
-        .select('message_text, sent_at')
-        .eq('section_id', section.id)
-        .or(`and(sender_id.eq.${currentStudentId.value},recipient_id.eq.${teacher.id}),and(sender_id.eq.${teacher.id},recipient_id.eq.${currentStudentId.value})`)
-        .order('sent_at', { ascending: false })
-        .limit(1)
-      
-      const lastMsg = lastMsgData && lastMsgData.length > 0 ? lastMsgData[0] : null
-      
-      processedTeachers.push({
-        id: teacher.id,
-        teacher_name: teacher.full_name,
-        email: teacher.email,
-        subject_id: subject.id,
-        subject_name: subject.name,
-        section_id: section.id,
-        section_name: section.name,
-        section_code: section.section_code,
-        unread_count: unreadCount || 0,
-        last_message: lastMsg?.message_text || null,
-        last_message_time: lastMsg?.sent_at || null,
-        name: teacher.full_name,
-        archived: false
-      })
+      teacherPromises.push(
+        (async () => {
+          const { count: unreadCount } = await supabase
+            .from('messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('section_id', section.id)
+            .eq('sender_id', teacher.id)
+            .eq('recipient_id', currentStudentId.value)
+            .eq('message_type', 'direct')
+            .eq('is_read', false)
+          
+          const { data: lastMsgData } = await supabase
+            .from('messages')
+            .select('message_text, sent_at')
+            .eq('section_id', section.id)
+            .or(`and(sender_id.eq.${currentStudentId.value},recipient_id.eq.${teacher.id}),and(sender_id.eq.${teacher.id},recipient_id.eq.${currentStudentId.value})`)
+            .order('sent_at', { ascending: false })
+            .limit(1)
+          
+          const lastMsg = lastMsgData && lastMsgData.length > 0 ? lastMsgData[0] : null
+          
+          return {
+            id: teacher.id,
+            teacher_name: teacher.full_name,
+            email: teacher.email,
+            subject_id: subject.id,
+            subject_name: subject.name,
+            section_id: section.id,
+            section_name: section.name,
+            section_code: section.section_code,
+            unread_count: unreadCount || 0,
+            last_message: lastMsg?.message_text || null,
+            last_message_time: lastMsg?.sent_at || null,
+            name: teacher.full_name,
+            archived: false
+          }
+        })()
+      )
     }
+    
+    // Wait for all teacher data to load
+    const teachersData = await Promise.all(teacherPromises)
+    processedTeachers.push(...teachersData)
     
     enrolledSubjects.value = processedSubjects
     enrolledTeachers.value = processedTeachers
@@ -1118,6 +1161,7 @@ const loadNotifications = async () => {
   try {
     if (!currentStudentId.value) return
     
+    isLoadingNotifications.value = true
     console.log('Loading notifications for student:', currentStudentId.value)
     
     const { data: enrollments } = await supabase
@@ -1128,6 +1172,7 @@ const loadNotifications = async () => {
     
     if (!enrollments || enrollments.length === 0) {
       notifications.value = []
+      isLoadingNotifications.value = false
       return
     }
     
@@ -1144,6 +1189,7 @@ const loadNotifications = async () => {
     
     if (!messages || messages.length === 0) {
       notifications.value = []
+      isLoadingNotifications.value = false
       return
     }
     
@@ -1219,6 +1265,8 @@ const loadNotifications = async () => {
     
   } catch (error) {
     console.error('Error loading notifications:', error)
+  } finally {
+    isLoadingNotifications.value = false
   }
 }
 
@@ -1354,8 +1402,6 @@ const sendMessage = async () => {
   scrollToBottom()
   
   try {
-    isLoading.value = true
-    
     // Upload file first if exists
     let uploadedAttachment = null
     if (fileToUpload) {
@@ -1392,7 +1438,7 @@ const sendMessage = async () => {
         id: newMsg.id,
         sender_id: newMsg.sender_id,
         recipient_id: newMsg.recipient_id,
-        content: newMsg.message_text,
+        content:newMsg.message_text,
         sent_at: newMsg.sent_at,
         is_read: newMsg.is_read,
         read_at: newMsg.read_at,
@@ -1417,8 +1463,6 @@ const sendMessage = async () => {
     }
     
     alert('Failed to send message. Please try again.')
-  } finally {
-    isLoading.value = false
   }
 }
 
@@ -1682,6 +1726,7 @@ onMounted(async () => {
   if (userData) {
     console.log('Student authenticated:', userData.profile.full_name)
     
+    // Load data in parallel for better performance
     await Promise.all([
       loadEnrolledSubjectsAndTeachers(),
       loadNotifications()
@@ -3759,5 +3804,318 @@ onUnmounted(() => {
     flex-direction: column;
     align-items: flex-start;
   }
+}
+
+/* ================================
+   LOADING OVERLAY STYLES (matching Subjects.vue)
+   ================================ */
+
+/* Loading Overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(251, 255, 228, 0.95);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.loading-content {
+  background: white;
+  padding: 3rem 4rem;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(61, 141, 122, 0.15);
+  border: 2px solid #a3d1c6;
+  animation: slideUp 0.4s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.loading-spinner-container {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
+}
+
+.loading-spinner {
+  width: 80px;
+  height: 80px;
+  border: 5px solid rgba(61, 141, 122, 0.1);
+  border-left: 5px solid #3d8d7a;
+  border-top: 5px solid #20c997;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+  box-shadow: 0 0 20px rgba(61, 141, 122, 0.1);
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #181c20;
+  margin: 0 0 0.5rem 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.loading-subtext {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #3d8d7a;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+/* ================================
+   OLD LOADING STATE STYLES (REMOVED - keeping for reference if needed)
+   ================================ */
+
+/* Skeleton Loading Animation (Optional Enhancement) */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  );
+  background-size: 200% 100%;
+  animation: loading 1.5s ease-in-out infinite;
+}
+
+.dark .skeleton {
+  background: linear-gradient(
+    90deg,
+    #2a2d35 25%,
+    #23272b 50%,
+    #2a2d35 75%
+  );
+  background-size: 200% 100%;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Loading dots animation (Alternative) */
+.loading-dots {
+  display: inline-flex;
+  gap: 0.25rem;
+  margin-left: 0.5rem;
+}
+
+.loading-dots span {
+  width: 6px;
+  height: 6px;
+  background: #3D8D7A;
+  border-radius: 50%;
+  animation: bounce 1.4s ease-in-out infinite;
+}
+
+.dark .loading-dots span {
+  background: #20c997;
+}
+
+.loading-dots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.loading-dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Pulsing effect for loading state */
+.loading-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Loading overlay for specific sections */
+.section-loading {
+  position: relative;
+  min-height: 200px;
+}
+
+.section-loading::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(2px);
+  z-index: 10;
+  border-radius: 12px;
+}
+
+.dark .section-loading::before {
+  background: rgba(35, 39, 43, 0.8);
+}
+
+/* Smooth fade-in for loaded content */
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Loading state for empty states */
+.empty-state.loading,
+.deleted-state.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Shimmer effect for loading cards (Optional Advanced) */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+.dark .shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Responsive adjustments for loading states */
+@media (max-width: 768px) {
+  .loading-state {
+    padding: 3rem 1.5rem;
+    min-height: 250px;
+  }
+  
+  .spinner-icon {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .loading-text {
+    font-size: 1rem;
+  }
+  
+  .loading-subtext {
+    font-size: 0.813rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .loading-state {
+    padding: 2rem 1rem;
+    min-height: 200px;
+  }
+  
+  .spinner-icon {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+/* Loading button state */
+.btn-loading {
+  position: relative;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.btn-loading::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  margin-left: -8px;
+  margin-top: -8px;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
 }
 </style>
