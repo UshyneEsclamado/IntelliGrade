@@ -533,8 +533,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { supabase } from '@/supabase.js'
+
+// Watch for route changes
+const route = useRoute()
+watch(() => route.fullPath, () => {
+  loadSections()
+})
 
 // State management
 const currentTab = ref('teachers')
@@ -596,6 +603,7 @@ const uploadFileToStorage = async (file, folder = 'message-attachments') => {
       .from('attachments')
       .getPublicUrl(filePath)
     
+    // Return the file info object (inside the function)
     return {
       path: filePath,
       url: urlData.publicUrl,

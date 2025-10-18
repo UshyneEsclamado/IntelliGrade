@@ -524,6 +524,7 @@ export default {
   bottom: 0;
   font-family: 'Inter', sans-serif;
   background: var(--bg-primary);
+  font-size: 1.15rem;
 }
 
 .dashboard-container::before {
@@ -542,7 +543,7 @@ export default {
 }
 
 .sidebar {
-  width: 280px;
+  width: 300px;
   background: var(--card-background);
   backdrop-filter: blur(20px);
   border-right: 1px solid var(--border-color);
@@ -598,7 +599,7 @@ export default {
 }
 
 .user-info h3 {
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   font-weight: 700;
   color: var(--accent-color);
   margin-bottom: 0.5rem;
@@ -644,7 +645,7 @@ export default {
 }
 
 .user-info .role {
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   color: var(--text-muted);
   font-weight: 600;
   text-transform: uppercase;
@@ -658,7 +659,7 @@ export default {
 }
 
 .user-info .grade {
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   color: var(--accent-color);
   font-weight: 600;
   text-transform: uppercase;
@@ -694,7 +695,7 @@ export default {
 }
 
 .user-info .student-id {
-  font-size: 0.7rem;
+  font-size: 0.85rem;
   color: var(--text-secondary);
   font-weight: 500;
   margin-bottom: 0;
@@ -727,7 +728,7 @@ export default {
   color: var(--accent-color);
   text-decoration: none;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 1rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: var(--bg-accent);
   border: 1px solid var(--border-color);
@@ -809,7 +810,7 @@ export default {
   color: var(--text-inverse);
   text-decoration: none;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 1rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: var(--accent-color);
   border: 1px solid var(--accent-color);
@@ -911,14 +912,14 @@ export default {
 }
 
 .modal-title {
-  font-size: 1.5rem;
+  font-size: 1.7rem;
   font-weight: 700;
   color: var(--accent-color);
   margin-bottom: 0.75rem;
 }
 
 .modal-message {
-  font-size: 1rem;
+  font-size: 1.15rem;
   color: var(--text-secondary);
   line-height: 1.6;
   margin-bottom: 0;
@@ -936,7 +937,7 @@ export default {
   border: none;
   border-radius: 16px;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   min-width: 120px;
@@ -1196,22 +1197,22 @@ html, body {
 /* CSS Variables for consistent theming */
 :root {
   /* Light mode colors */
-  --bg-primary: #fefefe;
-  --bg-secondary: #f8faf9;
-  --bg-accent: rgba(251, 255, 228, 0.6);
-  --bg-accent-hover: rgba(251, 255, 228, 0.8);
+  --bg-primary: #f8faf9;
+  --bg-secondary: #fefefe;
+  --bg-accent: #f3f7f4;
+  --bg-accent-hover: #e9f5ee;
   
-  --card-background: rgba(255, 255, 255, 0.8);
-  --card-background-hover: rgba(255, 255, 255, 0.9);
+  --card-background: #ffffff;
+  --card-background-hover: #f8faf9;
   
-  --accent-color: #3D8D7A;
-  --accent-hover: #2A6B5B;
+  --accent-color: #33806b;
+  --accent-hover: #2d6a57;
   --accent-light: #5FB3A0;
   --accent-lighter: #A3D1C6;
   
   --text-primary: #1a1a1a;
-  --text-secondary: #4a4a4a;
-  --text-muted: #7a7a7a;
+  --text-secondary: #3d8d7a;
+  --text-muted: #7a9c8f;
   --text-inverse: #ffffff;
   
   --border-color: rgba(61, 141, 122, 0.12);
@@ -1224,22 +1225,22 @@ html, body {
 
 /* Dark mode colors */
 :root.dark {
-  --bg-primary: #0f1211;
-  --bg-secondary: #1a1f1e;
-  --bg-accent: rgba(30, 35, 34, 0.6);
-  --bg-accent-hover: rgba(30, 35, 34, 0.8);
+  --bg-primary: #181c20;
+  --bg-secondary: #23272b;
+  --bg-accent: #23272b;
+  --bg-accent-hover: #23272b;
   
-  --card-background: rgba(30, 35, 34, 0.8);
-  --card-background-hover: rgba(30, 35, 34, 0.9);
+  --card-background: #23272b;
+  --card-background-hover: #181c20;
   
   --accent-color: #5FB3A0;
-  --accent-hover: #4A9085;
+  --accent-hover: #33806b;
   --accent-light: #7BC4B5;
   --accent-lighter: #A3D1C6;
   
   --text-primary: #f0f0f0;
-  --text-secondary: #c0c0c0;
-  --text-muted: #909090;
+  --text-secondary: #A3D1C6;
+  --text-muted: #7a9c8f;
   --text-inverse: #ffffff;
   
   --border-color: rgba(95, 179, 160, 0.15);

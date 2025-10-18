@@ -188,6 +188,26 @@
           >
         </div>
         
+        <!-- Grade Level Section -->
+        <div class="form-group">
+          <label>Grade Level</label>
+          <select v-model="profileData.grade_level" class="form-input grade-select">
+            <option value="7">Grade 7</option>
+            <option value="8">Grade 8</option>
+            <option value="9">Grade 9</option>
+            <option value="10">Grade 10</option>
+            <option value="11">Grade 11</option>
+            <option value="12">Grade 12</option>
+          </select>
+          <p class="grade-note">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 6v6l4 2"/>
+            </svg>
+            Update your grade level when advancing to the next school year
+          </p>
+        </div>
+        
         <!-- Error/Success Messages -->
         <div v-if="profileError" class="error-message">{{ profileError }}</div>
         <div v-if="profileSuccess" class="success-message">{{ profileSuccess }}</div>
@@ -430,7 +450,7 @@
             placeholder="Type DELETE to confirm"
             class="form-input"
             style="margin-top: 0.5rem; text-align: center; border: 2px solid #dc3545; font-weight: 600; text-transform: uppercase;"
-            @input="deleteConfirmation = $event.target.value.toUpperCase()"
+            @input="deleteConfirmation = (($event.target as HTMLInputElement).value || '').toUpperCase()"
           >
         </div>
       </div>
@@ -448,11 +468,11 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import { supabase } from '@/supabase.js';
 
 export default {
-  name: 'Settings',
+  name: 'StudentSettings',
   data() {
     return {
       // User data
@@ -473,7 +493,8 @@ export default {
       // Profile management
       profileData: {
         full_name: '',
-        avatar: '1'
+        avatar: '1',
+        grade_level: '7'
       },
       isSaving: false,
       profileError: '',
@@ -526,6 +547,12 @@ export default {
     
     // Load user data
     await this.loadUserData();
+  },
+  watch: {
+    $route() {
+      // Reload settings data when route changes
+      this.loadUserData();
+    }
   },
   methods: {
     // ==================== USER DATA METHODS ====================
@@ -610,7 +637,8 @@ export default {
       // Load REAL user data into the form
       this.profileData = {
         full_name: this.userProfile.full_name || '',
-        avatar: this.userProfile.avatar || localStorage.getItem('userAvatar') || '1'
+        avatar: this.userProfile.avatar || localStorage.getItem('userAvatar') || '1',
+        grade_level: this.userProfile.grade_level || '7'
       };
       this.showProfileModal = true;
       this.clearMessages();
@@ -652,6 +680,7 @@ export default {
           .from('students')
           .update({
             full_name: this.profileData.full_name.trim(),
+            grade_level: parseInt(this.profileData.grade_level),
             updated_at: new Date().toISOString()
           })
           .eq('profile_id', this.userProfile.id);
@@ -1524,6 +1553,36 @@ input:checked + .slider:before {
 
 .form-input::placeholder {
   color: var(--text-secondary);
+}
+
+/* Grade Level Styles */
+.grade-select {
+  cursor: pointer;
+}
+
+.grade-note {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: rgba(61, 141, 122, 0.1);
+  border: 1px solid rgba(61, 141, 122, 0.2);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  line-height: 1.4;
+}
+
+.dark .grade-note {
+  background: rgba(32, 201, 151, 0.1);
+  border: 1px solid rgba(32, 201, 151, 0.2);
+  color: var(--text-secondary);
+}
+
+.grade-note svg {
+  flex-shrink: 0;
+  color: var(--accent-color);
 }
 
 /* Avatar Grid */

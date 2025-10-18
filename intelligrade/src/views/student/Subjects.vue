@@ -263,7 +263,7 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import { supabase } from '../../supabase.js'
 
 export default {
@@ -298,6 +298,12 @@ export default {
       favoriteSubjects: new Set(),
       archivedSubjects: new Set(),
     };
+  },
+  watch: {
+    $route() {
+      // Reload subjects data when route changes
+      this.fetchSubjects();
+    }
   },
   computed: {
     totalSubjects() {
@@ -487,7 +493,7 @@ export default {
 
         // BATCH FETCH: Get all quiz results for this student in ONE query
         const allQuizIds = allQuizzes ? allQuizzes.map(q => q.id) : []
-        let resultsByQuizId = {}
+  const resultsByQuizId = {}
         
         if (allQuizIds.length > 0) {
           const { data: allResults } = await supabase
@@ -627,7 +633,9 @@ export default {
         console.log('Found section data:', sectionData)
 
         // Check if subject and teacher are active
-        if (!sectionData.subjects || !sectionData.subjects.is_active || !sectionData.subjects.teachers?.is_active) {
+        // Ensure subjects is an object, not array
+        const subjectObj = Array.isArray(sectionData.subjects) ? sectionData.subjects[0] : sectionData.subjects;
+        if (!subjectObj || !subjectObj.is_active || !(subjectObj.teachers && subjectObj.teachers[0] && subjectObj.teachers[0].is_active)) {
           this.joinError = 'This section is currently inactive. Please contact your teacher.'
           this.previewSubject = null
           return
@@ -650,8 +658,8 @@ export default {
         }
 
         // Check grade level match
-        if (this.studentInfo && sectionData.subjects.grade_level !== this.studentInfo.grade_level) {
-          this.joinError = `This subject is for Grade ${sectionData.subjects.grade_level} students. You are in Grade ${this.studentInfo.grade_level}.`
+        if (this.studentInfo && subjectObj.grade_level !== this.studentInfo.grade_level) {
+          this.joinError = `This subject is for Grade ${subjectObj.grade_level} students. You are in Grade ${this.studentInfo.grade_level}.`
           this.previewSubject = null
           return
         }
@@ -689,12 +697,12 @@ export default {
         // Show preview - everything is valid
         this.previewSubject = {
           id: sectionData.subject_id,
-          name: sectionData.subjects.name,
+          name: subjectObj.name,
           code: sectionData.section_code,
           section: sectionData.name,
-          instructor: sectionData.subjects.teachers?.full_name || 'Teacher Name Not Available',
-          grade_level: sectionData.subjects.grade_level,
-          color: this.generateSubjectColor(sectionData.subjects.name),
+          instructor: subjectObj.teachers && subjectObj.teachers[0] ? subjectObj.teachers[0].full_name : 'Teacher Name Not Available',
+          grade_level: subjectObj.grade_level,
+          color: this.generateSubjectColor(subjectObj.name),
           sectionId: sectionData.id
         }
         this.joinError = ''
@@ -1067,6 +1075,201 @@ export default {
 </script>
 
 <style scoped>
+/* Dark mode for empty state */
+.dark .empty-state {
+  background: #23272b;
+  border-color: #20c997;
+  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.08);
+}
+.dark .empty-icon {
+  background: rgba(32, 201, 151, 0.08);
+  color: #20c997;
+}
+.dark .empty-state h3 {
+  color: #fbffe4;
+}
+.dark .empty-state p {
+  color: #a3d1c6;
+}
+/* More dark mode for stats and buttons */
+.dark .subject-stats {
+  background: #23272b;
+  border-color: #20c997;
+}
+.dark .stat-value {
+  color: #20c997;
+}
+.dark .stat-text {
+  color: #a3d1c6;
+}
+.dark .action-btn.primary {
+  background: #20c997;
+  color: #181c20;
+  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.15);
+}
+.dark .action-btn.primary:hover {
+  background: #3d8d7a;
+}
+.dark .action-btn.secondary,
+.dark .action-btn.clickable {
+  background: #23272b;
+  color: #20c997;
+  border: 1px solid #20c997;
+}
+.dark .action-btn.clickable:hover {
+  background: #181c20;
+  border-color: #3d8d7a;
+}
+.dark .action-btn.completed {
+  background: rgba(32, 201, 151, 0.08);
+  color: #20c997;
+  border: 1px solid #20c997;
+}
+/* DARK MODE OVERRIDES */
+.dark .subjects-container {
+  background: #181c20;
+}
+
+.dark .section-header-card,
+.dark .minimal-header-card {
+  background: #23272b;
+  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.08);
+  border: 2px solid #20c997;
+}
+
+.dark .minimal-header-icon {
+  background: #20c997;
+  color: #181c20;
+  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.15);
+}
+
+.dark .minimal-header-title {
+  color: #fbffe4;
+}
+
+.dark .minimal-header-sub {
+  color: #a3d1c6;
+}
+
+.dark .section-header-stats .stat-number {
+  color: #20c997;
+}
+
+.dark .section-header-stats .stat-label {
+  color: #a3d1c6;
+}
+
+.dark .join-class-btn {
+  background: #3d8d7a;
+  color: #fbffe4;
+  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.15);
+}
+.dark .join-class-btn:hover {
+  background: #20c997;
+}
+
+.dark .controls-section {
+  background: #23272b;
+  border-color: #20c997;
+  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.08);
+}
+
+.dark .search-box {
+  background: #181c20;
+  border-color: #20c997;
+}
+.dark .search-box svg {
+  color: #20c997;
+}
+.dark .search-input {
+  color: #fbffe4;
+}
+.dark .search-input::placeholder {
+  color: #a3d1c6;
+}
+
+.dark .filter-tab {
+  background: #23272b;
+  border-color: #20c997;
+  color: #a3d1c6;
+}
+.dark .filter-tab.active {
+  background: #20c997;
+  color: #181c20;
+  border-color: #20c997;
+}
+.dark .filter-tab:hover {
+  background: #23272b;
+  border-color: #3d8d7a;
+}
+
+.dark .subjects-grid .subject-card {
+  background: #23272b;
+  border-color: #20c997;
+  color: #fbffe4;
+}
+.dark .subject-card:hover {
+  border-color: #20c997;
+}
+.dark .subject-card.favorite-card {
+  background: rgba(32, 201, 151, 0.08);
+  border-color: #ffd600;
+}
+.dark .subject-card.archived-card {
+  background: rgba(163, 209, 198, 0.08);
+}
+.dark .subject-title,
+.dark .subject-instructor,
+.dark .subject-section {
+  color: #fbffe4;
+}
+.dark .star-btn {
+  color: #a3d1c6;
+}
+.dark .star-btn:hover {
+  background: rgba(255, 193, 7, 0.1);
+  color: #ffd600;
+}
+.dark .options-menu {
+  background: #23272b;
+  color: #fbffe4;
+  border-color: #20c997;
+}
+.dark .dropdown-item:hover {
+  background: #20c997;
+  color: #181c20;
+}
+.dark .subject-preview {
+  background: #23272b;
+  border-color: #20c997;
+}
+.dark .preview-card {
+  background: #181c20;
+  border-color: #20c997;
+}
+.dark .preview-icon {
+  background: #20c997;
+  color: #181c20;
+}
+.dark .loading-overlay {
+  background: rgba(24, 28, 32, 0.95);
+}
+.dark .loading-content {
+  background: #23272b;
+  border-color: #20c997;
+  color: #fbffe4;
+}
+
+/* Add border for both light and dark mode */
+.section-header-card,
+.minimal-header-card {
+  border: 2px solid #a3d1c6;
+}
+.dark .section-header-card,
+.dark .minimal-header-card {
+  border: 2px solid #20c997;
+}
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
@@ -1930,102 +2133,6 @@ export default {
 }
 
 /* Loading Styles */
-.loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1100;
-}
-
-.loading-content {
-  background: #fbffe4;
-  padding: 1.5rem;
-  border-radius: 12px;
-  text-align: center;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  border: 2px solid #a3d1c6;
-}
-
-.loading-spinner {
-  width: 36px;
-  height: 36px;
-  border: 3px solid rgba(61, 141, 122, 0.1);
-  border-left: 3px solid #3d8d7a;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 1rem;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .subjects-container {
-    padding: 1rem;
-  }
-
-  .minimal-header-card {
-    flex-direction: column;
-    text-align: center;
-    padding: 2rem;
-    gap: 1.5rem;
-  }
-
-  .section-header-stats {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .controls-section {
-    flex-direction: column;
-    gap: 1.5rem;
-  }
-
-  .search-box {
-    min-width: auto;
-    width: 100%;
-  }
-
-  .filter-tabs {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .subjects-grid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-
-  .subject-actions {
-    flex-direction: column;
-  }
-}
-  .modal-overlay {
-    padding: 1rem;
-  }
-
-  .modal-actions {
-    flex-direction: column;
-  }
-
-  .preview-card {
-    flex-direction: column;
-    align-items: center;
-  }
-
-/* ==================== NEW LOADING STYLES - ADD THIS ==================== */
-
-/* Loading Overlay */
 .loading-overlay {
   position: fixed;
   top: 0;

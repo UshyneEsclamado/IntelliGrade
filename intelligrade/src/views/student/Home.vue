@@ -954,6 +954,14 @@ export default {
     }, 120000); // Every 2 minutes
   },
 
+  watch: {
+    $route() {
+      // Reload dashboard data when route changes
+      this.loadStudentProfile();
+      this.loadNotifications();
+    }
+  },
+
   beforeUnmount() {
     console.log('🛑 Home component unmounting');
     

@@ -143,19 +143,19 @@
         <div v-for="(dayEvents, date) in groupedEvents" :key="date" class="day-group">
           <h3 class="day-title">{{ formatDate(date) }}</h3>
           <div class="events-container">
-            <div 
-              v-for="event in dayEvents" 
-              :key="event.id"
-              :class="['event-item', event.type, getEventStatus(event)]"
-            >
-              <div class="event-time">{{ event.time }}</div>
+              <div 
+                v-for="event in dayEvents" 
+                :key="(event as any).id"
+                :class="['event-item', (event as any).type, getEventStatus(event as any)]"
+              >
+              <div class="event-time">{{ (event as any).time }}</div>
               <div class="event-content">
-                <h4 class="event-title">{{ event.title }}</h4>
-                <p class="event-subject">{{ event.subject }}</p>
-                <p class="event-description">{{ event.description }}</p>
+                <h4 class="event-title">{{ (event as any).title }}</h4>
+                <p class="event-subject">{{ (event as any).subject }}</p>
+                <p class="event-description">{{ (event as any).description }}</p>
                 <div class="event-status-badge">
-                  <span :class="['status-badge', getEventStatus(event)]">
-                    {{ getEventStatusText(event) }}
+                  <span :class="['status-badge', getEventStatus(event as any)]">
+                    {{ getEventStatusText(event as any) }}
                   </span>
                 </div>
               </div>
@@ -344,8 +344,9 @@ export default {
       ],
       daysOfWeek: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
       events: [],
-      user: null,
-      studentId: null
+  user: null,
+  studentId: null,
+  fastUpdateInterval: null
     };
   },
   computed: {
@@ -923,6 +924,12 @@ export default {
       }
     }
   },
+  watch: {
+    $route() {
+      // Reload calendar data when route changes
+      this.initializeData();
+    }
+  },
   mounted() {
     this.initializeData();
     
@@ -942,8 +949,16 @@ export default {
 </script>
 
 <style scoped>
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+/* All other CSS follows here */
+.section-header-card {
+  border: 2px solid #a3d1c6;
+}
+.dark .section-header-card {
+  border: 2px solid #20c997;
+}
 * {
   margin: 0;
   padding: 0;
