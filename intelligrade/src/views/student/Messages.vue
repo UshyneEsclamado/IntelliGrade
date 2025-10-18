@@ -1,61 +1,59 @@
 <template>
-  <div class="page-container">
-    <div class="bg-decoration">
-      <div class="floating-shape shape-1"></div>
-      <div class="floating-shape shape-2"></div>
-      <div class="floating-shape shape-3"></div>
-    </div>
-    
-    <div class="main-wrapper">
-      <!-- Header Section -->
-      <div class="section-header-card">
-        <div class="section-header-left">
-          <div class="section-header-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+  <div class="messages-container">
+    <!-- Simple Header matching Home.vue -->
+    <div class="header-card">
+      <div class="header-content">
+        <div class="header-left">
+          <div class="header-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
             </svg>
           </div>
           <div>
-            <div class="section-header-title">Messages</div>
-            <div class="section-header-sub">Chat with your enrolled teachers and view announcements</div>
+            <h1 class="header-title">Messages</h1>
+            <p class="header-subtitle">Chat with your enrolled teachers and view announcements</p>
           </div>
         </div>
       </div>
+    </div>
 
-      <section class="content-section">
-        <div class="card-box content-card">
-          <div class="tabs">
-            <button 
-              :class="['tab-btn', { 'active': currentTab === 'teachers' }]"
-              @click="currentTab = 'teachers'; showArchive = false"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-              </svg>
-              My Teachers
-            </button>
-            <button 
-              :class="['tab-btn', { 'active': currentTab === 'archive' }]"
-              @click="currentTab = 'archive'; showArchive = true"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="21 8 21 21 3 21 3 8"></polyline>
-                <rect x="1" y="3" width="22" height="5"></rect>
-                <line x1="10" y1="12" x2="14" y2="12"></line>
-              </svg>
-              Archive
-            </button>
-            <button 
-              :class="['tab-btn', { 'active': currentTab === 'notifications' }]"
+    <!-- Main Content Card matching Home.vue -->
+    <div class="content-card">
+      <div class="card-header">
+        <h3>Messages</h3>
+        <p class="card-desc">Connect with your teachers and stay updated with announcements</p>
+        <div class="tabs">
+          <button 
+            :class="['tab-btn', { 'active': currentTab === 'teachers' }]"
+            @click="currentTab = 'teachers'; showArchive = false"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            My Teachers
+          </button>
+          <button 
+            :class="['tab-btn', { 'active': currentTab === 'archive' }]"
+            @click="currentTab = 'archive'; showArchive = true"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="21 8 21 21 3 21 3 8"></polyline>
+              <rect x="1" y="3" width="22" height="5"></rect>
+              <line x1="10" y1="12" x2="14" y2="12"></line>
+            </svg>
+            Archive
+          </button>
+          <button 
+            :class="['tab-btn', { 'active': currentTab === 'notifications' }]"
               @click="currentTab = 'notifications'; showArchive = false"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
                 <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
               </svg>
-              Class Announcements
-            </button>
+              Notifications
+          </button>
           </div>
 
           <!-- Teachers Tab -->
@@ -68,14 +66,7 @@
                 </svg>
                 <input type="text" v-model="searchQuery" placeholder="Search teachers or subjects..." class="search-input" />
               </div>
-              <div class="filter-section">
-                <select v-model="selectedSubject" class="subject-filter">
-                  <option value="">All Subjects</option>
-                  <option v-for="subject in enrolledSubjects" :key="subject.id" :value="subject.id">
-                    {{ subject.name }}
-                  </option>
-                </select>
-              </div>
+              <!-- Subject filter dropdown removed as requested -->
             </div>
 
             <!-- Empty state when no deleted conversations -->
@@ -128,22 +119,18 @@
                         <span>{{ teacher.teacher_name?.[0] || 'T' }}</span>
                       </div>
                       <div class="teacher-details">
-                        <h4 class="teacher-name">Teacher: {{ teacher.teacher_name }}</h4>
+                        <h4 class="teacher-name">{{ teacher.teacher_name }}</h4>
                         <p class="teacher-email">{{ teacher.email }}</p>
                         <p class="last-message">{{ teacher.last_message || 'Start a conversation' }}</p>
                       </div>
                     </div>
                     <div class="message-status">
-                      <template v-if="teacher.unread_count > 0">
-                        <div class="unread-status">
-                          <span class="unread-badge">{{ teacher.unread_count }}</span>
-                          <span class="unread-text">{{ teacher.unread_count === 1 ? '1 unread' : `${teacher.unread_count} unread` }}</span>
-                        </div>
-                      </template>
-                      <span class="last-time">{{ formatTime(teacher.last_message_time) }}</span>
+                      <div class="status-info">
+                        <span v-if="teacher.unread_count > 0" class="unread-badge">{{ teacher.unread_count }}</span>
+                      </div>
                       <div class="options-wrapper">
                         <button class="options-btn" @click.stop="toggleTeacherOptions(`${teacher.id}-${teacher.section_id}`)">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="1"/>
                             <circle cx="12" cy="5" r="1"/>
                             <circle cx="12" cy="19" r="1"/>
@@ -151,7 +138,7 @@
                         </button>
                         <div v-if="activeTeacherOptionsId === `${teacher.id}-${teacher.section_id}`" class="options-menu" @click.stop>
                           <a href="#" @click.prevent="archiveConversation(teacher); activeTeacherOptionsId = null">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                               <polyline points="21 8 21 21 3 21 3 8"></polyline>
                               <rect x="1" y="3" width="22" height="5"></rect>
                               <line x1="10" y1="12" x2="14" y2="12"></line>
@@ -159,7 +146,7 @@
                             {{ teacher.archived ? 'Unarchive' : 'Archive' }}
                           </a>
                           <a href="#" @click.prevent="deleteConversation(teacher); activeTeacherOptionsId = null" class="delete-option">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                               <polyline points="3 6 5 6 21 6"></polyline>
                               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                             </svg>
@@ -231,28 +218,30 @@
                     <span class="count-badge">{{ group.announcements.length }}</span>
                     <span v-if="group.announcements.some(a => !a.is_read)" class="unread-indicator"></span>
                   </div>
-                </div>
               </div>
             </div>
           </div>
         </div>
-      </section>
-    </div>
-
-    <!-- Chat Modal -->
+      </div>
+    </div>    <!-- Chat Modal -->
     <div v-if="isModalOpen" class="modal-overlay" @click.self="closeModal">
       <div class="modal-content">
         <div class="modal-header">
-          <button @click="closeModal" class="close-btn">&times;</button>
           <div class="header-info">
-            <div class="teacher-avatar">
+            <div class="teacher-avatar-chat">
               <span>{{ activeTeacher?.teacher_name?.[0] || 'T' }}</span>
             </div>
             <div class="header-details">
-              <h2 class="modal-title">Teacher: {{ activeTeacher?.teacher_name }}</h2>
+              <h2 class="modal-title">{{ activeTeacher?.teacher_name }}</h2>
               <span class="subject-info">{{ activeTeacher?.subject_name }}</span>
             </div>
           </div>
+          <button @click="closeModal" class="close-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
         </div>
         <div class="modal-body">
           <div class="messages-container" ref="messagesContainer">
@@ -1711,158 +1700,134 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* Main Page Styling */
-.page-container {
-  padding: 2rem 5%;
-  font-family: 'Inter', sans-serif;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Main Container */
+.messages-container {
   min-height: 100vh;
-  position: relative;
-  overflow-x: hidden;
-  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  background: #FBFFE4;
+  padding: 1.5rem;
+  font-family: 'Inter', sans-serif;
+}
+.dark .messages-container {
+  background: #181c20;
 }
 
-.bg-decoration {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.floating-shape {
-  position: absolute;
-  border-radius: 50%;
-  opacity: 0.03;
-  animation: float 20s ease-in-out infinite;
-}
-
-.shape-1 {
-  width: 300px;
-  height: 300px;
-  background: #3D8D7A;
-  top: 10%;
-  right: 10%;
-  animation-delay: 0s;
-}
-
-.shape-2 {
-  width: 200px;
-  height: 200px;
-  background: #A3D1C6;
-  bottom: 20%;
-  left: 5%;
-  animation-delay: 7s;
-}
-
-.shape-3 {
-  width: 150px;
-  height: 150px;
-  background: #B3D8A8;
-  top: 60%;
-  right: 40%;
-  animation-delay: 14s;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  33% { transform: translateY(-20px) rotate(120deg); }
-  66% { transform: translateY(10px) rotate(240deg); }
-}
-
-.main-wrapper {
-  max-width: 1000px;
-  margin: 0 auto;
-  position: relative;
-  z-index: 1;
-}
-
-.card-box {
-  background: var(--bg-card);
-  backdrop-filter: blur(20px);
-  border: 1px solid var(--border-color);
-  border-radius: 28px;
-  padding: 2.5rem;
-  box-shadow: 
-    0 20px 60px var(--shadow-light),
-    0 8px 32px var(--shadow-medium),
-    0 0 0 1px rgba(255, 255, 255, 0.3);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.card-box:hover {
-  transform: translateY(-2px);
-  box-shadow: 
-    0 25px 70px var(--shadow-medium),
-    0 12px 40px var(--shadow-strong),
-    0 0 0 1px rgba(255, 255, 255, 0.4);
-}
-
-
-
-/* --- Header card style to match Settings.vue/Subjects.vue --- */
-.section-header-card {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  background: var(--bg-card);
- 
-  border-radius: 28px;
-
-  box-shadow: 0 8px 32px var(--shadow-medium);
-  border: 1.5px solid var(--border-color-hover);
-  padding: 3rem 4rem 3rem 3.5rem;
-  margin-bottom: 2.8rem;
-  min-height: 140px;
-  gap: 2.5rem;
-}
-.section-header-left {
-  display: flex;
-  align-items: center;
-  gap: 1.7rem;
-}
-.section-header-icon {
-  width: 64px;
-  height: 64px;
-  background: linear-gradient(135deg, #4dbb98 0%, #33806b 100%);
+/* Header matching Home.vue */
+.header-card {
+  background: white;
   border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.dark .header-card {
+  background: #23272b;
+  border: 1px solid #20c997;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-icon {
+  width: 56px;
+  height: 56px;
+  background: #3D8D7A;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 16px 0 rgba(61, 141, 122, 0.13);
-  color: var(--text-inverse);
+  color: white;
 }
-.section-header-title {
-  font-size: 2.1rem;
+
+.header-title {
+  font-size: 1.5rem;
   font-weight: 700;
-  color: var(--text-accent);
-  margin-bottom: 0.18rem;
-  letter-spacing: -0.01em;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
 }
-.section-header-sub {
-  font-size: 1.15rem;
-  color: var(--text-secondary);
-  font-weight: 400;
-  margin-bottom: 0;
+.dark .header-title {
+  color: #A3D1C6;
 }
 
-.content-section {
-  display: flex;
-  justify-content: center;
-  width: 100%;
+.header-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+.dark .header-subtitle {
+  color: #A3D1C6;
 }
 
+/* Content Card matching Home.vue */
 .content-card {
-  width: 100%;
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  border: 2px solid #A3D1C6;
+}
+.dark .content-card {
+  background: #23272b;
+  border: 2px solid #20c997;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+.card-header {
+  margin-bottom: 1.25rem;
+}
+
+.card-header h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+.dark .card-header h3 {
+  color: #A3D1C6;
+}
+
+.card-desc {
+  font-size: 0.813rem;
+  color: #6b7280;
+  margin-bottom: 1rem;
+}
+.dark .card-desc {
+  color: #A3D1C6;
+}
+
+/* Tab Content */
+.tab-content {
+  padding: 0;
+  background: white;
+  overflow-y: auto;
+  flex: 1;
+}
+.dark .tab-content {
+  background: #23272b;
 }
 
 .tabs {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 .tab-btn {
@@ -1870,41 +1835,63 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  background: var(--bg-accent);
-  border: 1px solid var(--border-color);
+  border: none;
+  background: #FBFFE4;
+  border: 1px solid #A3D1C6;
   border-radius: 12px;
-  color: var(--text-muted);
-  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+}
+.dark .tab-btn {
+  background: #23272b;
+  border-color: #20c997;
+  color: #A3D1C6;
 }
 
 .tab-btn:hover {
-  background: var(--bg-accent-hover);
+  background: #A3D1C6;
+  color: #181c20;
+  border-color: #3D8D7A;
+}
+.dark .tab-btn:hover {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
 }
 
 .tab-btn.active {
-  background: var(--text-accent);
-  color: var(--text-inverse);
-  box-shadow: 0 4px 12px var(--shadow-medium);
+  background: #3D8D7A;
+  color: white;
+  border-color: #3D8D7A;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.2);
 }
-
-.tab-btn.active svg {
-  color: var(--text-inverse);
-  stroke: var(--text-inverse);
+.dark .tab-btn.active {
+  background: #20c997;
+  color: #181c20;
+  border-color: #20c997;
 }
 
 .tab-content {
-  padding-top: 1rem;
+  padding: 1.5rem;
 }
 
+.dark .tab-content {
+  background: #2a2d35;
+}
+
+/* Section Actions */
 .section-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   gap: 1rem;
   flex-wrap: wrap;
+  padding: 0 1.5rem;
 }
 
 .search-bar {
@@ -1918,24 +1905,369 @@ onUnmounted(() => {
   left: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #999;
+  color: #3D8D7A;
+}
+.dark .search-icon {
+  color: #A3D1C6;
 }
 
 .search-input {
   width: 100%;
   padding: 0.75rem 1rem 0.75rem 3rem;
-  border: 1px solid var(--border-color);
+  border: 1px solid #A3D1C6;
   border-radius: 12px;
-  font-size: 1rem;
-  background: var(--bg-card);
-  color: var(--text-primary);
+  font-size: 0.875rem;
+  background: white;
+  color: #1f2937;
   transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+}
+.dark .search-input {
+  background: #23272b;
+  border-color: #20c997;
+  color: #A3D1C6;
 }
 
 .search-input:focus {
   outline: none;
-  border-color: var(--text-accent);
-  box-shadow: 0 0 0 3px var(--shadow-light);
+  border-color: #3D8D7A;
+  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
+}
+.dark .search-input:focus {
+  border-color: #20c997;
+  box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.1);
+}
+
+/* Empty States */
+.empty-state, .deleted-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #9ca3af;
+}
+.dark .empty-state, .dark .deleted-state {
+  color: #A3D1C6;
+}
+
+.empty-icon, .deleted-icon {
+  margin-bottom: 1rem;
+  color: #3D8D7A;
+}
+.dark .empty-icon, .dark .deleted-icon {
+  color: #A3D1C6;
+}
+
+.empty-state p, .deleted-state p {
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.show-teachers-btn {
+  margin-top: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #3D8D7A;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+}
+.dark .show-teachers-btn {
+  background: #20c997;
+  color: #181c20;
+}
+
+.show-teachers-btn:hover {
+  background: #2f6b5c;
+  transform: translateY(-1px);
+}
+.dark .show-teachers-btn:hover {
+  background: #0ea770;
+}
+
+/* Teachers List matching Home.vue assessment pattern */
+.teachers-by-subject {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+.subject-group {
+  background: #FBFFE4;
+  border: 1px solid #A3D1C6;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.dark .subject-group {
+  background: #23272b;
+  border-color: #20c997;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+.subject-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #A3D1C6;
+}
+.dark .subject-header {
+  border-bottom-color: #20c997;
+}
+
+.subject-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+.dark .subject-name {
+  color: #A3D1C6;
+}
+
+.subject-code {
+  font-size: 0.813rem;
+  font-weight: 500;
+  color: #3D8D7A;
+  background: #d1fae5;
+  padding: 0.25rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #10b981;
+}
+.dark .subject-code {
+  background: #022c22;
+  color: #34d399;
+  border-color: #059669;
+}
+
+.teachers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+
+
+.teacher-item {
+  background: #FBFFE4;
+  border-radius: 10px;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s;
+  border: 1px solid #A3D1C6;
+  margin-bottom: 0.75rem;
+  cursor: pointer;
+}
+.dark .teacher-item {
+  background: #23272b;
+  border-color: #20c997;
+}
+
+.teacher-item:hover {
+  background: #A3D1C6;
+  border-color: #3D8D7A;
+}
+.dark .teacher-item:hover {
+  background: #23272b;
+  border-color: #A3D1C6;
+}
+
+.teacher-item.has-unread {
+  border-color: #3D8D7A;
+  border-width: 2px;
+}
+.dark .teacher-item.has-unread {
+  border-color: #20c997;
+  border-width: 2px;
+}
+
+.teacher-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.teacher-avatar {
+  width: 48px;
+  height: 48px;
+  background: #3D8D7A;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+.dark .teacher-avatar {
+  background: #20c997;
+  color: #181c20;
+}
+
+.teacher-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.teacher-name {
+  font-size: 0.938rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dark .teacher-name {
+  color: #A3D1C6;
+}
+
+.teacher-email {
+  font-size: 0.813rem;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dark .teacher-email {
+  color: #A3D1C6;
+}
+
+.message-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.last-time {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+.dark .last-time {
+  color: #A3D1C6;
+}
+
+.unread-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  background: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fbbf24;
+}
+.dark .unread-badge {
+  background: #451a03;
+  color: #fbbf24;
+  border-color: #d97706;
+}
+
+.options-wrapper {
+  position: relative;
+}
+
+.options-btn {
+  padding: 0.3rem;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.options-btn:hover {
+  background: var(--bg-accent);
+  color: var(--text-accent);
+}
+
+.options-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px var(--shadow-color);
+  padding: 0.25rem;
+  min-width: 140px;
+  z-index: 1000;
+  margin-top: 0.25rem;
+}
+
+.options-menu a {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  color: var(--text-primary);
+  text-decoration: none;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+.options-menu a:hover {
+  background: var(--bg-accent);
+}
+
+.options-menu a.delete-option {
+  color: #ef4444;
+}
+
+.options-menu a.delete-option:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.options-wrapper {
+  position: relative;
+}
+
+.options-btn {
+  padding: 0.5rem;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #6b7280;
+  transition: all 0.2s ease;
+}
+
+.dark .options-btn {
+  color: #9ca3af;
+}
+
+.options-btn:hover {
+  background: #f3f4f6;
+  color: #3D8D7A;
+}
+
+.dark .options-btn:hover {
+  background: #374151;
+  color: #A3D1C6;
 }
 
 .action-btn {
@@ -2290,53 +2622,94 @@ onUnmounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  backdrop-filter: blur(5px);
+  backdrop-filter: blur(8px);
 }
 
 .modal-content {
-  background: var(--card-background);
-  border-radius: 20px;
-  width: 90%;
-  max-width: 600px;
-  height: 80vh;
+  background: var(--bg-card);
+  border-radius: 16px;
+  width: 95%;
+  max-width: 500px;
+  height: 85vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 32px var(--shadow-color);
   overflow: hidden;
-  position: relative;
+  border: 2px solid var(--border-color);
 }
 
 .modal-header {
-  padding: 1.5rem 2rem;
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  color: var(--text-inverse);
+  padding: 1rem 1.25rem;
+  background: var(--text-accent);
+  color: white;
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  position: relative;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-color);
 }
 
-.modal-header .close-btn {
-  background: none;
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.teacher-avatar-chat {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.header-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.modal-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.2rem 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.subject-info {
+  font-size: 0.875rem;
+  opacity: 0.9;
+  font-weight: 400;
+}
+
+.close-btn {
+  background: rgba(255, 255, 255, 0.1);
   border: none;
-  color: var(--text-inverse);
-  font-size: 2rem;
+  color: white;
   cursor: pointer;
-  position: absolute;
-  right: 1.5rem;
-  top: 1.5rem;
-  opacity: 0.8;
-  transition: opacity 0.2s ease;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.modal-header .close-btn:hover {
-  opacity: 1;
+.close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .header-info {
@@ -2360,42 +2733,48 @@ onUnmounted(() => {
 
 .modal-body {
   flex: 1;
-  padding: 1.5rem 2rem;
+  padding: 1rem;
   overflow-y: auto;
-  background-color: #f8fcfb;
+  background: var(--bg-accent);
 }
 
 .messages-container {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
+  padding: 0.5rem;
 }
 
 .message-bubble {
-  max-width: 85%;
-  padding: 1rem 1.25rem;
-  border-radius: 20px;
+  max-width: 75%;
+  padding: 0.75rem 1rem;
+  border-radius: 16px;
   line-height: 1.4;
   position: relative;
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.05));
+  font-size: 0.9rem;
+  box-shadow: 0 1px 4px var(--shadow-color);
 }
 
 .message-bubble.received {
-  background: #e6f1f4;
-  color: #333;
+  background: var(--bg-card);
+  color: var(--text-primary);
   align-self: flex-start;
+  border: 1px solid var(--border-color);
   border-bottom-left-radius: 4px;
+  box-shadow: 0 1px 4px var(--shadow-color);
 }
 
 .message-bubble.sent {
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  color: var(--text-inverse);
+  background: var(--text-accent);
+  color: white;
   align-self: flex-end;
   border-bottom-right-radius: 4px;
+  box-shadow: 0 2px 8px var(--shadow-color);
 }
 
 .message-text {
   margin: 0;
+  font-weight: 400;
   font-size: 1rem;
 }
 
@@ -2412,42 +2791,70 @@ onUnmounted(() => {
 }
 
 .modal-footer {
-  padding: 1.5rem 2rem;
-  border-top: 1px solid #eee;
-  background-color: #f8fcfb;
-  position: sticky;
-  bottom: 0;
+  padding: 1rem;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-card);
 }
 
 .message-input-area {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.5rem;
   align-items: center;
+}
+
+.attach-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-accent);
+  padding: 0.6rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+}
+
+.attach-btn:hover {
+  background: var(--bg-accent);
+  color: var(--text-accent);
+  border-color: var(--text-accent);
+  box-shadow: 0 0 0 2px var(--shadow-color);
+}
+
+.attach-btn:focus {
+  background: var(--bg-accent);
+  color: var(--text-accent);
+  outline: 2px solid var(--text-accent);
+  box-shadow: 0 0 0 3px var(--shadow-color);
 }
 
 .message-input {
   flex: 1;
-  padding: 0.75rem 1.25rem;
+  padding: 0.75rem 1rem;
   border: 1px solid var(--border-color);
-  border-radius: 20px;
-  font-size: 1rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
   background: var(--bg-card);
   color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  transition: border-color 0.2s ease;
 }
 
 .message-input:focus {
   outline: none;
   border-color: var(--text-accent);
-  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
+  box-shadow: 0 0 0 3px var(--shadow-color);
 }
 
 .send-btn {
-  background: #3D8D7A;
-  color: var(--text-inverse);
+  background: var(--text-accent);
+  color: white;
   border: none;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2456,8 +2863,15 @@ onUnmounted(() => {
 }
 
 .send-btn:hover {
-  background: #347c6b;
+  background: #2f6b5c;
   transform: scale(1.05);
+  box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+.send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* Add new styles for the updated layout */
@@ -2474,63 +2888,67 @@ onUnmounted(() => {
 .teachers-by-subject {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1rem;
 }
 
 .subject-group {
   background: var(--bg-accent);
-  border-radius: 20px;
-  padding: 1.5rem;
+  border-radius: 12px;
+  padding: 1.2rem;
   border: 1px solid var(--border-color);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .subject-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1rem;
-  padding-bottom: 1rem;
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.8rem;
   border-bottom: 1px solid var(--border-color);
 }
 
 .subject-name {
-  font-size: 1.2rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--text-accent);
   margin: 0;
+  letter-spacing: -0.02em;
 }
 
 .subject-code {
-  background: var(--text-accent);
-  color: var(--text-inverse);
-  padding: 0.25rem 0.75rem;
+  background: #64748b;
+  color: white;
+  padding: 0.25rem 0.7rem;
   border-radius: 8px;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 .teachers-list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .teacher-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 1.5rem;
+  padding: 1rem 1.2rem;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .teacher-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px var(--shadow-medium);
-  border-color: var(--border-color-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #cbd5e1;
 }
 
 .teacher-item.has-unread {
@@ -2546,17 +2964,24 @@ onUnmounted(() => {
 }
 
 .teacher-avatar {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #A3D1C6 0%, #B3D8A8 100%);
-  color: var(--text-accent);
+  width: 42px;
+  height: 42px;
+  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+  color: #475569;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 1.2rem;
-  box-shadow: 0 4px 12px var(--shadow-light);
+  font-size: 0.95rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 2px solid #f8fafc;
+}
+
+.dark .teacher-avatar {
+  background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+  color: #e5e7eb;
+  border: 2px solid #1f2937;
 }
 
 .teacher-details {
@@ -2565,36 +2990,37 @@ onUnmounted(() => {
 }
 
 .teacher-name {
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-accent);
-  margin: 0 0 0.25rem 0;
-  font-size: 1.1rem;
+  margin: 0 0 0.1rem 0;
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
 }
 
 .message-status {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 0.5rem;
+  gap: 0.3rem;
 }
 
 .unread-status {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.15rem;
 }
 
 .unread-badge {
   background: var(--text-accent);
   color: var(--text-inverse);
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   font-weight: 600;
 }
 
@@ -3038,9 +3464,10 @@ onUnmounted(() => {
 
 /* Teacher Email Styling */
 .teacher-email {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
-  margin: 0.25rem 0;
+  margin: 0;
+  opacity: 0.8;
 }
 
 /* No Messages State */

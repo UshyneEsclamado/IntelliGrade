@@ -26,7 +26,7 @@
           </div>
           <div>
             <div class="section-header-title minimal-header-title">Academic Calendar</div>
-            <div class="section-header-sub minimal-header-sub">View and manage your academic events - Real-time updates</div>
+            <div class="section-header-sub minimal-header-sub">View and manage your academic events</div>
           </div>
         </div>
         <div class="section-header-stats align-top">
@@ -41,130 +41,204 @@
         </div>
       </div>
 
-      <!-- Status Legend -->
-      <div class="status-legend">
-        <div class="legend-item">
-          <div class="legend-color upcoming"></div>
-          <span>Upcoming Deadline</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-color due-today"></div>
-          <span>Due Today</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-color completed"></div>
-          <span>Completed</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-color overdue"></div>
-          <span>Overdue</span>
-        </div>
+    <!-- Status Legend -->
+    <div class="status-legend">
+      <div class="legend-item">
+        <div class="legend-color upcoming"></div>
+        <span>Upcoming Deadline</span>
       </div>
+      <div class="legend-item">
+        <div class="legend-color due-today"></div>
+        <span>Due Today</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color completed"></div>
+        <span>Completed</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color overdue"></div>
+        <span>Overdue</span>
+      </div>
+    </div>
 
-      <!-- Calendar Navigation -->
-      <div class="calendar-nav">
-        <div class="nav-controls">
-          <button @click="previousMonth" class="nav-btn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z" />
-            </svg>
-          </button>
-          <h2 class="current-month">{{ currentMonthYear }}</h2>
-          <button @click="nextMonth" class="nav-btn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" />
-            </svg>
-          </button>
+    <!-- Calendar Navigation -->
+    <div class="calendar-nav">
+      <div class="nav-controls">
+        <button @click="previousMonth" class="nav-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z" />
+          </svg>
+        </button>
+        <h2 class="current-month">{{ currentMonthYear }}</h2>
+        <button @click="nextMonth" class="nav-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" />
+          </svg>
+        </button>
+      </div>
+      <div class="view-toggle">
+        <button 
+          v-for="view in views" 
+          :key="view.key"
+          @click="currentView = view.key"
+          :class="['view-btn', { 'active': currentView === view.key }]"
+        >
+          {{ view.label }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Calendar Grid -->
+    <div class="calendar-content">
+      <div v-if="currentView === 'month'" class="calendar-grid">
+        <!-- Days of Week Header -->
+        <div class="calendar-header">
+          <div v-for="day in daysOfWeek" :key="day" class="day-header">
+            {{ day }}
+          </div>
         </div>
-        <div class="view-toggle">
-          <button 
-            v-for="view in views" 
-            :key="view.key"
-            @click="currentView = view.key"
-            :class="['view-btn', { 'active': currentView === view.key }]"
+        
+        <!-- Calendar Days -->
+        <div class="calendar-body">
+          <div 
+            v-for="day in calendarDays" 
+            :key="day.date"
+            :class="['calendar-day', {
+              'other-month': !day.isCurrentMonth,
+              'today': day.isToday,
+              'has-events': day.events.length > 0,
+              'has-due-today': day.hasDueToday,
+              'has-overdue': day.hasOverdue,
+              'has-upcoming': day.hasUpcoming,
+              'clickable': day.events.length > 0
+            }]"
+            @click="selectDay(day)"
           >
-            {{ view.label }}
-          </button>
+            <span class="day-number">{{ day.day }}</span>
+            <div class="day-events">
+              <div 
+                v-for="event in day.events.slice(0, 2)" 
+                :key="event.id"
+                :class="['event-dot', getEventStatus(event)]"
+                :title="`${event.title} - ${getEventStatusText(event)}`"
+              ></div>
+              <span v-if="day.events.length > 2" class="more-events">
+                +{{ day.events.length - 2 }}
+              </span>
+            </div>
+            <div v-if="day.events.length > 0" class="event-count">
+              {{ day.events.length }}
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Calendar Grid -->
-      <div class="calendar-content">
-        <div v-if="currentView === 'month'" class="calendar-grid">
-          <!-- Days of Week Header -->
-          <div class="calendar-header">
-            <div v-for="day in daysOfWeek" :key="day" class="day-header">
-              {{ day }}
+      <!-- List View -->
+      <div v-if="currentView === 'list'" class="events-list">
+        <div v-for="(dayEvents, date) in groupedEvents" :key="date" class="day-group">
+          <h3 class="day-title">{{ formatDate(date) }}</h3>
+          <div class="events-container">
+            <div 
+              v-for="event in dayEvents" 
+              :key="event.id"
+              :class="['event-item', event.type, getEventStatus(event)]"
+            >
+              <div class="event-time">{{ event.time }}</div>
+              <div class="event-content">
+                <h4 class="event-title">{{ event.title }}</h4>
+                <p class="event-subject">{{ event.subject }}</p>
+                <p class="event-description">{{ event.description }}</p>
+                <div class="event-status-badge">
+                  <span :class="['status-badge', getEventStatus(event)]">
+                    {{ getEventStatusText(event) }}
+                  </span>
+                </div>
+              </div>
+              <div class="event-actions">
+                <button v-if="getEventStatus(event) === 'upcoming' || getEventStatus(event) === 'due-today'" 
+                        class="answer-btn" 
+                        @click="markAsCompleted(event)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
+                  </svg>
+                  Answer
+                </button>
+                <button class="view-btn-small" @click="viewEvent(event)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Day Details Modal -->
+    <div v-if="selectedDay" class="modal-overlay" @click="closeDayModal">
+      <div class="day-modal-content" @click.stop>
+        <div class="day-modal-header">
+          <h3>{{ formatSelectedDayDate() }}</h3>
+          <button @click="closeDayModal" class="close-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+            </svg>
+          </button>
+        </div>
+        <div class="day-modal-body">
+          <div class="day-events-summary">
+            <div class="summary-stats">
+              <div class="summary-stat">
+                <span class="summary-number">{{ selectedDay.events.length }}</span>
+                <span class="summary-label">Total Events</span>
+              </div>
+              <div class="summary-stat">
+                <span class="summary-number">{{ getCompletedCount(selectedDay.events) }}</span>
+                <span class="summary-label">Completed</span>
+              </div>
+              <div class="summary-stat">
+                <span class="summary-number">{{ getPendingCount(selectedDay.events) }}</span>
+                <span class="summary-label">Pending</span>
+              </div>
             </div>
           </div>
           
-          <!-- Calendar Days -->
-          <div class="calendar-body">
-            <div 
-              v-for="day in calendarDays" 
-              :key="day.date"
-              :class="['calendar-day', {
-                'other-month': !day.isCurrentMonth,
-                'today': day.isToday,
-                'has-events': day.events.length > 0,
-                'has-due-today': day.hasDueToday,
-                'has-overdue': day.hasOverdue,
-                'has-upcoming': day.hasUpcoming,
-                'clickable': day.events.length > 0
-              }]"
-              @click="selectDay(day)"
-            >
-              <span class="day-number">{{ day.day }}</span>
-              <div class="day-events">
-                <div 
-                  v-for="event in day.events.slice(0, 2)" 
-                  :key="event.id"
-                  :class="['event-dot', getEventStatus(event)]"
-                  :title="`${event.title} - ${getEventStatusText(event)}`"
-                ></div>
-                <span v-if="day.events.length > 2" class="more-events">
-                  +{{ day.events.length - 2 }}
-                </span>
-              </div>
-              <div v-if="day.events.length > 0" class="event-count">
-                {{ day.events.length }}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- List View -->
-        <div v-if="currentView === 'list'" class="events-list">
-          <div v-for="(dayEvents, date) in groupedEvents" :key="date" class="day-group">
-            <h3 class="day-title">{{ formatDate(date) }}</h3>
-            <div class="events-container">
+          <div class="day-events-list">
+            <h4>Deadlines & Events</h4>
+            <div class="day-event-items">
               <div 
-                v-for="event in dayEvents" 
+                v-for="event in selectedDay.events" 
                 :key="event.id"
-                :class="['event-item', event.type, getEventStatus(event)]"
+                :class="['day-event-item', getEventStatus(event)]"
               >
-                <div class="event-time">{{ event.time }}</div>
-                <div class="event-content">
-                  <h4 class="event-title">{{ event.title }}</h4>
-                  <p class="event-subject">{{ event.subject }}</p>
-                  <p class="event-description">{{ event.description }}</p>
-                  <div class="event-status-badge">
-                    <span :class="['status-badge', getEventStatus(event)]">
-                      {{ getEventStatusText(event) }}
-                    </span>
-                  </div>
+                <div class="event-status-indicator">
+                  <div :class="['status-dot', getEventStatus(event)]"></div>
                 </div>
-                <div class="event-actions">
-                  <button v-if="canTakeQuiz(event)" 
-                          class="take-quiz-btn" 
-                          @click="takeQuiz(event)">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M13,9H18.5L13,3.5V9M6,2H14L20,8V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V4C4,2.89 4.89,2 6,2M15,18V16H6V18H15M18,14V12H6V14H18Z" />
+                <div class="event-details">
+                  <h5 class="event-name">{{ event.title }}</h5>
+                  <p class="event-subject-small">{{ event.subject }}</p>
+                  <p class="event-time-small">{{ event.time }}</p>
+                  <p class="event-desc-small">{{ event.description }}</p>
+                </div>
+                <div class="event-status-text">
+                  <span :class="['status-badge-small', getEventStatus(event)]">
+                    {{ getEventStatusText(event) }}
+                  </span>
+                </div>
+                <div class="event-quick-actions">
+                  <button v-if="getEventStatus(event) === 'upcoming' || getEventStatus(event) === 'due-today'" 
+                          class="quick-answer-btn" 
+                          @click="markAsCompleted(event)"
+                          :title="'Mark ' + event.title + ' as completed'">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
                     </svg>
-                    Take Quiz
                   </button>
-                  <button class="view-btn-small" @click="viewEvent(event)">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <button class="quick-view-btn" 
+                          @click="viewEventFromDay(event)"
+                          :title="'View ' + event.title + ' details'">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
                     </svg>
                   </button>
@@ -174,151 +248,52 @@
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Day Details Modal -->
-      <div v-if="selectedDay" class="modal-overlay" @click="closeDayModal">
-        <div class="day-modal-content" @click.stop>
-          <div class="day-modal-header">
-            <h3>{{ formatSelectedDayDate() }}</h3>
-            <button @click="closeDayModal" class="close-btn">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
-              </svg>
-            </button>
+    <!-- Event Details Modal -->
+    <div v-if="selectedEvent" class="modal-overlay" @click="closeModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>{{ selectedEvent.title }}</h3>
+          <button @click="closeModal" class="close-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="event-detail">
+            <strong>Subject:</strong> {{ selectedEvent.subject }}
           </div>
-          <div class="day-modal-body">
-            <div class="day-events-summary">
-              <div class="summary-stats">
-                <div class="summary-stat">
-                  <span class="summary-number">{{ selectedDay.events.length }}</span>
-                  <span class="summary-label">Total Events</span>
-                </div>
-                <div class="summary-stat">
-                  <span class="summary-number">{{ getCompletedCount(selectedDay.events) }}</span>
-                  <span class="summary-label">Completed</span>
-                </div>
-                <div class="summary-stat">
-                  <span class="summary-number">{{ getPendingCount(selectedDay.events) }}</span>
-                  <span class="summary-label">Pending</span>
-                </div>
-              </div>
-            </div>
-            
-            <div class="day-events-list">
-              <h4>Deadlines & Events</h4>
-              <div class="day-event-items">
-                <div 
-                  v-for="event in selectedDay.events" 
-                  :key="event.id"
-                  :class="['day-event-item', getEventStatus(event)]"
-                >
-                  <div class="event-status-indicator">
-                    <div :class="['status-dot', getEventStatus(event)]"></div>
-                  </div>
-                  <div class="event-details">
-                    <h5 class="event-name">{{ event.title }}</h5>
-                    <p class="event-subject-small">{{ event.subject }}</p>
-                    <p class="event-time-small">{{ event.time }}</p>
-                    <p class="event-desc-small">{{ event.description }}</p>
-                  </div>
-                  <div class="event-status-text">
-                    <span :class="['status-badge-small', getEventStatus(event)]">
-                      {{ getEventStatusText(event) }}
-                    </span>
-                  </div>
-                  <div class="event-quick-actions">
-                    <button v-if="canTakeQuiz(event)" 
-                            class="quick-take-quiz-btn" 
-                            @click="takeQuiz(event)"
-                            :title="'Take quiz: ' + event.title">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M13,9H18.5L13,3.5V9M6,2H14L20,8V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V4C4,2.89 4.89,2 6,2M15,18V16H6V18H15M18,14V12H6V14H18Z" />
-                      </svg>
-                    </button>
-                    <button class="quick-view-btn" 
-                            @click="viewEventFromDay(event)"
-                            :title="'View ' + event.title + ' details'">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div class="event-detail">
+            <strong>Date:</strong> {{ formatEventDate(selectedEvent.date) }}
+          </div>
+          <div class="event-detail">
+            <strong>Time:</strong> {{ selectedEvent.time }}
+          </div>
+          <div class="event-detail">
+            <strong>Type:</strong> {{ selectedEvent.type }}
+          </div>
+          <div class="event-detail">
+            <strong>Status:</strong> 
+            <span :class="['status-badge', getEventStatus(selectedEvent)]">
+              {{ getEventStatusText(selectedEvent) }}
+            </span>
+          </div>
+          <div class="event-detail">
+            <strong>Description:</strong> {{ selectedEvent.description }}
+          </div>
+          <div v-if="getEventStatus(selectedEvent) === 'upcoming' || getEventStatus(selectedEvent) === 'due-today'" class="modal-actions">
+            <button class="answer-btn-modal" @click="markAsCompleted(selectedEvent)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
+              </svg>
+              Mark as Completed
+            </button>
           </div>
         </div>
       </div>
-
-      <!-- Event Details Modal -->
-      <div v-if="selectedEvent" class="modal-overlay" @click="closeModal">
-        <div class="modal-content" @click.stop>
-          <div class="modal-header">
-            <h3>{{ selectedEvent.title }}</h3>
-            <button @click="closeModal" class="close-btn">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
-              </svg>
-            </button>
-          </div>
-          <div class="modal-body">
-            <div class="event-detail">
-              <strong>Subject:</strong> {{ selectedEvent.subject }}
-            </div>
-            <div class="event-detail">
-              <strong>Date:</strong> {{ formatEventDate(selectedEvent.date) }}
-            </div>
-            <div class="event-detail">
-              <strong>Time:</strong> {{ selectedEvent.time }}
-            </div>
-            <div class="event-detail">
-              <strong>Type:</strong> {{ selectedEvent.type }}
-            </div>
-            <div class="event-detail">
-              <strong>Status:</strong> 
-              <span :class="['status-badge', getEventStatus(selectedEvent)]">
-                {{ getEventStatusText(selectedEvent) }}
-              </span>
-            </div>
-            <div class="event-detail">
-              <strong>Description:</strong> {{ selectedEvent.description }}
-            </div>
-            <div v-if="selectedEvent.quizCode" class="event-detail">
-              <strong>Quiz Code:</strong> {{ selectedEvent.quizCode }}
-            </div>
-            <div v-if="selectedEvent.attemptsAllowed" class="event-detail">
-              <strong>Attempts:</strong> {{ selectedEvent.totalAttempts }} / {{ selectedEvent.attemptsAllowed }} used
-            </div>
-            <div v-if="selectedEvent.isCompleted && selectedEvent.bestScore" class="event-detail">
-              <strong>Best Score:</strong> {{ selectedEvent.bestScore.toFixed(1) }}%
-            </div>
-            <div v-if="canTakeQuiz(selectedEvent)" class="modal-actions">
-              <button class="take-quiz-btn-modal" @click="takeQuiz(selectedEvent)">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M13,9H18.5L13,3.5V9M6,2H14L20,8V20A2,2 0 0,1 18,22H6C4.89,22 4,21.1 4,20V4C4,2.89 4.89,2 6,2M15,18V16H6V18H15M18,14V12H6V14H18Z" />
-                </svg>
-                Take Quiz Now
-              </button>
-            </div>
-            <div v-else-if="selectedEvent.isCompleted" class="modal-info">
-              <div class="completed-message">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
-                </svg>
-                <span>Quiz Completed!</span>
-              </div>
-            </div>
-            <div v-else-if="getEventStatus(selectedEvent) === 'overdue'" class="modal-info">
-              <div class="overdue-message">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z" />
-                </svg>
-                <span>Quiz Deadline Passed</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    </div>
     </div>
 
     <!-- Notifications Area -->
@@ -341,7 +316,7 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import { supabase } from '@/supabase.js'
 
 export default {
@@ -354,7 +329,6 @@ export default {
       selectedDay: null,
       currentTime: new Date(),
       statusUpdateInterval: null,
-      fastUpdateInterval: null,
       realTimeSubscription: null,
       loading: true,
       error: null,
@@ -743,58 +717,13 @@ export default {
       }
     },
 
-    canTakeQuiz(event) {
-      if (!event) return false;
+    async markAsCompleted(event) {
+      this.showNotification(`Click to take quiz: ${event.title}`, 'info');
       
-      // Can't take if already completed
-      if (event.isCompleted) return false;
-      
-      // Can't take if no more attempts left
-      if (event.totalAttempts >= event.attemptsAllowed) return false;
-      
-      // Can't take if overdue (past deadline)
-      const status = this.getEventStatus(event);
-      if (status === 'overdue') return false;
-      
-      // Can take if it's upcoming or due today
-      return status === 'upcoming' || status === 'due-today';
-    },
-
-    takeQuiz(event) {
-      // Close any open modals
       this.selectedEvent = null;
       this.selectedDay = null;
       
-      console.log('Current route:', this.$route.path);
-      console.log('Attempting to navigate to subjects page for quiz:', {
-        id: event.id,
-        code: event.quizCode,
-        title: event.title
-      });
-      
-      // Check if we're already on subjects page
-      if (this.$route.path === '/student/subjects' || this.$route.name === 'StudentSubjects') {
-        console.log('Already on subjects page, reloading...');
-        // Force a reload of the current page
-        this.$router.go(0);
-        this.showNotification(`Refreshing Subjects page - ${event.title}`, 'info');
-      } else {
-        // Navigate to subjects page
-        this.$router.push('/student/subjects')
-          .then(() => {
-            console.log('Successfully navigated to subjects page');
-            this.showNotification(`Opening Subjects page - ${event.title}`, 'info');
-          })
-          .catch(err => {
-            console.error('Navigation error:', err);
-            // Try with name-based navigation as fallback
-            this.$router.push({ name: 'StudentSubjects' })
-              .catch(err2 => {
-                console.error('Fallback navigation also failed:', err2);
-                this.showNotification('Unable to navigate to subjects page', 'error');
-              });
-          });
-      }
+      console.log('Navigate to quiz:', event.id, 'Code:', event.quizCode);
     },
 
     showNotification(message, type = 'info') {
@@ -1008,215 +937,124 @@ export default {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* === NEW STYLES FOR TAKE QUIZ BUTTONS === */
-.take-quiz-btn {
-  background: linear-gradient(135deg, #3D8D7A 0%, #4dbb98 100%);
-  color: var(--text-inverse);
-  border: none;
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 600;
-  font-size: 0.875rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.calendar-container {
+  min-height: 100vh;
+  background: #FBFFE4;
+  padding: 1.5rem;
   font-family: 'Inter', sans-serif;
 }
-
-.take-quiz-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(61, 141, 122, 0.3);
+.dark .calendar-container {
+  background: #181c20;
 }
-
-.take-quiz-btn:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.take-quiz-btn-modal {
-  background: linear-gradient(135deg, #3D8D7A 0%, #4dbb98 100%);
-  color: var(--text-inverse);
-  border: none;
+/* Header Card Styles (matching Subjects.vue) */
+.section-header-card {
+  display: flex;
+  align-items: center;
+  background: #FBFFE4;
   border-radius: 12px;
-  padding: 0.875rem 1.5rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 600;
-  font-size: 0.875rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-family: 'Inter', sans-serif;
-  width: 100%;
-  justify-content: center;
-}
-
-.take-quiz-btn-modal:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(61, 141, 122, 0.3);
-}
-
-.quick-take-quiz-btn {
-  background: linear-gradient(135deg, #3D8D7A 0%, #4dbb98 100%);
-  color: var(--text-inverse);
-  border: none;
-  border-radius: 8px;
-  width: 32px;
-  height: 32px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.quick-take-quiz-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
-}
-
-.modal-info {
-  padding-top: 1rem;
-  border-top: 1px solid rgba(61, 141, 122, 0.1);
-}
-
-.completed-message {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem;
-  background: rgba(34, 197, 94, 0.1);
-  border-radius: 12px;
-  color: #16a34a;
-  font-weight: 600;
-}
-
-.completed-message svg {
-  color: #16a34a;
-}
-
-.overdue-message {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem;
-  background: rgba(245, 158, 11, 0.1);
-  border-radius: 12px;
-  color: #d97706;
-  font-weight: 600;
-}
-
-.overdue-message svg {
-  color: #d97706;
-}
-
-/* === EXISTING STYLES === */
-.header-flex-align {
-  display: flex;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.08);
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  min-height: auto;
+  gap: 1.25rem;
   justify-content: space-between;
-  align-items: flex-start;
+  border: none;
 }
-.section-header-stats.align-top {
-  align-items: flex-start;
-  margin-top: 0.1rem;
+.dark .section-header-card {
+  background: #23272b;
+  border-color: #3D8D7A;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
-.minimal-header-card {
-  border-radius: 28px;
-  box-shadow: 0 8px 32px 0 var(--shadow-strong);
-  background: var(--bg-card);
-  border: 1.5px solid var(--border-color-hover);
-  padding: 3.5rem 4.5rem;
-  min-height: 170px;
-  gap: 3.5rem;
-  margin-bottom: 2.2rem;
-}
-.minimal-header-icon {
-  width: 88px;
-  height: 88px;
-  background: #4dbb98;
-  border-radius: 20px;
+
+.section-header-content {
   display: flex;
   align-items: center;
-  justify-content: center;
-  color: var(--text-inverse);
-  box-shadow: none;
+  justify-content: space-between;
+  width: 100%;
 }
-.minimal-header-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 0.12rem;
-  letter-spacing: -0.01em;
-}
-.minimal-header-sub {
-  font-size: 1.25rem;
-  color: var(--text-secondary);
-  font-weight: 400;
-  margin-bottom: 0;
-}
+
 .section-header-left {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
 }
+
 .section-header-icon {
-  width: 56px;
-  height: 56px;
-  background: linear-gradient(135deg, #4dbb98 0%, #33806b 100%);
-  border-radius: 16px;
+  width: 48px;
+  height: 48px;
+  background: #4dbb98;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-inverse);
-  box-shadow: 0 2px 8px 0 rgba(61, 141, 122, 0.10);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.15);
 }
+
 .section-header-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 0.18rem;
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: #181c20;
+  margin-bottom: 0.25rem;
   letter-spacing: -0.01em;
 }
+.dark .section-header-title {
+  color: #A3D1C6;
+}
+
 .section-header-sub {
-  font-size: 1.08rem;
-  color: var(--text-secondary);
+  font-size: 0.95rem;
+  color: #3D8D7A;
   font-weight: 400;
   margin-bottom: 0;
 }
+.dark .section-header-sub {
+  color: #A3D1C6;
+}
+
 .section-header-stats {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 2rem;
 }
+
 .stat-item {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
+
 .stat-number {
-  font-size: 2.5rem;
-  font-weight: 800;
+  font-size: 2rem;
+  font-weight: 700;
   color: #3D8D7A;
   line-height: 1;
 }
+.dark .stat-number {
+  color: #A3D1C6;
+}
+
 .stat-label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--text-muted);
+  color: #23272b;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-top: 0.5rem;
 }
-
-* {
-  box-sizing: border-box;
+.dark .stat-label {
+  color: #A3D1C6;
 }
 
+/* Loading and Error States */
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -1227,18 +1065,18 @@ export default {
 }
 
 .loading-spinner {
-  width: 60px;
-  height: 60px;
-  border: 4px solid rgba(61, 141, 122, 0.1);
-  border-left: 4px solid #3D8D7A;
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(61, 141, 122, 0.1);
+  border-left: 3px solid #3D8D7A;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
 .loading-text {
-  font-size: 1.25rem;
+  font-size: 1rem;
   color: #3D8D7A;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 @keyframes spin {
@@ -1257,40 +1095,85 @@ export default {
 }
 
 .error-icon {
-  font-size: 4rem;
+  font-size: 3rem;
 }
 
 .error-title {
-  font-size: 1.75rem;
-  color: #dc2626;
-  font-weight: 700;
+  font-size: 1.5rem;
+  color: #ef4444;
+  font-weight: 600;
   margin: 0;
 }
 
 .error-message {
-  font-size: 1.1rem;
-  color: var(--text-secondary);
+  font-size: 1rem;
+  color: #6b7280;
   margin: 0;
+}
+.dark .error-message {
+  color: #9ca3af;
 }
 
 .retry-btn {
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  color: var(--text-inverse);
+  background: #3D8D7A;
+  color: white;
   border: none;
-  border-radius: 12px;
-  padding: 1rem 2rem;
-  font-size: 1rem;
-  font-weight: 600;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s;
   font-family: 'Inter', sans-serif;
 }
 
 .retry-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(61, 141, 122, 0.3);
+  background: #2f6b5c;
+  transform: translateY(-1px);
 }
 
+/* Status Legend */
+.status-legend {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 2px solid #A3D1C6;
+}
+.dark .status-legend {
+  background: #23272b;
+  border-color: #3D8D7A;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1f2937;
+}
+.dark .legend-item {
+  color: #A3D1C6;
+}
+
+.legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
+
+.legend-color.upcoming { background: #2563eb; }
+.legend-color.due-today { background: #ef4444; }
+.legend-color.completed { background: #10b981; }
+.legend-color.overdue { background: #f59e0b; }
+
+/* Notifications */
 .notifications-container {
   position: fixed;
   top: 2rem;
@@ -1383,6 +1266,7 @@ export default {
   }
 }
 
+/* Live Indicator */
 .live-indicator {
   animation: pulse 2s infinite;
 }
@@ -1396,146 +1280,146 @@ export default {
   }
 }
 
-.calendar-container {
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
-  font-family: 'Inter', sans-serif;
-  background: var(--bg-primary);
-  min-height: 100vh;
-}
-
-.status-legend {
-  background: var(--bg-card);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
-  padding: 1.5rem 2rem;
-  margin-bottom: 2rem;
-  margin-top: 1.5rem;
-  display: flex;
-  justify-content: center;
-  gap: 4.5rem;
-  box-shadow: 0 8px 32px var(--shadow-light);
-  border: 1px solid var(--border-color);
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.legend-color {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.legend-color.upcoming {
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-}
-
-.legend-color.due-today {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
-}
-
-.legend-color.completed {
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-}
-
-.legend-color.overdue {
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-}
-
 .calendar-nav {
-  background: var(--bg-card);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
-  padding: 2rem;
-  margin-bottom: 2rem;
+  background: #FBFFE4;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 8px 32px var(--shadow-light);
-  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.08);
+  border: 2px solid #A3D1C6;
+}
+.dark .calendar-nav {
+  background: #23272b;
+  border-color: #3D8D7A;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
 
 .nav-controls {
   display: flex;
   align-items: center;
-  gap: 2rem;
+  gap: 1rem;
 }
 
 .nav-btn {
-  background: rgba(251, 255, 228, 0.8);
-  border: 1px solid rgba(61, 141, 122, 0.1);
-  border-radius: 12px;
-  width: 44px;
-  height: 44px;
+  background: #FBFFE4;
+  border: 1px solid #A3D1C6;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #3D8D7A;
+  font-size: 1rem;
+}
+.dark .nav-btn {
+  background: #23272b;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
 }
 
 .nav-btn:hover {
-  background: rgba(61, 141, 122, 0.1);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.15);
+  background: #A3D1C6;
+  border-color: #3D8D7A;
+  transform: scale(1.05);
+}
+.dark .nav-btn:hover {
+  background: #3D8D7A;
 }
 
 .current-month {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #3D8D7A;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
   margin: 0;
-  min-width: 220px;
+  min-width: 200px;
   text-align: center;
+  font-family: 'Inter', sans-serif;
+}
+.dark .current-month {
+  color: #A3D1C6;
 }
 
 .view-toggle {
   display: flex;
-  gap: 0.5rem;
-  background: var(--bg-accent);
-  padding: 0.5rem;
-  border-radius: 16px;
+  gap: 0.25rem;
+  background: rgba(61, 141, 122, 0.05);
+  padding: 0.25rem;
+  border-radius: 10px;
+  border: 1px solid #A3D1C6;
+}
+.dark .view-toggle {
+  background: rgba(61, 141, 122, 0.1);
+  border-color: #3D8D7A;
 }
 
 .view-btn {
   background: transparent;
   border: none;
-  border-radius: 12px;
-  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  padding: 0.625rem 1.25rem;
   cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 600;
-  color: #3D8D7A;
+  transition: all 0.2s;
+  font-weight: 500;
+  color: #6b7280;
   font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+}
+.dark .view-btn {
+  color: #9ca3af;
 }
 
 .view-btn:hover {
   background: rgba(61, 141, 122, 0.1);
+  color: #3D8D7A;
+}
+.dark .view-btn:hover {
+  color: #A3D1C6;
 }
 
 .view-btn.active {
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  color: var(--text-inverse);
-  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.2);
+  background: #3D8D7A;
+  color: white;
+  font-weight: 600;
+}
+
+.today-btn {
+  background: #3D8D7A;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.25rem;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.today-btn:hover {
+  background: #2f6b5c;
+  transform: translateY(-1px);
 }
 
 .calendar-content {
-  background: var(--bg-card);
-  backdrop-filter: blur(20px);
-  border-radius: 24px;
-  padding: 2.5rem;
-  box-shadow: 0 12px 40px var(--shadow-medium);
-  border: 1px solid var(--border-color);
+  background: #FBFFE4;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.08);
+  border: 2px solid #A3D1C6;
+}
+.dark .calendar-content {
+  background: #23272b;
+  border-color: #3D8D7A;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
 
 .calendar-grid {
@@ -1545,38 +1429,47 @@ export default {
 .calendar-header {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
-  margin-bottom: 1.5rem;
+  gap: 1px;
+  margin-bottom: 1rem;
 }
 
 .day-header {
-  padding: 1.25rem;
+  padding: 1rem;
   text-align: center;
-  font-weight: 700;
-  color: var(--text-accent);
-  background: var(--bg-secondary);
-  border-radius: 12px;
-  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1f2937;
+  background: rgba(61, 141, 122, 0.05);
+  border-radius: 8px;
+  font-size: 0.875rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  font-family: 'Inter', sans-serif;
+}
+.dark .day-header {
+  color: #A3D1C6;
+  background: rgba(61, 141, 122, 0.1);
 }
 
 .calendar-body {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
+  gap: 1px;
 }
 
 .calendar-day {
-  min-height: 130px;
-  padding: 1rem;
-  background: var(--input-bg);
-  border-radius: 12px;
-  transition: all 0.3s ease;
+  min-height: 120px;
+  padding: 0.75rem;
+  background: white;
+  border-radius: 8px;
+  transition: all 0.2s;
   display: flex;
   flex-direction: column;
   position: relative;
-  border: 2px solid transparent;
+  border: 1px solid #e5e7eb;
+}
+.dark .calendar-day {
+  background: #1f2937;
+  border-color: #374151;
 }
 
 .calendar-day.clickable {
@@ -1584,9 +1477,14 @@ export default {
 }
 
 .calendar-day.clickable:hover {
-  background: var(--input-bg);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px var(--shadow-medium);
+  background: #f9fafb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.1);
+  border-color: #A3D1C6;
+}
+.dark .calendar-day.clickable:hover {
+  background: #374151;
+  border-color: #3D8D7A;
 }
 
 .calendar-day.other-month {
@@ -1594,19 +1492,28 @@ export default {
 }
 
 .calendar-day.today {
-  background: linear-gradient(135deg, rgba(61, 141, 122, 0.15) 0%, rgba(163, 209, 198, 0.15) 100%);
+  background: rgba(61, 141, 122, 0.1);
   border-color: #3D8D7A;
-  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.2);
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.15);
+}
+.dark .calendar-day.today {
+  background: rgba(61, 141, 122, 0.15);
 }
 
 .calendar-day.has-due-today {
-  border-color: #ff6b6b;
-  background: linear-gradient(135deg, rgba(255, 107, 107, 0.15) 0%, rgba(238, 90, 82, 0.1) 100%);
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+}
+.dark .calendar-day.has-due-today {
+  background: rgba(239, 68, 68, 0.1);
 }
 
 .calendar-day.has-overdue {
-  border-color: #fbbf24;
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(245, 158, 11, 0.1) 100%);
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.05);
+}
+.dark .calendar-day.has-overdue {
+  background: rgba(245, 158, 11, 0.1);
 }
 
 .calendar-day.has-upcoming {
@@ -1614,10 +1521,13 @@ export default {
 }
 
 .day-number {
-  font-weight: 700;
-  color: #3D8D7A;
-  margin-bottom: 0.75rem;
-  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+.dark .day-number {
+  color: #A3D1C6;
 }
 
 .day-events {
@@ -1629,56 +1539,59 @@ export default {
 
 .event-dot {
   width: 100%;
-  height: 8px;
-  border-radius: 4px;
+  height: 6px;
+  border-radius: 3px;
   margin-bottom: 2px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .event-dot.upcoming {
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  background: #3D8D7A;
 }
 
 .event-dot.due-today {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+  background: #ef4444;
 }
 
 .event-dot.completed {
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  background: #10b981;
 }
 
 .event-dot.overdue {
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  background: #f59e0b;
 }
 
 .more-events {
   font-size: 0.7rem;
-  color: #666;
-  font-weight: 600;
+  color: #6b7280;
+  font-weight: 500;
   text-align: center;
   margin-top: 0.5rem;
   padding: 0.25rem;
+  background: rgba(61, 141, 122, 0.05);
+  border-radius: 4px;
+}
+.dark .more-events {
+  color: #9ca3af;
   background: rgba(61, 141, 122, 0.1);
-  border-radius: 6px;
 }
 
 .event-count {
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  color: var(--text-inverse);
+  background: #3D8D7A;
+  color: white;
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.75rem;
-  font-weight: 700;
-  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.3);
+  font-weight: 600;
 }
 
+/* Modal Styles */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -1694,30 +1607,35 @@ export default {
 }
 
 .day-modal-content {
-  background: var(--card-background);
-  border-radius: 24px;
+  background: #FBFFE4;
+  border-radius: 12px;
   padding: 0;
   max-width: 600px;
   width: 90%;
   max-height: 80vh;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(61, 141, 122, 0.25);
-  border: 1px solid rgba(61, 141, 122, 0.1);
+  box-shadow: 0 10px 25px rgba(61, 141, 122, 0.15);
+  border: 1px solid #A3D1C6;
+}
+.dark .day-modal-content {
+  background: #1f2937;
+  border-color: #3D8D7A;
 }
 
 .day-modal-header {
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  color: var(--text-inverse);
-  padding: 2rem;
+  background: #3D8D7A;
+  color: white;
+  padding: 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
 .day-modal-header h3 {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 1.25rem;
+  font-weight: 600;
   margin: 0;
+  font-family: 'Inter', sans-serif;
 }
 
 .close-btn {
@@ -1726,23 +1644,24 @@ export default {
   cursor: pointer;
   color: rgba(255, 255, 255, 0.8);
   padding: 0.5rem;
-  border-radius: 8px;
-  transition: all 0.3s ease;
+  border-radius: 6px;
+  transition: all 0.2s;
+  font-size: 1.125rem;
 }
 
 .close-btn:hover {
   background: rgba(255, 255, 255, 0.1);
-  color: var(--text-inverse);
+  color: white;
 }
 
 .day-modal-body {
-  padding: 2rem;
+  padding: 1.5rem;
   overflow-y: auto;
   max-height: 60vh;
 }
 
 .day-events-summary {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .summary-stats {
@@ -1752,76 +1671,105 @@ export default {
 }
 
 .summary-stat {
-  background: rgba(251, 255, 228, 0.5);
-  border-radius: 16px;
-  padding: 1.5rem;
+  background: rgba(61, 141, 122, 0.05);
+  border-radius: 10px;
+  padding: 1rem;
   text-align: center;
-  border: 1px solid rgba(61, 141, 122, 0.1);
+  border: 1px solid #A3D1C6;
+}
+.dark .summary-stat {
+  background: #23272b;
+  border-color: #3D8D7A;
 }
 
 .summary-number {
   display: block;
-  font-size: 2rem;
-  font-weight: 800;
+  font-size: 1.5rem;
+  font-weight: 700;
   color: #3D8D7A;
   line-height: 1;
+}
+.dark .summary-number {
+  color: #A3D1C6;
 }
 
 .summary-label {
   font-size: 0.75rem;
-  font-weight: 600;
-  color: #777;
+  font-weight: 500;
+  color: #6b7280;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-top: 0.5rem;
 }
+.dark .summary-label {
+  color: #9ca3af;
+}
 
 .day-events-list h4 {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #3D8D7A;
-  margin-bottom: 1.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+.dark .day-events-list h4 {
+  color: #A3D1C6;
 }
 
 .day-event-items {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .day-event-item {
-  background: rgba(251, 255, 228, 0.3);
-  border-radius: 16px;
-  padding: 1.5rem;
+  background: #FBFFE4;
+  border-radius: 10px;
+  padding: 1rem;
   display: flex;
   align-items: flex-start;
   gap: 1rem;
-  transition: all 0.3s ease;
-  border-left: 4px solid;
+  transition: all 0.2s;
+  border: 1px solid #A3D1C6;
+}
+.dark .day-event-item {
+  background: #23272b;
+  border-color: #3D8D7A;
 }
 
 .day-event-item:hover {
-  background: rgba(251, 255, 228, 0.6);
-  transform: translateX(4px);
+  background: #f0f9f4;
+  border-color: #3D8D7A;
+}
+.dark .day-event-item:hover {
+  background: #2a3137;
 }
 
 .day-event-item.upcoming {
-  border-left-color: #3D8D7A;
+  border-left: 4px solid #3D8D7A;
 }
 
 .day-event-item.due-today {
-  border-left-color: #ff6b6b;
-  background: rgba(255, 107, 107, 0.1);
+  border-left: 4px solid #ef4444;
+  background: #fef2f2;
+}
+.dark .day-event-item.due-today {
+  background: #2d1b1b;
 }
 
 .day-event-item.completed {
-  border-left-color: #22c55e;
-  background: rgba(34, 197, 94, 0.1);
+  border-left: 4px solid #10b981;
+  background: #f0fdf4;
+}
+.dark .day-event-item.completed {
+  background: #1a2e1a;
 }
 
 .day-event-item.overdue {
-  border-left-color: #fbbf24;
-  background: rgba(251, 191, 36, 0.1);
+  border-left: 4px solid #f59e0b;
+  background: #fffbeb;
+}
+.dark .day-event-item.overdue {
+  background: #2d2516;
 }
 
 .event-status-indicator {
@@ -1829,10 +1777,10 @@ export default {
 }
 
 .status-dot {
-  width: 12px;
-  height: 12px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .status-dot.upcoming {
@@ -1840,15 +1788,15 @@ export default {
 }
 
 .status-dot.due-today {
-  background: #ff6b6b;
+  background: #ef4444;
 }
 
 .status-dot.completed {
-  background: #22c55e;
+  background: #10b981;
 }
 
 .status-dot.overdue {
-  background: #fbbf24;
+  background: #f59e0b;
 }
 
 .event-details {
@@ -1856,29 +1804,41 @@ export default {
 }
 
 .event-name {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #3D8D7A;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
   margin-bottom: 0.25rem;
+}
+.dark .event-name {
+  color: #A3D1C6;
 }
 
 .event-subject-small {
   font-size: 0.875rem;
-  color: #777;
+  color: #6b7280;
   margin-bottom: 0.25rem;
+}
+.dark .event-subject-small {
+  color: #9ca3af;
 }
 
 .event-time-small {
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 500;
   color: #3D8D7A;
   margin-bottom: 0.5rem;
+}
+.dark .event-time-small {
+  color: #A3D1C6;
 }
 
 .event-desc-small {
   font-size: 0.875rem;
-  color: #666;
+  color: #6b7280;
   margin: 0;
+}
+.dark .event-desc-small {
+  color: #9ca3af;
 }
 
 .event-status-text {
@@ -1889,10 +1849,10 @@ export default {
 
 .status-badge-small {
   font-size: 0.7rem;
-  font-weight: 600;
+  font-weight: 500;
   text-transform: uppercase;
   padding: 0.25rem 0.75rem;
-  border-radius: 8px;
+  border-radius: 6px;
   letter-spacing: 0.5px;
 }
 
@@ -1902,17 +1862,17 @@ export default {
 }
 
 .status-badge-small.due-today {
-  background: rgba(255, 107, 107, 0.2);
+  background: rgba(239, 68, 68, 0.2);
   color: #dc2626;
 }
 
 .status-badge-small.completed {
-  background: rgba(34, 197, 94, 0.2);
-  color: #16a34a;
+  background: rgba(16, 185, 129, 0.2);
+  color: #059669;
 }
 
 .status-badge-small.overdue {
-  background: rgba(251, 191, 36, 0.2);
+  background: rgba(245, 158, 11, 0.2);
   color: #d97706;
 }
 
@@ -1922,88 +1882,139 @@ export default {
   gap: 0.5rem;
 }
 
-.quick-view-btn {
-  background: rgba(61, 141, 122, 0.1);
-  border: 1px solid rgba(61, 141, 122, 0.2);
-  border-radius: 8px;
+.quick-answer-btn {
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 6px;
   width: 32px;
   height: 32px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quick-answer-btn:hover {
+  background: #059669;
+  transform: scale(1.05);
+}
+
+.quick-view-btn {
+  background: #FBFFE4;
+  border: 1px solid #A3D1C6;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #3D8D7A;
 }
-
-.quick-view-btn:hover {
-  background: rgba(61, 141, 122, 0.2);
-  transform: scale(1.1);
+.dark .quick-view-btn {
+  background: #23272b;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
 }
 
+.quick-view-btn:hover {
+  background: #A3D1C6;
+  transform: scale(1.05);
+}
+.dark .quick-view-btn:hover {
+  background: #3D8D7A;
+}
+
+/* List View Styles */
 .events-list {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
 }
 
 .day-group {
   border-bottom: 1px solid rgba(61, 141, 122, 0.1);
-  padding-bottom: 1.5rem;
+  padding-bottom: 1rem;
 }
 
 .day-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #3D8D7A;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
   margin-bottom: 1rem;
+}
+.dark .day-title {
+  color: #A3D1C6;
 }
 
 .events-container {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .event-item {
-  background: var(--input-bg);
-  border-radius: 16px;
-  padding: 1.5rem;
+  background: #FBFFE4;
+  border-radius: 10px;
+  padding: 1rem;
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  transition: all 0.3s ease;
-  border-left: 4px solid;
+  gap: 1rem;
+  transition: all 0.2s;
+  border: 1px solid #A3D1C6;
+}
+.dark .event-item {
+  background: #23272b;
+  border-color: #3D8D7A;
 }
 
 .event-item:hover {
-  background: var(--input-bg);
-  transform: translateX(4px);
+  background: #f0f9f4;
+  border-color: #3D8D7A;
+}
+.dark .event-item:hover {
+  background: #2a3137;
 }
 
 .event-item.upcoming {
-  border-left-color: #3D8D7A;
+  border-left: 4px solid #3D8D7A;
 }
 
 .event-item.due-today {
-  border-left-color: #ff6b6b;
-  background: rgba(255, 107, 107, 0.1);
+  border-left: 4px solid #ef4444;
+  background: #fef2f2;
+}
+.dark .event-item.due-today {
+  background: #2d1b1b;
 }
 
 .event-item.completed {
-  border-left-color: #22c55e;
-  background: rgba(34, 197, 94, 0.1);
+  border-left: 4px solid #10b981;
+  background: #f0fdf4;
+}
+.dark .event-item.completed {
+  background: #1a2e1a;
 }
 
 .event-item.overdue {
-  border-left-color: #fbbf24;
-  background: rgba(251, 191, 36, 0.1);
+  border-left: 4px solid #f59e0b;
+  background: #fffbeb;
+}
+.dark .event-item.overdue {
+  background: #2d2516;
 }
 
 .event-time {
-  font-weight: 700;
-  color: #3D8D7A;
   min-width: 80px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #3D8D7A;
+}
+.dark .event-time {
+  color: #A3D1C6;
 }
 
 .event-content {
@@ -2011,26 +2022,34 @@ export default {
 }
 
 .event-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
   margin-bottom: 0.25rem;
+}
+.dark .event-title {
+  color: #A3D1C6;
 }
 
 .event-subject {
   font-size: 0.875rem;
-  color: #777;
+  color: #6b7280;
   margin-bottom: 0.25rem;
+}
+.dark .event-subject {
+  color: #9ca3af;
 }
 
 .event-description {
   font-size: 0.875rem;
-  color: #666;
-  margin-bottom: 0.5rem;
+  color: #6b7280;
+}
+.dark .event-description {
+  color: #9ca3af;
 }
 
 .event-status-badge {
-  display: inline-block;
+  margin-top: 0.5rem;
 }
 
 .status-badge {
@@ -2038,7 +2057,7 @@ export default {
   font-weight: 600;
   text-transform: uppercase;
   padding: 0.25rem 0.75rem;
-  border-radius: 12px;
+  border-radius: 6px;
   letter-spacing: 0.5px;
 }
 
@@ -2048,17 +2067,17 @@ export default {
 }
 
 .status-badge.due-today {
-  background: rgba(255, 107, 107, 0.2);
+  background: rgba(239, 68, 68, 0.2);
   color: #dc2626;
 }
 
 .status-badge.completed {
-  background: rgba(34, 197, 94, 0.2);
-  color: #16a34a;
+  background: rgba(16, 185, 129, 0.2);
+  color: #059669;
 }
 
 .status-badge.overdue {
-  background: rgba(251, 191, 36, 0.2);
+  background: rgba(245, 158, 11, 0.2);
   color: #d97706;
 }
 
@@ -2068,124 +2087,213 @@ export default {
   align-items: center;
 }
 
+.answer-btn {
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Inter', sans-serif;
+}
+
+.answer-btn:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
 .view-btn-small {
-  background: rgba(61, 141, 122, 0.1);
-  border: 1px solid rgba(61, 141, 122, 0.2);
+  background: #FBFFE4;
+  border: 1px solid #A3D1C6;
   border-radius: 8px;
   width: 32px;
   height: 32px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #3D8D7A;
 }
+.dark .view-btn-small {
+  background: #23272b;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
+}
 
 .view-btn-small:hover {
-  background: rgba(61, 141, 122, 0.2);
-  transform: scale(1.1);
+  background: #A3D1C6;
+  transform: scale(1.05);
+}
+.dark .view-btn-small:hover {
+  background: #3D8D7A;
 }
 
 .modal-content {
-  background: var(--card-background);
-  border-radius: 24px;
-  padding: 2rem;
+  background: #FBFFE4;
+  border-radius: 12px;
+  padding: 0;
   max-width: 500px;
   width: 90%;
   max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(61, 141, 122, 0.25);
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(61, 141, 122, 0.15);
+  border: 1px solid #A3D1C6;
+}
+.dark .modal-content {
+  background: #1f2937;
+  border-color: #3D8D7A;
 }
 
 .modal-header {
+  background: #3D8D7A;
+  color: white;
+  padding: 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(61, 141, 122, 0.1);
+  margin-bottom: 0;
+  border-bottom: none;
 }
 
 .modal-header h3 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #3D8D7A;
+  font-size: 1.25rem;
+  font-weight: 600;
   margin: 0;
+  font-family: 'Inter', sans-serif;
 }
 
 .modal-header .close-btn {
-  color: #666;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .modal-header .close-btn:hover {
-  background: rgba(61, 141, 122, 0.1);
-  color: #3D8D7A;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
 }
 
 .modal-body {
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  overflow-y: auto;
+  max-height: calc(80vh - 120px);
 }
 
 .event-detail {
   display: flex;
   gap: 1rem;
   padding: 0.75rem 0;
-  border-bottom: 1px solid rgba(61, 141, 122, 0.05);
-  align-items: center;
+  border-bottom: 1px solid rgba(61, 141, 122, 0.1);
+  align-items: flex-start;
+}
+.dark .event-detail {
+  border-bottom-color: rgba(61, 141, 122, 0.2);
 }
 
 .event-detail strong {
-  min-width: 100px;
+  min-width: 80px;
   color: #3D8D7A;
   font-weight: 600;
+  font-size: 0.875rem;
+}
+.dark .event-detail strong {
+  color: #A3D1C6;
+}
+
+.event-detail span {
+  color: #1f2937;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.dark .event-detail span {
+  color: #A3D1C6;
 }
 
 .modal-actions {
   padding-top: 1rem;
   border-top: 1px solid rgba(61, 141, 122, 0.1);
 }
+.dark .modal-actions {
+  border-top-color: rgba(61, 141, 122, 0.2);
+}
 
+.answer-btn-modal {
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.875rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Inter', sans-serif;
+  width: 100%;
+  justify-content: center;
+}
+
+.answer-btn-modal:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
   .calendar-container {
     padding: 1rem;
   }
   
-  .minimal-header-card {
+  .section-header-card {
     flex-direction: column;
     text-align: center;
-    gap: 2rem;
-    padding: 2rem;
+    gap: 1.5rem;
+    padding: 1.5rem;
   }
   
-  .section-header-left {
+  .section-header-content {
     flex-direction: column;
+    align-items: center;
     text-align: center;
   }
   
   .section-header-stats {
     flex-direction: row;
     justify-content: center;
+    gap: 1.5rem;
   }
   
-  .minimal-header-title {
-    font-size: 2rem;
+  .section-header-title {
+    font-size: 1.25rem;
   }
   
   .status-legend {
     flex-wrap: wrap;
     gap: 1rem;
+    padding: 1rem;
   }
   
   .calendar-nav {
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1rem;
+    padding: 1rem;
   }
   
   .nav-controls {
     justify-content: center;
+  }
+  .calendar-content {
+    padding: 1rem;
   }
   
   .calendar-day {
@@ -2202,6 +2310,7 @@ export default {
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
+    padding: 1rem;
   }
   
   .event-time {
@@ -2213,8 +2322,10 @@ export default {
     justify-content: space-between;
   }
   
-  .day-modal-content {
+  .day-modal-content,
+  .modal-content {
     max-width: 95%;
+    margin: 1rem;
   }
   
   .summary-stats {
@@ -2234,3 +2345,155 @@ export default {
   }
 }
 </style>
+
+/* --- Modern Card Header Styles (from Home.vue) --- */
+.section-header-card {
+  position: relative;
+  background: var(--bg-primary);
+  border-radius: 32px;
+  padding: 3.5rem;
+  margin-bottom: 2.5rem;
+  min-height: 180px;
+  box-shadow: 
+    0 24px 48px rgba(61, 141, 122, 0.08),
+    0 12px 24px rgba(61, 141, 122, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border: 2px solid rgba(61, 141, 122, 0.08);
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.section-header-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 32px 64px rgba(61, 141, 122, 0.12),
+    0 16px 32px rgba(61, 141, 122, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.header-bg-decoration {
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 120%;
+  height: 200%;
+  background: radial-gradient(ellipse at center, rgba(77, 187, 152, 0.08) 0%, transparent 70%);
+  z-index: 1;
+}
+.floating-shapes {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+.shape {
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(77, 187, 152, 0.1) 0%, rgba(51, 128, 107, 0.05) 100%);
+}
+.shape-1 {
+  width: 120px;
+  height: 120px;
+  top: -30px;
+  right: 10%;
+  animation: float 6s ease-in-out infinite;
+}
+.shape-2 {
+  width: 80px;
+  height: 80px;
+  bottom: -20px;
+  right: 25%;
+  animation: float 8s ease-in-out infinite reverse;
+}
+.shape-3 {
+  width: 60px;
+  height: 60px;
+  top: 50%;
+  right: 5%;
+  animation: float 7s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(10deg); }
+}
+.section-header-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+.section-header-left {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+}
+.section-header-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #4dbb98 0%, #33806b 100%);
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-inverse);
+  box-shadow: 
+    0 12px 24px rgba(61, 141, 122, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+.section-header-icon:hover {
+  transform: scale(1.05);
+}
+.header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.section-header-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #2d6a57;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #33806b 0%, #4dbb98 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.25rem;
+}
+.section-header-subtitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #5e8c7a;
+  margin-bottom: 0.25rem;
+}
+.section-header-description {
+  font-size: 1rem;
+  color: #7a9c8f;
+  font-weight: 400;
+  opacity: 0.9;
+}
+.header-badge {
+  background: rgba(77, 187, 152, 0.1);
+  border: 2px solid rgba(77, 187, 152, 0.2);
+  border-radius: 20px;
+  padding: 1rem 1.5rem;
+  backdrop-filter: blur(10px);
+}
+.badge-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.badge-icon {
+  font-size: 1.5rem;
+}
+.badge-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #33806b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
