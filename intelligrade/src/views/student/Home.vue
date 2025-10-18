@@ -808,6 +808,14 @@ export default {
     }, 30000);
   },
 
+  watch: {
+    $route() {
+      // Reload dashboard data when route changes
+      this.loadStudentProfile();
+      this.loadNotifications();
+    }
+  },
+
   beforeUnmount() {
     console.log('Home component being destroyed');
     
