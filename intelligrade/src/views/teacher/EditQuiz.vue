@@ -1,0 +1,1398 @@
+<template>
+  <div class="edit-quiz-container" :class="{ 'dark-mode': isDarkMode }">
+    <!-- Enhanced Header Section -->
+    <div class="section-header-card">
+      <div class="header-bg-decoration"></div>
+      <div class="floating-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+      </div>
+      
+      <div class="section-header-content">
+        <div class="section-header-left">
+          <div class="section-header-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
+            </svg>
+          </div>
+          <div class="header-text">
+            <div class="section-header-title">Edit Quiz</div>
+            <div class="section-header-subtitle">{{ quiz.title || 'Loading...' }}</div>
+            <div class="section-header-description" v-if="quiz.quiz_code">
+              Quiz Code: <span class="code-highlight">{{ quiz.quiz_code }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="header-actions">
+          <button @click="saveQuiz" :disabled="isSaving" class="save-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z" />
+            </svg>
+            {{ isSaving ? 'Saving...' : 'Save Changes' }}
+          </button>
+          <button @click="goBack" class="back-button">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M10 19l-7-7 7-7m-7 7h18"></path>
+            </svg>
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-wrapper">
+      <!-- Loading State -->
+      <div v-if="isLoading" class="loading-state">
+        <div class="loading-spinner"></div>
+        <p>Loading quiz...</p>
+      </div>
+
+      <!-- Error State -->
+      <div v-else-if="error" class="error-state">
+        <div class="error-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M11,15H13V17H11V15M11,7H13V13H11V7M12,2C6.47,2 2,6.5 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20Z" />
+          </svg>
+        </div>
+        <h3>Error Loading Quiz</h3>
+        <p>{{ error }}</p>
+        <button @click="loadQuiz" class="retry-btn">Try Again</button>
+      </div>
+
+      <!-- Edit Form -->
+      <div v-else class="edit-form">
+        <!-- Quiz Settings Card -->
+        <div class="form-card">
+          <div class="card-header">
+            <h3>Quiz Settings</h3>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label for="title">Quiz Title *</label>
+              <input 
+                type="text" 
+                id="title" 
+                v-model="quiz.title" 
+                placeholder="Enter quiz title"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="description">Description</label>
+              <textarea 
+                id="description" 
+                v-model="quiz.description" 
+                placeholder="Enter quiz description (optional)"
+                rows="3"
+              ></textarea>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="status">Status</label>
+                <select id="status" v-model="quiz.status">
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                  <option value="archived">Archived</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="attempts">Attempts Allowed *</label>
+                <input 
+                  type="number" 
+                  id="attempts" 
+                  v-model.number="quiz.attempts_allowed" 
+                  min="1"
+                  max="999"
+                  required
+                />
+                <small>Use 999 for unlimited attempts</small>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group checkbox-group">
+                <label>
+                  <input type="checkbox" v-model="quiz.has_time_limit" />
+                  <span>Enable Time Limit</span>
+                </label>
+              </div>
+
+              <div class="form-group" v-if="quiz.has_time_limit">
+                <label for="timeLimit">Time Limit (minutes) *</label>
+                <input 
+                  type="number" 
+                  id="timeLimit" 
+                  v-model.number="quiz.time_limit_minutes" 
+                  min="1"
+                  :required="quiz.has_time_limit"
+                />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group checkbox-group">
+                <label>
+                  <input type="checkbox" v-model="quiz.shuffle_questions" />
+                  <span>Shuffle Questions</span>
+                </label>
+              </div>
+
+              <div class="form-group checkbox-group">
+                <label>
+                  <input type="checkbox" v-model="quiz.shuffle_options" />
+                  <span>Shuffle Options</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="startDate">Start Date</label>
+                <input 
+                  type="datetime-local" 
+                  id="startDate" 
+                  v-model="quiz.start_date" 
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="endDate">End Date</label>
+                <input 
+                  type="datetime-local" 
+                  id="endDate" 
+                  v-model="quiz.end_date" 
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Questions Card -->
+        <div class="form-card">
+          <div class="card-header">
+            <h3>Questions ({{ questions.length }})</h3>
+            <button @click="addQuestion" class="add-question-btn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+              </svg>
+              Add Question
+            </button>
+          </div>
+          <div class="card-body">
+            <div v-if="questions.length === 0" class="no-questions">
+              <p>No questions added yet. Click "Add Question" to get started.</p>
+            </div>
+
+            <div v-else class="questions-list">
+              <div 
+                v-for="(question, index) in questions" 
+                :key="question.id || `new-${index}`"
+                class="question-item"
+              >
+                <div class="question-header">
+                  <div class="question-number">{{ index + 1 }}</div>
+                  <button @click="removeQuestion(index)" class="delete-question-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div class="question-content">
+                  <div class="form-group">
+                    <label>Question Type *</label>
+                    <select v-model="question.question_type" @change="onQuestionTypeChange(question)">
+                      <option value="multiple_choice">Multiple Choice</option>
+                      <option value="true_false">True/False</option>
+                      <option value="fill_blank">Fill in the Blank</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Question Text *</label>
+                    <textarea 
+                      v-model="question.question_text" 
+                      placeholder="Enter your question"
+                      rows="2"
+                      required
+                    ></textarea>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Points *</label>
+                    <input 
+                      type="number" 
+                      v-model.number="question.points" 
+                      min="0.01"
+                      step="0.01"
+                      required
+                    />
+                  </div>
+
+                  <!-- Multiple Choice Options -->
+                  <div v-if="question.question_type === 'multiple_choice'" class="options-section">
+                    <label>Options *</label>
+                    <div class="options-list">
+                      <div 
+                        v-for="(option, optIndex) in question.options" 
+                        :key="optIndex"
+                        class="option-item"
+                      >
+                        <input 
+                          type="radio" 
+                          :name="`correct-${question.id || index}`"
+                          :checked="option.is_correct"
+                          @change="setCorrectOption(question, optIndex)"
+                        />
+                        <input 
+                          type="text" 
+                          v-model="option.option_text" 
+                          :placeholder="`Option ${optIndex + 1}`"
+                          required
+                        />
+                        <button 
+                          v-if="question.options.length > 2"
+                          @click="removeOption(question, optIndex)"
+                          class="remove-option-btn"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                    <button @click="addOption(question)" class="add-option-btn">
+                      Add Option
+                    </button>
+                  </div>
+
+                  <!-- True/False Answer -->
+                  <div v-else-if="question.question_type === 'true_false'" class="answer-section">
+                    <label>Correct Answer *</label>
+                    <select v-model="question.answer.correct_answer" required>
+                      <option value="true">True</option>
+                      <option value="false">False</option>
+                    </select>
+                  </div>
+
+                  <!-- Fill in the Blank Answer -->
+                  <div v-else-if="question.question_type === 'fill_blank'" class="answer-section">
+                    <div class="form-group">
+                      <label>Correct Answer *</label>
+                      <input 
+                        type="text" 
+                        v-model="question.answer.correct_answer" 
+                        placeholder="Enter the correct answer"
+                        required
+                      />
+                    </div>
+                    <div class="form-group checkbox-group">
+                      <label>
+                        <input type="checkbox" v-model="question.answer.case_sensitive" />
+                        <span>Case Sensitive</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Save Button (Bottom) -->
+        <div class="form-actions">
+          <button @click="saveQuiz" :disabled="isSaving" class="save-btn-large">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z" />
+            </svg>
+            {{ isSaving ? 'Saving Changes...' : 'Save All Changes' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { supabase } from '../../supabase.js'
+import { useDarkMode } from '../../composables/useDarkMode.js'
+
+// Dark mode
+const { isDarkMode, initDarkMode } = useDarkMode()
+
+const router = useRouter()
+const route = useRoute()
+
+// Get quiz ID from route
+const quizId = ref(route.params.quizId)
+
+// State
+const quiz = ref({
+  title: '',
+  description: '',
+  status: 'draft',
+  has_time_limit: false,
+  time_limit_minutes: null,
+  attempts_allowed: 1,
+  shuffle_questions: false,
+  shuffle_options: false,
+  start_date: null,
+  end_date: null,
+  quiz_code: ''
+})
+
+const questions = ref([])
+const isLoading = ref(false)
+const isSaving = ref(false)
+const error = ref(null)
+
+// Load quiz data
+const loadQuiz = async () => {
+  isLoading.value = true
+  error.value = null
+  
+  try {
+    // Fetch quiz details
+    const { data: quizData, error: quizError } = await supabase
+      .from('quizzes')
+      .select('*')
+      .eq('id', quizId.value)
+      .single()
+    
+    if (quizError) throw quizError
+    
+    // Format dates for datetime-local input
+    quiz.value = {
+      ...quizData,
+      start_date: quizData.start_date ? formatDateForInput(quizData.start_date) : null,
+      end_date: quizData.end_date ? formatDateForInput(quizData.end_date) : null
+    }
+    
+    // Fetch questions
+    const { data: questionsData, error: questionsError } = await supabase
+      .from('quiz_questions')
+      .select('*')
+      .eq('quiz_id', quizId.value)
+      .order('question_number')
+    
+    if (questionsError) throw questionsError
+    
+    // Load options and answers for each question
+    for (const question of questionsData || []) {
+      if (question.question_type === 'multiple_choice') {
+        const { data: options, error: optionsError } = await supabase
+          .from('question_options')
+          .select('*')
+          .eq('question_id', question.id)
+          .order('option_number')
+        
+        if (optionsError) throw optionsError
+        
+        question.options = options || []
+      } else {
+        const { data: answer, error: answerError } = await supabase
+          .from('question_answers')
+          .select('*')
+          .eq('question_id', question.id)
+          .single()
+        
+        if (!answerError && answer) {
+          question.answer = answer
+        } else {
+          question.answer = {
+            correct_answer: question.question_type === 'true_false' ? 'true' : '',
+            case_sensitive: false
+          }
+        }
+      }
+    }
+    
+    questions.value = questionsData || []
+    
+  } catch (err) {
+    console.error('Error loading quiz:', err)
+    error.value = err.message
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Format date for datetime-local input
+const formatDateForInput = (dateString) => {
+  if (!dateString) return null
+  const date = new Date(dateString)
+  return date.toISOString().slice(0, 16)
+}
+
+// Question management
+const addQuestion = () => {
+  questions.value.push({
+    question_number: questions.value.length + 1,
+    question_type: 'multiple_choice',
+    question_text: '',
+    points: 1,
+    options: [
+      { option_number: 1, option_text: '', is_correct: true },
+      { option_number: 2, option_text: '', is_correct: false }
+    ]
+  })
+}
+
+const removeQuestion = (index) => {
+  if (confirm('Are you sure you want to remove this question?')) {
+    questions.value.splice(index, 1)
+    // Renumber questions
+    questions.value.forEach((q, i) => {
+      q.question_number = i + 1
+    })
+  }
+}
+
+const onQuestionTypeChange = (question) => {
+  if (question.question_type === 'multiple_choice') {
+    question.options = [
+      { option_number: 1, option_text: '', is_correct: true },
+      { option_number: 2, option_text: '', is_correct: false }
+    ]
+    delete question.answer
+  } else {
+    question.answer = {
+      correct_answer: question.question_type === 'true_false' ? 'true' : '',
+      case_sensitive: false
+    }
+    delete question.options
+  }
+}
+
+const addOption = (question) => {
+  const optionNumber = question.options.length + 1
+  question.options.push({
+    option_number: optionNumber,
+    option_text: '',
+    is_correct: false
+  })
+}
+
+const removeOption = (question, index) => {
+  question.options.splice(index, 1)
+  // Renumber options
+  question.options.forEach((opt, i) => {
+    opt.option_number = i + 1
+  })
+}
+
+const setCorrectOption = (question, index) => {
+  question.options.forEach((opt, i) => {
+    opt.is_correct = i === index
+  })
+}
+
+// Save quiz
+const saveQuiz = async () => {
+  // Validation
+  if (!quiz.value.title.trim()) {
+    alert('Please enter a quiz title')
+    return
+  }
+  
+  if (questions.value.length === 0) {
+    alert('Please add at least one question')
+    return
+  }
+  
+  // Validate questions
+  for (let i = 0; i < questions.value.length; i++) {
+    const q = questions.value[i]
+    
+    if (!q.question_text.trim()) {
+      alert(`Please enter text for question ${i + 1}`)
+      return
+    }
+    
+    if (q.question_type === 'multiple_choice') {
+      if (!q.options || q.options.length < 2) {
+        alert(`Question ${i + 1} must have at least 2 options`)
+        return
+      }
+      
+      if (!q.options.some(opt => opt.is_correct)) {
+        alert(`Please select a correct answer for question ${i + 1}`)
+        return
+      }
+      
+      if (q.options.some(opt => !opt.option_text.trim())) {
+        alert(`Please fill in all options for question ${i + 1}`)
+        return
+      }
+    } else if (q.question_type === 'fill_blank' || q.question_type === 'true_false') {
+      if (!q.answer || !q.answer.correct_answer) {
+        alert(`Please provide a correct answer for question ${i + 1}`)
+        return
+      }
+    }
+  }
+  
+  isSaving.value = true
+  
+  try {
+    console.log('Starting save process...')
+    
+    // Step 1: Update quiz settings
+    console.log('Updating quiz settings...')
+    const { error: quizError } = await supabase
+      .from('quizzes')
+      .update({
+        title: quiz.value.title,
+        description: quiz.value.description,
+        status: quiz.value.status,
+        has_time_limit: quiz.value.has_time_limit,
+        time_limit_minutes: quiz.value.has_time_limit ? quiz.value.time_limit_minutes : null,
+        attempts_allowed: quiz.value.attempts_allowed,
+        shuffle_questions: quiz.value.shuffle_questions,
+        shuffle_options: quiz.value.shuffle_options,
+        start_date: quiz.value.start_date || null,
+        end_date: quiz.value.end_date || null,
+        number_of_questions: questions.value.length,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', quizId.value)
+    
+    if (quizError) {
+      console.error('Quiz update error:', quizError)
+      throw quizError
+    }
+    
+    console.log('Quiz settings updated successfully')
+    
+    // Step 2: Get all existing question IDs for this quiz
+    console.log('Fetching existing questions...')
+    const { data: existingQuestions, error: fetchError } = await supabase
+      .from('quiz_questions')
+      .select('id')
+      .eq('quiz_id', quizId.value)
+    
+    if (fetchError) {
+      console.error('Fetch questions error:', fetchError)
+      throw fetchError
+    }
+    
+    // Step 3: Delete old questions (this will cascade to options and answers)
+    if (existingQuestions && existingQuestions.length > 0) {
+      console.log(`Deleting ${existingQuestions.length} existing questions...`)
+      const questionIds = existingQuestions.map(q => q.id)
+      
+      const { error: deleteError } = await supabase
+        .from('quiz_questions')
+        .delete()
+        .in('id', questionIds)
+      
+      if (deleteError) {
+        console.error('Delete questions error:', deleteError)
+        throw deleteError
+      }
+      
+      console.log('Old questions deleted successfully')
+    }
+    
+    // Step 4: Insert new questions one by one with their options/answers
+    console.log(`Inserting ${questions.value.length} new questions...`)
+    
+    for (let i = 0; i < questions.value.length; i++) {
+      const question = questions.value[i]
+      console.log(`Processing question ${i + 1}...`)
+      
+      // Insert question
+      const { data: insertedQuestion, error: questionError } = await supabase
+        .from('quiz_questions')
+        .insert({
+          quiz_id: quizId.value,
+          question_number: question.question_number,
+          question_type: question.question_type,
+          question_text: question.question_text,
+          points: question.points
+        })
+        .select()
+        .single()
+      
+      if (questionError) {
+        console.error(`Question ${i + 1} insert error:`, questionError)
+        throw new Error(`Failed to save question ${i + 1}: ${questionError.message}`)
+      }
+      
+      console.log(`Question ${i + 1} inserted with ID:`, insertedQuestion.id)
+      
+      // Insert options or answers based on question type
+      if (question.question_type === 'multiple_choice') {
+        console.log(`Inserting ${question.options.length} options for question ${i + 1}...`)
+        
+        const optionsToInsert = question.options.map(opt => ({
+          question_id: insertedQuestion.id,
+          option_number: opt.option_number,
+          option_text: opt.option_text,
+          is_correct: opt.is_correct
+        }))
+        
+        const { error: optionsError } = await supabase
+          .from('question_options')
+          .insert(optionsToInsert)
+        
+        if (optionsError) {
+          console.error(`Options insert error for question ${i + 1}:`, optionsError)
+          throw new Error(`Failed to save options for question ${i + 1}: ${optionsError.message}`)
+        }
+        
+        console.log(`Options inserted for question ${i + 1}`)
+      } else {
+        console.log(`Inserting answer for question ${i + 1}...`)
+        
+        const { error: answerError } = await supabase
+          .from('question_answers')
+          .insert({
+            question_id: insertedQuestion.id,
+            correct_answer: question.answer.correct_answer,
+            case_sensitive: question.answer.case_sensitive || false
+          })
+        
+        if (answerError) {
+          console.error(`Answer insert error for question ${i + 1}:`, answerError)
+          throw new Error(`Failed to save answer for question ${i + 1}: ${answerError.message}`)
+        }
+        
+        console.log(`Answer inserted for question ${i + 1}`)
+      }
+    }
+    
+    console.log('All questions saved successfully!')
+    alert('Quiz updated successfully!')
+    goBack()
+    
+  } catch (err) {
+    console.error('Error saving quiz:', err)
+    alert(`Error saving quiz: ${err.message || 'Unknown error occurred'}`)
+  } finally {
+    isSaving.value = false
+  }
+}
+
+const goBack = () => {
+  router.back()
+}
+
+// Lifecycle
+onMounted(async () => {
+  initDarkMode()
+  
+  if (!quizId.value) {
+    error.value = 'Quiz ID is missing'
+    return
+  }
+  
+  await loadQuiz()
+})
+</script>
+
+<style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+.edit-quiz-container {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: 'Inter', sans-serif;
+  background: #FBFFE4;
+  min-height: 100vh;
+  transition: all 0.3s ease;
+}
+
+/* Header Section (same as ViewQuizzes) */
+.section-header-card {
+  position: relative;
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 2px solid #A3D1C6;
+  overflow: hidden;
+}
+
+.header-bg-decoration {
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(163, 209, 198, 0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.floating-shapes {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.shape {
+  position: absolute;
+  background: #3D8D7A;
+  opacity: 0.05;
+  border-radius: 50%;
+}
+
+.shape-1 {
+  width: 150px;
+  height: 150px;
+  top: 10%;
+  left: 5%;
+  animation: float 6s ease-in-out infinite;
+}
+
+.shape-2 {
+  width: 100px;
+  height: 100px;
+  top: 60%;
+  left: 80%;
+  animation: float 8s ease-in-out infinite 1s;
+}
+
+.shape-3 {
+  width: 80px;
+  height: 80px;
+  top: 30%;
+  left: 70%;
+  animation: float 7s ease-in-out infinite 2s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(180deg); }
+}
+
+.section-header-content {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1;
+}
+
+.section-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.section-header-icon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #3D8D7A 0%, #2d6a5a 100%);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
+}
+
+.header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.section-header-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #3D8D7A;
+  margin: 0;
+}
+
+.section-header-subtitle {
+  font-size: 1rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.section-header-description {
+  font-size: 0.875rem;
+  color: #9ca3af;
+}
+
+.code-highlight {
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.save-btn, .back-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  cursor: pointer;
+  border: none;
+}
+
+.save-btn {
+  background: #3D8D7A;
+  color: white;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.2);
+}
+
+.save-btn:hover:not(:disabled) {
+  background: #2d6a5a;
+  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.3);
+}
+
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.back-button {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.back-button:hover {
+  background: #d1d5db;
+}
+
+/* Main Content */
+.main-wrapper {
+  margin-top: 2rem;
+}
+
+/* Loading & Error States */
+.loading-state, .error-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: white;
+  border-radius: 12px;
+  border: 2px solid #A3D1C6;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #A3D1C6;
+  border-left: 3px solid #3D8D7A;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error-icon {
+  color: #ef4444;
+  margin-bottom: 1rem;
+}
+
+.error-state h3 {
+  color: #3D8D7A;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.error-state p {
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+}
+
+.retry-btn {
+  background: #3D8D7A;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.retry-btn:hover {
+  background: #2d6a5a;
+}
+
+/* Form Cards */
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.form-card {
+  background: white;
+  border-radius: 12px;
+  border: 2px solid #A3D1C6;
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #FBFFE4 0%, #B3D8A8 100%);
+  border-bottom: 2px solid #A3D1C6;
+}
+
+.card-header h3 {
+  color: #3D8D7A;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.add-question-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #3D8D7A;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-question-btn:hover {
+  background: #2d6a5a;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+/* Form Groups */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group input[type="datetime-local"],
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #A3D1C6;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  background: #FBFFE4;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #3D8D7A;
+  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
+}
+
+.form-group small {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: auto;
+  cursor: pointer;
+}
+
+/* Questions List */
+.no-questions {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+}
+
+.questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.question-item {
+  background: #FBFFE4;
+  border: 2px solid #A3D1C6;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.2s;
+}
+
+.question-item:hover {
+  border-color: #3D8D7A;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.1);
+}
+
+.question-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #A3D1C6;
+}
+
+.question-number {
+  background: #3D8D7A;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.delete-question-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-question-btn:hover {
+  background: #dc2626;
+}
+
+.question-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Options Section */
+.options-section {
+  margin-top: 1rem;
+}
+
+.options-section > label {
+  display: block;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.option-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: white;
+  padding: 0.75rem;
+  border: 2px solid #A3D1C6;
+  border-radius: 8px;
+}
+
+.option-item input[type="radio"] {
+  cursor: pointer;
+  width: auto;
+}
+
+.option-item input[type="text"] {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+.option-item input[type="text"]:focus {
+  outline: none;
+  border-color: #3D8D7A;
+}
+
+.remove-option-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remove-option-btn:hover {
+  background: #dc2626;
+}
+
+.add-option-btn {
+  background: #B3D8A8;
+  color: #3D8D7A;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-option-btn:hover {
+  background: #a0c995;
+}
+
+/* Answer Section */
+.answer-section {
+  margin-top: 1rem;
+}
+
+.answer-section label {
+  display: block;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.answer-section select,
+.answer-section input[type="text"] {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #A3D1C6;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  background: white;
+}
+
+.answer-section select:focus,
+.answer-section input[type="text"]:focus {
+  outline: none;
+  border-color: #3D8D7A;
+  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 0;
+}
+
+.save-btn-large {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #3D8D7A;
+  color: white;
+  border: none;
+  padding: 1rem 3rem;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
+}
+
+.save-btn-large:hover:not(:disabled) {
+  background: #2d6a5a;
+  box-shadow: 0 6px 20px rgba(61, 141, 122, 0.4);
+  transform: translateY(-2px);
+}
+
+.save-btn-large:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Dark Mode */
+.dark-mode {
+  background: #23272b;
+  color: #A3D1C6;
+}
+
+.dark-mode .section-header-card,
+.dark-mode .form-card {
+  background: #23272b;
+  border-color: #3D8D7A;
+}
+
+.dark-mode .section-header-title {
+  color: #A3D1C6;
+}
+
+.dark-mode .section-header-subtitle,
+.dark-mode .section-header-description {
+  color: #A3D1C6;
+}
+
+.dark-mode .card-header {
+  background: linear-gradient(135deg, #23272b 0%, #3D8D7A 100%);
+  border-bottom-color: #3D8D7A;
+}
+
+.dark-mode .card-header h3 {
+  color: #A3D1C6;
+}
+
+.dark-mode .form-group label {
+  color: #A3D1C6;
+}
+
+.dark-mode .form-group input,
+.dark-mode .form-group textarea,
+.dark-mode .form-group select {
+  background: #23272b;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
+}
+
+.dark-mode .form-group small {
+  color: #A3D1C6;
+}
+
+.dark-mode .question-item {
+  background: #23272b;
+  border-color: #3D8D7A;
+}
+
+.dark-mode .question-header {
+  border-bottom-color: #3D8D7A;
+}
+
+.dark-mode .question-number {
+  background: #A3D1C6;
+  color: #23272b;
+}
+
+.dark-mode .option-item {
+  background: #23272b;
+  border-color: #3D8D7A;
+}
+
+.dark-mode .option-item input[type="text"] {
+  background: #23272b;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
+}
+
+.dark-mode .answer-section select,
+.dark-mode .answer-section input[type="text"] {
+  background: #23272b;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
+}
+
+.dark-mode .loading-state,
+.dark-mode .error-state {
+  background: #23272b;
+  border-color: #3D8D7A;
+}
+
+.dark-mode .error-state h3 {
+  color: #A3D1C6;
+}
+
+.dark-mode .error-state p,
+.dark-mode .no-questions {
+  color: #A3D1C6;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .edit-quiz-container {
+    padding: 1rem;
+  }
+  
+  .section-header-content {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+  
+  .header-actions {
+    flex-direction: column;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .option-item {
+    flex-wrap: wrap;
+  }
+  
+  .save-btn-large {
+    width: 100%;
+    justify-content: center;
+  }
+}
+</style>
