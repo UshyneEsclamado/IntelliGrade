@@ -621,7 +621,7 @@ export default {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError || !session?.user) {
-          console.error('No session found');
+          console.error('No session found:', sessionError);
           router.push('/login');
           return false;
         }
@@ -632,9 +632,15 @@ export default {
           .eq('auth_user_id', session.user.id)
           .single();
 
-        if (profileError || !profile) {
+        if (profileError) {
           console.error('Profile error:', profileError);
           alert('Failed to load profile. Please try logging in again.');
+          return false;
+        }
+
+        if (!profile) {
+          console.error('No profile found');
+          alert('Profile not found. Please contact support.');
           return false;
         }
 
@@ -644,8 +650,14 @@ export default {
           .eq('profile_id', profile.id)
           .single();
 
-        if (teacherError || !teacher) {
+        if (teacherError) {
           console.error('Teacher error:', teacherError);
+          alert('Teacher profile not found. Please contact support.');
+          return false;
+        }
+
+        if (!teacher) {
+          console.error('No teacher found');
           alert('Teacher profile not found. Please contact support.');
           return false;
         }
@@ -657,6 +669,7 @@ export default {
           teacher_id: teacher.id
         };
 
+        console.log('✅ Teacher info loaded:', teacherInfo.value);
         return true;
       } catch (error) {
         console.error('Error loading teacher info:', error);
@@ -679,11 +692,15 @@ export default {
       subject.value = { id: subjectId, name: subjectName };
       section.value = { id: sectionId, name: sectionName };
 
+      console.log('✅ Route params loaded:', { subject: subject.value, section: section.value });
       return true;
     };
 
     const setupRealtimeSubscription = () => {
-      if (!teacherInfo.value.teacher_id) return;
+      if (!teacherInfo.value.teacher_id) {
+        console.warn('⚠️ Cannot setup realtime: teacher_id not available');
+        return;
+      }
       
       quizSubscription = supabase
         .channel('quiz-changes')
@@ -696,10 +713,12 @@ export default {
             filter: `teacher_id=eq.${teacherInfo.value.teacher_id}`
           },
           (payload) => {
-            console.log('📡 New quiz created:', payload.new);
+            console.log('📡 Real-time: New quiz created:', payload.new);
           }
         )
-        .subscribe();
+        .subscribe((status) => {
+          console.log('📡 Subscription status:', status);
+        });
     };
 
     const goBack = () => {
@@ -851,18 +870,32 @@ export default {
     };
 
     // ============================================
-    // PRODUCTION-READY PUBLISH FUNCTION
+    // IMPROVED PUBLISH FUNCTION WITH BETTER ERROR HANDLING
     // ============================================
     const publishQuiz = async () => {
-      if (!validateQuiz()) return;
+      // Validate quiz before proceeding
+      if (!validateQuiz()) {
+        console.log('❌ Validation failed');
+        return;
+      }
 
+      // Confirm publication
       if (!confirm(`Publish "${quiz.value.title}"?\n\nStudents will be able to see and take this quiz immediately.`)) {
         return;
       }
 
+      // Set publishing state
       isPublishing.value = true;
+      console.log('🚀 Starting quiz publication...');
 
       try {
+        // Verify teacher info exists
+        if (!teacherInfo.value.teacher_id) {
+          throw new Error('Teacher ID not found. Please refresh and try again.');
+        }
+
+        console.log('✅ Teacher verified:', teacherInfo.value.teacher_id);
+
         // Prepare quiz data
         const quizData = {
           subject_id: subject.value.id,
@@ -881,17 +914,29 @@ export default {
           status: 'published'
         };
 
-        // Step 1: Create Quiz
+        console.log('📝 Quiz data prepared:', quizData);
+
+        // === STEP 1: Create Quiz ===
+        console.log('📤 Step 1: Creating quiz...');
         const { data: newQuiz, error: quizError } = await supabase
           .from('quizzes')
           .insert([quizData])
           .select()
           .single();
 
-        if (quizError) throw quizError;
-        if (!newQuiz?.id) throw new Error('Quiz creation failed');
+        if (quizError) {
+          console.error('❌ Quiz creation failed:', quizError);
+          throw new Error(`Failed to create quiz: ${quizError.message}`);
+        }
 
-        // Step 2: Prepare all questions
+        if (!newQuiz?.id) {
+          throw new Error('Quiz created but no ID returned');
+        }
+
+        console.log('✅ Step 1 complete: Quiz created with ID:', newQuiz.id);
+
+        // === STEP 2: Prepare Questions ===
+        console.log('📝 Step 2: Preparing questions...');
         const questionsData = quiz.value.questions.map((q, index) => ({
           quiz_id: newQuiz.id,
           question_number: index + 1,
@@ -900,18 +945,28 @@ export default {
           points: 1.00
         }));
 
-        // Step 3: Insert all questions
+        console.log(`✅ Prepared ${questionsData.length} questions`);
+
+        // === STEP 3: Insert Questions ===
+        console.log('📤 Step 3: Inserting questions...');
         const { data: insertedQuestions, error: questionsError } = await supabase
           .from('quiz_questions')
           .insert(questionsData)
           .select();
 
-        if (questionsError) throw questionsError;
-        if (!insertedQuestions || insertedQuestions.length !== questionsData.length) {
-          throw new Error('Failed to insert all questions');
+        if (questionsError) {
+          console.error('❌ Questions insertion failed:', questionsError);
+          throw new Error(`Failed to insert questions: ${questionsError.message}`);
         }
 
-        // Step 4: Prepare options and answers
+        if (!insertedQuestions || insertedQuestions.length !== questionsData.length) {
+          throw new Error(`Expected ${questionsData.length} questions, got ${insertedQuestions?.length || 0}`);
+        }
+
+        console.log(`✅ Step 3 complete: ${insertedQuestions.length} questions inserted`);
+
+        // === STEP 4: Prepare Options and Answers ===
+        console.log('📝 Step 4: Preparing options and answers...');
         const allOptions = [];
         const allAnswers = [];
 
@@ -937,83 +992,123 @@ export default {
           }
         }
 
-        // Step 5: Insert all options (if any)
+        console.log(`✅ Prepared ${allOptions.length} options and ${allAnswers.length} answers`);
+
+        // === STEP 5: Insert Options ===
         if (allOptions.length > 0) {
+          console.log('📤 Step 5: Inserting options...');
           const { error: optionsError } = await supabase
             .from('question_options')
             .insert(allOptions);
 
-          if (optionsError) throw optionsError;
+          if (optionsError) {
+            console.error('❌ Options insertion failed:', optionsError);
+            throw new Error(`Failed to insert options: ${optionsError.message}`);
+          }
+          console.log(`✅ Step 5 complete: ${allOptions.length} options inserted`);
+        } else {
+          console.log('⏭️ Step 5 skipped: No options to insert');
         }
 
-        // Step 6: Insert all answers (if any)
+        // === STEP 6: Insert Answers ===
         if (allAnswers.length > 0) {
+          console.log('📤 Step 6: Inserting answers...');
           const { error: answersError } = await supabase
             .from('question_answers')
             .insert(allAnswers);
 
-          if (answersError) throw answersError;
+          if (answersError) {
+            console.error('❌ Answers insertion failed:', answersError);
+            throw new Error(`Failed to insert answers: ${answersError.message}`);
+          }
+          console.log(`✅ Step 6 complete: ${allAnswers.length} answers inserted`);
+        } else {
+          console.log('⏭️ Step 6 skipped: No answers to insert');
         }
 
-        // Success!
-        alert(`✅ Quiz published successfully!\n\n📝 ${newQuiz.title}\n🔑 Quiz Code: ${newQuiz.quiz_code}\n\nStudents can now take this quiz.`);
-
-        // Navigate to quizzes page
-        router.push({
-          name: 'ViewQuizzes',
-          params: {
-            subjectId: subject.value.id,
-            sectionId: section.value.id
-          },
-          query: {
-            subjectName: subject.value.name,
-            sectionName: section.value.name,
-            gradeLevel: route.query.gradeLevel,
-            sectionCode: route.query.sectionCode
-          }
+        // === SUCCESS ===
+        console.log('🎉 Quiz published successfully!');
+        console.log('Quiz details:', {
+          id: newQuiz.id,
+          code: newQuiz.quiz_code,
+          title: newQuiz.title,
+          questions: insertedQuestions.length
         });
 
-      } catch (error) {
-        console.error('Publication error:', error);
+        // Show success message
+        alert(`✅ Quiz Published Successfully!\n\n📝 ${newQuiz.title}\n🔑 Quiz Code: ${newQuiz.quiz_code}\n📊 ${insertedQuestions.length} questions\n\n✨ Students can now take this quiz!`);
 
-        let errorMessage = '❌ Failed to publish quiz\n\n';
+        // Navigate back to quizzes page
+        setTimeout(() => {
+          router.push({
+            name: 'ViewQuizzes',
+            params: {
+              subjectId: subject.value.id,
+              sectionId: section.value.id
+            },
+            query: {
+              subjectName: subject.value.name,
+              sectionName: section.value.name,
+              gradeLevel: route.query.gradeLevel,
+              sectionCode: route.query.sectionCode
+            }
+          });
+        }, 500);
+
+      } catch (error) {
+        console.error('❌ Publication error:', error);
+
+        // Determine error message
+        let errorMessage = '❌ Failed to Publish Quiz\n\n';
 
         if (error.code === '23505') {
-          errorMessage += 'A quiz with this title already exists.\nPlease use a different title.';
+          errorMessage += '⚠️ A quiz with this title already exists in this section.\nPlease use a different title.';
         } else if (error.code === '23503') {
-          errorMessage += 'Invalid reference detected.\nPlease refresh the page and try again.';
+          errorMessage += '⚠️ Invalid reference detected.\nPlease refresh the page and try again.';
+        } else if (error.code === 'PGRST116') {
+          errorMessage += '⚠️ Database connection issue.\nPlease check your internet connection and try again.';
         } else if (error.message) {
-          errorMessage += error.message;
+          errorMessage += `Error: ${error.message}`;
         } else {
-          errorMessage += 'An unexpected error occurred.\nPlease try again or contact support.';
+          errorMessage += '⚠️ An unexpected error occurred.\nPlease try again or contact support if the problem persists.';
         }
 
         alert(errorMessage);
+
       } finally {
+        // Always reset publishing state
         isPublishing.value = false;
+        console.log('🏁 Publishing process completed');
       }
     };
 
     onMounted(async () => {
+      console.log('🔧 Component mounted');
+      
       const teacherLoaded = await loadTeacherInfo();
       if (!teacherLoaded) {
+        console.error('❌ Failed to load teacher info');
         router.push('/login');
         return;
       }
 
       const paramsLoaded = loadRouteParams();
       if (!paramsLoaded) {
+        console.error('❌ Failed to load route params');
         alert('Missing information. Redirecting...');
         router.push('/teacher/subjects');
         return;
       }
 
       setupRealtimeSubscription();
+      console.log('✅ Component initialization complete');
     });
 
     onUnmounted(() => {
+      console.log('🧹 Component unmounting');
       if (quizSubscription) {
         supabase.removeChannel(quizSubscription);
+        console.log('✅ Realtime subscription cleaned up');
       }
     });
 

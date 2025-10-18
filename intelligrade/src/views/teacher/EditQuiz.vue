@@ -36,7 +36,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M10 19l-7-7 7-7m-7 7h18"></path>
             </svg>
-            Cancel
+            Back to Quiz Management
           </button>
         </div>
       </div>
@@ -307,6 +307,12 @@
 
         <!-- Save Button (Bottom) -->
         <div class="form-actions">
+          <button @click="goBack" class="cancel-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M10 19l-7-7 7-7m-7 7h18"></path>
+            </svg>
+            Cancel
+          </button>
           <button @click="saveQuiz" :disabled="isSaving" class="save-btn-large">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z" />
@@ -331,8 +337,14 @@ const { isDarkMode, initDarkMode } = useDarkMode()
 const router = useRouter()
 const route = useRoute()
 
-// Get quiz ID from route
+// Get quiz ID and route params from query
 const quizId = ref(route.params.quizId)
+const subjectId = ref(route.query.subjectId)
+const sectionId = ref(route.query.sectionId)
+const subjectName = ref(route.query.subjectName)
+const sectionName = ref(route.query.sectionName)
+const gradeLevel = ref(route.query.gradeLevel)
+const sectionCode = ref(route.query.sectionCode)
 
 // State
 const quiz = ref({
@@ -354,12 +366,14 @@ const isLoading = ref(false)
 const isSaving = ref(false)
 const error = ref(null)
 
-// Load quiz data
+// Load quiz data - REAL-TIME, NO TIMEOUTS
 const loadQuiz = async () => {
   isLoading.value = true
   error.value = null
   
   try {
+    console.log('🔍 Loading quiz:', quizId.value)
+    
     // Fetch quiz details
     const { data: quizData, error: quizError } = await supabase
       .from('quizzes')
@@ -367,7 +381,12 @@ const loadQuiz = async () => {
       .eq('id', quizId.value)
       .single()
     
-    if (quizError) throw quizError
+    if (quizError) {
+      console.error('❌ Quiz fetch error:', quizError)
+      throw quizError
+    }
+
+    console.log('✅ Quiz data loaded:', quizData)
     
     // Format dates for datetime-local input
     quiz.value = {
@@ -377,27 +396,39 @@ const loadQuiz = async () => {
     }
     
     // Fetch questions
+    console.log('🔍 Loading questions for quiz:', quizId.value)
     const { data: questionsData, error: questionsError } = await supabase
       .from('quiz_questions')
       .select('*')
       .eq('quiz_id', quizId.value)
       .order('question_number')
     
-    if (questionsError) throw questionsError
+    if (questionsError) {
+      console.error('❌ Questions fetch error:', questionsError)
+      throw questionsError
+    }
+
+    console.log('✅ Questions loaded:', questionsData?.length || 0)
     
     // Load options and answers for each question
     for (const question of questionsData || []) {
       if (question.question_type === 'multiple_choice') {
+        console.log('🔍 Loading options for question:', question.id)
         const { data: options, error: optionsError } = await supabase
           .from('question_options')
           .select('*')
           .eq('question_id', question.id)
           .order('option_number')
         
-        if (optionsError) throw optionsError
+        if (optionsError) {
+          console.error('❌ Options fetch error:', optionsError)
+          throw optionsError
+        }
         
         question.options = options || []
+        console.log('✅ Options loaded:', options?.length || 0)
       } else {
+        console.log('🔍 Loading answer for question:', question.id)
         const { data: answer, error: answerError } = await supabase
           .from('question_answers')
           .select('*')
@@ -406,22 +437,26 @@ const loadQuiz = async () => {
         
         if (!answerError && answer) {
           question.answer = answer
+          console.log('✅ Answer loaded')
         } else {
           question.answer = {
             correct_answer: question.question_type === 'true_false' ? 'true' : '',
             case_sensitive: false
           }
+          console.log('⚠️ No answer found, using default')
         }
       }
     }
     
     questions.value = questionsData || []
+    console.log('✅ All quiz data loaded successfully')
     
   } catch (err) {
-    console.error('Error loading quiz:', err)
+    console.error('❌ Error loading quiz:', err)
     error.value = err.message
   } finally {
     isLoading.value = false
+    console.log('🏁 Load quiz completed')
   }
 }
 
@@ -434,6 +469,7 @@ const formatDateForInput = (dateString) => {
 
 // Question management
 const addQuestion = () => {
+  console.log('➕ Adding new question')
   questions.value.push({
     question_number: questions.value.length + 1,
     question_type: 'multiple_choice',
@@ -448,15 +484,18 @@ const addQuestion = () => {
 
 const removeQuestion = (index) => {
   if (confirm('Are you sure you want to remove this question?')) {
+    console.log('🗑️ Removing question:', index + 1)
     questions.value.splice(index, 1)
     // Renumber questions
     questions.value.forEach((q, i) => {
       q.question_number = i + 1
     })
+    console.log('✅ Question removed and renumbered')
   }
 }
 
 const onQuestionTypeChange = (question) => {
+  console.log('🔄 Question type changed to:', question.question_type)
   if (question.question_type === 'multiple_choice') {
     question.options = [
       { option_number: 1, option_text: '', is_correct: true },
@@ -473,6 +512,7 @@ const onQuestionTypeChange = (question) => {
 }
 
 const addOption = (question) => {
+  console.log('➕ Adding option to question')
   const optionNumber = question.options.length + 1
   question.options.push({
     option_number: optionNumber,
@@ -482,6 +522,7 @@ const addOption = (question) => {
 }
 
 const removeOption = (question, index) => {
+  console.log('🗑️ Removing option:', index + 1)
   question.options.splice(index, 1)
   // Renumber options
   question.options.forEach((opt, i) => {
@@ -490,13 +531,16 @@ const removeOption = (question, index) => {
 }
 
 const setCorrectOption = (question, index) => {
+  console.log('✅ Setting correct option:', index + 1)
   question.options.forEach((opt, i) => {
     opt.is_correct = i === index
   })
 }
 
-// Save quiz
+// Save quiz - REAL-TIME, NO TIMEOUTS
 const saveQuiz = async () => {
+  console.log('💾 Starting save quiz process...')
+  
   // Validation
   if (!quiz.value.title.trim()) {
     alert('Please enter a quiz title')
@@ -543,10 +587,8 @@ const saveQuiz = async () => {
   isSaving.value = true
   
   try {
-    console.log('Starting save process...')
-    
     // Step 1: Update quiz settings
-    console.log('Updating quiz settings...')
+    console.log('📤 Updating quiz settings...')
     const { error: quizError } = await supabase
       .from('quizzes')
       .update({
@@ -566,27 +608,27 @@ const saveQuiz = async () => {
       .eq('id', quizId.value)
     
     if (quizError) {
-      console.error('Quiz update error:', quizError)
+      console.error('❌ Quiz update error:', quizError)
       throw quizError
     }
     
-    console.log('Quiz settings updated successfully')
+    console.log('✅ Quiz settings updated')
     
-    // Step 2: Get all existing question IDs for this quiz
-    console.log('Fetching existing questions...')
+    // Step 2: Get all existing question IDs
+    console.log('🔍 Fetching existing questions...')
     const { data: existingQuestions, error: fetchError } = await supabase
       .from('quiz_questions')
       .select('id')
       .eq('quiz_id', quizId.value)
     
     if (fetchError) {
-      console.error('Fetch questions error:', fetchError)
+      console.error('❌ Fetch questions error:', fetchError)
       throw fetchError
     }
     
-    // Step 3: Delete old questions (this will cascade to options and answers)
+    // Step 3: Delete old questions (cascade to options and answers)
     if (existingQuestions && existingQuestions.length > 0) {
-      console.log(`Deleting ${existingQuestions.length} existing questions...`)
+      console.log(`🗑️ Deleting ${existingQuestions.length} existing questions...`)
       const questionIds = existingQuestions.map(q => q.id)
       
       const { error: deleteError } = await supabase
@@ -595,19 +637,19 @@ const saveQuiz = async () => {
         .in('id', questionIds)
       
       if (deleteError) {
-        console.error('Delete questions error:', deleteError)
+        console.error('❌ Delete questions error:', deleteError)
         throw deleteError
       }
       
-      console.log('Old questions deleted successfully')
+      console.log('✅ Old questions deleted')
     }
     
-    // Step 4: Insert new questions one by one with their options/answers
-    console.log(`Inserting ${questions.value.length} new questions...`)
+    // Step 4: Insert new questions with their options/answers
+    console.log(`📤 Inserting ${questions.value.length} new questions...`)
     
     for (let i = 0; i < questions.value.length; i++) {
       const question = questions.value[i]
-      console.log(`Processing question ${i + 1}...`)
+      console.log(`📤 Processing question ${i + 1}...`)
       
       // Insert question
       const { data: insertedQuestion, error: questionError } = await supabase
@@ -623,15 +665,15 @@ const saveQuiz = async () => {
         .single()
       
       if (questionError) {
-        console.error(`Question ${i + 1} insert error:`, questionError)
+        console.error(`❌ Question ${i + 1} insert error:`, questionError)
         throw new Error(`Failed to save question ${i + 1}: ${questionError.message}`)
       }
       
-      console.log(`Question ${i + 1} inserted with ID:`, insertedQuestion.id)
+      console.log(`✅ Question ${i + 1} inserted:`, insertedQuestion.id)
       
-      // Insert options or answers based on question type
+      // Insert options or answers
       if (question.question_type === 'multiple_choice') {
-        console.log(`Inserting ${question.options.length} options for question ${i + 1}...`)
+        console.log(`📤 Inserting ${question.options.length} options...`)
         
         const optionsToInsert = question.options.map(opt => ({
           question_id: insertedQuestion.id,
@@ -645,13 +687,13 @@ const saveQuiz = async () => {
           .insert(optionsToInsert)
         
         if (optionsError) {
-          console.error(`Options insert error for question ${i + 1}:`, optionsError)
+          console.error(`❌ Options insert error for question ${i + 1}:`, optionsError)
           throw new Error(`Failed to save options for question ${i + 1}: ${optionsError.message}`)
         }
         
-        console.log(`Options inserted for question ${i + 1}`)
+        console.log(`✅ Options inserted for question ${i + 1}`)
       } else {
-        console.log(`Inserting answer for question ${i + 1}...`)
+        console.log(`📤 Inserting answer for question ${i + 1}...`)
         
         const { error: answerError } = await supabase
           .from('question_answers')
@@ -662,40 +704,57 @@ const saveQuiz = async () => {
           })
         
         if (answerError) {
-          console.error(`Answer insert error for question ${i + 1}:`, answerError)
+          console.error(`❌ Answer insert error for question ${i + 1}:`, answerError)
           throw new Error(`Failed to save answer for question ${i + 1}: ${answerError.message}`)
         }
         
-        console.log(`Answer inserted for question ${i + 1}`)
+        console.log(`✅ Answer inserted for question ${i + 1}`)
       }
     }
     
-    console.log('All questions saved successfully!')
+    console.log('🎉 All questions saved successfully!')
     alert('Quiz updated successfully!')
     goBack()
     
   } catch (err) {
-    console.error('Error saving quiz:', err)
+    console.error('❌ Error saving quiz:', err)
     alert(`Error saving quiz: ${err.message || 'Unknown error occurred'}`)
   } finally {
     isSaving.value = false
+    console.log('🏁 Save quiz completed')
   }
 }
 
 const goBack = () => {
-  router.back()
+  console.log('⬅️ Navigating back to quiz management')
+  router.push({
+    name: 'ViewQuizzes',
+    params: {
+      subjectId: subjectId.value,
+      sectionId: sectionId.value
+    },
+    query: {
+      subjectName: subjectName.value,
+      sectionName: sectionName.value,
+      gradeLevel: gradeLevel.value,
+      sectionCode: sectionCode.value
+    }
+  })
 }
 
 // Lifecycle
 onMounted(async () => {
+  console.log('🔧 EditQuiz component mounted')
   initDarkMode()
   
   if (!quizId.value) {
+    console.error('❌ Quiz ID is missing')
     error.value = 'Quiz ID is missing'
     return
   }
   
   await loadQuiz()
+  console.log('✅ Component initialization complete')
 })
 </script>
 
