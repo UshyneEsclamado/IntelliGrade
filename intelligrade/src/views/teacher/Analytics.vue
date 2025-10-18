@@ -32,10 +32,15 @@
       </div>
     </div>
 
-    <!-- Loading State -->
-    <div v-if="loading" class="loading-container">
-      <div class="spinner-large"></div>
-      <p>Loading analytics data...</p>
+    <!-- Loading Overlay matching Subjects.vue -->
+    <div v-if="loading" class="loading-overlay">
+      <div class="loading-content">
+        <div class="loading-spinner-container">
+          <div class="loading-spinner"></div>
+        </div>
+        <p class="loading-text">Loading analytics data...</p>
+        <p class="loading-subtext">Please wait a moment...</p>
+      </div>
     </div>
 
     <!-- Stats Cards -->
@@ -1741,5 +1746,95 @@ export default {
 
 .dark .quiz-info p {
   color: #9ca3af;
+}
+
+/* Loading Overlay (matching Subjects.vue) */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(251, 255, 228, 0.95);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.loading-content {
+  background: white;
+  padding: 3rem 4rem;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(61, 141, 122, 0.15);
+  border: 2px solid #a3d1c6;
+  animation: slideUp 0.4s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.loading-spinner-container {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
+}
+
+.loading-spinner {
+  width: 80px;
+  height: 80px;
+  border: 5px solid rgba(61, 141, 122, 0.1);
+  border-left: 5px solid #3d8d7a;
+  border-top: 5px solid #20c997;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+  box-shadow: 0 0 20px rgba(61, 141, 122, 0.1);
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #181c20;
+  margin: 0 0 0.5rem 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.loading-subtext {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #3d8d7a;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
 }
 </style>
