@@ -451,63 +451,74 @@ export default {
 
     const loadGrades = async () => {
       try {
-        // Get all published quizzes
-        const { data: allQuizzes } = await supabase
-          .from('quizzes')
-          .select('id, title, quiz_code, description, number_of_questions, attempts_allowed')
-          .eq('section_id', section.value.id)
-          .eq('status', 'published');
+        // Get ALL quiz attempts for this student in this section (only submitted ones)
+        const { data: attempts } = await supabase
+          .from('quiz_attempts')
+          .select(`
+            id,
+            quiz_id,
+            attempt_number,
+            total_score,
+            percentage,
+            submitted_at,
+            time_taken_minutes,
+            status,
+            quizzes (
+              id,
+              title,
+              quiz_code,
+              description,
+              number_of_questions,
+              attempts_allowed,
+              section_id
+            )
+          `)
+          .eq('student_id', studentInfo.value.student_id)
+          .in('status', ['submitted', 'graded', 'reviewed'])
+          .order('submitted_at', { ascending: false });
 
-        if (!allQuizzes || allQuizzes.length === 0) {
+        if (!attempts || attempts.length === 0) {
           grades.value = [];
           return;
         }
 
-        const quizIds = allQuizzes.map(q => q.id);
+        // Filter attempts to only those from the current section
+        const sectionAttempts = attempts.filter(att => att.quizzes?.section_id === section.value.id);
 
-        // Get all attempts for these quizzes
-        const { data: attempts } = await supabase
-          .from('quiz_attempts')
-          .select('quiz_id, attempt_number, total_score, percentage, submitted_at, time_taken_minutes, status')
-          .eq('student_id', studentInfo.value.student_id)
-          .in('quiz_id', quizIds)
-          .in('status', ['submitted', 'graded', 'reviewed']);
-
-        // Build grades data
-        const attemptsMap = {};
-        (attempts || []).forEach(att => {
-          if (!attemptsMap[att.quiz_id]) {
-            attemptsMap[att.quiz_id] = {
-              total_attempts: 0,
-              best_percentage: null,
-              latest_date: null,
-              time_taken: null,
-              status: 'not_taken'
+        // Build a map to get the best attempt for each quiz
+        const quizMap = {};
+        sectionAttempts.forEach(att => {
+          const quizId = att.quiz_id;
+          
+          if (!quizMap[quizId]) {
+            quizMap[quizId] = {
+              attempts: [],
+              quiz: att.quizzes
             };
           }
-
-          const current = attemptsMap[att.quiz_id];
-          current.total_attempts++;
-
-          if (att.percentage !== null && (current.best_percentage === null || att.percentage > current.best_percentage)) {
-            current.best_percentage = att.percentage;
-          }
-
-          if (!current.latest_date || new Date(att.submitted_at) > new Date(current.latest_date)) {
-            current.latest_date = att.submitted_at;
-            current.time_taken = att.time_taken_minutes;
-            current.status = att.status === 'graded' || att.status === 'reviewed' ? 'graded' : 'completed';
-          }
+          
+          quizMap[quizId].attempts.push(att);
         });
 
-        grades.value = allQuizzes.map(quiz => {
-          const attemptData = attemptsMap[quiz.id] || {
-            total_attempts: 0,
-            best_percentage: null,
-            latest_date: null,
-            time_taken: null,
-            status: 'not_taken'
-          };
+        // Process each quiz's attempts to find the best score and latest attempt
+        grades.value = Object.values(quizMap).map(quizData => {
+          const { quiz, attempts: quizAttempts } = quizData;
+
+          // Find best percentage
+          const bestAttempt = quizAttempts.reduce((best, current) => {
+            if (current.percentage === null) return best;
+            if (best.percentage === null) return current;
+            return current.percentage > best.percentage ? current : best;
+          });
+
+          // Find latest attempt
+          const latestAttempt = quizAttempts[0]; // Already sorted by submitted_at descending
+
+          // Determine status based on latest attempt
+          let resultStatus = 'completed';
+          if (latestAttempt.status === 'graded' || latestAttempt.status === 'reviewed') {
+            resultStatus = 'graded';
+          }
 
           return {
             id: quiz.id,
@@ -516,11 +527,11 @@ export default {
             description: quiz.description,
             number_of_questions: quiz.number_of_questions || 1,
             attempts_allowed: quiz.attempts_allowed || 999,
-            best_percentage: attemptData.best_percentage,
-            total_attempts: attemptData.total_attempts,
-            latest_attempt_date: attemptData.latest_date,
-            status: attemptData.status,
-            time_taken_minutes: attemptData.time_taken,
+            best_percentage: bestAttempt.percentage,
+            total_attempts: quizAttempts.length,
+            latest_attempt_date: latestAttempt.submitted_at,
+            status: resultStatus,
+            time_taken_minutes: latestAttempt.time_taken_minutes,
             visible_to_student: true
           };
         });

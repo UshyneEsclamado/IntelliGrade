@@ -517,7 +517,7 @@ export default {
     const selectedSubmission = ref(null)
     const reviewQuestions = ref([])
     const reviewFeedback = ref('')
-    const modalMode = ref('view') // 'view' or 'grade'
+    const modalMode = ref('view')
 
     const sectionStats = computed(() => {
       const pending = submissions.value.filter(s => s.status === 'submitted').length
@@ -526,7 +526,6 @@ export default {
       const averageScore = total > 0 
         ? Math.round(submissions.value.reduce((sum, s) => sum + (s.percentage || 0), 0) / total)
         : 0
-
       return { pendingReview: pending, graded, total, averageScore }
     })
 
@@ -649,34 +648,28 @@ export default {
         loading.value = true
         error.value = null
 
-        // Get subjects first
+        // Optimized: Get subjects with aggregated stats in a single query
         const { data: subjectsData, error: subjectsError } = await supabase
           .from('subjects')
-          .select('id, name, grade_level, description')
+          .select(`
+            id,
+            name,
+            grade_level,
+            description,
+            sections (id),
+            quizzes (id)
+          `)
           .eq('teacher_id', teacherId.value)
           .eq('is_active', true)
 
         if (subjectsError) throw subjectsError
 
-        // For each subject, count sections and pending submissions
+        // Process subjects with pending count
         const subjectsWithStats = await Promise.all(
           (subjectsData || []).map(async (subject) => {
-            // Count sections
-            const { count: sectionCount } = await supabase
-              .from('sections')
-              .select('id', { count: 'exact', head: true })
-              .eq('subject_id', subject.id)
-              .eq('is_active', true)
-
-            // Get quiz IDs for this subject's sections
-            const { data: quizzes } = await supabase
-              .from('quizzes')
-              .select('id')
-              .eq('subject_id', subject.id)
-
-            const quizIds = quizzes?.map(q => q.id) || []
-
-            // Count pending submissions
+            const sectionCount = subject.sections?.length || 0
+            const quizIds = subject.quizzes?.map(q => q.id) || []
+            
             let pendingCount = 0
             if (quizIds.length > 0) {
               const { count } = await supabase
@@ -694,7 +687,7 @@ export default {
               name: subject.name,
               grade_level: subject.grade_level,
               description: subject.description || '',
-              section_count: sectionCount || 0,
+              section_count: sectionCount,
               pending_count: pendingCount
             }
           })
@@ -719,33 +712,27 @@ export default {
         loading.value = true
         error.value = null
 
-        // Get sections
+        // Optimized: Get sections with quiz data
         const { data: sectionsData, error: sectionsError } = await supabase
           .from('sections')
-          .select('id, name, section_code, max_students')
+          .select(`
+            id,
+            name,
+            section_code,
+            max_students,
+            quizzes (id)
+          `)
           .eq('subject_id', subjectId)
           .eq('is_active', true)
 
         if (sectionsError) throw sectionsError
 
-        // For each section, count quizzes and pending submissions
+        // Process sections with pending count
         const sectionsWithStats = await Promise.all(
           (sectionsData || []).map(async (section) => {
-            // Count quizzes
-            const { count: quizCount } = await supabase
-              .from('quizzes')
-              .select('id', { count: 'exact', head: true })
-              .eq('section_id', section.id)
-
-            // Get quiz IDs
-            const { data: quizzes } = await supabase
-              .from('quizzes')
-              .select('id')
-              .eq('section_id', section.id)
-
-            const quizIds = quizzes?.map(q => q.id) || []
-
-            // Count pending submissions
+            const quizCount = section.quizzes?.length || 0
+            const quizIds = section.quizzes?.map(q => q.id) || []
+            
             let pendingCount = 0
             if (quizIds.length > 0) {
               const { count } = await supabase
@@ -763,7 +750,7 @@ export default {
               name: section.name,
               section_code: section.section_code,
               max_students: section.max_students,
-              quiz_count: quizCount || 0,
+              quiz_count: quizCount,
               pending_count: pendingCount
             }
           })
@@ -788,7 +775,7 @@ export default {
         loading.value = true
         error.value = null
 
-        // Get quizzes for this section
+        // Step 1: Get all quizzes for this section
         const { data: quizzes, error: quizzesError } = await supabase
           .from('quizzes')
           .select('id, title, quiz_code')
@@ -798,52 +785,50 @@ export default {
 
         if (!quizzes || quizzes.length === 0) {
           submissions.value = []
+          loading.value = false
           return
         }
 
         const quizIds = quizzes.map(q => q.id)
 
-        // Get attempts
-        const { data: attempts, error: attemptsError } = await supabase
+        // Step 2: Get all quiz attempts for these quizzes
+        const { data: submissionsData, error: submissionsError } = await supabase
           .from('quiz_attempts')
-          .select('*')
+          .select(`
+            id,
+            quiz_id,
+            student_id,
+            attempt_number,
+            total_score,
+            max_score,
+            percentage,
+            status,
+            submitted_at,
+            time_taken_minutes,
+            teacher_feedback,
+            students (
+              id,
+              full_name,
+              email
+            )
+          `)
           .in('quiz_id', quizIds)
-          .not('submitted_at', 'is', null)
           .order('submitted_at', { ascending: false })
 
-        if (attemptsError) throw attemptsError
+        if (submissionsError) throw submissionsError
 
-        if (!attempts || attempts.length === 0) {
-          submissions.value = []
-          return
-        }
-
-        // Get student IDs
-        const studentIds = [...new Set(attempts.map(a => a.student_id))]
-
-        // Get students
-        const { data: students, error: studentsError } = await supabase
-          .from('students')
-          .select('id, full_name, email')
-          .in('id', studentIds)
-
-        if (studentsError) console.error('Students error:', studentsError)
-
-        // Create lookup maps
+        // Create quiz lookup
         const quizMap = {}
         quizzes.forEach(q => { quizMap[q.id] = q })
 
-        const studentMap = {}
-        students?.forEach(s => { studentMap[s.id] = s })
-
-        // Map submissions
-        submissions.value = attempts.map(attempt => ({
+        // Map submissions with all data
+        submissions.value = (submissionsData || []).map(attempt => ({
           id: attempt.id,
           quiz_id: attempt.quiz_id,
           student_id: attempt.student_id,
           attempt_number: attempt.attempt_number,
-          student_name: studentMap[attempt.student_id]?.full_name || 'Unknown Student',
-          student_email: studentMap[attempt.student_id]?.email || '',
+          student_name: attempt.students?.full_name || 'Unknown Student',
+          student_email: attempt.students?.email || '',
           quiz_title: quizMap[attempt.quiz_id]?.title || 'Unknown Quiz',
           quiz_code: quizMap[attempt.quiz_id]?.quiz_code || '',
           total_score: attempt.total_score || 0,
@@ -854,6 +839,8 @@ export default {
           time_taken_minutes: attempt.time_taken_minutes,
           teacher_feedback: attempt.teacher_feedback
         }))
+
+        console.log('Submissions loaded:', submissions.value.length)
       } catch (err) {
         console.error('Error fetching submissions:', err)
         error.value = `Failed to load submissions: ${err.message}`
@@ -880,9 +867,9 @@ export default {
       if (!selectedSubject && !selectedSection) {
         await fetchSubjects()
       } else if (selectedSubject && !selectedSection) {
-        await fetchSections(selectedSubject.id)
+        await fetchSections(selectedSubject.value.id)
       } else if (selectedSection) {
-        await fetchSubmissions(selectedSection.id)
+        await fetchSubmissions(selectedSection.value.id)
       }
     }
 
@@ -890,10 +877,25 @@ export default {
       try {
         loadingQuestions.value = true
 
-        // Get questions
+        // Optimized: Get all question data with related records
         const { data: questions, error: questionsError } = await supabase
           .from('quiz_questions')
-          .select('id, question_number, question_type, question_text, points')
+          .select(`
+            id,
+            question_number,
+            question_type,
+            question_text,
+            points,
+            question_options (
+              id,
+              option_number,
+              option_text,
+              is_correct
+            ),
+            question_answers (
+              correct_answer
+            )
+          `)
           .eq('quiz_id', submission.quiz_id)
           .order('question_number')
 
@@ -906,24 +908,7 @@ export default {
 
         const questionIds = questions.map(q => q.id)
 
-        // Get options
-        const { data: options, error: optionsError } = await supabase
-          .from('question_options')
-          .select('*')
-          .in('question_id', questionIds)
-          .order('option_number')
-
-        if (optionsError) console.error('Options error:', optionsError)
-
-        // Get answers (for true/false and fill blank)
-        const { data: answers, error: answersError } = await supabase
-          .from('question_answers')
-          .select('*')
-          .in('question_id', questionIds)
-
-        if (answersError) console.error('Answers error:', answersError)
-
-        // Get student answers
+        // Get student answers for this attempt
         const { data: studentAnswers, error: studentAnswersError } = await supabase
           .from('student_answers')
           .select('*')
@@ -934,8 +919,7 @@ export default {
         // Map everything together
         reviewQuestions.value = questions.map(q => {
           const studentAnswer = (studentAnswers || []).find(sa => sa.question_id === q.id)
-          const questionOptions = (options || []).filter(opt => opt.question_id === q.id)
-          const questionAnswer = (answers || []).find(ans => ans.question_id === q.id)
+          const questionAnswer = q.question_answers?.[0]
 
           return {
             id: q.id,
@@ -943,7 +927,7 @@ export default {
             question_type: q.question_type,
             question_text: q.question_text,
             points: q.points || 1,
-            options: questionOptions,
+            options: q.question_options || [],
             correct_answer: questionAnswer?.correct_answer || null,
             selected_option_id: studentAnswer?.selected_option_id || null,
             answer_text: studentAnswer?.answer_text || null,
@@ -954,7 +938,6 @@ export default {
             student_answer_id: studentAnswer?.id || null
           }
         })
-
       } catch (err) {
         console.error('Error loading questions:', err)
         alert('Failed to load questions: ' + err.message)
@@ -1041,25 +1024,29 @@ export default {
 
         if (updateError) throw updateError
 
-        // Update student answers
-        for (const question of reviewQuestions.value) {
-          if (question.student_answer_id) {
-            const { error: answerError } = await supabase
+        // Batch update student answers
+        const answerUpdates = reviewQuestions.value
+          .filter(q => q.student_answer_id)
+          .map(q => ({
+            id: q.student_answer_id,
+            teacher_comment: q.teacherComment || null,
+            points_earned: parseFloat(q.manualPoints) || 0
+          }))
+
+        if (answerUpdates.length > 0) {
+          for (const update of answerUpdates) {
+            await supabase
               .from('student_answers')
               .update({
-                teacher_comment: question.teacherComment || null,
-                points_earned: parseFloat(question.manualPoints) || 0
+                teacher_comment: update.teacher_comment,
+                points_earned: update.points_earned
               })
-              .eq('id', question.student_answer_id)
-
-            if (answerError) {
-              console.error('Error updating answer:', answerError)
-            }
+              .eq('id', update.id)
           }
         }
 
-        // Update quiz results
-        const { error: resultError } = await supabase
+        // Upsert quiz results
+        await supabase
           .from('quiz_results')
           .upsert({
             quiz_id: selectedSubmission.value.quiz_id,
@@ -1076,10 +1063,6 @@ export default {
             onConflict: 'quiz_id,student_id',
             ignoreDuplicates: false
           })
-
-        if (resultError) {
-          console.error('Error updating result:', resultError)
-        }
 
         // Update local data
         const index = submissions.value.findIndex(s => s.id === selectedSubmission.value.id)
