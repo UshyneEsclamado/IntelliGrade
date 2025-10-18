@@ -4,15 +4,19 @@
   font-weight: 600;
   display: inline-block;
   min-width: 100px;
+}
 .dark .section-detail-card .info-label {
   color: #A3D1C6;
+}
 
 .section-detail-card .info-value {
   color: #6b7280;
   font-weight: 500;
   margin-left: 0.5rem;
+}
 .dark .section-detail-card .info-value {
   color: #A3D1C6;
+}
 
 .section-code {
   background: #f8f9fa;
@@ -22,20 +26,24 @@
   font-size: 1rem;
   font-weight: 600;
   display: inline-block;
+}
 .dark .section-code {
   background: #181c20;
   color: #A3D1C6;
   border: 1px solid #20c997;
+}
 
 .section-actions-grid {
   display: flex;
   gap: 1rem;
   margin-top: 1.5rem;
   justify-content: center;
+}
 
 /* Stats and Counts */
 .section-stats-simple {
   color: #6b7280;
+}
     
   /*
   |--------------------------------------------------------------------------
@@ -123,8 +131,6 @@
     color: #10b981;
     font-family: 'Courier New', Courier, monospace;
   }
-
-.dark .section-header-card {
 
 .section-card.simple:hover {
   background: #f6f8fa;
@@ -1303,11 +1309,14 @@
       </div>
     </transition>
 
-    <!-- Loading Overlay -->
+    <!-- Loading Overlay matching Subjects.vue -->
     <div v-if="isLoading" class="loading-overlay">
       <div class="loading-content">
-        <div class="loading-spinner"></div>
-        <p>{{ loadingMessage }}</p>
+        <div class="loading-spinner-container">
+          <div class="loading-spinner"></div>
+        </div>
+        <p class="loading-text">{{ loadingMessage || 'Loading your subjects...' }}</p>
+        <p class="loading-subtext">Please wait a moment...</p>
       </div>
     </div>
 
@@ -1363,6 +1372,8 @@ const showNotification = ref(false)
 const notificationMessage = ref('')
 const notificationType = ref('success')
 const openMenuId = ref(null)
+const isLoading = ref(false)
+const loadingMessage = ref('')
 
 // Cache state
 const subjectsCache = ref(null)
@@ -1633,12 +1644,18 @@ const fetchSubjects = async (forceRefresh = false) => {
       return
     }
 
+    // Show loading only on initial load (no cache)
+    if (!subjectsCache.value) {
+      isLoading.value = true
+      loadingMessage.value = 'Loading your subjects...'
+    }
+
     // If we have cache, display it immediately and fetch in background
     if (subjectsCache.value) {
       subjects.value = subjectsCache.value
     }
 
-    // Fetch in background (no loading state)
+    // Fetch subjects
     const { data: subjectsData, error: subjectsError } = await supabase
       .from('subjects')
       .select(`
@@ -1750,9 +1767,12 @@ const fetchSubjects = async (forceRefresh = false) => {
     lastFetchTime.value = now
 
     await nextTick()
+    
+    isLoading.value = false
 
   } catch (error) {
     console.error('Error fetching subjects:', error)
+    isLoading.value = false
     
     if (error.code === 'PGRST301' || error.message?.includes('JWT')) {
       await router.push('/login')
@@ -1890,7 +1910,11 @@ const nextStep = () => {
 
 const saveSubject = async () => {
   try {
+    isLoading.value = true
+    loadingMessage.value = isEditing.value ? 'Updating subject...' : 'Creating subject...'
+    
     if (!teacherInfo.value?.id) {
+      isLoading.value = false
       alert('Please login to continue')
       return
     }
@@ -1973,9 +1997,12 @@ const saveSubject = async () => {
     // Invalidate cache and refresh
     subjectsCache.value = null
     await fetchSubjects(true)
+    
+    isLoading.value = false
 
   } catch (error) {
     console.error('Error saving subject:', error)
+    isLoading.value = false
     showToast('Error saving subject. Please try again.', 'error')
   }
 }
@@ -3286,5 +3313,95 @@ onUnmounted(() => {
   .quick-actions-card {
     padding: 1rem;
   }
+}
+
+/* Loading Overlay (matching Subjects.vue) */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(251, 255, 228, 0.95);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.loading-content {
+  background: white;
+  padding: 3rem 4rem;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(61, 141, 122, 0.15);
+  border: 2px solid #a3d1c6;
+  animation: slideUp 0.4s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.loading-spinner-container {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
+}
+
+.loading-spinner {
+  width: 80px;
+  height: 80px;
+  border: 5px solid rgba(61, 141, 122, 0.1);
+  border-left: 5px solid #3d8d7a;
+  border-top: 5px solid #20c997;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+  box-shadow: 0 0 20px rgba(61, 141, 122, 0.1);
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #181c20;
+  margin: 0 0 0.5rem 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.loading-subtext {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #3d8d7a;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
 }
 </style>
