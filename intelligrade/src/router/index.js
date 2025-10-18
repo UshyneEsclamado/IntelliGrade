@@ -21,6 +21,7 @@ import Analytics from '../views/teacher/Analytics.vue'
 import AssessmentRes from '../views/teacher/AssessmentResults.vue'
 import ClassCodeEntry from '../views/teacher/ClassCodeEntry.vue'
 import CreateQuiz from '../views/teacher/CreateQuiz.vue'
+import EditQuiz from '../views/teacher/EditQuiz.vue'
 import DashboardHome from '../views/teacher/DashboardHome.vue'
 import GradeManagement from '../views/teacher/GradeManagement.vue'
 import MessagesPage from '../views/teacher/MessagesPage.vue'
@@ -179,6 +180,12 @@ const routes = [
         path: 'create-quiz/:subjectId/:sectionId',
         name: 'CreateQuiz',
         component: CreateQuiz
+      },
+      {
+        path: 'edit-quiz/:quizId',
+        name: 'EditQuiz',
+        component: EditQuiz,
+        meta: { requiresAuth: true, role: 'teacher' }
       },
       {
         path: 'grade-management/:subjectId/:sectionId',
