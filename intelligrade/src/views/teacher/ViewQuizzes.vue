@@ -217,7 +217,15 @@
 
           <div class="questions-preview">
             <h4>Questions Preview</h4>
-            <div v-if="selectedQuizQuestions.length > 0" class="questions-list">
+            
+            <!-- Loading State -->
+            <div v-if="loadingQuestions" class="loading-questions">
+              <div class="loading-spinner-small"></div>
+              <p>Loading questions...</p>
+            </div>
+
+            <!-- Questions List -->
+            <div v-else-if="selectedQuizQuestions.length > 0" class="questions-list">
               <div v-for="(question, index) in selectedQuizQuestions" :key="question.id" class="question-preview">
                 <div class="question-number">{{ question.question_number }}</div>
                 <div class="question-content">
@@ -229,8 +237,10 @@
                 </div>
               </div>
             </div>
-            <div v-else class="loading-questions">
-              <p>Loading questions...</p>
+
+            <!-- No Questions State -->
+            <div v-else class="no-questions">
+              <p>No questions found for this quiz.</p>
             </div>
           </div>
         </div>
@@ -264,6 +274,7 @@ const quizzes = ref([])
 const selectedQuiz = ref(null)
 const selectedQuizQuestions = ref([])
 const isLoading = ref(false)
+const loadingQuestions = ref(false)
 const error = ref(null)
 const teacherId = ref(null)
 
@@ -317,7 +328,7 @@ const fetchQuizzes = async () => {
       await loadTeacherInfo()
     }
 
-    // Fetch quizzes with question count - NOW INCLUDING quiz_code
+    // Fetch quizzes with question count
     const { data: quizzesData, error: quizzesError } = await supabase
       .from('quizzes')
       .select(`
@@ -338,7 +349,6 @@ const fetchQuizzes = async () => {
         ...quiz,
         question_count: questions.length,
         total_points: questions.reduce((sum, q) => sum + (q.points || 0), 0),
-        // Remove the nested quiz_questions to avoid confusion
         quiz_questions: undefined
       }
     })
@@ -349,7 +359,6 @@ const fetchQuizzes = async () => {
     console.error('Error fetching quizzes:', err)
     error.value = err.message
     
-    // If it's an authentication error, redirect to login
     if (err.message.includes('login') || err.message.includes('not found')) {
       alert('Session expired. Please login again.')
       router.push('/login')
@@ -361,8 +370,9 @@ const fetchQuizzes = async () => {
 
 const viewQuizDetails = async (quiz) => {
   selectedQuiz.value = quiz
+  selectedQuizQuestions.value = []
+  loadingQuestions.value = true
   
-  // Fetch questions for this quiz
   try {
     const { data: questions, error } = await supabase
       .from('quiz_questions')
@@ -371,33 +381,37 @@ const viewQuizDetails = async (quiz) => {
       .order('question_number')
     
     if (error) throw error
+    
     selectedQuizQuestions.value = questions || []
+    console.log('Questions loaded:', selectedQuizQuestions.value)
+    
   } catch (err) {
     console.error('Error fetching quiz questions:', err)
     selectedQuizQuestions.value = []
     alert('Error loading quiz questions: ' + err.message)
+  } finally {
+    loadingQuestions.value = false
   }
 }
 
-const editQuiz = async (quiz) => {
-  // Navigate to edit quiz (you'll need to create this route)
-  try {
-    await router.push({
-      name: 'EditQuiz',
-      params: { quizId: quiz.id },
-      query: {
-        subjectId: subjectId.value,
-        sectionId: sectionId.value,
-        subjectName: subjectName.value,
-        sectionName: sectionName.value,
-        gradeLevel: gradeLevel.value,
-        sectionCode: sectionCode.value
-      }
-    })
-  } catch (error) {
-    console.error('Navigation error:', error)
-    alert('Edit feature coming soon!')
-  }
+const editQuiz = (quiz) => {
+  alert(`Edit functionality coming soon!\n\nQuiz: ${quiz.title}\nQuiz ID: ${quiz.id}\n\nThis will navigate to an edit page where you can modify the quiz settings and questions.`)
+  
+  // Uncomment when you create the EditQuiz route
+  /*
+  router.push({
+    name: 'EditQuiz',
+    params: { quizId: quiz.id },
+    query: {
+      subjectId: subjectId.value,
+      sectionId: sectionId.value,
+      subjectName: subjectName.value,
+      sectionName: sectionName.value,
+      gradeLevel: gradeLevel.value,
+      sectionCode: sectionCode.value
+    }
+  })
+  */
 }
 
 const toggleQuizStatus = async (quiz) => {
@@ -418,7 +432,6 @@ const toggleQuizStatus = async (quiz) => {
     
     if (error) throw error
     
-    // Update local state
     quiz.status = newStatus
     alert(`Quiz ${newStatus === 'published' ? 'published' : 'unpublished'} successfully!`)
   } catch (err) {
@@ -440,7 +453,6 @@ const deleteQuiz = async (quiz) => {
     
     if (error) throw error
     
-    // Remove from local state
     quizzes.value = quizzes.value.filter(q => q.id !== quiz.id)
     alert('Quiz deleted successfully!')
   } catch (err) {
@@ -481,6 +493,7 @@ const goBack = async () => {
 const closeModal = () => {
   selectedQuiz.value = null
   selectedQuizQuestions.value = []
+  loadingQuestions.value = false
 }
 
 const formatStatus = (status) => {
@@ -511,7 +524,6 @@ const formatQuestionType = (type) => {
 onMounted(async () => {
   initDarkMode()
   
-  // Validate route params
   if (!subjectId.value || !sectionId.value) {
     error.value = 'Missing required parameters'
     alert('Missing subject or section information. Redirecting back...')
@@ -519,7 +531,6 @@ onMounted(async () => {
     return
   }
   
-  // Load quizzes
   await fetchQuizzes()
 })
 </script>
