@@ -129,19 +129,14 @@
   </div>
 </template>
 
+
 <!-- SCRIPT SECTION -->
 <script>
 import { supabase } from '../supabase.js';
 
 export default {
   name: 'StudentDashboard',
-  components: {
-    Home,
-    Subjects,
-    Calendar,
-    Messages,
-    Settings
-  },
+  // REMOVED: components object - not needed with router-view
   data() {
     return {
       userProfile: {
@@ -505,6 +500,7 @@ export default {
   }
 };
 </script>
+
 
 <style scoped>
 /*
