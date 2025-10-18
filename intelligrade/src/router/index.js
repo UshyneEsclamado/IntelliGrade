@@ -305,36 +305,8 @@ router.beforeEach(async (to, from, next) => {
     const isAuthenticated = !!session?.user
     console.log('Is authenticated:', isAuthenticated)
 
-    // Handle guest-only routes (login, signup) - IMPORTANT FIX
-    if (to.meta.guestOnly && isAuthenticated) {
-      console.log('Guest-only route but user is authenticated, checking role...')
-      
-      // Get user profile to determine redirect
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('auth_user_id', session.user.id)
-        .single()
-
-      if (profileError) {
-        console.error('Profile fetch error on guest-only route:', profileError)
-        // If profile fetch fails, sign out and allow access to login
-        await supabase.auth.signOut()
-        console.log('Signed out due to profile error, allowing access to:', to.path)
-        next()
-        return
-      }
-
-      if (profile) {
-        console.log('User already logged in with role:', profile.role)
-        const redirectPath = profile.role === 'student' 
-          ? '/student/dashboard' 
-          : '/teacher/dashboard'
-        console.log('→ Redirecting authenticated user to:', redirectPath)
-        next(redirectPath)
-        return
-      }
-    }
+    // Allow access to guest-only routes (login, signup) even if authenticated
+    // This lets users re-login or switch accounts from the login page
 
     // Handle routes that require authentication
     if (to.meta.requiresAuth) {

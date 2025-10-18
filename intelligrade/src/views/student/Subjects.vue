@@ -1086,29 +1086,27 @@ export default {
   display: flex;
   align-items: center;
   background: #fbffe4;
-  border-radius: 16px;
+  border-radius: 12px;
   box-shadow: 0 2px 8px rgba(61, 141, 122, 0.08);
-  border: 2px solid #a3d1c6;
-  padding: 2rem;
-  margin-bottom: 2rem;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
   min-height: auto;
-  gap: 2rem;
+  gap: 1.25rem;
   justify-content: space-between;
 }
 
 .minimal-header-card {
-  border-radius: 16px;
+  border-radius: 12px;
   box-shadow: 0 2px 8px rgba(61, 141, 122, 0.08);
   background: #fbffe4;
-  border: 2px solid #a3d1c6;
-  padding: 2rem 2.5rem;
+  padding: 1.25rem;
   min-height: auto;
-  gap: 2rem;
+  gap: 1.25rem;
 }
 
 .minimal-header-icon {
-  width: 72px;
-  height: 72px;
+  width: 48px;
+  height: 48px;
   background: #3d8d7a;
   border-radius: 12px;
   display: flex;
@@ -1119,24 +1117,24 @@ export default {
 }
 
 .minimal-header-title {
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: 1.5rem;
+  font-weight: 500;
   color: #181c20;
   margin-bottom: 0.25rem;
   letter-spacing: -0.01em;
 }
 
 .minimal-header-sub {
-  font-size: 1rem;
+  font-size: 0.95rem;
   color: #3d8d7a;
-  font-weight: 500;
+  font-weight: 400;
   margin-bottom: 0;
 }
 
 .section-header-left {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .section-header-stats {
