@@ -35,7 +35,7 @@ import ViewQuizzes from '../views/teacher/ViewQuizzes.vue'
 import ViewStudents from '../views/teacher/ViewStudents.vue'
 import Gradebook from '../views/teacher/Gradebook.vue'
 
-// Student subfolder components
+// Student subfolder components - FIXED: Removed duplicates
 import Home from '../views/student/Home.vue'
 import Subjects from '../views/student/Subjects.vue'
 import Messages from '../views/student/Messages.vue'
@@ -43,8 +43,6 @@ import Calendar from '../views/student/Calendar.vue'
 import Settings from '../views/student/Settings.vue'
 import TakeQuiz from '../views/student/TakeQuiz.vue'
 import StudentGrades from '../views/student/Grades.vue'
-import Calendar from '../views/student/Calendar.vue'
-import StudentHome from '../views/student/Home.vue'
 
 const routes = [
   {
@@ -215,7 +213,7 @@ const routes = [
       }
     ]
   },
-  // Student Dashboard Routes
+  // Student Dashboard Routes - FIXED: Removed duplicate calendar route
   {
     path: '/student',
     name: 'StudentLayout',
@@ -245,11 +243,6 @@ const routes = [
         path: 'messages',
         name: 'StudentMessages',
         component: Messages
-      },
-      {
-        path: 'calendar',
-        name: 'StudentCalendar',
-        component: Calendar
       },
       {
         path: 'settings',
