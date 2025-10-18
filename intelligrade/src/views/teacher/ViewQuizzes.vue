@@ -250,7 +250,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { supabase } from '../../supabase.js'
 import { useDarkMode } from '../../composables/useDarkMode.js'
@@ -278,14 +278,28 @@ const loadingQuestions = ref(false)
 const error = ref(null)
 const teacherId = ref(null)
 
+// Real-time subscription
+let quizSubscription = null
+
 // Load teacher information
 const loadTeacherInfo = async () => {
   try {
+    console.log('🔍 Loading teacher information...')
+    
     // Get auth user
     const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError || !user) {
+    
+    if (userError) {
+      console.error('❌ Auth error:', userError)
+      throw new Error('Authentication failed')
+    }
+    
+    if (!user) {
+      console.error('❌ No user found')
       throw new Error('Please login to continue')
     }
+
+    console.log('✅ User authenticated:', user.id)
 
     // Get profile
     const { data: profile, error: profileError } = await supabase
@@ -294,37 +308,61 @@ const loadTeacherInfo = async () => {
       .eq('auth_user_id', user.id)
       .single()
 
-    if (profileError || !profile) {
+    if (profileError) {
+      console.error('❌ Profile error:', profileError)
       throw new Error('Profile not found')
     }
 
+    if (!profile) {
+      console.error('❌ No profile found')
+      throw new Error('Profile not found')
+    }
+
+    console.log('✅ Profile loaded:', profile.id)
+
     // Get teacher
-    const { data: teacher, error: teacherError} = await supabase
+    const { data: teacher, error: teacherError } = await supabase
       .from('teachers')
       .select('id')
       .eq('profile_id', profile.id)
       .single()
 
-    if (teacherError || !teacher) {
+    if (teacherError) {
+      console.error('❌ Teacher error:', teacherError)
+      throw new Error('Teacher profile not found')
+    }
+
+    if (!teacher) {
+      console.error('❌ No teacher found')
       throw new Error('Teacher profile not found')
     }
 
     teacherId.value = teacher.id
+    console.log('✅ Teacher loaded:', teacherId.value)
+    
     return teacher.id
   } catch (err) {
-    console.error('Error loading teacher info:', err)
+    console.error('❌ Error loading teacher info:', err)
     throw err
   }
 }
 
-// Methods
+// Fetch quizzes with real-time data
 const fetchQuizzes = async () => {
   isLoading.value = true
   error.value = null
   
   try {
+    console.log('🔍 Fetching quizzes...')
+    console.log('📋 Parameters:', {
+      subjectId: subjectId.value,
+      sectionId: sectionId.value,
+      teacherId: teacherId.value
+    })
+
     // Load teacher info first if not already loaded
     if (!teacherId.value) {
+      console.log('⚠️ Teacher ID not found, loading...')
       await loadTeacherInfo()
     }
 
@@ -340,23 +378,39 @@ const fetchQuizzes = async () => {
       .eq('teacher_id', teacherId.value)
       .order('created_at', { ascending: false })
 
-    if (quizzesError) throw quizzesError
+    if (quizzesError) {
+      console.error('❌ Quizzes fetch error:', quizzesError)
+      throw quizzesError
+    }
+
+    console.log('📊 Raw quizzes data:', quizzesData)
 
     // Process quiz data to add question count and total points
     quizzes.value = (quizzesData || []).map(quiz => {
       const questions = quiz.quiz_questions || []
-      return {
+      const processedQuiz = {
         ...quiz,
         question_count: questions.length,
         total_points: questions.reduce((sum, q) => sum + (q.points || 0), 0),
         quiz_questions: undefined
       }
+      
+      console.log('✅ Processed quiz:', {
+        id: processedQuiz.id,
+        title: processedQuiz.title,
+        quiz_code: processedQuiz.quiz_code,
+        question_count: processedQuiz.question_count,
+        total_points: processedQuiz.total_points,
+        status: processedQuiz.status
+      })
+      
+      return processedQuiz
     })
 
-    console.log('Quizzes loaded:', quizzes.value)
+    console.log('✅ Total quizzes loaded:', quizzes.value.length)
 
   } catch (err) {
-    console.error('Error fetching quizzes:', err)
+    console.error('❌ Error fetching quizzes:', err)
     error.value = err.message
     
     if (err.message.includes('login') || err.message.includes('not found')) {
@@ -365,38 +419,49 @@ const fetchQuizzes = async () => {
     }
   } finally {
     isLoading.value = false
+    console.log('🏁 Fetch quizzes completed')
   }
 }
 
+// View quiz details with real-time question fetching
 const viewQuizDetails = async (quiz) => {
+  console.log('👁️ Viewing quiz details:', quiz.id)
+  
   selectedQuiz.value = quiz
   selectedQuizQuestions.value = []
   loadingQuestions.value = true
   
   try {
+    console.log('📤 Fetching questions for quiz:', quiz.id)
+    
     const { data: questions, error } = await supabase
       .from('quiz_questions')
       .select('*')
       .eq('quiz_id', quiz.id)
       .order('question_number')
     
-    if (error) throw error
+    if (error) {
+      console.error('❌ Questions fetch error:', error)
+      throw error
+    }
     
     selectedQuizQuestions.value = questions || []
-    console.log('Questions loaded:', selectedQuizQuestions.value)
+    console.log('✅ Questions loaded:', selectedQuizQuestions.value.length)
     
   } catch (err) {
-    console.error('Error fetching quiz questions:', err)
+    console.error('❌ Error fetching quiz questions:', err)
     selectedQuizQuestions.value = []
     alert('Error loading quiz questions: ' + err.message)
   } finally {
     loadingQuestions.value = false
+    console.log('🏁 View quiz details completed')
   }
 }
 
+// Edit quiz
 const editQuiz = async (quiz) => {
   try {
-    console.log('Navigating to edit quiz:', quiz.id)
+    console.log('✏️ Navigating to edit quiz:', quiz.id)
     
     await router.push({
       name: 'EditQuiz',
@@ -413,13 +478,20 @@ const editQuiz = async (quiz) => {
       }
     })
   } catch (error) {
-    console.error('Navigation error:', error)
+    console.error('❌ Navigation error:', error)
     alert('Error navigating to edit page: ' + error.message)
   }
 }
 
+// Toggle quiz status (publish/unpublish)
 const toggleQuizStatus = async (quiz) => {
   const newStatus = quiz.status === 'published' ? 'draft' : 'published'
+  
+  console.log('🔄 Toggling quiz status:', {
+    quizId: quiz.id,
+    currentStatus: quiz.status,
+    newStatus: newStatus
+  })
   
   if (!confirm(`Are you sure you want to ${newStatus === 'published' ? 'publish' : 'unpublish'} this quiz?`)) {
     return
@@ -434,17 +506,26 @@ const toggleQuizStatus = async (quiz) => {
       })
       .eq('id', quiz.id)
     
-    if (error) throw error
+    if (error) {
+      console.error('❌ Status update error:', error)
+      throw error
+    }
     
+    // Update local state immediately
     quiz.status = newStatus
+    console.log('✅ Quiz status updated successfully')
     alert(`Quiz ${newStatus === 'published' ? 'published' : 'unpublished'} successfully!`)
+    
   } catch (err) {
-    console.error('Error updating quiz status:', err)
+    console.error('❌ Error updating quiz status:', err)
     alert(`Error updating quiz: ${err.message}`)
   }
 }
 
+// Delete quiz
 const deleteQuiz = async (quiz) => {
+  console.log('🗑️ Attempting to delete quiz:', quiz.id)
+  
   if (!confirm(`Are you sure you want to delete "${quiz.title}"?\n\nThis action cannot be undone and will delete all associated questions, student attempts, and results.`)) {
     return
   }
@@ -455,18 +536,27 @@ const deleteQuiz = async (quiz) => {
       .delete()
       .eq('id', quiz.id)
     
-    if (error) throw error
+    if (error) {
+      console.error('❌ Delete error:', error)
+      throw error
+    }
     
+    // Remove from local state immediately
     quizzes.value = quizzes.value.filter(q => q.id !== quiz.id)
+    console.log('✅ Quiz deleted successfully')
     alert('Quiz deleted successfully!')
+    
   } catch (err) {
-    console.error('Error deleting quiz:', err)
+    console.error('❌ Error deleting quiz:', err)
     alert(`Error deleting quiz: ${err.message}`)
   }
 }
 
+// Navigate to create quiz
 const navigateToCreateQuiz = async () => {
   try {
+    console.log('➕ Navigating to create quiz')
+    
     await router.push({
       name: 'CreateQuiz',
       params: {
@@ -481,30 +571,36 @@ const navigateToCreateQuiz = async () => {
       }
     })
   } catch (error) {
-    console.error('Navigation error:', error)
+    console.error('❌ Navigation error:', error)
   }
 }
 
+// Go back to subjects
 const goBack = async () => {
   try {
+    console.log('⬅️ Navigating back to subjects')
     await router.push({ name: 'MySubjects' })
   } catch (error) {
-    console.error('Navigation error:', error)
+    console.error('❌ Navigation error:', error)
     router.back()
   }
 }
 
+// Close modal
 const closeModal = () => {
+  console.log('❌ Closing modal')
   selectedQuiz.value = null
   selectedQuizQuestions.value = []
   loadingQuestions.value = false
 }
 
+// Format status
 const formatStatus = (status) => {
   if (!status) return 'Unknown'
   return status.charAt(0).toUpperCase() + status.slice(1)
 }
 
+// Format date
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A'
   const date = new Date(dateString)
@@ -515,6 +611,7 @@ const formatDate = (dateString) => {
   })
 }
 
+// Format question type
 const formatQuestionType = (type) => {
   const types = {
     'multiple_choice': 'Multiple Choice',
@@ -524,18 +621,88 @@ const formatQuestionType = (type) => {
   return types[type] || type
 }
 
+// Setup real-time subscription for quiz changes
+const setupRealtimeSubscription = () => {
+  if (!teacherId.value) {
+    console.warn('⚠️ Cannot setup realtime: teacher_id not available')
+    return
+  }
+
+  console.log('📡 Setting up real-time subscription for teacher:', teacherId.value)
+
+  quizSubscription = supabase
+    .channel('quiz-changes')
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'quizzes',
+        filter: `teacher_id=eq.${teacherId.value}`
+      },
+      (payload) => {
+        console.log('📡 Real-time event received:', payload.eventType, payload)
+        
+        if (payload.eventType === 'INSERT') {
+          // New quiz created - fetch fresh data
+          console.log('➕ New quiz detected, refreshing list...')
+          fetchQuizzes()
+        } else if (payload.eventType === 'UPDATE') {
+          // Quiz updated - update local state
+          console.log('🔄 Quiz updated:', payload.new.id)
+          const index = quizzes.value.findIndex(q => q.id === payload.new.id)
+          if (index !== -1) {
+            // Preserve question count and total points
+            quizzes.value[index] = {
+              ...payload.new,
+              question_count: quizzes.value[index].question_count,
+              total_points: quizzes.value[index].total_points
+            }
+          }
+        } else if (payload.eventType === 'DELETE') {
+          // Quiz deleted - remove from local state
+          console.log('🗑️ Quiz deleted:', payload.old.id)
+          quizzes.value = quizzes.value.filter(q => q.id !== payload.old.id)
+        }
+      }
+    )
+    .subscribe((status) => {
+      console.log('📡 Subscription status:', status)
+    })
+}
+
 // Lifecycle
 onMounted(async () => {
+  console.log('🔧 Component mounted')
   initDarkMode()
   
+  // Validate required parameters
   if (!subjectId.value || !sectionId.value) {
+    console.error('❌ Missing required parameters')
     error.value = 'Missing required parameters'
     alert('Missing subject or section information. Redirecting back...')
     router.push('/teacher/subjects')
     return
   }
+
+  console.log('✅ Required parameters present')
   
+  // Fetch quizzes
   await fetchQuizzes()
+  
+  // Setup real-time subscription
+  setupRealtimeSubscription()
+  
+  console.log('✅ Component initialization complete')
+})
+
+onUnmounted(() => {
+  console.log('🧹 Component unmounting')
+  
+  if (quizSubscription) {
+    supabase.removeChannel(quizSubscription)
+    console.log('✅ Real-time subscription cleaned up')
+  }
 })
 </script>
 
