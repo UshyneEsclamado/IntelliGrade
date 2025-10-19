@@ -104,25 +104,18 @@ import { useRouter } from 'vue-router';
 import { useTeacherAuth } from '../composables/useTeacherAuth.js';
 
 const router = useRouter();
+
+// Use the teacher auth composable - ONLY DECLARE ONCE
 const { 
-  initializeAuth, 
-  setupAuthListener, 
-  teacherInfo, 
   teacherProfile, 
+  teacherInfo, 
+  isLoading,
   isAuthenticated,
-  isLoading 
-} = useTeacherAuth();
-
-const isLogoutModalVisible = ref(false);
-
-// Use the teacher auth composable
-const { 
-  teacherProfile, 
-  teacherInfo, 
-  isLoading, 
   initializeAuth, 
   setupAuthListener
 } = useTeacherAuth();
+
+const isLogoutModalVisible = ref(false);
 
 // Computed profile data from the composable
 const profileData = computed(() => {
@@ -193,7 +186,6 @@ const confirmLogout = async () => {
     router.push('/login');
   }
 };
-
 
 onMounted(async () => {
   console.log('\n🚀 TeacherDashboard mounted\n');
