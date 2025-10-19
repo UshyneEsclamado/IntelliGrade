@@ -1189,6 +1189,7 @@ export default {
   border-radius: 16px;
   padding: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 2px solid #cbe7db;
 }
 
 .dark .header-card {
@@ -1411,19 +1412,21 @@ input:checked + .slider:before {
 }
 
 /* Danger Zone */
-.danger-zone .section-title {
-  color: var(--danger-color);
-}
 
-.danger-zone .section-subtitle {
-  color: var(--danger-color);
+/* Danger Zone - Enhanced Red Style */
+.danger-zone {
+  border: 1.5px solid #dc3545 !important;
+  background: #fdf6f6 !important;
 }
-
-.danger-text {
-  color: var(--danger-color);
-  font-weight: 500;
+.dark .danger-zone {
+  background: #2a1818 !important;
+  border: 1.5px solid #dc3545 !important;
 }
-
+.danger-zone .section-title,
+.danger-zone .section-subtitle,
+.danger-zone .danger-text {
+  color: #dc3545 !important;
+}
 .danger-btn {
   background-color: #dc3545 !important;
   color: white !important;
@@ -1431,13 +1434,11 @@ input:checked + .slider:before {
   box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
   font-weight: 600;
 }
-
 .dark .danger-btn {
   background-color: #dc3545 !important;
   color: white !important;
   border: 1px solid #dc3545 !important;
 }
-
 .danger-btn:hover {
   background-color: #c82333 !important;
   border-color: #c82333 !important;
