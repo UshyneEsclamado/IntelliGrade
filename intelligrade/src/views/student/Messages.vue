@@ -1,229 +1,231 @@
 <template>
   <div class="messages-container">
-    <!-- Simple Header matching Home.vue -->
-    <div class="header-card">
-      <div class="header-content">
-        <div class="header-left">
-          <div class="header-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            </svg>
-          </div>
-          <div>
-            <h1 class="header-title">Messages</h1>
-            <p class="header-subtitle">Chat with your enrolled teachers and view announcements</p>
-          </div>
+    <!-- Header Section (Uniform Card Style) -->
+    <div class="section-header-card minimal-header-card">
+      <div class="section-header-left">
+        <div class="section-header-icon minimal-header-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="section-header-title minimal-header-title">Messages</div>
+          <div class="section-header-sub minimal-header-sub">Chat with your enrolled teachers and view announcements</div>
         </div>
       </div>
     </div>
 
-    <!-- Main Content Card matching Home.vue -->
-    <div class="content-card">
-      <div class="card-header">
-        <h3>Messages</h3>
-        <p class="card-desc">Connect with your teachers and stay updated with announcements</p>
-        <div class="tabs">
-          <button 
-            :class="['tab-btn', { 'active': currentTab === 'teachers' }]"
-            @click="currentTab = 'teachers'; showArchive = false"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Filter and Search -->
+    <div class="controls-section">
+      <div class="search-box">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" />
+        </svg>
+        <input 
+          type="text" 
+          v-model="searchQuery" 
+          placeholder="Search teachers or subjects..."
+          class="search-input"
+        />
+      </div>
+      <div class="filter-tabs">
+        <button 
+          :class="['filter-tab', { 'active': currentTab === 'teachers' }]"
+          @click="currentTab = 'teachers'; showArchive = false"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+          My Teachers
+        </button>
+        <button 
+          :class="['filter-tab', { 'active': currentTab === 'archive' }]"
+          @click="currentTab = 'archive'; showArchive = true"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="21 8 21 21 3 21 3 8"></polyline>
+            <rect x="1" y="3" width="22" height="5"></rect>
+            <line x1="10" y1="12" x2="14" y2="12"></line>
+          </svg>
+          Archive
+        </button>
+        <button 
+          :class="['filter-tab', { 'active': currentTab === 'notifications' }]"
+          @click="currentTab = 'notifications'; showArchive = false"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          Notifications
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="content-area">
+      <!-- Teachers Tab -->
+      <div v-if="currentTab === 'teachers' || currentTab === 'archive'" class="tab-content">
+
+        <!-- Empty state when no deleted conversations -->
+        <div v-if="filteredTeachers.length === 0 && !hasDeletedConversations" class="empty-state">
+          <div class="empty-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
               <circle cx="12" cy="7" r="4"/>
             </svg>
-            My Teachers
-          </button>
-          <button 
-            :class="['tab-btn', { 'active': currentTab === 'archive' }]"
-            @click="currentTab = 'archive'; showArchive = true"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="21 8 21 21 3 21 3 8"></polyline>
-              <rect x="1" y="3" width="22" height="5"></rect>
-              <line x1="10" y1="12" x2="14" y2="12"></line>
-            </svg>
-            Archive
-          </button>
-          <button 
-            :class="['tab-btn', { 'active': currentTab === 'notifications' }]"
-              @click="currentTab = 'notifications'; showArchive = false"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-              </svg>
-              Notifications
-          </button>
           </div>
+          <p>{{ showArchive ? 'No archived conversations' : 'No teachers found' }}</p>
+          <span class="empty-subtext">{{ showArchive ? 'Archived conversations will appear here.' : 'Teachers from your enrolled subjects will appear here.' }}</span>
+        </div>
 
-          <!-- Teachers Tab -->
-          <div v-if="currentTab === 'teachers' || currentTab === 'archive'" class="tab-content">
-            <div class="section-actions">
-              <div class="search-bar">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
-                  <circle cx="11" cy="11" r="8"></circle>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-                <input type="text" v-model="searchQuery" placeholder="Search teachers or subjects..." class="search-input" />
-              </div>
-              <!-- Subject filter dropdown removed as requested -->
+        <!-- Show Available Teachers when conversations are deleted -->
+        <div v-else-if="filteredTeachers.length === 0 && hasDeletedConversations" class="deleted-state">
+          <div class="deleted-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+          <p>You deleted all conversations</p>
+          <span class="deleted-subtext">Your enrolled teachers are still available. Click below to see them again.</span>
+          <button @click="showAvailableTeachers" class="show-teachers-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            Show Available Teachers
+          </button>
+        </div>
+
+        <!-- Teachers Grid -->
+        <div v-else class="teachers-grid">
+          <div v-for="subject in groupedTeachers" :key="subject.id" class="subject-section">
+            <div class="subject-section-header">
+              <h3 class="subject-section-name">{{ subject.name }}</h3>
+              <span class="subject-section-code">{{ subject.code }}</span>
             </div>
-
-            <!-- Empty state when no deleted conversations -->
-            <div v-if="filteredTeachers.length === 0 && !hasDeletedConversations" class="empty-state">
-              <div class="empty-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
-              </div>
-              <p>{{ showArchive ? 'No archived conversations' : 'No teachers found' }}</p>
-              <span class="empty-subtext">{{ showArchive ? 'Archived conversations will appear here.' : 'Teachers from your enrolled subjects will appear here.' }}</span>
-            </div>
-
-            <!-- Show Available Teachers when conversations are deleted -->
-            <div v-else-if="filteredTeachers.length === 0 && hasDeletedConversations" class="deleted-state">
-              <div class="deleted-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
-              </div>
-              <p>You deleted all conversations</p>
-              <span class="deleted-subtext">Your enrolled teachers are still available. Click below to see them again.</span>
-              <button @click="showAvailableTeachers" class="show-teachers-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                  <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-                Show Available Teachers
-              </button>
-            </div>
-
-            <!-- Teachers list -->
-            <div v-else class="teachers-by-subject">
-              <div v-for="subject in groupedTeachers" :key="subject.id" class="subject-group">
-                <div class="subject-header">
-                  <h3 class="subject-name">{{ subject.name }}</h3>
-                  <span class="subject-code">{{ subject.code }}</span>
+            
+            <div class="teachers-cards">
+              <div 
+                v-for="teacher in subject.teachers" 
+                :key="`${teacher.id}-${teacher.section_id}`"
+                :class="['teacher-card', { 'has-unread': teacher.unread_count > 0 }]"
+                @click="startChatWithTeacher(teacher)"
+              >
+                <div class="teacher-card-header">
+                  <div class="teacher-card-left">
+                    <div class="teacher-avatar">
+                      <span>{{ teacher.teacher_name?.[0] || 'T' }}</span>
+                    </div>
+                    <div class="teacher-info">
+                      <h4 class="teacher-name">{{ teacher.teacher_name }}</h4>
+                      <p class="teacher-email">{{ teacher.email }}</p>
+                    </div>
+                  </div>
+                  <div class="teacher-card-right">
+                    <!-- unread-badge removed as requested -->
+                    <button 
+                      class="options-btn" 
+                      @click.stop="toggleTeacherOptions(`${teacher.id}-${teacher.section_id}`)"
+                      :title="'More options'"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12,16A2,2 0 0,1 14,18A2,2 0 0,1 12,20A2,2 0 0,1 10,18A2,2 0 0,1 12,16M12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12A2,2 0 0,1 12,10M12,4A2,2 0 0,1 14,6A2,2 0 0,1 12,8A2,2 0 0,1 10,6A2,2 0 0,1 12,4Z" />
+                      </svg>
+                    </button>
+                    <div v-if="activeTeacherOptionsId === `${teacher.id}-${teacher.section_id}`" class="options-dropdown" @click.stop>
+                      <button @click.stop="archiveConversation(teacher); activeTeacherOptionsId = null" class="dropdown-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="21 8 21 21 3 21 3 8"></polyline>
+                          <rect x="1" y="3" width="22" height="5"></rect>
+                          <line x1="10" y1="12" x2="14" y2="12"></line>
+                        </svg>
+                        {{ teacher.archived ? 'Unarchive' : 'Archive' }}
+                      </button>
+                      <button @click.stop="deleteConversation(teacher); activeTeacherOptionsId = null" class="dropdown-item delete-option">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        Delete
+                      </button>
+                    </div>
+                  </div>
                 </div>
                 
-                <div class="teachers-list">
-                  <div 
-                    v-for="teacher in subject.teachers" 
-                    :key="`${teacher.id}-${teacher.section_id}`"
-                    :class="['teacher-item', { 'has-unread': teacher.unread_count > 0 }]"
-                  >
-                    <div class="teacher-info" @click="startChatWithTeacher(teacher)">
-                      <div class="teacher-avatar">
-                        <span>{{ teacher.teacher_name?.[0] || 'T' }}</span>
-                      </div>
-                      <div class="teacher-details">
-                        <h4 class="teacher-name">{{ teacher.teacher_name }}</h4>
-                        <p class="teacher-email">{{ teacher.email }}</p>
-                        <p class="last-message">{{ teacher.last_message || 'Start a conversation' }}</p>
-                      </div>
-                    </div>
-                    <div class="message-status">
-                      <div class="status-info">
-                        <span v-if="teacher.unread_count > 0" class="unread-badge">{{ teacher.unread_count }}</span>
-                      </div>
-                      <div class="options-wrapper">
-                        <button class="options-btn" @click.stop="toggleTeacherOptions(`${teacher.id}-${teacher.section_id}`)">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="1"/>
-                            <circle cx="12" cy="5" r="1"/>
-                            <circle cx="12" cy="19" r="1"/>
-                          </svg>
-                        </button>
-                        <div v-if="activeTeacherOptionsId === `${teacher.id}-${teacher.section_id}`" class="options-menu" @click.stop>
-                          <a href="#" @click.prevent="archiveConversation(teacher); activeTeacherOptionsId = null">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <polyline points="21 8 21 21 3 21 3 8"></polyline>
-                              <rect x="1" y="3" width="22" height="5"></rect>
-                              <line x1="10" y1="12" x2="14" y2="12"></line>
-                            </svg>
-                            {{ teacher.archived ? 'Unarchive' : 'Archive' }}
-                          </a>
-                          <a href="#" @click.prevent="deleteConversation(teacher); activeTeacherOptionsId = null" class="delete-option">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <polyline points="3 6 5 6 21 6"></polyline>
-                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                            </svg>
-                            Delete
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                <div class="teacher-card-body">
+                  <p class="last-message">{{ teacher.last_message || 'Start a conversation' }}</p>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Notifications Tab -->
-          <div v-else-if="currentTab === 'notifications'" class="tab-content">
-            <div class="section-actions">
-              <div class="notification-filters">
-                <button 
-                  :class="['filter-btn', { 'active': currentFilter === 'all' }]"
-                  @click="currentFilter = 'all'"
-                >
-                  All
-                </button>
-                <button 
-                  :class="['filter-btn', { 'active': currentFilter === 'unread' }]"
-                  @click="currentFilter = 'unread'"
-                >
-                  Unread
-                </button>
-              </div>
-              <button class="action-btn" @click="clearNotifications">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20,6 9,17 4,12"/>
-                </svg>
-                Mark all read
-              </button>
-            </div>
-            
-            <div v-if="Object.keys(groupedBroadcasts).length === 0" class="empty-state">
-              <div class="empty-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                  <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                </svg>
-              </div>
-              <p>No announcements found</p>
-              <span class="empty-subtext">Class announcements and notifications will appear here.</span>
-            </div>
-            
-            <div v-else class="broadcast-groups">
-              <div 
-                v-for="(group, key) in groupedBroadcasts" 
-                :key="key" 
-                class="broadcast-group"
-                @click="openBroadcastGroup(group)"
-              >
-                <div class="broadcast-group-header">
-                  <div class="broadcast-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                    </svg>
-                  </div>
-                  <div class="broadcast-info">
-                    <h3 class="broadcast-title">{{ group.section }}: {{ group.subject }}</h3>
-                    <p class="broadcast-teacher">Teacher: {{ group.teacher }}</p>
-                  </div>
-                  <div class="broadcast-count">
-                    <span class="count-badge">{{ group.announcements.length }}</span>
-                    <span v-if="group.announcements.some(a => !a.is_read)" class="unread-indicator"></span>
-                  </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>    <!-- Chat Modal -->
+
+      <!-- Notifications Tab -->
+      <div v-else-if="currentTab === 'notifications'" class="tab-content">
+        <div class="notifications-actions">
+          <div class="notification-filters">
+            <button 
+              :class="['filter-btn', { 'active': currentFilter === 'all' }]"
+              @click="currentFilter = 'all'"
+            >
+              All
+            </button>
+            <button 
+              :class="['filter-btn', { 'active': currentFilter === 'unread' }]"
+              @click="currentFilter = 'unread'"
+            >
+              Unread
+            </button>
+          </div>
+          <button class="action-btn" @click="clearNotifications">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20,6 9,17 4,12"/>
+            </svg>
+            Mark all read
+          </button>
+        </div>
+        
+        <div v-if="Object.keys(groupedBroadcasts).length === 0" class="empty-state">
+          <div class="empty-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+          </div>
+          <p>No announcements found</p>
+          <span class="empty-subtext">Class announcements and notifications will appear here.</span>
+        </div>
+        
+        <div v-else class="notifications-grid">
+          <div 
+            v-for="(group, key) in groupedBroadcasts" 
+            :key="key" 
+            class="notification-card"
+            @click="openBroadcastGroup(group)"
+          >
+            <div class="notification-card-header">
+              <div class="notification-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                </svg>
+              </div>
+              <div class="notification-card-right">
+                <span class="notification-count">{{ group.announcements.length }}</span>
+                <span v-if="group.announcements.some(a => !a.is_read)" class="unread-dot"></span>
+              </div>
+            </div>
+            <div class="notification-card-body">
+              <h3 class="notification-title">{{ group.section }}: {{ group.subject }}</h3>
+              <p class="notification-teacher">Teacher: {{ group.teacher }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div v-if="isModalOpen" class="modal-overlay" @click.self="closeModal">
       <div class="modal-content">
         <div class="modal-header">
@@ -503,7 +505,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { supabase } from '@/supabase.js'
@@ -556,7 +558,7 @@ const uploadFileToStorage = async (file, folder = 'message-attachments') => {
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
     const filePath = `${folder}/${fileName}`
     
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('attachments')
       .upload(filePath, file, {
         cacheControl: '3600',
@@ -854,7 +856,8 @@ const loadAnnouncementAttachments = async (messageId) => {
       selectedAnnouncement.value.attachments = []
       selectedAnnouncement.value.has_attachments = false
     }
-  } catch (error) {
+  } catch (err) {
+    console.error('Error loading announcement attachments:', err)
     selectedAnnouncement.value.attachments = []
     selectedAnnouncement.value.has_attachments = false
   }
@@ -1708,7 +1711,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 * {
   margin: 0;
@@ -1720,253 +1723,222 @@ onUnmounted(() => {
 .messages-container {
   min-height: 100vh;
   background: #FBFFE4;
-  padding: 1.5rem;
+  padding: 1.5rem 2rem;
   font-family: 'Inter', sans-serif;
 }
 .dark .messages-container {
   background: #181c20;
 }
 
-/* Header matching Home.vue */
-.header-card {
+/* Header Section (Uniform Card Style) */
+.section-header-card {
   background: white;
   border-radius: 16px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-.dark .header-card {
-  background: #23272b;
-  border: 1px solid #20c997;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-}
-
-.header-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.header-icon {
-  width: 56px;
-  height: 56px;
-  background: #3D8D7A;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
-
-.header-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 0.25rem;
-}
-.dark .header-title {
-  color: #A3D1C6;
-}
-
-.header-subtitle {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-.dark .header-subtitle {
-  color: #A3D1C6;
-}
-
-/* Content Card matching Home.vue */
-.content-card {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  display: flex;
-  flex-direction: column;
   border: 2px solid #A3D1C6;
 }
-.dark .content-card {
+.dark .section-header-card {
   background: #23272b;
   border: 2px solid #20c997;
   box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
 
-.card-header {
-  margin-bottom: 1.25rem;
+.section-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
-.card-header h3 {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1f2937;
+.section-header-icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #A3D1C6 0%, #87C5B8 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 4px 12px rgba(163, 209, 198, 0.3);
+}
+.dark .section-header-icon {
+  background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
+}
+
+.section-header-title {
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: #2c3e50;
   margin-bottom: 0.25rem;
 }
-.dark .card-header h3 {
-  color: #A3D1C6;
+.dark .section-header-title {
+  color: #ffffff;
 }
 
-.card-desc {
-  font-size: 0.813rem;
-  color: #6b7280;
-  margin-bottom: 1rem;
+.section-header-sub {
+  font-size: 1rem;
+  color: #6c757d;
+  font-weight: 400;
 }
-.dark .card-desc {
-  color: #A3D1C6;
-}
-
-/* Tab Content */
-.tab-content {
-  padding: 0;
-  background: white;
-  overflow-y: auto;
-  flex: 1;
-}
-.dark .tab-content {
-  background: #23272b;
+.dark .section-header-sub {
+  color: #adb5bd;
 }
 
-.tabs {
+/* Controls Section */
+.controls-section {
   display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.tab-btn {
-  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  background: #FBFFE4;
-  border: 1px solid #A3D1C6;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #6b7280;
-}
-.dark .tab-btn {
-  background: #23272b;
-  border-color: #20c997;
-  color: #A3D1C6;
-}
-
-.tab-btn:hover {
-  background: #A3D1C6;
-  color: #181c20;
-  border-color: #3D8D7A;
-}
-.dark .tab-btn:hover {
-  background: #A3D1C6;
-  color: #23272b;
-  border-color: #20c997;
-}
-
-.tab-btn.active {
-  background: #3D8D7A;
-  color: white;
-  border-color: #3D8D7A;
-  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.2);
-}
-.dark .tab-btn.active {
-  background: #20c997;
-  color: #181c20;
-  border-color: #20c997;
-}
-
-.tab-content {
-  padding: 1.5rem;
-}
-
-.dark .tab-content {
-  background: #2a2d35;
-}
-
-/* Section Actions */
-.section-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  gap: 1rem;
   flex-wrap: wrap;
-  padding: 0 1.5rem;
 }
 
-.search-bar {
+.search-box {
   position: relative;
   flex: 1;
-  max-width: 400px;
+  min-width: 300px;
 }
 
-.search-icon {
+.search-box svg {
   position: absolute;
   left: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #3D8D7A;
+  color: #6c757d;
 }
-.dark .search-icon {
-  color: #A3D1C6;
+.dark .search-box svg {
+  color: #adb5bd;
 }
 
 .search-input {
   width: 100%;
-  padding: 0.75rem 1rem 0.75rem 3rem;
-  border: 1px solid #A3D1C6;
+  padding: 0.875rem 1rem 0.875rem 3rem;
+  border: 2px solid #e9ecef;
   border-radius: 12px;
-  font-size: 0.875rem;
+  font-size: 1rem;
+  font-weight: 400;
   background: white;
-  color: #1f2937;
+  color: #495057;
   transition: all 0.2s ease;
-  font-family: 'Inter', sans-serif;
 }
 .dark .search-input {
-  background: #23272b;
-  border-color: #20c997;
-  color: #A3D1C6;
+  background: #2c3135;
+  border-color: #495057;
+  color: #ffffff;
 }
 
 .search-input:focus {
   outline: none;
-  border-color: #3D8D7A;
-  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
+  border-color: #A3D1C6;
+  box-shadow: 0 0 0 3px rgba(163, 209, 198, 0.1);
 }
 .dark .search-input:focus {
   border-color: #20c997;
   box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.1);
 }
 
+.filter-tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filter-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border: 2px solid #e9ecef;
+  background: white;
+  color: #6c757d;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+.dark .filter-tab {
+  background: #2c3135;
+  border-color: #495057;
+  color: #adb5bd;
+}
+
+.filter-tab:hover {
+  border-color: #A3D1C6;
+  color: #2c3e50;
+}
+.dark .filter-tab:hover {
+  border-color: #20c997;
+  color: #ffffff;
+}
+
+.filter-tab.active {
+  background: #A3D1C6;
+  border-color: #A3D1C6;
+  color: white;
+  font-weight: 600;
+}
+.dark .filter-tab.active {
+  background: #20c997;
+  border-color: #20c997;
+}
+
+/* Content Area */
+.content-area {
+  min-height: 400px;
+}
+
+.tab-content {
+  width: 100%;
+}
+
 /* Empty States */
-.empty-state, .deleted-state {
+.empty-state {
   text-align: center;
-  padding: 3rem 2rem;
-  color: #9ca3af;
+  padding: 4rem 2rem;
+  color: #6c757d;
 }
-.dark .empty-state, .dark .deleted-state {
-  color: #A3D1C6;
-}
-
-.empty-icon, .deleted-icon {
-  margin-bottom: 1rem;
-  color: #3D8D7A;
-}
-.dark .empty-icon, .dark .deleted-icon {
-  color: #A3D1C6;
+.dark .empty-state {
+  color: #adb5bd;
 }
 
-.empty-state p, .deleted-state p {
-  font-size: 0.875rem;
-  margin: 0;
+.empty-icon {
+  margin-bottom: 1.5rem;
+  color: #A3D1C6;
+}
+.dark .empty-icon {
+  color: #20c997;
+}
+
+.empty-state p {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #495057;
+}
+.dark .empty-state p {
+  color: #ffffff;
+}
+
+.empty-subtext {
+  font-size: 1rem;
+  color: #6c757d;
+}
+.dark .empty-subtext {
+  color: #adb5bd;
+}
+
+.deleted-state {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.deleted-icon {
+  margin-bottom: 1.5rem;
+  color: #A3D1C6;
+}
+.dark .deleted-icon {
+  color: #20c997;
 }
 
 .show-teachers-btn {
@@ -1974,473 +1946,256 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  background: #3D8D7A;
+  padding: 0.875rem 1.5rem;
+  background: #A3D1C6;
   color: white;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-family: 'Inter', sans-serif;
 }
 .dark .show-teachers-btn {
   background: #20c997;
-  color: #181c20;
 }
 
 .show-teachers-btn:hover {
-  background: #2f6b5c;
+  background: #87C5B8;
   transform: translateY(-1px);
 }
 .dark .show-teachers-btn:hover {
-  background: #0ea770;
+  background: #17a085;
 }
 
-/* Teachers List matching Home.vue assessment pattern */
-.teachers-by-subject {
+/* Teachers Grid */
+.teachers-grid {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2rem;
+}
+
+.subject-section {
+  background: white;
+  border-radius: 16px;
   padding: 1.5rem;
+  border: 2px solid #e9ecef;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
-
-.subject-group {
-  background: #FBFFE4;
-  border: 1px solid #A3D1C6;
-  border-radius: 12px;
-  padding: 1.25rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-.dark .subject-group {
+.dark .subject-section {
   background: #23272b;
-  border-color: #20c997;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  border-color: #495057;
 }
 
-.subject-header {
+.subject-section-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid #A3D1C6;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e9ecef;
 }
-.dark .subject-header {
-  border-bottom-color: #20c997;
+.dark .subject-section-header {
+  border-bottom-color: #495057;
 }
 
-.subject-name {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1f2937;
+.subject-section-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #2c3e50;
   margin: 0;
 }
-.dark .subject-name {
+.dark .subject-section-name {
+  color: #ffffff;
+}
+
+.subject-section-code {
+  font-size: 0.875rem;
+  font-weight: 600;
   color: #A3D1C6;
-}
-
-.subject-code {
-  font-size: 0.813rem;
-  font-weight: 500;
-  color: #3D8D7A;
-  background: #d1fae5;
+  background: rgba(163, 209, 198, 0.1);
   padding: 0.25rem 0.75rem;
-  border-radius: 8px;
-  border: 1px solid #10b981;
+  border-radius: 6px;
 }
-.dark .subject-code {
-  background: #022c22;
-  color: #34d399;
-  border-color: #059669;
+.dark .subject-section-code {
+  color: #20c997;
+  background: rgba(32, 201, 151, 0.1);
 }
 
-.teachers-list {
+.teachers-cards {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1.25rem;
 }
 
-
-
-.teacher-item {
-  background: #FBFFE4;
-  border-radius: 10px;
-  padding: 1rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: all 0.2s;
-  border: 1px solid #A3D1C6;
-  margin-bottom: 0.75rem;
+.teacher-card {
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 1.25rem;
   cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transform: translateY(0);
 }
-.dark .teacher-item {
-  background: #23272b;
-  border-color: #20c997;
+.dark .teacher-card {
+  background: #2c3135;
+  border-color: #495057;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-.teacher-item:hover {
-  background: #A3D1C6;
-  border-color: #3D8D7A;
-}
-.dark .teacher-item:hover {
-  background: #23272b;
+.teacher-card:hover {
   border-color: #A3D1C6;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(163, 209, 198, 0.25);
 }
-
-.teacher-item.has-unread {
-  border-color: #3D8D7A;
-  border-width: 2px;
-}
-.dark .teacher-item.has-unread {
+.dark .teacher-card:hover {
   border-color: #20c997;
-  border-width: 2px;
+  box-shadow: 0 8px 25px rgba(32, 201, 151, 0.25);
 }
 
-.teacher-info {
+.teacher-card.has-unread {
+  border-color: #A3D1C6;
+  background: rgba(163, 209, 198, 0.05);
+}
+.dark .teacher-card.has-unread {
+  border-color: #20c997;
+  background: rgba(32, 201, 151, 0.05);
+}
+
+.teacher-card-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.teacher-card-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   flex: 1;
-  min-width: 0;
 }
 
 .teacher-avatar {
-  width: 48px;
-  height: 48px;
-  background: #3D8D7A;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #A3D1C6 0%, #87C5B8 100%);
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-weight: 600;
-  font-size: 1.1rem;
+  font-size: 1rem;
   flex-shrink: 0;
 }
 .dark .teacher-avatar {
-  background: #20c997;
-  color: #181c20;
+  background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
 }
 
-.teacher-details {
+.teacher-info {
   flex: 1;
   min-width: 0;
 }
 
 .teacher-name {
-  font-size: 0.938rem;
+  font-size: 1rem;
   font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 0.25rem;
+  color: #2c3e50;
+  margin: 0 0 0.25rem 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .dark .teacher-name {
-  color: #A3D1C6;
+  color: #ffffff;
 }
 
 .teacher-email {
-  font-size: 0.813rem;
-  color: #6b7280;
-  margin-bottom: 0.25rem;
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .dark .teacher-email {
-  color: #A3D1C6;
+  color: #adb5bd;
 }
 
-.message-status {
+.teacher-card-right {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 0.5rem;
-}
-
-.last-time {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #1f2937;
-}
-.dark .last-time {
-  color: #A3D1C6;
+  flex-shrink: 0;
 }
 
 .unread-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 6px;
+  background: #dc3545;
+  color: white;
   font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  white-space: nowrap;
-  background: #fef3c7;
-  color: #d97706;
-  border: 1px solid #fbbf24;
-}
-.dark .unread-badge {
-  background: #451a03;
-  color: #fbbf24;
-  border-color: #d97706;
-}
-
-.options-wrapper {
-  position: relative;
-}
-
-.options-btn {
-  padding: 0.3rem;
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  color: var(--text-secondary);
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.options-btn:hover {
-  background: var(--bg-accent);
-  color: var(--text-accent);
-}
-
-.options-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px var(--shadow-color);
-  padding: 0.25rem;
-  min-width: 140px;
-  z-index: 1000;
-  margin-top: 0.25rem;
-}
-
-.options-menu a {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  color: var(--text-primary);
-  text-decoration: none;
-  border-radius: 6px;
-  transition: background-color 0.2s ease;
-  font-size: 0.875rem;
-  font-weight: 400;
-}
-
-.options-menu a:hover {
-  background: var(--bg-accent);
-}
-
-.options-menu a.delete-option {
-  color: #ef4444;
-}
-
-.options-menu a.delete-option:hover {
-  background: rgba(239, 68, 68, 0.1);
-}
-
-.options-wrapper {
-  position: relative;
-}
-
-.options-btn {
-  padding: 0.5rem;
-  background: transparent;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  color: #6b7280;
-  transition: all 0.2s ease;
-}
-
-.dark .options-btn {
-  color: #9ca3af;
-}
-
-.options-btn:hover {
-  background: #f3f4f6;
-  color: #3D8D7A;
-}
-
-.dark .options-btn:hover {
-  background: #374151;
-  color: #A3D1C6;
-}
-
-.action-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  background: var(--bg-accent);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  color: var(--text-accent);
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.action-btn:hover {
-  background: var(--bg-accent-hover);
-  transform: translateY(-1px);
-}
-
-.empty-state {
-  text-align: center;
-  color: var(--text-muted);
-  padding: 3rem 2rem;
-}
-
-.empty-icon {
-  color: var(--text-muted);
-  margin-bottom: 1rem;
-}
-
-.empty-state p {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin: 0;
-  color: var(--text-secondary);
-}
-
-.empty-subtext {
-  font-size: 0.9rem;
-  color: var(--text-muted);
-  margin-top: 0.5rem;
-  display: block;
-}
-
-.conversation-item {
-  overflow: visible;
-  position: relative; /* Add this */
-  z-index: 10;        /* Add this */
-}
-
-.conversation-item.menu-open {
-  z-index: 10000;
-}
-
-.conversation-list,
-.notification-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.conversation-item,
-.notification-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  background: linear-gradient(135deg, var(--bg-accent) 0%, var(--bg-card) 100%);
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-}
-
-.conversation-item.unread {
-  background: linear-gradient(135deg, var(--bg-unread) 0%, var(--bg-card) 100%);
-  border-color: var(--border-color-hover);
-}
-
-.notification-item.unread {
-  background: linear-gradient(135deg, var(--bg-unread) 0%, var(--bg-card) 100%);
-  border-color: var(--border-color-hover);
-}
-
-.notification-item.important {
-  background: linear-gradient(135deg, var(--bg-important) 0%, var(--bg-card) 100%);
-  border-color: #ffc107;
-}
-
-.conversation-item:hover,
-.notification-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px var(--shadow-medium);
-  border-color: var(--border-color-hover);
-}
-
-.sender-info {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex: 1;
-}
-
-.sender-avatar {
-  position: relative;
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #A3D1C6 0%, #B3D8A8 100%);
-  color: var(--text-accent);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 1.2rem;
-  flex-shrink: 0;
-  box-shadow: 0 4px 16px var(--shadow-light);
-}
-
-.message-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.message-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.sender-name {
   font-weight: 700;
-  color: var(--text-accent);
-  margin: 0;
-  font-size: 1.1rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  min-width: 20px;
+  text-align: center;
 }
 
-.message-indicators {
+.unread-indicator {
+  position: relative;
+}
+
+.unread-count {
+  background: #dc3545;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.teacher-card-right {
+  position: relative;
+}
+
+.options-btn {
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
+  cursor: pointer;
+  color: #6c757d;
+  transition: all 0.2s ease;
+}
+.dark .options-btn {
+  border-color: #495057;
+  color: #adb5bd;
 }
 
-.unread-dot {
-  width: 8px;
-  height: 8px;
-  background: var(--text-accent);
-  border-radius: 50%;
-  flex-shrink: 0;
+.options-btn:hover {
+  background: #e9ecef;
+  color: #495057;
+}
+.dark .options-btn:hover {
+  background: #495057;
+  color: #ffffff;
 }
 
-.message-time {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  font-weight: 500;
+.teacher-card-body {
+  margin-top: 0.5rem;
 }
 
 .last-message {
-  font-size: 0.95rem;
-  color: var(--text-secondary);
+  font-size: 0.85rem;
+  color: #495057;
+  font-style: italic;
   margin: 0;
   line-height: 1.4;
   display: -webkit-box;
@@ -2449,64 +2204,108 @@ onUnmounted(() => {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-
-.message-options-container {
-  position: relative;
-  z-index: 20;
+.dark .last-message {
+  color: #ced4da;
 }
 
-.options-btn {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 0.5rem;
-  transition: color 0.2s ease;
-}
-
-.options-btn:hover {
-  color: var(--text-accent);
-}
-
-.options-menu {
+.options-dropdown {
   position: absolute;
   top: 100%;
   right: 0;
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  box-shadow: 0 8px 24px var(--shadow-medium);
-  padding: 0.5rem;
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 150px;
+  overflow: hidden;
+}
+.dark .options-dropdown {
+  background: #2c3135;
+  border-color: #495057;
+}
+
+.dropdown-item {
   display: flex;
-  flex-direction: column;
-  width: 200px;
-  z-index: 9999;
-  margin-top: 10px;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  color: #495057;
+  font-size: 0.875rem;
+  transition: background-color 0.2s ease;
+}
+.dark .dropdown-item {
+  color: #ffffff;
 }
 
-.options-menu a {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1rem;
-    color: var(--text-secondary);
-    text-decoration: none;
-    border-radius: 8px;
-    transition: background-color 0.2s ease, color 0.2s ease;
+.dropdown-item:hover {
+  background: #f8f9fa;
+}
+.dark .dropdown-item:hover {
+  background: #495057;
 }
 
-.options-menu a:hover {
-    background-color: var(--bg-accent);
-    color: var(--text-accent);
+.dropdown-item.delete-option {
+  color: #dc3545;
+}
+.dropdown-item.delete-option:hover {
+  background: #fee;
+}
+.dark .dropdown-item.delete-option:hover {
+  background: rgba(220, 53, 69, 0.1);
 }
 
-.options-menu a.delete-option {
-    color: #ff6b6b;
+.teacher-card-body {
+  margin-top: 1rem;
 }
 
-.options-menu a.delete-option:hover {
-    background-color: rgba(255, 107, 107, 0.1);
-    color: #ff6b6b;
+.teacher-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 0.25rem;
+}
+.dark .teacher-name {
+  color: #ffffff;
+}
+
+.teacher-email {
+  font-size: 0.875rem;
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+}
+.dark .teacher-email {
+  color: #adb5bd;
+}
+
+.last-message {
+  font-size: 0.875rem;
+  color: #495057;
+  font-style: italic;
+}
+.dark .last-message {
+  color: #ced4da;
+}
+
+/* Notifications */
+.notifications-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 12px;
+  border: 2px solid #e9ecef;
+}
+.dark .notifications-actions {
+  background: #23272b;
+  border-color: #495057;
 }
 
 .notification-filters {
@@ -2516,111 +2315,158 @@ onUnmounted(() => {
 
 .filter-btn {
   padding: 0.5rem 1rem;
-  background: transparent;
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  color: var(--text-muted);
+  border: 1px solid #e9ecef;
+  background: white;
+  color: #6c757d;
+  border-radius: 8px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
 }
+.dark .filter-btn {
+  background: #2c3135;
+  border-color: #495057;
+  color: #adb5bd;
+}
 
 .filter-btn:hover {
-  background: var(--bg-accent);
+  border-color: #A3D1C6;
+}
+.dark .filter-btn:hover {
+  border-color: #20c997;
 }
 
 .filter-btn.active {
-  background: var(--text-accent);
-  border-color: var(--text-accent);
-  color: var(--text-inverse);
-  box-shadow: 0 4px 12px var(--shadow-medium);
+  background: #A3D1C6;
+  border-color: #A3D1C6;
+  color: white;
+}
+.dark .filter-btn.active {
+  background: #20c997;
+  border-color: #20c997;
 }
 
-.notification-header {
+.action-btn {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #A3D1C6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.dark .action-btn {
+  background: #20c997;
+}
+
+.action-btn:hover {
+  background: #87C5B8;
+}
+.dark .action-btn:hover {
+  background: #17a085;
+}
+
+.notifications-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.notification-card {
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.dark .notification-card {
+  background: #23272b;
+  border-color: #495057;
+}
+
+.notification-card:hover {
+  border-color: #A3D1C6;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(163, 209, 198, 0.15);
+}
+.dark .notification-card:hover {
+  border-color: #20c997;
+  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.15);
+}
+
+.notification-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 1rem;
 }
 
 .notification-icon {
-  color: var(--text-accent);
-  background: var(--bg-accent);
-  padding: 8px;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #A3D1C6 0%, #87C5B8 100%);
   border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+.dark .notification-icon {
+  background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
 }
 
-.notification-indicators {
+.notification-card-right {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.priority-dot {
+.notification-count {
+  background: #A3D1C6;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  min-width: 24px;
+  text-align: center;
+}
+.dark .notification-count {
+  background: #20c997;
+}
+
+.unread-dot {
   width: 8px;
   height: 8px;
-  background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%);
+  background: #dc3545;
   border-radius: 50%;
-  box-shadow: 0 0 8px rgba(255, 107, 107, 0.3);
 }
 
-.unread-label {
-  background: #3D8D7A;
-  color: var(--text-inverse);
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.25rem 0.75rem;
-  border-radius: 8px;
-}
-
-.notif-title {
-  font-weight: 700;
-  color: #3D8D7A;
-  margin: 0 0 0.5rem 0;
-  font-size: 1.1rem;
-}
-
-.notif-body {
-  font-size: 0.95rem;
-  color: #555;
-  margin: 0;
-  line-height: 1.5;
-}
-
-.notification-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.notification-card-body {
   margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(61, 141, 122, 0.05);
 }
 
-.notif-timestamp {
-  font-size: 0.8rem;
-  color: #999;
-  font-weight: 500;
+.notification-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+.dark .notification-title {
+  color: #ffffff;
 }
 
-.dismiss-btn {
-  width: 28px;
-  height: 28px;
-  background: rgba(255, 107, 107, 0.1);
-  border: none;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ff6b6b;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  opacity: 0.7;
+.notification-teacher {
+  font-size: 0.875rem;
+  color: #6c757d;
 }
-
-.dismiss-btn:hover {
-  background: rgba(255, 107, 107, 0.2);
-  opacity: 1;
-  transform: scale(1.1);
+.dark .notification-teacher {
+  color: #adb5bd;
 }
 
 /* Modal Styles */
@@ -2628,613 +2474,187 @@ onUnmounted(() => {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  right: 0;
+  bottom: 0;
   background: rgba(0, 0, 0, 0.6);
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   z-index: 1000;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(4px);
 }
 
 .modal-content {
-  background: var(--bg-card);
+  background: white;
   border-radius: 16px;
-  width: 95%;
-  max-width: 500px;
-  height: 85vh;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   display: flex;
   flex-direction: column;
-  box-shadow: 0 8px 32px var(--shadow-color);
-  overflow: hidden;
-  border: 2px solid var(--border-color);
+}
+.dark .modal-content {
+  background: #23272b;
+  border: 1px solid #495057;
 }
 
 .modal-header {
-  padding: 1rem 1.25rem;
-  background: var(--text-accent);
-  color: white;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e9ecef;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--border-color);
+  background: #f8f9fa;
+}
+.dark .modal-header {
+  background: #2c3135;
+  border-bottom-color: #495057;
 }
 
 .header-info {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  flex: 1;
+  gap: 0.875rem;
 }
 
 .teacher-avatar-chat {
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.2);
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #A3D1C6 0%, #87C5B8 100%);
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-weight: 600;
-  font-size: 1.1rem;
-  flex-shrink: 0;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  font-size: 1rem;
+}
+.dark .teacher-avatar-chat {
+  background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
 }
 
 .header-details {
-  flex: 1;
-  min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-title {
-  font-size: 1rem;
+  font-size: 1.25rem;
   font-weight: 600;
-  margin: 0 0 0.2rem 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: #2c3e50;
+  margin: 0;
+}
+.dark .modal-title {
+  color: #ffffff;
 }
 
 .subject-info {
   font-size: 0.875rem;
-  opacity: 0.9;
-  font-weight: 400;
+  color: #6c757d;
+}
+.dark .subject-info {
+  color: #adb5bd;
 }
 
 .close-btn {
-  background: rgba(255, 255, 255, 0.1);
+  width: 36px;
+  height: 36px;
+  background: #e9ecef;
   border: none;
-  color: white;
-  cursor: pointer;
-  padding: 0.5rem;
   border-radius: 8px;
-  transition: background-color 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  color: #6c757d;
+  transition: all 0.2s ease;
+}
+.dark .close-btn {
+  background: #495057;
+  color: #adb5bd;
 }
 
 .close-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.header-info {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.modal-header .teacher-avatar {
-  background: rgba(255, 255, 255, 0.3);
-  width: 48px;
-  height: 48px;
-  box-shadow: none;
-}
-
-.modal-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin: 0;
+  background: #dc3545;
+  color: white;
 }
 
 .modal-body {
   flex: 1;
-  padding: 1rem;
+  padding: 1.5rem;
   overflow-y: auto;
-  background: var(--bg-accent);
 }
 
 .messages-container {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding: 0.5rem;
+  gap: 1rem;
+  max-height: 400px;
+  overflow-y: auto;
 }
 
 .message-bubble {
-  max-width: 75%;
-  padding: 0.75rem 1rem;
+  max-width: 80%;
+  padding: 0.875rem 1.125rem;
   border-radius: 16px;
-  line-height: 1.4;
-  position: relative;
-  font-size: 0.9rem;
-  box-shadow: 0 1px 4px var(--shadow-color);
+  word-wrap: break-word;
 }
 
 .message-bubble.received {
-  background: var(--bg-card);
-  color: var(--text-primary);
   align-self: flex-start;
-  border: 1px solid var(--border-color);
+  background: #e9ecef;
+  color: #495057;
   border-bottom-left-radius: 4px;
-  box-shadow: 0 1px 4px var(--shadow-color);
+}
+.dark .message-bubble.received {
+  background: #495057;
+  color: #ffffff;
 }
 
 .message-bubble.sent {
-  background: var(--text-accent);
-  color: white;
   align-self: flex-end;
+  background: #A3D1C6;
+  color: white;
   border-bottom-right-radius: 4px;
-  box-shadow: 0 2px 8px var(--shadow-color);
+}
+.dark .message-bubble.sent {
+  background: #20c997;
 }
 
 .message-text {
-  margin: 0;
-  font-weight: 400;
-  font-size: 1rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
 }
 
 .message-time {
-  display: block;
   font-size: 0.75rem;
-  margin-top: 0.5rem;
-  color: rgba(0, 0, 0, 0.4);
+  opacity: 0.7;
+  margin-top: 0.25rem;
   text-align: right;
 }
 
 .message-bubble.sent .message-time {
-  color: rgba(255, 255, 255, 0.7);
+  text-align: left;
 }
 
-.modal-footer {
-  padding: 1rem;
-  border-top: 1px solid var(--border-color);
-  background: var(--bg-card);
-}
-
-.message-input-area {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.attach-btn {
-  background: transparent;
-  border: 1px solid var(--border-color);
-  color: var(--text-accent);
-  padding: 0.6rem;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  outline: none;
-}
-
-.attach-btn:hover {
-  background: var(--bg-accent);
-  color: var(--text-accent);
-  border-color: var(--text-accent);
-  box-shadow: 0 0 0 2px var(--shadow-color);
-}
-
-.attach-btn:focus {
-  background: var(--bg-accent);
-  color: var(--text-accent);
-  outline: 2px solid var(--text-accent);
-  box-shadow: 0 0 0 3px var(--shadow-color);
-}
-
-.message-input {
-  flex: 1;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  font-size: 0.9rem;
-  background: var(--bg-card);
-  color: var(--text-primary);
-  font-family: 'Inter', sans-serif;
-  transition: border-color 0.2s ease;
-}
-
-.message-input:focus {
-  outline: none;
-  border-color: var(--text-accent);
-  box-shadow: 0 0 0 3px var(--shadow-color);
-}
-
-.send-btn {
-  background: var(--text-accent);
-  color: white;
-  border: none;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.send-btn:hover {
-  background: #2f6b5c;
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px var(--shadow-color);
-}
-
-.send-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* Add new styles for the updated layout */
-.subject-filter {
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  background: var(--bg-card);
-  color: var(--text-primary);
-  font-size: 0.9rem;
-  min-width: 150px;
-}
-
-.teachers-by-subject {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.subject-group {
-  background: var(--bg-accent);
-  border-radius: 12px;
-  padding: 1.2rem;
-  border: 1px solid var(--border-color);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.subject-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.9rem;
-  padding-bottom: 0.8rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.subject-name {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--text-accent);
-  margin: 0;
-  letter-spacing: -0.02em;
-}
-
-.subject-code {
-  background: #64748b;
-  color: white;
-  padding: 0.25rem 0.7rem;
-  border-radius: 8px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.teachers-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.teacher-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.2rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.teacher-item:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border-color: #cbd5e1;
-}
-
-.teacher-item.has-unread {
-  border-left: 4px solid var(--text-accent);
-  background: var(--bg-unread);
-}
-
-.teacher-info {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex: 1;
-}
-
-.teacher-avatar {
-  width: 42px;
-  height: 42px;
-  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
-  color: #475569;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 0.95rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 2px solid #f8fafc;
-}
-
-.dark .teacher-avatar {
-  background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
-  color: #e5e7eb;
-  border: 2px solid #1f2937;
-}
-
-.teacher-details {
-  flex: 1;
-  min-width: 0;
-}
-
-.teacher-name {
-  font-weight: 600;
-  color: var(--text-accent);
-  margin: 0 0 0.1rem 0;
-  font-size: 0.95rem;
-  letter-spacing: -0.01em;
-}
-
-.message-status {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.3rem;
-}
-
-.unread-status {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.15rem;
-}
-
-.unread-badge {
-  background: var(--text-accent);
-  color: var(--text-inverse);
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.7rem;
-  font-weight: 600;
-}
-
-.unread-text {
-  font-size: 0.75rem;
-  color: var(--text-accent);
-  font-weight: 600;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.last-time {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-}
-
-.chat-icon {
-  color: var(--text-accent);
-  opacity: 0.7;
-  transition: opacity 0.2s ease;
-}
-
-.teacher-item:hover .chat-icon {
-  opacity: 1;
-}
-
-.notification-source {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.source-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.source-name {
-  font-weight: 600;
-  color: var(--text-accent);
-  font-size: 0.9rem;
-}
-
-.source-subject {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-}
-
-.notification-item.class-announcement {
-  border-left: 4px solid #4A9B8E;
-  background: linear-gradient(135deg, rgba(74, 155, 142, 0.05) 0%, var(--bg-card) 100%);
-}
-
-.header-details {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.subject-info {
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.8);
-  font-weight: 500;
-}
-
-/* Archive and Options Styling */
-.options-wrapper {
-  position: relative;
-}
-
-.options-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  box-shadow: 0 8px 24px var(--shadow-medium);
-  padding: 0.5rem;
-  display: flex;
-  flex-direction: column;
-  min-width: 180px;
-  z-index: 9999;
-  margin-top: 8px;
-}
-
-.options-menu a {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  color: var(--text-secondary);
-  text-decoration: none;
-  border-radius: 8px;
-  transition: background-color 0.2s ease, color 0.2s ease;
-  font-size: 0.9rem;
-}
-
-.options-menu a:hover {
-  background-color: var(--bg-accent);
-  color: var(--text-accent);
-}
-
-.options-menu a.delete-option {
-  color: #ff6b6b;
-}
-
-.options-menu a.delete-option:hover {
-  background-color: rgba(255, 107, 107, 0.1);
-  color: #ff6b6b;
-}
-
-/* File Upload and Attachments */
-.file-preview {
-  padding: 1rem;
-  background: var(--bg-accent);
-  border-top: 1px solid var(--border-color);
-}
-
-.preview-content {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  background: var(--bg-card);
-  padding: 0.75rem;
-  border-radius: 12px;
-  position: relative;
-}
-
-.preview-image {
-  max-width: 100px;
-  max-height: 100px;
-  border-radius: 8px;
-  object-fit: cover;
-}
-
-.preview-file {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--text-secondary);
-  flex: 1;
-}
-
-.preview-file svg {
-  color: var(--text-accent);
-}
-
-.remove-file-btn {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  background: rgba(255, 107, 107, 0.9);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.remove-file-btn:hover {
-  background: #ff5252;
-  transform: scale(1.1);
-}
-
-.attach-btn {
-  background: var(--bg-accent);
-  color: var(--text-accent);
-  border: 1px solid var(--border-color);
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.attach-btn:hover {
-  background: var(--bg-accent-hover);
-  transform: scale(1.05);
-}
-
+/* Message Attachments */
 .message-attachments {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
   margin-bottom: 0.5rem;
 }
 
 .attachment {
-  display: inline-block;
+  margin-bottom: 0.5rem;
 }
 
 .attachment-image {
-  max-width: 250px;
-  max-height: 250px;
-  border-radius: 12px;
+  max-width: 200px;
+  max-height: 150px;
+  border-radius: 8px;
   cursor: pointer;
+  object-fit: cover;
+  border: 1px solid rgba(0, 0, 0, 0.1);
   transition: transform 0.2s ease;
 }
 
@@ -3243,529 +2663,196 @@ onUnmounted(() => {
 }
 
 .attachment-file {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  color: inherit;
-}
-
-.message-bubble.sent .attachment-file {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.message-bubble.received .attachment-file {
+  padding: 0.5rem;
   background: rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #495057;
+  max-width: 250px;
+}
+.dark .attachment-file {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
 }
 
 .attachment-file:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: translateY(-1px);
+  background: rgba(0, 0, 0, 0.1);
+}
+.dark .attachment-file:hover {
+  background: rgba(255, 255, 255, 0.15);
 }
 
-.attachment-file span {
-  font-size: 0.9rem;
-}
-
-/* Message Status and Read Receipts */
-.message-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-}
-
-.message-status {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.message-status svg {
-  width: 14px;
-  height: 14px;
-}
-
-.read-time {
-  font-size: 0.7rem;
-  margin-left: 0.25rem;
-}
-
-.message-bubble.sent .message-status {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.message-bubble.received .message-status {
-  color: rgba(0, 0, 0, 0.4);
-}
-
-/* Broadcast Groups */
-.broadcast-groups {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.broadcast-group {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
+.modal-footer {
   padding: 1.5rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  border-top: 1px solid #e9ecef;
+  background: #f8f9fa;
+}
+.dark .modal-footer {
+  background: #2c3135;
+  border-top-color: #495057;
 }
 
-.broadcast-group:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px var(--shadow-medium);
-  border-color: var(--border-color-hover);
-}
-
-.broadcast-group-header {
+.message-input-area {
   display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.broadcast-icon {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #4A9B8E 0%, #3D8D7A 100%);
-  color: white;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.broadcast-icon-large {
-  width: 56px;
-  height: 56px;
-  background: linear-gradient(135deg, #4A9B8E 0%, #3D8D7A 100%);
-  color: white;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.broadcast-info {
-  flex: 1;
-}
-
-.broadcast-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--text-accent);
-  margin: 0 0 0.25rem 0;
-}
-
-.broadcast-teacher {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-.broadcast-count {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.count-badge {
-  background: var(--text-accent);
-  color: var(--text-inverse);
-  font-weight: 600;
-  font-size: 0.85rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  min-width: 28px;
-  text-align: center;
-}
-
-.unread-indicator {
-  width: 10px;
-  height: 10px;
-  background: #ff6b6b;
-  border-radius: 50%;
-  box-shadow: 0 0 8px rgba(255, 107, 107, 0.5);
-}
-
-/* Broadcast List Modal */
-.broadcast-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.broadcast-item {
-  background: var(--bg-accent);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 1.5rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.broadcast-item:hover {
-  background: var(--bg-card);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px var(--shadow-light);
-}
-
-.broadcast-item.unread {
-  background: var(--bg-unread);
-  border-left: 4px solid var(--text-accent);
-}
-
-.broadcast-item-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.75rem;
-}
-
-.broadcast-item-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--text-accent);
-  margin: 0;
-}
-
-.broadcast-item-body {
-  font-size: 0.95rem;
-  color: var(--text-secondary);
-  line-height: 1.5;
-  margin: 0 0 0.75rem 0;
-}
-
-.broadcast-item-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--border-color);
-}
-
-.broadcast-item-time {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-}
-
-.attachment-indicator {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.8rem;
-  color: var(--text-accent);
-  background: rgba(61, 141, 122, 0.1);
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-weight: 500;
-}
-
-/* Teacher Email Styling */
-.teacher-email {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  margin: 0;
-  opacity: 0.8;
-}
-
-/* No Messages State */
-.no-messages {
-  text-align: center;
-  padding: 3rem 2rem;
-  color: var(--text-muted);
-}
-
-.no-messages p {
-  font-size: 1rem;
-  margin: 0;
-}
-
-/* ================================
-   ANNOUNCEMENT DETAIL MODAL
-   ================================ */
-
-.announcement-detail-modal {
-  max-width: 800px;
-  width: 95%;
-  height: 85vh;
-}
-
-.announcement-detail_body {
-  padding: 2rem;
-}
-
-.announcement-content {
-  max-width: 100%;
-  margin: 0 auto;
-}
-
-.announcement-header {
-  margin-bottom: 2rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 2px solid var(--border-color);
-}
-
-.announcement-title {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: var(--text-accent);
-  margin: 0 0 1rem 0;
-  line-height: 1.3;
-}
-
-.announcement-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.teacher-info {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.teacher-name {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.announcement-date {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.9rem;
-  color: var(--text-muted);
-}
-
-.announcement-body {
-  margin-bottom: 2rem;
-}
-
-.announcement-text {
-  font-size: 1.1rem;
-  line-height: 1.6;
-  color: var(--text-primary);
-  margin: 0;
-  white-space: pre-wrap;
-}
-
-.announcement-attachments {
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--border-color);
-}
-
-.attachments-title {
-  display: flex;
-  align-items: center;
   gap: 0.75rem;
-  margin-bottom: 1.5rem;
-  color: var(--text-accent);
-  font-size: 1.2rem;
-  font-weight: 600;
+  align-items: flex-end;
 }
 
-.attachments-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-}
-
-.attachment-item {
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  overflow: hidden;
-  transition: all 0.2s ease;
-  background: var(--bg-card);
-}
-
-.attachment-item:hover {
-  border-color: var(--border-color-hover);
-  box-shadow: 0 4px 12px var(--shadow-light);
-  transform: translateY(-2px);
-}
-
-.attachment-image-container {
-  position: relative;
-  overflow: hidden;
-}
-
-.attachment-image-large {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
+.attach-btn {
+  width: 40px;
+  height: 40px;
+  background: #e9ecef;
+  border: none;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  transition: transform 0.2s ease;
+  color: #6c757d;
+  transition: all 0.2s ease;
+}
+.dark .attach-btn {
+  background: #495057;
+  color: #adb5bd;
 }
 
-.attachment-image-large:hover {
+.attach-btn:hover {
+  background: #A3D1C6;
+  color: white;
+}
+.dark .attach-btn:hover {
+  background: #20c997;
+}
+
+.attach-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(163, 209, 198, 0.3);
+}
+.dark .attach-btn:focus {
+  box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.3);
+}
+
+.message-input {
+  flex: 1;
+  padding: 0.875rem 1rem;
+  border: 2px solid #e9ecef;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  resize: none;
+  min-height: 40px;
+  max-height: 120px;
+}
+.dark .message-input {
+  background: #2c3135;
+  border-color: #495057;
+  color: #ffffff;
+}
+
+.message-input:focus {
+  outline: none;
+  border-color: #A3D1C6;
+  box-shadow: 0 0 0 3px rgba(163, 209, 198, 0.1);
+}
+.dark .message-input:focus {
+  border-color: #20c997;
+  box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.1);
+}
+
+.send-btn {
+  width: 40px;
+  height: 40px;
+  background: #A3D1C6;
+  border: none;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+  transition: all 0.2s ease;
+}
+.dark .send-btn {
+  background: #20c997;
+}
+
+.send-btn:hover {
+  background: #87C5B8;
   transform: scale(1.05);
 }
-
-.attachment-overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
-  padding: 1rem;
-  display: flex;
-  gap: 0.5rem;
-  opacity: 0;
-  transition: opacity 0.2s ease;
+.dark .send-btn:hover {
+  background: #17a085;
 }
 
-.attachment-image-container:hover .attachment-overlay {
-  opacity: 1;
+.send-btn:disabled {
+  background: #e9ecef;
+  cursor: not-allowed;
+  transform: none;
+}
+.dark .send-btn:disabled {
+  background: #495057;
 }
 
-.view-btn,
-.download-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: rgba(255, 255, 255, 0.9);
-  color: var(--text-accent);
-  border: none;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.view-btn:hover,
-.download-btn:hover {
-  background: white;
-  transform: translateY(-1px);
-}
-
-.attachment-file-large {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.5rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background: var(--bg-card);
-}
-
-.attachment-file-large:hover {
-  background: var(--bg-accent);
-}
-
-.file-icon {
-  width: 56px;
-  height: 56px;
-  background: var(--bg-accent);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-accent);
-  flex-shrink: 0;
-}
-
-.file-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  min-width: 0;
-}
-
-.file-name {
-  font-weight: 600;
-  color: var(--text-primary);
-  word-break: break-word;
-  font-size: 1rem;
-}
-
-.file-size {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-}
-
-.download-file-btn {
-  background: var(--text-accent);
-  color: white;
-  border: none;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.download-file-btn:hover {
-  background: #2f7063;
-  transform: scale(1.1);
-}
-
-.announcement-icon {
-  width: 56px;
-  height: 56px;
-  background: linear-gradient(135deg, #4A9B8E 0%, #3D8D7A 100%);
-  color: white;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.close-detail-btn {
-  background: var(--text-accent);
-  color: white;
-  border: none;
-  padding: 0.75rem 2rem;
-  border-radius: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.close-detail-btn:hover {
-  background: #2f7063;
-  transform: translateY(-1px);
-}
-
-/* Responsive adjustments */
+/* Responsive Design */
 @media (max-width: 768px) {
-  .announcement-detail-modal {
-    width: 98%;
-    height: 90vh;
-  }
-  
-  .announcement-detail_body {
+  .messages-container {
     padding: 1rem;
   }
   
-  .attachments-grid {
+  .controls-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-box {
+    min-width: auto;
+  }
+  
+  .filter-tabs {
+    justify-content: center;
+  }
+  
+  .teachers-cards {
     grid-template-columns: 1fr;
   }
   
-  .announcement-meta {
-    flex-direction: column;
-    align-items: flex-start;
+  .notifications-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .modal-content {
+    width: 95%;
+    margin: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .section-header-card {
+    padding: 1.5rem;
+  }
+  
+  .section-header-left {
+    gap: 1rem;
+  }
+  
+  .section-header-icon {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .section-header-title {
+    font-size: 1.5rem;
+  }
+  
+  .filter-tabs {
+    flex-wrap: wrap;
+  }
+  
+  .teacher-card {
+    padding: 1rem;
   }
 }
 </style>
