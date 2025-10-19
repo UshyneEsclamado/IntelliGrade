@@ -2,117 +2,115 @@
   <div class="page-container" :class="{ 'dark-mode': isDarkMode }">
     <div class="main-wrapper">
       <!-- Header Section -->
-      <div class="hero-header card-box">
+      <div class="header-card">
         <div class="header-content">
-          <div class="header-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11.03L21.54,9.37C21.73,9.22 21.78,8.95 21.67,8.75L19.67,5.27C19.56,5.08 19.3,5.03 19.1,5.12L16.9,6C16.5,5.65 16.08,5.36 15.61,5.1L15.2,2.83C15.15,2.56 14.9,2.33 14.62,2.33L9.38,2.33C9.1,2.33 8.85,2.56 8.8,2.83L8.39,5.09C7.92,5.34 7.5,5.65 7.1,6L4.9,5.12C4.7,5.03 4.44,5.08 4.33,5.27L2.33,8.75C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11.03C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.33,15.25L4.33,18.73C4.44,18.92 4.7,18.97 4.9,18.88L7.1,18C7.5,18.35 7.92,18.64 8.39,18.9L8.8,21.17C8.85,21.44 9.1,21.67 9.38,21.67L14.62,21.67C14.9,21.67 15.15,21.44 15.2,21.17L15.61,18.91C16.08,18.66 16.5,18.35 16.9,18L19.1,18.88C19.3,18.97 19.56,18.92 19.67,18.73L21.67,15.25C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" />
-            </svg>
+          <div class="header-left">
+            <div class="header-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11.03L21.54,9.37C21.73,9.22 21.78,8.95 21.67,8.75L19.67,5.27C19.56,5.08 19.3,5.03 19.1,5.12L16.9,6C16.5,5.65 16.08,5.36 15.61,5.1L15.2,2.83C15.15,2.56 14.9,2.33 14.62,2.33L9.38,2.33C9.1,2.33 8.85,2.56 8.8,2.83L8.39,5.09C7.92,5.34 7.5,5.65 7.1,6L4.9,5.12C4.7,5.03 4.44,5.08 4.33,5.27L2.33,8.75C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11.03C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.33,15.25L4.33,18.73C4.44,18.92 4.7,18.97 4.9,18.88L7.1,18C7.5,18.35 7.92,18.64 8.39,18.9L8.8,21.17C8.85,21.44 9.1,21.67 9.38,21.67L14.62,21.67C14.9,21.67 15.15,21.44 15.2,21.17L15.61,18.91C16.08,18.66 16.5,18.35 16.9,18L19.1,18.88C19.3,18.97 19.56,18.92 19.67,18.73L21.67,15.25C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" />
+              </svg>
+            </div>
+            <div>
+              <h1 class="header-title">Settings</h1>
+              <p class="header-subtitle">Manage your account, profile, and app preferences</p>
+            </div>
           </div>
-          <h1 class="page-title">Settings</h1>
-          <p class="page-subtitle">Manage your account, profile, and app preferences.</p>
         </div>
       </div>
       
-      <!-- Settings Grid -->
-      <section class="settings-grid">
+      <!-- Main Content -->
+      <div class="content-card">
         <!-- Account & Profile Card -->
-        <div class="card-box settings-card">
-          <h2>
+        <div class="settings-card">
+          <h2 class="section-title">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="section-icon">
               <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
             </svg> 
             Account & Profile
           </h2>
-          <p class="section-subtitle">Update your personal information and profile settings.</p>
-          <ul class="settings-list">
-            <li>
-              <div class="setting-item">
-                <span>Update Profile Info</span>
-                <button @click="openProfileModal" class="action-btn">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-                  </svg>
-                </button>
-              </div>
-            </li>
-            <li>
-              <div class="setting-item">
-                <span>Change Password</span>
-                <button @click="openPasswordModal" class="action-btn">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                    <circle cx="12" cy="16" r="1"></circle>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                  </svg>
-                </button>
-              </div>
-            </li>
-          </ul>
+          <p class="section-subtitle">Update your personal information and profile settings</p>
+          <div class="settings-list">
+            <div class="setting-item">
+              <span>Update Profile Info</span>
+              <button @click="openProfileModal" class="action-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                </svg>
+              </button>
+            </div>
+            <div class="setting-item">
+              <span>Change Password</span>
+              <button @click="openPasswordModal" class="action-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <circle cx="12" cy="16" r="1"></circle>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
         
         <!-- App Preferences Card -->
-        <div class="card-box settings-card">
-          <h2>
+        <div class="settings-card">
+          <h2 class="section-title">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="section-icon">
               <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
             </svg> 
             App Preferences
           </h2>
-          <p class="section-subtitle">Customize the app's look and feel.</p>
-          <ul class="settings-list">
-            <li>
-              <div class="setting-item">
-                <span>Dark Mode</span>
-                <label class="switch">
-                  <input type="checkbox" v-model="isDarkMode" @change="handleDarkModeToggle">
-                  <span class="slider round"></span>
-                </label>
-              </div>
-            </li>
-          </ul>
+          <p class="section-subtitle">Customize the app's look and feel</p>
+          <div class="settings-list">
+            <div class="setting-item">
+              <span>Dark Mode</span>
+              <label class="switch">
+                <input type="checkbox" v-model="isDarkMode" @change="handleDarkModeToggle">
+                <span class="slider round"></span>
+              </label>
+            </div>
+          </div>
         </div>
 
         <!-- Privacy & Legal Card -->
-        <div class="card-box settings-card">
-          <h2>
+        <div class="settings-card">
+          <h2 class="section-title">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="section-icon">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg> 
             Privacy & Legal
           </h2>
-          <p class="section-subtitle">Understand our policies and manage your data.</p>
-          <ul class="settings-list">
-            <li>
-              <div class="setting-item">
-                <span>Privacy Policy</span>
-                <button @click="showPrivacyPolicy" class="action-btn">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="12" y1="16" x2="12" y2="12"/>
-                    <line x1="12" y1="8" x2="12.01" y2="8"/>
-                  </svg>
-                </button>
-              </div>
-            </li>
-            <li>
-              <div class="setting-item">
-                <span>Terms of Service</span>
-                <button @click="showTermsOfService" class="action-btn">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="12" y1="16" x2="12" y2="12"/>
-                    <line x1="12" y1="8" x2="12.01" y2="8"/>
-                  </svg>
-                </button>
-              </div>
-            </li>
-          </ul>
+          <p class="section-subtitle">Understand our policies and manage your data</p>
+          <div class="settings-list">
+            <div class="setting-item">
+              <span>Privacy Policy</span>
+              <button @click="showPrivacyPolicy" class="action-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                  <polyline points="10 9 9 9 8 9" />
+                </svg>
+              </button>
+            </div>
+            <div class="setting-item">
+              <span>Terms of Service</span>
+              <button @click="showTermsOfService" class="action-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                  <polyline points="10 9 9 9 8 9" />
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- Danger Zone Card -->
-        <div class="card-box settings-card danger-zone">
-          <h2>
+        <div class="settings-card danger-zone">
+          <h2 class="section-title">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="section-icon">
               <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
               <line x1="12" y1="9" x2="12" y2="13"/>
@@ -120,33 +118,23 @@
             </svg> 
             Danger Zone
           </h2>
-          <p class="section-subtitle">Sensitive actions that cannot be undone.</p>
-          <ul class="settings-list">
-            <li>
-              <div class="setting-item">
-                <span class="danger-text">Delete Account</span>
-                <button @click="openDeleteAccountModal" class="action-btn danger-btn">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 6l3 0l0 15a2 2 0 0 0 2 2l8 0a2 2 0 0 0 2 -2l0 -15l3 0"/>
-                    <path d="M14 10l0 5"/>
-                    <path d="M10 10l0 5"/>
-                    <path d="M18 6l-12 0"/>
-                    <path d="M10 3l4 0l0 3l-4 0l0 -3z"/>
-                  </svg>
-                </button>
-              </div>
-            </li>
-          </ul>
+          <p class="section-subtitle">Sensitive actions that cannot be undone</p>
+          <div class="settings-list">
+            <div class="setting-item">
+              <span class="danger-text">Delete Account</span>
+              <button @click="openDeleteAccountModal" class="action-btn danger-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 6l3 0l0 15a2 2 0 0 0 2 2l8 0a2 2 0 0 0 2 -2l0 -15l3 0"/>
+                  <path d="M14 10l0 5"/>
+                  <path d="M10 10l0 5"/>
+                  <path d="M18 6l-12 0"/>
+                  <path d="M10 3l4 0l0 3l-4 0l0 -3z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
-      </section>
-      
-      <!-- About Section -->
-      <section class="about-section">
-        <div class="about-card card-box">
-          <h2>IntelliGrade</h2>
-          <p class="copyright-text">© 2025 IntelliGrade. All Rights Reserved.</p>
-        </div>
-      </section>
+      </div>
     </div>
   </div>
 
@@ -344,31 +332,23 @@
     </div>
   </div>
 
-  <!-- Delete Account Confirmation Modal -->
+  <!-- Delete Account Confirmation Modal (Settings.vue Style) -->
   <div v-if="showDeleteModal" class="modal-overlay" @click="showDeleteModal = false">
-    <div class="modal-content" @click.stop>
-      <div class="modal-header">
+    <div class="modal-content delete-modal" @click.stop>
+      <div class="modal-header delete-header">
         <h3>Delete Account</h3>
         <button @click="showDeleteModal = false" class="close-btn">×</button>
       </div>
       <div class="modal-body">
-        <div class="warning-box">
-          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-            <line x1="12" y1="9" x2="12" y2="13"/>
-            <line x1="12" y1="17" x2="12.01" y2="17"/>
-          </svg>
-          <h4>Are you absolutely sure?</h4>
-          <p>This action <strong>cannot be undone</strong>. This will permanently delete your account and remove all your data from our servers.</p>
-        </div>
+        <p class="delete-warning-text">This action cannot be undone. This will permanently delete your account and all associated data.</p>
         
         <div class="form-group">
-          <label>Type "DELETE" to confirm</label>
+          <label class="delete-label">Type DELETE to confirm:</label>
           <input 
             type="text" 
             v-model="deleteConfirmation" 
-            placeholder="Type DELETE"
-            class="form-input"
+            placeholder="TYPE DELETE TO CONFIRM"
+            class="form-input delete-input"
           >
         </div>
         
@@ -381,7 +361,7 @@
           class="btn-danger" 
           :disabled="deleteConfirmation !== 'DELETE' || isDeleting"
         >
-          {{ isDeleting ? 'Deleting...' : 'Delete Account' }}
+          {{ isDeleting ? 'Deleting...' : 'DELETE ACCOUNT' }}
         </button>
       </div>
     </div>
@@ -784,7 +764,7 @@ const deleteAccount = async () => {
     if (deleteProfileError) throw deleteProfileError;
 
     // Delete auth user (this should be the last step)
-    const { error: deleteAuthError } = await supabase.auth.admin.deleteUser(user.id);
+    await supabase.auth.admin.deleteUser(user.id);
     
     // Note: admin.deleteUser might not be available in client-side
     // You may need to call a server function or edge function for this
@@ -819,113 +799,315 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Base Styles */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* CSS Variables */
+:root {
+  --bg-primary: #FBFFE4;
+  --bg-card: white;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --text-accent: #3D8D7A;
+  --border-color: #A3D1C6;
+  --accent-color: #3D8D7A;
+  --accent-hover: #2f6b5c;
+  --success-color: #B3D8A8;
+  --danger-color: #dc3545;
+  --shadow-light: rgba(61, 141, 122, 0.1);
+}
+
+.dark {
+  --bg-primary: #1e2127;
+  --bg-card: #2a2e36;
+  --text-primary: #e5e7eb;
+  --text-secondary: #9ca3af;
+  --text-accent: #3D8D7A;
+  --border-color: #3D8D7A;
+  --accent-color: #3D8D7A;
+  --accent-hover: #2f6b5c;
+  --success-color: #22c55e;
+  --danger-color: #dc3545;
+  --shadow-light: rgba(0, 0, 0, 0.2);
+}
+
+/* Main Container */
 .page-container {
-  padding: 2rem 5%;
-  font-family: 'Inter', sans-serif;
   min-height: 100vh;
-  background: var(--bg-primary);
-  color: var(--primary-text-color);
-  transition: all 0.3s ease;
+  background: #FBFFE4;
+  padding: 1.5rem;
+  font-family: 'Inter', sans-serif;
+}
+
+.dark .page-container {
+  background: #181c20;
 }
 
 .main-wrapper {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
-  position: relative;
-  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.card-box {
-  background: var(--card-background);
-  backdrop-filter: blur(20px);
-  border: 1px solid var(--card-border-color);
-  border-radius: 28px;
-  padding: 2.5rem;
-  box-shadow: 
-    0 20px 60px rgba(61, 141, 122, 0.05),
-    0 8px 32px rgba(61, 141, 122, 0.03),
-    0 0 0 1px rgba(255, 255, 255, 0.3);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  color: var(--primary-text-color);
+/* Header Card */
+.header-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-/* Header Styles */
-.hero-header {
-  margin-bottom: 2rem;
-  text-align: center;
+.dark .header-card {
+  background: #23272b;
+  border: 1px solid #20c997;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
 
 .header-content {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  justify-content: space-between;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
 }
 
 .header-icon {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
-  border-radius: 24px;
+  width: 48px;
+  height: 48px;
+  background: var(--accent-color);
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.2);
-  animation: pulse 3s ease-in-out infinite;
+  flex-shrink: 0;
 }
 
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+.dark .header-icon {
+  background: var(--accent-color);
+  color: #FBFFE4;
 }
 
-.page-title {
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: var(--primary-text-color);
-  margin: 0;
-  letter-spacing: -0.02em;
-}
-
-.page-subtitle {
-  font-size: 1.2rem;
-  color: var(--secondary-text-color);
-  margin: 0;
-  max-width: 600px;
-}
-
-/* Settings Grid */
-.settings-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-}
-
-.settings-card {
-  padding: 2.5rem;
-}
-
-.settings-card h2 {
-  font-size: 1.8rem;
+.header-title {
+  font-size: 1.5rem;
   font-weight: 700;
-  color: var(--primary-text-color);
-  margin-bottom: 0.5rem;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+
+.dark .header-title {
+  color: #A3D1C6;
+}
+
+.header-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.dark .header-subtitle {
+  color: #A3D1C6;
+}
+
+/* Content Card */
+.content-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.dark .content-card {
+  background: #23272b;
+  border: 1px solid #20c997;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+/* Settings Cards */
+.settings-card {
+  padding: 1.25rem;
+  border: 1px solid #A3D1C6;
+  border-radius: 12px;
+  background: #FBFFE4;
+  transition: all 0.2s;
+}
+
+.dark .settings-card {
+  background: #23272b;
+  border: 1px solid #20c997;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #3D8D7A;
+  margin: 0 0 0.5rem 0;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
+}
+
+.dark .section-title {
+  color: #A3D1C6;
 }
 
 .section-icon {
-  stroke: var(--primary-text-color);
+  color: #3D8D7A;
+}
+
+.dark .section-icon {
+  color: #A3D1C6;
 }
 
 .section-subtitle {
-  color: var(--secondary-text-color);
-  font-size: 1rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin: 0 0 1.5rem 0;
+  font-weight: 400;
+}
+
+.dark .section-subtitle {
+  color: #A3D1C6;
+}
+
+.settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #A3D1C6;
+  font-size: 0.9rem;
+  color: #1f2937;
+}
+
+.dark .setting-item {
+  color: #A3D1C6;
+  border-bottom: 1px solid #20c997;
+}
+
+.setting-item:last-child {
+  border-bottom: none;
+}
+
+.action-btn {
+  background: #3D8D7A;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dark .action-btn {
+  background: #20c997;
+  color: white;
+}
+
+.action-btn:hover {
+  background: #2f6b5c;
+  transform: translateY(-1px);
+}
+
+.dark .action-btn:hover {
+  background: #A3D1C6;
+}
+
+/* Toggle Switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .3s;
+  border-radius: 24px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: var(--accent-color);
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+/* Danger Zone */
+.danger-zone .section-title {
+  color: var(--danger-color);
+}
+
+.danger-zone .section-subtitle {
+  color: var(--danger-color);
+}
+
+.danger-text {
+  color: var(--danger-color);
   font-weight: 500;
-  margin-bottom: 2rem;
+}
+
+.danger-btn {
+  background-color: #dc3545 !important;
+  color: white !important;
+  border: 1px solid #dc3545 !important;
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
+  font-weight: 600;
+}
+
+.dark .danger-btn {
+  background-color: #dc3545 !important;
+  color: white !important;
+  border: 1px solid #dc3545 !important;
+}
+
+.danger-btn:hover {
+  background-color: #c82333 !important;
+  border-color: #c82333 !important;
 }
 
 .settings-list {
@@ -1027,12 +1209,21 @@ input:checked + .slider:before {
 }
 
 /* Danger Zone */
+.danger-zone {
+  border-color: #d9534f !important;
+  background: rgba(217, 83, 79, 0.05) !important;
+}
+.dark .danger-zone {
+  background: rgba(217, 83, 79, 0.1) !important;
+  border-color: #d9534f !important;
+}
+
 .danger-zone h2 {
-  color: #d9534f;
+  color: #d9534f !important;
 }
 
 .danger-zone .section-subtitle {
-  color: #d9534f;
+  color: #d9534f !important;
 }
 
 .danger-text {
@@ -1056,20 +1247,37 @@ input:checked + .slider:before {
 }
 
 .about-card {
-  padding: 2rem;
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid #A3D1C6;
   max-width: 600px;
   margin: 0 auto;
 }
+.dark .about-card {
+  background: #23272b;
+  border-color: #20c997;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
 
 .about-card h2 {
-  font-size: 1.5rem;
-  color: var(--accent-color);
-  margin-bottom: 1rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #20c997;
+  margin-bottom: 0.5rem;
+}
+.dark .about-card h2 {
+  color: #A3D1C6;
 }
 
 .copyright-text {
-  color: var(--secondary-text-color);
-  font-size: 1rem;
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin: 0;
+}
+.dark .copyright-text {
+  color: #A3D1C6;
 }
 
 /* Modal Styles */
@@ -1388,24 +1596,366 @@ input:checked + .slider:before {
   background: rgba(95, 179, 160, 0.1);
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
-  .settings-grid {
-    grid-template-columns: 1fr;
-  }
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
 }
 
+.modal-content {
+  background: var(--card-background);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  color: var(--primary-text-color);
+}
+
+.info-modal {
+  max-width: 700px;
+}
+
+.modal-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--card-border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  background: var(--card-background);
+  border-radius: 16px 16px 0 0;
+  z-index: 10;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--primary-text-color);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: var(--secondary-text-color);
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+}
+
+.close-btn:hover {
+  color: var(--primary-text-color);
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.info-content {
+  line-height: 1.6;
+}
+
+.info-content h4 {
+  color: var(--accent-color);
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.info-content h5 {
+  color: var(--primary-text-color);
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.info-content p {
+  color: var(--secondary-text-color);
+  margin-bottom: 1rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--primary-text-color);
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--input-border);
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+  background-color: var(--input-bg);
+  color: var(--primary-text-color);
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.form-input::placeholder {
+  color: var(--secondary-text-color);
+}
+
+/* Avatar Upload */
+.avatar-upload-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--action-btn-bg);
+  border-radius: 12px;
+  border: 2px dashed var(--card-border-color);
+}
+
+.current-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid var(--accent-color);
+}
+
+.avatar-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-placeholder {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: var(--card-background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-color);
+  border: 2px dashed var(--accent-color);
+}
+
+.file-input {
+  display: none;
+}
+
+.file-input-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--accent-color);
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.file-input-label:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.selected-file {
+  font-size: 0.9rem;
+  color: var(--secondary-text-color);
+  text-align: center;
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Warning Box */
+.warning-box {
+  background: rgba(217, 83, 79, 0.1);
+  border: 2px solid #d9534f;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.warning-box svg {
+  color: #d9534f;
+  margin-bottom: 1rem;
+}
+
+.warning-box h4 {
+  color: #d9534f;
+  margin: 0.5rem 0;
+}
+
+.warning-box p {
+  color: var(--secondary-text-color);
+  margin: 0.5rem 0 0 0;
+}
+
+/* Messages */
+.error-message {
+  color: #d9534f;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: rgba(217, 83, 79, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(217, 83, 79, 0.3);
+}
+
+.success-message {
+  color: #5cb85c;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: rgba(92, 184, 92, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(92, 184, 92, 0.3);
+}
+
+.modal-footer {
+  padding: 1.5rem;
+  border-top: 1px solid var(--card-border-color);
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  position: sticky;
+  bottom: 0;
+  background: var(--card-background);
+  border-radius: 0 0 16px 16px;
+}
+
+/* Button Styles */
+.btn-primary {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  background: var(--accent-color);
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
+}
+
+.btn-primary:disabled {
+  background: var(--accent-color);
+  transform: none;
+  opacity: 0.6;
+}
+
+.btn-secondary {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dark .btn-secondary {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+}
+
+/* Danger Button */
+.btn-danger {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  background: #dc3545;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #c82333;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.btn-danger:disabled {
+  background: #dc3545;
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
   .page-container {
-    padding: 1rem 3%;
+    padding: 1rem;
   }
   
-  .page-title {
-    font-size: 2rem;
+  .header-card {
+    padding: 1.5rem;
+  }
+  
+  .header-left {
+    gap: 1rem;
+  }
+  
+  .header-icon {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .header-title {
+    font-size: 1.3rem;
+  }
+  
+  .content-card {
+    padding: 1rem;
+    gap: 1.5rem;
   }
   
   .settings-card {
-    padding: 1.5rem;
+    padding: 1rem;
   }
   
   .modal-overlay {
@@ -1419,5 +1969,86 @@ input:checked + .slider:before {
   .modal-header, .modal-footer, .modal-body {
     padding: 1rem;
   }
+}
+
+/* Delete Modal Styles - Matching Settings.vue */
+.delete-modal {
+  max-width: 400px;
+  border: 1px solid #dc3545;
+  border-radius: 16px;
+  overflow: hidden;
+  background: white;
+}
+
+.delete-header {
+  background: white;
+  border-bottom: 2px solid #dc3545;
+  padding: 1.5rem;
+}
+
+.delete-header h3 {
+  color: #dc3545;
+  font-weight: 700;
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+.delete-header .close-btn {
+  color: #20c997;
+  font-size: 1.5rem;
+  width: auto;
+  height: auto;
+}
+
+.delete-warning-text {
+  color: #dc3545;
+  font-weight: 500;
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.delete-label {
+  color: #1f2937;
+  font-weight: 500;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.delete-input {
+  border: 2px solid #dc3545 !important;
+  color: #20c997;
+  font-weight: 600;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.delete-input:focus {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+}
+
+.dark .delete-modal {
+  background: #2a2e36;
+  border: 1px solid #dc3545;
+}
+
+.dark .delete-header {
+  background: #2a2e36;
+}
+
+.dark .delete-warning-text {
+  color: #dc3545;
+}
+
+.dark .delete-label {
+  color: #e5e7eb;
+}
+
+.dark .delete-input {
+  background: #2a2e36;
+  color: #20c997;
+  border: 2px solid #dc3545 !important;
 }
 </style>

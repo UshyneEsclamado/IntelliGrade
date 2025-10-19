@@ -1,29 +1,21 @@
 <template>
   <div class="messages-container" :class="{ 'dark': isDarkMode }">
-    <!-- Consistent Header Card -->
+    <!-- Unified Header Card -->
     <div class="header-card">
       <div class="header-content">
         <div class="header-left">
-          <div class="header-icon" style="background:#43907A;width:56px;height:56px;display:flex;align-items:center;justify-content:center;border-radius:14px;margin-right:1.5rem;">
+          <div class="header-icon">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
               <rect width="24" height="24" rx="6" fill="none"/>
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="#fff"/>
             </svg>
           </div>
           <div>
-            <h1 class="header-title" style="font-size:2rem;font-weight:800;color:#222;margin-bottom:0.1rem;">Class Messaging</h1>
-            <p class="header-subtitle" style="font-size:1.1rem;color:#6b7a89;font-weight:500;">Communicate with your students</p>
+            <h1 class="header-title">Class Messaging</h1>
+            <p class="header-subtitle">Communicate with your students</p>
           </div>
         </div>
         <div class="header-actions">
-          <button class="dark-mode-toggle" @click="toggleDarkMode">
-            <svg v-if="!isDarkMode" width="24" height="24" fill="none" viewBox="0 0 24 24">
-              <path fill="currentColor" d="M12 2a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0V3a1 1 0 0 1 1-1Zm6.364 3.636a1 1 0 0 1 1.414 1.414l-1.414 1.414a1 1 0 1 1-1.414-1.414l1.414-1.414ZM21 11a1 1 0 1 1 0 2h-2a1 1 0 1 1 0-2h2Zm-2.222 7.364a1 1 0 0 1-1.415 1.415l-1.414-1.415a1 1 0 1 1 1.415-1.414l1.414 1.414ZM13 21a1 1 0 1 1-2 0v-2a1 1 0 1 1 2 0v2Zm-7.364-2.222a1 1 0 0 1-1.414-1.415l1.414-1.414a1 1 0 1 1 1.414 1.415l-1.414 1.414ZM3 13a1 1 0 1 1 0-2h2a1 1 0 1 1 0 2H3Zm2.222-7.364a1 1 0 0 1 1.415-1.414l1.414 1.414A1 1 0 1 1 6.05 6.05L4.636 4.636Z"/>
-            </svg>
-            <svg v-else width="24" height="24" fill="none" viewBox="0 0 24 24">
-              <path fill="currentColor" d="M21 12.79A9 9 0 0 1 11.21 3a1 1 0 0 0-1.21 1v.09A9 9 0 1 0 20.91 13a1 1 0 0 0 1-1.21ZM12 21a7 7 0 0 1 0-14V5a7 7 0 0 1 0 14Z"/>
-            </svg>
-          </button>
           <button @click="markAllAsRead" class="action-btn">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <polyline points="20,6 9,17 4,12"/>
@@ -2067,24 +2059,27 @@ onUnmounted(() => {
 
 .header-title {
   font-size: 1.5rem;
-  font-weight: 700;
-  color: #3D8D7A;
+  font-weight: 800;
+  color: #222;
   margin-bottom: 0.25rem;
 }
 
 .dark .header-title {
   color: #A3D1C6;
+  font-weight: 800;
 }
 
 .header-subtitle {
   font-size: 0.875rem;
-  color: #3D8D7A;
-  opacity: 0.8;
+  color: #6b7a89;
+  font-weight: 500;
+  opacity: 1;
 }
 
 .dark .header-subtitle {
   color: #B3D8A8;
-  opacity: 0.9;
+  font-weight: 500;
+  opacity: 1;
 }
 
 .header-actions {
