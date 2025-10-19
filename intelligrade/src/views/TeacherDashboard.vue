@@ -68,7 +68,7 @@
     </aside>
 
     <main class="main-content">
-      <router-view @profile-updated="handleProfileUpdate"></router-view>
+      <router-view></router-view>
     </main>
 
     <!-- Logout Confirmation Modal -->
@@ -98,144 +98,37 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { supabase } from '../supabase.js';
 import { useRouter } from 'vue-router';
+import { useTeacherAuth } from '../composables/useTeacherAuth.js';
 
 const router = useRouter();
-const profileData = ref({
-  full_name: 'Loading...',
-  email: '',
-  department: '',
-  employee_id: '',
-  role: 'teacher',
-  profile_pic: null
-});
+const { 
+  initializeAuth, 
+  setupAuthListener, 
+  teacherInfo, 
+  teacherProfile, 
+  isAuthenticated,
+  isLoading 
+} = useTeacherAuth();
+
 const isLogoutModalVisible = ref(false);
-let authUserId = ref<string | null>(null);
-let currentProfileId = ref<string | null>(null);
 
-const fetchUserProfile = async () => {
-  try {
-    console.log('=== Starting fetchUserProfile ===');
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !user) {
-      console.error('Auth error:', authError);
-      router.push('/login');
-      return;
-    }
+// Use the teacher auth composable
+const { 
+  teacherProfile, 
+  teacherInfo, 
+  isLoading, 
+  initializeAuth, 
+  setupAuthListener
+} = useTeacherAuth();
 
-    authUserId.value = user.id;
-    console.log('✓ Authenticated user:', user.id, user.email);
-
-    // Fetch profile data with profile_photo_url
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('id, full_name, email, role, profile_photo_url')
-      .eq('auth_user_id', user.id)
-      .single();
-
-    if (profileError) {
-      console.error('❌ Profile fetch error:', profileError);
-      router.push('/login');
-      return;
-    }
-
-    console.log('✓ Profile data fetched:', {
-      id: profile.id,
-      full_name: profile.full_name,
-      email: profile.email,
-      role: profile.role,
-      profile_photo_url: profile.profile_photo_url
-    });
-
-    currentProfileId.value = profile.id;
-    
-    // Verify user is a teacher
-    if (profile.role !== 'teacher') {
-      console.warn('❌ Access denied: User is not a teacher');
-      router.push('/login');
-      return;
-    }
-
-    // Get additional teacher details
-    const { data: teacherDetails, error: teacherError } = await supabase
-      .from('teachers')
-      .select('employee_id, department, profile_photo_url')
-      .eq('profile_id', profile.id)
-      .single();
-
-    if (teacherError) {
-      console.warn('⚠ Teacher details fetch error:', teacherError);
-    }
-
-    console.log('✓ Teacher details:', teacherDetails);
-    
-    // Determine which profile photo URL to use (prioritize profiles table)
-    let finalProfilePic = null;
-    
-    // First check profiles table
-    if (profile.profile_photo_url) {
-      console.log('📸 Found profile_photo_url in profiles table:', profile.profile_photo_url);
-      
-      if (profile.profile_photo_url.startsWith('http')) {
-        finalProfilePic = profile.profile_photo_url;
-        console.log('✓ Using full URL from profiles');
-      } else {
-        // Construct the public URL from storage path
-        const { data: publicUrlData } = supabase.storage
-          .from('profile-photos')
-          .getPublicUrl(profile.profile_photo_url);
-        finalProfilePic = publicUrlData.publicUrl;
-        console.log('✓ Constructed public URL from storage path:', finalProfilePic);
-      }
-    } 
-    // Fallback to teacher's profile photo if profiles doesn't have one
-    else if (teacherDetails?.profile_photo_url) {
-      console.log('📸 Found profile_photo_url in teachers table:', teacherDetails.profile_photo_url);
-      
-      if (teacherDetails.profile_photo_url.startsWith('http')) {
-        finalProfilePic = teacherDetails.profile_photo_url;
-        console.log('✓ Using full URL from teachers');
-      } else {
-        const { data: publicUrlData } = supabase.storage
-          .from('profile-photos')
-          .getPublicUrl(teacherDetails.profile_photo_url);
-        finalProfilePic = publicUrlData.publicUrl;
-        console.log('✓ Constructed public URL from storage path:', finalProfilePic);
-      }
-    } else {
-      console.log('ℹ No profile photo found in either table');
-    }
-    
-    // Add cache-busting timestamp to force image reload
-    if (finalProfilePic) {
-      finalProfilePic = `${finalProfilePic}?t=${Date.now()}`;
-      console.log('✓ Added cache-busting timestamp:', finalProfilePic);
-    }
-    
-    // Set profile data
-    profileData.value = {
-      full_name: profile.full_name || 'Teacher',
-      email: profile.email || '',
-      department: teacherDetails?.department || '',
-      employee_id: teacherDetails?.employee_id || '',
-      role: profile.role,
-      profile_pic: finalProfilePic
-    };
-    
-    console.log('✅ Profile data updated successfully:', {
-      full_name: profileData.value.full_name,
-      has_profile_pic: !!profileData.value.profile_pic,
-      profile_pic_url: profileData.value.profile_pic
-    });
-    console.log('=== fetchUserProfile completed ===\n');
-    
-  } catch (err) {
-    console.error('💥 Unexpected error fetching user profile:', err);
-    profileData.value = {
-      full_name: 'Teacher',
+// Computed profile data from the composable
+const profileData = computed(() => {
+  if (!teacherInfo.value || !teacherProfile.value) {
+    return {
+      full_name: isLoading.value ? 'Loading...' : 'Teacher',
       email: '',
       department: '',
       employee_id: '',
@@ -243,21 +136,23 @@ const fetchUserProfile = async () => {
       profile_pic: null
     };
   }
-};
+
+  return {
+    full_name: teacherProfile.value.full_name || 'Teacher',
+    email: teacherProfile.value.email || '',
+    department: teacherInfo.value.department || '',
+    employee_id: teacherInfo.value.employee_id || '',
+    role: teacherProfile.value.role || 'teacher',
+    profile_pic: teacherInfo.value.profile_pic || null
+  };
+});
 
 // Handle image loading errors
 const handleImageError = (event: Event) => {
   console.warn('❌ Failed to load profile image, falling back to placeholder');
   console.log('Failed image src:', (event.target as HTMLImageElement)?.src);
-  profileData.value.profile_pic = null;
-};
-
-// Handle profile update from child components (like settings page)
-const handleProfileUpdate = async () => {
-  console.log('\n🔄 Profile update event received from Settings page');
-  console.log('⏳ Refreshing profile data...');
-  await fetchUserProfile();
-  console.log('✅ Profile data refresh completed\n');
+  // Note: With computed profileData, we can't directly modify it
+  // The composable should handle image error fallbacks
 };
 
 const initializeDarkMode = () => {
@@ -299,92 +194,20 @@ const confirmLogout = async () => {
   }
 };
 
-const setupAuthListener = () => {
-  supabase.auth.onAuthStateChange(async (event, session) => {
-    console.log('🔐 Auth state changed:', event, session?.user?.email);
-    
-    if (event === 'SIGNED_OUT' || !session) {
-      router.push('/login');
-    } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-      await fetchUserProfile();
-    }
-  });
-};
-
-// Set up realtime subscription for profile updates
-let profileChannel: any = null;
-
-const setupProfileListener = () => {
-  console.log('🔌 Setting up realtime profile listener...');
-  
-  profileChannel = supabase
-    .channel('profile-changes')
-    .on(
-      'postgres_changes',
-      {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'profiles'
-      },
-      async (payload) => {
-        console.log('\n📡 Realtime: profiles table updated:', payload);
-        
-        // Check if the update is for the current user
-        if (payload.new.id === currentProfileId.value) {
-          console.log('✓ Update is for current user profile');
-          console.log('📸 New profile_photo_url:', payload.new.profile_photo_url);
-          console.log('⏳ Refreshing profile data...');
-          await fetchUserProfile();
-        } else {
-          console.log('ℹ Update is for a different user, ignoring');
-        }
-      }
-    )
-    .on(
-      'postgres_changes',
-      {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'teachers'
-      },
-      async (payload) => {
-        console.log('\n📡 Realtime: teachers table updated:', payload);
-        
-        // Check if this update is relevant to current user
-        if (payload.new.profile_id === currentProfileId.value) {
-          console.log('✓ Update is for current teacher');
-          console.log('📸 New profile_photo_url:', payload.new.profile_photo_url);
-          console.log('⏳ Refreshing profile data...');
-          await fetchUserProfile();
-        } else {
-          console.log('ℹ Update is for a different teacher, ignoring');
-        }
-      }
-    )
-    .subscribe((status) => {
-      console.log('📡 Realtime subscription status:', status);
-    });
-};
-
-const cleanupProfileListener = () => {
-  if (profileChannel) {
-    console.log('🔌 Cleaning up realtime profile listener');
-    supabase.removeChannel(profileChannel);
-    profileChannel = null;
-  }
-};
 
 onMounted(async () => {
   console.log('\n🚀 TeacherDashboard mounted\n');
   initializeDarkMode();
-  setupAuthListener();
-  await fetchUserProfile();
-  setupProfileListener();
-});
-
-onUnmounted(() => {
-  console.log('👋 TeacherDashboard unmounting');
-  cleanupProfileListener();
+  
+  // Initialize authentication once for the entire teacher dashboard
+  const authResult = await initializeAuth();
+  if (authResult.success) {
+    setupAuthListener();
+    console.log('Teacher dashboard initialized successfully');
+  } else {
+    console.error('Failed to initialize teacher dashboard');
+    router.push('/login');
+  }
 });
 </script>
 
@@ -407,6 +230,7 @@ onUnmounted(() => {
   bottom: 0;
   font-family: 'Inter', sans-serif;
   background: var(--bg-primary);
+  font-size: 1.15rem;
 }
 
 .dashboard-container::before {
@@ -424,37 +248,36 @@ onUnmounted(() => {
   pointer-events: none;
 }
 
-/* PERFECTLY FITTED SIDEBAR */
+/* SIDEBAR - EXACT STUDENT DASHBOARD MATCH */
 .sidebar {
   width: 300px;
-  height: 100vh;
   background: var(--card-background);
   backdrop-filter: blur(20px);
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  padding: 1.75rem 1.25rem;
+  padding: 1.5rem 1rem;
   box-shadow: 
     0 8px 32px var(--shadow-medium),
     0 0 0 1px var(--border-color);
-  overflow: hidden;
+  overflow-y: hidden;
   flex-shrink: 0;
   position: relative;
   z-index: 1;
-  justify-content: space-between;
 }
 
-/* COMPACT USER INFO */
+/* USER INFO - EXACT STUDENT DASHBOARD MATCH */
 .user-info {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
   background: var(--bg-accent);
   border-radius: 16px;
-  padding: 1.5rem;
+  padding: 1.5rem 1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  flex-shrink: 0;
-  margin-bottom: 0;
 }
 
 .profile-pic-container {
@@ -462,41 +285,40 @@ onUnmounted(() => {
 }
 
 .profile-pic {
-  width: 65px;
-  height: 65px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid var(--accent-color);
-  box-shadow: 0 8px 32px var(--shadow-strong);
+  box-shadow: 0 4px 16px var(--shadow-strong);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .profile-pic:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 12px 40px var(--shadow-strong);
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.15);
 }
 
 .profile-pic-placeholder {
-  width: 65px;
-  height: 65px;
+  width: 60px;
+  height: 60px;
   background: var(--accent-color);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 8px 32px var(--shadow-strong);
+  box-shadow: 0 4px 16px var(--shadow-strong);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .profile-pic-placeholder:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 12px 40px var(--shadow-strong);
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.15);
 }
 
 .profile-pic-placeholder svg {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
 }
 
 .user-details {
@@ -504,45 +326,47 @@ onUnmounted(() => {
 }
 
 .user-info h3 {
-  font-size: 1.3rem;
+  font-size: 1.35rem;
   font-weight: 700;
   color: var(--accent-color);
-  margin-bottom: 0.4rem;
-  text-shadow: 0 1px 2px var(--shadow-light);
+  margin-bottom: 0.5rem;
+  word-break: break-word;
+  line-height: 1.2;
+  min-height: 1.5rem;
 }
 
 .user-info .role {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--text-muted);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   background: var(--bg-accent);
-  padding: 0.2rem 0.6rem;
-  border-radius: 12px;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
   display: inline-block;
-  margin-bottom: 0;
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--border-color);
 }
 
-/* PERFECTLY DISTRIBUTED NAVIGATION */
+/* NAVIGATION LINKS - EXACT STUDENT DASHBOARD MATCH */
 .nav-links {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  flex: 1;
-  justify-content: space-between;
-  padding: 1.25rem 0;
-  min-height: 280px; /* Ensure minimum height for proper distribution */
+  gap: 0.5rem;
+  justify-content: center;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  padding: 1rem 1.2rem;
-  border-radius: 14px;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
   color: var(--accent-color);
   text-decoration: none;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 1rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: var(--bg-accent);
   border: 1px solid var(--border-color);
@@ -554,7 +378,6 @@ onUnmounted(() => {
   margin: 0;
   box-shadow: none;
   line-height: 1;
-  flex-shrink: 0;
 }
 
 .nav-item::before {
@@ -570,10 +393,10 @@ onUnmounted(() => {
 }
 
 .nav-item svg {
-  margin-right: 0.9rem;
-  width: 20px;
-  height: 20px;
-  fill: var(--accent-color);
+  margin-right: 0.75rem;
+  width: 18px;
+  height: 18px;
+  fill: #3D8D7A;
   transition: all 0.3s ease;
   position: relative;
   z-index: 1;
@@ -586,16 +409,12 @@ onUnmounted(() => {
 
 .nav-item:hover {
   transform: none;
-  box-shadow: 0 2px 8px var(--shadow-light);
-  border-color: var(--border-color);
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.08);
+  border-color: rgba(61, 141, 122, 0.15);
 }
 
 .nav-item:hover::before {
   left: 0;
-}
-
-.nav-item:hover svg {
-  transform: none;
 }
 
 .nav-item.router-link-exact-active {
@@ -608,7 +427,6 @@ onUnmounted(() => {
 
 .nav-item.router-link-exact-active svg {
   fill: var(--accent-color);
-  transform: none;
 }
 
 .nav-item.router-link-exact-active span {
@@ -623,16 +441,16 @@ onUnmounted(() => {
   box-shadow: 0 2px 8px rgba(95, 179, 160, 0.15);
 }
 
-/* BOTTOM POSITIONED LOGOUT BUTTON */
+/* LOGOUT BUTTON - EXACT STUDENT DASHBOARD MATCH */
 .logout-btn {
   display: flex;
   align-items: center;
-  padding: 1rem 1.2rem;
-  border-radius: 14px;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
   color: var(--text-inverse);
   text-decoration: none;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 1rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: var(--accent-color);
   border: 1px solid var(--accent-color);
@@ -641,27 +459,18 @@ onUnmounted(() => {
   text-align: left;
   position: relative;
   overflow: hidden;
+  margin-top: 0.5rem;
   box-shadow: none;
   line-height: 1;
-  gap: 0.9rem;
+  gap: 0.75rem;
   justify-content: flex-start;
   box-sizing: border-box;
-  flex-shrink: 0;
-  margin-top: 0; /* No margin needed since we're using space-between */
 }
 
 .logout-btn svg {
-  width: 20px;
-  height: 20px;
-  fill: var(--text-inverse);
-  transition: all 0.3s ease;
-  position: relative;
-  z-index: 1;
-}
-
-.logout-btn span {
-  position: relative;
-  z-index: 1;
+  width: 18px;
+  height: 18px;
+  margin-right: 0.75rem;
 }
 
 .logout-btn:hover {
@@ -669,11 +478,7 @@ onUnmounted(() => {
   color: var(--text-inverse);
   border-color: var(--accent-hover);
   transform: none;
-  box-shadow: 0 2px 8px var(--shadow-light);
-}
-
-.logout-btn:hover svg {
-  transform: none;
+  box-shadow: 0 2px 8px rgba(24, 60, 46, 0.1);
 }
 
 .main-content {
@@ -1000,11 +805,68 @@ onUnmounted(() => {
 html, body {
   height: 100%;
   width: 100%;
-  overflow: hidden; /* Prevents scrollbars on the body */
+  overflow: hidden;
 }
 
 #app {
   height: 100%;
   width: 100%;
+}
+
+/* CSS Variables for consistent theming */
+:root {
+  /* Light mode colors */
+  --bg-primary: #f8faf9;
+  --bg-secondary: #fefefe;
+  --bg-accent: #f3f7f4;
+  --bg-accent-hover: #e9f5ee;
+  
+  --card-background: #ffffff;
+  --card-background-hover: #f8faf9;
+  
+  --accent-color: #33806b;
+  --accent-hover: #2d6a57;
+  --accent-light: #5FB3A0;
+  --accent-lighter: #A3D1C6;
+  
+  --text-primary: #1a1a1a;
+  --text-secondary: #3d8d7a;
+  --text-muted: #7a9c8f;
+  --text-inverse: #ffffff;
+  
+  --border-color: rgba(61, 141, 122, 0.12);
+  --border-hover: rgba(61, 141, 122, 0.2);
+  
+  --shadow-light: rgba(61, 141, 122, 0.05);
+  --shadow-medium: rgba(61, 141, 122, 0.1);
+  --shadow-strong: rgba(61, 141, 122, 0.2);
+}
+
+/* Dark mode colors */
+:root.dark {
+  --bg-primary: #181c20;
+  --bg-secondary: #23272b;
+  --bg-accent: #23272b;
+  --bg-accent-hover: #23272b;
+  
+  --card-background: #23272b;
+  --card-background-hover: #181c20;
+  
+  --accent-color: #5FB3A0;
+  --accent-hover: #33806b;
+  --accent-light: #7BC4B5;
+  --accent-lighter: #A3D1C6;
+  
+  --text-primary: #f0f0f0;
+  --text-secondary: #A3D1C6;
+  --text-muted: #7a9c8f;
+  --text-inverse: #ffffff;
+  
+  --border-color: rgba(95, 179, 160, 0.15);
+  --border-hover: rgba(95, 179, 160, 0.25);
+  
+  --shadow-light: rgba(0, 0, 0, 0.1);
+  --shadow-medium: rgba(0, 0, 0, 0.2);
+  --shadow-strong: rgba(0, 0, 0, 0.3);
 }
 </style>

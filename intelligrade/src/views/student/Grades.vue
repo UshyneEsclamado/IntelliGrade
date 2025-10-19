@@ -732,7 +732,7 @@ export default {
     };
 
     const goBack = () => {
-      router.push({ name: 'StudentDashboard' });
+  router.push({ name: 'StudentSubjects' });
     };
 
     const goToQuizzes = () => {
@@ -818,9 +818,10 @@ export default {
 .section-header-card {
   background: white;
   border-radius: 16px;
+  border: 2px solid #A3D1C6;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.08);
 }
 
 .dark .section-header-card {
