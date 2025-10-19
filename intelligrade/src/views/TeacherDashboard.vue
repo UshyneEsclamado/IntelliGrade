@@ -3,7 +3,13 @@
     <aside class="sidebar">
       <div class="user-info">
         <div class="profile-pic-container">
-          <img v-if="profileData.profile_pic" :src="profileData.profile_pic" :alt="profileData.full_name" class="profile-pic">
+          <img 
+            v-if="profileData.profile_pic" 
+            :src="profileData.profile_pic" 
+            :alt="profileData.full_name" 
+            class="profile-pic"
+            @error="handleImageError"
+          >
           <div v-else class="profile-pic-placeholder">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
@@ -62,7 +68,7 @@
     </aside>
 
     <main class="main-content">
-      <router-view></router-view>
+      <router-view @profile-updated="handleProfileUpdate"></router-view>
     </main>
 
     <!-- Logout Confirmation Modal -->
@@ -92,7 +98,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { supabase } from '../supabase.js';
 import { useRouter } from 'vue-router';
 
@@ -106,9 +112,12 @@ const profileData = ref({
   profile_pic: null
 });
 const isLogoutModalVisible = ref(false);
+let authUserId = ref<string | null>(null);
+let currentProfileId = ref<string | null>(null);
 
 const fetchUserProfile = async () => {
   try {
+    console.log('=== Starting fetchUserProfile ===');
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
@@ -117,64 +126,114 @@ const fetchUserProfile = async () => {
       return;
     }
 
-    console.log('Authenticated user:', user.id, user.email);
+    authUserId.value = user.id;
+    console.log('✓ Authenticated user:', user.id, user.email);
 
-    // First, get profile data and verify role
+    // Fetch profile data with profile_photo_url
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('id, full_name, email, role')
+      .select('id, full_name, email, role, profile_photo_url')
       .eq('auth_user_id', user.id)
       .single();
 
     if (profileError) {
-      console.warn('Profile fetch error:', profileError);
+      console.error('❌ Profile fetch error:', profileError);
       router.push('/login');
       return;
     }
 
-    const userData = { 
-      user_id: profile.id,
-      role: profile.role, 
-      full_name: profile.full_name, 
-      email: profile.email 
-    };
+    console.log('✓ Profile data fetched:', {
+      id: profile.id,
+      full_name: profile.full_name,
+      email: profile.email,
+      role: profile.role,
+      profile_photo_url: profile.profile_photo_url
+    });
+
+    currentProfileId.value = profile.id;
     
     // Verify user is a teacher
-    if (userData.role !== 'teacher') {
-      console.warn('Access denied: User is not a teacher');
+    if (profile.role !== 'teacher') {
+      console.warn('❌ Access denied: User is not a teacher');
       router.push('/login');
       return;
     }
-
-    console.log('User data from function:', userData);
 
     // Get additional teacher details
     const { data: teacherDetails, error: teacherError } = await supabase
       .from('teachers')
-      .select('employee_id, department')
-      .eq('id', userData.user_id)
+      .select('employee_id, department, profile_photo_url')
+      .eq('profile_id', profile.id)
       .single();
 
     if (teacherError) {
-      console.warn('Teacher details fetch error:', teacherError);
+      console.warn('⚠ Teacher details fetch error:', teacherError);
     }
 
-    console.log('Teacher details:', teacherDetails);
+    console.log('✓ Teacher details:', teacherDetails);
+    
+    // Determine which profile photo URL to use (prioritize profiles table)
+    let finalProfilePic = null;
+    
+    // First check profiles table
+    if (profile.profile_photo_url) {
+      console.log('📸 Found profile_photo_url in profiles table:', profile.profile_photo_url);
+      
+      if (profile.profile_photo_url.startsWith('http')) {
+        finalProfilePic = profile.profile_photo_url;
+        console.log('✓ Using full URL from profiles');
+      } else {
+        // Construct the public URL from storage path
+        const { data: publicUrlData } = supabase.storage
+          .from('profile-photos')
+          .getPublicUrl(profile.profile_photo_url);
+        finalProfilePic = publicUrlData.publicUrl;
+        console.log('✓ Constructed public URL from storage path:', finalProfilePic);
+      }
+    } 
+    // Fallback to teacher's profile photo if profiles doesn't have one
+    else if (teacherDetails?.profile_photo_url) {
+      console.log('📸 Found profile_photo_url in teachers table:', teacherDetails.profile_photo_url);
+      
+      if (teacherDetails.profile_photo_url.startsWith('http')) {
+        finalProfilePic = teacherDetails.profile_photo_url;
+        console.log('✓ Using full URL from teachers');
+      } else {
+        const { data: publicUrlData } = supabase.storage
+          .from('profile-photos')
+          .getPublicUrl(teacherDetails.profile_photo_url);
+        finalProfilePic = publicUrlData.publicUrl;
+        console.log('✓ Constructed public URL from storage path:', finalProfilePic);
+      }
+    } else {
+      console.log('ℹ No profile photo found in either table');
+    }
+    
+    // Add cache-busting timestamp to force image reload
+    if (finalProfilePic) {
+      finalProfilePic = `${finalProfilePic}?t=${Date.now()}`;
+      console.log('✓ Added cache-busting timestamp:', finalProfilePic);
+    }
     
     // Set profile data
     profileData.value = {
-      full_name: userData.full_name || 'Teacher',
-      email: userData.email || '',
+      full_name: profile.full_name || 'Teacher',
+      email: profile.email || '',
       department: teacherDetails?.department || '',
       employee_id: teacherDetails?.employee_id || '',
-      role: userData.role,
-      profile_pic: null // You can add profile pic URL field to your database later
+      role: profile.role,
+      profile_pic: finalProfilePic
     };
     
-    console.log('Final profile data set:', profileData.value);
+    console.log('✅ Profile data updated successfully:', {
+      full_name: profileData.value.full_name,
+      has_profile_pic: !!profileData.value.profile_pic,
+      profile_pic_url: profileData.value.profile_pic
+    });
+    console.log('=== fetchUserProfile completed ===\n');
     
   } catch (err) {
-    console.error('Unexpected error fetching user profile:', err);
+    console.error('💥 Unexpected error fetching user profile:', err);
     profileData.value = {
       full_name: 'Teacher',
       email: '',
@@ -184,6 +243,21 @@ const fetchUserProfile = async () => {
       profile_pic: null
     };
   }
+};
+
+// Handle image loading errors
+const handleImageError = (event: Event) => {
+  console.warn('❌ Failed to load profile image, falling back to placeholder');
+  console.log('Failed image src:', (event.target as HTMLImageElement)?.src);
+  profileData.value.profile_pic = null;
+};
+
+// Handle profile update from child components (like settings page)
+const handleProfileUpdate = async () => {
+  console.log('\n🔄 Profile update event received from Settings page');
+  console.log('⏳ Refreshing profile data...');
+  await fetchUserProfile();
+  console.log('✅ Profile data refresh completed\n');
 };
 
 const initializeDarkMode = () => {
@@ -227,7 +301,7 @@ const confirmLogout = async () => {
 
 const setupAuthListener = () => {
   supabase.auth.onAuthStateChange(async (event, session) => {
-    console.log('Auth state changed:', event, session?.user?.email);
+    console.log('🔐 Auth state changed:', event, session?.user?.email);
     
     if (event === 'SIGNED_OUT' || !session) {
       router.push('/login');
@@ -237,12 +311,83 @@ const setupAuthListener = () => {
   });
 };
 
+// Set up realtime subscription for profile updates
+let profileChannel: any = null;
+
+const setupProfileListener = () => {
+  console.log('🔌 Setting up realtime profile listener...');
+  
+  profileChannel = supabase
+    .channel('profile-changes')
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'profiles'
+      },
+      async (payload) => {
+        console.log('\n📡 Realtime: profiles table updated:', payload);
+        
+        // Check if the update is for the current user
+        if (payload.new.id === currentProfileId.value) {
+          console.log('✓ Update is for current user profile');
+          console.log('📸 New profile_photo_url:', payload.new.profile_photo_url);
+          console.log('⏳ Refreshing profile data...');
+          await fetchUserProfile();
+        } else {
+          console.log('ℹ Update is for a different user, ignoring');
+        }
+      }
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'teachers'
+      },
+      async (payload) => {
+        console.log('\n📡 Realtime: teachers table updated:', payload);
+        
+        // Check if this update is relevant to current user
+        if (payload.new.profile_id === currentProfileId.value) {
+          console.log('✓ Update is for current teacher');
+          console.log('📸 New profile_photo_url:', payload.new.profile_photo_url);
+          console.log('⏳ Refreshing profile data...');
+          await fetchUserProfile();
+        } else {
+          console.log('ℹ Update is for a different teacher, ignoring');
+        }
+      }
+    )
+    .subscribe((status) => {
+      console.log('📡 Realtime subscription status:', status);
+    });
+};
+
+const cleanupProfileListener = () => {
+  if (profileChannel) {
+    console.log('🔌 Cleaning up realtime profile listener');
+    supabase.removeChannel(profileChannel);
+    profileChannel = null;
+  }
+};
+
 onMounted(async () => {
+  console.log('\n🚀 TeacherDashboard mounted\n');
   initializeDarkMode();
   setupAuthListener();
   await fetchUserProfile();
+  setupProfileListener();
+});
+
+onUnmounted(() => {
+  console.log('👋 TeacherDashboard unmounting');
+  cleanupProfileListener();
 });
 </script>
+
 
 <style scoped>
 /* Imported fonts */
