@@ -1328,19 +1328,30 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, nextTick, onUnmounted } from 'vue'
+import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '../../supabase.js'
 import { useDarkMode } from '../../composables/useDarkMode.js'
+import { useTeacherAuth } from '../../composables/useTeacherAuth.js'
+import { useTeacherData } from '../../composables/useTeacherData.js'
 
 // Dark mode
 const { isDarkMode, initDarkMode, toggleDarkMode } = useDarkMode()
 
+// Authentication and Data
+const { teacherInfo, isAuthenticated } = useTeacherAuth()
+const { 
+  subjects, 
+  fetchSubjects, 
+  getCachedSubjects, 
+  invalidateSubjectsCache,
+  setupAutoRefresh 
+} = useTeacherData()
+
 // Router
 const router = useRouter()
 
-// State
-const subjects = ref([])
+// Local State
 const selectedSubject = ref(null)
 const selectedSection = ref(null)
 const viewMode = ref('subjects')
@@ -1352,10 +1363,6 @@ const isEditing = ref(false)
 const currentSubjectId = ref(null)
 const currentStep = ref(1)
 const copiedCodeId = ref(null)
-const currentUser = ref(null)
-const teacherInfo = ref(null)
-const authListener = ref(null)
-const isInitialized = ref(false)
 const showDeleteModal = ref(false)
 const deleteType = ref('')
 const itemToDelete = ref(null)
@@ -1363,11 +1370,6 @@ const showNotification = ref(false)
 const notificationMessage = ref('')
 const notificationType = ref('success')
 const openMenuId = ref(null)
-
-// Cache state
-const subjectsCache = ref(null)
-const lastFetchTime = ref(0)
-const CACHE_DURATION = 30000 // 30 seconds
 
 // Success modal state
 const showSuccessModal = ref(false)
@@ -1386,75 +1388,6 @@ const formData = ref({
 const canProceedToStep2 = computed(() => {
   return formData.value.name && formData.value.grade_level && formData.value.number_of_sections
 })
-
-// Initialize authentication
-const initializeAuth = async () => {
-  try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-    
-    if (sessionError) throw sessionError
-    if (!session?.user) {
-      await router.push('/login')
-      return false
-    }
-    
-    currentUser.value = session.user
-    
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('id, role, full_name, email')
-      .eq('auth_user_id', session.user.id)
-      .single()
-    
-    if (profileError || !profile) {
-      await router.push('/login')
-      return false
-    }
-
-    if (profile.role !== 'teacher') {
-      await router.push('/login')
-      return false
-    }
-
-    const { data: teacher, error: teacherError } = await supabase
-      .from('teachers')
-      .select('*')
-      .eq('profile_id', profile.id)
-      .eq('is_active', true)
-      .single()
-
-    if (teacherError || !teacher) {
-      await router.push('/login')
-      return false
-    }
-
-    teacherInfo.value = teacher
-    return true
-
-  } catch (error) {
-    console.error('Authentication error:', error)
-    await router.push('/login')
-    return false
-  }
-}
-
-// Setup auth state listener
-const setupAuthListener = () => {
-  if (authListener.value) {
-    authListener.value.data.subscription.unsubscribe()
-  }
-  
-  authListener.value = supabase.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
-      currentUser.value = null
-      teacherInfo.value = null
-      subjects.value = []
-      subjectsCache.value = null
-      isInitialized.value = false
-      await router.push('/login')
-    }
-  })
-}
 
 // Navigation methods
 const toggleSubjectExpansion = (subject) => {
@@ -1620,8 +1553,10 @@ const viewSectionStudents = async (subject, section) => {
   }
 }
 
-// Optimized fetch with instant display from cache
-const fetchSubjects = async (forceRefresh = false) => {
+// REMOVED: Optimized fetch with instant display from cache (using composable instead)
+// const fetchSubjects = async (forceRefresh = false) => {
+// REMOVED: Function body removed to use composable instead
+/*
   try {
     if (!teacherInfo.value?.id) return
 
@@ -1758,16 +1693,19 @@ const fetchSubjects = async (forceRefresh = false) => {
       await router.push('/login')
     }
   }
-}
+*/
+// End of removed duplicate function
 
-// Background refresh
-const startBackgroundRefresh = () => {
-  setInterval(() => {
-    if (teacherInfo.value?.id && document.visibilityState === 'visible') {
-      fetchSubjects(true)
-    }
-  }, CACHE_DURATION)
-}
+// Background refresh functions are also removed as they're handled by composables
+
+// REMOVED: Background refresh handled by composable
+// const startBackgroundRefresh = () => {
+//   setInterval(() => {
+//     if (teacherInfo.value?.id && document.visibilityState === 'visible') {
+//       fetchSubjects(true)
+//     }
+//   }, CACHE_DURATION)
+// }
 
 const getTotalStudents = (subject) => {
   return subject.actualStudentCount || 0
@@ -2165,29 +2103,31 @@ onMounted(async () => {
   try {
     initDarkMode()
     
-    const authSuccess = await initializeAuth()
-    if (!authSuccess) return
+    if (!isAuthenticated.value) {
+      console.warn('Not authenticated, redirecting to login')
+      await router.push('/login')
+      return
+    }
     
-    setupAuthListener()
-    isInitialized.value = true
+    // Use cached data first for instant display
+    const cached = getCachedSubjects()
+    if (cached && cached.length > 0) {
+      console.log('Using cached subjects for instant display')
+    }
     
-    // Initial fetch - subjects display instantly from cache after first load
+    // Fetch fresh data
     await fetchSubjects()
     
-    // Start background refresh
-    startBackgroundRefresh()
+    // Setup auto-refresh
+    const cleanup = setupAutoRefresh()
     
     document.addEventListener('click', handleClickOutside)
     
-    // Refresh when tab becomes visible
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible' && teacherInfo.value?.id) {
-        const timeSinceLastFetch = Date.now() - lastFetchTime.value
-        if (timeSinceLastFetch > CACHE_DURATION) {
-          fetchSubjects(true)
-        }
-      }
-    })
+    // Cleanup function for unmount
+    return () => {
+      cleanup?.()
+      document.removeEventListener('click', handleClickOutside)
+    }
     
   } catch (error) {
     console.error('Component mount error:', error)
@@ -2196,10 +2136,6 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  if (authListener.value) {
-    authListener.value.data.subscription.unsubscribe()
-    authListener.value = null
-  }
   document.removeEventListener('click', handleClickOutside)
 })
 </script>

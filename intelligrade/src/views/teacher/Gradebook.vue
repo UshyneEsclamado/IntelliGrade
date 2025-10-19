@@ -1,128 +1,211 @@
 <template>
-  <div class="gradebook-container">
-    <!-- Header -->
-    <div class="gradebook-header">
+  <div class="gradebook-container" :class="{ 'dark': isDarkMode }">
+    <!-- Simple Header -->
+    <div class="header-card">
       <div class="header-content">
-        <h1 class="page-title">Gradebook</h1>
-        <p class="page-subtitle">Review and grade quiz submissions</p>
-      </div>
-      <div class="header-actions">
-        <div class="search-box">
-          <i class="fas fa-search"></i>
-          <input 
-            v-model="searchQuery" 
-            type="text" 
-            placeholder="Search..."
-          >
+        <div class="header-left">
+          <div class="header-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+            </svg>
+          </div>
+          <div>
+            <h1 class="header-title">Gradebook</h1>
+            <p class="header-subtitle">Review and grade quiz submissions</p>
+          </div>
         </div>
-        <button @click="refreshData" class="refresh-btn" :disabled="loading">
-          <i class="fas fa-sync-alt" :class="{ 'spinning': loading }"></i>
+        
+        <div class="header-actions">
+          <div class="search-box">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="M21 21L16.65 16.65"></path>
+            </svg>
+            <input 
+              v-model="searchQuery" 
+              type="text" 
+              placeholder="Search..."
+            >
+          </div>
+          <button @click="refreshData" class="grade-btn refresh-btn" :disabled="loading">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :class="{ 'spinning': loading }">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+            </svg>
+            Refresh
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subject Filter Buttons -->
+    <div v-if="!selectedSubject && !selectedSection" class="subject-filters">
+      <h3 class="filter-title">Filter by Subject:</h3>
+      <div class="filter-buttons">
+        <button 
+          @click="selectedSubjectFilter = ''" 
+          class="filter-btn" 
+          :class="{ 'active': selectedSubjectFilter === '' }"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M9,5V9H21V5M9,19H21V15H9M9,14H21V10H9M4,9H8L6,7L4,9M4,19H8L6,17L4,19M4,14H8L6,12L4,14Z" />
+          </svg>
+          All
+        </button>
+        <button 
+          v-for="filterType in availableSubjectTypes" 
+          :key="filterType.name"
+          @click="selectedSubjectFilter = filterType.name" 
+          class="filter-btn" 
+          :class="{ 'active': selectedSubjectFilter === filterType.name }"
+          :style="{ '--filter-color': filterType.color }"
+        >
+          <div v-html="filterType.icon"></div>
+          {{ filterType.name }}
         </button>
       </div>
     </div>
 
     <!-- Breadcrumb Navigation -->
-    <div class="breadcrumb" v-if="selectedSubject || selectedSection">
-      <button @click="resetToSubjects" class="breadcrumb-item">
-        <i class="fas fa-book"></i> Subjects
+    <div class="breadcrumb-nav" v-if="selectedSubject || selectedSection">
+      <button @click="resetToSubjects" class="breadcrumb-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,12V19A3,3 0 0,1 16,22H8A3,3 0 0,1 5,19V12A3,3 0 0,1 8,9H16A3,3 0 0,1 19,12Z" />
+        </svg>
+        Subjects
       </button>
       <span v-if="selectedSubject" class="breadcrumb-separator">/</span>
-      <button v-if="selectedSubject" @click="resetToSections" class="breadcrumb-item">
+      <button v-if="selectedSubject" @click="resetToSections" class="breadcrumb-btn">
         {{ selectedSubject.name }}
       </button>
       <span v-if="selectedSection" class="breadcrumb-separator">/</span>
-      <span v-if="selectedSection" class="breadcrumb-item active">
+      <span v-if="selectedSection" class="breadcrumb-current">
         {{ selectedSection.name }}
       </span>
     </div>
 
     <!-- Loading State -->
     <div v-if="loading" class="loading-container">
-      <div class="spinner"></div>
+      <div class="spinner-large"></div>
       <p>Loading...</p>
     </div>
 
     <!-- Error State -->
     <div v-else-if="error" class="error-container">
-      <i class="fas fa-exclamation-triangle"></i>
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12,2C17.53,2 22,6.47 22,12C22,17.53 17.53,22 12,22C6.47,22 2,17.53 2,12C2,6.47 6.47,2 12,2M15.59,7L12,10.59L8.41,7L7,8.41L10.59,12L7,15.59L8.41,17L12,13.41L15.59,17L17,15.59L13.41,12L17,8.41L15.59,7Z" />
+      </svg>
       <h3>Error Loading Data</h3>
       <p>{{ error }}</p>
-      <button @click="refreshData" class="btn-retry">Retry</button>
+      <button @click="refreshData" class="grade-btn">Retry</button>
     </div>
 
     <!-- Main Content -->
-    <div v-else class="gradebook-content">
+    <div v-else class="main-content">
       <!-- LEVEL 1: Subject Selection -->
-      <div v-if="!selectedSubject" class="subjects-grid">
-        <div 
-          v-for="subject in filteredSubjects" 
-          :key="subject.id"
-          class="subject-card"
-          @click="selectSubject(subject)"
-        >
-          <div class="subject-icon">
-            <i class="fas fa-book"></i>
-          </div>
-          <div class="subject-info">
-            <h3>{{ subject.name }}</h3>
-            <p>Grade {{ subject.grade_level }}</p>
-            <div class="subject-stats">
-              <span class="stat-badge">
-                <i class="fas fa-users"></i>
-                {{ subject.section_count }} Sections
-              </span>
-              <span class="stat-badge pending">
-                <i class="fas fa-clock"></i>
-                {{ subject.pending_count }} Pending
-              </span>
+      <div v-if="!selectedSubject" class="content-card">
+        <div class="card-header">
+          <h3>Select Subject</h3>
+          <p class="card-desc">Choose a subject to view sections and submissions</p>
+        </div>
+        
+        <div class="subjects-grid">
+          <div 
+            v-for="subject in filteredSubjects" 
+            :key="subject.id"
+            class="subject-card"
+            @click="selectSubject(subject)"
+          >
+            <div class="subject-icon" :style="{ background: getSubjectIconColor(subject.name) }">
+              <div v-html="getSubjectIconSvg(subject.name)"></div>
+            </div>
+            <div class="subject-info">
+              <h4>{{ subject.name }}</h4>
+              <p class="subject-grade">Grade {{ subject.grade_level }}</p>
+              <div class="subject-stats">
+                <span class="stat-item">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12,5.5A3.5,3.5 0 0,1 15.5,9A3.5,3.5 0 0,1 12,12.5A3.5,3.5 0 0,1 8.5,9A3.5,3.5 0 0,1 12,5.5M5,8C5.56,8 6.08,8.15 6.53,8.42C6.38,9.85 6.8,11.27 7.66,12.38C7.16,13.34 6.16,14 5,14A3,3 0 0,1 2,11A3,3 0 0,1 5,8M19,8A3,3 0 0,1 22,11A3,3 0 0,1 19,14C17.84,14 16.84,13.34 16.34,12.38C17.2,11.27 17.62,9.85 17.47,8.42C17.92,8.15 18.44,8 19,8M5.5,18.25C5.5,16.18 8.41,14.5 12,14.5C15.59,14.5 18.5,16.18 18.5,18.25V20H5.5V18.25M0,20V18.5C0,17.11 1.89,15.94 4.45,15.6C3.86,16.28 3.5,17.22 3.5,18.25V20H0M24,20H20.5V18.25C20.5,17.22 20.14,16.28 19.55,15.6C22.11,15.94 24,17.11 24,18.5V20Z" />
+                  </svg>
+                  {{ subject.section_count }} Sections
+                </span>
+                <span class="stat-item pending" v-if="subject.pending_count > 0">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M16.2,16.2L11,13V7H12.5V12.2L17,14.9L16.2,16.2Z" />
+                  </svg>
+                  {{ subject.pending_count }} Pending
+                </span>
+              </div>
+            </div>
+            <div class="card-arrow">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" />
+              </svg>
             </div>
           </div>
-          <div class="card-arrow">
-            <i class="fas fa-chevron-right"></i>
-          </div>
-        </div>
 
-        <div v-if="filteredSubjects.length === 0" class="empty-state">
-          <i class="fas fa-book"></i>
-          <h3>No subjects found</h3>
-          <p>You don't have any subjects assigned yet.</p>
+          <div v-if="filteredSubjects.length === 0" class="empty-state">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3.9 19 5 18.1 5 17V9H19C20.1 9 21 8.1 21 7V5C21 3.9 20.1 3 19 3Z" />
+            </svg>
+            <h3>No subjects found</h3>
+            <p>You don't have any subjects assigned yet.</p>
+          </div>
         </div>
       </div>
 
       <!-- LEVEL 2: Section Selection -->
-      <div v-else-if="selectedSubject && !selectedSection" class="sections-grid">
-        <div 
-          v-for="section in filteredSections" 
-          :key="section.id"
-          class="section-card"
-          @click="selectSection(section)"
-        >
-          <div class="section-icon">
-            <i class="fas fa-users"></i>
-          </div>
-          <div class="section-info">
-            <h3>{{ section.name }}</h3>
-            <p>{{ section.section_code }}</p>
-            <div class="section-stats">
-              <span class="stat-badge">
-                <i class="fas fa-clipboard-list"></i>
-                {{ section.quiz_count }} Quizzes
-              </span>
-              <span class="stat-badge pending">
-                <i class="fas fa-clock"></i>
-                {{ section.pending_count }} Pending
-              </span>
+      <div v-else-if="selectedSubject && !selectedSection" class="content-card">
+        <div class="card-header">
+          <h3>{{ selectedSubject.name }} - Sections</h3>
+          <p class="card-desc">Choose a section to view quiz submissions</p>
+        </div>
+        
+        <div class="sections-grid">
+          <div 
+            v-for="section in filteredSections" 
+            :key="section.id"
+            class="section-card"
+            @click="selectSection(section)"
+          >
+            <div class="section-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12,5.5A3.5,3.5 0 0,1 15.5,9A3.5,3.5 0 0,1 12,12.5A3.5,3.5 0 0,1 8.5,9A3.5,3.5 0 0,1 12,5.5M5,8C5.56,8 6.08,8.15 6.53,8.42C6.38,9.85 6.8,11.27 7.66,12.38C7.16,13.34 6.16,14 5,14A3,3 0 0,1 2,11A3,3 0 0,1 5,8M19,8A3,3 0 0,1 22,11A3,3 0 0,1 19,14C17.84,14 16.84,13.34 16.34,12.38C17.2,11.27 17.62,9.85 17.47,8.42C17.92,8.15 18.44,8 19,8M5.5,18.25C5.5,16.18 8.41,14.5 12,14.5C15.59,14.5 18.5,16.18 18.5,18.25V20H5.5V18.25M0,20V18.5C0,17.11 1.89,15.94 4.45,15.6C3.86,16.28 3.5,17.22 3.5,18.25V20H0M24,20H20.5V18.25C20.5,17.22 20.14,16.28 19.55,15.6C22.11,15.94 24,17.11 24,18.5V20Z" />
+              </svg>
+            </div>
+            <div class="section-info">
+              <h4>{{ section.name }}</h4>
+              <p class="section-code">{{ section.section_code }}</p>
+              <div class="section-stats">
+                <span class="stat-item">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                  </svg>
+                  {{ section.quiz_count }} Quizzes
+                </span>
+                <span class="stat-item pending" v-if="section.pending_count > 0">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M16.2,16.2L11,13V7H12.5V12.2L17,14.9L16.2,16.2Z" />
+                  </svg>
+                  {{ section.pending_count }} Pending
+                </span>
+              </div>
+            </div>
+            <div class="card-arrow">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" />
+              </svg>
             </div>
           </div>
-          <div class="card-arrow">
-            <i class="fas fa-chevron-right"></i>
-          </div>
-        </div>
 
-        <div v-if="filteredSections.length === 0" class="empty-state">
-          <i class="fas fa-users"></i>
-          <h3>No sections found</h3>
-          <p>No sections available for this subject.</p>
+          <div v-if="filteredSections.length === 0" class="empty-state">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12,5.5A3.5,3.5 0 0,1 15.5,9A3.5,3.5 0 0,1 12,12.5A3.5,3.5 0 0,1 8.5,9A3.5,3.5 0 0,1 12,5.5M5,8C5.56,8 6.08,8.15 6.53,8.42C6.38,9.85 6.8,11.27 7.66,12.38C7.16,13.34 6.16,14 5,14A3,3 0 0,1 2,11A3,3 0 0,1 5,8M19,8A3,3 0 0,1 22,11A3,3 0 0,1 19,14C17.84,14 16.84,13.34 16.34,12.38C17.2,11.27 17.62,9.85 17.47,8.42C17.92,8.15 18.44,8 19,8M5.5,18.25C5.5,16.18 8.41,14.5 12,14.5C15.59,14.5 18.5,16.18 18.5,18.25V20H5.5V18.25M0,20V18.5C0,17.11 1.89,15.94 4.45,15.6C3.86,16.28 3.5,17.22 3.5,18.25V20H0M24,20H20.5V18.25C20.5,17.22 20.14,16.28 19.55,15.6C22.11,15.94 24,17.11 24,18.5V20Z" />
+            </svg>
+            <h3>No sections found</h3>
+            <p>No sections available for this subject.</p>
+          </div>
         </div>
       </div>
 
@@ -484,40 +567,45 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { supabase } from '@/supabase.js'
+import { useDarkMode } from '@/composables/useDarkMode.js'
 
-export default {
-  name: 'Gradebook',
-  setup() {
-    const loading = ref(true)
-    const loadingQuestions = ref(false)
-    const savingGrade = ref(false)
-    const error = ref(null)
-    const searchQuery = ref('')
-    const teacherId = ref(null)
+// Dark mode support
+const { isDarkMode } = useDarkMode()
 
-    // Hierarchy state
-    const subjects = ref([])
-    const selectedSubject = ref(null)
-    const sections = ref([])
-    const selectedSection = ref(null)
-    const submissions = ref([])
+// Component state
+const loading = ref(true)
+const loadingQuestions = ref(false)
+const savingGrade = ref(false)
+const error = ref(null)
+const searchQuery = ref('')
+const teacherId = ref(null)
 
-    // Table state
-    const selectedStatus = ref('')
-    const currentPage = ref(1)
-    const itemsPerPage = ref(10)
-    const sortField = ref('submitted_at')
-    const sortDirection = ref('desc')
+// Hierarchy state
+const subjects = ref([])
+const selectedSubject = ref(null)
+const sections = ref([])
+const selectedSection = ref(null)
+const submissions = ref([])
 
-    // Review modal state
-    const showReviewModal = ref(false)
-    const selectedSubmission = ref(null)
-    const reviewQuestions = ref([])
-    const reviewFeedback = ref('')
-    const modalMode = ref('view')
+// Table state
+const selectedStatus = ref('')
+const currentPage = ref(1)
+const itemsPerPage = ref(10)
+const sortField = ref('submitted_at')
+const sortDirection = ref('desc')
+
+// Review modal state
+const showReviewModal = ref(false)
+const selectedSubmission = ref(null)
+const reviewQuestions = ref([])
+const reviewFeedback = ref('')
+const modalMode = ref('view')
+
+// Subject filtering
+const selectedSubjectFilter = ref('')
 
     const sectionStats = computed(() => {
       const pending = submissions.value.filter(s => s.status === 'submitted').length
@@ -537,16 +625,79 @@ export default {
       return reviewQuestions.value.reduce((sum, q) => sum + (q.points || 1), 0)
     })
 
-    const filteredSubjects = computed(() => {
-      if (!searchQuery.value) return subjects.value
-      const query = searchQuery.value.toLowerCase()
-      return subjects.value.filter(s => 
-        s.name.toLowerCase().includes(query) || 
-        s.grade_level.toString().includes(query)
-      )
-    })
+const availableSubjectTypes = computed(() => {
+  const types = new Set()
+  subjects.value.forEach(subject => {
+    const name = subject.name.toLowerCase()
+    if (name.includes('math') || name.includes('algebra') || name.includes('geometry') || name.includes('calculus')) {
+      types.add('Mathematics')
+    } else if (name.includes('english') || name.includes('literature') || name.includes('writing')) {
+      types.add('English')
+    } else if (name.includes('science') || name.includes('biology') || name.includes('chemistry') || name.includes('physics')) {
+      types.add('Science')
+    } else if (name.includes('filipino') || name.includes('tagalog')) {
+      types.add('Filipino')
+    } else if (name.includes('history') || name.includes('social')) {
+      types.add('History')
+    } else if (name.includes('art') || name.includes('music') || name.includes('creative')) {
+      types.add('Arts')
+    } else if (name.includes('pe') || name.includes('physical') || name.includes('sports')) {
+      types.add('PE')
+    } else if (name.includes('computer') || name.includes('ict') || name.includes('programming') || name.includes('technology')) {
+      types.add('Computer')
+    }
+  })
+  
+  return Array.from(types).map(type => ({
+    name: type,
+    color: getSubjectTypeColor(type),
+    icon: getSubjectTypeIcon(type)
+  }))
+})
 
-    const filteredSections = computed(() => {
+const filteredSubjects = computed(() => {
+  let filtered = subjects.value
+  
+  // Filter by subject type
+  if (selectedSubjectFilter.value) {
+    filtered = filtered.filter(subject => {
+      const name = subject.name.toLowerCase()
+      const filter = selectedSubjectFilter.value.toLowerCase()
+      
+      if (filter === 'mathematics') {
+        return name.includes('math') || name.includes('algebra') || name.includes('geometry') || name.includes('calculus')
+      } else if (filter === 'english') {
+        return name.includes('english') || name.includes('literature') || name.includes('writing')
+      } else if (filter === 'science') {
+        return name.includes('science') || name.includes('biology') || name.includes('chemistry') || name.includes('physics')
+      } else if (filter === 'filipino') {
+        return name.includes('filipino') || name.includes('tagalog')
+      } else if (filter === 'history') {
+        return name.includes('history') || name.includes('social')
+      } else if (filter === 'arts') {
+        return name.includes('art') || name.includes('music') || name.includes('creative')
+      } else if (filter === 'pe') {
+        return name.includes('pe') || name.includes('physical') || name.includes('sports')
+      } else if (filter === 'computer') {
+        return name.includes('computer') || name.includes('ict') || name.includes('programming') || name.includes('technology')
+      }
+      return true
+    })
+  }
+  
+  // Filter by search query
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    filtered = filtered.filter(s => 
+      s.name.toLowerCase().includes(query) || 
+      s.grade_level.toString().includes(query)
+    )
+  }
+  
+  return filtered
+})
+
+const filteredSections = computed(() => {
       if (!searchQuery.value) return sections.value
       const query = searchQuery.value.toLowerCase()
       return sections.value.filter(s => 
@@ -863,15 +1014,15 @@ export default {
       searchQuery.value = ''
     }
 
-    const refreshData = async () => {
-      if (!selectedSubject && !selectedSection) {
-        await fetchSubjects()
-      } else if (selectedSubject && !selectedSection) {
-        await fetchSections(selectedSubject.value.id)
-      } else if (selectedSection) {
-        await fetchSubmissions(selectedSection.value.id)
-      }
-    }
+const refreshData = async () => {
+  if (!selectedSubject.value && !selectedSection.value) {
+    await fetchSubjects()
+  } else if (selectedSubject.value && !selectedSection.value) {
+    await fetchSections(selectedSubject.value.id)
+  } else if (selectedSection.value) {
+    await fetchSubmissions(selectedSection.value.id)
+  }
+}
 
     const loadQuestionsAndAnswers = async (submission) => {
       try {
@@ -905,8 +1056,6 @@ export default {
           reviewQuestions.value = []
           return
         }
-
-        const questionIds = questions.map(q => q.id)
 
         // Get student answers for this attempt
         const { data: studentAnswers, error: studentAnswersError } = await supabase
@@ -1122,110 +1271,209 @@ export default {
       return map[status] || status
     }
 
-    const getScoreClass = (percentage) => {
-      if (percentage >= 90) return 'excellent'
-      if (percentage >= 80) return 'good'
-      if (percentage >= 70) return 'average'
-      return 'needs-improvement'
-    }
-
-    watch([searchQuery, selectedStatus], () => {
-      currentPage.value = 1
-    })
-
-    onMounted(async () => {
-      const success = await getTeacherInfo()
-      if (success) {
-        await fetchSubjects()
-      } else {
-        loading.value = false
-      }
-    })
-
-    return {
-      loading,
-      loadingQuestions,
-      savingGrade,
-      error,
-      searchQuery,
-      subjects,
-      selectedSubject,
-      sections,
-      selectedSection,
-      submissions,
-      selectedStatus,
-      currentPage,
-      totalPages,
-      filteredSubjects,
-      filteredSections,
-      filteredSubmissions,
-      paginatedSubmissions,
-      sectionStats,
-      showReviewModal,
-      selectedSubmission,
-      reviewQuestions,
-      reviewFeedback,
-      correctAnswerCount,
-      maxReviewScore,
-      modalMode,
-      selectSubject,
-      selectSection,
-      resetToSubjects,
-      resetToSections,
-      refreshData,
-      sortBy,
-      getSortIcon,
-      reviewSubmission,
-      viewSubmission,
-      updateQuestionPoints,
-      closeReviewModal,
-      saveGrade,
-      calculateReviewScore,
-      calculateReviewPercentage,
-      getInitials,
-      formatDate,
-      formatTime,
-      getStatusText,
-      getScoreClass,
-      getCorrectOptionLabel
-    }
-  }
+const getScoreClass = (percentage) => {
+  if (percentage >= 90) return 'excellent'
+  if (percentage >= 80) return 'good'
+  if (percentage >= 70) return 'average'
+  return 'needs-improvement'
 }
+
+// Subject icon functions
+const getSubjectIconSvg = (subjectName) => {
+  const name = subjectName.toLowerCase()
+  
+  if (name.includes('math') || name.includes('algebra') || name.includes('geometry') || name.includes('calculus')) {
+    return '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M7,7H9V9H7V7M7,11H9V13H7V11M7,15H9V17H7V15M11,7H17V9H11V7M11,11H17V13H11V11M11,15H17V17H11V15Z" /></svg>'
+  }
+  
+  if (name.includes('english') || name.includes('literature') || name.includes('writing')) {
+    return '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" /></svg>'
+  }
+  
+  if (name.includes('science') || name.includes('biology') || name.includes('chemistry') || name.includes('physics')) {
+    return '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M5,13H6.5L9.5,6H14.5L17.5,13H19L15.5,4H8.5L5,13M15,16A1,1 0 0,1 16,17A1,1 0 0,1 15,18A1,1 0 0,1 14,17A1,1 0 0,1 15,16M15,10A1,1 0 0,1 16,11A1,1 0 0,1 15,12A1,1 0 0,1 14,11A1,1 0 0,1 15,10Z" /></svg>'
+  }
+  
+  if (name.includes('filipino') || name.includes('tagalog')) {
+    return '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12.87,15.07L15.28,17.48L17.48,15.28L15.07,12.87L17.48,10.46L15.28,8.26L12.87,10.67L10.46,8.26L8.26,10.46L10.67,12.87L8.26,15.28L10.46,17.48L12.87,15.07M17.5,12A1.5,1.5 0 0,1 16,10.5A1.5,1.5 0 0,1 17.5,9A1.5,1.5 0 0,1 19,10.5A1.5,1.5 0 0,1 17.5,12M10,10.5C10,9.67 9.33,9 8.5,9C7.67,9 7,9.67 7,10.5C7,11.33 7.67,12 8.5,12C9.33,12 10,11.33 10,10.5M12,14C12,11.34 14.33,9.2 17.35,9.04C17.75,6.27 15.41,4 12.5,4C9.59,4 7.25,6.27 7.65,9.04C10.67,9.2 13,11.34 13,14H12Z" /></svg>'
+  }
+  
+  if (name.includes('history') || name.includes('social')) {
+    return '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M13,3V9H21V3M13,21H21V11H13M3,21H11V15H3M3,13H11V3H3V13Z" /></svg>'
+  }
+  
+  if (name.includes('art') || name.includes('music') || name.includes('creative')) {
+    return '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12,3V13.55C11.41,13.21 10.73,13 10,13A4,4 0 0,0 6,17A4,4 0 0,0 10,21A4,4 0 0,0 14,17V7H18V3H12Z" /></svg>'
+  }
+  
+  if (name.includes('pe') || name.includes('physical') || name.includes('sports')) {
+    return '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6.5,2A7.5,7.5 0 0,1 14,9.5C14,10.87 13.61,12.14 12.94,13.22L19.07,19.36L17.66,20.78L11.5,14.63C10.42,15.28 9.17,15.67 7.83,15.67A7.67,7.67 0 0,1 0.17,8A7.5,7.5 0 0,1 6.5,2M6.5,4A5.5,5.5 0 0,0 1,9.5A5.5,5.5 0 0,0 6.5,15A5.5,5.5 0 0,0 12,9.5A5.5,5.5 0 0,0 6.5,4Z" /></svg>'
+  }
+  
+  if (name.includes('computer') || name.includes('ict') || name.includes('programming') || name.includes('technology')) {
+    return '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M4,6H20V16H4M20,18A2,2 0 0,0 22,16V6C22,4.89 21.1,4 20,4H4C2.89,4 2,4.89 2,6V16A2,2 0 0,0 4,18H0V20H24V18H20Z" /></svg>'
+  }
+  
+  // Default book icon for other subjects
+  return '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5C3.9 3 3 3.9 3 5V19C3.9 19 5 18.1 5 17V9H19C20.1 9 21 8.1 21 7V5C21 3.9 20.1 3 19 3Z" /></svg>'
+}
+
+const getSubjectIconColor = (subjectName) => {
+  const name = subjectName.toLowerCase()
+  
+  if (name.includes('math') || name.includes('algebra') || name.includes('geometry') || name.includes('calculus')) {
+    return '#2563eb' // Blue
+  }
+  
+  if (name.includes('english') || name.includes('literature') || name.includes('writing')) {
+    return '#dc2626' // Red
+  }
+  
+  if (name.includes('science') || name.includes('biology') || name.includes('chemistry') || name.includes('physics')) {
+    return '#16a34a' // Green
+  }
+  
+  if (name.includes('filipino') || name.includes('tagalog')) {
+    return '#ca8a04' // Yellow/Gold
+  }
+  
+  if (name.includes('history') || name.includes('social')) {
+    return '#9333ea' // Purple
+  }
+  
+  if (name.includes('art') || name.includes('music') || name.includes('creative')) {
+    return '#ec4899' // Pink
+  }
+  
+  if (name.includes('pe') || name.includes('physical') || name.includes('sports')) {
+    return '#ea580c' // Orange
+  }
+  
+  if (name.includes('computer') || name.includes('ict') || name.includes('programming') || name.includes('technology')) {
+    return '#0891b2' // Cyan
+  }
+  
+  // Default color
+  return '#3D8D7A'
+}
+
+const getSubjectTypeColor = (type) => {
+  const colors = {
+    'Mathematics': '#2563eb',
+    'English': '#dc2626',
+    'Science': '#16a34a',
+    'Filipino': '#ca8a04',
+    'History': '#9333ea',
+    'Arts': '#ec4899',
+    'PE': '#ea580c',
+    'Computer': '#0891b2'
+  }
+  return colors[type] || '#3D8D7A'
+}
+
+const getSubjectTypeIcon = (type) => {
+  const icons = {
+    'Mathematics': '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M7,7H9V9H7V7M7,11H9V13H7V11M7,15H9V17H7V15M11,7H17V9H11V7M11,11H17V13H11V11M11,15H17V17H11V15Z" /></svg>',
+    'English': '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" /></svg>',
+    'Science': '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M5,13H6.5L9.5,6H14.5L17.5,13H19L15.5,4H8.5L5,13M15,16A1,1 0 0,1 16,17A1,1 0 0,1 15,18A1,1 0 0,1 14,17A1,1 0 0,1 15,16M15,10A1,1 0 0,1 16,11A1,1 0 0,1 15,12A1,1 0 0,1 14,11A1,1 0 0,1 15,10Z" /></svg>',
+    'Filipino': '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12.87,15.07L15.28,17.48L17.48,15.28L15.07,12.87L17.48,10.46L15.28,8.26L12.87,10.67L10.46,8.26L8.26,10.46L10.67,12.87L8.26,15.28L10.46,17.48L12.87,15.07M17.5,12A1.5,1.5 0 0,1 16,10.5A1.5,1.5 0 0,1 17.5,9A1.5,1.5 0 0,1 19,10.5A1.5,1.5 0 0,1 17.5,12M10,10.5C10,9.67 9.33,9 8.5,9C7.67,9 7,9.67 7,10.5C7,11.33 7.67,12 8.5,12C9.33,12 10,11.33 10,10.5M12,14C12,11.34 14.33,9.2 17.35,9.04C17.75,6.27 15.41,4 12.5,4C9.59,4 7.25,6.27 7.65,9.04C10.67,9.2 13,11.34 13,14H12Z" /></svg>',
+    'History': '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M13,3V9H21V3M13,21H21V11H13M3,21H11V15H3M3,13H11V3H3V13Z" /></svg>',
+    'Arts': '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12,3V13.55C11.41,13.21 10.73,13 10,13A4,4 0 0,0 6,17A4,4 0 0,0 10,21A4,4 0 0,0 14,17V7H18V3H12Z" /></svg>',
+    'PE': '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6.5,2A7.5,7.5 0 0,1 14,9.5C14,10.87 13.61,12.14 12.94,13.22L19.07,19.36L17.66,20.78L11.5,14.63C10.42,15.28 9.17,15.67 7.83,15.67A7.67,7.67 0 0,1 0.17,8A7.5,7.5 0 0,1 6.5,2M6.5,4A5.5,5.5 0 0,0 1,9.5A5.5,5.5 0 0,0 6.5,15A5.5,5.5 0 0,0 12,9.5A5.5,5.5 0 0,0 6.5,4Z" /></svg>',
+    'Computer': '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M4,6H20V16H4M20,18A2,2 0 0,0 22,16V6C22,4.89 21.1,4 20,4H4C2.89,4 2,4.89 2,6V16A2,2 0 0,0 4,18H0V20H24V18H20Z" /></svg>'
+  }
+  return icons[type] || '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5C3.9 3 3 3.9 3 5V19C3.9 19 5 18.1 5 17V9H19C20.1 9 21 8.1 21 7V5C21 3.9 20.1 3 19 3Z" /></svg>'
+}
+
+watch([searchQuery, selectedStatus], () => {
+  currentPage.value = 1
+})
+
+onMounted(async () => {
+  const success = await getTeacherInfo()
+  if (success) {
+    await fetchSubjects()
+  } else {
+    loading.value = false
+  }
+})
 </script>
 
 <style scoped>
-.gradebook-container {
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
-  min-height: 100vh;
-  background: #f8fafc;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.gradebook-header {
+.gradebook-container {
+  min-height: 100vh;
+  background: #FBFFE4;
+  padding: 1.5rem;
+  font-family: 'Inter', sans-serif;
+}
+.dark .gradebook-container {
+  background: #181c20;
+}
+
+/* Header */
+.header-card {
+  background: white;
+  border: 1.5px solid #3D8D7A;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.1);
+}
+.dark .header-card {
+  background: #23272b;
+  border: 1.5px solid #A3D1C6;
+  box-shadow: 0 2px 8px rgba(163, 209, 198, 0.1);
+}
+
+.header-content {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 2rem;
   flex-wrap: wrap;
   gap: 1rem;
 }
 
-.header-content {
-  flex: 1;
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
-.page-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #1a202c;
-  margin: 0 0 0.5rem 0;
+.header-icon {
+  width: 56px;
+  height: 56px;
+  background: #3D8D7A;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
 }
 
-.page-subtitle {
-  color: #64748b;
-  font-size: 1.1rem;
-  margin: 0;
+.header-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+.dark .header-title {
+  color: #A3D1C6;
+}
+
+.header-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+.dark .header-subtitle {
+  color: #A3D1C6;
 }
 
 .header-actions {
@@ -1237,10 +1485,10 @@ export default {
 
 .search-box {
   position: relative;
-  min-width: 300px;
+  min-width: 280px;
 }
 
-.search-box i {
+.search-box svg {
   position: absolute;
   left: 1rem;
   top: 50%;
@@ -1251,44 +1499,54 @@ export default {
 .search-box input {
   width: 100%;
   padding: 0.75rem 1rem 0.75rem 2.5rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
-  font-size: 0.95rem;
+  border: 1px solid #A3D1C6;
+  border-radius: 8px;
+  font-size: 0.875rem;
   background: white;
+  transition: all 0.2s;
+}
+.dark .search-box input {
+  background: #23272b;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
 }
 
-.filter-select {
+.search-box input:focus {
+  outline: none;
+  border-color: #3D8D7A;
+  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
+}
+
+.grade-btn {
+  background: #3D8D7A;
+  color: white;
+  border: none;
+  border-radius: 8px;
   padding: 0.75rem 1rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
-  background: white;
-  font-size: 0.95rem;
-  min-width: 140px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.grade-btn:hover:not(:disabled) {
+  background: #2d6b5c;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  transform: translateY(-1px);
+}
+
+.grade-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .refresh-btn {
-  width: 40px;
-  height: 40px;
-  border: 1px solid #e2e8f0;
-  background: white;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  color: #64748b;
-}
-
-.refresh-btn:hover:not(:disabled) {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-  color: #3b82f6;
-}
-
-.refresh-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  min-width: auto;
 }
 
 .spinning {
@@ -1300,16 +1558,136 @@ export default {
   100% { transform: rotate(360deg); }
 }
 
+/* Subject Filter Buttons */
+.subject-filters {
+  margin-bottom: 1.5rem;
+}
+
+.filter-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.75rem;
+}
+.dark .filter-title {
+  color: #A3D1C6;
+}
+
+.filter-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  border: 2px solid #A3D1C6;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1f2937;
+}
+.dark .filter-btn {
+  background: #23272b;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
+}
+
+.filter-btn:hover {
+  background: var(--filter-color, #3D8D7A);
+  border-color: var(--filter-color, #3D8D7A);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.filter-btn.active {
+  background: var(--filter-color, #3D8D7A);
+  border-color: var(--filter-color, #3D8D7A);
+  color: white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.filter-btn svg {
+  flex-shrink: 0;
+}
+
+/* All button special styling */
+.filter-btn:first-child {
+  --filter-color: #3D8D7A;
+}
+
+/* Breadcrumb Navigation */
+.breadcrumb-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 0;
+  margin-bottom: 1rem;
+}
+
+.breadcrumb-btn {
+  background: none;
+  border: none;
+  color: #3D8D7A;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+.dark .breadcrumb-btn {
+  color: #A3D1C6;
+}
+
+.breadcrumb-btn:hover {
+  background: #B3D8A8;
+  color: #1f2937;
+}
+.dark .breadcrumb-btn:hover {
+  background: #3D8D7A;
+  color: white;
+}
+
+.breadcrumb-current {
+  color: #1f2937;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+}
+.dark .breadcrumb-current {
+  color: #A3D1C6;
+}
+
+.breadcrumb-separator {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+.dark .breadcrumb-separator {
+  color: #A3D1C6;
+}
+
+/* Loading and Error States */
 .loading-container, .error-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 400px;
+  color: #6b7280;
 }
-
-.loading-container {
-  color: #64748b;
+.dark .loading-container {
+  color: #A3D1C6;
 }
 
 .error-container {
@@ -1318,165 +1696,361 @@ export default {
   padding: 2rem;
 }
 
-.error-container i {
-  font-size: 4rem;
+.error-container svg {
   margin-bottom: 1rem;
   color: #fca5a5;
 }
 
 .error-container h3 {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   margin-bottom: 0.5rem;
   color: #991b1b;
 }
 
-.btn-retry {
-  padding: 0.75rem 1.5rem;
-  background: #dc2626;
-  color: white;
-  border: none;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  font-size: 1rem;
-  margin-top: 1rem;
-}
-
-.btn-retry:hover {
-  background: #b91c1c;
-}
-
-.spinner {
+.spinner-large {
   width: 40px;
   height: 40px;
-  border: 4px solid #e2e8f0;
-  border-top: 4px solid #3b82f6;
+  border: 4px solid #B3D8A8;
+  border-top: 4px solid #3D8D7A;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
 }
 
+/* Main Content */
+.main-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.content-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(61, 141, 122, 0.1);
+}
+.dark .content-card {
+  background: #23272b;
+  border: 1px solid #3D8D7A;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+.card-header {
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(61, 141, 122, 0.1);
+  padding-bottom: 1rem;
+}
+.dark .card-header {
+  border-bottom-color: #3D8D7A;
+}
+
+.card-header h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+.dark .card-header h3 {
+  color: #A3D1C6;
+}
+
+.card-desc {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+.dark .card-desc {
+  color: #A3D1C6;
+}
+
+/* Stats Grid */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .stat-card {
   background: white;
-  padding: 1.5rem;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(61, 141, 122, 0.1);
+}
+.dark .stat-card {
+  background: #23272b;
+  border: 1px solid #3D8D7A;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.stat-icon.pending { background: #A3D1C6; }
+.stat-icon.graded { background: #B3D8A8; }
+.stat-icon.total { background: #3D8D7A; }
+.stat-icon.average { background: linear-gradient(135deg, #3D8D7A, #A3D1C6); }
+
+.stat-number {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1;
+}
+.dark .stat-number {
+  color: #A3D1C6;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+  font-weight: 500;
+}
+.dark .stat-label {
+  color: #A3D1C6;
+}
+
+/* Subject and Section Cards */
+.subjects-grid, .sections-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.subject-card, .section-card {
+  background: #FBFFE4;
+  border: 1px solid #A3D1C6;
+  border-radius: 12px;
+  padding: 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s;
   display: flex;
   align-items: center;
   gap: 1rem;
 }
+.dark .subject-card, .dark .section-card {
+  background: #23272b;
+  border-color: #3D8D7A;
+}
 
-.stat-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 0.5rem;
+.subject-card:hover, .section-card:hover {
+  background: white;
+  border-color: #3D8D7A;
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.15);
+  transform: translateY(-2px);
+}
+.dark .subject-card:hover, .dark .section-card:hover {
+  background: #2a3038;
+  border-color: #A3D1C6;
+}
+
+.subject-icon, .section-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: #3D8D7A;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  color: white;
+  flex-shrink: 0;
+}
+
+.subject-info, .section-info {
+  flex: 1;
+}
+
+.subject-info h4, .section-info h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 0.25rem 0;
+}
+.dark .subject-info h4, .dark .section-info h4 {
+  color: #A3D1C6;
+}
+
+.subject-grade {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin: 0 0 0.5rem 0;
+}
+.dark .subject-grade {
+  color: #A3D1C6;
+}
+
+.section-code {
+  background: #B3D8A8;
+  color: #1f2937;
+  border-radius: 6px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-block;
+  font-family: 'Courier New', monospace;
+  margin: 0 0 0.5rem 0;
+}
+.dark .section-code {
+  background: #3D8D7A;
   color: white;
 }
 
-.stat-icon.pending { background: #f59e0b; }
-.stat-icon.graded { background: #10b981; }
-.stat-icon.reviewed { background: #3b82f6; }
-.stat-icon.average { background: #8b5cf6; }
-
-.stat-info h3 {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #1a202c;
-  margin: 0 0 0.25rem 0;
+.subject-stats, .section-stats {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
-.stat-info p {
-  color: #64748b;
-  margin: 0;
-  font-size: 0.9rem;
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+.dark .stat-item {
+  color: #A3D1C6;
 }
 
-.submissions-section {
-  background: white;
-  border-radius: 0.75rem;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+.stat-item.pending {
+  color: #d97706;
+}
+.dark .stat-item.pending {
+  color: #fbbf24;
 }
 
-.section-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
+.card-arrow {
+  color: #A3D1C6;
+  font-size: 1.25rem;
+  transition: all 0.2s;
 }
 
-.section-header h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1a202c;
-  margin: 0;
+.subject-card:hover .card-arrow,
+.section-card:hover .card-arrow {
+  color: #3D8D7A;
+  transform: translateX(2px);
 }
 
 .empty-state {
-  padding: 4rem 2rem;
+  padding: 3rem 2rem;
   text-align: center;
-  color: #64748b;
+  color: #6b7280;
+}
+.dark .empty-state {
+  color: #A3D1C6;
 }
 
-.empty-state i {
-  font-size: 4rem;
+.empty-state svg {
   margin-bottom: 1rem;
-  color: #cbd5e1;
+  color: #A3D1C6;
 }
 
 .empty-state h3 {
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   margin-bottom: 0.5rem;
-  color: #374151;
+  color: #1f2937;
+}
+.dark .empty-state h3 {
+  color: #A3D1C6;
+}
+
+/* Submissions Section */
+.submissions-filters {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+.filter-select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #A3D1C6;
+  border-radius: 6px;
+  background: white;
+  font-size: 0.875rem;
+  color: #1f2937;
+}
+.dark .filter-select {
+  background: #23272b;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
 }
 
 .submissions-table-container {
   overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid rgba(61, 141, 122, 0.1);
+}
+.dark .submissions-table-container {
+  border-color: #3D8D7A;
 }
 
 .submissions-table {
   width: 100%;
   border-collapse: collapse;
+  background: white;
+}
+.dark .submissions-table {
+  background: #23272b;
 }
 
 .submissions-table th,
 .submissions-table td {
   padding: 1rem;
   text-align: left;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid rgba(61, 141, 122, 0.1);
+}
+.dark .submissions-table th,
+.dark .submissions-table td {
+  border-bottom-color: #3D8D7A;
 }
 
 .submissions-table th {
-  background: #f8fafc;
+  background: #FBFFE4;
   font-weight: 600;
-  color: #374151;
+  color: #1f2937;
   font-size: 0.875rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+.dark .submissions-table th {
+  background: #1f2429;
+  color: #A3D1C6;
 }
 
 .submissions-table th.sortable {
   cursor: pointer;
   user-select: none;
+  transition: background 0.2s;
 }
 
 .submissions-table th.sortable:hover {
-  background: #f1f5f9;
+  background: #B3D8A8;
+}
+.dark .submissions-table th.sortable:hover {
+  background: #2a3038;
 }
 
-.submissions-table th i {
+.submissions-table th svg {
   margin-left: 0.5rem;
   opacity: 0.5;
 }
 
+/* Table Content Styles */
 .student-info {
   display: flex;
   align-items: center;
@@ -1484,59 +2058,80 @@ export default {
 }
 
 .student-avatar {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: #3b82f6;
+  background: #3D8D7A;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
 }
 
 .student-name {
   font-weight: 500;
-  color: #1a202c;
+  color: #1f2937;
+  font-size: 0.875rem;
+}
+.dark .student-name {
+  color: #A3D1C6;
 }
 
 .student-email {
-  font-size: 0.875rem;
-  color: #64748b;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+.dark .student-email {
+  color: #9ca3af;
 }
 
 .quiz-info {
-  max-width: 200px;
+  max-width: 180px;
 }
 
 .quiz-title {
   font-weight: 500;
-  color: #1a202c;
+  color: #1f2937;
   margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+}
+.dark .quiz-title {
+  color: #A3D1C6;
 }
 
 .quiz-code {
-  font-size: 0.75rem;
-  color: #64748b;
-  font-family: monospace;
-  background: #f1f5f9;
-  padding: 0.125rem 0.5rem;
-  border-radius: 0.25rem;
+  font-size: 0.7rem;
+  color: #6b7280;
+  font-family: 'Courier New', monospace;
+  background: #B3D8A8;
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
   display: inline-block;
+}
+.dark .quiz-code {
+  background: #3D8D7A;
+  color: white;
 }
 
 .date-info {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
 }
 
 .date {
-  color: #1a202c;
+  color: #1f2937;
   font-weight: 500;
+}
+.dark .date {
+  color: #A3D1C6;
 }
 
 .time {
-  color: #64748b;
+  color: #6b7280;
+}
+.dark .time {
+  color: #9ca3af;
 }
 
 .score-display {
@@ -1545,44 +2140,48 @@ export default {
 
 .score-percentage {
   font-weight: 700;
-  font-size: 1.125rem;
+  font-size: 1rem;
   margin-bottom: 0.25rem;
 }
 
 .score-percentage.excellent { color: #059669; }
-.score-percentage.good { color: #0369a1; }
+.score-percentage.good { color: #3D8D7A; }
 .score-percentage.average { color: #d97706; }
 .score-percentage.needs-improvement { color: #dc2626; }
 
 .score-fraction {
-  font-size: 0.75rem;
-  color: #64748b;
+  font-size: 0.7rem;
+  color: #6b7280;
+}
+.dark .score-fraction {
+  color: #9ca3af;
 }
 
 .status-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 500;
+  padding: 0.25rem 0.625rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.025em;
 }
 
 .status-badge.submitted {
-  background: #fef3c7;
-  color: #92400e;
+  background: rgba(163, 209, 198, 0.2);
+  color: #1f2937;
 }
 
 .status-badge.graded {
-  background: #d1fae5;
-  color: #065f46;
+  background: rgba(179, 216, 168, 0.3);
+  color: #1f2937;
 }
 
 .status-badge.reviewed {
-  background: #dbeafe;
-  color: #1e40af;
+  background: rgba(61, 141, 122, 0.1);
+  color: #3D8D7A;
 }
 
+/* Action Buttons */
 .action-buttons {
   display: flex;
   gap: 0.5rem;
@@ -1592,7 +2191,7 @@ export default {
   width: 32px;
   height: 32px;
   border: none;
-  border-radius: 0.25rem;
+  border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1601,48 +2200,65 @@ export default {
 }
 
 .btn-action.review {
-  background: #f3f4f6;
-  color: #374151;
+  background: #B3D8A8;
+  color: #1f2937;
 }
 
 .btn-action.review:hover {
-  background: #e5e7eb;
+  background: #3D8D7A;
+  color: white;
 }
 
-.btn-action.auto-grade {
-  background: #fef3c7;
-  color: #92400e;
+.btn-action.view {
+  background: rgba(163, 209, 198, 0.3);
+  color: #3D8D7A;
 }
 
-.btn-action.auto-grade:hover {
-  background: #fde68a;
+.btn-action.view:hover {
+  background: #A3D1C6;
+  color: #1f2937;
 }
 
+/* Pagination */
 .pagination {
   padding: 1.5rem;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 1rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid rgba(61, 141, 122, 0.1);
+}
+.dark .pagination {
+  border-top-color: #3D8D7A;
 }
 
 .pagination-btn {
-  width: 40px;
-  height: 40px;
-  border: 1px solid #e2e8f0;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #A3D1C6;
   background: white;
-  border-radius: 0.5rem;
+  border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
+  color: #3D8D7A;
+}
+.dark .pagination-btn {
+  background: #23272b;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background: #f8fafc;
-  border-color: #cbd5e1;
+  background: #B3D8A8;
+  border-color: #3D8D7A;
+  color: #1f2937;
+}
+.dark .pagination-btn:hover:not(:disabled) {
+  background: #3D8D7A;
+  color: white;
 }
 
 .pagination-btn:disabled {
@@ -1651,10 +2267,15 @@ export default {
 }
 
 .pagination-info {
-  color: #64748b;
+  color: #6b7280;
   font-size: 0.875rem;
+  font-weight: 500;
+}
+.dark .pagination-info {
+  color: #A3D1C6;
 }
 
+/* Modal Styles */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -1671,52 +2292,76 @@ export default {
 
 .review-modal {
   background: white;
-  border-radius: 0.75rem;
+  border-radius: 12px;
   width: 100%;
   max-width: 900px;
   max-height: 90vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  border: 1px solid #A3D1C6;
+}
+.dark .review-modal {
+  background: #23272b;
+  border-color: #3D8D7A;
 }
 
 .modal-header {
   padding: 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid rgba(61, 141, 122, 0.1);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background: #FBFFE4;
+}
+.dark .modal-header {
+  background: #1f2429;
+  border-bottom-color: #3D8D7A;
 }
 
 .modal-header h3 {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1a202c;
+  color: #1f2937;
   margin: 0;
+}
+.dark .modal-header h3 {
+  color: #A3D1C6;
 }
 
 .modal-subtitle {
-  color: #64748b;
+  color: #6b7280;
   font-size: 0.875rem;
   margin: 0.25rem 0 0 0;
 }
+.dark .modal-subtitle {
+  color: #A3D1C6;
+}
 
 .modal-close {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border: none;
   background: none;
   cursor: pointer;
-  border-radius: 0.5rem;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #64748b;
+  color: #6b7280;
+  transition: all 0.2s;
+}
+.dark .modal-close {
+  color: #A3D1C6;
 }
 
 .modal-close:hover {
-  background: #f1f5f9;
-  color: #374151;
+  background: #B3D8A8;
+  color: #1f2937;
+}
+.dark .modal-close:hover {
+  background: #3D8D7A;
+  color: white;
 }
 
 .modal-content {
@@ -1730,14 +2375,17 @@ export default {
   align-items: center;
   justify-content: center;
   padding: 3rem 2rem;
-  color: #64748b;
+  color: #6b7280;
+}
+.dark .loading-questions, .dark .no-questions {
+  color: #A3D1C6;
 }
 
 .spinner-small {
   width: 30px;
   height: 30px;
-  border: 3px solid #e2e8f0;
-  border-top: 3px solid #3b82f6;
+  border: 3px solid #B3D8A8;
+  border-top: 3px solid #3D8D7A;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
@@ -1749,12 +2397,17 @@ export default {
 
 .review-summary {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 1rem;
-  padding: 1.5rem;
-  background: #f8fafc;
-  border-radius: 0.5rem;
+  padding: 1.25rem;
+  background: #FBFFE4;
+  border-radius: 8px;
   margin-bottom: 1.5rem;
+  border: 1px solid rgba(61, 141, 122, 0.1);
+}
+.dark .review-summary {
+  background: #1f2429;
+  border-color: #3D8D7A;
 }
 
 .summary-stat {
@@ -1765,28 +2418,40 @@ export default {
 }
 
 .stat-label {
-  font-size: 0.875rem;
-  color: #64748b;
+  font-size: 0.75rem;
+  color: #6b7280;
   margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+.dark .stat-label {
+  color: #A3D1C6;
 }
 
 .stat-value {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 700;
-  color: #1a202c;
+  color: #1f2937;
+}
+.dark .stat-value {
+  color: #A3D1C6;
 }
 
+/* Question Review Styles */
 .questions-review {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
 .question-review-item {
-  border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
-  padding: 1.5rem;
+  border: 1px solid rgba(61, 141, 122, 0.1);
+  border-radius: 8px;
+  padding: 1.25rem;
   background: white;
+}
+.dark .question-review-item {
+  background: #2a3038;
+  border-color: #3D8D7A;
 }
 
 .question-header {
@@ -1798,42 +2463,49 @@ export default {
 }
 
 .question-number {
-  background: #3b82f6;
+  background: #3D8D7A;
   color: white;
   padding: 0.5rem 0.75rem;
-  border-radius: 0.375rem;
+  border-radius: 6px;
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
 }
 
 .question-result {
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
 }
 
 .question-result.correct {
-  background: #d1fae5;
-  color: #065f46;
+  background: rgba(179, 216, 168, 0.3);
+  color: #1f2937;
 }
 
 .question-result.incorrect {
-  background: #fee2e2;
-  color: #991b1b;
+  background: rgba(248, 113, 113, 0.1);
+  color: #dc2626;
 }
 
 .question-points {
   margin-left: auto;
-  color: #64748b;
+  color: #6b7280;
   font-weight: 600;
+  font-size: 0.875rem;
+}
+.dark .question-points {
+  color: #A3D1C6;
 }
 
 .question-text {
-  font-size: 1.125rem;
-  color: #1a202c;
+  font-size: 1rem;
+  color: #1f2937;
   margin-bottom: 1rem;
   line-height: 1.6;
+}
+.dark .question-text {
+  color: #A3D1C6;
 }
 
 .answer-section {
@@ -2012,37 +2684,55 @@ export default {
 
 .modal-actions {
   padding: 1.5rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid rgba(61, 141, 122, 0.1);
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
+  background: #FBFFE4;
+}
+.dark .modal-actions {
+  background: #1f2429;
+  border-top-color: #3D8D7A;
 }
 
 .btn-modal {
   padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  font-size: 0.875rem;
 }
 
 .btn-modal.cancel {
   background: #f1f5f9;
-  color: #475569;
+  color: #6b7280;
+  border: 1px solid #A3D1C6;
+}
+.dark .btn-modal.cancel {
+  background: #23272b;
+  color: #A3D1C6;
+  border-color: #3D8D7A;
 }
 
 .btn-modal.cancel:hover {
-  background: #e2e8f0;
+  background: #B3D8A8;
+  color: #1f2937;
+}
+.dark .btn-modal.cancel:hover {
+  background: #3D8D7A;
+  color: white;
 }
 
 .btn-modal.primary {
-  background: #3b82f6;
+  background: #3D8D7A;
   color: white;
 }
 
 .btn-modal.primary:hover:not(:disabled) {
-  background: #2563eb;
+  background: #2d6b5c;
+  box-shadow: 0 2px 6px rgba(61, 141, 122, 0.2);
 }
 
 .btn-modal:disabled {
@@ -2050,12 +2740,324 @@ export default {
   cursor: not-allowed;
 }
 
+/* Points Input */
+.points-input {
+  width: 60px;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid #A3D1C6;
+  border-radius: 4px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  background: white;
+}
+.dark .points-input {
+  background: #23272b;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
+}
+
+.points-input:focus {
+  outline: none;
+  border-color: #3D8D7A;
+  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
+}
+
+/* Input and Textarea Styles */
+.comment-input, .feedback-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #A3D1C6;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  resize: vertical;
+  background: white;
+}
+.dark .comment-input, .dark .feedback-textarea {
+  background: #23272b;
+  border-color: #3D8D7A;
+  color: #A3D1C6;
+}
+
+.comment-input:focus, .feedback-textarea:focus {
+  outline: none;
+  border-color: #3D8D7A;
+  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
+}
+
+/* Answer Styles */
+.answer-section {
+  margin: 1rem 0;
+}
+
+.answer-key-label {
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.75rem;
+}
+.dark .answer-key-label {
+  color: #A3D1C6;
+}
+
+.options-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.option-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+}
+.dark .option-item {
+  background: #23272b;
+  border-color: #374151;
+}
+
+.option-item.correct {
+  border-color: #B3D8A8;
+  background: rgba(179, 216, 168, 0.1);
+}
+
+.option-item.incorrect {
+  border-color: #fca5a5;
+  background: rgba(248, 113, 113, 0.1);
+}
+
+.option-item.selected {
+  border-color: #3D8D7A;
+}
+
+.option-letter {
+  min-width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  border-radius: 50%;
+  font-weight: 700;
+  color: #475569;
+  font-size: 0.875rem;
+}
+
+.option-item.correct .option-letter {
+  background: #B3D8A8;
+  color: #1f2937;
+}
+
+.option-item.incorrect .option-letter {
+  background: #fca5a5;
+  color: white;
+}
+
+.option-content {
+  flex: 1;
+}
+
+.option-text {
+  color: #1f2937;
+  line-height: 1.5;
+}
+.dark .option-text {
+  color: #A3D1C6;
+}
+
+.correct-tag, .selected-tag {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+  display: inline-block;
+}
+
+.correct-tag {
+  background: rgba(179, 216, 168, 0.2);
+  color: #1f2937;
+}
+
+.selected-tag {
+  background: rgba(61, 141, 122, 0.1);
+  color: #3D8D7A;
+}
+
+/* True/False Options */
+.true-false-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.tf-option {
+  padding: 1.25rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  text-align: center;
+  background: white;
+  transition: all 0.2s;
+}
+.dark .tf-option {
+  background: #23272b;
+  border-color: #374151;
+}
+
+.tf-option.student-selected {
+  border-color: #3D8D7A;
+  background: rgba(61, 141, 122, 0.05);
+}
+
+.tf-option.correct-answer {
+  border-color: #B3D8A8;
+  background: rgba(179, 216, 168, 0.1);
+}
+
+.tf-option.wrong-answer {
+  border-color: #fca5a5;
+  background: rgba(248, 113, 113, 0.1);
+}
+
+.tf-option strong {
+  display: block;
+  font-size: 1.125rem;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+.dark .tf-option strong {
+  color: #A3D1C6;
+}
+
+/* Fill in the Blank */
+.fill-blank-answers {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.answer-key-box, .student-answer-box {
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+.dark .answer-key-box, .dark .student-answer-box {
+  border-color: #374151;
+}
+
+.answer-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+.dark .answer-label {
+  color: #A3D1C6;
+}
+
+.answer-text {
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.answer-text.correct {
+  background: rgba(179, 216, 168, 0.2);
+  color: #1f2937;
+}
+
+.answer-text.incorrect {
+  background: rgba(248, 113, 113, 0.1);
+  color: #dc2626;
+}
+
+/* Teacher Comments */
+.teacher-comment-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(61, 141, 122, 0.1);
+}
+.dark .teacher-comment-section {
+  border-top-color: #3D8D7A;
+}
+
+.overall-feedback-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid rgba(61, 141, 122, 0.1);
+}
+.dark .overall-feedback-section {
+  border-top-color: #3D8D7A;
+}
+
+.overall-feedback-section h4 {
+  font-size: 1.125rem;
+  color: #1f2937;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+}
+.dark .overall-feedback-section h4 {
+  color: #A3D1C6;
+}
+
+.feedback-display {
+  background: #FBFFE4;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(61, 141, 122, 0.1);
+}
+.dark .feedback-display {
+  background: #1f2429;
+  border-color: #3D8D7A;
+}
+
+.feedback-display p {
+  color: #1f2937;
+  line-height: 1.6;
+  margin: 0;
+}
+.dark .feedback-display p {
+  color: #A3D1C6;
+}
+
+.comment-display {
+  background: rgba(61, 141, 122, 0.05);
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin-top: 0.5rem;
+}
+.dark .comment-display {
+  background: rgba(61, 141, 122, 0.1);
+}
+
+.comment-display strong {
+  color: #3D8D7A;
+  font-weight: 600;
+}
+.dark .comment-display strong {
+  color: #A3D1C6;
+}
+
+.comment-display p {
+  margin: 0.5rem 0 0 0;
+  color: #1f2937;
+}
+.dark .comment-display p {
+  color: #A3D1C6;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
   .gradebook-container {
     padding: 1rem;
   }
 
-  .gradebook-header {
+  .header-content {
     flex-direction: column;
     align-items: stretch;
   }
@@ -2064,20 +3066,28 @@ export default {
     min-width: auto;
   }
 
+  .subjects-grid, .sections-grid {
+    grid-template-columns: 1fr;
+  }
+
   .stats-grid {
     grid-template-columns: 1fr;
   }
 
   .submissions-table {
-    font-size: 0.875rem;
-  }
-
-  .true-false-options {
-    grid-template-columns: 1fr;
+    font-size: 0.8rem;
   }
 
   .review-summary {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .btn-modal {
+    width: 100%;
   }
 }
 
