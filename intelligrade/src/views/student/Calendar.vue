@@ -975,13 +975,13 @@ export default {
   align-items: center;
   background: #FBFFE4;
   border-radius: 12px;
+  border: 2px solid #A3D1C6;
   box-shadow: 0 2px 8px rgba(61, 141, 122, 0.08);
   padding: 1.25rem;
   margin-bottom: 1.5rem;
   min-height: auto;
   gap: 1.25rem;
   justify-content: space-between;
-  border: none;
 }
 .dark .section-header-card {
   background: #23272b;

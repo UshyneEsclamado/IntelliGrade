@@ -1088,6 +1088,9 @@ export default {
 
 /* Header */
 .section-header-card {
+  border: 2px solid #A3D1C6;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.08);
   background: white;
   border-radius: 16px;
   padding: 1.5rem;
