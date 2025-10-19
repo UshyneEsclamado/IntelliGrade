@@ -790,15 +790,16 @@ export default {
 /* Header */
 .header-card {
   background: white;
+  border: 1.5px solid #3D8D7A;
   border-radius: 16px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.1);
 }
 .dark .header-card {
   background: #23272b;
-  border: 1px solid #20c997;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  border: 1.5px solid #A3D1C6;
+  box-shadow: 0 2px 8px rgba(163, 209, 198, 0.1);
 }
 
 .header-content {
@@ -826,12 +827,21 @@ export default {
 
 .header-title {
   font-size: 1.5rem;
-  font-weight: 700;
+  font-weight: 800;
   color: #1f2937;
   margin-bottom: 0.25rem;
 }
+
+.header-title span {
+  font-weight: 800 !important;
+}
 .dark .header-title {
   color: #A3D1C6;
+  font-weight: 800;
+}
+
+.dark .header-title span {
+  font-weight: 800 !important;
 }
 
 .header-subtitle {
