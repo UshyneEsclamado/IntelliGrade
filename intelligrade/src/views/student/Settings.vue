@@ -58,7 +58,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="section-icon">
               <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
             </svg> 
-            App Preferences
+            App Appearance
           </h2>
           <p class="section-subtitle">Customize the app's look and feel</p>
           <div class="settings-list">
@@ -66,13 +66,6 @@
               <span>Dark Mode</span>
               <label class="switch">
                 <input type="checkbox" v-model="isDarkMode" @change="handleDarkModeToggle">
-                <span class="slider round"></span>
-              </label>
-            </div>
-            <div class="setting-item">
-              <span>Notifications</span>
-              <label class="switch">
-                <input type="checkbox" v-model="notificationsEnabled" @change="toggleNotifications">
                 <span class="slider round"></span>
               </label>
             </div>
@@ -196,13 +189,6 @@
                 <li>Check your internet connection</li>
                 <li>Try refreshing the page</li>
               </ul>
-              
-              <p><strong>Not receiving notifications?</strong></p>
-              <ul>
-                <li>Check your notification settings</li>
-                <li>Verify your email address</li>
-                <li>Check your spam/junk folder</li>
-              </ul>
             </section>
 
             <section>
@@ -238,15 +224,6 @@
             </section>
 
             <section>
-              <h5>📚 Resources</h5>
-              <ul>
-                <li>User Guide: Coming soon</li>
-                <li>Video Tutorials: Coming soon</li>
-                <li>FAQ: Coming soon</li>
-              </ul>
-            </section>
-
-            <section>
               <h5>🐛 Report a Bug</h5>
               <p>Found a bug? Help us improve IntelliGrade by reporting it:</p>
               <ul>
@@ -271,319 +248,344 @@
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Profile Update Modal -->
-  <div v-if="showProfileModal" class="modal-overlay" @click="closeProfileModal">
-    <div class="modal-content" @click.stop>
-      <div class="modal-header">
-        <h3>Update Profile</h3>
-        <button @click="closeProfileModal" class="close-btn">×</button>
-      </div>
-      <div class="modal-body">
-        <!-- Avatar Selection Section -->
-        <div class="form-group">
-          <label>Choose Avatar</label>
-          <div class="avatar-grid">
-            <div 
-              v-for="avatar in avatarOptions" 
-              :key="avatar.id"
-              @click="selectAvatar(avatar.id)"
-              :class="['avatar-option', { 'selected': profileData.avatar === avatar.id }]"
-            >
-              <div class="avatar-icon" :style="{ background: avatar.color }">
-                {{ avatar.emoji }}
+    <!-- Profile Update Modal -->
+    <div v-if="showProfileModal" class="modal-overlay" @click="closeProfileModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>Update Profile</h3>
+          <button @click="closeProfileModal" class="close-btn">×</button>
+        </div>
+        <div class="modal-body">
+          <!-- Profile Photo Upload Section -->
+          <div class="form-group">
+            <label>Profile Photo</label>
+            <div class="photo-upload-container">
+              <div class="current-photo">
+                <img 
+                  v-if="profileData.profile_photo_url" 
+                  :src="profileData.profile_photo_url" 
+                  alt="Profile Photo"
+                  class="profile-photo-preview"
+                >
+                <div v-else class="profile-photo-placeholder">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                </div>
+              </div>
+              <div class="photo-upload-actions">
+                <input 
+                  type="file" 
+                  ref="photoInput" 
+                  accept="image/jpeg,image/png,image/jpg,image/webp"
+                  @change="handlePhotoSelect"
+                  style="display: none;"
+                >
+                <button @click="triggerPhotoInput" class="btn-upload" type="button">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                  </svg>
+                  Upload Photo
+                </button>
+                <button v-if="profileData.profile_photo_url" @click="removePhoto" class="btn-remove" type="button">
+                  Remove Photo
+                </button>
+                <p class="photo-hint">Max 5MB. JPEG, PNG, or WebP format</p>
               </div>
             </div>
           </div>
-        </div>
-        
-        <!-- Full Name Section -->
-        <div class="form-group">
-          <label>Full Name</label>
-          <input 
-            type="text" 
-            v-model="profileData.full_name" 
-            placeholder="Enter your full name"
-            class="form-input"
-          >
-        </div>
-        
-        <!-- Grade Level Section -->
-        <div class="form-group">
-          <label>Grade Level</label>
-          <select v-model="profileData.grade_level" class="form-input grade-select">
-            <option value="7">Grade 7</option>
-            <option value="8">Grade 8</option>
-            <option value="9">Grade 9</option>
-            <option value="10">Grade 10</option>
-            <option value="11">Grade 11</option>
-            <option value="12">Grade 12</option>
-          </select>
-          <p class="grade-note">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M12 6v6l4 2"/>
-            </svg>
-            Update your grade level when advancing to the next school year
-          </p>
-        </div>
-        
-        <!-- Error/Success Messages -->
-        <div v-if="profileError" class="error-message">{{ profileError }}</div>
-        <div v-if="profileSuccess" class="success-message">{{ profileSuccess }}</div>
-      </div>
-      <div class="modal-footer">
-        <button @click="closeProfileModal" class="btn-secondary">Cancel</button>
-        <button @click="saveProfile" class="btn-primary" :disabled="isSaving">
-          {{ isSaving ? 'Saving...' : 'Save Profile' }}
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Password Change Modal -->
-  <div v-if="showPasswordModal" class="modal-overlay" @click="closePasswordModal">
-    <div class="modal-content" @click.stop>
-      <div class="modal-header">
-        <h3>Change Password</h3>
-        <button @click="closePasswordModal" class="close-btn">×</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label>Current Password</label>
-          <input 
-            type="password" 
-            v-model="passwordData.currentPassword" 
-            placeholder="Enter current password"
-            class="form-input"
-          >
-        </div>
-        <div class="form-group">
-          <label>New Password</label>
-          <input 
-            type="password" 
-            v-model="passwordData.newPassword" 
-            placeholder="Enter new password (min 6 characters)"
-            class="form-input"
-          >
-        </div>
-        <div class="form-group">
-          <label>Confirm New Password</label>
-          <input 
-            type="password" 
-            v-model="passwordData.confirmPassword" 
-            placeholder="Confirm new password"
-            class="form-input"
-          >
-        </div>
-        
-        <!-- Error/Success Messages -->
-        <div v-if="passwordError" class="error-message">{{ passwordError }}</div>
-        <div v-if="passwordSuccess" class="success-message">{{ passwordSuccess }}</div>
-      </div>
-      <div class="modal-footer">
-        <button @click="closePasswordModal" class="btn-secondary">Cancel</button>
-        <button @click="changePassword" class="btn-primary" :disabled="isChangingPassword">
-          {{ isChangingPassword ? 'Updating...' : 'Update Password' }}
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Privacy Policy Modal -->
-  <div v-if="showPrivacyModal" class="modal-overlay" @click="closePrivacyModal">
-    <div class="modal-content document-modal" @click.stop>
-      <div class="modal-header">
-        <h3>Privacy Policy</h3>
-        <button @click="closePrivacyModal" class="close-btn">×</button>
-      </div>
-      <div class="modal-body document-body">
-        <div class="document-content">
-          <h4>IntelliGrade Privacy Policy</h4>
-          <p class="document-date">Last Updated: January 2025</p>
           
-          <section>
-            <h5>1. Information We Collect</h5>
-            <p>We collect information that you provide directly to us, including:</p>
-            <ul>
-              <li>Account information (name, email, student ID)</li>
-              <li>Profile information (grade level)</li>
-              <li>Academic records and grades</li>
-              <li>Messages and communications within the platform</li>
-              <li>Usage data and analytics</li>
-            </ul>
-          </section>
-
-          <section>
-            <h5>2. How We Use Your Information</h5>
-            <p>We use the information we collect to:</p>
-            <ul>
-              <li>Provide, maintain, and improve our educational services</li>
-              <li>Process enrollments and manage class sections</li>
-              <li>Facilitate communication between teachers and students</li>
-              <li>Monitor and analyze usage patterns</li>
-              <li>Ensure platform security and prevent fraud</li>
-              <li>Comply with legal obligations</li>
-            </ul>
-          </section>
-
-          <section>
-            <h5>3. Information Sharing</h5>
-            <p>We do not sell your personal information. We may share your information with:</p>
-            <ul>
-              <li>Teachers and administrators within your educational institution</li>
-              <li>Service providers who assist in operating our platform</li>
-              <li>Legal authorities when required by law</li>
-            </ul>
-          </section>
-
-          <section>
-            <h5>4. Data Security</h5>
-            <p>We implement appropriate technical and organizational measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction.</p>
-          </section>
-
-          <section>
-            <h5>5. Your Rights</h5>
-            <p>You have the right to:</p>
-            <ul>
-              <li>Access and update your personal information</li>
-              <li>Request deletion of your account</li>
-              <li>Opt-out of non-essential communications</li>
-              <li>Export your data</li>
-            </ul>
-          </section>
-
-          <section>
-            <h5>6. Children's Privacy</h5>
-            <p>Our platform is designed for students in grades 7-12. We comply with applicable laws regarding the collection and use of information from minors.</p>
-          </section>
-
-          <section>
-            <h5>7. Contact Us</h5>
-            <p>If you have questions about this Privacy Policy, please contact us at privacy@intelligrade.edu</p>
-          </section>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button @click="closePrivacyModal" class="btn-primary">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Terms of Service Modal -->
-  <div v-if="showTermsModal" class="modal-overlay" @click="closeTermsModal">
-    <div class="modal-content document-modal" @click.stop>
-      <div class="modal-header">
-        <h3>Terms of Service</h3>
-        <button @click="closeTermsModal" class="close-btn">×</button>
-      </div>
-      <div class="modal-body document-body">
-        <div class="document-content">
-          <h4>IntelliGrade Terms of Service</h4>
-          <p class="document-date">Last Updated: January 2025</p>
+          <!-- Full Name Section -->
+          <div class="form-group">
+            <label>Full Name</label>
+            <input 
+              type="text" 
+              v-model="profileData.full_name" 
+              placeholder="Enter your full name"
+              class="form-input"
+            >
+          </div>
           
-          <section>
-            <h5>1. Acceptance of Terms</h5>
-            <p>By accessing and using IntelliGrade, you accept and agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our platform.</p>
-          </section>
-
-          <section>
-            <h5>2. User Accounts</h5>
-            <p>You are responsible for:</p>
-            <ul>
-              <li>Maintaining the confidentiality of your account credentials</li>
-              <li>All activities that occur under your account</li>
-              <li>Notifying us immediately of any unauthorized access</li>
-              <li>Providing accurate and complete information</li>
-            </ul>
-          </section>
-
-          <section>
-            <h5>3. Acceptable Use</h5>
-            <p>You agree not to:</p>
-            <ul>
-              <li>Use the platform for any illegal or unauthorized purpose</li>
-              <li>Violate any laws in your jurisdiction</li>
-              <li>Infringe on intellectual property rights</li>
-              <li>Transmit malicious code or harmful content</li>
-              <li>Harass, abuse, or harm other users</li>
-              <li>Attempt to gain unauthorized access to the system</li>
-            </ul>
-          </section>
-
-          <section>
-            <h5>4. Academic Integrity</h5>
-            <p>All users must maintain academic integrity. Cheating, plagiarism, or any form of academic dishonesty is strictly prohibited and may result in account suspension or termination.</p>
-          </section>
-
-          <section>
-            <h5>5. Content Ownership</h5>
-            <p>You retain ownership of content you create on the platform. By posting content, you grant IntelliGrade a license to use, store, and display that content as necessary to provide our services.</p>
-          </section>
-
-          <section>
-            <h5>6. Service Availability</h5>
-            <p>We strive to provide continuous access to our platform but do not guarantee uninterrupted service. We may suspend or terminate access for maintenance, updates, or violations of these terms.</p>
-          </section>
-
-          <section>
-            <h5>7. Limitation of Liability</h5>
-            <p>IntelliGrade is provided "as is" without warranties of any kind. We are not liable for any indirect, incidental, or consequential damages arising from your use of the platform.</p>
-          </section>
-
-          <section>
-            <h5>8. Termination</h5>
-            <p>We reserve the right to suspend or terminate your account if you violate these terms or engage in conduct that we deem harmful to the platform or other users.</p>
-          </section>
-
-          <section>
-            <h5>9. Changes to Terms</h5>
-            <p>We may modify these terms at any time. Continued use of the platform after changes constitutes acceptance of the modified terms.</p>
-          </section>
-
-          <section>
-            <h5>10. Contact Information</h5>
-            <p>For questions about these Terms of Service, contact us at support@intelligrade.edu</p>
-          </section>
+          <!-- Grade Level Section -->
+          <div class="form-group">
+            <label>Grade Level</label>
+            <select v-model="profileData.grade_level" class="form-input grade-select">
+              <option value="7">Grade 7</option>
+              <option value="8">Grade 8</option>
+              <option value="9">Grade 9</option>
+              <option value="10">Grade 10</option>
+              <option value="11">Grade 11</option>
+              <option value="12">Grade 12</option>
+            </select>
+            <p class="grade-note">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 6v6l4 2"/>
+              </svg>
+              When you advance to the next grade level, your previous enrollments and data will be archived
+            </p>
+          </div>
+          
+          <!-- Error/Success Messages -->
+          <div v-if="profileError" class="error-message">{{ profileError }}</div>
+          <div v-if="profileSuccess" class="success-message">{{ profileSuccess }}</div>
         </div>
-      </div>
-      <div class="modal-footer">
-        <button @click="closeTermsModal" class="btn-primary">Close</button>
+        <div class="modal-footer">
+          <button @click="closeProfileModal" class="btn-secondary">Cancel</button>
+          <button @click="saveProfile" class="btn-primary" :disabled="isSaving">
+            {{ isSaving ? 'Saving...' : 'Save Profile' }}
+          </button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Delete Account Confirmation Modal -->
-  <div v-if="showDeleteModal" class="modal-overlay" @click="closeDeleteModal">
-    <div class="modal-content" style="max-width: 400px;" @click.stop>
-      <div class="modal-header" style="border-bottom: 1px solid #dc3545;">
-        <h3 style="color: #dc3545; font-weight: 600; margin: 0;">Delete Account</h3>
-        <button @click="closeDeleteModal" class="close-btn">×</button>
-      </div>
-      <div class="modal-body">
-        <p style="color: #dc3545; font-weight: 500; margin-bottom: 1rem;">This action cannot be undone. This will permanently delete your account and all associated data.</p>
-        <div style="margin-bottom: 1.5rem;">
-          <label style="font-weight: 500;">Type <strong>DELETE</strong> to confirm:</label>
-          <input 
-            type="text" 
-            v-model="deleteConfirmation" 
-            placeholder="Type DELETE to confirm"
-            class="form-input"
-            style="margin-top: 0.5rem; text-align: center; border: 2px solid #dc3545; font-weight: 600; text-transform: uppercase;"
-            @input="deleteConfirmation = (($event.target as HTMLInputElement).value || '').toUpperCase()"
-          >
+    <!-- Password Change Modal -->
+    <div v-if="showPasswordModal" class="modal-overlay" @click="closePasswordModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>Change Password</h3>
+          <button @click="closePasswordModal" class="close-btn">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Current Password</label>
+            <input 
+              type="password" 
+              v-model="passwordData.currentPassword" 
+              placeholder="Enter current password"
+              class="form-input"
+            >
+          </div>
+          <div class="form-group">
+            <label>New Password</label>
+            <input 
+              type="password" 
+              v-model="passwordData.newPassword" 
+              placeholder="Enter new password (min 6 characters)"
+              class="form-input"
+            >
+          </div>
+          <div class="form-group">
+            <label>Confirm New Password</label>
+            <input 
+              type="password" 
+              v-model="passwordData.confirmPassword" 
+              placeholder="Confirm new password"
+              class="form-input"
+            >
+          </div>
+          
+          <!-- Error/Success Messages -->
+          <div v-if="passwordError" class="error-message">{{ passwordError }}</div>
+          <div v-if="passwordSuccess" class="success-message">{{ passwordSuccess }}</div>
+        </div>
+        <div class="modal-footer">
+          <button @click="closePasswordModal" class="btn-secondary">Cancel</button>
+          <button @click="changePassword" class="btn-primary" :disabled="isChangingPassword">
+            {{ isChangingPassword ? 'Updating...' : 'Update Password' }}
+          </button>
         </div>
       </div>
-      <div class="modal-footer">
-        <button @click="closeDeleteModal" class="btn-secondary">Cancel</button>
-        <button 
-          @click="executeDeleteAccount" 
-          class="btn-danger" 
-          :disabled="deleteConfirmation !== 'DELETE' || isDeletingAccount"
-        >
-          {{ isDeletingAccount ? 'Deleting...' : 'Delete Account' }}
-        </button>
+    </div>
+
+    <!-- Privacy Policy Modal -->
+    <div v-if="showPrivacyModal" class="modal-overlay" @click="closePrivacyModal">
+      <div class="modal-content document-modal" @click.stop>
+        <div class="modal-header">
+          <h3>Privacy Policy</h3>
+          <button @click="closePrivacyModal" class="close-btn">×</button>
+        </div>
+        <div class="modal-body document-body">
+          <div class="document-content">
+            <h4>IntelliGrade Privacy Policy</h4>
+            <p class="document-date">Last Updated: January 2025</p>
+            
+            <section>
+              <h5>1. Information We Collect</h5>
+              <p>We collect information that you provide directly to us, including:</p>
+              <ul>
+                <li>Account information (name, email, student ID)</li>
+                <li>Profile information (grade level, profile photo)</li>
+                <li>Academic records and grades</li>
+                <li>Messages and communications within the platform</li>
+                <li>Usage data and analytics</li>
+              </ul>
+            </section>
+
+            <section>
+              <h5>2. How We Use Your Information</h5>
+              <p>We use the information we collect to:</p>
+              <ul>
+                <li>Provide, maintain, and improve our educational services</li>
+                <li>Process enrollments and manage class sections</li>
+                <li>Facilitate communication between teachers and students</li>
+                <li>Monitor and analyze usage patterns</li>
+                <li>Ensure platform security and prevent fraud</li>
+                <li>Comply with legal obligations</li>
+              </ul>
+            </section>
+
+            <section>
+              <h5>3. Information Sharing</h5>
+              <p>We do not sell your personal information. We may share your information with:</p>
+              <ul>
+                <li>Teachers and administrators within your educational institution</li>
+                <li>Service providers who assist in operating our platform</li>
+                <li>Legal authorities when required by law</li>
+              </ul>
+            </section>
+
+            <section>
+              <h5>4. Data Security</h5>
+              <p>We implement appropriate technical and organizational measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction.</p>
+            </section>
+
+            <section>
+              <h5>5. Your Rights</h5>
+              <p>You have the right to:</p>
+              <ul>
+                <li>Access and update your personal information</li>
+                <li>Request deletion of your account</li>
+                <li>Opt-out of non-essential communications</li>
+                <li>Export your data</li>
+              </ul>
+            </section>
+
+            <section>
+              <h5>6. Children's Privacy</h5>
+              <p>Our platform is designed for students in grades 7-12. We comply with applicable laws regarding the collection and use of information from minors.</p>
+            </section>
+
+            <section>
+              <h5>7. Contact Us</h5>
+              <p>If you have questions about this Privacy Policy, please contact us at privacy@intelligrade.edu</p>
+            </section>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="closePrivacyModal" class="btn-primary">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Terms of Service Modal -->
+    <div v-if="showTermsModal" class="modal-overlay" @click="closeTermsModal">
+      <div class="modal-content document-modal" @click.stop>
+        <div class="modal-header">
+          <h3>Terms of Service</h3>
+          <button @click="closeTermsModal" class="close-btn">×</button>
+        </div>
+        <div class="modal-body document-body">
+          <div class="document-content">
+            <h4>IntelliGrade Terms of Service</h4>
+            <p class="document-date">Last Updated: January 2025</p>
+            
+            <section>
+              <h5>1. Acceptance of Terms</h5>
+              <p>By accessing and using IntelliGrade, you accept and agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our platform.</p>
+            </section>
+
+            <section>
+              <h5>2. User Accounts</h5>
+              <p>You are responsible for:</p>
+              <ul>
+                <li>Maintaining the confidentiality of your account credentials</li>
+                <li>All activities that occur under your account</li>
+                <li>Notifying us immediately of any unauthorized access</li>
+                <li>Providing accurate and complete information</li>
+              </ul>
+            </section>
+
+            <section>
+              <h5>3. Acceptable Use</h5>
+              <p>You agree not to:</p>
+              <ul>
+                <li>Use the platform for any illegal or unauthorized purpose</li>
+                <li>Violate any laws in your jurisdiction</li>
+                <li>Infringe on intellectual property rights</li>
+                <li>Transmit malicious code or harmful content</li>
+                <li>Harass, abuse, or harm other users</li>
+                <li>Attempt to gain unauthorized access to the system</li>
+              </ul>
+            </section>
+
+            <section>
+              <h5>4. Academic Integrity</h5>
+              <p>All users must maintain academic integrity. Cheating, plagiarism, or any form of academic dishonesty is strictly prohibited and may result in account suspension or termination.</p>
+            </section>
+
+            <section>
+              <h5>5. Content Ownership</h5>
+              <p>You retain ownership of content you create on the platform. By posting content, you grant IntelliGrade a license to use, store, and display that content as necessary to provide our services.</p>
+            </section>
+
+            <section>
+              <h5>6. Service Availability</h5>
+              <p>We strive to provide continuous access to our platform but do not guarantee uninterrupted service. We may suspend or terminate access for maintenance, updates, or violations of these terms.</p>
+            </section>
+
+            <section>
+              <h5>7. Limitation of Liability</h5>
+              <p>IntelliGrade is provided "as is" without warranties of any kind. We are not liable for any indirect, incidental, or consequential damages arising from your use of the platform.</p>
+            </section>
+
+            <section>
+              <h5>8. Termination</h5>
+              <p>We reserve the right to suspend or terminate your account if you violate these terms or engage in conduct that we deem harmful to the platform or other users.</p>
+            </section>
+
+            <section>
+              <h5>9. Changes to Terms</h5>
+              <p>We may modify these terms at any time. Continued use of the platform after changes constitutes acceptance of the modified terms.</p>
+            </section>
+
+            <section>
+              <h5>10. Contact Information</h5>
+              <p>For questions about these Terms of Service, contact us at support@intelligrade.edu</p>
+            </section>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="closeTermsModal" class="btn-primary">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Account Confirmation Modal -->
+    <div v-if="showDeleteModal" class="modal-overlay" @click="closeDeleteModal">
+      <div class="modal-content" style="max-width: 400px;" @click.stop>
+        <div class="modal-header" style="border-bottom: 1px solid #dc3545;">
+          <h3 style="color: #dc3545; font-weight: 600; margin: 0;">Delete Account</h3>
+          <button @click="closeDeleteModal" class="close-btn">×</button>
+        </div>
+        <div class="modal-body">
+          <p style="color: #dc3545; font-weight: 500; margin-bottom: 1rem;">This action cannot be undone. This will permanently delete your account and all associated data.</p>
+          <div style="margin-bottom: 1.5rem;">
+            <label style="font-weight: 500;">Type <strong>DELETE</strong> to confirm:</label>
+            <input 
+              type="text" 
+              v-model="deleteConfirmation" 
+              placeholder="Type DELETE to confirm"
+              class="form-input"
+              style="margin-top: 0.5rem; text-align: center; border: 2px solid #dc3545; font-weight: 600; text-transform: uppercase;"
+              @input="deleteConfirmation = (($event.target as HTMLInputElement).value || '').toUpperCase()"
+            >
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="closeDeleteModal" class="btn-secondary">Cancel</button>
+          <button 
+            @click="executeDeleteAccount" 
+            class="btn-danger" 
+            :disabled="deleteConfirmation !== 'DELETE' || isDeletingAccount"
+          >
+            {{ isDeletingAccount ? 'Deleting...' : 'Delete Account' }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -600,9 +602,8 @@ export default {
       currentUser: null,
       userProfile: null,
       
-      // Theme and preferences
+      // Theme
       isDarkMode: false,
-      notificationsEnabled: false,
       
       // Modal states
       showProfileModal: false,
@@ -615,9 +616,10 @@ export default {
       // Profile management
       profileData: {
         full_name: '',
-        avatar: '1',
+        profile_photo_url: '',
         grade_level: '7'
       },
+      selectedPhotoFile: null,
       isSaving: false,
       profileError: '',
       profileSuccess: '',
@@ -634,32 +636,10 @@ export default {
       
       // Delete account management
       deleteConfirmation: '',
-      isDeletingAccount: false,
-      
-      // Avatar options
-      avatarOptions: [
-        { id: '1', emoji: '😊', color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
-        { id: '2', emoji: '🎓', color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
-        { id: '3', emoji: '📚', color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' },
-        { id: '4', emoji: '✨', color: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)' },
-        { id: '5', emoji: '🚀', color: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)' },
-        { id: '6', emoji: '🎨', color: 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)' },
-        { id: '7', emoji: '🌟', color: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)' },
-        { id: '8', emoji: '💡', color: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)' },
-        { id: '9', emoji: '🎯', color: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)' },
-        { id: '10', emoji: '🏆', color: 'linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)' },
-        { id: '11', emoji: '🎵', color: 'linear-gradient(135deg, #fdcbf1 0%, #e6dee9 100%)' },
-        { id: '12', emoji: '🌈', color: 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)' }
-      ]
+      isDeletingAccount: false
     };
   },
   async mounted() {
-    // Load saved preferences
-    const savedNotifications = localStorage.getItem('notifications');
-    if (savedNotifications !== null) {
-      this.notificationsEnabled = savedNotifications === 'true';
-    }
-    
     // Load theme preference
     const savedTheme = localStorage.getItem('darkMode');
     if (savedTheme !== null) {
@@ -672,7 +652,6 @@ export default {
   },
   watch: {
     $route() {
-      // Reload settings data when route changes
       this.loadUserData();
     }
   },
@@ -680,7 +659,6 @@ export default {
     // ==================== USER DATA METHODS ====================
     async loadUserData() {
       try {
-        // Get current authenticated user
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         
         if (authError) throw authError;
@@ -719,12 +697,6 @@ export default {
         if (studentError) throw studentError;
         this.userProfile = { ...this.userProfile, ...studentData };
         
-        // Load saved avatar
-        const savedAvatar = localStorage.getItem('userAvatar');
-        if (savedAvatar) {
-          this.userProfile.avatar = savedAvatar;
-        }
-        
       } catch (error) {
         console.error('Error loading user data:', error);
         alert('Failed to load user data. Please refresh the page.');
@@ -745,10 +717,6 @@ export default {
       }
     },
     
-    toggleNotifications() {
-      localStorage.setItem('notifications', this.notificationsEnabled.toString());
-    },
-    
     // ==================== HELP MODAL METHODS ====================
     openHelpModal() {
       this.showHelpModal = true;
@@ -765,23 +733,74 @@ export default {
         return;
       }
       
-      // Load REAL user data into the form
+      // Load current user data into the form
       this.profileData = {
         full_name: this.userProfile.full_name || '',
-        avatar: this.userProfile.avatar || localStorage.getItem('userAvatar') || '1',
-        grade_level: this.userProfile.grade_level || '7'
+        profile_photo_url: this.userProfile.profile_photo_url || '',
+        grade_level: this.userProfile.grade_level?.toString() || '7'
       };
+      this.selectedPhotoFile = null;
       this.showProfileModal = true;
       this.clearMessages();
     },
     
     closeProfileModal() {
       this.showProfileModal = false;
+      this.selectedPhotoFile = null;
       this.clearMessages();
     },
     
-    selectAvatar(avatarId) {
-      this.profileData.avatar = avatarId;
+    handlePhotoSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        this.profileError = 'Please select a valid image file (JPEG, PNG, or WebP)';
+        return;
+      }
+      
+      // Validate file size (5MB max)
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      if (file.size > maxSize) {
+        this.profileError = 'Image file size must be less than 5MB';
+        return;
+      }
+      
+      this.selectedPhotoFile = file;
+      
+      // Preview the image
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        // Narrow the union type (string | ArrayBuffer | null) to string before assigning
+        const result = (e.target && (e.target as FileReader).result) ?? reader.result;
+        if (typeof result === 'string') {
+          this.profileData.profile_photo_url = result;
+        } else {
+          // Fallback: clear the preview if it's not a string (readAsDataURL should provide a string)
+          this.profileData.profile_photo_url = '';
+        }
+      };
+      reader.readAsDataURL(file);
+      
+      this.clearMessages();
+    },
+    
+    triggerPhotoInput() {
+      const input = this.$refs.photoInput as HTMLInputElement | undefined;
+      if (input && typeof input.click === 'function') {
+        input.click();
+      }
+    },
+    
+    removePhoto() {
+      this.profileData.profile_photo_url = '';
+      this.selectedPhotoFile = null;
+      const input = this.$refs.photoInput as HTMLInputElement | undefined;
+      if (input) {
+        input.value = '';
+      }
     },
     
     async saveProfile() {
@@ -795,11 +814,62 @@ export default {
       this.isSaving = true;
 
       try {
+        const previousGradeLevel = this.userProfile.grade_level;
+        const newGradeLevel = parseInt(this.profileData.grade_level);
+        const gradeChanged = previousGradeLevel !== newGradeLevel;
+        
+        let photoUrl = this.userProfile.profile_photo_url;
+        
+        // Upload photo if a new one was selected
+        if (this.selectedPhotoFile) {
+          const fileExt = this.selectedPhotoFile.name.split('.').pop();
+          const fileName = `${this.userProfile.id}_${Date.now()}.${fileExt}`;
+          const filePath = `profile-photos/${fileName}`;
+          
+          // Delete old photo if it exists
+          if (this.userProfile.profile_photo_url) {
+            const oldPath = this.userProfile.profile_photo_url.split('/').pop();
+            await supabase.storage
+              .from('profile-photos')
+              .remove([`profile-photos/${oldPath}`]);
+          }
+          
+          // Upload new photo
+          const { error: uploadError } = await supabase.storage
+            .from('profile-photos')
+            .upload(filePath, this.selectedPhotoFile, {
+              cacheControl: '3600',
+              upsert: true
+            });
+          
+          if (uploadError) throw uploadError;
+          
+          // Get public URL
+          const { data: { publicUrl } } = supabase.storage
+            .from('profile-photos')
+            .getPublicUrl(filePath);
+          
+          photoUrl = publicUrl;
+        } else if (!this.profileData.profile_photo_url && this.userProfile.profile_photo_url) {
+          // User removed the photo
+          const oldPath = this.userProfile.profile_photo_url.split('/').pop();
+          await supabase.storage
+            .from('profile-photos')
+            .remove([`profile-photos/${oldPath}`]);
+          photoUrl = null;
+        }
+        
+        // If grade level changed, archive old enrollments
+        if (gradeChanged) {
+          await this.handleGradeTransition(previousGradeLevel, newGradeLevel);
+        }
+        
         // Update profiles table
         const { error: profileError } = await supabase
           .from('profiles')
           .update({
             full_name: this.profileData.full_name.trim(),
+            profile_photo_url: photoUrl,
             updated_at: new Date().toISOString()
           })
           .eq('id', this.userProfile.id);
@@ -811,30 +881,69 @@ export default {
           .from('students')
           .update({
             full_name: this.profileData.full_name.trim(),
-            grade_level: parseInt(this.profileData.grade_level),
+            grade_level: newGradeLevel,
+            profile_photo_url: photoUrl,
             updated_at: new Date().toISOString()
           })
           .eq('profile_id', this.userProfile.id);
 
         if (studentError) throw studentError;
 
-        // Save avatar preference to localStorage
-        localStorage.setItem('userAvatar', this.profileData.avatar);
-
-        this.profileSuccess = 'Profile updated successfully!';
+        this.profileSuccess = gradeChanged 
+          ? 'Profile updated! Your grade level has been changed and previous enrollments have been archived.' 
+          : 'Profile updated successfully!';
         
         // Reload user data to reflect changes
         await this.loadUserData();
         
         setTimeout(() => {
           this.closeProfileModal();
-        }, 1500);
+          if (gradeChanged) {
+            // Optionally redirect to dashboard to see the fresh state
+            this.$router.push('/student-dashboard');
+          }
+        }, 2000);
         
       } catch (error) {
         console.error('Error saving profile:', error);
-        this.profileError = 'Failed to save profile. Please try again.';
+        this.profileError = error.message || 'Failed to save profile. Please try again.';
       } finally {
         this.isSaving = false;
+      }
+    },
+    
+    async handleGradeTransition(oldGrade, newGrade) {
+      try {
+        // Archive all active enrollments
+        const { error: archiveError } = await supabase
+          .from('enrollments')
+          .update({
+            status: 'completed',
+            updated_at: new Date().toISOString()
+          })
+          .eq('student_id', this.userProfile.id)
+          .eq('status', 'active');
+        
+        if (archiveError) throw archiveError;
+        
+        // Log the grade transition
+        await supabase
+          .from('security_events')
+          .insert({
+            profile_id: this.userProfile.profile_id,
+            event_type: 'grade_transition',
+            details: {
+              old_grade: oldGrade,
+              new_grade: newGrade,
+              transition_date: new Date().toISOString(),
+              enrollments_archived: true
+            }
+          });
+        
+        console.log(`Grade transition: ${oldGrade} → ${newGrade}. All enrollments archived.`);
+      } catch (error) {
+        console.error('Error handling grade transition:', error);
+        throw new Error('Failed to process grade level change');
       }
     },
     
@@ -861,7 +970,6 @@ export default {
     async changePassword() {
       this.clearMessages();
 
-      // Validation
       if (!this.passwordData.currentPassword || !this.passwordData.newPassword || !this.passwordData.confirmPassword) {
         this.passwordError = 'All fields are required';
         return;
@@ -885,7 +993,7 @@ export default {
       this.isChangingPassword = true;
 
       try {
-        // First, verify current password by trying to sign in
+        // Verify current password
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email: this.userProfile.email,
           password: this.passwordData.currentPassword
@@ -969,7 +1077,15 @@ export default {
       this.isDeletingAccount = true;
 
       try {
-        // Log the deletion event first
+        // Delete profile photo if exists
+        if (this.userProfile.profile_photo_url) {
+          const photoPath = this.userProfile.profile_photo_url.split('/').pop();
+          await supabase.storage
+            .from('profile-photos')
+            .remove([`profile-photos/${photoPath}`]);
+        }
+        
+        // Log the deletion event
         await supabase
           .from('security_events')
           .insert({
@@ -992,7 +1108,6 @@ export default {
         // Sign out the user
         await supabase.auth.signOut();
 
-        // Give brief feedback and redirect
         this.isDeletingAccount = false;
         this.showDeleteModal = false;
         alert('Your account has been permanently deleted. You will now be redirected to the login page.');
@@ -1330,118 +1445,88 @@ input:checked + .slider:before {
   box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
 }
 
-/* Delete Modal Specific Styles */
-.delete-modal {
-  max-width: 550px;
-  border: 2px solid #dc3545;
-}
-
-.delete-header {
-  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-  color: white;
-  border-bottom: none;
-}
-
-.delete-header h3 {
-  color: white;
-  font-weight: 600;
-}
-
-.delete-header .close-btn {
-  color: white;
-}
-
-.delete-header .close-btn:hover {
-  color: #fff;
-  opacity: 0.8;
-}
-
-.delete-warning {
-  text-align: center;
-}
-
-.warning-icon {
-  color: #dc3545;
-  margin-bottom: 1rem;
+/* Profile Photo Upload */
+.photo-upload-container {
   display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.dark .photo-upload-container {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+}
+
+.current-photo {
+  flex-shrink: 0;
+}
+
+.profile-photo-preview {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--accent-color);
+}
+
+.profile-photo-placeholder {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.photo-upload-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.btn-upload, .btn-remove {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   justify-content: center;
 }
 
-.delete-warning h4 {
-  font-size: 1.3rem;
-  color: #dc3545;
-  margin: 0 0 1rem 0;
-  font-weight: 700;
+.btn-upload {
+  background: var(--accent-color);
+  color: white;
 }
 
-.dark .delete-warning h4 {
-  color: #dc3545;
+.btn-upload:hover {
+  background: var(--accent-hover);
 }
 
-.delete-warning p {
-  font-size: 1rem;
-  color: var(--text-primary);
-  margin: 0 0 1.5rem 0;
-  line-height: 1.5;
+.btn-remove {
+  background: var(--danger-color);
+  color: white;
 }
 
-.delete-consequences {
-  background: rgba(220, 53, 69, 0.05);
-  border: 1px solid rgba(220, 53, 69, 0.2);
-  border-radius: 8px;
-  padding: 1rem;
-  margin: 1.5rem 0;
-  text-align: left;
+.btn-remove:hover {
+  background: #c82333;
 }
 
-.dark .delete-consequences {
-  background: rgba(220, 53, 69, 0.1);
-  border: 1px solid rgba(220, 53, 69, 0.3);
-}
-
-.delete-consequences h5 {
-  color: #dc3545;
-  font-size: 1rem;
-  margin: 0 0 0.75rem 0;
-  font-weight: 600;
-}
-
-.delete-consequences ul {
+.photo-hint {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
   margin: 0;
-  padding-left: 1.2rem;
-}
-
-.delete-consequences li {
-  color: var(--text-primary);
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-}
-
-.confirmation-input {
-  margin-top: 1.5rem;
-  text-align: left;
-}
-
-.confirmation-input label {
-  display: block;
-  margin-bottom: 0.75rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  font-size: 0.95rem;
-}
-
-.delete-input {
-  text-align: center;
-  font-weight: 600;
-  font-size: 1rem;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  border: 2px solid #dc3545;
-}
-
-.delete-input:focus {
-  border-color: #c82333;
-  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
 }
 
 /* About Card */
@@ -1713,51 +1798,6 @@ input:checked + .slider:before {
   color: var(--accent-color);
 }
 
-/* Avatar Grid */
-.avatar-grid {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 0.75rem;
-  padding: 1rem;
-  background: var(--bg-primary);
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-}
-
-.dark .avatar-grid {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-}
-
-.avatar-option {
-  cursor: pointer;
-  transition: all 0.2s;
-  border-radius: 8px;
-  padding: 0.5rem;
-  border: 2px solid transparent;
-}
-
-.avatar-option:hover {
-  transform: scale(1.05);
-  border-color: var(--accent-color);
-}
-
-.avatar-option.selected {
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 2px rgba(61, 141, 122, 0.2);
-}
-
-.avatar-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.4rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
 /* Messages */
 .error-message {
   color: var(--danger-color);
@@ -1875,65 +1915,6 @@ input:checked + .slider:before {
   transform: none;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .page-container {
-    padding: 1rem;
-  }
-  
-  .header-card {
-    padding: 1.5rem;
-  }
-  
-  .header-left {
-    gap: 1rem;
-  }
-  
-  .header-icon {
-    width: 40px;
-    height: 40px;
-  }
-  
-  .header-title {
-    font-size: 1.3rem;
-  }
-  
-  .content-card {
-    padding: 1rem;
-    gap: 1.5rem;
-  }
-  
-  .settings-card {
-    padding: 1rem;
-  }
-  
-  .modal-overlay {
-    padding: 10px;
-  }
-  
-  .modal-content {
-    max-height: 95vh;
-  }
-  
-  .modal-header, .modal-footer, .modal-body {
-    padding: 1rem;
-  }
-  
-  .avatar-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-  
-  .document-modal {
-    max-width: 100%;
-  }
-}
-
-@media (max-width: 480px) {
-  .avatar-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
 /* Floating Help & Support Button */
 .floating-help-btn {
   position: fixed;
@@ -1984,8 +1965,59 @@ input:checked + .slider:before {
   transform: scale(0.95) !important;
 }
 
-/* Responsive adjustments for floating help button */
+/* Responsive */
 @media (max-width: 768px) {
+  .page-container {
+    padding: 1rem;
+  }
+  
+  .header-card {
+    padding: 1.5rem;
+  }
+  
+  .header-left {
+    gap: 1rem;
+  }
+  
+  .header-icon {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .header-title {
+    font-size: 1.3rem;
+  }
+  
+  .content-card {
+    padding: 1rem;
+    gap: 1.5rem;
+  }
+  
+  .settings-card {
+    padding: 1rem;
+  }
+  
+  .modal-overlay {
+    padding: 10px;
+  }
+  
+  .modal-content {
+    max-height: 95vh;
+  }
+  
+  .modal-header, .modal-footer, .modal-body {
+    padding: 1rem;
+  }
+  
+  .document-modal {
+    max-width: 100%;
+  }
+  
+  .photo-upload-container {
+    flex-direction: column;
+    text-align: center;
+  }
+  
   .floating-help-btn {
     width: 50px;
     height: 50px;

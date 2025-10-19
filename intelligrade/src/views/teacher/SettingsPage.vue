@@ -58,7 +58,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="section-icon">
               <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
             </svg> 
-            App Preferences
+            App Appearance
           </h2>
           <p class="section-subtitle">Customize the app's look and feel</p>
           <div class="settings-list">
@@ -66,13 +66,6 @@
               <span>Dark Mode</span>
               <label class="switch">
                 <input type="checkbox" v-model="isDarkMode" @change="handleDarkModeToggle">
-                <span class="slider round"></span>
-              </label>
-            </div>
-            <div class="setting-item">
-              <span>Notifications</span>
-              <label class="switch">
-                <input type="checkbox" v-model="notificationsEnabled" @change="toggleNotifications">
                 <span class="slider round"></span>
               </label>
             </div>
@@ -196,13 +189,6 @@
                 <li>Check your internet connection</li>
                 <li>Try refreshing the page</li>
               </ul>
-              
-              <p><strong>Not receiving notifications?</strong></p>
-              <ul>
-                <li>Check your notification settings</li>
-                <li>Verify your email address</li>
-                <li>Check your spam/junk folder</li>
-              </ul>
             </section>
 
             <section>
@@ -213,14 +199,6 @@
                 <li>Add students to your classes</li>
                 <li>Post assignments and grades</li>
                 <li>Track student progress</li>
-              </ul>
-              
-              <p><strong>For Students:</strong></p>
-              <ul>
-                <li>Join classes using class codes</li>
-                <li>View assignments and grades</li>
-                <li>Submit work on time</li>
-                <li>Track your academic progress</li>
               </ul>
             </section>
 
@@ -279,330 +257,351 @@
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Profile Update Modal -->
-  <div v-if="showProfileModal" class="modal-overlay" @click="closeProfileModal">
-    <div class="modal-content" @click.stop>
-      <div class="modal-header">
-        <h3>Update Profile</h3>
-        <button @click="closeProfileModal" class="close-btn">×</button>
-      </div>
-      <div class="modal-body">
-        <!-- Profile Picture Section -->
-        <div class="form-group">
-          <label>Profile Picture</label>
-          <div class="avatar-upload-section">
-            <div v-if="imagePreview || currentProfilePicture" class="current-avatar">
-              <img 
-                :src="imagePreview || currentProfilePicture" 
-                alt="Profile Picture" 
-                class="avatar-preview"
-              >
-            </div>
-            <div v-else class="avatar-placeholder">
-              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2z"/>
-                <circle cx="12" cy="7" r="4"/>
-              </svg>
-            </div>
-            <input 
-              type="file" 
-              @change="handleImageSelect"
-              accept="image/*"
-              class="file-input"
-              id="avatar-upload"
-            >
-            <label for="avatar-upload" class="file-input-label">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
-                <circle cx="12" cy="13" r="3"/>
-              </svg>
-              {{ selectedImage ? 'Change Photo' : 'Choose Photo' }}
-            </label>
-            <div v-if="selectedImage" class="selected-file">
-              Selected: {{ selectedImage.name }}
+    <!-- Profile Update Modal -->
+    <div v-if="showProfileModal" class="modal-overlay" @click="closeProfileModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>Update Profile</h3>
+          <button @click="closeProfileModal" class="close-btn">×</button>
+        </div>
+        <div class="modal-body">
+          <!-- Profile Photo Upload Section -->
+          <div class="form-group">
+            <label>Profile Photo</label>
+            <div class="photo-upload-container">
+              <div class="current-photo">
+                <img 
+                  v-if="imagePreview || currentProfilePicture" 
+                  :src="imagePreview || currentProfilePicture" 
+                  alt="Profile Photo"
+                  class="profile-photo-preview"
+                >
+                <div v-else class="profile-photo-placeholder">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                </div>
+              </div>
+              <div class="photo-upload-actions">
+                <input 
+                  type="file" 
+                  ref="photoInput" 
+                  accept="image/jpeg,image/png,image/jpg,image/webp"
+                  @change="handleImageSelect"
+                  style="display: none;"
+                >
+                <button @click="triggerPhotoInput" class="btn-upload" type="button">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                  </svg>
+                  Upload Photo
+                </button>
+                <button v-if="imagePreview || currentProfilePicture" @click="removePhoto" class="btn-remove" type="button">
+                  Remove Photo
+                </button>
+                <p class="photo-hint">Max 5MB. JPEG, PNG, or WebP format</p>
+              </div>
             </div>
           </div>
-        </div>
-        
-        <!-- Full Name Section -->
-        <div class="form-group">
-          <label>Full Name</label>
-          <input 
-            type="text" 
-            v-model="profileData.full_name" 
-            placeholder="Enter your full name"
-            class="form-input"
-          >
-        </div>
-        
-        <!-- Error/Success Messages -->
-        <div v-if="profileError" class="error-message">{{ profileError }}</div>
-        <div v-if="profileSuccess" class="success-message">{{ profileSuccess }}</div>
-      </div>
-      <div class="modal-footer">
-        <button @click="closeProfileModal" class="btn-secondary">Cancel</button>
-        <button @click="saveProfile" class="btn-primary" :disabled="isSaving">
-          {{ isSaving ? 'Saving...' : 'Save Profile' }}
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Password Change Modal -->
-  <div v-if="showPasswordModal" class="modal-overlay" @click="closePasswordModal">
-    <div class="modal-content" @click.stop>
-      <div class="modal-header">
-        <h3>Change Password</h3>
-        <button @click="closePasswordModal" class="close-btn">×</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label>Current Password</label>
-          <input 
-            type="password" 
-            v-model="passwordData.currentPassword" 
-            placeholder="Enter current password"
-            class="form-input"
-          >
-        </div>
-        <div class="form-group">
-          <label>New Password</label>
-          <input 
-            type="password" 
-            v-model="passwordData.newPassword" 
-            placeholder="Enter new password (min 6 characters)"
-            class="form-input"
-          >
-        </div>
-        <div class="form-group">
-          <label>Confirm New Password</label>
-          <input 
-            type="password" 
-            v-model="passwordData.confirmPassword" 
-            placeholder="Confirm new password"
-            class="form-input"
-          >
-        </div>
-        
-        <div v-if="passwordError" class="error-message">{{ passwordError }}</div>
-        <div v-if="passwordSuccess" class="success-message">{{ passwordSuccess }}</div>
-      </div>
-      <div class="modal-footer">
-        <button @click="closePasswordModal" class="btn-secondary">Cancel</button>
-        <button @click="changePassword" class="btn-primary" :disabled="isChangingPassword">
-          {{ isChangingPassword ? 'Updating...' : 'Update Password' }}
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Privacy Policy Modal -->
-  <div v-if="showPrivacyModal" class="modal-overlay" @click="showPrivacyModal = false">
-    <div class="modal-content document-modal" @click.stop>
-      <div class="modal-header">
-        <h3>Privacy Policy</h3>
-        <button @click="showPrivacyModal = false" class="close-btn">×</button>
-      </div>
-      <div class="modal-body document-body">
-        <div class="document-content">
-          <h4>IntelliGrade Privacy Policy</h4>
-          <p class="document-date">Last Updated: January 2025</p>
           
-          <section>
-            <h5>1. Information We Collect</h5>
-            <p>We collect information that you provide directly to us, including:</p>
-            <ul>
-              <li>Account information (name, email, student ID)</li>
-              <li>Profile information (grade level)</li>
-              <li>Academic records and grades</li>
-              <li>Messages and communications within the platform</li>
-              <li>Usage data and analytics</li>
-            </ul>
-          </section>
-
-          <section>
-            <h5>2. How We Use Your Information</h5>
-            <p>We use the information we collect to:</p>
-            <ul>
-              <li>Provide, maintain, and improve our educational services</li>
-              <li>Process enrollments and manage class sections</li>
-              <li>Facilitate communication between teachers and students</li>
-              <li>Monitor and analyze usage patterns</li>
-              <li>Ensure platform security and prevent fraud</li>
-              <li>Comply with legal obligations</li>
-            </ul>
-          </section>
-
-          <section>
-            <h5>3. Information Sharing</h5>
-            <p>We do not sell your personal information. We may share your information with:</p>
-            <ul>
-              <li>Teachers and administrators within your educational institution</li>
-              <li>Service providers who assist in operating our platform</li>
-              <li>Legal authorities when required by law</li>
-            </ul>
-          </section>
-
-          <section>
-            <h5>4. Data Security</h5>
-            <p>We implement appropriate technical and organizational measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction.</p>
-          </section>
-
-          <section>
-            <h5>5. Your Rights</h5>
-            <p>You have the right to:</p>
-            <ul>
-              <li>Access and update your personal information</li>
-              <li>Request deletion of your account</li>
-              <li>Opt-out of non-essential communications</li>
-              <li>Export your data</li>
-            </ul>
-          </section>
-
-          <section>
-            <h5>6. Children's Privacy</h5>
-            <p>Our platform is designed for students in grades 7-12. We comply with applicable laws regarding the collection and use of information from minors.</p>
-          </section>
-
-          <section>
-            <h5>7. Contact Us</h5>
-            <p>If you have questions about this Privacy Policy, please contact us at privacy@intelligrade.edu</p>
-          </section>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button @click="showPrivacyModal = false" class="btn-primary">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Terms of Service Modal -->
-  <div v-if="showTermsModal" class="modal-overlay" @click="showTermsModal = false">
-    <div class="modal-content document-modal" @click.stop>
-      <div class="modal-header">
-        <h3>Terms of Service</h3>
-        <button @click="showTermsModal = false" class="close-btn">×</button>
-      </div>
-      <div class="modal-body document-body">
-        <div class="document-content">
-          <h4>IntelliGrade Terms of Service</h4>
-          <p class="document-date">Last Updated: January 2025</p>
+          <!-- Full Name Section -->
+          <div class="form-group">
+            <label>Full Name</label>
+            <input 
+              type="text" 
+              v-model="profileData.full_name" 
+              placeholder="Enter your full name"
+              class="form-input"
+            >
+          </div>
           
-          <section>
-            <h5>1. Acceptance of Terms</h5>
-            <p>By accessing and using IntelliGrade, you accept and agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our platform.</p>
-          </section>
-
-          <section>
-            <h5>2. User Accounts</h5>
-            <p>You are responsible for:</p>
-            <ul>
-              <li>Maintaining the confidentiality of your account credentials</li>
-              <li>All activities that occur under your account</li>
-              <li>Notifying us immediately of any unauthorized access</li>
-              <li>Providing accurate and complete information</li>
-            </ul>
-          </section>
-
-          <section>
-            <h5>3. Acceptable Use</h5>
-            <p>You agree not to:</p>
-            <ul>
-              <li>Use the platform for any illegal or unauthorized purpose</li>
-              <li>Violate any laws in your jurisdiction</li>
-              <li>Infringe on intellectual property rights</li>
-              <li>Transmit malicious code or harmful content</li>
-              <li>Harass, abuse, or harm other users</li>
-              <li>Attempt to gain unauthorized access to the system</li>
-            </ul>
-          </section>
-
-          <section>
-            <h5>4. Academic Integrity</h5>
-            <p>All users must maintain academic integrity. Cheating, plagiarism, or any form of academic dishonesty is strictly prohibited and may result in account suspension or termination.</p>
-          </section>
-
-          <section>
-            <h5>5. Content Ownership</h5>
-            <p>You retain ownership of content you create on the platform. By posting content, you grant IntelliGrade a license to use, store, and display that content as necessary to provide our services.</p>
-          </section>
-
-          <section>
-            <h5>6. Service Availability</h5>
-            <p>We strive to provide continuous access to our platform but do not guarantee uninterrupted service. We may suspend or terminate access for maintenance, updates, or violations of these terms.</p>
-          </section>
-
-          <section>
-            <h5>7. Limitation of Liability</h5>
-            <p>IntelliGrade is provided "as is" without warranties of any kind. We are not liable for any indirect, incidental, or consequential damages arising from your use of the platform.</p>
-          </section>
-
-          <section>
-            <h5>8. Termination</h5>
-            <p>We reserve the right to suspend or terminate your account if you violate these terms or engage in conduct that we deem harmful to the platform or other users.</p>
-          </section>
-
-          <section>
-            <h5>9. Changes to Terms</h5>
-            <p>We may modify these terms at any time. Continued use of the platform after changes constitutes acceptance of the modified terms.</p>
-          </section>
-
-          <section>
-            <h5>10. Contact Information</h5>
-            <p>For questions about these Terms of Service, contact us at support@intelligrade.edu</p>
-          </section>
+          <!-- Department Section (Teacher-specific) -->
+          <div class="form-group">
+            <label>Department (Optional)</label>
+            <input 
+              type="text" 
+              v-model="profileData.department" 
+              placeholder="e.g., Mathematics, Science, English"
+              class="form-input"
+            >
+          </div>
+          
+          <!-- Error/Success Messages -->
+          <div v-if="profileError" class="error-message">{{ profileError }}</div>
+          <div v-if="profileSuccess" class="success-message">{{ profileSuccess }}</div>
+        </div>
+        <div class="modal-footer">
+          <button @click="closeProfileModal" class="btn-secondary">Cancel</button>
+          <button @click="saveProfile" class="btn-primary" :disabled="isSaving">
+            {{ isSaving ? 'Saving...' : 'Save Profile' }}
+          </button>
         </div>
       </div>
-      <div class="modal-footer">
-        <button @click="showTermsModal = false" class="btn-primary">Close</button>
+    </div>
+
+    <!-- Password Change Modal -->
+    <div v-if="showPasswordModal" class="modal-overlay" @click="closePasswordModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>Change Password</h3>
+          <button @click="closePasswordModal" class="close-btn">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Current Password</label>
+            <input 
+              type="password" 
+              v-model="passwordData.currentPassword" 
+              placeholder="Enter current password"
+              class="form-input"
+            >
+          </div>
+          <div class="form-group">
+            <label>New Password</label>
+            <input 
+              type="password" 
+              v-model="passwordData.newPassword" 
+              placeholder="Enter new password (min 6 characters)"
+              class="form-input"
+            >
+          </div>
+          <div class="form-group">
+            <label>Confirm New Password</label>
+            <input 
+              type="password" 
+              v-model="passwordData.confirmPassword" 
+              placeholder="Confirm new password"
+              class="form-input"
+            >
+          </div>
+          
+          <!-- Error/Success Messages -->
+          <div v-if="passwordError" class="error-message">{{ passwordError }}</div>
+          <div v-if="passwordSuccess" class="success-message">{{ passwordSuccess }}</div>
+        </div>
+        <div class="modal-footer">
+          <button @click="closePasswordModal" class="btn-secondary">Cancel</button>
+          <button @click="changePassword" class="btn-primary" :disabled="isChangingPassword">
+            {{ isChangingPassword ? 'Updating...' : 'Update Password' }}
+          </button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Delete Account Confirmation Modal -->
-  <div v-if="showDeleteModal" class="modal-overlay" @click="showDeleteModal = false">
-    <div class="modal-content" style="max-width: 400px;" @click.stop>
-      <div class="modal-header" style="border-bottom: 1px solid #dc3545;">
-        <h3 style="color: #dc3545; font-weight: 600; margin: 0;">Delete Account</h3>
-        <button @click="showDeleteModal = false" class="close-btn">×</button>
+    <!-- Privacy Policy Modal -->
+    <div v-if="showPrivacyModal" class="modal-overlay" @click="showPrivacyModal = false">
+      <div class="modal-content document-modal" @click.stop>
+        <div class="modal-header">
+          <h3>Privacy Policy</h3>
+          <button @click="showPrivacyModal = false" class="close-btn">×</button>
+        </div>
+        <div class="modal-body document-body">
+          <div class="document-content">
+            <h4>IntelliGrade Privacy Policy</h4>
+            <p class="document-date">Last Updated: January 2025</p>
+            
+            <section>
+              <h5>1. Information We Collect</h5>
+              <p>We collect information that you provide directly to us, including:</p>
+              <ul>
+                <li>Account information (name, email, employee ID)</li>
+                <li>Profile information (department, profile photo)</li>
+                <li>Academic records and class management data</li>
+                <li>Messages and communications within the platform</li>
+                <li>Usage data and analytics</li>
+              </ul>
+            </section>
+
+            <section>
+              <h5>2. How We Use Your Information</h5>
+              <p>We use the information we collect to:</p>
+              <ul>
+                <li>Provide, maintain, and improve our educational services</li>
+                <li>Manage class sections and student enrollments</li>
+                <li>Facilitate communication between teachers and students</li>
+                <li>Monitor and analyze usage patterns</li>
+                <li>Ensure platform security and prevent fraud</li>
+                <li>Comply with legal obligations</li>
+              </ul>
+            </section>
+
+            <section>
+              <h5>3. Information Sharing</h5>
+              <p>We do not sell your personal information. We may share your information with:</p>
+              <ul>
+                <li>Students and administrators within your educational institution</li>
+                <li>Service providers who assist in operating our platform</li>
+                <li>Legal authorities when required by law</li>
+              </ul>
+            </section>
+
+            <section>
+              <h5>4. Data Security</h5>
+              <p>We implement appropriate technical and organizational measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction.</p>
+            </section>
+
+            <section>
+              <h5>5. Your Rights</h5>
+              <p>You have the right to:</p>
+              <ul>
+                <li>Access and update your personal information</li>
+                <li>Request deletion of your account</li>
+                <li>Opt-out of non-essential communications</li>
+                <li>Export your data</li>
+              </ul>
+            </section>
+
+            <section>
+              <h5>6. Contact Us</h5>
+              <p>If you have questions about this Privacy Policy, please contact us at privacy@intelligrade.edu</p>
+            </section>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="showPrivacyModal = false" class="btn-primary">Close</button>
+        </div>
       </div>
-      <div class="modal-body">
-        <p style="color: #dc3545; font-weight: 500; margin-bottom: 1rem;">This action cannot be undone. This will permanently delete your account and all associated data.</p>
+    </div>
+
+    <!-- Terms of Service Modal -->
+    <div v-if="showTermsModal" class="modal-overlay" @click="showTermsModal = false">
+      <div class="modal-content document-modal" @click.stop>
+        <div class="modal-header">
+          <h3>Terms of Service</h3>
+          <button @click="showTermsModal = false" class="close-btn">×</button>
+        </div>
+        <div class="modal-body document-body">
+          <div class="document-content">
+            <h4>IntelliGrade Terms of Service</h4>
+            <p class="document-date">Last Updated: January 2025</p>
+            
+            <section>
+              <h5>1. Acceptance of Terms</h5>
+              <p>By accessing and using IntelliGrade, you accept and agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our platform.</p>
+            </section>
+
+            <section>
+              <h5>2. User Accounts</h5>
+              <p>You are responsible for:</p>
+              <ul>
+                <li>Maintaining the confidentiality of your account credentials</li>
+                <li>All activities that occur under your account</li>
+                <li>Notifying us immediately of any unauthorized access</li>
+                <li>Providing accurate and complete information</li>
+              </ul>
+            </section>
+
+            <section>
+              <h5>3. Acceptable Use</h5>
+              <p>You agree not to:</p>
+              <ul>
+                <li>Use the platform for any illegal or unauthorized purpose</li>
+                <li>Violate any laws in your jurisdiction</li>
+                <li>Infringe on intellectual property rights</li>
+                <li>Transmit malicious code or harmful content</li>
+                <li>Harass, abuse, or harm other users</li>
+                <li>Attempt to gain unauthorized access to the system</li>
+              </ul>
+            </section>
+
+            <section>
+              <h5>4. Academic Integrity</h5>
+              <p>All users must maintain academic integrity. Cheating, plagiarism, or any form of academic dishonesty is strictly prohibited and may result in account suspension or termination.</p>
+            </section>
+
+            <section>
+              <h5>5. Content Ownership</h5>
+              <p>You retain ownership of content you create on the platform. By posting content, you grant IntelliGrade a license to use, store, and display that content as necessary to provide our services.</p>
+            </section>
+
+            <section>
+              <h5>6. Service Availability</h5>
+              <p>We strive to provide continuous access to our platform but do not guarantee uninterrupted service. We may suspend or terminate access for maintenance, updates, or violations of these terms.</p>
+            </section>
+
+            <section>
+              <h5>7. Limitation of Liability</h5>
+              <p>IntelliGrade is provided "as is" without warranties of any kind. We are not liable for any indirect, incidental, or consequential damages arising from your use of the platform.</p>
+            </section>
+
+            <section>
+              <h5>8. Termination</h5>
+              <p>We reserve the right to suspend or terminate your account if you violate these terms or engage in conduct that we deem harmful to the platform or other users.</p>
+            </section>
+
+            <section>
+              <h5>9. Changes to Terms</h5>
+              <p>We may modify these terms at any time. Continued use of the platform after changes constitutes acceptance of the modified terms.</p>
+            </section>
+
+            <section>
+              <h5>10. Contact Information</h5>
+              <p>For questions about these Terms of Service, contact us at support@intelligrade.edu</p>
+            </section>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="showTermsModal = false" class="btn-primary">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Account Confirmation Modal -->
+    <div v-if="showDeleteModal" class="modal-overlay" @click="closeDeleteModal">
+      <div class="modal-content" style="max-width: 400px;" @click.stop>
+        <div class="modal-header" style="border-bottom: 1px solid #dc3545;">
+          <h3 style="color: #dc3545; font-weight: 600; margin: 0;">Delete Account</h3>
+          <button @click="closeDeleteModal" class="close-btn">×</button>
+        </div>
+        <div class="modal-body">
+          <p style="color: #dc3545; font-weight: 500; margin-bottom: 1rem;">This action cannot be undone. This will permanently delete your account and all associated data.</p>
           <div style="margin-bottom: 1.5rem;">
-          <label style="font-weight: 500;">Type <strong>DELETE</strong> to confirm:</label>
-          <input 
-            type="text" 
-            v-model="deleteConfirmation" 
-            placeholder="Type DELETE to confirm"
-            class="form-input"
-            style="margin-top: 0.5rem; text-align: center; border: 2px solid #dc3545; font-weight: 600; text-transform: uppercase;"
-            @input="deleteConfirmation = ($event.target && $event.target.value ? $event.target.value : '').toUpperCase()"
-          >
+            <label style="font-weight: 500;">Type <strong>DELETE</strong> to confirm:</label>
+            <input 
+              type="text" 
+              v-model="deleteConfirmation" 
+              placeholder="Type DELETE to confirm"
+              class="form-input"
+              style="margin-top: 0.5rem; text-align: center; border: 2px solid #dc3545; font-weight: 600; text-transform: uppercase;"
+              @input="deleteConfirmation = (($event.target as HTMLInputElement).value || '').toUpperCase()"
+            >
+          </div>
         </div>
-      </div>
-      <div class="modal-footer">
-        <button @click="showDeleteModal = false" class="btn-secondary">Cancel</button>
-        <button 
-          @click="executeDeleteAccount" 
-          class="btn-danger" 
-          :disabled="deleteConfirmation !== 'DELETE' || isDeletingAccount"
-        >
-          {{ isDeletingAccount ? 'Deleting...' : 'Delete Account' }}
-        </button>
+        <div class="modal-footer">
+          <button @click="closeDeleteModal" class="btn-secondary">Cancel</button>
+          <button 
+            @click="executeDeleteAccount" 
+            class="btn-danger" 
+            :disabled="deleteConfirmation !== 'DELETE' || isDeletingAccount"
+          >
+            {{ isDeletingAccount ? 'Deleting...' : 'Delete Account' }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { supabase } from '@/supabase.js';
+
 export default {
   name: 'SettingsPage',
   data() {
     return {
+      // User data
+      currentUser: null,
+      userProfile: null,
+      
+      // Theme
       isDarkMode: false,
       notificationsEnabled: false,
+      
+      // Modal states
       showProfileModal: false,
       showPasswordModal: false,
       showPrivacyModal: false,
@@ -610,12 +609,12 @@ export default {
       showDeleteModal: false,
       showHelpModal: false,
       
+      // Profile management
       profileData: {
         full_name: '',
-        profile_id: null,
-        auth_user_id: null
+        profile_photo_url: '',
+        department: ''
       },
-      
       selectedImage: null,
       imagePreview: null,
       currentProfilePicture: null,
@@ -623,6 +622,7 @@ export default {
       profileError: '',
       profileSuccess: '',
       
+      // Password management
       passwordData: {
         currentPassword: '',
         newPassword: '',
@@ -632,25 +632,88 @@ export default {
       passwordError: '',
       passwordSuccess: '',
       
+      // Delete account management
       deleteConfirmation: '',
       isDeletingAccount: false
     };
   },
   
-  mounted() {
+  async mounted() {
+    // Load theme preference
     const savedTheme = localStorage.getItem('darkMode');
     if (savedTheme !== null) {
       this.isDarkMode = savedTheme === 'true';
       this.applyTheme();
     }
     
+    // Load notifications preference
     const savedNotifications = localStorage.getItem('notifications');
     if (savedNotifications !== null) {
       this.notificationsEnabled = savedNotifications === 'true';
     }
+    
+    // Load user data
+    await this.loadUserData();
+  },
+  
+  watch: {
+    $route() {
+      this.loadUserData();
+    }
   },
   
   methods: {
+    // ==================== USER DATA METHODS ====================
+    async loadUserData() {
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError) throw authError;
+        if (!user) {
+          this.$router.push('/login');
+          return;
+        }
+        
+        this.currentUser = user;
+        
+        // Get profile data
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('auth_user_id', user.id)
+          .single();
+        
+        if (profileError) throw profileError;
+        
+        // Verify this is a teacher
+        if (profile.role !== 'teacher') {
+          alert('This settings page is for teachers only');
+          this.$router.push('/');
+          return;
+        }
+        
+        this.userProfile = profile;
+        
+        // Get teacher details
+        const { data: teacherData, error: teacherError } = await supabase
+          .from('teachers')
+          .select('*')
+          .eq('profile_id', profile.id)
+          .single();
+        
+        if (teacherError) throw teacherError;
+        this.userProfile = { ...this.userProfile, ...teacherData };
+        
+        // Set current profile picture
+        this.currentProfilePicture = this.userProfile.profile_photo_url || null;
+        
+      } catch (error) {
+        console.error('Error loading user data:', error);
+        alert('Failed to load user data. Please refresh the page.');
+      }
+    },
+    
+    // ==================== THEME METHODS ====================
     handleDarkModeToggle() {
       localStorage.setItem('darkMode', this.isDarkMode.toString());
       this.applyTheme();
@@ -668,6 +731,7 @@ export default {
       localStorage.setItem('notifications', this.notificationsEnabled.toString());
     },
     
+    // ==================== HELP MODAL METHODS ====================
     openHelpModal() {
       this.showHelpModal = true;
     },
@@ -676,24 +740,282 @@ export default {
       this.showHelpModal = false;
     },
     
+    // ==================== PROFILE MODAL METHODS ====================
     openProfileModal() {
+      if (!this.userProfile) {
+        alert('User profile not loaded yet. Please wait...');
+        return;
+      }
+      
+      // Load current user data into the form
+      this.profileData = {
+        full_name: this.userProfile.full_name || '',
+        profile_photo_url: this.userProfile.profile_photo_url || '',
+        department: this.userProfile.department || ''
+      };
+      this.currentProfilePicture = this.userProfile.profile_photo_url || null;
+      this.selectedImage = null;
+      this.imagePreview = null;
       this.showProfileModal = true;
+      this.clearMessages();
     },
     
     closeProfileModal() {
       this.showProfileModal = false;
       this.selectedImage = null;
       this.imagePreview = null;
+      this.clearMessages();
     },
     
+    handleImageSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        this.profileError = 'Please select a valid image file (JPEG, PNG, or WebP)';
+        return;
+      }
+      
+      // Validate file size (5MB max)
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      if (file.size > maxSize) {
+        this.profileError = 'Image file size must be less than 5MB';
+        return;
+      }
+      
+      this.selectedImage = file;
+      
+      // Preview the image
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.imagePreview = e.target.result;
+      };
+      reader.readAsDataURL(file);
+      
+      this.clearMessages();
+    },
+    
+    triggerPhotoInput() {
+      // Cast $refs to HTMLInputElement to satisfy TypeScript and safely trigger click
+      const input = this.$refs.photoInput as HTMLInputElement | null;
+      if (input) {
+        input.click();
+      }
+    },
+
+    removePhoto() {
+      this.profileData.profile_photo_url = '';
+      this.selectedImage = null;
+      this.imagePreview = null;
+      this.currentProfilePicture = null;
+    },
+    
+    async saveProfile() {
+      this.clearMessages();
+
+      if (!this.profileData.full_name.trim()) {
+        this.profileError = 'Full name is required';
+        return;
+      }
+
+      this.isSaving = true;
+
+      try {
+        let photoUrl = this.userProfile.profile_photo_url;
+        
+        // Upload photo if a new one was selected
+        if (this.selectedImage) {
+          const fileExt = this.selectedImage.name.split('.').pop();
+          const fileName = `${this.userProfile.id}_${Date.now()}.${fileExt}`;
+          const filePath = `profile-photos/${fileName}`;
+          
+          // Delete old photo if it exists
+          if (this.userProfile.profile_photo_url) {
+            try {
+              // Extract the file path from the URL
+              const urlParts = this.userProfile.profile_photo_url.split('/');
+              const oldFileName = urlParts[urlParts.length - 1];
+              await supabase.storage
+                .from('profile-photos')
+                .remove([`profile-photos/${oldFileName}`]);
+            } catch (deleteError) {
+              console.warn('Error deleting old photo:', deleteError);
+              // Continue anyway - old photo deletion is not critical
+            }
+          }
+          
+          // Upload new photo
+          const { error: uploadError } = await supabase.storage
+            .from('profile-photos')
+            .upload(filePath, this.selectedImage, {
+              cacheControl: '3600',
+              upsert: true
+            });
+          
+          if (uploadError) throw uploadError;
+          
+          // Get public URL
+          const { data: { publicUrl } } = supabase.storage
+            .from('profile-photos')
+            .getPublicUrl(filePath);
+          
+          photoUrl = publicUrl;
+        } else if (this.imagePreview === null && this.currentProfilePicture === null && this.userProfile.profile_photo_url) {
+          // User removed the photo
+          try {
+            const urlParts = this.userProfile.profile_photo_url.split('/');
+            const oldFileName = urlParts[urlParts.length - 1];
+            await supabase.storage
+              .from('profile-photos')
+              .remove([`profile-photos/${oldFileName}`]);
+          } catch (deleteError) {
+            console.warn('Error deleting photo:', deleteError);
+          }
+          photoUrl = null;
+        }
+        
+        // Update profiles table
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({
+            full_name: this.profileData.full_name.trim(),
+            profile_photo_url: photoUrl,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', this.userProfile.id);
+
+        if (profileError) throw profileError;
+
+        // Update teachers table
+        const { error: teacherError } = await supabase
+          .from('teachers')
+          .update({
+            full_name: this.profileData.full_name.trim(),
+            department: this.profileData.department?.trim() || null,
+            profile_photo_url: photoUrl,
+            updated_at: new Date().toISOString()
+          })
+          .eq('profile_id', this.userProfile.id);
+
+        if (teacherError) throw teacherError;
+
+        this.profileSuccess = 'Profile updated successfully!';
+        
+        // Reload user data to reflect changes
+        await this.loadUserData();
+        
+        setTimeout(() => {
+          this.closeProfileModal();
+        }, 1500);
+        
+      } catch (error) {
+        console.error('Error saving profile:', error);
+        this.profileError = error.message || 'Failed to save profile. Please try again.';
+      } finally {
+        this.isSaving = false;
+      }
+    },
+    
+    // ==================== PASSWORD MODAL METHODS ====================
     openPasswordModal() {
       this.showPasswordModal = true;
+      this.resetPasswordForm();
+      this.clearMessages();
     },
     
     closePasswordModal() {
       this.showPasswordModal = false;
+      this.resetPasswordForm();
     },
     
+    resetPasswordForm() {
+      this.passwordData = {
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      };
+    },
+    
+    async changePassword() {
+      this.clearMessages();
+
+      if (!this.passwordData.currentPassword || !this.passwordData.newPassword || !this.passwordData.confirmPassword) {
+        this.passwordError = 'All fields are required';
+        return;
+      }
+
+      if (this.passwordData.newPassword.length < 6) {
+        this.passwordError = 'New password must be at least 6 characters';
+        return;
+      }
+
+      if (this.passwordData.newPassword !== this.passwordData.confirmPassword) {
+        this.passwordError = 'New passwords do not match';
+        return;
+      }
+
+      if (this.passwordData.currentPassword === this.passwordData.newPassword) {
+        this.passwordError = 'New password must be different from current password';
+        return;
+      }
+
+      this.isChangingPassword = true;
+
+      try {
+        // Verify current password by trying to sign in
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: this.userProfile.email,
+          password: this.passwordData.currentPassword
+        });
+
+        if (signInError) {
+          this.passwordError = 'Current password is incorrect';
+          this.isChangingPassword = false;
+          return;
+        }
+
+        // Update to new password
+        const { error: updateError } = await supabase.auth.updateUser({
+          password: this.passwordData.newPassword
+        });
+
+        if (updateError) throw updateError;
+
+        // Update password_changed_at in profiles table
+        await supabase
+          .from('profiles')
+          .update({
+            password_changed_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', this.userProfile.id);
+
+        // Log password change event
+        await supabase
+          .from('security_events')
+          .insert({
+            profile_id: this.userProfile.id,
+            event_type: 'password_change',
+            details: { changed_at: new Date().toISOString() }
+          });
+
+        this.passwordSuccess = 'Password updated successfully!';
+        
+        setTimeout(() => {
+          this.closePasswordModal();
+        }, 1500);
+        
+      } catch (error) {
+        console.error('Error changing password:', error);
+        this.passwordError = error.message || 'Failed to update password. Please try again.';
+      } finally {
+        this.isChangingPassword = false;
+      }
+    },
+    
+    // ==================== PRIVACY & TERMS METHODS ====================
     openPrivacyPolicy() {
       this.showPrivacyModal = true;
     },
@@ -702,80 +1024,72 @@ export default {
       this.showTermsModal = true;
     },
     
-    openTermsOfService() {
-      this.showTermsModal = true;
-    },
-    
+    // ==================== DELETE ACCOUNT METHODS ====================
     confirmDeleteAccount() {
-      this.showDeleteModal = true;
       this.deleteConfirmation = '';
+      this.showDeleteModal = true;
     },
-    
+
     closeDeleteModal() {
       this.showDeleteModal = false;
       this.deleteConfirmation = '';
     },
-    
-    handleImageSelect(event) {
-      const file = event.target.files[0];
-      if (!file) return;
 
-      if (!file.type.startsWith('image/')) {
-        this.profileError = 'Please select an image file';
-        return;
-      }
-
-      if (file.size > 5 * 1024 * 1024) {
-        this.profileError = 'File size must be less than 5MB';
-        return;
-      }
-
-      this.selectedImage = file;
-      this.profileError = '';
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        this.imagePreview = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    },
-    
-    async saveProfile() {
-      // Implementation here
-      console.log('Save profile');
-    },
-    
-    async changePassword() {
-      // Implementation here
-      console.log('Change password');
-    },
-    
     async executeDeleteAccount() {
-      if (this.deleteConfirmation !== 'DELETE') {
-        return;
-      }
-      
+      if (this.deleteConfirmation !== 'DELETE') return;
       this.isDeletingAccount = true;
-      
+
       try {
-        // Add your delete account logic here with supabase
-        console.log('Deleting account...');
+        // Delete profile photo if exists
+        if (this.userProfile.profile_photo_url) {
+          try {
+            const urlParts = this.userProfile.profile_photo_url.split('/');
+            const photoFileName = urlParts[urlParts.length - 1];
+            await supabase.storage
+              .from('profile-photos')
+              .remove([`profile-photos/${photoFileName}`]);
+          } catch (deleteError) {
+            console.warn('Error deleting profile photo:', deleteError);
+            // Continue with account deletion even if photo deletion fails
+          }
+        }
         
-        // For now, just simulate the deletion
-        setTimeout(() => {
-          alert('Account deleted successfully. Redirecting to login...');
-          this.isDeletingAccount = false;
-          this.closeDeleteModal();
-          // Redirect to login page
-          // window.location.href = '/login';
-        }, 2000);
+        // Log the deletion event
+        await supabase
+          .from('security_events')
+          .insert({
+            profile_id: this.userProfile.id,
+            event_type: 'account_deletion',
+            details: {
+              deleted_at: new Date().toISOString(),
+              user_role: 'teacher'
+            }
+          });
+
+        // Delete the profile (cascade will handle related records)
+        const { error: deleteError } = await supabase
+          .from('profiles')
+          .delete()
+          .eq('id', this.userProfile.id);
+
+        if (deleteError) throw deleteError;
+
+        // Sign out the user
+        await supabase.auth.signOut();
+
+        this.isDeletingAccount = false;
+        this.showDeleteModal = false;
+        alert('Your account has been permanently deleted. You will now be redirected to the login page.');
+        this.$router.push('/login');
+
       } catch (error) {
         console.error('Error deleting account:', error);
         this.isDeletingAccount = false;
-        alert('Failed to delete account. Please try again.');
+        alert('Failed to delete account. Please try again or contact support.');
       }
     },
     
+    // ==================== UTILITY METHODS ====================
     clearMessages() {
       this.profileError = '';
       this.profileSuccess = '';
@@ -789,6 +1103,7 @@ export default {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+/* CSS Variables */
 :root {
   --bg-primary: #FBFFE4;
   --bg-card: #ffffff;
@@ -817,12 +1132,12 @@ export default {
   --shadow-light: rgba(0, 0, 0, 0.2);
 }
 
+/* Main Container */
 .page-container {
   min-height: 100vh;
   background: #FBFFE4;
   padding: 1.5rem;
   font-family: 'Inter', sans-serif;
-  position: relative;
 }
 
 .dark .page-container {
@@ -835,57 +1150,6 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  padding-bottom: 2rem;
-}
-
-/* Floating Help Button */
-.floating-help-btn {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #3D8D7A 0%, #2f6b5c 100%);
-  color: white;
-  border: none;
-  box-shadow: 0 4px 20px rgba(61, 141, 122, 0.3);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-  z-index: 999;
-  animation: pulse-help 2s ease-in-out infinite;
-}
-
-.dark .floating-help-btn {
-  background: linear-gradient(135deg, #20c997 0%, #3D8D7A 100%);
-  box-shadow: 0 4px 20px rgba(32, 201, 151, 0.4);
-}
-
-@keyframes pulse-help {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 4px 20px rgba(61, 141, 122, 0.3);
-  }
-  50% {
-    transform: scale(1.05);
-    box-shadow: 0 6px 30px rgba(61, 141, 122, 0.5);
-  }
-}
-
-.floating-help-btn:hover {
-  transform: scale(1.1) !important;
-  box-shadow: 0 6px 30px rgba(61, 141, 122, 0.5);
-}
-
-.dark .floating-help-btn:hover {
-  box-shadow: 0 6px 30px rgba(32, 201, 151, 0.6);
-}
-
-.floating-help-btn:active {
-  transform: scale(0.95) !important;
 }
 
 /* Header Card */
@@ -1150,6 +1414,90 @@ input:checked + .slider:before {
   box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
 }
 
+/* Profile Photo Upload */
+.photo-upload-container {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.dark .photo-upload-container {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+}
+
+.current-photo {
+  flex-shrink: 0;
+}
+
+.profile-photo-preview {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--accent-color);
+}
+
+.profile-photo-placeholder {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.photo-upload-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.btn-upload, .btn-remove {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.btn-upload {
+  background: var(--accent-color);
+  color: white;
+}
+
+.btn-upload:hover {
+  background: var(--accent-hover);
+}
+
+.btn-remove {
+  background: var(--danger-color);
+  color: white;
+}
+
+.btn-remove:hover {
+  background: #c82333;
+}
+
+.photo-hint {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
 /* About Card */
 .about-card {
   text-align: center;
@@ -1389,81 +1737,6 @@ input:checked + .slider:before {
   color: var(--text-secondary);
 }
 
-/* Avatar Upload */
-.avatar-upload-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  background: rgba(61, 141, 122, 0.05);
-  border-radius: 12px;
-  border: 2px dashed var(--border-color);
-}
-
-.dark .avatar-upload-section {
-  background: rgba(32, 201, 151, 0.1);
-}
-
-.current-avatar {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 3px solid var(--accent-color);
-}
-
-.avatar-preview {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.avatar-placeholder {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  background: var(--bg-card);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--accent-color);
-  border: 2px dashed var(--accent-color);
-}
-
-.file-input {
-  display: none;
-}
-
-.file-input-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  background: var(--accent-color);
-  color: white;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.file-input-label:hover {
-  background: var(--accent-hover);
-  transform: translateY(-1px);
-}
-
-.selected-file {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  text-align: center;
-  max-width: 250px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* Messages */
 .error-message {
   color: var(--danger-color);
@@ -1581,6 +1854,56 @@ input:checked + .slider:before {
   transform: none;
 }
 
+/* Floating Help & Support Button */
+.floating-help-btn {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3D8D7A 0%, #2f6b5c 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 20px rgba(61, 141, 122, 0.3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 999;
+  animation: pulse-help 2s ease-in-out infinite;
+}
+
+.dark .floating-help-btn {
+  background: linear-gradient(135deg, #20c997 0%, #3D8D7A 100%);
+  box-shadow: 0 4px 20px rgba(32, 201, 151, 0.4);
+}
+
+@keyframes pulse-help {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 4px 20px rgba(61, 141, 122, 0.3);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 6px 30px rgba(61, 141, 122, 0.5);
+  }
+}
+
+.floating-help-btn:hover {
+  transform: scale(1.1) !important;
+  box-shadow: 0 6px 30px rgba(61, 141, 122, 0.5);
+}
+
+.dark .floating-help-btn:hover {
+  box-shadow: 0 6px 30px rgba(32, 201, 151, 0.6);
+}
+
+.floating-help-btn:active {
+  transform: scale(0.95) !important;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .page-container {
@@ -1627,6 +1950,11 @@ input:checked + .slider:before {
   
   .document-modal {
     max-width: 100%;
+  }
+  
+  .photo-upload-container {
+    flex-direction: column;
+    text-align: center;
   }
   
   .floating-help-btn {
