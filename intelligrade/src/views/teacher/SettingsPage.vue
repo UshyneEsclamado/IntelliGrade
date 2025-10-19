@@ -591,6 +591,7 @@ import { supabase } from '@/supabase.js';
 
 export default {
   name: 'SettingsPage',
+  emits: ['profile-updated'],
   data() {
     return {
       // User data
@@ -704,8 +705,19 @@ export default {
         if (teacherError) throw teacherError;
         this.userProfile = { ...this.userProfile, ...teacherData };
         
-        // Set current profile picture
-        this.currentProfilePicture = this.userProfile.profile_photo_url || null;
+        // Set current profile picture with proper URL construction
+        if (this.userProfile.profile_photo_url) {
+          if (this.userProfile.profile_photo_url.startsWith('http')) {
+            this.currentProfilePicture = this.userProfile.profile_photo_url;
+          } else {
+            const { data: publicUrlData } = supabase.storage
+              .from('profile-photos')
+              .getPublicUrl(this.userProfile.profile_photo_url);
+            this.currentProfilePicture = publicUrlData.publicUrl;
+          }
+        } else {
+          this.currentProfilePicture = null;
+        }
         
       } catch (error) {
         console.error('Error loading user data:', error);
@@ -798,7 +810,6 @@ export default {
     },
     
     triggerPhotoInput() {
-      // Cast $refs to HTMLInputElement to satisfy TypeScript and safely trigger click
       const input = this.$refs.photoInput as HTMLInputElement | null;
       if (input) {
         input.click();
@@ -813,110 +824,136 @@ export default {
     },
     
     async saveProfile() {
-      this.clearMessages();
+  this.clearMessages();
 
-      if (!this.profileData.full_name.trim()) {
-        this.profileError = 'Full name is required';
-        return;
-      }
+  if (!this.profileData.full_name.trim()) {
+    this.profileError = 'Full name is required';
+    return;
+  }
 
-      this.isSaving = true;
+  this.isSaving = true;
 
-      try {
-        let photoUrl = this.userProfile.profile_photo_url;
-        
-        // Upload photo if a new one was selected
-        if (this.selectedImage) {
-          const fileExt = this.selectedImage.name.split('.').pop();
-          const fileName = `${this.userProfile.id}_${Date.now()}.${fileExt}`;
-          const filePath = `profile-photos/${fileName}`;
-          
-          // Delete old photo if it exists
-          if (this.userProfile.profile_photo_url) {
-            try {
-              // Extract the file path from the URL
-              const urlParts = this.userProfile.profile_photo_url.split('/');
-              const oldFileName = urlParts[urlParts.length - 1];
-              await supabase.storage
-                .from('profile-photos')
-                .remove([`profile-photos/${oldFileName}`]);
-            } catch (deleteError) {
-              console.warn('Error deleting old photo:', deleteError);
-              // Continue anyway - old photo deletion is not critical
-            }
-          }
-          
-          // Upload new photo
-          const { error: uploadError } = await supabase.storage
+  try {
+    let photoUrl = this.userProfile.profile_photo_url;
+    
+    // Upload photo if a new one was selected
+    if (this.selectedImage) {
+      console.log('📤 Uploading new profile photo...');
+      
+      const fileExt = this.selectedImage.name.split('.').pop();
+      const fileName = `${this.userProfile.id}_${Date.now()}.${fileExt}`;
+      const filePath = fileName; // Just the filename, not a subfolder
+      
+      console.log('📁 File path:', filePath);
+      
+      // Delete old photo if it exists
+      if (this.userProfile.profile_photo_url) {
+        try {
+          console.log('🗑 Deleting old photo:', this.userProfile.profile_photo_url);
+          const oldPhotoPath = this.userProfile.profile_photo_url.replace(/^https?:\/\/[^\/]+\/storage\/v1\/object\/public\/profile-photos\//, '');
+          await supabase.storage
             .from('profile-photos')
-            .upload(filePath, this.selectedImage, {
-              cacheControl: '3600',
-              upsert: true
-            });
-          
-          if (uploadError) throw uploadError;
-          
-          // Get public URL
-          const { data: { publicUrl } } = supabase.storage
-            .from('profile-photos')
-            .getPublicUrl(filePath);
-          
-          photoUrl = publicUrl;
-        } else if (this.imagePreview === null && this.currentProfilePicture === null && this.userProfile.profile_photo_url) {
-          // User removed the photo
-          try {
-            const urlParts = this.userProfile.profile_photo_url.split('/');
-            const oldFileName = urlParts[urlParts.length - 1];
-            await supabase.storage
-              .from('profile-photos')
-              .remove([`profile-photos/${oldFileName}`]);
-          } catch (deleteError) {
-            console.warn('Error deleting photo:', deleteError);
-          }
-          photoUrl = null;
+            .remove([oldPhotoPath]);
+          console.log('✓ Old photo deleted');
+        } catch (deleteError) {
+          console.warn('⚠ Error deleting old photo:', deleteError);
         }
-        
-        // Update profiles table
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({
-            full_name: this.profileData.full_name.trim(),
-            profile_photo_url: photoUrl,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', this.userProfile.id);
-
-        if (profileError) throw profileError;
-
-        // Update teachers table
-        const { error: teacherError } = await supabase
-          .from('teachers')
-          .update({
-            full_name: this.profileData.full_name.trim(),
-            department: this.profileData.department?.trim() || null,
-            profile_photo_url: photoUrl,
-            updated_at: new Date().toISOString()
-          })
-          .eq('profile_id', this.userProfile.id);
-
-        if (teacherError) throw teacherError;
-
-        this.profileSuccess = 'Profile updated successfully!';
-        
-        // Reload user data to reflect changes
-        await this.loadUserData();
-        
-        setTimeout(() => {
-          this.closeProfileModal();
-        }, 1500);
-        
-      } catch (error) {
-        console.error('Error saving profile:', error);
-        this.profileError = error.message || 'Failed to save profile. Please try again.';
-      } finally {
-        this.isSaving = false;
       }
-    },
+      
+      // Upload new photo
+      const { error: uploadError, data: uploadData } = await supabase.storage
+        .from('profile-photos')
+        .upload(filePath, this.selectedImage, {
+          cacheControl: '3600',
+          upsert: true
+        });
+      
+      if (uploadError) {
+        console.error('❌ Upload error:', uploadError);
+        throw uploadError;
+      }
+      
+      console.log('✓ Photo uploaded:', uploadData);
+      
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('profile-photos')
+        .getPublicUrl(filePath);
+      
+      photoUrl = publicUrl;
+      console.log('✓ Public URL generated:', photoUrl);
+    } else if (this.imagePreview === null && this.currentProfilePicture === null && this.userProfile.profile_photo_url) {
+      // User removed the photo
+      console.log('🗑 User removed photo');
+      try {
+        const oldPhotoPath = this.userProfile.profile_photo_url.replace(/^https?:\/\/[^\/]+\/storage\/v1\/object\/public\/profile-photos\//, '');
+        await supabase.storage
+          .from('profile-photos')
+          .remove([oldPhotoPath]);
+        console.log('✓ Photo deleted from storage');
+      } catch (deleteError) {
+        console.warn('⚠ Error deleting photo:', deleteError);
+      }
+      photoUrl = null;
+    }
+    
+    console.log('💾 Updating profiles table...');
+    
+    // Update profiles table
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({
+        full_name: this.profileData.full_name.trim(),
+        profile_photo_url: photoUrl,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', this.userProfile.id);
+
+    if (profileError) {
+      console.error('❌ Profile update error:', profileError);
+      throw profileError;
+    }
+    
+    console.log('✓ Profiles table updated');
+    console.log('💾 Updating teachers table...');
+
+    // Update teachers table
+    const { error: teacherError } = await supabase
+      .from('teachers')
+      .update({
+        full_name: this.profileData.full_name.trim(),
+        department: this.profileData.department?.trim() || null,
+        profile_photo_url: photoUrl,
+        updated_at: new Date().toISOString()
+      })
+      .eq('profile_id', this.userProfile.id);
+
+    if (teacherError) {
+      console.error('❌ Teacher update error:', teacherError);
+      throw teacherError;
+    }
+    
+    console.log('✓ Teachers table updated');
+
+    this.profileSuccess = 'Profile updated successfully!';
+    
+    console.log('🔄 Reloading user data...');
+    await this.loadUserData();
+    
+    console.log('📤 Emitting profile-updated event...');
+    this.$emit('profile-updated');
+    
+    setTimeout(() => {
+      this.closeProfileModal();
+    }, 1500);
+    
+  } catch (error) {
+    console.error('💥 Error saving profile:', error);
+    this.profileError = error.message || 'Failed to save profile. Please try again.';
+  } finally {
+    this.isSaving = false;
+  }
+},
     
     // ==================== PASSWORD MODAL METHODS ====================
     openPasswordModal() {
@@ -1043,14 +1080,12 @@ export default {
         // Delete profile photo if exists
         if (this.userProfile.profile_photo_url) {
           try {
-            const urlParts = this.userProfile.profile_photo_url.split('/');
-            const photoFileName = urlParts[urlParts.length - 1];
+            const photoPath = this.userProfile.profile_photo_url.replace(/^https?:\/\/[^\/]+\/storage\/v1\/object\/public\/profile-photos\//, '');
             await supabase.storage
               .from('profile-photos')
-              .remove([`profile-photos/${photoFileName}`]);
+              .remove([photoPath]);
           } catch (deleteError) {
             console.warn('Error deleting profile photo:', deleteError);
-            // Continue with account deletion even if photo deletion fails
           }
         }
         
