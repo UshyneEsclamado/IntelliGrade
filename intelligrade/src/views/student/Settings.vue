@@ -150,6 +150,127 @@
         <p class="copyright-text">© 2025 IntelliGrade. All Rights Reserved.</p>
       </div>
     </div>
+
+    <!-- Floating Help & Support Button -->
+    <button @click="openHelpModal" class="floating-help-btn" title="Help & Support">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+        <line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+    </button>
+
+    <!-- Help & Support Modal -->
+    <div v-if="showHelpModal" class="modal-overlay" @click="closeHelpModal">
+      <div class="modal-content document-modal" @click.stop>
+        <div class="modal-header">
+          <h3>Help & Support</h3>
+          <button @click="closeHelpModal" class="close-btn">×</button>
+        </div>
+        <div class="modal-body document-body">
+          <div class="document-content">
+            <h4>Welcome to IntelliGrade Help Center</h4>
+            <p class="document-date">We're here to help you!</p>
+            
+            <section>
+              <h5>📧 Contact Support</h5>
+              <p>Have a question or need assistance? Reach out to our support team:</p>
+              <ul>
+                <li>Email: <strong>support@intelligrade.edu</strong></li>
+                <li>Response Time: Within 24 hours</li>
+              </ul>
+            </section>
+
+            <section>
+              <h5>🔧 Common Issues</h5>
+              <p><strong>Can't log in?</strong></p>
+              <ul>
+                <li>Check if your email and password are correct</li>
+                <li>Try resetting your password</li>
+                <li>Clear your browser cache and cookies</li>
+              </ul>
+              
+              <p><strong>Profile not updating?</strong></p>
+              <ul>
+                <li>Ensure all required fields are filled</li>
+                <li>Check your internet connection</li>
+                <li>Try refreshing the page</li>
+              </ul>
+              
+              <p><strong>Not receiving notifications?</strong></p>
+              <ul>
+                <li>Check your notification settings</li>
+                <li>Verify your email address</li>
+                <li>Check your spam/junk folder</li>
+              </ul>
+            </section>
+
+            <section>
+              <h5>💡 Getting Started</h5>
+              <p><strong>For Students:</strong></p>
+              <ul>
+                <li>Join classes using class codes</li>
+                <li>View assignments and grades</li>
+                <li>Submit work on time</li>
+                <li>Track your academic progress</li>
+              </ul>
+            </section>
+
+            <section>
+              <h5>🔒 Account Security</h5>
+              <ul>
+                <li>Use a strong, unique password</li>
+                <li>Never share your login credentials</li>
+                <li>Log out when using shared computers</li>
+                <li>Update your password regularly</li>
+              </ul>
+            </section>
+
+            <section>
+              <h5>📱 Technical Requirements</h5>
+              <p>For the best experience with IntelliGrade:</p>
+              <ul>
+                <li>Use a modern web browser (Chrome, Firefox, Safari, Edge)</li>
+                <li>Ensure JavaScript is enabled</li>
+                <li>Stable internet connection recommended</li>
+                <li>Screen resolution: 1280x720 or higher</li>
+              </ul>
+            </section>
+
+            <section>
+              <h5>📚 Resources</h5>
+              <ul>
+                <li>User Guide: Coming soon</li>
+                <li>Video Tutorials: Coming soon</li>
+                <li>FAQ: Coming soon</li>
+              </ul>
+            </section>
+
+            <section>
+              <h5>🐛 Report a Bug</h5>
+              <p>Found a bug? Help us improve IntelliGrade by reporting it:</p>
+              <ul>
+                <li>Send detailed description to: <strong>bugs@intelligrade.edu</strong></li>
+                <li>Include screenshots if possible</li>
+                <li>Mention your browser and device type</li>
+              </ul>
+            </section>
+
+            <section>
+              <h5>💬 Feedback</h5>
+              <p>We value your feedback! Share your thoughts and suggestions:</p>
+              <ul>
+                <li>Email: <strong>feedback@intelligrade.edu</strong></li>
+                <li>Your input helps us improve the platform</li>
+              </ul>
+            </section>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="closeHelpModal" class="btn-primary">Close</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Profile Update Modal -->
@@ -433,7 +554,7 @@
     </div>
   </div>
 
-  <!-- Delete Account Confirmation Modal (Simple) -->
+  <!-- Delete Account Confirmation Modal -->
   <div v-if="showDeleteModal" class="modal-overlay" @click="closeDeleteModal">
     <div class="modal-content" style="max-width: 400px;" @click.stop>
       <div class="modal-header" style="border-bottom: 1px solid #dc3545;">
@@ -489,6 +610,7 @@ export default {
       showPrivacyModal: false,
       showTermsModal: false,
       showDeleteModal: false,
+      showHelpModal: false,
       
       // Profile management
       profileData: {
@@ -625,6 +747,15 @@ export default {
     
     toggleNotifications() {
       localStorage.setItem('notifications', this.notificationsEnabled.toString());
+    },
+    
+    // ==================== HELP MODAL METHODS ====================
+    openHelpModal() {
+      this.showHelpModal = true;
+    },
+    
+    closeHelpModal() {
+      this.showHelpModal = false;
     },
     
     // ==================== PROFILE MODAL METHODS ====================
@@ -823,19 +954,16 @@ export default {
     },
     
     // ==================== DELETE ACCOUNT METHODS ====================
-    // Open the delete confirmation modal
     confirmDeleteAccount() {
       this.deleteConfirmation = '';
       this.showDeleteModal = true;
     },
 
-    // Close the delete modal
     closeDeleteModal() {
       this.showDeleteModal = false;
       this.deleteConfirmation = '';
     },
 
-    // Execute the actual deletion after modal confirmation
     async executeDeleteAccount() {
       if (this.deleteConfirmation !== 'DELETE') return;
       this.isDeletingAccount = true;
@@ -1803,6 +1931,80 @@ input:checked + .slider:before {
 @media (max-width: 480px) {
   .avatar-grid {
     grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Floating Help & Support Button */
+.floating-help-btn {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3D8D7A 0%, #2f6b5c 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 20px rgba(61, 141, 122, 0.3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 999;
+  animation: pulse-help 2s ease-in-out infinite;
+}
+
+.dark .floating-help-btn {
+  background: linear-gradient(135deg, #20c997 0%, #3D8D7A 100%);
+  box-shadow: 0 4px 20px rgba(32, 201, 151, 0.4);
+}
+
+@keyframes pulse-help {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 4px 20px rgba(61, 141, 122, 0.3);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 6px 30px rgba(61, 141, 122, 0.5);
+  }
+}
+
+.floating-help-btn:hover {
+  transform: scale(1.1) !important;
+  box-shadow: 0 6px 30px rgba(61, 141, 122, 0.5);
+}
+
+.dark .floating-help-btn:hover {
+  box-shadow: 0 6px 30px rgba(32, 201, 151, 0.6);
+}
+
+.floating-help-btn:active {
+  transform: scale(0.95) !important;
+}
+
+/* Responsive adjustments for floating help button */
+@media (max-width: 768px) {
+  .floating-help-btn {
+    width: 50px;
+    height: 50px;
+    bottom: 1.5rem;
+    right: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .floating-help-btn {
+    width: 45px;
+    height: 45px;
+    bottom: 1rem;
+    right: 1rem;
+  }
+  
+  .floating-help-btn svg {
+    width: 20px;
+    height: 20px;
   }
 }
 </style>
