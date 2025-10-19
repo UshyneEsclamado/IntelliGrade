@@ -262,6 +262,7 @@ onMounted(async () => {
   bottom: 0;
   font-family: 'Inter', sans-serif;
   background: var(--bg-primary);
+  font-size: 1.15rem;
 }
 
 .dashboard-container::before {
@@ -279,37 +280,36 @@ onMounted(async () => {
   pointer-events: none;
 }
 
-/* PERFECTLY FITTED SIDEBAR */
+/* SIDEBAR - EXACT STUDENT DASHBOARD MATCH */
 .sidebar {
   width: 300px;
-  height: 100vh;
   background: var(--card-background);
   backdrop-filter: blur(20px);
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  padding: 1.75rem 1.25rem;
+  padding: 1.5rem 1rem;
   box-shadow: 
     0 8px 32px var(--shadow-medium),
     0 0 0 1px var(--border-color);
-  overflow: hidden;
+  overflow-y: hidden;
   flex-shrink: 0;
   position: relative;
   z-index: 1;
-  justify-content: space-between;
 }
 
-/* COMPACT USER INFO */
+/* USER INFO - EXACT STUDENT DASHBOARD MATCH */
 .user-info {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
   background: var(--bg-accent);
   border-radius: 16px;
-  padding: 1.5rem;
+  padding: 1.5rem 1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  flex-shrink: 0;
-  margin-bottom: 0;
 }
 
 .profile-pic-container {
@@ -317,41 +317,40 @@ onMounted(async () => {
 }
 
 .profile-pic {
-  width: 65px;
-  height: 65px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid var(--accent-color);
-  box-shadow: 0 8px 32px var(--shadow-strong);
+  box-shadow: 0 4px 16px var(--shadow-strong);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .profile-pic:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 12px 40px var(--shadow-strong);
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.15);
 }
 
 .profile-pic-placeholder {
-  width: 65px;
-  height: 65px;
+  width: 60px;
+  height: 60px;
   background: var(--accent-color);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 8px 32px var(--shadow-strong);
+  box-shadow: 0 4px 16px var(--shadow-strong);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .profile-pic-placeholder:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 12px 40px var(--shadow-strong);
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.15);
 }
 
 .profile-pic-placeholder svg {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
 }
 
 .user-details {
@@ -359,45 +358,47 @@ onMounted(async () => {
 }
 
 .user-info h3 {
-  font-size: 1.3rem;
+  font-size: 1.35rem;
   font-weight: 700;
   color: var(--accent-color);
-  margin-bottom: 0.4rem;
-  text-shadow: 0 1px 2px var(--shadow-light);
+  margin-bottom: 0.5rem;
+  word-break: break-word;
+  line-height: 1.2;
+  min-height: 1.5rem;
 }
 
 .user-info .role {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--text-muted);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   background: var(--bg-accent);
-  padding: 0.2rem 0.6rem;
-  border-radius: 12px;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
   display: inline-block;
-  margin-bottom: 0;
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--border-color);
 }
 
-/* PERFECTLY DISTRIBUTED NAVIGATION */
+/* NAVIGATION LINKS - EXACT STUDENT DASHBOARD MATCH */
 .nav-links {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  flex: 1;
-  justify-content: space-between;
-  padding: 1.25rem 0;
-  min-height: 280px; /* Ensure minimum height for proper distribution */
+  gap: 0.5rem;
+  justify-content: center;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  padding: 1rem 1.2rem;
-  border-radius: 14px;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
   color: var(--accent-color);
   text-decoration: none;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 1rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: var(--bg-accent);
   border: 1px solid var(--border-color);
@@ -409,7 +410,6 @@ onMounted(async () => {
   margin: 0;
   box-shadow: none;
   line-height: 1;
-  flex-shrink: 0;
 }
 
 .nav-item::before {
@@ -425,10 +425,10 @@ onMounted(async () => {
 }
 
 .nav-item svg {
-  margin-right: 0.9rem;
-  width: 20px;
-  height: 20px;
-  fill: var(--accent-color);
+  margin-right: 0.75rem;
+  width: 18px;
+  height: 18px;
+  fill: #3D8D7A;
   transition: all 0.3s ease;
   position: relative;
   z-index: 1;
@@ -441,16 +441,12 @@ onMounted(async () => {
 
 .nav-item:hover {
   transform: none;
-  box-shadow: 0 2px 8px var(--shadow-light);
-  border-color: var(--border-color);
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.08);
+  border-color: rgba(61, 141, 122, 0.15);
 }
 
 .nav-item:hover::before {
   left: 0;
-}
-
-.nav-item:hover svg {
-  transform: none;
 }
 
 .nav-item.router-link-exact-active {
@@ -463,7 +459,6 @@ onMounted(async () => {
 
 .nav-item.router-link-exact-active svg {
   fill: var(--accent-color);
-  transform: none;
 }
 
 .nav-item.router-link-exact-active span {
@@ -478,16 +473,16 @@ onMounted(async () => {
   box-shadow: 0 2px 8px rgba(95, 179, 160, 0.15);
 }
 
-/* BOTTOM POSITIONED LOGOUT BUTTON */
+/* LOGOUT BUTTON - EXACT STUDENT DASHBOARD MATCH */
 .logout-btn {
   display: flex;
   align-items: center;
-  padding: 1rem 1.2rem;
-  border-radius: 14px;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
   color: var(--text-inverse);
   text-decoration: none;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 1rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: var(--accent-color);
   border: 1px solid var(--accent-color);
@@ -496,27 +491,18 @@ onMounted(async () => {
   text-align: left;
   position: relative;
   overflow: hidden;
+  margin-top: 0.5rem;
   box-shadow: none;
   line-height: 1;
-  gap: 0.9rem;
+  gap: 0.75rem;
   justify-content: flex-start;
   box-sizing: border-box;
-  flex-shrink: 0;
-  margin-top: 0; /* No margin needed since we're using space-between */
 }
 
 .logout-btn svg {
-  width: 20px;
-  height: 20px;
-  fill: var(--text-inverse);
-  transition: all 0.3s ease;
-  position: relative;
-  z-index: 1;
-}
-
-.logout-btn span {
-  position: relative;
-  z-index: 1;
+  width: 18px;
+  height: 18px;
+  margin-right: 0.75rem;
 }
 
 .logout-btn:hover {
@@ -524,11 +510,7 @@ onMounted(async () => {
   color: var(--text-inverse);
   border-color: var(--accent-hover);
   transform: none;
-  box-shadow: 0 2px 8px var(--shadow-light);
-}
-
-.logout-btn:hover svg {
-  transform: none;
+  box-shadow: 0 2px 8px rgba(24, 60, 46, 0.1);
 }
 
 .main-content {
@@ -855,11 +837,68 @@ onMounted(async () => {
 html, body {
   height: 100%;
   width: 100%;
-  overflow: hidden; /* Prevents scrollbars on the body */
+  overflow: hidden;
 }
 
 #app {
   height: 100%;
   width: 100%;
+}
+
+/* CSS Variables for consistent theming */
+:root {
+  /* Light mode colors */
+  --bg-primary: #f8faf9;
+  --bg-secondary: #fefefe;
+  --bg-accent: #f3f7f4;
+  --bg-accent-hover: #e9f5ee;
+  
+  --card-background: #ffffff;
+  --card-background-hover: #f8faf9;
+  
+  --accent-color: #33806b;
+  --accent-hover: #2d6a57;
+  --accent-light: #5FB3A0;
+  --accent-lighter: #A3D1C6;
+  
+  --text-primary: #1a1a1a;
+  --text-secondary: #3d8d7a;
+  --text-muted: #7a9c8f;
+  --text-inverse: #ffffff;
+  
+  --border-color: rgba(61, 141, 122, 0.12);
+  --border-hover: rgba(61, 141, 122, 0.2);
+  
+  --shadow-light: rgba(61, 141, 122, 0.05);
+  --shadow-medium: rgba(61, 141, 122, 0.1);
+  --shadow-strong: rgba(61, 141, 122, 0.2);
+}
+
+/* Dark mode colors */
+:root.dark {
+  --bg-primary: #181c20;
+  --bg-secondary: #23272b;
+  --bg-accent: #23272b;
+  --bg-accent-hover: #23272b;
+  
+  --card-background: #23272b;
+  --card-background-hover: #181c20;
+  
+  --accent-color: #5FB3A0;
+  --accent-hover: #33806b;
+  --accent-light: #7BC4B5;
+  --accent-lighter: #A3D1C6;
+  
+  --text-primary: #f0f0f0;
+  --text-secondary: #A3D1C6;
+  --text-muted: #7a9c8f;
+  --text-inverse: #ffffff;
+  
+  --border-color: rgba(95, 179, 160, 0.15);
+  --border-hover: rgba(95, 179, 160, 0.25);
+  
+  --shadow-light: rgba(0, 0, 0, 0.1);
+  --shadow-medium: rgba(0, 0, 0, 0.2);
+  --shadow-strong: rgba(0, 0, 0, 0.3);
 }
 </style>
