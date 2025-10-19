@@ -132,6 +132,122 @@
         </div>
       </div>
     </div>
+    
+    <!-- Floating Help & Support Button -->
+    <button @click="openHelpModal" class="floating-help-btn" title="Help & Support">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+        <line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+    </button>
+
+    <!-- Help & Support Modal -->
+    <div v-if="showHelpModal" class="modal-overlay" @click="closeHelpModal">
+      <div class="modal-content document-modal" @click.stop>
+        <div class="modal-header">
+          <h3>Help & Support</h3>
+          <button @click="closeHelpModal" class="close-btn">×</button>
+        </div>
+        <div class="modal-body document-body">
+          <div class="document-content">
+            <h4>Welcome to IntelliGrade Help Center</h4>
+            <p class="document-date">We're here to help you!</p>
+            
+            <section>
+              <h5>📧 Contact Support</h5>
+              <p>Have a question or need assistance? Reach out to our support team:</p>
+              <ul>
+                <li>Email: <strong>support@intelligrade.edu</strong></li>
+                <li>Response Time: Within 24 hours</li>
+              </ul>
+            </section>
+
+            <section>
+              <h5>🔧 Common Issues</h5>
+              <p><strong>Can't log in?</strong></p>
+              <ul>
+                <li>Check if your email and password are correct</li>
+                <li>Try resetting your password</li>
+                <li>Clear your browser cache and cookies</li>
+              </ul>
+              
+              <p><strong>Quizzes not loading?</strong></p>
+              <ul>
+                <li>Check your internet connection</li>
+                <li>Try refreshing the page</li>
+                <li>Make sure you're enrolled in the class</li>
+              </ul>
+            </section>
+
+            <section>
+              <h5>💡 Getting Started</h5>
+              <p><strong>For Students:</strong></p>
+              <ul>
+                <li>View your enrolled subjects and classes</li>
+                <li>Take quizzes and assessments</li>
+                <li>Check your grades and progress</li>
+                <li>Communicate with your teachers</li>
+                <li>Track assignment deadlines</li>
+              </ul>
+            </section>
+
+            <section>
+              <h5>🔒 Account Security</h5>
+              <ul>
+                <li>Use a strong, unique password</li>
+                <li>Never share your login credentials</li>
+                <li>Log out when using shared computers</li>
+                <li>Update your password regularly</li>
+              </ul>
+            </section>
+
+            <section>
+              <h5>📱 Technical Requirements</h5>
+              <p>For the best experience with IntelliGrade:</p>
+              <ul>
+                <li>Use a modern web browser (Chrome, Firefox, Safari, Edge)</li>
+                <li>Ensure JavaScript is enabled</li>
+                <li>Stable internet connection recommended</li>
+                <li>Screen resolution: 1280x720 or higher</li>
+              </ul>
+            </section>
+
+            <section>
+              <h5>📚 Taking Quizzes</h5>
+              <ul>
+                <li>Make sure to read all instructions carefully</li>
+                <li>Submit before the deadline</li>
+                <li>Check your internet connection before starting</li>
+                <li>Contact your teacher if you experience technical issues</li>
+              </ul>
+            </section>
+
+            <section>
+              <h5>🐛 Report a Bug</h5>
+              <p>Found a bug? Help us improve IntelliGrade by reporting it:</p>
+              <ul>
+                <li>Send detailed description to: <strong>bugs@intelligrade.edu</strong></li>
+                <li>Include screenshots if possible</li>
+                <li>Mention your browser and device type</li>
+              </ul>
+            </section>
+
+            <section>
+              <h5>💬 Feedback</h5>
+              <p>We value your feedback! Share your thoughts and suggestions:</p>
+              <ul>
+                <li>Email: <strong>feedback@intelligrade.edu</strong></li>
+                <li>Your input helps us improve the platform</li>
+              </ul>
+            </section>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="closeHelpModal" class="btn-primary">Close</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -142,6 +258,7 @@ export default {
   name: 'StudentHome',
   data() {
     return {
+      showHelpModal: false,
       studentName: 'Student',
       totalSubjects: 0,
       pendingAssessments: 0,
@@ -161,6 +278,14 @@ export default {
   methods: {
     toggleNotifDropdown() {
       this.showNotifDropdown = !this.showNotifDropdown;
+    },
+    
+    openHelpModal() {
+      this.showHelpModal = true;
+    },
+    
+    closeHelpModal() {
+      this.showHelpModal = false;
     },
 
     async loadEnrolledSections() {
@@ -983,6 +1108,253 @@ export default {
   box-sizing: border-box;
 }
 
+/* Floating Help & Support Button */
+.floating-help-btn {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3D8D7A 0%, #2f6b5c 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 20px rgba(61, 141, 122, 0.3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 999;
+  animation: pulse-help 2s ease-in-out infinite;
+}
+
+.dark .floating-help-btn {
+  background: linear-gradient(135deg, #20c997 0%, #3D8D7A 100%);
+  box-shadow: 0 4px 20px rgba(32, 201, 151, 0.4);
+}
+
+@keyframes pulse-help {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 4px 20px rgba(61, 141, 122, 0.3);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 6px 30px rgba(61, 141, 122, 0.5);
+  }
+}
+
+.floating-help-btn:hover {
+  transform: scale(1.1) !important;
+  box-shadow: 0 6px 30px rgba(61, 141, 122, 0.5);
+}
+
+.dark .floating-help-btn:hover {
+  box-shadow: 0 6px 30px rgba(32, 201, 151, 0.6);
+}
+
+.floating-help-btn:active {
+  transform: scale(0.95) !important;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  color: #1f2937;
+  border: 1px solid #A3D1C6;
+}
+
+.dark .modal-content {
+  background: #23272b;
+  border: 1px solid #20c997;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  color: #A3D1C6;
+}
+
+.document-modal {
+  max-width: 700px;
+}
+
+.modal-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #A3D1C6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  background: white;
+  border-radius: 12px 12px 0 0;
+  z-index: 10;
+}
+
+.dark .modal-header {
+  background: #2a2e36;
+  border-bottom: 1px solid #3D8D7A;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #3D8D7A;
+  font-weight: 600;
+}
+
+.dark .modal-header h3 {
+  color: #A3D1C6;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #6b7280;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  transition: color 0.2s;
+}
+
+.close-btn:hover {
+  color: #1f2937;
+}
+
+.dark .close-btn:hover {
+  color: #A3D1C6;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.document-body {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.document-content {
+  line-height: 1.6;
+}
+
+.document-content h4 {
+  font-size: 1.4rem;
+  color: #3D8D7A;
+  margin: 0 0 0.5rem 0;
+  font-weight: 600;
+}
+
+.dark .document-content h4 {
+  color: #A3D1C6;
+}
+
+.document-date {
+  color: #6b7280;
+  font-style: italic;
+  margin: 0 0 2rem 0;
+  font-size: 0.875rem;
+}
+
+.dark .document-date {
+  color: #9ca3af;
+}
+
+.document-content section {
+  margin-bottom: 1.5rem;
+}
+
+.document-content h5 {
+  font-size: 1.1rem;
+  color: #1f2937;
+  margin: 1rem 0 0.5rem 0;
+  font-weight: 600;
+}
+
+.dark .document-content h5 {
+  color: #e5e7eb;
+}
+
+.document-content p {
+  margin: 0 0 1rem 0;
+  color: #1f2937;
+  font-size: 0.9rem;
+}
+
+.dark .document-content p {
+  color: #e5e7eb;
+}
+
+.document-content ul {
+  margin: 0 0 1rem 1.5rem;
+}
+
+.document-content li {
+  margin-bottom: 0.5rem;
+  color: #1f2937;
+  font-size: 0.9rem;
+}
+
+.dark .document-content li {
+  color: #e5e7eb;
+}
+
+.modal-footer {
+  padding: 1.5rem;
+  border-top: 1px solid #A3D1C6;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  position: sticky;
+  bottom: 0;
+  background: white;
+  border-radius: 0 0 12px 12px;
+}
+
+.dark .modal-footer {
+  background: #2a2e36;
+  border-top: 1px solid #3D8D7A;
+}
+
+.btn-primary {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  background: #3D8D7A;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #2f6b5c;
+  transform: translateY(-1px);
+}
+
 .home-container {
   min-height: 100vh;
   background: #FBFFE4;
@@ -1612,6 +1984,25 @@ export default {
 }
 
 @media (max-width: 768px) {
+  .floating-help-btn {
+    width: 50px;
+    height: 50px;
+    bottom: 1.5rem;
+    right: 1.5rem;
+  }
+
+  .modal-overlay {
+    padding: 10px;
+  }
+
+  .modal-content {
+    max-height: 95vh;
+  }
+
+  .document-modal {
+    max-width: 100%;
+  }
+
   .stats-grid {
     grid-template-columns: 1fr;
   }
@@ -1638,6 +2029,20 @@ export default {
     left: auto;
     width: calc(100vw - 3rem);
     max-width: 320px;
+  }
+}
+
+@media (max-width: 480px) {
+  .floating-help-btn {
+    width: 45px;
+    height: 45px;
+    bottom: 1rem;
+    right: 1rem;
+  }
+
+  .floating-help-btn svg {
+    width: 20px;
+    height: 20px;
   }
 }
 </style>
