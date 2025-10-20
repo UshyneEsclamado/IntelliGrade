@@ -1342,35 +1342,32 @@ import { useRouter } from 'vue-router'
 import { supabase } from '../../supabase.js'
 import { useDarkMode } from '../../composables/useDarkMode.js'
 import { useTeacherAuth } from '../../composables/useTeacherAuth.js'
-import { useTeacherData } from '../../composables/useTeacherData.js'
 
 // Dark mode
 const { isDarkMode, initDarkMode, toggleDarkMode } = useDarkMode()
 
-// Authentication and Data
+// Authentication
 const { teacherInfo, isAuthenticated } = useTeacherAuth()
-const { 
-  subjects, 
-  fetchSubjects, 
-  getCachedSubjects, 
-  invalidateSubjectsCache,
-  setupAutoRefresh 
-} = useTeacherData()
 
 // Router
 const router = useRouter()
 
-// Local State
+// Local State - Main data
+const subjects = ref([])
 const selectedSubject = ref(null)
 const selectedSection = ref(null)
 const viewMode = ref('subjects')
 const selectedGradeFilter = ref('all')
+
+// Modal states
 const showCreateModal = ref(false)
 const showStudentRosterModal = ref(false)
 const currentStudentRoster = ref(null)
 const isEditing = ref(false)
 const currentSubjectId = ref(null)
 const currentStep = ref(1)
+
+// UI states
 const copiedCodeId = ref(null)
 const showDeleteModal = ref(false)
 const deleteType = ref('')
@@ -1400,11 +1397,157 @@ const canProceedToStep2 = computed(() => {
   return formData.value.name && formData.value.grade_level && formData.value.number_of_sections
 })
 
-// Navigation methods
-const toggleSubjectExpansion = (subject) => {
-  subject.expanded = !subject.expanded
+const filteredSections = computed(() => {
+  if (!selectedSubject.value || !selectedSubject.value.sections) {
+    return []
+  }
+  
+  if (selectedGradeFilter.value === 'all') {
+    return selectedSubject.value.sections
+  }
+  
+  return selectedSubject.value.sections.filter(section => 
+    section.grade_level.toString() === selectedGradeFilter.value
+  )
+})
+
+const availableGrades = computed(() => {
+  if (!selectedSubject.value || !selectedSubject.value.sections) {
+    return []
+  }
+  
+  const grades = [...new Set(selectedSubject.value.sections.map(section => section.grade_level))]
+  return grades.sort((a, b) => a - b)
+})
+
+// ============================================================
+// FETCH SUBJECTS - MAIN FUNCTION
+// ============================================================
+const fetchSubjects = async (forceRefresh = false) => {
+  try {
+    if (!teacherInfo.value?.id) {
+      console.warn('Teacher ID not available yet')
+      return
+    }
+
+    isLoading.value = true
+    loadingMessage.value = 'Loading your subjects...'
+
+    // Get teacher's subjects with sections
+    const { data: subjectsData, error: subjectsError } = await supabase
+      .from('subjects')
+      .select(`
+        id,
+        name,
+        grade_level,
+        description,
+        is_active,
+        created_at,
+        sections (
+          id,
+          name,
+          section_code,
+          max_students,
+          is_active,
+          subject_id
+        )
+      `)
+      .eq('teacher_id', teacherInfo.value.id)
+      .eq('is_active', true)
+      .order('name')
+
+    if (subjectsError) {
+      console.error('Supabase error:', subjectsError)
+      throw subjectsError
+    }
+
+    if (!subjectsData || subjectsData.length === 0) {
+      subjects.value = []
+      isLoading.value = false
+      return
+    }
+
+    // Process subjects - group by name and aggregate sections
+    const subjectGroups = new Map()
+
+    for (const subject of subjectsData) {
+      if (subject.sections && subject.sections.length > 0) {
+        const subjectName = subject.name
+
+        if (!subjectGroups.has(subjectName)) {
+          subjectGroups.set(subjectName, {
+            id: subject.id,
+            subject_name: subjectName,
+            name: subjectName,
+            sections: [],
+            grade_levels: new Set(),
+            total_students: 0,
+            section_count: 0,
+            expanded: false
+          })
+        }
+
+        const subjectGroup = subjectGroups.get(subjectName)
+        subjectGroup.grade_levels.add(subject.grade_level)
+
+        // Fetch enrollment count for each section
+        for (const section of subject.sections) {
+          if (section.is_active) {
+            const { count, error: countError } = await supabase
+              .from('enrollments')
+              .select('*', { count: 'exact', head: true })
+              .eq('section_id', section.id)
+              .eq('status', 'active')
+
+            const studentCount = !countError && count ? count : 0
+            subjectGroup.total_students += studentCount
+
+            subjectGroup.sections.push({
+              id: section.id,
+              section_id: section.id,
+              name: section.name,
+              section_name: section.name,
+              section_code: section.section_code,
+              max_students: section.max_students,
+              student_count: studentCount,
+              is_active: section.is_active,
+              grade_level: subject.grade_level,
+              subject_id: subject.id,
+              subject_name: subject.name
+            })
+
+            subjectGroup.section_count++
+          }
+        }
+      }
+    }
+
+    // Convert to array and format for display
+    const processedSubjects = Array.from(subjectGroups.values()).map(group => {
+      const gradeLevelsArray = Array.from(group.grade_levels).sort((a, b) => a - b)
+      return {
+        ...group,
+        grade_levels: gradeLevelsArray,
+        grade_level_display: gradeLevelsArray.length === 1 
+          ? `Grade ${gradeLevelsArray[0]}` 
+          : `Grades ${gradeLevelsArray.join(', ')}`
+      }
+    })
+
+    subjects.value = processedSubjects
+    console.log('Subjects loaded:', processedSubjects)
+
+  } catch (error) {
+    console.error('Error fetching subjects:', error)
+    showToast('Error loading subjects. Please try again.', 'error')
+  } finally {
+    isLoading.value = false
+  }
 }
 
+// ============================================================
+// NAVIGATION FUNCTIONS
+// ============================================================
 const selectSubject = (subject) => {
   selectedSubject.value = subject
   selectedSection.value = null
@@ -1429,66 +1572,19 @@ const goBackToSections = () => {
   viewMode.value = 'sections'
 }
 
-// Grade filtering
 const setGradeFilter = (grade) => {
   selectedGradeFilter.value = grade
 }
 
-const filteredSections = computed(() => {
-  if (!selectedSubject.value || !selectedSubject.value.sections) {
-    return []
-  }
-  
-  if (selectedGradeFilter.value === 'all') {
-    return selectedSubject.value.sections
-  }
-  
-  return selectedSubject.value.sections.filter(section => 
-    section.grade_level.toString() === selectedGradeFilter.value
-  )
-})
-
-const availableGrades = computed(() => {
-  if (!selectedSubject.value || !selectedSubject.value.sections) {
-    return []
-  }
-  
-  const grades = [...new Set(selectedSubject.value.sections.map(section => section.grade_level))]
-  return grades.sort((a, b) => a - b)
-})
-
-// Navigation functions - FIXED
-const navigateToSections = async (subject, section, event) => {
-  if (event && (event.target.closest('button') || event.target.closest('.copy-code-btn'))) {
-    return
-  }
-  
-  try {
-    await router.push({
-      name: 'Sections',
-      params: {
-        subjectId: section.subject_id,  // ✅ Use real UUID from section
-        sectionId: section.id
-      },
-      query: {
-        subjectName: subject.name,
-        sectionName: section.name,
-        gradeLevel: subject.grade_level,
-        sectionCode: section.section_code,
-        studentCount: section.student_count || 0
-      }
-    })
-  } catch (error) {
-    console.error('Navigation error:', error)
-  }
-}
-
+// ============================================================
+// NAVIGATION TO OTHER ROUTES
+// ============================================================
 const navigateToCreateQuiz = async (subject, section) => {
   try {
     await router.push({
       name: 'CreateQuiz',
       params: {
-        subjectId: section.subject_id,  // ✅ FIXED: Use real UUID from section
+        subjectId: section.subject_id,
         sectionId: section.id
       },
       query: {
@@ -1508,7 +1604,7 @@ const viewQuizzes = async (subject, section) => {
     await router.push({
       name: 'ViewQuizzes',
       params: {
-        subjectId: section.subject_id,  // ✅ FIXED: Use real UUID from section
+        subjectId: section.subject_id,
         sectionId: section.id
       },
       query: {
@@ -1528,7 +1624,7 @@ const manageGrades = async (subject, section) => {
     await router.push({
       name: 'GradeManagement',
       params: {
-        subjectId: section.subject_id,  // ✅ FIXED: Use real UUID from section
+        subjectId: section.subject_id,
         sectionId: section.id
       },
       query: {
@@ -1549,7 +1645,7 @@ const viewSectionStudents = async (subject, section) => {
     await router.push({
       name: 'ViewStudents',
       params: {
-        subjectId: sec.subject_id || subject.id,  // ✅ FIXED: Use real UUID from section
+        subjectId: sec.subject_id || subject.id,
         sectionId: sec.id || sec.section_id
       },
       query: {
@@ -1564,174 +1660,288 @@ const viewSectionStudents = async (subject, section) => {
   }
 }
 
-// REMOVED: Optimized fetch with instant display from cache (using composable instead)
-// const fetchSubjects = async (forceRefresh = false) => {
-// REMOVED: Function body removed to use composable instead
-/*
-  try {
-    if (!teacherInfo.value?.id) return
+// ============================================================
+// SUBJECT MANAGEMENT
+// ============================================================
+const generateSections = () => {
+  const numSections = parseInt(formData.value.number_of_sections)
+  formData.value.sections = []
+  
+  for (let i = 1; i <= numSections; i++) {
+    formData.value.sections.push({
+      name: `Section ${i}`,
+      max_students: 40
+    })
+  }
+}
 
-    const now = Date.now()
+const nextStep = () => {
+  if (canProceedToStep2.value) {
+    generateSections()
+    currentStep.value = 2
+  }
+}
+
+const saveSubject = async () => {
+  try {
+    isLoading.value = true
+    loadingMessage.value = isEditing.value ? 'Updating subject...' : 'Creating subject...'
     
-    // Always use cache first for instant display
-    if (!forceRefresh && subjectsCache.value && (now - lastFetchTime.value) < CACHE_DURATION) {
-      subjects.value = subjectsCache.value
+    if (!teacherInfo.value?.id) {
+      isLoading.value = false
+      showToast('Please login to continue', 'error')
       return
     }
 
-    // Show loading only on initial load (no cache)
-    if (!subjectsCache.value) {
-      isLoading.value = true
-      loadingMessage.value = 'Loading your subjects...'
+    const subjectData = {
+      name: formData.value.name,
+      grade_level: parseInt(formData.value.grade_level),
+      teacher_id: teacherInfo.value.id,
+      description: formData.value.description || null,
+      is_active: true
     }
 
-    // If we have cache, display it immediately and fetch in background
-    if (subjectsCache.value) {
-      subjects.value = subjectsCache.value
+    let subjectId
+
+    if (isEditing.value) {
+      const { error: updateError } = await supabase
+        .from('subjects')
+        .update(subjectData)
+        .eq('id', currentSubjectId.value)
+        .eq('teacher_id', teacherInfo.value.id)
+
+      if (updateError) throw updateError
+      
+      subjectId = currentSubjectId.value
+
+      // Delete old sections
+      await supabase
+        .from('sections')
+        .delete()
+        .eq('subject_id', subjectId)
+
+    } else {
+      const { data: newSubject, error: insertError } = await supabase
+        .from('subjects')
+        .insert([subjectData])
+        .select()
+        .single()
+
+      if (insertError) throw insertError
+      
+      subjectId = newSubject.id
     }
 
-    // Fetch subjects
-    const { data: subjectsData, error: subjectsError } = await supabase
-      .from('subjects')
-      .select(`
-        id,
-        name,
-        grade_level,
-        description,
-        is_active,
-        created_at,
-        sections (
-          id,
-          name,
-          section_code,
-          max_students,
-          is_active
-        )
-      `)
-      .eq('teacher_id', teacherInfo.value.id)
-      .eq('is_active', true)
-      .order('name')
-
-    if (subjectsError) throw subjectsError
-
-    // Process subjects
-    const subjectGroups = new Map()
-
-    if (subjectsData && subjectsData.length > 0) {
-      // Batch fetch enrollment counts
-      const allSectionIds = subjectsData.flatMap(subject => 
-        (subject.sections || []).filter(s => s.is_active).map(s => s.id)
-      )
-
-      const enrollmentCounts = new Map()
-      if (allSectionIds.length > 0) {
-        const { data: enrollments } = await supabase
-          .from('enrollments')
-          .select('section_id')
-          .in('section_id', allSectionIds)
-
-        if (enrollments) {
-          enrollments.forEach(e => {
-            enrollmentCounts.set(e.section_id, (enrollmentCounts.get(e.section_id) || 0) + 1)
-          })
-        }
-      }
-
-      // Process subjects
-      for (const subject of subjectsData) {
-        if (subject.sections && subject.sections.length > 0) {
-          const subjectName = subject.name
-
-          if (!subjectGroups.has(subjectName)) {
-            subjectGroups.set(subjectName, {
-              subject_name: subjectName,
-              name: subjectName,
-              sections: [],
-              grade_levels: new Set(),
-              total_students: 0,
-              section_count: 0,
-              expanded: false
-            })
-          }
-
-          const subjectGroup = subjectGroups.get(subjectName)
-          subjectGroup.grade_levels.add(subject.grade_level)
-
-          for (const section of subject.sections) {
-            if (section.is_active) {
-              const studentCount = enrollmentCounts.get(section.id) || 0
-              subjectGroup.total_students += studentCount
-
-              subjectGroup.sections.push({
-                id: section.id,
-                section_id: section.id,
-                name: section.name,
-                section_name: section.name,
-                section_code: section.section_code,
-                max_students: section.max_students,
-                student_count: studentCount,
-                is_active: section.is_active,
-                grade_level: subject.grade_level,
-                subject_id: subject.id,  // ✅ Store the real UUID here
-                subject_name: subject.name
-              })
-              
-              subjectGroup.section_count++
-            }
-          }
-        }
-      }
+    // Create new sections
+    const sectionsToInsert = []
+    const createdSectionCodes = []
+    
+    for (let i = 0; i < formData.value.sections.length; i++) {
+      const section = formData.value.sections[i]
+      
+      const subjectPrefix = formData.value.name.substring(0, 4).toUpperCase().replace(/[^A-Z]/g, '')
+      const year = new Date().getFullYear()
+      const timestamp = Date.now().toString().slice(-6)
+      const sectionCode = `${subjectPrefix}${formData.value.grade_level}-${year}-${timestamp}${String(i + 1).padStart(2, '0')}`
+      
+      sectionsToInsert.push({
+        subject_id: subjectId,
+        name: section.name,
+        section_code: sectionCode,
+        max_students: parseInt(section.max_students) || 40,
+        is_active: true
+      })
+      
+      createdSectionCodes.push(`${section.name}: ${sectionCode}`)
     }
 
-    // Convert to array
-    const processedSubjects = Array.from(subjectGroups.values()).map(group => {
-      const gradeLevelsArray = Array.from(group.grade_levels).sort((a, b) => a - b)
-      return {
-        ...group,
-        id: `combined_${group.name}`,
-        grade_levels: gradeLevelsArray,
-        grade_level_display: gradeLevelsArray.length === 1 
-          ? `Grade ${gradeLevelsArray[0]}` 
-          : `Grades ${gradeLevelsArray.join(', ')}`
-      }
-    })
+    await supabase
+      .from('sections')
+      .insert(sectionsToInsert)
 
-    // Update cache and state
-    subjectsCache.value = [...processedSubjects]
-    subjects.value = [...processedSubjects]
-    lastFetchTime.value = now
+    closeModal()
 
-    await nextTick()
+    const sectionCodesText = createdSectionCodes.join('\n')
+    
+    successMessage.value = `Subject "${formData.value.name}" ${isEditing.value ? 'updated' : 'created'} successfully!\n\nSection Codes:\n${sectionCodesText}\n\nShare these codes with your students so they can join their respective sections.`
+    showSuccessModal.value = true
+
+    // Refresh subjects
+    await fetchSubjects(true)
     
     isLoading.value = false
 
   } catch (error) {
-    console.error('Error fetching subjects:', error)
+    console.error('Error saving subject:', error)
     isLoading.value = false
-    
-    if (error.code === 'PGRST301' || error.message?.includes('JWT')) {
-      await router.push('/login')
-    }
+    showToast('Error saving subject. Please try again.', 'error')
   }
-*/
-// End of removed duplicate function
-
-// Background refresh functions are also removed as they're handled by composables
-
-// REMOVED: Background refresh handled by composable
-// const startBackgroundRefresh = () => {
-//   setInterval(() => {
-//     if (teacherInfo.value?.id && document.visibilityState === 'visible') {
-//       fetchSubjects(true)
-//     }
-//   }, CACHE_DURATION)
-// }
-
-const getTotalStudents = (subject) => {
-  return subject.actualStudentCount || 0
 }
 
-// Student roster viewing (no loading overlay)
+// ============================================================
+// COPY CODE
+// ============================================================
+const copyCode = async (code, codeId) => {
+  try {
+    await navigator.clipboard.writeText(code)
+    copiedCodeId.value = codeId
+    setTimeout(() => {
+      copiedCodeId.value = null
+    }, 2000)
+  } catch (err) {
+    const textArea = document.createElement('textarea')
+    textArea.value = code
+    document.body.appendChild(textArea)
+    textArea.select()
+    document.execCommand('copy')
+    document.body.removeChild(textArea)
+    copiedCodeId.value = codeId
+    setTimeout(() => {
+      copiedCodeId.value = null
+    }, 2000)
+  }
+}
+
+// ============================================================
+// MODALS
+// ============================================================
+const closeModal = () => {
+  showCreateModal.value = false
+  isEditing.value = false
+  currentSubjectId.value = null
+  currentStep.value = 1
+  formData.value = {
+    name: '',
+    grade_level: '',
+    description: '',
+    number_of_sections: '',
+    sections: []
+  }
+}
+
+const closeStudentRosterModal = () => {
+  showStudentRosterModal.value = false
+  currentStudentRoster.value = null
+}
+
+const closeSuccessModal = () => {
+  showSuccessModal.value = false
+  successMessage.value = ''
+}
+
+// ============================================================
+// DELETE FUNCTIONALITY
+// ============================================================
+const openDeleteModal = (type, item) => {
+  deleteType.value = type
+  itemToDelete.value = item
+  showDeleteModal.value = true
+}
+
+const cancelDelete = () => {
+  showDeleteModal.value = false
+  itemToDelete.value = null
+  deleteType.value = ''
+}
+
+const confirmDelete = async () => {
+  if (deleteType.value === 'subject') {
+    await deleteSubjectConfirmed(itemToDelete.value.id)
+  } else if (deleteType.value === 'section') {
+    await deleteSectionConfirmed(itemToDelete.value.section_id)
+  }
+  showDeleteModal.value = false
+  itemToDelete.value = null
+  deleteType.value = ''
+}
+
+const deleteSubjectConfirmed = async (subjectId) => {
+  try {
+    if (!teacherInfo.value) return
+
+    const subject = subjects.value.find(s => s.id === subjectId)
+
+    await supabase
+      .from('subjects')
+      .delete()
+      .eq('id', subjectId)
+      .eq('teacher_id', teacherInfo.value.id)
+    
+    await fetchSubjects(true)
+    showToast(`Subject "${subject?.name}" deleted successfully!`, 'success')
+  } catch (error) {
+    showToast('Error deleting subject', 'error')
+  }
+}
+
+const deleteSectionConfirmed = async (sectionId) => {
+  try {
+    await supabase
+      .from('sections')
+      .delete()
+      .eq('id', sectionId)
+    
+    await fetchSubjects(true)
+    showToast('Section deleted successfully!', 'success')
+  } catch (error) {
+    showToast('Error deleting section', 'error')
+  }
+}
+
+// ============================================================
+// NOTIFICATIONS & TOAST
+// ============================================================
+const showToast = (message, type = 'success') => {
+  notificationMessage.value = message
+  notificationType.value = type
+  showNotification.value = true
+  
+  setTimeout(() => {
+    showNotification.value = false
+  }, 4000)
+}
+
+const hideNotification = () => {
+  showNotification.value = false
+}
+
+// ============================================================
+// SECTION MENU
+// ============================================================
+const toggleSectionMenu = (sectionId) => {
+  openMenuId.value = openMenuId.value === sectionId ? null : sectionId
+}
+
+const editSection = (section) => {
+  console.log('Edit section:', section)
+}
+
+const toggleArchiveSection = async (section) => {
+  try {
+    const newStatus = section.status === 'archived' ? 'in-progress' : 'archived'
+    
+    await supabase
+      .from('sections')
+      .update({ status: newStatus })
+      .eq('id', section.id)
+    
+    section.status = newStatus
+    openMenuId.value = null
+    showToast(`Section has been ${newStatus === 'archived' ? 'archived' : 'unarchived'}.`, 'success')
+  } catch (error) {
+    showToast('Error updating section status', 'error')
+  }
+}
+
+const handleClickOutside = (event) => {
+  if (!event.target.closest('.section-menu-container')) {
+    openMenuId.value = null
+  }
+}
+
+// ============================================================
+// STUDENT ROSTER
+// ============================================================
 const viewStudentRoster = async (subject) => {
   try {
     if (!teacherInfo.value) return
@@ -1804,254 +2014,6 @@ const viewStudentRoster = async (subject) => {
   }
 }
 
-const generateSections = () => {
-  const numSections = parseInt(formData.value.number_of_sections)
-  formData.value.sections = []
-  
-  for (let i = 1; i <= numSections; i++) {
-    formData.value.sections.push({
-      name: `Section ${i}`,
-      max_students: 40
-    })
-  }
-}
-
-const copyCode = async (code, codeId) => {
-  try {
-    await navigator.clipboard.writeText(code)
-    copiedCodeId.value = codeId
-    setTimeout(() => {
-      copiedCodeId.value = null
-    }, 2000)
-  } catch (err) {
-    const textArea = document.createElement('textarea')
-    textArea.value = code
-    document.body.appendChild(textArea)
-    textArea.select()
-    document.execCommand('copy')
-    document.body.removeChild(textArea)
-    copiedCodeId.value = codeId
-    setTimeout(() => {
-      copiedCodeId.value = null
-    }, 2000)
-  }
-}
-
-const nextStep = () => {
-  if (canProceedToStep2.value) {
-    generateSections()
-    currentStep.value = 2
-  }
-}
-
-// Save subject (no loading overlay)
-
-const saveSubject = async () => {
-  try {
-    isLoading.value = true
-    loadingMessage.value = isEditing.value ? 'Updating subject...' : 'Creating subject...'
-    
-    if (!teacherInfo.value?.id) {
-      isLoading.value = false
-      alert('Please login to continue')
-      return
-    }
-
-    const subjectData = {
-      name: formData.value.name,
-      grade_level: parseInt(formData.value.grade_level),
-      teacher_id: teacherInfo.value.id,
-      description: formData.value.description || null,
-      is_active: true
-    }
-
-    let subjectId
-
-    if (isEditing.value) {
-      const { data: updatedSubject, error: updateError } = await supabase
-        .from('subjects')
-        .update(subjectData)
-        .eq('id', currentSubjectId.value)
-        .eq('teacher_id', teacherInfo.value.id)
-        .select()
-        .single()
-
-      if (updateError) throw updateError
-      
-      subjectId = currentSubjectId.value
-
-      await supabase
-        .from('sections')
-        .delete()
-        .eq('subject_id', subjectId)
-
-    } else {
-      const { data: newSubject, error: insertError } = await supabase
-        .from('subjects')
-        .insert([subjectData])
-        .select()
-        .single()
-
-      if (insertError) throw insertError
-      
-      subjectId = newSubject.id
-    }
-
-    const sectionsToInsert = []
-    const createdSectionCodes = []
-    
-    for (let i = 0; i < formData.value.sections.length; i++) {
-      const section = formData.value.sections[i]
-      
-      const subjectPrefix = formData.value.name.substring(0, 4).toUpperCase().replace(/[^A-Z]/g, '')
-      const year = new Date().getFullYear()
-      const timestamp = Date.now().toString().slice(-6)
-      const sectionCode = `${subjectPrefix}${formData.value.grade_level}-${year}-${timestamp}${String(i + 1).padStart(2, '0')}`
-      
-      sectionsToInsert.push({
-        subject_id: subjectId,
-        name: section.name,
-        section_code: sectionCode,
-        max_students: parseInt(section.max_students) || 40,
-        is_active: true
-      })
-      
-      createdSectionCodes.push(`${section.name}: ${sectionCode}`)
-    }
-
-    await supabase
-      .from('sections')
-      .insert(sectionsToInsert)
-      .select()
-
-    closeModal()
-
-    const sectionCodesText = createdSectionCodes.join('\n')
-    
-    // Show success modal instead of toast and alert
-    successMessage.value = `Subject "${formData.value.name}" ${isEditing.value ? 'updated' : 'created'} successfully!\n\nSection Codes:\n${sectionCodesText}\n\nShare these codes with your students so they can join their respective sections.`
-    showSuccessModal.value = true
-
-    // Invalidate cache and refresh
-    subjectsCache.value = null
-    await fetchSubjects(true)
-    
-    isLoading.value = false
-
-  } catch (error) {
-    console.error('Error saving subject:', error)
-    isLoading.value = false
-    showToast('Error saving subject. Please try again.', 'error')
-  }
-}
-
-const editSection = (section) => {
-  console.log('Edit section:', section)
-  // Implement edit section logic
-}
-
-// Toast notifications
-const showToast = (message, type = 'success') => {
-  notificationMessage.value = message
-  notificationType.value = type
-  showNotification.value = true
-  
-  setTimeout(() => {
-    showNotification.value = false
-  }, 4000)
-}
-
-const hideNotification = () => {
-  showNotification.value = false
-}
-
-// Success modal functions
-const closeSuccessModal = () => {
-  showSuccessModal.value = false
-  successMessage.value = ''
-}
-
-const openDeleteModal = (type, item) => {
-  deleteType.value = type
-  itemToDelete.value = item
-  showDeleteModal.value = true
-}
-
-const cancelDelete = () => {
-  showDeleteModal.value = false
-  itemToDelete.value = null
-  deleteType.value = ''
-}
-
-const confirmDelete = async () => {
-  if (deleteType.value === 'subject') {
-    await deleteSubjectConfirmed(itemToDelete.value.id)
-  } else if (deleteType.value === 'section') {
-    await deleteSectionConfirmed(itemToDelete.value.section_id)
-  }
-  showDeleteModal.value = false
-  itemToDelete.value = null
-  deleteType.value = ''
-}
-
-const deleteSubjectConfirmed = async (subjectId) => {
-  try {
-    if (!teacherInfo.value) return
-
-    const subject = subjects.value.find(s => s.id === subjectId)
-
-    await supabase
-      .from('subjects')
-      .delete()
-      .eq('id', subjectId)
-      .eq('teacher_id', teacherInfo.value.id)
-    
-    subjectsCache.value = null
-    await fetchSubjects(true)
-    showToast(`Subject "${subject?.name}" deleted successfully!`, 'success')
-  } catch (error) {
-    showToast('Error deleting subject', 'error')
-  }
-}
-
-const deleteSectionConfirmed = async (sectionId) => {
-  try {
-    if (!teacherInfo.value) return
-
-    const section = subjects.value.find(s => s.section_id === sectionId)
-
-    await supabase
-      .from('sections')
-      .delete()
-      .eq('id', sectionId)
-    
-    subjectsCache.value = null
-    await fetchSubjects(true)
-    showToast(`Section "${section?.section_name}" deleted successfully!`, 'success')
-  } catch (error) {
-    showToast('Error deleting section', 'error')
-  }
-}
-
-const closeModal = () => {
-  showCreateModal.value = false
-  isEditing.value = false
-  currentSubjectId.value = null
-  currentStep.value = 1
-  formData.value = {
-    name: '',
-    grade_level: '',
-    description: '',
-    number_of_sections: '',
-    sections: []
-  }
-}
-
-const closeStudentRosterModal = () => {
-  showStudentRosterModal.value = false
-  currentStudentRoster.value = null
-}
-
 const formatEnrollmentDate = (dateString) => {
   if (!dateString) return 'N/A'
   try {
@@ -2098,34 +2060,9 @@ const exportStudentRoster = () => {
   }
 }
 
-const toggleSectionMenu = (sectionId) => {
-  openMenuId.value = openMenuId.value === sectionId ? null : sectionId
-}
-
-const toggleArchiveSection = async (section) => {
-  try {
-    const newStatus = section.status === 'archived' ? 'in-progress' : 'archived'
-    
-    await supabase
-      .from('sections')
-      .update({ status: newStatus })
-      .eq('id', section.id)
-    
-    section.status = newStatus
-    openMenuId.value = null
-    showToast(`Section "${section.section_name}" has been ${newStatus === 'archived' ? 'archived' : 'unarchived'}.`, 'success')
-  } catch (error) {
-    showToast('Error updating section status', 'error')
-  }
-}
-
-const handleClickOutside = (event) => {
-  if (!event.target.closest('.section-menu-container')) {
-    openMenuId.value = null
-  }
-}
-
-// Lifecycle
+// ============================================================
+// LIFECYCLE
+// ============================================================
 onMounted(async () => {
   try {
     initDarkMode()
@@ -2136,25 +2073,18 @@ onMounted(async () => {
       return
     }
     
-    // Use cached data first for instant display
-    const cached = getCachedSubjects()
-    if (cached && cached.length > 0) {
-      console.log('Using cached subjects for instant display')
-    }
-    
-    // Fetch fresh data
-    await fetchSubjects()
-    
-    // Setup auto-refresh
-    const cleanup = setupAutoRefresh()
+    // Wait a moment for teacherInfo to be available, then fetch
+    const checkTeacherInfo = setInterval(async () => {
+      if (teacherInfo.value?.id) {
+        clearInterval(checkTeacherInfo)
+        await fetchSubjects()
+      }
+    }, 100)
+
+    // Timeout after 5 seconds
+    setTimeout(() => clearInterval(checkTeacherInfo), 5000)
     
     document.addEventListener('click', handleClickOutside)
-    
-    // Cleanup function for unmount
-    return () => {
-      cleanup?.()
-      document.removeEventListener('click', handleClickOutside)
-    }
     
   } catch (error) {
     console.error('Component mount error:', error)
