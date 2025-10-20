@@ -2,13 +2,6 @@
   <div class="edit-quiz-container" :class="{ 'dark-mode': isDarkMode }">
     <!-- Enhanced Header Section -->
     <div class="section-header-card">
-      <div class="header-bg-decoration"></div>
-      <div class="floating-shapes">
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
-      </div>
-      
       <div class="section-header-content">
         <div class="section-header-left">
           <div class="section-header-icon">
@@ -43,7 +36,7 @@
     </div>
 
     <!-- Main Content -->
-    <div class="main-wrapper">
+  <div class="main-wrapper">
       <!-- Loading State -->
       <div v-if="isLoading" class="loading-state">
         <div class="loading-spinner"></div>
@@ -325,7 +318,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { supabase } from '../../supabase.js'
@@ -372,7 +365,7 @@ const loadQuiz = async () => {
   error.value = null
   
   try {
-    console.log('🔍 Loading quiz:', quizId.value)
+  console.log('Loading quiz:', quizId.value)
     
     // Fetch quiz details
     const { data: quizData, error: quizError } = await supabase
@@ -382,11 +375,11 @@ const loadQuiz = async () => {
       .single()
     
     if (quizError) {
-      console.error('❌ Quiz fetch error:', quizError)
+  console.error('Quiz fetch error:', quizError)
       throw quizError
     }
 
-    console.log('✅ Quiz data loaded:', quizData)
+  console.log('Quiz data loaded:', quizData)
     
     // Format dates for datetime-local input
     quiz.value = {
@@ -396,7 +389,7 @@ const loadQuiz = async () => {
     }
     
     // Fetch questions
-    console.log('🔍 Loading questions for quiz:', quizId.value)
+  console.log('Loading questions for quiz:', quizId.value)
     const { data: questionsData, error: questionsError } = await supabase
       .from('quiz_questions')
       .select('*')
@@ -413,7 +406,7 @@ const loadQuiz = async () => {
     // Load options and answers for each question
     for (const question of questionsData || []) {
       if (question.question_type === 'multiple_choice') {
-        console.log('🔍 Loading options for question:', question.id)
+        console.log('Loading options for question:', question.id)
         const { data: options, error: optionsError } = await supabase
           .from('question_options')
           .select('*')
@@ -426,9 +419,9 @@ const loadQuiz = async () => {
         }
         
         question.options = options || []
-        console.log('✅ Options loaded:', options?.length || 0)
+  console.log('Options loaded:', options?.length || 0)
       } else {
-        console.log('🔍 Loading answer for question:', question.id)
+  console.log('Loading answer for question:', question.id)
         const { data: answer, error: answerError } = await supabase
           .from('question_answers')
           .select('*')
@@ -437,26 +430,26 @@ const loadQuiz = async () => {
         
         if (!answerError && answer) {
           question.answer = answer
-          console.log('✅ Answer loaded')
+          console.log('Answer loaded')
         } else {
           question.answer = {
             correct_answer: question.question_type === 'true_false' ? 'true' : '',
             case_sensitive: false
           }
-          console.log('⚠️ No answer found, using default')
+          console.log('No answer found, using default')
         }
       }
     }
     
     questions.value = questionsData || []
-    console.log('✅ All quiz data loaded successfully')
+  console.log('All quiz data loaded successfully')
     
   } catch (err) {
-    console.error('❌ Error loading quiz:', err)
+  console.error('Error loading quiz:', err)
     error.value = err.message
   } finally {
     isLoading.value = false
-    console.log('🏁 Load quiz completed')
+  console.log('Load quiz completed')
   }
 }
 
@@ -469,7 +462,7 @@ const formatDateForInput = (dateString) => {
 
 // Question management
 const addQuestion = () => {
-  console.log('➕ Adding new question')
+  console.log('Adding new question')
   questions.value.push({
     question_number: questions.value.length + 1,
     question_type: 'multiple_choice',
@@ -484,18 +477,18 @@ const addQuestion = () => {
 
 const removeQuestion = (index) => {
   if (confirm('Are you sure you want to remove this question?')) {
-    console.log('🗑️ Removing question:', index + 1)
+  console.log('Removing question:', index + 1)
     questions.value.splice(index, 1)
     // Renumber questions
     questions.value.forEach((q, i) => {
       q.question_number = i + 1
     })
-    console.log('✅ Question removed and renumbered')
+  console.log('Question removed and renumbered')
   }
 }
 
 const onQuestionTypeChange = (question) => {
-  console.log('🔄 Question type changed to:', question.question_type)
+  console.log('Question type changed to:', question.question_type)
   if (question.question_type === 'multiple_choice') {
     question.options = [
       { option_number: 1, option_text: '', is_correct: true },
@@ -512,7 +505,7 @@ const onQuestionTypeChange = (question) => {
 }
 
 const addOption = (question) => {
-  console.log('➕ Adding option to question')
+  console.log('Adding option to question')
   const optionNumber = question.options.length + 1
   question.options.push({
     option_number: optionNumber,
@@ -522,7 +515,7 @@ const addOption = (question) => {
 }
 
 const removeOption = (question, index) => {
-  console.log('🗑️ Removing option:', index + 1)
+  console.log('Removing option:', index + 1)
   question.options.splice(index, 1)
   // Renumber options
   question.options.forEach((opt, i) => {
@@ -531,7 +524,7 @@ const removeOption = (question, index) => {
 }
 
 const setCorrectOption = (question, index) => {
-  console.log('✅ Setting correct option:', index + 1)
+  console.log('Setting correct option:', index + 1)
   question.options.forEach((opt, i) => {
     opt.is_correct = i === index
   })
@@ -539,7 +532,7 @@ const setCorrectOption = (question, index) => {
 
 // Save quiz - REAL-TIME, NO TIMEOUTS
 const saveQuiz = async () => {
-  console.log('💾 Starting save quiz process...')
+  console.log('Starting save quiz process...')
   
   // Validation
   if (!quiz.value.title.trim()) {
@@ -588,7 +581,7 @@ const saveQuiz = async () => {
   
   try {
     // Step 1: Update quiz settings
-    console.log('📤 Updating quiz settings...')
+  console.log('Updating quiz settings...')
     const { error: quizError } = await supabase
       .from('quizzes')
       .update({
@@ -612,10 +605,10 @@ const saveQuiz = async () => {
       throw quizError
     }
     
-    console.log('✅ Quiz settings updated')
+  console.log('Quiz settings updated')
     
     // Step 2: Get all existing question IDs
-    console.log('🔍 Fetching existing questions...')
+  console.log('Fetching existing questions...')
     const { data: existingQuestions, error: fetchError } = await supabase
       .from('quiz_questions')
       .select('id')
@@ -628,7 +621,7 @@ const saveQuiz = async () => {
     
     // Step 3: Delete old questions (cascade to options and answers)
     if (existingQuestions && existingQuestions.length > 0) {
-      console.log(`🗑️ Deleting ${existingQuestions.length} existing questions...`)
+  console.log(`Deleting ${existingQuestions.length} existing questions...`)
       const questionIds = existingQuestions.map(q => q.id)
       
       const { error: deleteError } = await supabase
@@ -641,15 +634,15 @@ const saveQuiz = async () => {
         throw deleteError
       }
       
-      console.log('✅ Old questions deleted')
+  console.log('Old questions deleted')
     }
     
     // Step 4: Insert new questions with their options/answers
-    console.log(`📤 Inserting ${questions.value.length} new questions...`)
+  console.log(`Inserting ${questions.value.length} new questions...`)
     
     for (let i = 0; i < questions.value.length; i++) {
       const question = questions.value[i]
-      console.log(`📤 Processing question ${i + 1}...`)
+  console.log(`Processing question ${i + 1}...`)
       
       // Insert question
       const { data: insertedQuestion, error: questionError } = await supabase
@@ -669,11 +662,11 @@ const saveQuiz = async () => {
         throw new Error(`Failed to save question ${i + 1}: ${questionError.message}`)
       }
       
-      console.log(`✅ Question ${i + 1} inserted:`, insertedQuestion.id)
+  console.log(`Question ${i + 1} inserted:`, insertedQuestion.id)
       
       // Insert options or answers
       if (question.question_type === 'multiple_choice') {
-        console.log(`📤 Inserting ${question.options.length} options...`)
+  console.log(`Inserting ${question.options.length} options...`)
         
         const optionsToInsert = question.options.map(opt => ({
           question_id: insertedQuestion.id,
@@ -691,9 +684,9 @@ const saveQuiz = async () => {
           throw new Error(`Failed to save options for question ${i + 1}: ${optionsError.message}`)
         }
         
-        console.log(`✅ Options inserted for question ${i + 1}`)
+  console.log(`Options inserted for question ${i + 1}`)
       } else {
-        console.log(`📤 Inserting answer for question ${i + 1}...`)
+  console.log(`Inserting answer for question ${i + 1}...`)
         
         const { error: answerError } = await supabase
           .from('question_answers')
@@ -708,11 +701,11 @@ const saveQuiz = async () => {
           throw new Error(`Failed to save answer for question ${i + 1}: ${answerError.message}`)
         }
         
-        console.log(`✅ Answer inserted for question ${i + 1}`)
+  console.log(`Answer inserted for question ${i + 1}`)
       }
     }
     
-    console.log('🎉 All questions saved successfully!')
+  console.log('All questions saved successfully!')
     alert('Quiz updated successfully!')
     goBack()
     
@@ -721,12 +714,12 @@ const saveQuiz = async () => {
     alert(`Error saving quiz: ${err.message || 'Unknown error occurred'}`)
   } finally {
     isSaving.value = false
-    console.log('🏁 Save quiz completed')
+  console.log('Save quiz completed')
   }
 }
 
 const goBack = () => {
-  console.log('⬅️ Navigating back to quiz management')
+  console.log('Navigating back to quiz management')
   router.push({
     name: 'ViewQuizzes',
     params: {
@@ -744,7 +737,7 @@ const goBack = () => {
 
 // Lifecycle
 onMounted(async () => {
-  console.log('🔧 EditQuiz component mounted')
+  console.log('EditQuiz component mounted')
   initDarkMode()
   
   if (!quizId.value) {
@@ -754,91 +747,12 @@ onMounted(async () => {
   }
   
   await loadQuiz()
-  console.log('✅ Component initialization complete')
+  console.log('Component initialization complete')
 })
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-.edit-quiz-container {
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-  font-family: 'Inter', sans-serif;
-  background: #FBFFE4;
-  min-height: 100vh;
-  transition: all 0.3s ease;
-}
-
-/* Header Section (same as ViewQuizzes) */
-.section-header-card {
-  position: relative;
-  background: white;
-  border-radius: 16px;
-  padding: 2rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  border: 2px solid #A3D1C6;
-  overflow: hidden;
-}
-
-.header-bg-decoration {
-  position: absolute;
-  top: -50%;
-  right: -10%;
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(163, 209, 198, 0.15) 0%, transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.floating-shapes {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.shape {
-  position: absolute;
-  background: #3D8D7A;
-  opacity: 0.05;
-  border-radius: 50%;
-}
-
-.shape-1 {
-  width: 150px;
-  height: 150px;
-  top: 10%;
-  left: 5%;
-  animation: float 6s ease-in-out infinite;
-}
-
-.shape-2 {
-  width: 100px;
-  height: 100px;
-  top: 60%;
-  left: 80%;
-  animation: float 8s ease-in-out infinite 1s;
-}
-
-.shape-3 {
-  width: 80px;
-  height: 80px;
-  top: 30%;
-  left: 70%;
-  animation: float 7s ease-in-out infinite 2s;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-20px) rotate(180deg); }
-}
 
 .section-header-content {
   position: relative;
