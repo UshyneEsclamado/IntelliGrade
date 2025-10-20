@@ -2333,7 +2333,9 @@ export default {
 /* Responsive Design */
 @media (max-width: 768px) {
   .calendar-container {
-    padding: 1rem;
+    padding: 1rem 1rem 0 1rem;
+    min-height: calc(100vh - 80px);
+    padding-bottom: 100px;
   }
   
   .section-header-card {
@@ -2341,6 +2343,7 @@ export default {
     text-align: center;
     gap: 1.5rem;
     padding: 1.5rem;
+    margin-bottom: 1rem;
   }
   
   .section-header-content {
@@ -2363,17 +2366,32 @@ export default {
     flex-wrap: wrap;
     gap: 1rem;
     padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .status-item {
+    min-height: 44px;
+    padding: 8px 12px;
   }
   
   .calendar-nav {
     flex-direction: column;
     gap: 1rem;
     padding: 1rem;
+    margin-bottom: 1rem;
   }
   
   .nav-controls {
     justify-content: center;
+    gap: 0.5rem;
   }
+  
+  .nav-btn {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 12px;
+  }
+  
   .calendar-content {
     padding: 1rem;
   }
@@ -2386,6 +2404,7 @@ export default {
   .day-header {
     padding: 0.75rem;
     font-size: 0.8rem;
+    min-height: 44px;
   }
   
   .event-item {
@@ -2393,11 +2412,144 @@ export default {
     align-items: flex-start;
     gap: 1rem;
     padding: 1rem;
+    min-height: 44px;
   }
   
   .event-time {
     min-width: auto;
   }
+  
+  .calendar-grid {
+    gap: 1px;
+  }
+  
+  .month-year-selector {
+    min-height: 44px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .calendar-container {
+    padding: 0.75rem 0.75rem 0 0.75rem;
+    padding-bottom: 120px;
+  }
+  
+  .section-header-card {
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .section-header-title {
+    font-size: 1.1rem;
+  }
+  
+  .section-header-sub {
+    font-size: 0.85rem;
+  }
+  
+  .status-legend {
+    padding: 0.75rem;
+    gap: 0.75rem;
+  }
+  
+  .status-item {
+    font-size: 0.8rem;
+    padding: 6px 10px;
+  }
+  
+  .calendar-nav {
+    padding: 0.75rem;
+    gap: 0.75rem;
+  }
+  
+  .nav-btn {
+    min-width: 40px;
+    min-height: 40px;
+    padding: 8px;
+  }
+  
+  .calendar-content {
+    padding: 0.75rem;
+  }
+  
+  .calendar-day {
+    min-height: 80px;
+    padding: 0.5rem;
+  }
+  
+  .day-header {
+    padding: 0.5rem;
+    font-size: 0.75rem;
+    min-height: 40px;
+  }
+  
+  .day-number {
+    font-size: 0.9rem;
+  }
+  
+  .event-item {
+    padding: 0.75rem;
+    font-size: 0.8rem;
+  }
+  
+  .calendar-grid {
+    gap: 0.5px;
+  }
+  
+  .month-year-selector {
+    min-height: 40px;
+    font-size: 14px;
+    padding: 8px;
+  }
+}
+
+/* iPhone 12 Pro Specific (390px) */
+@media (max-width: 390px) {
+  .calendar-container {
+    padding: 0.5rem 0.5rem 0 0.5rem;
+    padding-bottom: 110px;
+  }
+  
+  .section-header-card {
+    padding: 0.75rem;
+  }
+  
+  .section-header-title {
+    font-size: 1rem;
+  }
+  
+  .status-legend {
+    padding: 0.5rem;
+  }
+  
+  .calendar-nav {
+    padding: 0.5rem;
+  }
+  
+  .calendar-content {
+    padding: 0.5rem;
+  }
+  
+  .calendar-day {
+    min-height: 70px;
+    padding: 0.25rem;
+  }
+  
+  .day-header {
+    padding: 0.25rem;
+    font-size: 0.7rem;
+  }
+  
+  .day-number {
+    font-size: 0.8rem;
+  }
+  
+  .event-item {
+    padding: 0.5rem;
+    font-size: 0.75rem;
+  }
+}
   
   .event-actions {
     width: 100%;
@@ -2425,7 +2577,6 @@ export default {
     width: 100%;
     justify-content: flex-end;
   }
-}
 </style>
 
 /* --- Modern Card Header Styles (from Home.vue) --- */

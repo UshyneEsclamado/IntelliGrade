@@ -3,17 +3,30 @@
     <!-- Header Section (Uniform Card Style) -->
     <div class="section-header-card minimal-header-card">
       <div class="section-header-left">
-        <div class="section-header-icon minimal-header-icon">
+        <div class="section-header-icon minimal-header-icon desktop-only">
           <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M5,19V5H19V19H5Z" />
           </svg>
         </div>
-        <div>
+        <div style="width:100%">
           <div class="section-header-title minimal-header-title">My Subjects</div>
           <div class="section-header-sub minimal-header-sub">View and manage your enrolled subjects</div>
+          <!-- Enhanced Mobile Card -->
+          <div class="header-stats-mobile formal-mobile-card">
+            <div class="formal-mobile-stats">
+              <div class="stat-item">
+                <span class="stat-number">{{ totalSubjects }}</span>
+                <span class="stat-label">Total Subjects</span>
+              </div>
+              <button class="join-class-btn formal-join-btn" @click="showJoinModal = true">
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M12 5v14m7-7H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Join Class
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="section-header-stats">
+      <div class="section-header-stats header-stats-desktop">
         <div class="stat-item">
           <span class="stat-number">{{ totalSubjects }}</span>
           <span class="stat-label">Total Subjects</span>
@@ -1075,6 +1088,7 @@ export default {
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 /* Dark mode for empty state */
 .dark .empty-state {
   background: #23272b;
@@ -1270,7 +1284,6 @@ export default {
   border: 2px solid #20c997;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
   --bg-card-muted: rgba(var(--bg-card-rgb, 255, 255, 255), 0.6);
@@ -2223,4 +2236,566 @@ export default {
 }
 
 /* ==================== END NEW LOADING STYLES ==================== */
+
+/* ==================== MOBILE RESPONSIVE STYLES ==================== */
+
+@media (max-width: 1024px) {
+  .subjects-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Remove icon for mobile: adjust left padding if needed */
+  .section-header-left > .section-header-icon {
+    display: none !important;
+  }
+  .section-header-left > div[style] {
+    width: 100%;
+  }
+  .subjects-container {
+    padding: 0;
+    min-height: calc(100vh - 150px);
+  }
+
+  /* Header optimizations for mobile */
+  .section-header-card,
+  .minimal-header-card {
+    margin: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .minimal-header-icon {
+    width: 50px;
+    height: 50px;
+  }
+
+  .minimal-header-title {
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .minimal-header-sub {
+    font-size: 0.9rem;
+  }
+
+  .section-header-stats {
+    flex-direction: row;
+    gap: 1.5rem;
+    margin-top: 1rem;
+  }
+
+  .stat-item {
+    text-align: center;
+  }
+
+  .stat-number {
+    font-size: 1.5rem;
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
+  }
+
+  .join-class-btn {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9rem;
+    border-radius: 12px;
+    width: 100%;
+    margin-top: 1rem;
+  }
+
+  /* Controls section mobile optimization */
+  .controls-section {
+    margin: 0 1rem 1.5rem 1rem;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .search-box {
+    width: 100%;
+    max-width: none;
+  }
+
+  .search-input {
+    padding: 0.875rem 1rem 0.875rem 2.5rem;
+    font-size: 1rem;
+    border-radius: 12px;
+  }
+
+  .filter-tabs {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+  }
+
+  .filter-tab {
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    border-radius: 10px;
+    min-width: auto;
+  }
+
+  .filter-count {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+  }
+
+  /* Subjects grid mobile layout */
+  .subjects-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin: 0 1rem;
+  }
+
+  .subject-card {
+    padding: 1.25rem;
+    border-radius: 16px;
+  }
+
+  .subject-header {
+    margin-bottom: 1rem;
+  }
+
+  .subject-header-right {
+    gap: 0.75rem;
+  }
+
+  .star-btn,
+  .options-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+
+  .subject-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    margin-bottom: 0.75rem;
+  }
+
+  .subject-title {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .subject-code {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 8px;
+  }
+
+  .subject-instructor {
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .subject-section {
+    font-size: 0.8rem;
+  }
+
+  .subject-grade {
+    font-size: 0.85rem;
+    margin: 0.75rem 0;
+  }
+
+  .subject-stats {
+    margin: 1rem 0;
+    gap: 1rem;
+  }
+
+  .stat {
+    padding: 0.75rem;
+    border-radius: 10px;
+    min-width: 80px;
+  }
+
+  .stat-value {
+    font-size: 1.25rem;
+  }
+
+  .stat-text {
+    font-size: 0.75rem;
+  }
+
+  .subject-actions {
+    gap: 0.75rem;
+    flex-direction: column;
+  }
+
+  .action-btn {
+    padding: 0.875rem 1.25rem;
+    font-size: 0.9rem;
+    border-radius: 12px;
+    width: 100%;
+    min-height: 48px;
+  }
+
+  /* Options dropdown mobile optimization */
+  .options-dropdown {
+    position: fixed;
+    bottom: 1rem;
+    left: 1rem;
+    right: 1rem;
+    top: auto;
+    transform: none;
+    border-radius: 16px;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  .dropdown-item {
+    padding: 1rem;
+    font-size: 0.95rem;
+    min-height: 56px;
+    border-radius: 12px;
+  }
+
+  /* Empty state mobile optimization */
+  .empty-state {
+    padding: 2rem 1rem;
+    margin: 1rem;
+    border-radius: 16px;
+  }
+
+  .empty-icon {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 1rem;
+  }
+
+  .empty-state h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .empty-state p {
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .join-first-btn {
+    padding: 0.875rem 1.5rem;
+    font-size: 0.95rem;
+    border-radius: 12px;
+  }
+
+  /* Modal mobile optimization */
+  .modal-overlay {
+    padding: 1rem;
+  }
+
+  .modal-content {
+    margin: 0;
+    width: 100%;
+    max-width: none;
+    border-radius: 16px;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+
+  .modal-header {
+    padding: 1.25rem;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .modal-header h2 {
+    font-size: 1.1rem;
+  }
+
+  .close-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+
+  .join-form {
+    padding: 1.25rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+
+  .form-group label {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .input-with-icon input {
+    padding: 0.875rem 1rem 0.875rem 2.75rem;
+    font-size: 1rem;
+    border-radius: 12px;
+  }
+
+  .input-with-icon svg {
+    left: 1rem;
+  }
+
+  .error-message {
+    font-size: 0.85rem;
+    padding: 0.75rem;
+    border-radius: 10px;
+  }
+
+  .modal-actions {
+    padding: 1.25rem;
+    gap: 0.75rem;
+    flex-direction: column;
+  }
+
+  .modal-actions .btn {
+    width: 100%;
+    padding: 0.875rem;
+    font-size: 0.95rem;
+    border-radius: 12px;
+  }
+
+  /* Loading overlay mobile */
+  .loading-overlay {
+    border-radius: 16px;
+  }
+
+  .loading-content {
+    padding: 2rem 1rem;
+  }
+
+  .loading-text {
+    font-size: 1.1rem;
+  }
+
+  .loading-subtext {
+    font-size: 0.85rem;
+  }
+
+  /* Subject preview mobile */
+  .subject-preview {
+    margin: 1rem;
+    border-radius: 16px;
+  }
+
+  .preview-card {
+    padding: 1.25rem;
+    border-radius: 16px;
+  }
+
+  .preview-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Extra small mobile optimizations */
+  .section-header-card,
+  .minimal-header-card {
+    margin: 0.75rem;
+    padding: 0.875rem;
+  }
+
+  .minimal-header-title {
+    font-size: 1.125rem;
+  }
+
+  .section-header-stats {
+    gap: 1rem;
+  }
+
+  .stat-number {
+    font-size: 1.25rem;
+  }
+
+  .controls-section {
+    margin: 0 0.75rem 1.25rem 0.75rem;
+    padding: 0.875rem;
+  }
+
+  .subjects-grid {
+    margin: 0 0.75rem;
+    gap: 0.875rem;
+  }
+
+  .subject-card {
+    padding: 1rem;
+  }
+
+  .subject-icon {
+    width: 45px;
+    height: 45px;
+  }
+
+  .subject-title {
+    font-size: 1rem;
+  }
+
+  .subject-stats {
+    gap: 0.75rem;
+  }
+
+  .stat {
+    padding: 0.625rem;
+    min-width: 70px;
+  }
+
+  .stat-value {
+    font-size: 1.125rem;
+  }
+
+  .action-btn {
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    min-height: 44px;
+  }
+
+  .empty-state {
+    margin: 0.75rem;
+    padding: 1.5rem 0.875rem;
+  }
+
+  .empty-icon {
+    width: 70px;
+    height: 70px;
+  }
+
+  .modal-header,
+  .join-form,
+  .modal-actions {
+    padding: 1rem;
+  }
+
+  .dropdown-item {
+    padding: 0.875rem;
+    min-height: 52px;
+  }
+
+  /* Touch optimization for small screens */
+  .star-btn,
+  .options-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+  }
+
+  .filter-tab {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* iPhone 12 Pro specific optimizations */
+@media (max-width: 390px) {
+  .section-header-card,
+  .minimal-header-card {
+    margin: 0.5rem;
+  }
+
+  .controls-section {
+    margin: 0 0.5rem 1rem 0.5rem;
+  }
+
+  .subjects-grid {
+    margin: 0 0.5rem;
+  }
+
+  .empty-state {
+    margin: 0.5rem;
+  }
+
+  .options-dropdown {
+    left: 0.5rem;
+    right: 0.5rem;
+  }
+
+  .modal-overlay {
+    padding: 0.5rem;
+  }
+}
+
+/* ==================== END MOBILE RESPONSIVE STYLES ==================== */
+</style>
+<style scoped>
+@media (max-width: 768px) {
+  .header-stats-desktop {
+    display: none !important;
+  }
+  .header-stats-mobile {
+    display: block !important;
+    width: 100%;
+    margin-top: 1.1rem;
+  }
+  .formal-mobile-card {
+    background: #f8fffe;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(61, 141, 122, 0.06);
+    border: 1.5px solid #e6f2ed;
+    padding: 1.1rem 1rem 1.2rem 1rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.9rem;
+  }
+  .formal-mobile-stats {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.2rem;
+  }
+  .formal-mobile-stats .stat-item {
+    flex: 1;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1rem;
+  }
+  .formal-mobile-stats .stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #3d8d7a;
+    margin-bottom: 0.1rem;
+  }
+  .formal-mobile-stats .stat-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #20c997;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .formal-join-btn {
+    background: #20c997;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 0.85rem 1.3rem;
+    box-shadow: 0 2px 8px rgba(32, 201, 151, 0.13);
+    margin-left: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background 0.2s, box-shadow 0.2s;
+  }
+  .formal-join-btn:hover {
+    background: #1ba085;
+    box-shadow: 0 4px 12px rgba(32, 201, 151, 0.22);
+  }
+}
+@media (min-width: 769px) {
+  .header-stats-mobile {
+    display: none !important;
+  }
+}
 </style>

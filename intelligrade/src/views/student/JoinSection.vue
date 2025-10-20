@@ -537,24 +537,129 @@ input::placeholder {
 
 @media (max-width: 768px) {
   .auth-wrapper {
-    padding: 25px;
+    padding: 20px;
+    min-height: calc(100vh - 80px);
+    padding-bottom: 100px;
   }
   
   .auth-box {
-    padding: 40px 35px;
+    padding: 30px 25px;
+    max-width: 100%;
+    margin: 0 auto;
   }
 
   .class-icon {
-    width: 80px;
-    height: 80px;
+    width: 70px;
+    height: 70px;
   }
 
   h1 {
-    font-size: 28px;
+    font-size: 24px;
   }
 
   .subtitle {
+    font-size: 15px;
+  }
+  
+  .logo-section {
+    margin-bottom: 2rem;
+  }
+  
+  input[type="text"] {
+    min-height: 48px;
     font-size: 16px;
+    padding: 12px 12px 12px 40px;
+  }
+  
+  .btn {
+    min-height: 48px;
+    padding: 14px 20px;
+    font-size: 16px;
+  }
+  
+  .back-btn {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-wrapper {
+    padding: 15px;
+    padding-bottom: 120px;
+  }
+  
+  .auth-box {
+    padding: 25px 20px;
+  }
+
+  .class-icon {
+    width: 60px;
+    height: 60px;
+  }
+
+  h1 {
+    font-size: 22px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+  }
+  
+  input[type="text"] {
+    min-height: 44px;
+    font-size: 16px;
+    padding: 10px 10px 10px 36px;
+  }
+  
+  .btn {
+    min-height: 44px;
+    padding: 12px 18px;
+    font-size: 15px;
+  }
+  
+  .back-btn {
+    min-height: 40px;
+    min-width: 40px;
+    padding: 8px;
+  }
+}
+
+/* iPhone 12 Pro Specific (390px) */
+@media (max-width: 390px) {
+  .auth-wrapper {
+    padding: 10px;
+    padding-bottom: 110px;
+  }
+  
+  .auth-box {
+    padding: 20px 15px;
+  }
+
+  .class-icon {
+    width: 55px;
+    height: 55px;
+  }
+
+  h1 {
+    font-size: 20px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+  }
+  
+  input[type="text"] {
+    min-height: 42px;
+    font-size: 16px;
+    padding: 10px 10px 10px 34px;
+  }
+  
+  .btn {
+    min-height: 42px;
+    padding: 10px 16px;
+    font-size: 14px;
   }
 }
 

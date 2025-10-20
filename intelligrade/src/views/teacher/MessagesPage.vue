@@ -2317,7 +2317,7 @@ onUnmounted(() => {
 }
 
 .dark .header-card {
-  background: #2a2d35;
+  background: #23272b;
   border: 1.5px solid #A3D1C6;
   box-shadow: 0 2px 8px rgba(163, 209, 198, 0.1);
 }
@@ -2347,32 +2347,29 @@ onUnmounted(() => {
 
 .dark .header-icon {
   background: #A3D1C6;
-  color: #2a2d35;
+  color: #23272b;
 }
 
 .header-title {
   font-size: 1.5rem;
-  font-weight: 800;
-  color: #222;
-  margin-bottom: 0.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
 }
 
 .dark .header-title {
-  color: #A3D1C6;
-  font-weight: 800;
+  color: #FBFFE4;
 }
 
 .header-subtitle {
-  font-size: 0.875rem;
-  color: #6b7a89;
+  color: #6b7280;
+  font-size: 0.9rem;
   font-weight: 500;
-  opacity: 1;
+  margin: 0.25rem 0 0 0;
 }
 
 .dark .header-subtitle {
   color: #B3D8A8;
-  font-weight: 500;
-  opacity: 1;
 }
 
 .header-actions {
@@ -2396,12 +2393,15 @@ onUnmounted(() => {
 }
 
 .action-btn {
-  background: #3D8D7A;
-  color: white;
+  background: #20c997;
+  color: #181c20;
+  border: 1px solid #A3D1C6;
 }
 
 .action-btn:hover {
-  background: #2d6b5a;
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
   transform: translateY(-1px);
 }
 
@@ -2444,13 +2444,14 @@ onUnmounted(() => {
 }
 
 .dark .action-btn {
-  background: #A3D1C6;
-  color: #2a2d35;
+  background: #20c997;
+  color: #181c20;
+  border: 1px solid #A3D1C6;
 }
 
 .dark .debug-btn {
   background: #A3D1C6;
-  color: #2a2d35;
+  color: #23272b;
 }
 
 /* Content Card */
@@ -2464,7 +2465,7 @@ onUnmounted(() => {
 
 .dark .content-card {
   background: #23272b;
-  border: 1px solid #A3D1C6;
+  border: 1px solid #20c997;
   box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
 
@@ -5091,32 +5092,6 @@ onUnmounted(() => {
   margin-left: 0.25rem;
 }
 
-/* Enhanced Select */
-.select-wrapper {
-  position: relative;
-}
-
-.form-select-enhanced {
-  width: 100%;
-  padding: 1rem 3rem 1rem 1.25rem;
-  background: #f9fafb;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  font-size: 0.938rem;
-  font-weight: 500;
-  color: #1f2937;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  appearance: none;
-  font-family: 'Inter', sans-serif;
-}
-
-.form-select-enhanced:focus {
-  outline: none;
-  border-color: #3D8D7A;
-  background: white;
-  box-shadow: 0 0 0 4px rgba(61, 141, 122, 0.1);
-}
 
 .dark .form-select-enhanced {
   background: #1f2937;

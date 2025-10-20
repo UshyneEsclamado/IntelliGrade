@@ -1849,6 +1849,8 @@ onUnmounted(() => {
   background: #FBFFE4;
   padding: 1.5rem 2rem;
   font-family: 'Inter', sans-serif;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 .dark .messages-container {
   background: #181c20;
@@ -1858,10 +1860,12 @@ onUnmounted(() => {
 .section-header-card {
   background: white;
   border-radius: 16px;
-  padding: 1.5rem;
+  padding: 1.5rem 2.5rem;
   margin-bottom: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   border: 2px solid #A3D1C6;
+  width: 100%;
+  max-width: none;
 }
 .dark .section-header-card {
   background: #23272b;
@@ -2957,62 +2961,548 @@ onUnmounted(() => {
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
-  .messages-container {
-    padding: 1rem;
+@media (max-width: 1024px) {
+  .teachers-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
   }
   
+  .notifications-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .messages-container {
+    padding: 0;
+    min-height: calc(100vh - 150px);
+  }
+  
+  /* Header mobile optimization */
+  .section-header-card {
+    margin: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border-radius: 12px;
+  }
+  
+  .section-header-left {
+    gap: 0.75rem;
+  }
+  
+  .section-header-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+  }
+  
+  .section-header-title {
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  .section-header-sub {
+    font-size: 0.9rem;
+  }
+  
+  /* Controls section mobile optimization */
   .controls-section {
+    margin: 0 1rem 1.5rem 1rem;
     flex-direction: column;
     align-items: stretch;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 12px;
   }
   
   .search-box {
     min-width: auto;
+    width: 100%;
+  }
+  
+  .search-input {
+    padding: 0.875rem 1rem 0.875rem 2.5rem;
+    font-size: 1rem;
+    border-radius: 12px;
   }
   
   .filter-tabs {
-    justify-content: center;
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    gap: 0.5rem;
+  }
+  
+  .filter-tab {
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    border-radius: 10px;
+    white-space: nowrap;
+    min-width: auto;
+  }
+  
+  /* Content area mobile optimization */
+  .content-area {
+    margin: 0 1rem;
   }
   
   .teachers-cards {
     grid-template-columns: 1fr;
+    gap: 1rem;
   }
   
   .notifications-grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  /* Subject sections mobile layout */
+  .subject-section {
+    margin-bottom: 1.5rem;
+    border-radius: 12px;
+    padding: 1rem;
+  }
+  
+  .subject-section-header {
+    padding: 1rem 0 0.75rem 0;
+    margin-bottom: 0.75rem;
+  }
+  
+  .subject-section-name {
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  .subject-section-code {
+    font-size: 0.8rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 8px;
+  }
+  
+  .teachers-cards {
+    gap: 0.875rem;
+  }
+  
+  /* Teacher card mobile optimization */
+  .teacher-card {
+    padding: 1rem;
+    border-radius: 12px;
+    position: relative;
+  }
+  
+  .teacher-info {
+    gap: 0.75rem;
+  }
+  
+  .teacher-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+  }
+  
+  .teacher-name {
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  .teacher-email {
+    font-size: 0.8rem;
+  }
+  
+  .teacher-status {
+    gap: 0.75rem;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  
+  .unread-count {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.75rem;
+    border-radius: 8px;
+    min-width: 24px;
+    height: 24px;
+  }
+  
+  .teacher-options {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+  
+  .teacher-options-menu {
+    position: fixed;
+    bottom: 1rem;
+    left: 1rem;
+    right: 1rem;
+    top: auto;
+    transform: none;
+    border-radius: 16px;
+    max-height: 50vh;
+    overflow-y: auto;
+  }
+  
+  .teacher-option {
+    padding: 1rem;
+    font-size: 0.95rem;
+    min-height: 56px;
+    border-radius: 12px;
+  }
+  
+  /* Notification cards mobile optimization */
+  .notification-card {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+  
+  .notification-header {
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .notification-sender {
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  .notification-subject {
+    font-size: 0.8rem;
+  }
+  
+  .notification-preview {
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .notification-time {
+    font-size: 0.75rem;
+  }
+  
+  /* Empty states mobile optimization */
+  .empty-state {
+    padding: 2rem 1rem;
+    margin: 1rem;
+    border-radius: 16px;
+  }
+  
+  .empty-icon {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 1rem;
+  }
+  
+  .empty-state p {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .empty-subtext {
+    font-size: 0.8rem;
+  }
+  
+  .deleted-state {
+    margin: 1rem;
+    padding: 1.5rem 1rem;
+    border-radius: 16px;
+  }
+  
+  .show-teachers-btn {
+    padding: 0.875rem 1.25rem;
+    font-size: 0.9rem;
+    border-radius: 12px;
+  }
+  
+  /* Modal mobile optimization */
+  .modal-overlay {
+    padding: 1rem;
   }
   
   .modal-content {
-    width: 95%;
-    margin: 1rem;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    border-radius: 16px;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+  
+  .modal-header {
+    padding: 1.25rem;
+    border-radius: 16px 16px 0 0;
+  }
+  
+  .modal-title {
+    font-size: 1.1rem;
+  }
+  
+  .modal-close {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+  
+  .modal-body {
+    padding: 1.25rem;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  
+  .chat-header {
+    padding: 1rem;
+    border-radius: 12px 12px 0 0;
+  }
+  
+  .chat-teacher-info {
+    gap: 0.75rem;
+  }
+  
+  .chat-teacher-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 10px;
+  }
+  
+  .chat-teacher-name {
+    font-size: 1rem;
+  }
+  
+  .chat-teacher-status {
+    font-size: 0.8rem;
+  }
+  
+  .messages-area {
+    height: 300px;
+    padding: 1rem;
+  }
+  
+  .message-bubble {
+    max-width: 85%;
+    padding: 0.875rem 1rem;
+    border-radius: 16px;
+    margin-bottom: 0.75rem;
+  }
+  
+  .message-text {
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  
+  .message-time {
+    font-size: 0.7rem;
+    margin-top: 0.25rem;
+  }
+  
+  .message-input-area {
+    padding: 1rem;
+    border-radius: 0 0 12px 12px;
+  }
+  
+  .message-input-container {
+    gap: 0.75rem;
+  }
+  
+  .message-input {
+    padding: 0.875rem 1rem;
+    font-size: 0.95rem;
+    border-radius: 12px;
+  }
+  
+  .send-btn,
+  .attach-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+  }
+  
+  /* Broadcast modal mobile optimization */
+  .broadcast-modal {
+    border-radius: 16px;
+  }
+  
+  .broadcast-header {
+    padding: 1.25rem;
+    border-radius: 16px 16px 0 0;
+  }
+  
+  .broadcast-group-name {
+    font-size: 1.1rem;
+  }
+  
+  .broadcast-announcements {
+    padding: 1rem;
+    max-height: 50vh;
+    overflow-y: auto;
+  }
+  
+  .announcement-item {
+    padding: 1rem;
+    border-radius: 12px;
+    margin-bottom: 0.875rem;
+  }
+  
+  .announcement-header {
+    margin-bottom: 0.75rem;
+  }
+  
+  .announcement-title {
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  .announcement-date {
+    font-size: 0.75rem;
+  }
+  
+  .announcement-content {
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .announcement-actions {
+    gap: 0.5rem;
+  }
+  
+  .view-details-btn {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.8rem;
+    border-radius: 8px;
   }
 }
 
 @media (max-width: 480px) {
+  /* Extra small mobile optimizations */
   .section-header-card {
-    padding: 1.5rem;
-  }
-  
-  .section-header-left {
-    gap: 1rem;
+    margin: 0.75rem;
+    padding: 0.875rem;
   }
   
   .section-header-icon {
-    width: 48px;
-    height: 48px;
+    width: 45px;
+    height: 45px;
   }
   
   .section-header-title {
-    font-size: 1.5rem;
+    font-size: 1.125rem;
+  }
+  
+  .controls-section {
+    margin: 0 0.75rem 1.25rem 0.75rem;
+    padding: 0.875rem;
+  }
+  
+  .content-area {
+    margin: 0 0.75rem;
   }
   
   .filter-tabs {
     flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+  
+  .filter-tab {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.8rem;
   }
   
   .teacher-card {
+    padding: 0.875rem;
+  }
+  
+  .teacher-avatar {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .teacher-name {
+    font-size: 0.95rem;
+  }
+  
+  .teacher-email {
+    font-size: 0.75rem;
+  }
+  
+  .notification-card {
+    padding: 0.875rem;
+  }
+  
+  .empty-state {
+    margin: 0.75rem;
+    padding: 1.5rem 0.875rem;
+  }
+  
+  .empty-icon {
+    width: 70px;
+    height: 70px;
+  }
+  
+  .modal-header,
+  .modal-body,
+  .chat-header,
+  .messages-area,
+  .message-input-area {
     padding: 1rem;
+  }
+  
+  .message-bubble {
+    max-width: 90%;
+    padding: 0.75rem 0.875rem;
+  }
+  
+  .broadcast-header,
+  .broadcast-announcements {
+    padding: 1rem;
+  }
+  
+  .announcement-item {
+    padding: 0.875rem;
+  }
+  
+  /* Touch optimization for small screens */
+  .teacher-options,
+  .modal-close,
+  .send-btn,
+  .attach-btn {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .unread-count {
+    min-width: 22px;
+    height: 22px;
+    font-size: 0.7rem;
+  }
+}
+
+/* iPhone 12 Pro specific optimizations */
+@media (max-width: 390px) {
+  .section-header-card {
+    margin: 0.5rem;
+  }
+  
+  .controls-section {
+    margin: 0 0.5rem 1rem 0.5rem;
+  }
+  
+  .content-area {
+    margin: 0 0.5rem;
+  }
+  
+  .empty-state,
+  .deleted-state {
+    margin: 0.5rem;
+  }
+  
+  .teacher-options-menu {
+    left: 0.5rem;
+    right: 0.5rem;
+  }
+  
+  .modal-overlay {
+    padding: 0.5rem;
+  }
+  
+  .message-bubble {
+    max-width: 95%;
   }
 }
 </style>

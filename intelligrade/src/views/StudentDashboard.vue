@@ -2,7 +2,88 @@
 <!-- TEMPLATE SECTION -->
 <template>
   <div class="dashboard-container">
-    <aside class="sidebar">
+    <!-- Mobile Top Header -->
+    <header class="mobile-header">
+      <div class="header-left">
+        <div class="profile-pic-container">
+          <img 
+            v-if="userProfile.profilePhoto" 
+            :src="userProfile.profilePhoto" 
+            alt="Profile Photo"
+            class="profile-photo"
+          />
+          <div v-else class="profile-photo-placeholder">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
+            </svg>
+          </div>
+        </div>
+        <div class="user-details">
+          <h3 v-if="userProfile.fullName" class="user-name">
+            {{ userProfile.fullName }}
+          </h3>
+          <h3 v-else class="no-name-text">
+            Hi Student!
+          </h3>
+          <p v-if="userProfile.grade" class="grade">
+            Grade {{ userProfile.grade }}
+          </p>
+        </div>
+      </div>
+      <div class="header-right">
+        <button @click="toggleProfileMenu" class="profile-menu-btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12,16A2,2 0 0,1 14,18A2,2 0 0,1 12,20A2,2 0 0,1 10,18A2,2 0 0,1 12,16M12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12A2,2 0 0,1 12,10M12,4A2,2 0 0,1 14,6A2,2 0 0,1 12,8A2,2 0 0,1 10,6A2,2 0 0,1 12,4Z" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Profile Dropdown Menu -->
+    <transition name="profile-menu">
+      <div v-if="isProfileMenuOpen" class="profile-dropdown">
+        <div class="profile-dropdown-content">
+          <div class="profile-info">
+            <div class="profile-pic-large">
+              <img 
+                v-if="userProfile.profilePhoto" 
+                :src="userProfile.profilePhoto" 
+                alt="Profile Photo"
+              />
+              <div v-else class="profile-photo-placeholder-large">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
+                </svg>
+              </div>
+            </div>
+            <div class="profile-details">
+              <h4 v-if="userProfile.fullName">{{ userProfile.fullName }}</h4>
+              <h4 v-else>Student</h4>
+              <p class="role-text">STUDENT</p>
+              <p v-if="userProfile.grade" class="grade-text">GRADE {{ userProfile.grade }}</p>
+              <p v-if="userProfile.studentId" class="student-id-text">ID: {{ userProfile.studentId }}</p>
+            </div>
+          </div>
+          <div class="profile-actions">
+            <router-link to="/student/settings" class="profile-action" @click="closeProfileMenu">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11.03L21.54,9.37C21.73,9.22 21.78,8.95 21.67,8.75L19.67,5.27C19.56,5.08 19.3,5.03 19.1,5.12L16.9,6C16.5,5.65 16.08,5.36 15.61,5.1L15.2,2.83C15.15,2.56 14.9,2.33 14.62,2.33L9.38,2.33C9.1,2.33 8.85,2.56 8.8,2.83L8.39,5.09C7.92,5.34 7.5,5.65 7.1,6L4.9,5.12C4.7,5.03 4.44,5.08 4.33,5.27L2.33,8.75C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11.03C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.33,15.25L4.33,18.73C4.44,18.92 4.7,18.97 4.9,18.88L7.1,18C7.5,18.35 7.92,18.64 8.39,18.9L8.8,21.17C8.85,21.44 9.1,21.67 9.38,21.67L14.62,21.67C14.9,21.67 15.15,21.44 15.2,21.17L15.61,18.91C16.08,18.66 16.5,18.35 16.9,18L19.1,18.88C19.3,18.97 19.56,18.92 19.67,18.73L21.67,15.25C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" />
+              </svg>
+              <span>Settings</span>
+            </router-link>
+            <button @click="handleLogout" class="profile-action logout-action">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M16,17V14H9V10H16V7L21,12L16,17M14,2A2,2 0 0,1 16,4V6H14V4H5V20H14V18H16V20A2,2 0 0,1 14,22H5A2,2 0 0,1 3,20V4A2,2 0 0,1 5,2H14Z" />
+              </svg>
+              <span>Logout</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Desktop Sidebar (hidden on mobile) -->
+    <aside class="sidebar desktop-only">
       <div class="user-info">
         <div class="profile-pic-container">
           <img 
@@ -102,6 +183,46 @@
     <main class="main-content">
       <router-view />
     </main>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-bottom-nav">
+      <router-link
+        to="/student/dashboard"
+        :class="['mobile-nav-item', { 'is-active': $route.name === 'StudentDashboardHome' }]"
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" />
+        </svg>
+        <span>Home</span>
+      </router-link>
+      <router-link
+        to="/student/subjects"
+        :class="['mobile-nav-item', { 'is-active': $route.name === 'StudentSubjects' || $route.name === 'TakeQuiz' || $route.name === 'StudentGrades' }]"
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z" />
+        </svg>
+        <span>Subjects</span>
+      </router-link>
+      <router-link
+        to="/student/calendar"
+        :class="['mobile-nav-item', { 'is-active': $route.name === 'StudentCalendar' }]"
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19,19H5V8H19M19,3H18V1H16V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M16.5,13.5H11V18.5H16.5V13.5Z" />
+        </svg>
+        <span>Calendar</span>
+      </router-link>
+      <router-link
+        to="/student/messages"
+        :class="['mobile-nav-item', { 'is-active': $route.name === 'StudentMessages' }]"
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M20,8L12,13L4,8V6L12,11L20,6M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z" />
+        </svg>
+        <span>Messages</span>
+      </router-link>
+    </nav>
 
     <!-- Floating Help & Support Button -->
     <button class="floating-help-btn" @click="toggleHelpMenu" title="Help & Support">
@@ -228,6 +349,7 @@ export default {
         { id: '12', emoji: '🌈', color: 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)' }
       ],
       isLogoutModalVisible: false,
+      isProfileMenuOpen: false,
       profileSubscription: null,
       studentSubscription: null,
       currentProfileId: null,
@@ -247,6 +369,9 @@ export default {
     
     // Listen for profile updates from Settings component
     window.addEventListener('profileUpdated', this.handleProfileUpdate);
+    
+    // Add click outside listener for mobile profile menu
+    document.addEventListener('click', this.handleClickOutside);
   },
   beforeUnmount() {
     if (this.profileSubscription) {
@@ -256,6 +381,7 @@ export default {
       supabase.removeChannel(this.studentSubscription);
     }
     window.removeEventListener('profileUpdated', this.handleProfileUpdate);
+    document.removeEventListener('click', this.handleClickOutside);
   },
   methods: {
     async loadUserProfile() {
@@ -562,6 +688,31 @@ export default {
       } catch (error) {
         console.error('Error during logout:', error);
         this.$router.push('/');
+      }
+    },
+
+    toggleProfileMenu() {
+      this.isProfileMenuOpen = !this.isProfileMenuOpen;
+    },
+
+    closeProfileMenu() {
+      this.isProfileMenuOpen = false;
+    },
+
+    async handleLogout() {
+      this.closeProfileMenu();
+      this.showLogoutModal();
+    },
+
+    handleClickOutside(event) {
+      const profileDropdown = document.querySelector('.profile-dropdown');
+      const profileMenuBtn = document.querySelector('.profile-menu-btn');
+      
+      if (this.isProfileMenuOpen && 
+          profileDropdown && 
+          !profileDropdown.contains(event.target) && 
+          !profileMenuBtn.contains(event.target)) {
+        this.closeProfileMenu();
       }
     },
 
@@ -1104,164 +1255,351 @@ export default {
 }
 
 /*
- * Responsive styles for the layout
+ * Responsive styles for mobile-first design
  */
-@media (max-width: 768px) {
-  .dashboard-container {
-    flex-direction: column;
-    position: relative;
-    height: 100vh;
-  }
-  
-  .sidebar {
-    width: 100%;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1.5rem;
-    border-right: none;
-    border-bottom: 1px solid rgba(61, 141, 122, 0.1);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    height: auto;
-    backdrop-filter: blur(20px);
-  }
-  
-  .user-info {
-    flex-direction: row;
-    align-items: center;
-    gap: 1rem;
-    text-align: left;
-    margin-bottom: 0;
-    padding: 1rem 1.5rem;
-    background: rgba(251, 255, 228, 0.5);
-    border-radius: 16px;
-  }
-  
-  .profile-pic-container {
-    margin-bottom: 0;
-  }
-  
-  .profile-pic-placeholder {
-    width: 50px;
-    height: 50px;
-  }
-  
-  .profile-pic-placeholder svg {
-    width: 28px;
-    height: 28px;
-  }
-  
-  .user-info h3 {
-    font-size: 1.1rem;
-    margin-bottom: 0.25rem;
-  }
-  
-  .user-info .role {
-    font-size: 0.75rem;
-    padding: 0.2rem 0.5rem;
-  }
-  
-  .user-info .grade {
-    font-size: 0.7rem;
-    margin-bottom: 0.25rem;
-  }
-  
-  .user-info .student-id {
-    font-size: 0.65rem;
-  }
-  
-  .nav-links {
-    display: none;
-  }
-  
-  .logout-btn {
-    margin-top: 0;
-    padding: 0.75rem 1.25rem;
-    font-size: 0.85rem;
-    border-radius: 12px;
-  }
-  
-  .main-content {
-    flex: 1;
-    overflow-y: auto;
-    height: calc(100vh - 100px);
-  }
 
-  .modal-container {
-    padding: 2rem;
-    margin: 1rem;
-  }
-  
-  .modal-actions {
-    flex-direction: column;
-  }
-  
-  .btn-cancel,
-  .btn-confirm {
-    width: 100%;
+/* Hide desktop sidebar on mobile */
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
   }
 }
 
-@media (max-width: 480px) {
-  .sidebar {
-    padding: 1rem;
+/* Show desktop sidebar only on larger screens */
+@media (min-width: 769px) {
+  .mobile-header,
+  .mobile-bottom-nav,
+  .profile-dropdown {
+    display: none !important;
+  }
+}
+
+/* Mobile Header Styles */
+.mobile-header {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  background: var(--card-background);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 1rem;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 100;
+  box-shadow: 0 2px 12px var(--shadow-light);
+}
+
+@media (max-width: 768px) {
+  .mobile-header {
+    display: flex;
   }
   
-  .user-info {
-    padding: 0.75rem 1rem;
-    gap: 0.75rem;
+  .dashboard-container {
+    padding-top: 70px;
+    padding-bottom: 80px;
+  }
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.header-left .profile-pic-container {
+  margin-bottom: 0;
+}
+
+.header-left .profile-photo-placeholder {
+  width: 40px;
+  height: 40px;
+}
+
+.header-left .profile-photo-placeholder svg {
+  width: 20px;
+  height: 20px;
+}
+
+.header-left .user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.header-left .user-name {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.header-left .no-name-text {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+
+.header-left .grade {
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin: 0;
+  color: var(--accent-color);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.profile-menu-btn {
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: var(--bg-accent);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  border: 1px solid var(--border-color);
+}
+
+.profile-menu-btn:hover {
+  background: var(--accent-color);
+  color: white;
+  transform: scale(1.05);
+}
+
+/* Profile Dropdown Styles */
+.profile-dropdown {
+  position: fixed;
+  top: 70px;
+  right: 1rem;
+  width: 280px;
+  background: var(--card-background);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px var(--shadow-medium);
+  z-index: 99;
+  overflow: hidden;
+}
+
+.profile-dropdown-content {
+  padding: 1rem;
+}
+
+.profile-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 1rem;
+}
+
+.profile-pic-large {
+  flex-shrink: 0;
+}
+
+.profile-photo-placeholder-large {
+  width: 50px;
+  height: 50px;
+  background: var(--accent-color);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.profile-details h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+  color: var(--text-primary);
+}
+
+.role-text {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.grade-text {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--accent-color);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0.25rem 0 0 0;
+}
+
+.student-id-text {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin: 0.25rem 0 0 0;
+  opacity: 0.8;
+}
+
+.profile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.profile-action {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 12px;
+  background: var(--bg-accent);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.profile-action:hover {
+  background: var(--accent-color);
+  color: white;
+  border-color: var(--accent-color);
+}
+
+.logout-action:hover {
+  background: #dc3545;
+  border-color: #dc3545;
+}
+
+/* Mobile Bottom Navigation */
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: var(--card-background);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border-color);
+  padding: 0.5rem 1rem;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 100;
+  box-shadow: 0 -2px 12px var(--shadow-light);
+}
+
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    display: flex;
+  }
+}
+
+.mobile-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  border-radius: 12px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: all 0.2s ease;
+  min-height: 60px;
+  justify-content: center;
+  flex: 1;
+  max-width: 80px;
+}
+
+.mobile-nav-item svg {
+  transition: all 0.2s ease;
+}
+
+.mobile-nav-item span {
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1;
+}
+
+.mobile-nav-item:hover {
+  color: var(--accent-color);
+  background: rgba(95, 179, 160, 0.1);
+}
+
+.mobile-nav-item.is-active {
+  color: var(--accent-color);
+  background: rgba(95, 179, 160, 0.15);
+}
+
+.mobile-nav-item.is-active svg {
+  fill: var(--accent-color);
+}
+
+/* Profile Menu Transitions */
+.profile-menu-enter-active,
+.profile-menu-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.profile-menu-enter-from {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
+}
+
+.profile-menu-leave-to {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
+}
+
+/* Main content adjustments for mobile */
+@media (max-width: 768px) {
+  .main-content {
+    padding-top: 0;
+    height: calc(100vh - 150px);
+    overflow-y: auto;
+  }
+}
+
+/* iPhone 12 Pro specific optimizations */
+@media (max-width: 390px) {
+  .mobile-header {
+    padding: 0 0.75rem;
   }
   
-  .profile-pic-placeholder {
-    width: 40px;
-    height: 40px;
+  .header-left .user-name,
+  .header-left .no-name-text {
+    font-size: 0.9rem;
   }
   
-  .profile-pic-placeholder svg {
-    width: 24px;
-    height: 24px;
-  }
-  
-  .user-info h3 {
-    font-size: 1rem;
-  }
-  
-  .user-info .role {
+  .header-left .grade {
     font-size: 0.7rem;
-    padding: 0.15rem 0.4rem;
   }
   
-  .user-info .grade {
+  .profile-dropdown {
+    width: calc(100vw - 1.5rem);
+    right: 0.75rem;
+  }
+  
+  .mobile-nav-item span {
     font-size: 0.65rem;
   }
   
-  .user-info .student-id {
-    font-size: 0.6rem;
-  }
-  
-  .logout-btn {
-    padding: 0.6rem 1rem;
-    font-size: 0.8rem;
-  }
-
-  .modal-container {
-    padding: 1.5rem;
-  }
-  
-  .modal-icon {
-    width: 60px;
-    height: 60px;
-  }
-  
-  .modal-icon svg {
-    width: 36px;
-    height: 36px;
-  }
-  
-  .modal-title {
-    font-size: 1.25rem;
+  .mobile-bottom-nav {
+    padding: 0.25rem 0.5rem;
   }
 }
 
@@ -1397,17 +1735,17 @@ export default {
   transform: translateY(20px) scale(0.95);
 }
 
-/* Responsive adjustments for floating button */
+/* Mobile floating help button adjustments */
 @media (max-width: 768px) {
   .floating-help-btn {
-    bottom: 1.5rem;
+    bottom: 10rem;
     right: 1.5rem;
     width: 56px;
     height: 56px;
   }
   
   .help-menu {
-    bottom: 5rem;
+    bottom: 12rem;
     right: 1.5rem;
     left: 1.5rem;
     width: auto;
@@ -1416,14 +1754,14 @@ export default {
 
 @media (max-width: 480px) {
   .floating-help-btn {
-    bottom: 1rem;
+    bottom: 10rem;
     right: 1rem;
     width: 52px;
     height: 52px;
   }
   
   .help-menu {
-    bottom: 4.5rem;
+    bottom: 12rem;
     right: 1rem;
     left: 1rem;
   }
