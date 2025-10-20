@@ -739,6 +739,7 @@
   box-shadow: 0 2px 8px rgba(0,0,0,0.10);
 }
 
+
 <template>
   <div :class="['subjects-page', isDarkMode ? 'dark' : '']">
     <!-- Header Card -->
@@ -1077,114 +1078,198 @@
       </div>
     </div>
 
-    <!-- Create/Edit Subject Modal -->
+    <!-- Create/Edit Subject Modal - REDESIGNED -->
     <div v-if="showCreateModal" class="modal-overlay" @click="closeModal">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h2>{{ isEditing ? 'Edit Subject' : 'Create New Subject' }}</h2>
-          <button @click="closeModal" class="close-btn">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+      <div class="modal-content-enhanced" @click.stop>
+        <!-- Modal Header -->
+        <div class="modal-header-enhanced">
+          <div class="modal-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L2 7V17L12 22L22 17V7M12 4.18L19.55 8L12 11.82L4.45 8M4 9.73L11 13.36V20.27L4 16.64M20 16.64L13 20.27V13.36L20 9.73Z"/>
+            </svg>
+          </div>
+          <div class="modal-title-area">
+            <h2>{{ isEditing ? 'Edit Subject' : 'Create New Subject' }}</h2>
+            <p class="modal-subtitle">{{ currentStep === 1 ? 'Enter subject details' : 'Configure your sections' }}</p>
+          </div>
+          <button @click="closeModal" class="close-btn-enhanced">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
             </svg>
           </button>
         </div>
 
-        <form @submit.prevent="currentStep === 1 ? nextStep() : saveSubject()" class="subject-form">
+        <!-- Progress Indicator -->
+        <div class="progress-indicator">
+          <div class="progress-step" :class="{ active: currentStep === 1, completed: currentStep === 2 }">
+            <div class="step-circle">
+              <svg v-if="currentStep === 2" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+              </svg>
+              <span v-else>1</span>
+            </div>
+            <span class="step-label">Subject Info</span>
+          </div>
+          <div class="progress-line" :class="{ active: currentStep === 2 }"></div>
+          <div class="progress-step" :class="{ active: currentStep === 2 }">
+            <div class="step-circle">
+              <span>2</span>
+            </div>
+            <span class="step-label">Section Setup</span>
+          </div>
+        </div>
+
+        <form @submit.prevent="currentStep === 1 ? nextStep() : saveSubject()" class="subject-form-enhanced">
           <!-- Step 1: Basic Information -->
-          <div v-if="currentStep === 1" class="step-content">
-            <h3 class="step-title">Step 1: Subject Information</h3>
-            
-            <div class="form-group">
-              <label for="subjectName">Subject Name *</label>
-              <input
-                id="subjectName"
-                v-model="formData.name"
-                type="text"
-                placeholder="e.g., English, Mathematics, Science"
-                required
-              />
+          <div v-if="currentStep === 1" class="step-content-enhanced">
+            <div class="form-grid">
+              <div class="form-group-enhanced full-width">
+                <label for="subjectName">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"/>
+                  </svg>
+                  Subject Name <span class="required">*</span>
+                </label>
+                <input
+                  id="subjectName"
+                  v-model="formData.name"
+                  type="text"
+                  placeholder="e.g., English, Mathematics, Science"
+                  required
+                />
+              </div>
+
+              <div class="form-group-enhanced">
+                <label for="gradeLevel">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"/>
+                  </svg>
+                  Grade Level <span class="required">*</span>
+                </label>
+                <select id="gradeLevel" v-model="formData.grade_level" required>
+                  <option value="">Select Grade Level</option>
+                  <option value="7">Grade 7</option>
+                  <option value="8">Grade 8</option>
+                  <option value="9">Grade 9</option>
+                  <option value="10">Grade 10</option>
+                  <option value="11">Grade 11</option>
+                  <option value="12">Grade 12</option>
+                </select>
+              </div>
+
+              <div class="form-group-enhanced">
+                <label for="numberOfSections">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,5V19H5V5H19Z"/>
+                  </svg>
+                  Number of Sections <span class="required">*</span>
+                </label>
+                <select id="numberOfSections" v-model="formData.number_of_sections" required @change="generateSections">
+                  <option value="">Select Number</option>
+                  <option v-for="n in 10" :key="n" :value="n">{{ n }} Section{{ n > 1 ? 's' : '' }}</option>
+                </select>
+              </div>
+
+              <div class="form-group-enhanced full-width">
+                <label for="description">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                  </svg>
+                  Description <span class="optional">(Optional)</span>
+                </label>
+                <textarea
+                  id="description"
+                  v-model="formData.description"
+                  placeholder="Brief description of the subject"
+                  rows="3"
+                ></textarea>
+              </div>
             </div>
 
-            <div class="form-group">
-              <label for="gradeLevel">Grade Level *</label>
-              <select id="gradeLevel" v-model="formData.grade_level" required>
-                <option value="">Select Grade Level</option>
-                <option value="7">Grade 7</option>
-                <option value="8">Grade 8</option>
-                <option value="9">Grade 9</option>
-                <option value="10">Grade 10</option>
-                <option value="11">Grade 11</option>
-                <option value="12">Grade 12</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="description">Description (Optional)</label>
-              <textarea
-                id="description"
-                v-model="formData.description"
-                placeholder="Brief description of the subject"
-                rows="3"
-              ></textarea>
-            </div>
-
-            <div class="form-group">
-              <label for="numberOfSections">Number of Sections *</label>
-              <select id="numberOfSections" v-model="formData.number_of_sections" required @change="generateSections">
-                <option value="">Select Number of Sections</option>
-                <option v-for="n in 10" :key="n" :value="n">{{ n }} Section{{ n > 1 ? 's' : '' }}</option>
-              </select>
-            </div>
-
-            <div class="modal-actions">
-              <button type="button" @click="closeModal" class="cancel-btn">Cancel</button>
-              <button type="submit" :disabled="!canProceedToStep2" class="next-btn">
+            <div class="modal-actions-enhanced">
+              <button type="button" @click="closeModal" class="btn-secondary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
+                </svg>
+                Cancel
+              </button>
+              <button type="submit" :disabled="!canProceedToStep2" class="btn-primary">
                 Next: Setup Sections
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z" />
+                  <path d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z"/>
                 </svg>
               </button>
             </div>
           </div>
 
           <!-- Step 2: Section Setup -->
-          <div v-if="currentStep === 2" class="step-content">
-            <h3 class="step-title">Step 2: Setup Sections</h3>
-            <p class="step-subtitle">Customize section names and unique codes will be generated automatically</p>
+          <div v-if="currentStep === 2" class="step-content-enhanced">
+            <div class="sections-info-banner">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
+              </svg>
+              <p>Customize section names below. Unique section codes will be automatically generated.</p>
+            </div>
 
-            <div class="sections-setup">
-              <div v-for="(section, index) in formData.sections" :key="index" class="section-setup-item">
-                <div class="section-number">{{ index + 1 }}</div>
-                <div class="section-input">
-                  <label :for="'section-' + index">Section {{ index + 1 }} Name</label>
-                  <input
-                    :id="'section-' + index"
-                    v-model="section.name"
-                    type="text"
-                    :placeholder="'Section ' + (index + 1)"
-                    required
-                  />
-                  <input
-                    v-model="section.max_students"
-                    type="number"
-                    min="1"
-                    max="50"
-                    placeholder="Max students (default: 40)"
-                    style="margin-top: 0.5rem;"
-                  />
-                  <small class="section-code-preview">Code will be generated automatically</small>
+            <div class="sections-setup-enhanced">
+              <div v-for="(section, index) in formData.sections" :key="index" class="section-setup-card">
+                <div class="section-badge">{{ index + 1 }}</div>
+                <div class="section-fields">
+                  <div class="field-wrapper">
+                    <label :for="'section-' + index">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,5V19H5V5H19Z"/>
+                      </svg>
+                      Section Name
+                    </label>
+                    <input
+                      :id="'section-' + index"
+                      v-model="section.name"
+                      type="text"
+                      :placeholder="'Section ' + (index + 1)"
+                      required
+                    />
+                  </div>
+                  <div class="field-wrapper">
+                    <label :for="'max-students-' + index">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M16,13C15.71,13 15.38,13 15.03,13.05C16.19,13.89 17,15 17,16.5V19H23V16.5C23,14.17 18.33,13 16,13M8,13C5.67,13 1,14.17 1,16.5V19H15V16.5C15,14.17 10.33,13 8,13M8,11A3,3 0 0,0 11,8A3,3 0 0,0 8,5A3,3 0 0,0 5,8A3,3 0 0,0 8,11M16,11A3,3 0 0,0 19,8A3,3 0 0,0 16,5A3,3 0 0,0 13,8A3,3 0 0,0 16,11Z"/>
+                      </svg>
+                      Max Students
+                    </label>
+                    <input
+                      :id="'max-students-' + index"
+                      v-model="section.max_students"
+                      type="number"
+                      min="1"
+                      max="50"
+                      placeholder="Default: 40"
+                    />
+                  </div>
+                </div>
+                <div class="auto-code-notice">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9,22A1,1 0 0,1 8,21V18H4A2,2 0 0,1 2,16V4C2,2.89 2.9,2 4,2H20A2,2 0 0,1 22,4V16A2,2 0 0,1 20,18H13.9L10.2,21.71C10,21.9 9.75,22 9.5,22V22H9M10,16V19.08L13.08,16H20V4H4V16H10Z"/>
+                  </svg>
+                  Code will be auto-generated
                 </div>
               </div>
             </div>
 
-            <div class="modal-actions">
-              <button type="button" @click="currentStep = 1" class="back-btn">
+            <div class="modal-actions-enhanced">
+              <button type="button" @click="currentStep = 1" class="btn-secondary">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
+                  <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/>
                 </svg>
                 Back
               </button>
-              <button type="submit" :disabled="isLoading" class="save-btn">
+              <button type="submit" :disabled="isLoading" class="btn-primary">
+                <svg v-if="!isLoading" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+                </svg>
+                <svg v-else class="spinner-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/>
+                </svg>
                 {{ isLoading ? 'Creating...' : (isEditing ? 'Update Subject' : 'Create Subject') }}
               </button>
             </div>
@@ -3908,5 +3993,614 @@ onUnmounted(() => {
 
 .dark .success-close-btn:hover {
   background: #047857;
+}
+
+/* ============================================
+   ENHANCED MODAL STYLES - Modern Design
+   ============================================ */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+.modal-content-enhanced {
+  background: white;
+  border-radius: 20px;
+  max-width: 700px;
+  width: 95%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dark .modal-content-enhanced {
+  background: #1f2937;
+  border: 1px solid #374151;
+}
+
+/* Modal Header Enhanced */
+.modal-header-enhanced {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem 2rem 1.5rem;
+  border-bottom: 1px solid #f3f4f6;
+  position: relative;
+}
+
+.dark .modal-header-enhanced {
+  border-bottom-color: #374151;
+}
+
+.modal-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-radius: 16px;
+  color: white;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  flex-shrink: 0;
+}
+
+.modal-title-area {
+  flex: 1;
+}
+
+.modal-title-area h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 0.25rem 0;
+}
+
+.dark .modal-title-area h2 {
+  color: #f9fafb;
+}
+
+.modal-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.dark .modal-subtitle {
+  color: #9ca3af;
+}
+
+.close-btn-enhanced {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  width: 36px;
+  height: 36px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.close-btn-enhanced:hover {
+  background: #e5e7eb;
+  color: #1f2937;
+  transform: rotate(90deg);
+}
+
+.dark .close-btn-enhanced {
+  background: #374151;
+  color: #9ca3af;
+}
+
+.dark .close-btn-enhanced:hover {
+  background: #4b5563;
+  color: #f3f4f6;
+}
+
+/* Progress Indicator */
+.progress-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 2rem 1.5rem;
+  gap: 1rem;
+}
+
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.step-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  border: 2px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: #9ca3af;
+  transition: all 0.3s;
+}
+
+.progress-step.active .step-circle {
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-color: #10b981;
+  color: white;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.progress-step.completed .step-circle {
+  background: #10b981;
+  border-color: #10b981;
+  color: white;
+}
+
+.dark .step-circle {
+  background: #374151;
+  border-color: #4b5563;
+  color: #6b7280;
+}
+
+.dark .progress-step.active .step-circle {
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-color: #10b981;
+  color: white;
+}
+
+.step-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.progress-step.active .step-label {
+  color: #10b981;
+}
+
+.progress-step.completed .step-label {
+  color: #10b981;
+}
+
+.dark .step-label {
+  color: #6b7280;
+}
+
+.dark .progress-step.active .step-label,
+.dark .progress-step.completed .step-label {
+  color: #34d399;
+}
+
+.progress-line {
+  width: 80px;
+  height: 2px;
+  background: #e5e7eb;
+  transition: all 0.3s;
+}
+
+.progress-line.active {
+  background: #10b981;
+}
+
+.dark .progress-line {
+  background: #4b5563;
+}
+
+.dark .progress-line.active {
+  background: #10b981;
+}
+
+/* Form Enhanced */
+.subject-form-enhanced {
+  padding: 0 2rem 2rem;
+}
+
+.step-content-enhanced {
+  animation: fadeIn 0.3s ease;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.form-group-enhanced {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group-enhanced.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-group-enhanced label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.dark .form-group-enhanced label {
+  color: #d1d5db;
+}
+
+.form-group-enhanced label svg {
+  color: #10b981;
+}
+
+.required {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.optional {
+  color: #9ca3af;
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+
+.form-group-enhanced input,
+.form-group-enhanced select,
+.form-group-enhanced textarea {
+  width: 100%;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-family: 'Inter', sans-serif;
+  color: #1f2937;
+  transition: all 0.2s;
+}
+
+.form-group-enhanced input:focus,
+.form-group-enhanced select:focus,
+.form-group-enhanced textarea:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.dark .form-group-enhanced input,
+.dark .form-group-enhanced select,
+.dark .form-group-enhanced textarea {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+.dark .form-group-enhanced input:focus,
+.dark .form-group-enhanced select:focus,
+.dark .form-group-enhanced textarea:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+/* Sections Info Banner */
+.sections-info-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+  border: 1px solid #a7f3d0;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.dark .sections-info-banner {
+  background: linear-gradient(135deg, #064e3b, #065f46);
+  border-color: #047857;
+}
+
+.sections-info-banner svg {
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+.sections-info-banner p {
+  font-size: 0.875rem;
+  color: #065f46;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.dark .sections-info-banner p {
+  color: #d1fae5;
+}
+
+/* Sections Setup Enhanced */
+.sections-setup-enhanced {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+/* Custom Scrollbar */
+.sections-setup-enhanced::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sections-setup-enhanced::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 10px;
+}
+
+.dark .sections-setup-enhanced::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+.sections-setup-enhanced::-webkit-scrollbar-thumb {
+  background: #10b981;
+  border-radius: 10px;
+}
+
+.sections-setup-enhanced::-webkit-scrollbar-thumb:hover {
+  background: #059669;
+}
+
+.section-setup-card {
+  background: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  gap: 1rem;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.section-setup-card:hover {
+  border-color: #10b981;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
+}
+
+.dark .section-setup-card {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.dark .section-setup-card:hover {
+  border-color: #10b981;
+}
+
+.section-badge {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: white;
+  font-size: 1rem;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.section-fields {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.field-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.field-wrapper label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dark .field-wrapper label {
+  color: #9ca3af;
+}
+
+.field-wrapper label svg {
+  color: #10b981;
+}
+
+.field-wrapper input {
+  width: 100%;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  color: #1f2937;
+  transition: all 0.2s;
+}
+
+.field-wrapper input:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.dark .field-wrapper input {
+  background: #1f2937;
+  border-color: #374151;
+  color: #f3f4f6;
+}
+
+.auto-code-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: #10b981;
+  font-weight: 500;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #ecfdf5;
+  border-radius: 8px;
+}
+
+.dark .auto-code-notice {
+  background: #064e3b;
+  color: #34d399;
+}
+
+/* Modal Actions Enhanced */
+.modal-actions-enhanced {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #f3f4f6;
+}
+
+.dark .modal-actions-enhanced {
+  border-top-color: #374151;
+}
+
+.btn-primary,
+.btn-secondary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: white;
+  color: #6b7280;
+  border: 2px solid #e5e7eb;
+}
+
+.btn-secondary:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  color: #1f2937;
+}
+
+.dark .btn-secondary {
+  background: #374151;
+  color: #d1d5db;
+  border-color: #4b5563;
+}
+
+.dark .btn-secondary:hover {
+  background: #4b5563;
+  border-color: #6b7280;
+  color: #f3f4f6;
+}
+
+.spinner-icon {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .section-fields {
+    grid-template-columns: 1fr;
+  }
+  
+  .modal-content-enhanced {
+    width: 100%;
+    max-height: 95vh;
+  }
+  
+  .modal-header-enhanced {
+    padding: 1.5rem 1rem 1rem;
+  }
+  
+  .subject-form-enhanced {
+    padding: 0 1rem 1.5rem;
+  }
+  
+  .progress-indicator {
+    padding: 1.5rem 1rem 1rem;
+  }
 }
 </style>
