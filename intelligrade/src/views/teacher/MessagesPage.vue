@@ -119,11 +119,13 @@
                   <div class="section-student-info">
                     <div class="section-student-avatar">
                       <span>{{ student.student_name?.[0] || 'S' }}</span>
+                      <span v-if="studentPresence[student.auth_user_id]?.is_online" class="online-indicator" title="Online now"></span>
                     </div>
                     <div class="section-student-details">
                       <h4 class="section-student-name">{{ student.student_name }}</h4>
                       <p class="section-student-email">{{ student.student_email }}</p>
                       <p class="section-student-id">Student ID: {{ student.student_number }}</p>
+                      <p class="presence-status">{{ getPresenceStatus(student.auth_user_id) }}</p>
                       <p class="section-last-message">{{ student.last_message || `Enrolled ${formatDate(student.enrolled_date)}` }}</p>
                     </div>
                   </div>
@@ -783,6 +785,7 @@ const showBroadcastMessages = ref(false)
 const studentContacts = ref([])
 const currentMessages = ref([])
 const archivedChats = ref([])
+const studentPresence = ref({})
 
 // ================================
 // FILE UPLOAD FUNCTIONS
@@ -1948,6 +1951,125 @@ const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString()
 }
 
+// Presence status methods
+const getPresenceStatus = (authUserId) => {
+  const presence = studentPresence.value[authUserId]
+  if (!presence || !presence.last_seen) return 'Offline'
+  
+  if (presence.is_online) {
+    return 'Online now'
+  }
+  
+  const now = new Date()
+  const lastSeen = new Date(presence.last_seen)
+  const diffMs = now - lastSeen
+  const diffMinutes = Math.floor(diffMs / (1000 * 60))
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  
+  if (diffMinutes < 1) {
+    return 'Online now'
+  } else if (diffMinutes < 60) {
+    return `Offline for ${diffMinutes} minute${diffMinutes > 1 ? 's' : ''}`
+  } else if (diffHours < 24) {
+    return `Offline for ${diffHours} hour${diffHours > 1 ? 's' : ''}`
+  } else if (diffDays === 1) {
+    return 'Offline for a day'
+  } else if (diffDays < 7) {
+    return `Offline for ${diffDays} days`
+  } else {
+    return 'Offline for a while'
+  }
+}
+
+const setupPresenceTracking = async () => {
+  if (!currentTeacherId.value) return
+  
+  // Get all unique auth_user_ids from student contacts
+  const studentAuthIds = [...new Set(
+    studentContacts.value
+      .map(s => s.auth_user_id)
+      .filter(id => id)
+  )]
+  
+  if (studentAuthIds.length === 0) return
+  
+  console.log('Setting up presence tracking for students:', studentAuthIds.length)
+  
+  // Fetch initial presence status for all students
+  const { data: presenceData, error } = await supabase
+    .from('user_presence')
+    .select('*')
+    .in('user_id', studentAuthIds)
+  
+  if (error) {
+    console.error('Error fetching student presence:', error)
+    return
+  }
+  
+  // Initialize presence data
+  if (presenceData) {
+    presenceData.forEach(p => {
+      studentPresence.value[p.user_id] = {
+        is_online: p.is_online,
+        last_seen: p.last_seen
+      }
+    })
+  }
+  
+  // Subscribe to presence changes
+  const presenceChannel = supabase
+    .channel('student-presence-tracking')
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'user_presence',
+        filter: `user_id=in.(${studentAuthIds.join(',')})`
+      },
+      (payload) => {
+        console.log('Student presence update received:', payload)
+        
+        const userId = payload.new?.user_id || payload.old?.user_id
+        
+        if (payload.eventType === 'DELETE') {
+          if (studentPresence.value[userId]) {
+            studentPresence.value[userId].is_online = false
+          }
+        } else if (payload.new) {
+          studentPresence.value[userId] = {
+            is_online: payload.new.is_online,
+            last_seen: payload.new.last_seen
+          }
+        }
+      }
+    )
+    .subscribe()
+  
+  console.log('Presence tracking setup complete for', studentAuthIds.length, 'students')
+}
+
+const updateTeacherPresence = async (isOnline) => {
+  if (!currentUser.value) return
+  
+  try {
+    const { error } = await supabase
+      .from('user_presence')
+      .upsert({
+        user_id: currentUser.value.id,
+        is_online: isOnline,
+        last_seen: new Date().toISOString()
+      }, {
+        onConflict: 'user_id'
+      })
+    
+    if (error) throw error
+  } catch (error) {
+    console.error('Error updating teacher presence:', error)
+  }
+}
+
 // ================================
 // LIFECYCLE METHODS
 // ================================
@@ -1987,11 +2109,14 @@ onMounted(async () => {
     console.log('Teacher authenticated:', userData.profile.full_name)
     await loadTeacherContacts()
     await loadBroadcastHistory()
+    await setupPresenceTracking()
+    await updateTeacherPresence(true)
   }
 })
 
 onUnmounted(() => {
   console.log('Teacher messages component unmounted')
+  updateTeacherPresence(false)
 })
 </script>
 
@@ -2658,6 +2783,33 @@ onUnmounted(() => {
   font-weight: 600;
   font-size: 0.875rem;
   flex-shrink: 0;
+  position: relative;
+}
+
+.online-indicator {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  background: #28a745;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.3);
+  animation: pulse-online 2s infinite;
+}
+
+.dark .online-indicator {
+  border-color: #181c1f;
+}
+
+@keyframes pulse-online {
+  0%, 100% {
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.1);
+  }
 }
 
 .student-info, .section-student-info {
@@ -2691,6 +2843,16 @@ onUnmounted(() => {
 }
 .dark .section-student-id {
   color: #A3D1C6;
+}
+
+.presence-status {
+  font-size: 0.75rem;
+  color: #28a745;
+  margin: 0.25rem 0 0 0;
+  font-weight: 500;
+}
+.dark .presence-status {
+  color: #20c997;
 }
 
 .last-message, .section-last-message {
