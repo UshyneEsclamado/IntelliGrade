@@ -789,9 +789,10 @@
 
     <!-- Subjects Grid -->
     <div v-if="viewMode === 'subjects' && subjects.length > 0" class="subjects-grid enhanced">
-      <div v-for="subject in subjects" :key="subject.id" class="subject-card enhanced" @click="selectSubject(subject)">
+      <div v-for="subject in subjects" :key="subject.id" class="subject-card enhanced">
+        <!-- Subject Card Header with Menu -->
         <div class="subject-card-header">
-          <div class="subject-title-area">
+          <div class="subject-title-area" @click="selectSubject(subject)">
             <div class="subject-icon" :title="subject.subject_name">
               <span class="subject-initial">{{ subject.subject_name.charAt(0) }}</span>
             </div>
@@ -800,14 +801,43 @@
               <p class="grade-level">{{ subject.grade_level_display }}</p>
             </div>
           </div>
-          <div class="arrow-icon">
+          
+          <!-- Subject Menu (3 dots) -->
+          <div class="subject-menu-container">
+            <button class="subject-menu-btn" @click.stop="toggleSubjectMenu(subject.id)" title="More Options">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="5" cy="12" r="2" />
+                <circle cx="12" cy="12" r="2" />
+                <circle cx="19" cy="12" r="2" />
+              </svg>
+            </button>
+            <transition name="dropdown">
+              <div v-if="openSubjectMenuId === subject.id" class="subject-dropdown-menu">
+                <button @click.stop="editSubject(subject)" class="menu-item">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
+                  </svg>
+                  Edit Subject
+                </button>
+                <button @click.stop="openDeleteModal('subject', subject)" class="menu-item delete">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
+                  </svg>
+                  Delete Subject
+                </button>
+              </div>
+            </transition>
+          </div>
+          
+          <div class="arrow-icon" @click="selectSubject(subject)">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
               <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" />
             </svg>
           </div>
         </div>
+        
         <div class="subject-divider"></div>
-        <div class="subject-stats-container">
+        <div class="subject-stats-container" @click="selectSubject(subject)">
           <p class="subject-stats-simple">{{ subject.section_count }} sections • {{ subject.total_students }} students</p>
         </div>
       </div>
@@ -847,10 +877,10 @@
       </div>
       
       <div class="sections-grid">
-        <div v-for="section in filteredSections" :key="section.id" class="section-card enhanced" @click="selectSection(section)">
+        <div v-for="section in filteredSections" :key="section.id" class="section-card enhanced">
           <div class="section-card-header">
             <!-- Section icon and title -->
-            <div class="section-title-area">
+            <div class="section-title-area" @click="selectSection(section)">
               <div class="section-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
@@ -893,7 +923,7 @@
             </div>
           </div>
           
-          <div class="section-card-body">
+          <div class="section-card-body" @click="selectSection(section)">
             <!-- Section Code in distinct box -->
             <div class="section-code-box">
               <div class="code-box-header">
@@ -928,7 +958,7 @@
       </div>
     </div>
 
-    <!-- Level 3: Section Detail (like in the picture) -->
+    <!-- Level 3: Section Detail -->
     <div v-if="viewMode === 'section-detail' && selectedSection" class="section-detail-view">
       <div class="breadcrumb">
         <button @click="goBackToSubjects" class="breadcrumb-btn">
@@ -1047,7 +1077,6 @@
       </div>
     </div>
 
-    <!-- Empty State - only show when in subjects view and no subjects exist -->
     <!-- Create/Edit Subject Modal -->
     <div v-if="showCreateModal" class="modal-overlay" @click="closeModal">
       <div class="modal-content" @click.stop>
@@ -1124,15 +1153,15 @@
             <p class="step-subtitle">Customize section names and unique codes will be generated automatically</p>
 
             <div class="sections-setup">
-              <div v-for="(section, index) in formData.value.sections" :key="index" class="section-setup-item">
+              <div v-for="(section, index) in formData.sections" :key="index" class="section-setup-item">
                 <div class="section-number">{{ index + 1 }}</div>
                 <div class="section-input">
-                  <label :for="`section-${index}`">Section {{ index + 1 }} Name</label>
+                  <label :for="'section-' + index">Section {{ index + 1 }} Name</label>
                   <input
-                    :id="`section-${index}`"
+                    :id="'section-' + index"
                     v-model="section.name"
                     type="text"
-                    :placeholder="`Section ${index + 1}`"
+                    :placeholder="'Section ' + (index + 1)"
                     required
                   />
                   <input
@@ -1164,125 +1193,77 @@
       </div>
     </div>
 
-    <!-- Student Roster Modal -->
-    <div v-if="showStudentRosterModal && currentStudentRoster" class="modal-overlay" @click="closeStudentRosterModal">
-      <div class="modal-content student-roster-modal" @click.stop>
+    <!-- Delete Confirmation Modal -->
+    <div v-if="showDeleteModal" class="modal-overlay" @click="cancelDelete">
+      <div class="modal-content delete-modal" @click.stop>
         <div class="modal-header">
-          <div>
-            <h2>{{ currentStudentRoster.subject.name }} - Student Roster</h2>
-            <p class="roster-subtitle">
-              Grade {{ currentStudentRoster.subject.grade_level }} | 
-              Total: {{ currentStudentRoster.totalActualStudents }} Students
-            </p>
+          <div class="delete-icon-header">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12,2C17.53,2 22,6.47 22,12C22,17.53 17.53,22 12,22C6.47,22 2,17.53 2,12C2,6.47 6.47,2 12,2M15.59,7L12,10.59L8.41,7L7,8.41L10.59,12L7,15.59L8.41,17L12,13.41L15.59,17L17,15.59L13.41,12L17,8.41L15.59,7Z" />
+            </svg>
           </div>
-          <button @click="closeStudentRosterModal" class="close-btn">
+          <h2>Delete {{ deleteType === 'subject' ? 'Subject' : 'Section' }}?</h2>
+          <button @click="cancelDelete" class="close-btn">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
               <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
             </svg>
           </button>
         </div>
 
-        <div class="roster-content">
-          <div v-if="Object.keys(currentStudentRoster.studentsBySection).length === 0" class="no-students">
-            <div class="empty-icon">
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M16 4C18.2 4 20 5.8 20 8S18.2 12 16 12 12 10.2 12 8 13.8 4 16 4M16 14C20.42 14 24 15.79 24 18V20H8V18C8,15.79 11.58,14 16,14C10.5 14 9.2 14.3 8.5 14.8V11.5Z" />
-              </svg>
-            </div>
-            <h3>No Students Enrolled</h3>
-            <p>Students haven't joined any sections yet.</p>
-          </div>
-
-          <div v-else class="sections-roster">
-            <div v-for="(sectionData, sectionKey) in currentStudentRoster.studentsBySection" :key="sectionKey" class="section-roster">
-              <div class="section-roster-header">
-                <h3>{{ sectionData.section.name }}</h3>
-                <div class="section-details">
-                  <span class="section-code">{{ sectionData.section.section_code }}</span>
-                  <span class="student-count">{{ sectionData.students.length }} student{{ sectionData.students.length !== 1 ? 's' : '' }}</span>
-                </div>
-              </div>
-
-              <div class="students-table">
-                <div class="table-header">
-                  <div class="col-id">Student ID</div>
-                  <div class="col-name">Name</div>
-                  <div class="col-email">Email</div>
-                  <div class="col-grade">Grade</div>
-                  <div class="col-date">Enrolled</div>
-                </div>
-                
-                <div class="table-body">
-                  <div v-for="student in sectionData.students" :key="student.id" class="student-row">
-                    <div class="col-id">{{ student.student_id }}</div>
-                    <div class="col-name">{{ student.full_name }}</div>
-                    <div class="col-email">{{ student.email }}</div>
-                    <div class="col-grade">{{ student.grade_level }}</div>
-                    <div class="col-date">{{ formatEnrollmentDate(student.enrollment_date) }}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="roster-actions">
-          <button @click="exportStudentRoster" class="export-btn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-            </svg>
-            Export List
-          </button>
-          <button @click="closeStudentRosterModal" class="close-roster-btn">Close</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Delete Confirmation Modal -->
-    <template v-if="showDeleteModal">
-      <div class="modal-overlay">
-        <div class="modal-card">
-          <div class="modal-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12,2C13.1,2 14,2.9 14,4C14,5.1 13.1,6 12,6C10.9,6 10,5.1 10,4C10,2.9 10.9,2 12,2M21,9V7L15,1H5C3.89,1 3,1.89 3,3V7H9V9H3V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V9M6.5,18L10.5,14L6.5,10L8.5,8L14.5,14L8.5,20L6.5,18Z" />
-            </svg>
-          </div>
-          <h3>Confirm Deletion</h3>
-          <div class="item-details">
-            <p class="item-name">
-              <strong>
-                {{ deleteType === 'subject' ? itemToDelete?.subject_name || itemToDelete?.name : 
-                   `${itemToDelete?.subject_name} - ${itemToDelete?.section_name}` }}
-              </strong>
-            </p>
-            <p class="item-info">
-              {{ deleteType === 'subject' ? 'Subject' : 'Section' }} • 
-              Grade {{ itemToDelete?.grade_level }}
-              <template v-if="deleteType === 'section'">
+        <div class="delete-modal-body">
+          <div class="delete-item-info">
+            <h3 class="delete-item-name">
+              {{ deleteType === 'subject' ? itemToDelete?.subject_name || itemToDelete?.name : 
+                 `${itemToDelete?.subject_name} - ${itemToDelete?.section_name}` }}
+            </h3>
+            <p class="delete-item-details">
+              {{ deleteType === 'subject' ? 'Subject' : 'Section' }} • Grade {{ itemToDelete?.grade_level }}
+              <template v-if="deleteType === 'subject'">
+                • {{ itemToDelete?.section_count || 0 }} sections • {{ itemToDelete?.total_students || 0 }} students
+              </template>
+              <template v-else>
                 • {{ itemToDelete?.student_count || 0 }} students enrolled
               </template>
             </p>
           </div>
-          <p class="warning-text">
-            This action cannot be undone. All data will be permanently removed.
-          </p>
-          <div class="modal-actions">
-            <button class="btn-cancel" @click="cancelDelete">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
-              </svg>
-              Cancel
-            </button>
-            <button class="btn-delete" @click="confirmDelete">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
-              </svg>
-              Delete
-            </button>
+          
+          <div class="delete-warning">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z" />
+            </svg>
+            <div class="delete-warning-text">
+              <h4>This action cannot be undone!</h4>
+              <p v-if="deleteType === 'subject'">
+                Deleting this subject will permanently remove <strong>all {{ itemToDelete?.section_count || 0 }} sections</strong> 
+                and <strong>unenroll all {{ itemToDelete?.total_students || 0 }} students</strong>. All associated data, quizzes, and grades will be lost.
+              </p>
+              <p v-else>
+                Deleting this section will permanently <strong>unenroll all {{ itemToDelete?.student_count || 0 }} students</strong>. 
+                All section data, quizzes, and grades will be lost.
+              </p>
+            </div>
           </div>
         </div>
+
+        <div class="modal-actions">
+          <button @click="cancelDelete" class="cancel-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+            </svg>
+            Cancel
+          </button>
+          <button @click="confirmDelete" class="delete-confirm-btn" :disabled="isDeleting">
+            <svg v-if="!isDeleting" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
+            </svg>
+            <svg v-else class="spinner" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z" />
+            </svg>
+            {{ isDeleting ? 'Deleting...' : `Delete ${deleteType === 'subject' ? 'Subject' : 'Section'}` }}
+          </button>
+        </div>
       </div>
-    </template>
+    </div>
 
     <!-- Success/Error Toast Notification -->
     <transition name="toast">
@@ -1309,7 +1290,7 @@
       </div>
     </transition>
 
-    <!-- Loading Overlay matching Subjects.vue -->
+    <!-- Loading Overlay -->
     <div v-if="isLoading" class="loading-overlay">
       <div class="loading-content">
         <div class="loading-spinner-container">
@@ -1324,12 +1305,12 @@
     <div v-if="showSuccessModal" class="success-modal" @click.self="closeSuccessModal">
       <div class="success-modal-content">
         <div class="success-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z" />
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,16.5L18,9.5L16.59,8.09L11,13.67L7.41,10.09L6,11.5L11,16.5Z" />
           </svg>
         </div>
         <h3>Success!</h3>
-        <p>{{ successMessage }}</p>
+        <p class="success-message-text">{{ successMessage }}</p>
         <button @click="closeSuccessModal" class="success-close-btn">OK</button>
       </div>
     </div>
@@ -1376,8 +1357,10 @@ const showNotification = ref(false)
 const notificationMessage = ref('')
 const notificationType = ref('success')
 const openMenuId = ref(null)
+const openSubjectMenuId = ref(null)
 const isLoading = ref(false)
 const loadingMessage = ref('')
+const isDeleting = ref(false)
 
 // Success modal state
 const showSuccessModal = ref(false)
@@ -1528,6 +1511,7 @@ const fetchSubjects = async (forceRefresh = false) => {
       return {
         ...group,
         grade_levels: gradeLevelsArray,
+        grade_level: gradeLevelsArray[0], // For delete modal display
         grade_level_display: gradeLevelsArray.length === 1 
           ? `Grade ${gradeLevelsArray[0]}` 
           : `Grades ${gradeLevelsArray.join(', ')}`
@@ -1778,6 +1762,23 @@ const saveSubject = async () => {
   }
 }
 
+const editSubject = (subject) => {
+  isEditing.value = true
+  currentSubjectId.value = subject.id
+  formData.value = {
+    name: subject.subject_name || subject.name,
+    grade_level: subject.grade_level.toString(),
+    description: subject.description || '',
+    number_of_sections: subject.section_count.toString(),
+    sections: subject.sections.map(s => ({
+      name: s.name,
+      max_students: s.max_students
+    }))
+  }
+  currentStep.value = 1
+  showCreateModal.value = true
+}
+
 // ============================================================
 // COPY CODE
 // ============================================================
@@ -1836,55 +1837,140 @@ const openDeleteModal = (type, item) => {
   deleteType.value = type
   itemToDelete.value = item
   showDeleteModal.value = true
+  openMenuId.value = null
+  openSubjectMenuId.value = null
 }
 
 const cancelDelete = () => {
   showDeleteModal.value = false
   itemToDelete.value = null
   deleteType.value = ''
+  isDeleting.value = false
 }
 
 const confirmDelete = async () => {
   if (deleteType.value === 'subject') {
     await deleteSubjectConfirmed(itemToDelete.value.id)
   } else if (deleteType.value === 'section') {
-    await deleteSectionConfirmed(itemToDelete.value.section_id)
+    await deleteSectionConfirmed(itemToDelete.value.section_id || itemToDelete.value.id)
   }
   showDeleteModal.value = false
   itemToDelete.value = null
   deleteType.value = ''
+  isDeleting.value = false
 }
 
 const deleteSubjectConfirmed = async (subjectId) => {
   try {
     if (!teacherInfo.value) return
 
+    isDeleting.value = true
     const subject = subjects.value.find(s => s.id === subjectId)
 
-    await supabase
+    // First, delete all enrollments for all sections of this subject
+    const sectionIds = subject.sections.map(s => s.id)
+    
+    if (sectionIds.length > 0) {
+      const { error: enrollmentError } = await supabase
+        .from('enrollments')
+        .delete()
+        .in('section_id', sectionIds)
+      
+      if (enrollmentError) {
+        console.error('Error deleting enrollments:', enrollmentError)
+        throw enrollmentError
+      }
+    }
+
+    // Then delete all sections
+    const { error: sectionsError } = await supabase
+      .from('sections')
+      .delete()
+      .eq('subject_id', subjectId)
+    
+    if (sectionsError) {
+      console.error('Error deleting sections:', sectionsError)
+      throw sectionsError
+    }
+
+    // Finally delete the subject
+    const { error: subjectError } = await supabase
       .from('subjects')
       .delete()
       .eq('id', subjectId)
       .eq('teacher_id', teacherInfo.value.id)
     
-    await fetchSubjects(true)
-    showToast(`Subject "${subject?.name}" deleted successfully!`, 'success')
+    if (subjectError) {
+      console.error('Error deleting subject:', subjectError)
+      throw subjectError
+    }
+    
+    // Update local state
+    subjects.value = subjects.value.filter(s => s.id !== subjectId)
+    
+    showToast(`Subject "${subject?.name}" and all its sections deleted successfully!`, 'success')
+    
   } catch (error) {
-    showToast('Error deleting subject', 'error')
+    console.error('Delete subject error:', error)
+    showToast('Error deleting subject. Please try again.', 'error')
+  } finally {
+    isDeleting.value = false
   }
 }
 
 const deleteSectionConfirmed = async (sectionId) => {
   try {
-    await supabase
+    isDeleting.value = true
+
+    // First delete all enrollments for this section
+    const { error: enrollmentError } = await supabase
+      .from('enrollments')
+      .delete()
+      .eq('section_id', sectionId)
+    
+    if (enrollmentError) {
+      console.error('Error deleting enrollments:', enrollmentError)
+      throw enrollmentError
+    }
+
+    // Then delete the section
+    const { error: sectionError } = await supabase
       .from('sections')
       .delete()
       .eq('id', sectionId)
     
-    await fetchSubjects(true)
+    if (sectionError) {
+      console.error('Error deleting section:', sectionError)
+      throw sectionError
+    }
+    
+    // Update local state
+    if (selectedSubject.value) {
+      selectedSubject.value.sections = selectedSubject.value.sections.filter(s => s.id !== sectionId)
+      selectedSubject.value.section_count = selectedSubject.value.sections.length
+      
+      // Recalculate total students
+      selectedSubject.value.total_students = selectedSubject.value.sections.reduce((sum, s) => sum + (s.student_count || 0), 0)
+      
+      // Update the subject in the subjects array
+      const subjectIndex = subjects.value.findIndex(s => s.id === selectedSubject.value.id)
+      if (subjectIndex !== -1) {
+        subjects.value[subjectIndex] = { ...selectedSubject.value }
+      }
+    }
+    
+    // If we're in section detail view and deleted that section, go back
+    if (viewMode.value === 'section-detail' && selectedSection.value?.id === sectionId) {
+      goBackToSections()
+    }
+    
     showToast('Section deleted successfully!', 'success')
+    
   } catch (error) {
-    showToast('Error deleting section', 'error')
+    console.error('Delete section error:', error)
+    showToast('Error deleting section. Please try again.', 'error')
+  } finally {
+    isDeleting.value = false
   }
 }
 
@@ -1912,8 +1998,13 @@ const toggleSectionMenu = (sectionId) => {
   openMenuId.value = openMenuId.value === sectionId ? null : sectionId
 }
 
+const toggleSubjectMenu = (subjectId) => {
+  openSubjectMenuId.value = openSubjectMenuId.value === subjectId ? null : subjectId
+}
+
 const editSection = (section) => {
   console.log('Edit section:', section)
+  showToast('Edit section feature coming soon!', 'info')
 }
 
 const toggleArchiveSection = async (section) => {
@@ -1934,8 +2025,9 @@ const toggleArchiveSection = async (section) => {
 }
 
 const handleClickOutside = (event) => {
-  if (!event.target.closest('.section-menu-container')) {
+  if (!event.target.closest('.section-menu-container') && !event.target.closest('.subject-menu-container')) {
     openMenuId.value = null
+    openSubjectMenuId.value = null
   }
 }
 
@@ -3270,5 +3362,551 @@ onUnmounted(() => {
   color: #3d8d7a;
   margin: 0;
   font-family: 'Inter', sans-serif;
+}
+
+/* ============================================
+   DELETE MODAL STYLES - Add to your <style scoped>
+   ============================================ */
+
+/* Delete Modal Specific Styles */
+.delete-modal {
+  background: white;
+  border-radius: 16px;
+  padding: 0;
+  max-width: 500px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.dark .delete-modal {
+  background: #1f2937;
+  border: 1px solid #374151;
+}
+
+.delete-icon-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1rem;
+  background: #fef2f2;
+  border-radius: 50%;
+  color: #ef4444;
+}
+
+.dark .delete-icon-header {
+  background: #451a1a;
+  color: #f87171;
+}
+
+.delete-modal .modal-header {
+  flex-direction: column;
+  text-align: center;
+  padding: 2rem 2rem 1rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.dark .delete-modal .modal-header {
+  border-bottom-color: #374151;
+}
+
+.delete-modal .modal-header h2 {
+  font-size: 1.5rem;
+  color: #1f2937;
+  margin: 0;
+}
+
+.dark .delete-modal .modal-header h2 {
+  color: #f3f4f6;
+}
+
+.delete-modal .modal-header .close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.delete-modal .modal-header .close-btn:hover {
+  background: #f3f4f6;
+  color: #1f2937;
+}
+
+.dark .delete-modal .modal-header .close-btn:hover {
+  background: #374151;
+  color: #f3f4f6;
+}
+
+.delete-modal-body {
+  padding: 1.5rem 2rem;
+}
+
+.delete-item-info {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.delete-item-name {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 0.5rem 0;
+}
+
+.dark .delete-item-name {
+  color: #f3f4f6;
+}
+
+.delete-item-details {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.dark .delete-item-details {
+  color: #9ca3af;
+}
+
+.delete-warning {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  margin-top: 1rem;
+}
+
+.dark .delete-warning {
+  background: #451a1a;
+  border-color: #7f1d1d;
+}
+
+.delete-warning svg {
+  flex-shrink: 0;
+  color: #ef4444;
+  margin-top: 0.25rem;
+}
+
+.dark .delete-warning svg {
+  color: #f87171;
+}
+
+.delete-warning-text h4 {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #991b1b;
+  margin: 0 0 0.5rem 0;
+}
+
+.dark .delete-warning-text h4 {
+  color: #fca5a5;
+}
+
+.delete-warning-text p {
+  font-size: 0.875rem;
+  color: #7f1d1d;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.dark .delete-warning-text p {
+  color: #fca5a5;
+}
+
+.delete-warning-text strong {
+  font-weight: 700;
+  color: #991b1b;
+}
+
+.dark .delete-warning-text strong {
+  color: #fef2f2;
+}
+
+.delete-modal .modal-actions {
+  padding: 1rem 2rem 2rem;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.cancel-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: white;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-btn:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+  color: #1f2937;
+}
+
+.dark .cancel-btn {
+  background: #374151;
+  color: #d1d5db;
+  border-color: #4b5563;
+}
+
+.dark .cancel-btn:hover {
+  background: #4b5563;
+  border-color: #6b7280;
+  color: #f3f4f6;
+}
+
+.delete-confirm-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.delete-confirm-btn:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.delete-confirm-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.dark .delete-confirm-btn {
+  background: #dc2626;
+}
+
+.dark .delete-confirm-btn:hover {
+  background: #b91c1c;
+}
+
+.delete-confirm-btn .spinner {
+  animation: spin 0.8s linear infinite;
+}
+
+/* Subject Menu Styles */
+.subject-menu-container {
+  position: relative;
+}
+
+.subject-menu-btn {
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #6b7280;
+}
+
+.subject-menu-btn:hover {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+  color: #1f2937;
+}
+
+.dark .subject-menu-btn {
+  color: #9ca3af;
+}
+
+.dark .subject-menu-btn:hover {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+.subject-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  z-index: 50;
+  min-width: 180px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.dark .subject-dropdown-menu {
+  background: #1f2937;
+  border-color: #374151;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+/* Toast Notification Styles */
+.toast-notification {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  z-index: 9999;
+  min-width: 320px;
+  max-width: 500px;
+  overflow: hidden;
+  animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toast-success {
+  border-left: 4px solid #10b981;
+}
+
+.toast-error {
+  border-left: 4px solid #ef4444;
+}
+
+.toast-info {
+  border-left: 4px solid #3b82f6;
+}
+
+.dark .toast-notification {
+  background: #1f2937;
+  border: 1px solid #374151;
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+}
+
+.toast-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.toast-success .toast-icon {
+  background: #d1fae5;
+  color: #10b981;
+}
+
+.toast-error .toast-icon {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.toast-info .toast-icon {
+  background: #dbeafe;
+  color: #3b82f6;
+}
+
+.dark .toast-success .toast-icon {
+  background: #064e3b;
+  color: #34d399;
+}
+
+.dark .toast-error .toast-icon {
+  background: #7f1d1d;
+  color: #f87171;
+}
+
+.dark .toast-info .toast-icon {
+  background: #1e3a8a;
+  color: #60a5fa;
+}
+
+.toast-message {
+  flex: 1;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1f2937;
+  line-height: 1.5;
+}
+
+.dark .toast-message {
+  color: #f3f4f6;
+}
+
+.toast-close {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.toast-close:hover {
+  background: #f3f4f6;
+  color: #1f2937;
+}
+
+.dark .toast-close:hover {
+  background: #374151;
+  color: #f3f4f6;
+}
+
+/* Toast transition */
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.3s ease;
+}
+
+.toast-enter-from {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+.toast-leave-to {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+/* Success Modal Styles */
+.success-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+.success-modal-content {
+  background: white;
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+  max-width: 500px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: scaleIn 0.3s ease;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.dark .success-modal-content {
+  background: #1f2937;
+  border: 1px solid #374151;
+}
+
+.success-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
+  background: #d1fae5;
+  border-radius: 50%;
+  color: #10b981;
+}
+
+.dark .success-icon {
+  background: #064e3b;
+  color: #34d399;
+}
+
+.success-modal-content h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 1rem 0;
+}
+
+.dark .success-modal-content h3 {
+  color: #f3f4f6;
+}
+
+.success-message-text {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0 0 2rem 0;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.dark .success-message-text {
+  color: #d1d5db;
+}
+
+.success-close-btn {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.success-close-btn:hover {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.dark .success-close-btn {
+  background: #059669;
+}
+
+.dark .success-close-btn:hover {
+  background: #047857;
 }
 </style>
