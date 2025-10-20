@@ -109,6 +109,15 @@
               </button>
               <div v-if="subject.showOptions" class="options-dropdown" @click.stop>
                 <button 
+                  @click.stop="confirmUnenroll(subject)"
+                  class="dropdown-item unenroll-item"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+                  </svg>
+                  Unenroll from Class
+                </button>
+                <button 
                   @click.stop="toggleArchive(subject.id)"
                   class="dropdown-item"
                 >
@@ -263,6 +272,52 @@
       </div>
     </div>
 
+    <!-- Unenroll Confirmation Modal -->
+    <div v-if="showUnenrollModal" class="modal-overlay" @click="cancelUnenroll">
+      <div class="modal-content unenroll-modal" @click.stop>
+        <div class="modal-header">
+          <h2>Confirm Unenrollment</h2>
+          <button @click="cancelUnenroll" class="close-btn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="unenroll-content">
+          <div class="warning-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" />
+            </svg>
+          </div>
+          
+          <p class="warning-text">
+            Are you sure you want to unenroll from <strong>{{ unenrollSubject?.name }}</strong>?
+          </p>
+          
+          <div class="unenroll-details">
+            <p><strong>Section:</strong> {{ unenrollSubject?.section }}</p>
+            <p><strong>Teacher:</strong> {{ unenrollSubject?.instructor }}</p>
+            <p><strong>Code:</strong> {{ unenrollSubject?.code }}</p>
+          </div>
+
+          <div class="warning-note">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z" />
+            </svg>
+            <span>This action cannot be undone. You will lose access to all quizzes and grades for this class.</span>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" @click="cancelUnenroll" class="cancel-btn">Cancel</button>
+            <button type="button" @click="processUnenroll" :disabled="isUnenrolling" class="unenroll-btn">
+              {{ isUnenrolling ? 'Unenrolling...' : 'Yes, Unenroll' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Loading Overlay -->
     <div v-if="isLoading" class="loading-overlay">
       <div class="loading-content">
@@ -286,12 +341,15 @@ export default {
       searchQuery: '',
       activeFilter: 'all',
       showJoinModal: false,
+      showUnenrollModal: false,
       isJoining: false,
-      isLoading: true, // Start with loading true
+      isUnenrolling: false,
+      isLoading: true,
       loadingMessage: 'Loading your subjects...',
       joinError: '',
       joinSuccess: '',
       previewSubject: null,
+      unenrollSubject: null,
       filters: [
         { key: 'all', label: 'All Subjects' },
         { key: 'favorites', label: 'Favorites' },
@@ -314,7 +372,6 @@ export default {
   },
   watch: {
     $route() {
-      // Reload subjects data when route changes
       this.fetchSubjects();
     }
   },
@@ -325,22 +382,18 @@ export default {
     filteredSubjects() {
       let filtered = this.subjects;
       
-      // Filter by favorites/archive status first
       if (this.activeFilter === 'favorites') {
         filtered = filtered.filter(subject => this.favoriteSubjects.has(subject.id));
       } else if (this.activeFilter === 'archived') {
         filtered = filtered.filter(subject => this.archivedSubjects.has(subject.id));
       } else {
-        // For all other filters, exclude archived subjects
         filtered = filtered.filter(subject => !this.archivedSubjects.has(subject.id));
       }
       
-      // Filter by status (only if not favorites or archived)
       if (this.activeFilter !== 'all' && this.activeFilter !== 'favorites' && this.activeFilter !== 'archived') {
         filtered = filtered.filter(subject => subject.status === this.activeFilter);
       }
       
-      // Filter by search query
       if (this.searchQuery) {
         filtered = filtered.filter(subject => 
           subject.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
@@ -349,7 +402,6 @@ export default {
         );
       }
       
-      // Sort favorites to the top (except when viewing archived)
       if (this.activeFilter !== 'archived') {
         filtered.sort((a, b) => {
           const aIsFavorite = this.favoriteSubjects.has(a.id);
@@ -371,12 +423,10 @@ export default {
     }
   },
   methods: {
-    // Initialize authentication with new database structure
     async initializeAuth() {
       try {
         console.log('Initializing student authentication...')
         
-        // Get current session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession()
         
         if (sessionError) {
@@ -393,7 +443,6 @@ export default {
         console.log('Session found for user:', session.user.id)
         this.currentUser = session.user
         
-        // Get profile info first
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('id, role, full_name, email')
@@ -414,7 +463,6 @@ export default {
           return false
         }
 
-        // Now get the student record using the profile_id
         const { data: student, error: studentError } = await supabase
           .from('students')
           .select('*')
@@ -450,7 +498,6 @@ export default {
       return colors[Math.abs(hash) % colors.length];
     },
 
-    // Optimized fetch with single batch query
     async fetchSubjects() {
       try {
         if (!this.studentInfo?.id) {
@@ -463,7 +510,6 @@ export default {
         this.isLoading = true
         this.loadingMessage = 'Loading your subjects...'
 
-        // Fetch enrollments using the student_dashboard view
         const { data: enrollments, error } = await supabase
           .from('student_dashboard')
           .select('*')
@@ -483,17 +529,14 @@ export default {
 
         console.log('Found', enrollments.length, 'enrollments')
 
-        // Extract all section IDs for batch queries
         const sectionIds = enrollments.map(e => e.section_id)
 
-        // BATCH FETCH: Get all quizzes for all sections in ONE query
         const { data: allQuizzes } = await supabase
           .from('quizzes')
           .select('id, section_id, title, status')
           .in('section_id', sectionIds)
           .eq('status', 'published')
 
-        // Group quizzes by section for quick lookup
         const quizzesBySection = {}
         if (allQuizzes) {
           allQuizzes.forEach(quiz => {
@@ -504,9 +547,8 @@ export default {
           })
         }
 
-        // BATCH FETCH: Get all quiz results for this student in ONE query
         const allQuizIds = allQuizzes ? allQuizzes.map(q => q.id) : []
-  const resultsByQuizId = {}
+        const resultsByQuizId = {}
         
         if (allQuizIds.length > 0) {
           const { data: allResults } = await supabase
@@ -515,7 +557,6 @@ export default {
             .eq('student_id', this.studentInfo.id)
             .in('quiz_id', allQuizIds)
           
-          // Group results by quiz ID for quick lookup
           if (allResults) {
             allResults.forEach(result => {
               resultsByQuizId[result.quiz_id] = result
@@ -523,15 +564,12 @@ export default {
           }
         }
 
-        // Process all enrollments with pre-fetched data
         const newSubjects = enrollments.map(enrollment => {
           const sectionId = enrollment.section_id
           const subjectId = enrollment.subject_id
 
-          // Get quizzes for this section
           const sectionQuizzes = quizzesBySection[sectionId] || []
           
-          // Get completed quiz results for this section
           const completedQuizIds = sectionQuizzes
             .map(q => q.id)
             .filter(quizId => resultsByQuizId[quizId])
@@ -540,7 +578,6 @@ export default {
           const completedQuizzes = completedQuizIds.length
           const availableQuizzes = Math.max(0, totalQuizzes - completedQuizzes)
 
-          // Calculate grade
           let currentGrade = '--'
           let overallScore = null
           
@@ -597,7 +634,6 @@ export default {
       }
     },
 
-    // Validate section code using new schema
     async validateSectionCode() {
       if (!this.joinForm.sectionCode || this.joinForm.sectionCode.length < 8) {
         this.previewSubject = null
@@ -609,7 +645,6 @@ export default {
         const searchCode = this.joinForm.sectionCode.trim().toUpperCase()
         console.log('Validating section code:', searchCode)
 
-        // First, try to find section directly with joins
         const { data: sectionData, error: sectionError } = await supabase
           .from('sections')
           .select(`
@@ -645,8 +680,6 @@ export default {
 
         console.log('Found section data:', sectionData)
 
-        // Check if subject and teacher are active
-        // Ensure subjects is an object, not array
         const subjectObj = Array.isArray(sectionData.subjects) ? sectionData.subjects[0] : sectionData.subjects;
         if (!subjectObj || !subjectObj.is_active || !(subjectObj.teachers && subjectObj.teachers[0] && subjectObj.teachers[0].is_active)) {
           this.joinError = 'This section is currently inactive. Please contact your teacher.'
@@ -654,7 +687,6 @@ export default {
           return
         }
 
-        // Check if section has space
         const { count: enrollmentCount } = await supabase
           .from('enrollments')
           .select('id', { count: 'exact' })
@@ -670,14 +702,12 @@ export default {
           return
         }
 
-        // Check grade level match
         if (this.studentInfo && subjectObj.grade_level !== this.studentInfo.grade_level) {
           this.joinError = `This subject is for Grade ${subjectObj.grade_level} students. You are in Grade ${this.studentInfo.grade_level}.`
           this.previewSubject = null
           return
         }
 
-        // Check if already enrolled in this section
         const { data: existingEnrollment } = await supabase
           .from('enrollments')
           .select('id')
@@ -692,7 +722,6 @@ export default {
           return
         }
 
-        // Check if already enrolled in same subject (different section)
         const { data: sameSubjectEnrollment } = await supabase
           .from('enrollments')
           .select('id')
@@ -707,7 +736,6 @@ export default {
           return
         }
 
-        // Show preview - everything is valid
         this.previewSubject = {
           id: sectionData.subject_id,
           name: subjectObj.name,
@@ -729,7 +757,6 @@ export default {
       }
     },
 
-    // Improved join class with better database sync
     async joinClass() {
       if (!this.joinForm.sectionCode || !this.studentInfo || !this.previewSubject) return
 
@@ -741,7 +768,6 @@ export default {
         console.log('Starting join process for section:', this.joinForm.sectionCode)
         console.log('Preview subject:', this.previewSubject)
 
-        // Use the validate_enrollment function from your schema
         const { data: validation, error: validationError } = await supabase
           .rpc('validate_enrollment', {
             p_student_id: this.studentInfo.id,
@@ -759,7 +785,6 @@ export default {
           throw new Error(validation?.[0]?.error_message || 'Enrollment validation failed')
         }
 
-        // Create enrollment
         const { data: newEnrollment, error: enrollmentError } = await supabase
           .from('enrollments')
           .insert([{
@@ -778,23 +803,17 @@ export default {
 
         console.log('Successfully enrolled:', newEnrollment)
 
-        // Show success message BEFORE closing modal
         this.joinSuccess = `Successfully joined ${this.previewSubject.name}! Loading your updated subjects...`
         this.joinError = ''
 
-        // Wait a moment for database to sync, then refresh subjects
         await new Promise(resolve => setTimeout(resolve, 1500))
         
-        // Force a fresh fetch to ensure we get the new enrollment
         await this.fetchSubjects()
         
-        // Wait a bit more for UI to update
         await new Promise(resolve => setTimeout(resolve, 500))
 
-        // Close modal 
         this.closeJoinModal()
 
-        // Final confirmation
         setTimeout(() => {
           alert(`Welcome to ${this.previewSubject.name}!\n\nThe subject has been added to your dashboard.`)
         }, 200)
@@ -808,7 +827,6 @@ export default {
       }
     },
 
-    // Improved clearJoinError with better debouncing
     clearJoinError() {
       this.joinError = ''
       this.joinSuccess = ''
@@ -833,6 +851,64 @@ export default {
       if (this.validationTimeout) {
         clearTimeout(this.validationTimeout)
         this.validationTimeout = null
+      }
+    },
+
+    confirmUnenroll(subject) {
+      this.unenrollSubject = subject
+      this.showUnenrollModal = true
+      this.closeAllOptionsMenus()
+    },
+
+    cancelUnenroll() {
+      this.showUnenrollModal = false
+      this.unenrollSubject = null
+    },
+
+    async processUnenroll() {
+      if (!this.unenrollSubject || !this.studentInfo) return
+
+      this.isUnenrolling = true
+
+      try {
+        console.log('Starting unenrollment process for:', this.unenrollSubject.name)
+
+        const { error: unenrollError } = await supabase
+          .from('enrollments')
+          .update({ 
+            status: 'dropped'
+          })
+          .eq('id', this.unenrollSubject.enrollmentId)
+          .eq('student_id', this.studentInfo.id)
+
+        if (unenrollError) {
+          console.error('Unenrollment error:', unenrollError)
+          throw unenrollError
+        }
+
+        console.log('Successfully unenrolled from:', this.unenrollSubject.name)
+
+        this.showUnenrollModal = false
+        
+        this.favoriteSubjects.delete(this.unenrollSubject.id)
+        this.archivedSubjects.delete(this.unenrollSubject.id)
+        this.saveUserPreferences()
+
+        await new Promise(resolve => setTimeout(resolve, 500))
+        
+        await this.fetchSubjects()
+
+        setTimeout(() => {
+          alert(`You have been successfully unenrolled from ${this.unenrollSubject.name}.`)
+        }, 200)
+
+        this.unenrollSubject = null
+
+      } catch (error) {
+        console.error('Error during unenrollment:', error)
+        alert(`Failed to unenroll: ${error.message}. Please try again.`)
+      } finally {
+        this.isUnenrolling = false
       }
     },
 
@@ -938,7 +1014,6 @@ export default {
       });
     },
 
-    // Favorite and Archive functionality methods
     toggleFavorite(subjectId) {
       if (this.favoriteSubjects.has(subjectId)) {
         this.favoriteSubjects.delete(subjectId);
@@ -978,7 +1053,6 @@ export default {
       });
     },
 
-    // localStorage persistence methods
     getUserStorageKey(key) {
       const userId = this.currentUser?.id || 'anonymous';
       return `intelligrade_${key}_${userId}`;
@@ -1044,7 +1118,6 @@ export default {
       
       await this.fetchSubjects()
       
-      // Set up polling every 30 seconds
       this.pollingInterval = setInterval(() => {
         this.fetchSubjects()
       }, 30000)
@@ -1058,7 +1131,6 @@ export default {
       await this.$router.push('/login')
     }
 
-    // Auth state listener
     supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         const success = await this.initializeAuth()
@@ -2798,4 +2870,287 @@ export default {
     display: none !important;
   }
 }
+
+/* iPhone 12 Pro specific optimizations */
+@media (max-width: 390px) {
+  .section-header-card,
+  .minimal-header-card {
+    margin: 0.5rem;
+  }
+
+  .controls-section {
+    margin: 0 0.5rem 1rem 0.5rem;
+  }
+
+  .subjects-grid {
+    margin: 0 0.5rem;
+  }
+
+  .empty-state {
+    margin: 0.5rem;
+  }
+
+  .options-dropdown {
+    left: 0.5rem;
+    right: 0.5rem;
+  }
+
+  .modal-overlay {
+    padding: 0.5rem;
+  }
+}
+
+/* ==================== END MOBILE RESPONSIVE STYLES ==================== */
+
+/* ==================== UNENROLL MODAL STYLES ==================== */
+.unenroll-modal {
+  max-width: 500px;
+}
+
+.unenroll-content {
+  padding: 1.5rem;
+}
+
+.warning-icon {
+  width: 80px;
+  height: 80px;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  color: #ef4444;
+}
+
+.warning-text {
+  text-align: center;
+  font-size: 1.1rem;
+  color: #181c20;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.warning-text strong {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.unenroll-details {
+  background: #f8fffe;
+  border: 1px solid #e6f2ed;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.unenroll-details p {
+  margin: 0.5rem 0;
+  color: #23272b;
+  font-size: 0.95rem;
+}
+
+.unenroll-details strong {
+  color: #3d8d7a;
+  font-weight: 600;
+  margin-right: 0.5rem;
+}
+
+.warning-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.warning-note svg {
+  color: #ef4444;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.warning-note span {
+  color: #dc2626;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.unenroll-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.unenroll-btn:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+}
+
+.unenroll-btn:disabled {
+  pointer-events: none;
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.dropdown-item.unenroll-item {
+  color: #ef4444;
+}
+
+.dropdown-item.unenroll-item:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+.dropdown-item.unenroll-item svg {
+  color: #ef4444;
+}
+
+/* Dark mode unenroll styles */
+.dark .unenroll-modal {
+  background: #23272b;
+  border-color: #20c997;
+}
+
+.dark .unenroll-content {
+  color: #fbffe4;
+}
+
+.dark .warning-icon {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.dark .warning-text {
+  color: #fbffe4;
+}
+
+.dark .warning-text strong {
+  color: #ff6b6b;
+}
+
+.dark .unenroll-details {
+  background: #181c20;
+  border-color: #20c997;
+}
+
+.dark .unenroll-details p {
+  color: #a3d1c6;
+}
+
+.dark .unenroll-details strong {
+  color: #20c997;
+}
+
+.dark .warning-note {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.dark .warning-note span {
+  color: #ff8787;
+}
+
+.dark .unenroll-btn {
+  background: #ef4444;
+}
+
+.dark .unenroll-btn:hover {
+  background: #dc2626;
+}
+
+.dark .dropdown-item.unenroll-item {
+  color: #ff6b6b;
+}
+
+.dark .dropdown-item.unenroll-item:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ff8787;
+}
+
+/* Mobile responsive for unenroll modal */
+@media (max-width: 768px) {
+  .unenroll-modal {
+    max-width: none;
+    width: 100%;
+  }
+
+  .unenroll-content {
+    padding: 1.25rem;
+  }
+
+  .warning-icon {
+    width: 70px;
+    height: 70px;
+    margin-bottom: 1.25rem;
+  }
+
+  .warning-text {
+    font-size: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .unenroll-details {
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .unenroll-details p {
+    font-size: 0.9rem;
+    margin: 0.4rem 0;
+  }
+
+  .warning-note {
+    padding: 0.875rem;
+    gap: 0.625rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .warning-note span {
+    font-size: 0.8rem;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .modal-actions .cancel-btn,
+  .modal-actions .unenroll-btn {
+    width: 100%;
+    padding: 0.875rem;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .warning-icon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .warning-text {
+    font-size: 0.95rem;
+  }
+
+  .unenroll-details p {
+    font-size: 0.85rem;
+  }
+
+  .warning-note span {
+    font-size: 0.75rem;
+  }
+}
+
+/* ==================== END UNENROLL MODAL STYLES ==================== */
 </style>
