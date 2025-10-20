@@ -118,10 +118,12 @@
                   <div class="teacher-card-left">
                     <div class="teacher-avatar">
                       <span>{{ teacher.teacher_name?.[0] || 'T' }}</span>
+                      <span v-if="teacherPresence[teacher.id]?.is_online" class="online-indicator" title="Online now"></span>
                     </div>
                     <div class="teacher-info">
                       <h4 class="teacher-name">{{ teacher.teacher_name }}</h4>
                       <p class="teacher-email">{{ teacher.email }}</p>
+                      <p class="presence-status">{{ getPresenceStatus(teacher.id) }}</p>
                     </div>
                   </div>
                   <div class="teacher-card-right">
@@ -539,6 +541,7 @@ const deletedConversationKeys = ref(new Set())
 
 // Real-time subscriptions
 let messageChannel = null
+let presenceChannel = null
 
 // Data
 const enrolledSubjects = ref([])
@@ -547,6 +550,7 @@ const notifications = ref([])
 const currentMessages = ref([])
 const currentUser = ref(null)
 const currentStudentId = ref(null)
+const teacherPresence = ref({})
 
 // ================================
 // FILE UPLOAD FUNCTIONS
@@ -1683,6 +1687,119 @@ const formatTime = (dateString) => {
   }
 }
 
+// Presence status methods
+const getPresenceStatus = (teacherId) => {
+  const presence = teacherPresence.value[teacherId]
+  if (!presence || !presence.last_seen) return 'Offline'
+  
+  if (presence.is_online) {
+    return 'Online now'
+  }
+  
+  const now = new Date()
+  const lastSeen = new Date(presence.last_seen)
+  const diffMs = now - lastSeen
+  const diffMinutes = Math.floor(diffMs / (1000 * 60))
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  
+  if (diffMinutes < 1) {
+    return 'Online now'
+  } else if (diffMinutes < 60) {
+    return `Offline for ${diffMinutes} minute${diffMinutes > 1 ? 's' : ''}`
+  } else if (diffHours < 24) {
+    return `Offline for ${diffHours} hour${diffHours > 1 ? 's' : ''}`
+  } else if (diffDays === 1) {
+    return 'Offline for a day'
+  } else if (diffDays < 7) {
+    return `Offline for ${diffDays} days`
+  } else {
+    return 'Offline for a while'
+  }
+}
+
+const setupPresenceTracking = async () => {
+  if (!currentStudentId.value) return
+  
+  // Get all teacher IDs from enrolled teachers
+  const teacherIds = [...new Set(enrolledTeachers.value.map(t => t.id))]
+  
+  if (teacherIds.length === 0) return
+  
+  // Fetch initial presence status for all teachers
+  const { data: presenceData, error } = await supabase
+    .from('user_presence')
+    .select('*')
+    .in('user_id', teacherIds)
+  
+  if (error) {
+    console.error('Error fetching teacher presence:', error)
+    return
+  }
+  
+  // Initialize presence data
+  if (presenceData) {
+    presenceData.forEach(p => {
+      teacherPresence.value[p.user_id] = {
+        is_online: p.is_online,
+        last_seen: p.last_seen
+      }
+    })
+  }
+  
+  // Subscribe to presence changes
+  presenceChannel = supabase
+    .channel('teacher-presence-tracking')
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'user_presence',
+        filter: `user_id=in.(${teacherIds.join(',')})`
+      },
+      (payload) => {
+        console.log('Presence update received:', payload)
+        
+        const userId = payload.new?.user_id || payload.old?.user_id
+        
+        if (payload.eventType === 'DELETE') {
+          if (teacherPresence.value[userId]) {
+            teacherPresence.value[userId].is_online = false
+          }
+        } else if (payload.new) {
+          teacherPresence.value[userId] = {
+            is_online: payload.new.is_online,
+            last_seen: payload.new.last_seen
+          }
+        }
+      }
+    )
+    .subscribe()
+  
+  console.log('Presence tracking setup complete for', teacherIds.length, 'teachers')
+}
+
+const updateStudentPresence = async (isOnline) => {
+  if (!currentUser.value) return
+  
+  try {
+    const { error } = await supabase
+      .from('user_presence')
+      .upsert({
+        user_id: currentUser.value.id,
+        is_online: isOnline,
+        last_seen: new Date().toISOString()
+      }, {
+        onConflict: 'user_id'
+      })
+    
+    if (error) throw error
+  } catch (error) {
+    console.error('Error updating student presence:', error)
+  }
+}
+
 // Lifecycle
 onMounted(async () => {
   console.log('Student messages component mounted')
@@ -1699,6 +1816,8 @@ onMounted(async () => {
     ])
     
     setupRealTimeSubscriptions()
+    await setupPresenceTracking()
+    await updateStudentPresence(true)
   } else {
     console.error('Authentication failed or user is not a student')
   }
@@ -1706,6 +1825,11 @@ onMounted(async () => {
 
 onUnmounted(() => {
   cleanupRealTimeSubscriptions()
+  if (presenceChannel) {
+    presenceChannel.unsubscribe()
+    presenceChannel = null
+  }
+  updateStudentPresence(false)
   document.removeEventListener('click', handleClickOutside)
 })
 </script>
@@ -2089,9 +2213,35 @@ onUnmounted(() => {
   font-weight: 600;
   font-size: 1rem;
   flex-shrink: 0;
+  position: relative;
 }
 .dark .teacher-avatar {
   background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
+}
+
+.online-indicator {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  background: #28a745;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.3);
+  animation: pulse-online 2s infinite;
+}
+.dark .online-indicator {
+  border-color: #23272b;
+}
+
+@keyframes pulse-online {
+  0%, 100% {
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.1);
+  }
 }
 
 .teacher-info {
@@ -2122,6 +2272,16 @@ onUnmounted(() => {
 }
 .dark .teacher-email {
   color: #adb5bd;
+}
+
+.presence-status {
+  font-size: 0.75rem;
+  color: #28a745;
+  margin: 0.25rem 0 0 0;
+  font-weight: 500;
+}
+.dark .presence-status {
+  color: #20c997;
 }
 
 .teacher-card-right {
