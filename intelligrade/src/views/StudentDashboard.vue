@@ -103,6 +103,72 @@
       <router-view />
     </main>
 
+    <!-- Floating Help & Support Button -->
+    <button class="floating-help-btn" @click="toggleHelpMenu" title="Help & Support">
+      <svg v-if="!isHelpMenuOpen" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M11,18H13V16H11V18M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,6A4,4 0 0,0 8,10H10A2,2 0 0,1 12,8A2,2 0 0,1 14,10C14,12 11,11.75 11,15H13C13,12.75 16,12.5 16,10A4,4 0 0,0 12,6Z" />
+      </svg>
+      <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+      </svg>
+    </button>
+
+    <!-- Help Menu -->
+    <transition name="help-menu">
+      <div v-if="isHelpMenuOpen" class="help-menu">
+        <div class="help-menu-header">
+          <h3>Help & Support</h3>
+          <p>How can we assist you today?</p>
+        </div>
+        <div class="help-menu-items">
+          <a href="#" class="help-menu-item" @click.prevent="openGuide">
+            <div class="help-item-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19,2L14,6.5V17.5L19,13V2M6.5,5C4.55,5 2.45,5.4 1,6.5V21.16C1,21.41 1.25,21.66 1.5,21.66C1.6,21.66 1.65,21.59 1.75,21.59C3.1,20.94 5.05,20.5 6.5,20.5C8.45,20.5 10.55,20.9 12,22C13.35,21.15 15.8,20.5 17.5,20.5C19.15,20.5 20.85,20.81 22.25,21.56C22.35,21.61 22.4,21.59 22.5,21.59C22.75,21.59 23,21.34 23,21.09V6.5C22.4,6.05 21.75,5.75 21,5.5V7.5L21,13V19C19.9,18.65 18.7,18.5 17.5,18.5C15.8,18.5 13.35,19.15 12,20V13L12,8.5V6.5C10.55,5.4 8.45,5 6.5,5Z" />
+              </svg>
+            </div>
+            <div class="help-item-content">
+              <h4>Student's Guide</h4>
+              <p>Learn how to use IntelliGrade effectively</p>
+            </div>
+          </a>
+          <a href="#" class="help-menu-item" @click.prevent="openFAQ">
+            <div class="help-item-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18,15H6L2,19V3A1,1 0 0,1 3,2H18A1,1 0 0,1 19,3V14A1,1 0 0,1 18,15M23,9V23L19,19H8A1,1 0 0,1 7,18V17H20V8H21A1,1 0 0,1 22,9Z" />
+              </svg>
+            </div>
+            <div class="help-item-content">
+              <h4>FAQ</h4>
+              <p>Find answers to common questions</p>
+            </div>
+          </a>
+          <a href="#" class="help-menu-item" @click.prevent="contactSupport">
+            <div class="help-item-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20,8L12,13L4,8V6L12,11L20,6M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z" />
+              </svg>
+            </div>
+            <div class="help-item-content">
+              <h4>Contact Support</h4>
+              <p>Get help from our support team</p>
+            </div>
+          </a>
+          <a href="#" class="help-menu-item" @click.prevent="reportIssue">
+            <div class="help-item-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z" />
+              </svg>
+            </div>
+            <div class="help-item-content">
+              <h4>Report an Issue</h4>
+              <p>Let us know about any problems</p>
+            </div>
+          </a>
+        </div>
+      </div>
+    </transition>
+
     <!-- Logout Confirmation Modal -->
     <div v-if="isLogoutModalVisible" class="modal-overlay" @click="hideLogoutModal">
       <div class="modal-container" @click.stop>
@@ -164,7 +230,8 @@ export default {
       isLogoutModalVisible: false,
       profileSubscription: null,
       studentSubscription: null,
-      currentProfileId: null
+      currentProfileId: null,
+      isHelpMenuOpen: false
     };
   },
   computed: {
@@ -496,6 +563,30 @@ export default {
         console.error('Error during logout:', error);
         this.$router.push('/');
       }
+    },
+
+    toggleHelpMenu() {
+      this.isHelpMenuOpen = !this.isHelpMenuOpen;
+    },
+
+    openGuide() {
+      alert('Student\'s Guide: Opening documentation...');
+      this.isHelpMenuOpen = false;
+    },
+
+    openFAQ() {
+      alert('FAQ: Opening frequently asked questions...');
+      this.isHelpMenuOpen = false;
+    },
+
+    contactSupport() {
+      alert('Contact Support: Opening support form...');
+      this.isHelpMenuOpen = false;
+    },
+
+    reportIssue() {
+      alert('Report Issue: Opening issue report form...');
+      this.isHelpMenuOpen = false;
     }
   }
 };
@@ -1171,6 +1262,170 @@ export default {
   
   .modal-title {
     font-size: 1.25rem;
+  }
+}
+
+/* Floating Help Button */
+.floating-help-btn {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 60px;
+  height: 60px;
+  background: var(--accent-color);
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 16px var(--shadow-strong);
+  color: white;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 999;
+}
+
+.floating-help-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 24px var(--shadow-strong);
+  background: var(--accent-hover);
+}
+
+.floating-help-btn:active {
+  transform: scale(0.95);
+}
+
+/* Help Menu */
+.help-menu {
+  position: fixed;
+  bottom: 6rem;
+  right: 2rem;
+  width: 320px;
+  background: var(--card-background);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px var(--shadow-strong);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  z-index: 998;
+}
+
+.help-menu-header {
+  padding: 1.5rem;
+  background: var(--bg-accent);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.help-menu-header h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--accent-color);
+  margin-bottom: 0.5rem;
+}
+
+.help-menu-header p {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.help-menu-items {
+  padding: 0.5rem;
+}
+
+.help-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+}
+
+.help-menu-item:last-child {
+  margin-bottom: 0;
+}
+
+.help-menu-item:hover {
+  background: var(--bg-accent);
+}
+
+.help-item-icon {
+  width: 40px;
+  height: 40px;
+  background: var(--accent-color);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.help-item-content {
+  flex: 1;
+}
+
+.help-item-content h4 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.help-item-content p {
+  font-size: 0.813rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* Help Menu Transitions */
+.help-menu-enter-active,
+.help-menu-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.help-menu-enter-from {
+  opacity: 0;
+  transform: translateY(20px) scale(0.95);
+}
+
+.help-menu-leave-to {
+  opacity: 0;
+  transform: translateY(20px) scale(0.95);
+}
+
+/* Responsive adjustments for floating button */
+@media (max-width: 768px) {
+  .floating-help-btn {
+    bottom: 1.5rem;
+    right: 1.5rem;
+    width: 56px;
+    height: 56px;
+  }
+  
+  .help-menu {
+    bottom: 5rem;
+    right: 1.5rem;
+    left: 1.5rem;
+    width: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .floating-help-btn {
+    bottom: 1rem;
+    right: 1rem;
+    width: 52px;
+    height: 52px;
+  }
+  
+  .help-menu {
+    bottom: 4.5rem;
+    right: 1rem;
+    left: 1rem;
   }
 }
 </style>
