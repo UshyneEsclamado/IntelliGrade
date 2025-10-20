@@ -285,7 +285,7 @@ const router = createRouter({
   routes
 })
 
-// Enhanced Navigation Guard with Better Error Handling
+// Enhanced Navigation Guard with Better Error Handling and Refresh Support
 router.beforeEach(async (to, from, next) => {
   console.log('=== ROUTER NAVIGATION START ===')
   console.log('From:', from.path)
@@ -293,20 +293,61 @@ router.beforeEach(async (to, from, next) => {
   console.log('Route meta:', to.meta)
   
   try {
-    // Get current session
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    // Get current session with retry logic for refresh scenarios
+    let session = null
+    let sessionError = null
+    
+    // Try to get session, with retry on refresh
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const result = await supabase.auth.getSession()
+      session = result.data?.session
+      sessionError = result.error
+      
+      if (!sessionError && session) {
+        break // Success
+      }
+      
+      if (attempt < 2) {
+        console.log(`Session attempt ${attempt + 1} failed, retrying...`)
+        await new Promise(resolve => setTimeout(resolve, 100)) // Small delay
+      }
+    }
     
     if (sessionError) {
-      console.error('Session error:', sessionError)
-      // Clear potentially corrupted session
-      await supabase.auth.signOut()
+      console.error('Session error after retries:', sessionError)
+      // Only sign out on authentication errors, not network errors
+      if (sessionError.message?.includes('Invalid') || sessionError.message?.includes('Expired')) {
+        await supabase.auth.signOut()
+      }
     }
 
     const isAuthenticated = !!session?.user
     console.log('Is authenticated:', isAuthenticated)
 
-    // Allow access to guest-only routes (login, signup) even if authenticated
-    // This lets users re-login or switch accounts from the login page
+    // Handle guest-only routes (redirect authenticated users away)
+    if (to.meta.guestOnly && isAuthenticated) {
+      console.log('Guest-only route but user is authenticated, redirecting to dashboard')
+      
+      // Get user role to redirect to correct dashboard
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('auth_user_id', session.user.id)
+          .single()
+        
+        const redirectPath = profile?.role === 'student' 
+          ? '/student/dashboard' 
+          : '/teacher/dashboard'
+        next(redirectPath)
+        return
+      } catch (error) {
+        console.error('Error getting profile for redirect:', error)
+        // Fallback to teacher dashboard
+        next('/teacher/dashboard')
+        return
+      }
+    }
 
     // Handle routes that require authentication
     if (to.meta.requiresAuth) {
@@ -319,46 +360,54 @@ router.beforeEach(async (to, from, next) => {
 
       console.log('Valid session found for user:', session.user.email)
 
-      // Handle role-based access
+      // Handle role-based access with better error handling
       if (to.meta.role) {
         console.log('Checking role requirement:', to.meta.role)
         
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('auth_user_id', session.user.id)
-          .single()
+        try {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('auth_user_id', session.user.id)
+            .single()
 
-        if (profileError) {
-          console.error('Profile fetch error:', profileError)
-          console.log('→ Redirecting to login due to profile error')
-          await supabase.auth.signOut()
-          next('/login')
+          if (profileError) {
+            console.error('Profile fetch error:', profileError)
+            // Don't immediately sign out - might be a temporary network issue
+            // Allow access and let the component handle it
+            console.log('→ Profile error, but allowing navigation (component will handle)')
+            next()
+            return
+          }
+
+          if (!profile) {
+            console.error('No profile found for authenticated user')
+            console.log('→ No profile found, redirecting to role selection')
+            next('/role-selection')
+            return
+          }
+
+          console.log('User profile role:', profile.role)
+
+          if (profile.role !== to.meta.role) {
+            console.log('Role mismatch! Required:', to.meta.role, 'Got:', profile.role)
+            // Redirect to appropriate dashboard based on actual role
+            const redirectPath = profile.role === 'student' 
+              ? '/student/dashboard' 
+              : '/teacher/dashboard'
+            console.log('→ Redirecting to correct dashboard:', redirectPath)
+            next(redirectPath)
+            return
+          }
+
+          console.log('✓ Role check passed')
+        } catch (roleError) {
+          console.error('Role check error:', roleError)
+          // Allow navigation to continue, let component handle the auth state
+          console.log('→ Role check failed, but allowing navigation')
+          next()
           return
         }
-
-        if (!profile) {
-          console.error('No profile found for authenticated user')
-          console.log('→ Redirecting to login due to missing profile')
-          await supabase.auth.signOut()
-          next('/login')
-          return
-        }
-
-        console.log('User profile role:', profile.role)
-
-        if (profile.role !== to.meta.role) {
-          console.log('Role mismatch! Required:', to.meta.role, 'Got:', profile.role)
-          // Redirect to appropriate dashboard based on actual role
-          const redirectPath = profile.role === 'student' 
-            ? '/student/dashboard' 
-            : '/teacher/dashboard'
-          console.log('→ Redirecting to correct dashboard:', redirectPath)
-          next(redirectPath)
-          return
-        }
-
-        console.log('✓ Role check passed')
       }
       
       console.log('✓ Authorization successful, proceeding to:', to.path)
@@ -374,15 +423,23 @@ router.beforeEach(async (to, from, next) => {
     console.error('=== NAVIGATION GUARD ERROR ===')
     console.error('Error details:', error)
     
-    // On any error, clear session and redirect to login for protected routes
+    // On any error, be more forgiving for protected routes
     if (to.meta.requiresAuth) {
-      console.log('→ Error on protected route, redirecting to login')
-      try {
-        await supabase.auth.signOut()
-      } catch (signOutError) {
-        console.error('Sign out error:', signOutError)
+      console.log('→ Error on protected route, but being more forgiving')
+      // Only redirect to login on authentication-specific errors
+      if (error.message?.includes('Invalid') || error.message?.includes('Expired') || error.message?.includes('JWT')) {
+        console.log('→ Authentication error detected, redirecting to login')
+        try {
+          await supabase.auth.signOut()
+        } catch (signOutError) {
+          console.error('Sign out error:', signOutError)
+        }
+        next('/login')
+      } else {
+        // For network or other errors, allow navigation and let component handle
+        console.log('→ Non-auth error, allowing navigation')
+        next()
       }
-      next('/login')
     } else {
       // Allow access to public routes even on error
       console.log('→ Error on public route, allowing access')

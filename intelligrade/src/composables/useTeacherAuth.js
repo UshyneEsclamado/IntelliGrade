@@ -12,7 +12,7 @@ const authListener = ref(null)
 export function useTeacherAuth() {
   const router = useRouter()
 
-  // Initialize authentication once and reuse
+  // Initialize authentication once and reuse - with better persistence
   const initializeAuth = async (force = false) => {
     if (isInitialized.value && !force) {
       return { success: true, user: currentUser.value, teacher: teacherInfo.value }
@@ -39,52 +39,99 @@ export function useTeacherAuth() {
     isLoading.value = true
 
     try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      // Try to get session with retry logic for refresh scenarios
+      let session = null
+      let sessionError = null
+      
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const result = await supabase.auth.getSession()
+        session = result.data?.session
+        sessionError = result.error
+        
+        if (!sessionError && session) {
+          break
+        }
+        
+        if (attempt < 2) {
+          await new Promise(resolve => setTimeout(resolve, 200))
+        }
+      }
       
       if (sessionError) {
-        console.error('Session error:', sessionError)
-        throw sessionError
+        console.error('Session error after retries:', sessionError)
+        // Only fail on authentication errors, not network errors
+        if (sessionError.message?.includes('Invalid') || sessionError.message?.includes('Expired')) {
+          throw sessionError
+        }
       }
       
       if (!session?.user) {
         console.warn('No active session')
-        await router.push('/login')
-        return { success: false }
+        return { success: false, needsLogin: true }
       }
       
       currentUser.value = session.user
       
-      // Get profile data
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, role, full_name, email')
-        .eq('auth_user_id', session.user.id)
-        .single()
+      // Get profile data with retry
+      let profile = null
+      let profileError = null
+      
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const result = await supabase
+          .from('profiles')
+          .select('id, role, full_name, email')
+          .eq('auth_user_id', session.user.id)
+          .single()
+        
+        profile = result.data
+        profileError = result.error
+        
+        if (!profileError && profile) {
+          break
+        }
+        
+        if (attempt < 1) {
+          await new Promise(resolve => setTimeout(resolve, 300))
+        }
+      }
       
       if (profileError || !profile) {
         console.error('Profile error:', profileError)
-        await router.push('/login')
-        return { success: false }
+        return { success: false, needsLogin: true }
       }
 
       if (profile.role !== 'teacher') {
         console.warn('User is not a teacher')
-        await router.push('/login')
-        return { success: false }
+        return { success: false, wrongRole: true }
       }
 
-      // Get teacher details
-      const { data: teacher, error: teacherError } = await supabase
-        .from('teachers')
-        .select('*')
-        .eq('profile_id', profile.id)
-        .eq('is_active', true)
-        .single()
+      // Get teacher details with retry
+      let teacher = null
+      let teacherError = null
+      
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const result = await supabase
+          .from('teachers')
+          .select('*')
+          .eq('profile_id', profile.id)
+          .eq('is_active', true)
+          .single()
+        
+        teacher = result.data
+        teacherError = result.error
+        
+        if (!teacherError && teacher) {
+          break
+        }
+        
+        if (attempt < 1) {
+          await new Promise(resolve => setTimeout(resolve, 300))
+        }
+      }
 
       if (teacherError || !teacher) {
         console.error('Teacher error:', teacherError)
-        await router.push('/login')
-        return { success: false }
+        return { success: false, needsLogin: true }
       }
 
       teacherInfo.value = { ...teacher, profile }
@@ -95,8 +142,7 @@ export function useTeacherAuth() {
 
     } catch (error) {
       console.error('Authentication error:', error)
-      await router.push('/login')
-      return { success: false }
+      return { success: false, needsLogin: true }
     } finally {
       isLoading.value = false
     }

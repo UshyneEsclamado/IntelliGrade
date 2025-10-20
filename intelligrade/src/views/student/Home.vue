@@ -1981,64 +1981,383 @@ export default {
 @media (max-width: 1024px) {
   .content-grid {
     grid-template-columns: 1fr;
+    gap: 1.5rem;
   }
 }
 
 @media (max-width: 768px) {
-  .floating-help-btn {
-    width: 50px;
-    height: 50px;
-    bottom: 1.5rem;
-    right: 1.5rem;
+  .home-container {
+    padding: 0;
+    min-height: calc(100vh - 150px);
+    margin-bottom: 0;
   }
 
-  .modal-overlay {
-    padding: 10px;
+  /* Header adjustments for mobile */
+  .header-card {
+    margin: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border-radius: 12px;
   }
 
-  .modal-content {
-    max-height: 95vh;
-  }
-
-  .document-modal {
-    max-width: 100%;
-  }
-
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .quick-links {
-    grid-template-columns: 1fr;
-  }
-  
   .header-content {
     flex-direction: column;
+    align-items: flex-start;
     gap: 1rem;
   }
-  
+
   .header-left {
     width: 100%;
   }
-  
-  .notif-wrapper {
-    align-self: flex-end;
+
+  .user-icon {
+    width: 50px;
+    height: 50px;
   }
-  
+
+  .header-title {
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .header-subtitle {
+    font-size: 0.9rem;
+  }
+
+  /* Notification improvements for mobile */
+  .notif-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .notif-btn {
+    padding: 0.75rem;
+    border-radius: 12px;
+  }
+
   .notif-dropdown {
-    right: 0;
-    left: auto;
-    width: calc(100vw - 3rem);
-    max-width: 320px;
+    position: fixed;
+    top: 80px;
+    right: 1rem;
+    left: 1rem;
+    width: auto;
+    max-height: 60vh;
+    overflow-y: auto;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Stats grid mobile optimization */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin: 0 1rem 1.5rem 1rem;
+  }
+
+  .stat-card {
+    padding: 1rem;
+    border-radius: 12px;
+    min-height: 80px;
+  }
+
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 0.5rem;
+  }
+
+  .stat-number {
+    font-size: 1.5rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
+  }
+
+  /* Content grid mobile layout */
+  .content-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin: 0 1rem;
+  }
+
+  .content-card {
+    border-radius: 16px;
+    padding: 1.25rem;
+  }
+
+  .card-header h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .card-desc {
+    font-size: 0.85rem;
+  }
+
+  /* Assessment list mobile optimization */
+  .assessment-list {
+    max-height: 300px;
+    gap: 0.75rem;
+  }
+
+  .assessment-item {
+    padding: 1rem;
+    border-radius: 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .assessment-info {
+    width: 100%;
+  }
+
+  .assessment-info h4 {
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .assessment-class {
+    font-size: 0.8rem;
+  }
+
+  .assessment-progress {
+    font-size: 0.75rem;
+  }
+
+  .assessment-due {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .due-date {
+    font-size: 0.8rem;
+  }
+
+  .status {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.75rem;
+    border-radius: 8px;
+  }
+
+  .grade-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+    width: 100%;
+  }
+
+  /* Quick links mobile optimization */
+  .quick-links {
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+  }
+
+  .quick-link {
+    min-width: 140px;
+    padding: 1rem;
+    border-radius: 12px;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+
+  .quick-link svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .quick-link span {
+    font-size: 0.8rem;
+  }
+
+  /* Quick actions mobile layout */
+  .actions-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .action-card {
+    padding: 1.25rem;
+    border-radius: 12px;
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .action-icon {
+    width: 50px;
+    height: 50px;
+    flex-shrink: 0;
+  }
+
+  .action-content {
+    flex: 1;
+    text-align: left;
+  }
+
+  .action-content h3 {
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .action-content p {
+    font-size: 0.85rem;
+  }
+
+  /* Empty state mobile adjustments */
+  .empty-state {
+    padding: 2rem 1rem;
+  }
+
+  .empty-state h3 {
+    font-size: 1.1rem;
+  }
+
+  .empty-state p {
+    font-size: 0.9rem;
+  }
+
+  /* Modal adjustments for mobile */
+  .modal-overlay {
+    padding: 1rem;
+  }
+
+  .modal-content {
+    margin: 0;
+    border-radius: 16px;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .document-modal {
+    max-width: none;
+    width: 100%;
+  }
+
+  .modal-header {
+    padding: 1.25rem;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .modal-header h3 {
+    font-size: 1.1rem;
+  }
+
+  .modal-body {
+    padding: 1.25rem;
+  }
+
+  .document-content h4 {
+    font-size: 1.1rem;
+  }
+
+  .document-content h5 {
+    font-size: 1rem;
+  }
+
+  .document-content p {
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  /* Floating help button mobile position */
+  .floating-help-btn {
+    bottom: 10rem;
+    right: 1rem;
+    width: 52px;
+    height: 52px;
   }
 }
 
 @media (max-width: 480px) {
-  .floating-help-btn {
+  /* Extra small mobile optimizations */
+  .header-card {
+    margin: 0.75rem;
+    padding: 0.875rem;
+  }
+
+  .header-title {
+    font-size: 1.125rem;
+  }
+
+  .stats-grid {
+    margin: 0 0.75rem 1.25rem 0.75rem;
+    gap: 0.75rem;
+  }
+
+  .stat-card {
+    padding: 0.875rem;
+    min-height: 70px;
+  }
+
+  .stat-number {
+    font-size: 1.25rem;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+  }
+
+  .content-grid {
+    margin: 0 0.75rem;
+    gap: 1.25rem;
+  }
+
+  .content-card {
+    padding: 1rem;
+  }
+
+  .assessment-item {
+    padding: 0.875rem;
+  }
+
+  .quick-link {
+    min-width: 120px;
+    padding: 0.875rem;
+  }
+
+  .action-card {
+    padding: 1rem;
+  }
+
+  .action-icon {
     width: 45px;
     height: 45px;
-    bottom: 1rem;
-    right: 1rem;
+  }
+
+  .notif-dropdown {
+    top: 75px;
+    right: 0.75rem;
+    left: 0.75rem;
+  }
+
+  /* Notification items mobile touch optimization */
+  .notif-item {
+    padding: 1rem;
+    border-radius: 12px;
+    min-height: 60px;
+  }
+
+  .notif-title {
+    font-size: 0.9rem;
+  }
+
+  .notif-body {
+    font-size: 0.8rem;
+  }
+
+  .floating-help-btn {
+    bottom: 10rem;
+    right: 0.75rem;
+    width: 48px;
+    height: 48px;
   }
 
   .floating-help-btn svg {

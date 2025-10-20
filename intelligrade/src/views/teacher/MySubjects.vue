@@ -776,70 +776,110 @@
       </div>
     </div>
 
-    <!-- Empty State -->
-    <div v-if="viewMode === 'subjects' && subjects.length === 0" class="empty-state">
-      <div class="empty-icon">
-        <svg width="48" height="48" fill="none" viewBox="0 0 24 24">
-          <path fill="currentColor" d="M12 2a2 2 0 0 1 2 2v1h4a2 2 0 0 1 2 2v1H4V7a2 2 0 0 1 2-2h4V4a2 2 0 0 1 2-2Zm8 7v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9h16Zm-2 2H6v7h12v-7Z"/>
-        </svg>
-      </div>
-      <div class="empty-title">No Subjects Created Yet</div>
-      <div class="empty-desc">Create your first subject to start managing your classes and student sections</div>
-      <button class="create-quiz-btn" @click="showCreateModal = true">Create Your First Subject</button>
-    </div>
-
-    <!-- Subjects Grid -->
-    <div v-if="viewMode === 'subjects' && subjects.length > 0" class="subjects-grid enhanced">
-      <div v-for="subject in subjects" :key="subject.id" class="subject-card enhanced">
-        <!-- Subject Card Header with Menu -->
-        <div class="subject-card-header">
-          <div class="subject-title-area" @click="selectSubject(subject)">
-            <div class="subject-icon" :title="subject.subject_name">
-              <span class="subject-initial">{{ subject.subject_name.charAt(0) }}</span>
-            </div>
-            <div class="subject-info">
-              <h3 class="subject-title">{{ subject.subject_name }}</h3>
-              <p class="grade-level">{{ subject.grade_level_display }}</p>
-            </div>
-          </div>
-          
-          <!-- Subject Menu (3 dots) -->
-          <div class="subject-menu-container">
-            <button class="subject-menu-btn" @click.stop="toggleSubjectMenu(subject.id)" title="More Options">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <circle cx="5" cy="12" r="2" />
-                <circle cx="12" cy="12" r="2" />
-                <circle cx="19" cy="12" r="2" />
-              </svg>
-            </button>
-            <transition name="dropdown">
-              <div v-if="openSubjectMenuId === subject.id" class="subject-dropdown-menu">
-                <button @click.stop="editSubject(subject)" class="menu-item">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
-                  </svg>
-                  Edit Subject
-                </button>
-                <button @click.stop="openDeleteModal('subject', subject)" class="menu-item delete">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
-                  </svg>
-                  Delete Subject
-                </button>
-              </div>
-            </transition>
-          </div>
-          
-          <div class="arrow-icon" @click="selectSubject(subject)">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" />
+    <!-- Search Bar and Subjects Grid -->
+    <div v-if="viewMode === 'subjects'">
+      <!-- Search Bar with Dropdown -->
+      <div class="subject-search-bar enhanced extra">
+        <div class="search-group extra">
+          <select v-model="subjectDropdown" class="subject-dropdown enhanced extra">
+            <option v-for="option in subjectOptions" :key="option" :value="option.toLowerCase()">{{ option }}</option>
+          </select>
+          <div class="search-divider"></div>
+          <input
+            v-model="searchQuery"
+            class="subject-search-input enhanced extra"
+            type="text"
+            placeholder="Search subjects..."
+            @keyup.enter.prevent
+          />
+          <button class="search-btn extra" tabindex="0" aria-label="Search" @click.prevent>
+            <svg width="20" height="20" fill="none" viewBox="0 0 20 20">
+              <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="2"/>
+              <line x1="14.5" y1="14.5" x2="18" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
-          </div>
+          </button>
         </div>
-        
-        <div class="subject-divider"></div>
-        <div class="subject-stats-container" @click="selectSubject(subject)">
-          <p class="subject-stats-simple">{{ subject.section_count }} sections • {{ subject.total_students }} students</p>
+      </div>
+      
+      <!-- Empty State -->
+      <div v-if="subjects.length === 0" class="empty-state">
+        <div class="empty-icon">
+          <svg width="48" height="48" fill="none" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12 2a2 2 0 0 1 2 2v1h4a2 2 0 0 1 2 2v1H4V7a2 2 0 0 1 2-2h4V4a2 2 0 0 1 2-2Zm8 7v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9h16Zm-2 2H6v7h12v-7Z"/>
+          </svg>
+        </div>
+        <div class="empty-title">No Subjects Created Yet</div>
+        <div class="empty-desc">Create your first subject to start managing your classes and student sections</div>
+        <button class="create-quiz-btn" @click="showCreateModal = true">Create Your First Subject</button>
+      </div>
+      
+      <!-- Filtered Results -->
+      <div v-else-if="filteredSubjects.length === 0" class="empty-state">
+        <div class="empty-icon">
+          <svg width="48" height="48" fill="none" viewBox="0 0 48 48">
+            <rect x="8" y="16" width="32" height="24" rx="4" fill="#B3D8A8"/>
+            <rect x="8" y="16" width="32" height="24" rx="4" stroke="#3D8D7A" stroke-width="2"/>
+            <rect x="14" y="22" width="20" height="8" rx="2" fill="#FBFFE4"/>
+            <rect x="14" y="22" width="20" height="8" rx="2" stroke="#3D8D7A" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <div class="empty-title">No subjects found</div>
+        <div class="empty-desc">Try adjusting your search or filter.</div>
+      </div>
+
+      <!-- Subjects Grid -->
+      <div v-else class="subjects-grid enhanced">
+        <div v-for="subject in filteredSubjects" :key="subject.id" class="subject-card enhanced">
+          <!-- Subject Card Header with Menu -->
+          <div class="subject-card-header">
+            <div class="subject-title-area" @click="selectSubject(subject)">
+              <div class="subject-icon" :title="subject.subject_name">
+                <span class="subject-initial">{{ (subject.subject_name || subject.name || 'N').charAt(0) }}</span>
+              </div>
+              <div class="subject-info">
+                <h3 class="subject-title">{{ subject.subject_name || subject.name }}</h3>
+                <p class="grade-level">{{ subject.grade_level_display }}</p>
+              </div>
+            </div>
+            
+            <!-- Subject Menu (3 dots) -->
+            <div class="subject-menu-container">
+              <button class="subject-menu-btn" @click.stop="toggleSubjectMenu(subject.id)" title="More Options">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="5" cy="12" r="2" />
+                  <circle cx="12" cy="12" r="2" />
+                  <circle cx="19" cy="12" r="2" />
+                </svg>
+              </button>
+              <transition name="dropdown">
+                <div v-if="openSubjectMenuId === subject.id" class="subject-dropdown-menu">
+                  <button @click.stop="editSubject(subject)" class="menu-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
+                    </svg>
+                    Edit Subject
+                  </button>
+                  <button @click.stop="openDeleteModal('subject', subject)" class="menu-item delete">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
+                    </svg>
+                    Delete Subject
+                  </button>
+                </div>
+              </transition>
+            </div>
+            
+            <div class="arrow-icon" @click="selectSubject(subject)">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" />
+              </svg>
+            </div>
+          </div>
+          
+          <div class="subject-divider"></div>
+          <div class="subject-stats-container" @click="selectSubject(subject)">
+            <p class="subject-stats-simple">{{ subject.section_count }} sections • {{ subject.total_students }} students</p>
+          </div>
         </div>
       </div>
     </div>
@@ -1378,11 +1418,8 @@
     <!-- Loading Overlay -->
     <div v-if="isLoading" class="loading-overlay">
       <div class="loading-content">
-        <div class="loading-spinner-container">
-          <div class="loading-spinner"></div>
-        </div>
-        <p class="loading-text">{{ loadingMessage || 'Loading your subjects...' }}</p>
-        <p class="loading-subtext">Please wait a moment...</p>
+        <div class="loading-spinner"></div>
+        <p class="loading-text">{{ loadingMessage || 'Loading...' }}</p>
       </div>
     </div>
 
@@ -1425,6 +1462,10 @@ const selectedSection = ref(null)
 const viewMode = ref('subjects')
 const selectedGradeFilter = ref('all')
 
+// Search and filter states
+const searchQuery = ref('')
+const subjectDropdown = ref('all')
+
 // Modal states
 const showCreateModal = ref(false)
 const showStudentRosterModal = ref(false)
@@ -1463,6 +1504,37 @@ const formData = ref({
 // Computed
 const canProceedToStep2 = computed(() => {
   return formData.value.name && formData.value.grade_level && formData.value.number_of_sections
+})
+
+// Subject filtering and search
+const subjectOptions = computed(() => {
+  const names = subjects.value.map(s => s.subject_name || s.name)
+  const unique = Array.from(new Set(names.filter(Boolean)))
+  unique.sort((a, b) => a.localeCompare(b))
+  return ['All', ...unique]
+})
+
+const filteredSubjects = computed(() => {
+  let filtered = subjects.value
+  
+  // Filter by dropdown selection
+  if (subjectDropdown.value && subjectDropdown.value.toLowerCase() !== 'all') {
+    filtered = filtered.filter(s => {
+      const subjectName = (s.subject_name || s.name || '').toLowerCase()
+      return subjectName === subjectDropdown.value.toLowerCase()
+    })
+  }
+  
+  // Filter by search query
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.trim().toLowerCase()
+    filtered = filtered.filter(s => {
+      const subjectName = (s.subject_name || s.name || '').toLowerCase()
+      return subjectName.includes(query)
+    })
+  }
+  
+  return filtered
 })
 
 const filteredSections = computed(() => {
@@ -2244,10 +2316,21 @@ onMounted(async () => {
   try {
     initDarkMode()
     
-    if (!isAuthenticated.value) {
-      console.warn('Not authenticated, redirecting to login')
-      await router.push('/login')
-      return
+    // Initialize authentication with better error handling
+    const { initializeAuth, setupAuthListener } = useTeacherAuth()
+    setupAuthListener()
+    
+    // Try to initialize auth, with fallback for refresh scenarios
+    const authResult = await initializeAuth()
+    
+    if (!authResult.success) {
+      if (authResult.needsLogin || authResult.wrongRole) {
+        console.warn('Authentication failed, redirecting to login')
+        await router.push('/login')
+        return
+      }
+      // For network errors, continue and try to load data anyway
+      console.warn('Auth initialization had issues, but continuing...')
     }
     
     // Wait a moment for teacherInfo to be available, then fetch
@@ -2255,17 +2338,28 @@ onMounted(async () => {
       if (teacherInfo.value?.id) {
         clearInterval(checkTeacherInfo)
         await fetchSubjects()
+      } else if (authResult.success === false && authResult.needsLogin) {
+        // Clear interval if we know auth failed definitively
+        clearInterval(checkTeacherInfo)
       }
-    }, 100)
+    }, 200)
 
-    // Timeout after 5 seconds
-    setTimeout(() => clearInterval(checkTeacherInfo), 5000)
+    // Timeout after 10 seconds (more generous for slow connections)
+    setTimeout(() => {
+      clearInterval(checkTeacherInfo)
+      // If still no teacher info after 10 seconds, but we have some auth, try fetching anyway
+      if (!teacherInfo.value?.id && isAuthenticated.value) {
+        console.warn('Timeout waiting for teacher info, but authenticated - trying to fetch anyway')
+        fetchSubjects()
+      }
+    }, 10000)
     
     document.addEventListener('click', handleClickOutside)
     
   } catch (error) {
     console.error('Component mount error:', error)
-    await router.push('/login')
+    // Don't immediately redirect on error - might be a network issue
+    // Let the router guard handle auth redirections
   }
 })
 
@@ -2276,6 +2370,176 @@ onUnmounted(() => {
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* Further Enhanced Search Bar Styles */
+.subject-search-bar.enhanced.extra {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin: 1.5rem 0 1.5rem 0;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(90deg, #fbffe4 80%, #e6f7f1 100%);
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.10);
+  border: 1.5px solid #a3d1c6;
+  transition: box-shadow 0.18s, background 0.18s;
+}
+.dark .subject-search-bar.enhanced.extra {
+  background: #232c2d;
+  box-shadow: 0 1.5px 6px rgba(0,0,0,0.10);
+  border: 1.5px solid #2a3c36;
+  border-radius: 18px;
+}
+.search-group.extra {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 0;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.08);
+  border: 1.5px solid #a3d1c6;
+  overflow: hidden;
+  position: relative;
+  transition: box-shadow 0.18s;
+}
+.dark .search-group.extra {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+.subject-dropdown.enhanced.extra {
+  border: none;
+  border-radius: 12px 0 0 12px;
+  background: transparent;
+  color: #3d8d7a;
+  font-weight: 500;
+  font-size: 1rem;
+  min-width: 120px;
+  padding: 0.7rem 1.2rem 0.7rem 1.1rem;
+  outline: none;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+  z-index: 2;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%233d8d7a" height="20" viewBox="0 0 20 20" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M5.516 7.548a.75.75 0 0 1 1.06 0L10 10.97l3.424-3.423a.75.75 0 1 1 1.06 1.06l-3.954 3.954a.75.75 0 0 1-1.06 0L5.516 8.608a.75.75 0 0 1 0-1.06z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 1.1em;
+  padding-right: 2em;
+}
+.dark .subject-dropdown.enhanced.extra {
+  color: #b3d8a8;
+  background-color: #232c2d;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%23b3d8a8" height="20" viewBox="0 0 20 20" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M5.516 7.548a.75.75 0 0 1 1.06 0L10 10.97l3.424-3.423a.75.75 0 1 1 1.06 1.06l-3.954 3.954a.75.75 0 0 1-1.06 0L5.516 8.608a.75.75 0 0 1 0-1.06z"/></svg>');
+  color-scheme: dark;
+}
+.subject-dropdown.enhanced.extra:focus {
+  background: #e6f7f1;
+  box-shadow: 0 0 0 2px #a3d1c6;
+}
+.dark .subject-dropdown.enhanced.extra:focus {
+  background-color: #232c2d;
+  box-shadow: none;
+}
+.dark .subject-dropdown.enhanced.extra option {
+  background-color: #232c2d;
+  color: #b3d8a8;
+}
+.search-divider {
+  width: 1.5px;
+  height: 2.2rem;
+  background: #e6f7f1;
+  margin: 0 0.1rem;
+  align-self: stretch;
+  z-index: 1;
+}
+.dark .search-divider {
+  background: #23332d;
+}
+.subject-search-input.enhanced.extra {
+  flex: 1;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: #3d8d7a;
+  font-size: 1rem;
+  padding: 0.7rem 1.2rem 0.7rem 0.9rem;
+  outline: none;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+  z-index: 2;
+}
+.dark .subject-search-input.enhanced.extra {
+  color: #b3d8a8;
+  background: transparent;
+}
+.subject-search-input.enhanced.extra:focus {
+  background: #e6f7f1;
+  box-shadow: 0 0 0 2px #a3d1c6;
+}
+.dark .subject-search-input.enhanced.extra:focus {
+  background: #23332d;
+  box-shadow: 0 0 0 2px #3d8d7a;
+}
+.search-btn.extra {
+  background: none;
+  border: none;
+  border-radius: 0 12px 12px 0;
+  color: #3d8d7a;
+  padding: 0.7rem 1.1rem 0.7rem 0.7rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background 0.18s, color 0.18s, transform 0.15s;
+  outline: none;
+  z-index: 2;
+  box-shadow: none;
+}
+.search-btn.extra:focus, .search-btn.extra:hover {
+  background: #e6f7f1;
+  color: #17815c;
+  transform: scale(1.08);
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
+}
+.dark .search-btn.extra {
+  color: #b3d8a8;
+  background: transparent;
+}
+.dark .search-btn.extra:focus, .dark .search-btn.extra:hover {
+  background: #23332d;
+  color: #a3d1c6;
+  transform: scale(1.08);
+  box-shadow: 0 2px 8px rgba(163, 209, 198, 0.18);
+}
+@media (max-width: 768px) {
+  .subject-search-bar.enhanced.extra {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0.75rem 0.5rem;
+  }
+  .search-group.extra {
+    flex-direction: column;
+    border-radius: 12px;
+    box-shadow: none;
+    border: none;
+    gap: 0.5rem;
+  }
+  .subject-dropdown.enhanced.extra, .subject-search-input.enhanced.extra {
+    border-radius: 12px;
+    width: 100%;
+    min-width: 0;
+    padding: 0.7rem 1.2rem;
+  }
+  .search-divider {
+    display: none;
+  }
+  .search-btn.extra {
+    border-radius: 12px;
+    width: 100%;
+    justify-content: center;
+  }
+}
 
 * {
   margin: 0;
@@ -3359,94 +3623,62 @@ onUnmounted(() => {
   }
 }
 
-/* Loading Overlay (matching Subjects.vue) */
+/* Simple Loading Overlay */
 .loading-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(251, 255, 228, 0.95);
-  backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
-  animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
 }
 
 .loading-content {
   background: white;
-  padding: 3rem 4rem;
-  border-radius: 20px;
+  padding: 2rem;
+  border-radius: 8px;
   text-align: center;
-  box-shadow: 0 20px 60px rgba(61, 141, 122, 0.15);
-  border: 2px solid #a3d1c6;
-  animation: slideUp 0.4s ease;
+  min-width: 200px;
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.loading-spinner-container {
-  position: relative;
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 1.5rem;
+.dark .loading-content {
+  background: #232c2d;
+  color: #b3d8a8;
 }
 
 .loading-spinner {
-  width: 80px;
-  height: 80px;
-  border: 5px solid rgba(61, 141, 122, 0.1);
-  border-left: 5px solid #3d8d7a;
-  border-top: 5px solid #20c997;
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e5e7eb;
+  border-top: 3px solid #3d8d7a;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin: 0 auto;
-  box-shadow: 0 0 20px rgba(61, 141, 122, 0.1);
+  margin: 0 auto 1rem;
+}
+
+.dark .loading-spinner {
+  border: 3px solid #2a3c36;
+  border-top: 3px solid #b3d8a8;
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .loading-text {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #181c20;
-  margin: 0 0 0.5rem 0;
-  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #374151;
+  margin: 0;
 }
 
-.loading-subtext {
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #3d8d7a;
-  margin: 0;
-  font-family: 'Inter', sans-serif;
+.dark .loading-text {
+  color: #b3d8a8;
 }
 
 /* ============================================

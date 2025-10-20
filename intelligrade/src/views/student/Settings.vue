@@ -1969,11 +1969,18 @@ input:checked + .slider:before {
 /* Responsive */
 @media (max-width: 768px) {
   .page-container {
-    padding: 1rem;
+    padding: 1rem 1rem 0 1rem;
+    min-height: calc(100vh - 80px);
+  }
+  
+  .main-wrapper {
+    min-height: calc(100vh - 80px);
+    padding-bottom: 100px;
   }
   
   .header-card {
     padding: 1.5rem;
+    margin-bottom: 1rem;
   }
   
   .header-left {
@@ -1995,7 +2002,24 @@ input:checked + .slider:before {
   }
   
   .settings-card {
-    padding: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .setting-item {
+    min-height: 50px;
+    padding: 0.75rem;
+  }
+  
+  .action-btn {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 12px;
+  }
+  
+  .setting-toggle {
+    min-width: 44px;
+    min-height: 44px;
   }
   
   .modal-overlay {
@@ -2004,6 +2028,7 @@ input:checked + .slider:before {
   
   .modal-content {
     max-height: 95vh;
+    margin: 10px;
   }
   
   .modal-header, .modal-footer, .modal-body {
@@ -2022,22 +2047,165 @@ input:checked + .slider:before {
   .floating-help-btn {
     width: 50px;
     height: 50px;
-    bottom: 1.5rem;
+    bottom: 100px;
     right: 1.5rem;
+  }
+  
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+  
+  .form-group label {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    min-height: 44px;
+    font-size: 16px;
+    padding: 12px;
   }
 }
 
 @media (max-width: 480px) {
+  .page-container {
+    padding: 0.75rem 0.75rem 0 0.75rem;
+    min-height: calc(100vh - 80px);
+  }
+  
+  .main-wrapper {
+    padding-bottom: 120px;
+  }
+  
+  .header-card {
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .header-title {
+    font-size: 1.2rem;
+  }
+  
+  .header-subtitle {
+    font-size: 0.85rem;
+  }
+  
+  .content-card {
+    padding: 0.75rem;
+    gap: 1rem;
+  }
+  
+  .settings-card {
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .section-title {
+    font-size: 1rem;
+  }
+  
+  .section-subtitle {
+    font-size: 0.8rem;
+  }
+  
+  .setting-item {
+    min-height: 48px;
+    padding: 0.5rem;
+  }
+  
+  .setting-item span {
+    font-size: 0.9rem;
+  }
+  
+  .action-btn {
+    min-width: 40px;
+    min-height: 40px;
+    padding: 8px;
+  }
+  
   .floating-help-btn {
     width: 45px;
     height: 45px;
-    bottom: 1rem;
+    bottom: 90px;
     right: 1rem;
   }
   
   .floating-help-btn svg {
     width: 20px;
     height: 20px;
+  }
+  
+  .modal-content {
+    margin: 5px;
+    max-height: 98vh;
+  }
+  
+  .modal-header, .modal-footer, .modal-body {
+    padding: 0.75rem;
+  }
+  
+  .form-group {
+    margin-bottom: 1rem;
+  }
+  
+  .form-group label {
+    font-size: 0.9rem;
+  }
+  
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    min-height: 40px;
+    font-size: 16px;
+    padding: 10px;
+  }
+  
+  .btn {
+    min-height: 44px;
+    padding: 12px 16px;
+    font-size: 0.9rem;
+  }
+}
+
+/* iPhone 12 Pro Specific (390px) */
+@media (max-width: 390px) {
+  .page-container {
+    padding: 0.5rem 0.5rem 0 0.5rem;
+  }
+  
+  .header-card {
+    padding: 0.75rem;
+  }
+  
+  .header-title {
+    font-size: 1.1rem;
+  }
+  
+  .content-card {
+    padding: 0.5rem;
+  }
+  
+  .settings-card {
+    padding: 0.75rem;
+  }
+  
+  .setting-item {
+    min-height: 44px;
+    padding: 0.5rem;
+  }
+  
+  .floating-help-btn {
+    width: 40px;
+    height: 40px;
+    bottom: 85px;
+    right: 0.75rem;
+  }
+  
+  .floating-help-btn svg {
+    width: 18px;
+    height: 18px;
   }
 }
 </style>

@@ -1912,13 +1912,17 @@ export default {
 
 @media (max-width: 480px) {
   .grades-page {
-    padding: 1rem;
-    width: 100vw;
-    margin-left: calc(-50vw + 50%);
+    padding: 0;
+    min-height: calc(100vh - 150px);
+    width: 100%;
+    margin: 0;
   }
 
   .section-header-card {
+    margin: 1rem;
+    margin-bottom: 1.5rem;
     padding: 1rem;
+    border-radius: 12px;
   }
 
   .section-header-content {
@@ -1928,18 +1932,115 @@ export default {
   }
 
   .section-header-left {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    align-items: center;
     width: 100%;
+    gap: 0.75rem;
+  }
+
+  .section-header-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
   }
 
   .section-header-title {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .section-header-subtitle,
+  .section-header-description {
+    font-size: 0.9rem;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .back-btn {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    border-radius: 10px;
   }
 
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
+    margin: 0 1rem 1.5rem 1rem;
+  }
+
+  .stat-card {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
+  }
+
+  .grades-section {
+    margin: 0 1rem;
+  }
+
+  .quiz-category {
+    margin-bottom: 1.5rem;
+  }
+
+  .category-header {
+    padding: 1rem 0 0.75rem 0;
+    margin-bottom: 0.75rem;
+  }
+
+  .category-title {
+    font-size: 1.1rem;
+  }
+
+  .category-count {
+    font-size: 0.8rem;
+    padding: 0.35rem 0.75rem;
+  }
+
+  .grades-list {
+    gap: 1rem;
+  }
+
+  .grade-card {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .grade-header {
+    margin-bottom: 1rem;
+  }
+
+  .quiz-info h3 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .quiz-code {
+    margin-bottom: 0.75rem;
+  }
+
+  .code-label {
+    font-size: 0.75rem;
+  }
+
+  .code-value {
+    font-size: 0.8rem;
+    padding: 0.35rem 0.75rem;
+  }
+
+  .grade-status {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.75rem;
+    border-radius: 8px;
   }
 
   .grade-content {
@@ -1948,14 +2049,65 @@ export default {
     gap: 1rem;
   }
 
-  .grade-actions {
-    justify-content: flex-start;
+  .grade-info {
     width: 100%;
   }
 
+  .score-display {
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+
+  .score-circle {
+    width: 80px;
+    height: 80px;
+  }
+
+  .score-value {
+    font-size: 1.5rem;
+  }
+
+  .score-details {
+    text-align: center;
+  }
+
+  .score-fraction {
+    font-size: 0.85rem;
+  }
+
+  .score-label {
+    font-size: 0.75rem;
+  }
+
+  .submission-info {
+    gap: 0.75rem;
+    flex-direction: column;
+  }
+
+  .info-item {
+    font-size: 0.8rem;
+  }
+
+  .grade-actions {
+    justify-content: flex-start;
+    width: 100%;
+    gap: 0.75rem;
+    flex-direction: column;
+  }
+
   .btn {
-    flex: 1;
-    min-width: 120px;
+    width: 100%;
+    min-width: auto;
+    padding: 0.875rem 1.25rem;
+    font-size: 0.9rem;
+    border-radius: 12px;
+    min-height: 48px;
+  }
+
+  .grades-table-container {
+    margin: 1rem;
+    border-radius: 12px;
+    overflow: hidden;
   }
 
   .grades-table {
@@ -1967,31 +2119,160 @@ export default {
     padding: 0.75rem 0.5rem;
   }
 
+  .grades-table th {
+    font-size: 0.75rem;
+  }
+
+  .quiz-name {
+    font-size: 0.85rem;
+  }
+
+  .quiz-code-small {
+    font-size: 0.7rem;
+  }
+
+  .score-badge {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.7rem;
+  }
+
+  .status-badge {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.7rem;
+  }
+
+  .date-text {
+    font-size: 0.75rem;
+  }
+
+  .btn-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+  }
+
+  .empty-state {
+    padding: 2rem 1rem;
+    margin: 1rem;
+    border-radius: 16px;
+  }
+
+  .empty-icon {
+    width: 80px;
+    height: 80px;
+  }
+
+  .empty-state h3 {
+    font-size: 1.1rem;
+  }
+
+  .empty-state p {
+    font-size: 0.9rem;
+  }
+
+  .modal-overlay {
+    padding: 1rem;
+  }
+
   .preview-modal {
-    max-height: 95vh;
-    width: 98%;
+    max-height: 85vh;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    border-radius: 16px;
   }
 
   .modal-header {
     padding: 1rem;
+    border-radius: 16px 16px 0 0;
   }
 
   .modal-header h3 {
     font-size: 1.125rem;
   }
 
+  .modal-close {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+
   .modal-body {
     padding: 1rem;
-    max-height: 70vh;
+    max-height: 60vh;
+  }
+
+  .preview-content {
+    gap: 1rem;
+  }
+
+  .preview-summary {
+    padding: 1rem;
+    border-radius: 12px;
+    gap: 1rem;
+  }
+
+  .summary-item {
+    text-align: center;
+  }
+
+  .summary-value {
+    font-size: 1.25rem;
+  }
+
+  .summary-label {
+    font-size: 0.8rem;
+  }
+
+  .answers-section {
+    gap: 1rem;
   }
 
   .answer-item {
     padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .question-header {
+    margin-bottom: 0.75rem;
+  }
+
+  .question-number {
+    font-size: 0.8rem;
+    padding: 0.35rem 0.75rem;
+  }
+
+  .question-text {
+    font-size: 0.9rem;
+  }
+
+  .answer-content {
+    gap: 0.75rem;
+  }
+
+  .student-answer,
+  .correct-answer {
+    padding: 0.875rem;
+    border-radius: 10px;
+  }
+
+  .answer-label {
+    font-size: 0.75rem;
+  }
+
+  .answer-text {
+    font-size: 0.85rem;
+  }
+
+  .answer-status {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.75rem;
   }
 
   .modal-actions {
     padding: 1rem;
     flex-direction: column-reverse;
+    gap: 0.75rem;
   }
 
   .modal-actions .btn {
@@ -2001,20 +2282,96 @@ export default {
 
 @media (min-width: 481px) and (max-width: 768px) {
   .grades-page {
-    padding: 1.5rem;
+    padding: 0;
+    min-height: calc(100vh - 150px);
+  }
+
+  .section-header-card {
+    margin: 1.5rem;
+    margin-bottom: 2rem;
+    padding: 1.25rem;
+    border-radius: 14px;
+  }
+
+  .section-header-content {
+    gap: 1.25rem;
+  }
+
+  .section-header-left {
+    gap: 1rem;
+  }
+
+  .section-header-icon {
+    width: 55px;
+    height: 55px;
+    border-radius: 14px;
+  }
+
+  .section-header-title {
+    font-size: 1.375rem;
   }
 
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+    margin: 0 1.5rem 2rem 1.5rem;
+  }
+
+  .stat-card {
+    padding: 1.25rem;
+    border-radius: 14px;
+  }
+
+  .grades-section {
+    margin: 0 1.5rem;
   }
 
   .grade-content {
     flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .grade-card {
+    padding: 1.25rem;
+    border-radius: 14px;
+  }
+
+  .grade-actions {
+    flex-direction: row;
     gap: 1rem;
+  }
+
+  .btn {
+    flex: 1;
+    min-width: 140px;
+    padding: 0.875rem 1.25rem;
+    border-radius: 12px;
+  }
+
+  .grades-table-container {
+    margin: 1.5rem;
+    border-radius: 14px;
+  }
+
+  .empty-state {
+    margin: 1.5rem;
+    padding: 2.5rem 1.5rem;
+    border-radius: 16px;
+  }
+
+  .modal-overlay {
+    padding: 1.5rem;
   }
 
   .preview-modal {
     max-width: 90vw;
+    border-radius: 16px;
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-actions {
+    padding: 1.25rem;
   }
 }
 
