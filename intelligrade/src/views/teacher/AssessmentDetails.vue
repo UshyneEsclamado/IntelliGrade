@@ -1,36 +1,39 @@
 <template>
-  <div class="assessment-details-page">
-    <!-- Header Section -->
-    <div class="page-header">
-      <div class="header-container">
-        <div class="header-content">
+  <div :class="['assessment-details-page', isDarkMode ? 'dark' : '']">
+    <!-- Header Card -->
+    <div class="header-card">
+      <div class="header-content">
+        <div class="header-left">
           <button @click="goBack" class="back-btn">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
             </svg>
-            Back to History
+            Back
           </button>
           
           <div class="assessment-info">
             <div class="assessment-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14,2 14,8 20,8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
               </svg>
             </div>
             <div class="assessment-details">
-              <h1>{{ assessment.title }}</h1>
-              <p>{{ assessment.studentName }} • {{ assessment.subject }} • {{ formatDate(assessment.checkedAt) }}</p>
+              <h1 class="header-title">{{ assessment.title }}</h1>
+              <p class="header-subtitle">{{ assessment.studentName }} • {{ assessment.subject }} • {{ formatDate(assessment.checkedAt) }}</p>
             </div>
           </div>
+        </div>
 
-          <div class="header-actions">
-            <button @click="downloadReport" class="download-btn">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z" />
-              </svg>
-              Download
-            </button>
-          </div>
+        <div class="header-actions">
+          <button @click="downloadReport" class="download-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z" />
+            </svg>
+            Download
+          </button>
         </div>
       </div>
     </div>
@@ -227,8 +230,14 @@
 </template>
 
 <script>
+import { useDarkMode } from "../../composables/useDarkMode.js";
+
 export default {
   name: 'AssessmentDetails',
+  setup() {
+    const { isDarkMode } = useDarkMode();
+    return { isDarkMode };
+  },
   data() {
     return {
       assessment: {
@@ -375,44 +384,37 @@ export default {
 </script>
 
 <style scoped>
-/* Using the same color variables */
-:root {
-  --primary-green: #3D8D7A;
-  --light-green: #B3D8A8;
-  --mint-green: #A3D1C6;
-  --white: #FFFFFF;
-  --gray-50: #f9fafb;
-  --gray-100: #f3f4f6;
-  --gray-200: #e5e7eb;
-  --gray-300: #d1d5db;
-  --gray-400: #9ca3af;
-  --gray-500: #6b7280;
-  --gray-600: #4b5563;
-  --gray-700: #374151;
-  --gray-800: #1f2937;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+/* Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 .assessment-details-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--light-green) 0%, var(--mint-green) 100%);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-}
-
-/* Header Section */
-.page-header {
-  background: var(--white);
-  box-shadow: var(--shadow-md);
-  border-bottom: 3px solid var(--primary-green);
-}
-
-.header-container {
+  background: #FBFFE4;
+  font-family: 'Inter', sans-serif;
+  padding: 1.5rem;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 2rem;
+}
+
+.dark .assessment-details-page {
+  background: #181c20;
+}
+
+/* Header Card */
+.header-card {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.dark .header-card {
+  background: #2a2d33;
 }
 
 .header-content {
@@ -426,92 +428,138 @@ export default {
 .back-btn {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  background: var(--gray-100);
-  color: var(--gray-600);
-  border: 1px solid var(--gray-300);
-  border-radius: 10px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
 }
 
-.back-btn:hover {
-  background: var(--gray-200);
-  color: var(--gray-700);
-  transform: translateY(-1px);
-}
-
-.assessment-info {
+.header-left {
   display: flex;
   align-items: center;
   gap: 1rem;
   flex: 1;
 }
 
-.assessment-icon {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, var(--primary-green), var(--mint-green));
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--white);
-}
-
-.assessment-details h1 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--gray-800);
-  margin: 0;
-}
-
-.assessment-details p {
-  color: var(--gray-600);
-  margin: 0.25rem 0 0 0;
-  font-size: 0.95rem;
-}
-
-.download-btn {
+.back-btn {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.875rem 1.5rem;
-  background: linear-gradient(135deg, var(--primary-green), var(--mint-green));
-  color: var(--white);
+  padding: 0.75rem 1.5rem;
+  background: #E2E8F0;
+  color: #555;
   border: none;
   border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
+  transition: background-color 0.2s ease;
+}
+
+.back-btn:hover {
+  background: #cbd5e0;
+}
+
+.dark .back-btn {
+  background: #404040;
+  color: #e1e5e9;
+}
+
+.dark .back-btn:hover {
+  background: #525252;
+}
+
+.assessment-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-left: 1rem;
+}
+
+.assessment-icon {
+  background: #B3D8A8;
+  color: #3D8D7A;
+  padding: 0.75rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dark .assessment-icon {
+  background: #3D8D7A;
+  color: #B3D8A8;
+}
+
+.header-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #3D8D7A;
+  margin: 0;
+}
+
+.dark .header-title {
+  color: #B3D8A8;
+}
+
+.header-subtitle {
+  color: #6b7280;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.dark .header-subtitle {
+  color: #9ca3af;
+}
+
+/* Download Button */
+.download-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #3D8D7A;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
 .download-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(61, 141, 122, 0.4);
+  background: #317c6b;
 }
 
-/* Main Content */
-.main-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
+.dark .download-btn {
+  background: #B3D8A8;
+  color: #1a1e23;
 }
 
-/* Score Overview */
-.overview-section {
+.dark .download-btn:hover {
+  background: #9ec795;
+}
+
+/* Content Cards */
+.card {
+  background: white;
+  border-radius: 20px;
   margin-bottom: 2rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
 }
 
+.dark .card {
+  background: #2a2d33;
+}
+
+/* Score Card */
 .score-card {
-  background: var(--white);
+  background: white;
   border-radius: 20px;
   padding: 2rem;
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(61, 141, 122, 0.1);
+}
+
+.dark .score-card {
+  background: #2a2d33;
+  border: 1px solid rgba(179, 216, 168, 0.1);
 }
 
 .score-visual {

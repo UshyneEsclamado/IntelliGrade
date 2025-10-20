@@ -1,23 +1,25 @@
 <template>
-  <div class="history-page">
-    <!-- Header Section -->
-    <div class="page-header">
-      <div class="header-container">
-        <div class="header-content">
-          <div class="page-info">
-            <div class="page-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M13,3A9,9 0 0,0 4,12H1L4.96,16.03L9,12H6A7,7 0 0,1 13,5A7,7 0 0,1 20,12A7,7 0 0,1 13,19C11.07,19 9.32,18.21 8.06,16.94L6.64,18.36C8.27,20 10.5,21 13,21A9,9 0 0,0 22,12A9,9 0 0,0 13,3Z" />
-              </svg>
-            </div>
-            <div class="page-details">
-              <h1>Assessment History & Results</h1>
-              <p>View all your checked assessments organized by subject</p>
-            </div>
+  <div :class="['history-page', isDarkMode ? 'dark' : '']">
+    <!-- Header Card -->
+    <div class="header-card">
+      <div class="header-content">
+        <div class="header-left">
+          <div class="page-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12,6 12,12 16,14"/>
+            </svg>
           </div>
+          <div class="page-details">
+            <h1 class="header-title">Assessment History</h1>
+            <p class="header-subtitle">View all your checked assessments organized by subject</p>
+          </div>
+        </div>
+        
+        <div class="header-actions">
           <button @click="goToUpload" class="upload-btn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14m-7-7h14"/>
             </svg>
             Check New Assessment
           </button>
@@ -133,8 +135,14 @@
 </template>
 
 <script>
+import { useDarkMode } from "../../composables/useDarkMode.js";
+
 export default {
   name: 'AssessmentHistory',
+  setup() {
+    const { isDarkMode } = useDarkMode();
+    return { isDarkMode };
+  },
   data() {
     return {
       expandedSubjects: ['Science', 'Mathematics'], // Default expanded subjects
@@ -349,112 +357,128 @@ export default {
 </script>
 
 <style scoped>
-/* Color Theme Variables */
-:root {
-  --primary-green: #3D8D7A;
-  --light-green: #B3D8A8;
-  --mint-green: #A3D1C6;
-  --white: #FFFFFF;
-  --gray-50: #f9fafb;
-  --gray-100: #f3f4f6;
-  --gray-200: #e5e7eb;
-  --gray-300: #d1d5db;
-  --gray-400: #9ca3af;
-  --gray-500: #6b7280;
-  --gray-600: #4b5563;
-  --gray-700: #374151;
-  --gray-800: #1f2937;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+/* Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-/* Base Styles */
 .history-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--light-green) 0%, var(--mint-green) 100%);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-}
-
-/* Header Section */
-.page-header {
-  background: var(--white);
-  box-shadow: var(--shadow-md);
-  border-bottom: 3px solid var(--primary-green);
-}
-
-.header-container {
+  background: #FBFFE4;
+  font-family: 'Inter', sans-serif;
+  padding: 1.5rem;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 2rem;
+}
+
+.dark .history-page {
+  background: #181c20;
+}
+
+/* Header Card */
+.header-card {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.dark .header-card {
+  background: #2a2d33;
 }
 
 .header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem 0;
 }
 
-.page-info {
+.header-left {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
 .page-icon {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, var(--primary-green), var(--mint-green));
+  background: #B3D8A8;
+  color: #3D8D7A;
+  padding: 0.75rem;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--white);
 }
 
-.page-details h1 {
-  font-size: 1.875rem;
+.dark .page-icon {
+  background: #3D8D7A;
+  color: #B3D8A8;
+}
+
+.header-title {
+  font-size: 1.75rem;
   font-weight: 700;
-  color: var(--gray-800);
+  color: #3D8D7A;
   margin: 0;
 }
 
-.page-details p {
-  color: var(--gray-600);
-  margin: 0.25rem 0 0 0;
+.dark .header-title {
+  color: #B3D8A8;
+}
+
+.header-subtitle {
+  color: #6b7280;
+  margin: 0;
   font-size: 0.95rem;
+}
+
+.dark .header-subtitle {
+  color: #9ca3af;
 }
 
 .upload-btn {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.875rem 1.5rem;
-  background: linear-gradient(135deg, var(--primary-green), var(--mint-green));
-  color: var(--white);
+  padding: 0.75rem 1.5rem;
+  background: #3D8D7A;
+  color: white;
   border: none;
   border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
+  transition: background-color 0.2s ease;
 }
 
 .upload-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(61, 141, 122, 0.4);
+  background: #317c6b;
 }
 
-/* Main Content */
-.main-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
+.dark .upload-btn {
+  background: #B3D8A8;
+  color: #1a1e23;
 }
 
-/* Stats Section */
+.dark .upload-btn:hover {
+  background: #9ec795;
+}
+
+/* Cards */
+.card {
+  background: white;
+  border-radius: 20px;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.dark .card {
+  background: #2a2d33;
+}
+
+/* Stats Grid */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -463,9 +487,10 @@ export default {
 }
 
 .stat-card {
-  background: var(--white);
+  background: white;
   border-radius: 16px;
   padding: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
   display: flex;
   align-items: center;
   gap: 1rem;

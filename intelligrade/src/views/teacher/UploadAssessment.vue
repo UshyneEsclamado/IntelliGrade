@@ -1,17 +1,22 @@
 <template>
-    <div class="upload-page">
-      <!-- Floating Gradient Blobs -->
-      <div class="floating-shape shape1"></div>
-      <div class="floating-shape shape2"></div>
-      <div class="floating-shape shape3"></div>
-
-      <!-- Header -->
+    <div :class="['upload-page', isDarkMode ? 'dark' : '']">
+      <!-- Header Card -->
       <div class="header-card">
         <div class="header-content">
-          <div class="icon-wrapper">🤖</div>
-          <div>
-            <h1>Automated Assessment Checker</h1>
-            <p>Upload student assessments for instant AI-powered scoring and detailed feedback</p>
+          <div class="header-left">
+            <div class="user-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14,2 14,8 20,8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10,9 9,9 8,9"></polyline>
+              </svg>
+            </div>
+            <div>
+              <h1 class="header-title">Assessment Checker</h1>
+              <p class="header-subtitle">Upload student assessments for instant AI-powered scoring</p>
+            </div>
           </div>
         </div>
       </div>
@@ -23,7 +28,11 @@
         <div v-if="processingSteps.length > 0" class="processing-steps">
           <div v-for="(step, index) in processingSteps" :key="index" 
                class="processing-step" :class="{ 'completed': step.completed, 'active': step.active }">
-            <span class="step-icon">{{ step.completed ? '✅' : (step.active ? '⏳' : '⏸️') }}</span>
+            <span class="step-icon">
+              <span v-if="step.completed" class="icon-completed">✓</span>
+              <span v-else-if="step.active" class="icon-active">⟳</span>
+              <span v-else class="icon-pending">○</span>
+            </span>
             <span class="step-text">{{ step.text }}</span>
           </div>
         </div>
@@ -119,14 +128,14 @@
         </div>
         <div class="card-body">
           <div class="answer-key-tabs">
-            <button type="button" class="tab-button" :class="{ active: answerKeyMethod === 'upload' }" 
-                    @click="answerKeyMethod = 'upload'">
-              📁 Upload Answer Key
-            </button>
-            <button type="button" class="tab-button" :class="{ active: answerKeyMethod === 'manual' }" 
-                    @click="answerKeyMethod = 'manual'">
-              ✏️ Manual Input
-            </button>
+              <button type="button" class="tab-button" :class="{ active: answerKeyMethod === 'upload' }" 
+                      @click="answerKeyMethod = 'upload'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg> Upload Answer Key
+              </button>
+              <button type="button" class="tab-button" :class="{ active: answerKeyMethod === 'manual' }" 
+                      @click="answerKeyMethod = 'manual'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg> Manual Input
+              </button>
           </div>
 
           <!-- Upload Answer Key -->
@@ -156,11 +165,11 @@
             <div class="manual-input-tabs">
               <button type="button" class="input-tab" :class="{ active: manualInputMethod === 'individual' }" 
                       @click="manualInputMethod = 'individual'">
-                📝 Individual Questions
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg> Individual Questions
               </button>
               <button type="button" class="input-tab" :class="{ active: manualInputMethod === 'bulk' }" 
                       @click="manualInputMethod = 'bulk'">
-                📄 Bulk Text Input
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg> Bulk Text Input
               </button>
             </div>
 
@@ -201,14 +210,14 @@
                 </div>
               </div>
               <div v-else class="no-questions-message">
-                <p>📝 Please set the number of questions first to create the answer key.</p>
+                <p>Please set the number of questions first to create the answer key.</p>
               </div>
             </div>
 
             <!-- Bulk Text Input -->
             <div v-if="manualInputMethod === 'bulk'" class="bulk-input-container">
               <div class="bulk-input-header">
-                <h4>📄 Bulk Answer Key Input</h4>
+                <h4><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg> Bulk Answer Key Input</h4>
                 <p>Enter your answer key in any format. The system will automatically detect the pattern.</p>
                 <div class="format-examples">
                   <div class="example-tabs">
@@ -222,7 +231,7 @@
                     <small>{{ bulkExamples[activeBulkExample].description }}</small>
                     <pre class="example-code">{{ bulkExamples[activeBulkExample].content }}</pre>
                     <button @click="loadExample(activeBulkExample)" class="load-example-btn">
-                      📋 Use This Example
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg> Use This Example
                     </button>
                   </div>
                 </div>
@@ -236,7 +245,7 @@
               </textarea>
               
               <div v-if="bulkParsedQuestions.length > 0" class="bulk-preview">
-                <h4>📋 Detected Questions ({{ bulkParsedQuestions.length }})</h4>
+                <h4><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg> Detected Questions ({{ bulkParsedQuestions.length }})</h4>
                 <div class="bulk-preview-grid">
                   <div v-for="(question, index) in bulkParsedQuestions" :key="index" 
                        class="bulk-preview-item" :class="question.type">
@@ -246,7 +255,7 @@
                   </div>
                 </div>
                 <button @click="applyBulkAnswers" class="apply-bulk-btn">
-                  ✅ Apply These Answers ({{ bulkParsedQuestions.length }} questions)
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;"><path d="M9 16.2l-3.5-3.5 1.41-1.41L9 13.38l7.09-7.09 1.41 1.41z"/></svg> Apply These Answers ({{ bulkParsedQuestions.length }} questions)
                 </button>
               </div>
             </div>
@@ -379,7 +388,7 @@
           <div class="ai-settings-grid">
             <div class="setting-card">
               <div class="setting-header">
-                <span class="setting-icon">🧠</span>
+                <span class="setting-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 5.52 4.48 10 10 10s10-4.48 10-10C22 6.48 17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg></span>
                 <h3>AI Analysis Level</h3>
               </div>
               <select v-model="aiAnalysisLevel" class="form-control">
@@ -391,7 +400,7 @@
 
             <div class="setting-card">
               <div class="setting-header">
-                <span class="setting-icon">📝</span>
+                <span class="setting-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></span>
                 <h3>Feedback Detail</h3>
               </div>
               <select v-model="feedbackLevel" class="form-control">
@@ -533,16 +542,16 @@
         
         <!-- Quick Fix Suggestions -->
         <div v-if="error.includes('questions but no student answers')" class="error-suggestions">
-          <h4>🛠️ Quick Fix Suggestions:</h4>
+                <h4><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4-4 4z"/></svg> Quick Fix Suggestions:</h4>
           <div class="suggestion-buttons">
             <button @click="moveFileToAnswerKey" class="suggestion-btn" v-if="assessmentFile">
-              📁 Use This File as Answer Key
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg> Use This File as Answer Key
             </button>
             <button @click="clearFileAndShowExample" class="suggestion-btn">
-              📝 Show Example of Student Response File
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg> Show Example of Student Response File
             </button>
             <button @click="clearErrorAndContinue" class="suggestion-btn">
-              ✖️ Clear Error & Continue
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg> Clear Error & Continue
             </button>
           </div>
         </div>
@@ -553,7 +562,7 @@
         <button @click="clearForm" class="btn-secondary">Clear Form</button>
         <button @click="submitAssessment" class="btn-submit" :disabled="!canSubmit || isLoading">
           <span v-if="isLoading">Processing...</span>
-          <span v-else>🤖 Start AI Grading</span>
+          <span v-else><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4-4 4z"/></svg> Start AI Grading</span>
         </button>
       </div>
     </div>
@@ -562,11 +571,13 @@
   <script>
   import { ref, computed } from "vue";
   import { useRouter } from "vue-router";
+  import { useDarkMode } from "../../composables/useDarkMode.js";
 
   export default {
     name: "UploadAssessment",
     setup() {
       const router = useRouter();
+      const { isDarkMode } = useDarkMode();
       const isLoading = ref(false);
       const loadingMessage = ref("Processing...");
       const isDragOver = ref(false);
@@ -1518,6 +1529,7 @@ const canSubmit = computed(() => {
 });
 
       return {
+        isDarkMode,
         isLoading,
         loadingMessage,
         isDragOver,
@@ -1595,94 +1607,130 @@ const canSubmit = computed(() => {
 
   <style scoped>
 
-  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+  /* Base Styles */
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
-  /* Reuse Dashboard Design Language */
   .upload-page {
-    max-width: 1000px;
-    margin: 2rem auto;
-    padding: 1rem;
-    position: relative;
-    z-index: 1;
-    font-family: 'Poppins', sans-serif;
+    min-height: 100vh;
+    background: #FBFFE4;
+    font-family: 'Inter', sans-serif;
+    padding: 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
   }
 
-  /* Floating Gradient Shapes */
-  .floating-shape {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(70px);
-    opacity: 0.4;
-    z-index: 0;
-  }
-  .shape1 { top: -100px; left: -100px; width: 300px; height: 300px; background: #3D8D7A; animation: float 6s ease-in-out infinite; }
-  .shape2 { bottom: -120px; right: -80px; width: 250px; height: 250px; background: #B3D8A8; animation: float 7s ease-in-out infinite; }
-  .shape3 { top: 40%; left: -60px; width: 200px; height: 200px; background: #87CBB9; animation: float 8s ease-in-out infinite; }
-
-  @keyframes float {
-    0%, 100% { transform: translateY(0) translateX(0); }
-    50% { transform: translateY(-20px) translateX(20px); }
+  .dark .upload-page {
+    background: #181c20;
   }
 
   /* Header Card */
   .header-card {
-    background: linear-gradient(135deg, #3D8D7A, #87CBB9);
+    background: white;
     border-radius: 20px;
     padding: 2rem;
     margin-bottom: 2rem;
-    color: white;
-    position: relative;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
   }
+
+  .dark .header-card {
+    background: #2a2d33;
+  }
+
   .header-content {
     display: flex;
     align-items: center;
     gap: 1rem;
   }
-  .header-content h1 {
-    font-size: 2rem;
-    margin: 0 0 0.3rem 0;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
   }
-  .header-content p {
+
+  .user-icon {
+    background: #B3D8A8;
+    color: #3D8D7A;
+    padding: 0.75rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .dark .user-icon {
+    background: #3D8D7A;
+    color: #B3D8A8;
+  }
+
+  .header-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #3D8D7A;
     margin: 0;
-    font-size: 1rem;
-    opacity: 0.9;
   }
-  .icon-wrapper {
-    background: rgba(255,255,255,0.2);
-    padding: 1rem;
-    border-radius: 50%;
-    font-size: 2rem;
+
+  .dark .header-title {
+    color: #B3D8A8;
+  }
+
+  .header-subtitle {
+    color: #6b7280;
+    margin: 0;
+    font-size: 0.95rem;
+  }
+
+  .dark .header-subtitle {
+    color: #9ca3af;
   }
 
   /* Cards */
   .card {
-    background: rgba(255,255,255,0.85);
-    border-radius: 16px;
-    box-shadow: 0 6px 25px rgba(0,0,0,0.05);
+    background: white;
+    border-radius: 20px;
     margin-bottom: 2rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     overflow: hidden;
-    backdrop-filter: blur(10px);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
-  .card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+
+  .dark .card {
+    background: #2a2d33;
   }
+
   .card-header {
     padding: 1.5rem 2rem;
-    border-bottom: 1px solid rgba(0,0,0,0.05);
+    border-bottom: 1px solid rgba(61, 141, 122, 0.1);
   }
+
+  .dark .card-header {
+    border-bottom: 1px solid rgba(179, 216, 168, 0.1);
+  }
+
   .card-header h2 {
     margin: 0 0 0.25rem 0;
     font-size: 1.3rem;
     font-weight: 600;
+    color: #3D8D7A;
   }
+
+  .dark .card-header h2 {
+    color: #B3D8A8;
+  }
+
   .card-header p {
     margin: 0;
     font-size: 0.9rem;
-    color: #6c757d;
+    color: #666;
   }
+
+  .dark .card-header p {
+    color: #888;
+  }
+
   .card-body {
     padding: 2rem;
   }
@@ -1693,47 +1741,109 @@ const canSubmit = computed(() => {
     grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
   }
+
   .form-group {
     margin-bottom: 1.5rem;
   }
+
   .form-group label {
     display: block;
     margin-bottom: 0.5rem;
-    font-weight: 500;
+    font-weight: 600;
     font-size: 0.95rem;
+    color: #3D8D7A;
   }
+
+  .dark .form-group label {
+    color: #B3D8A8;
+  }
+
   .form-control {
     width: 100%;
     padding: 0.75rem 1rem;
     border: 1px solid #E0E7EE;
     border-radius: 10px;
     font-size: 1rem;
+    background: white;
+    color: #333;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
   }
+
+  .dark .form-control {
+    border-color: #404040;
+    background: #2a2d33;
+    color: #e1e5e9;
+  }
+
   .form-control:focus {
     border-color: #3D8D7A;
     box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.15);
     outline: none;
   }
 
-  /* Upload */
+  .dark .form-control:focus {
+    border-color: #B3D8A8;
+    box-shadow: 0 0 0 3px rgba(179, 216, 168, 0.15);
+  }
+
+  /* Upload Areas */
   .file-upload-area {
     border: 2px dashed #E0E7EE;
     border-radius: 12px;
     padding: 2rem;
     text-align: center;
-    background: rgba(250, 252, 254, 0.8);
+    background: white;
     transition: all 0.3s ease;
     cursor: pointer;
   }
-  .file-upload-area:hover, .file-upload-area.drag-over {
+
+  .dark .file-upload-area {
+    border-color: #404040;
+    background: #2a2d33;
+  }
+
+  .file-upload-area:hover, 
+  .file-upload-area.drag-over {
     border-color: #3D8D7A;
     background-color: rgba(61, 141, 122, 0.05);
   }
-  .file-input { display: none; }
-  .upload-icon { color: #a0aec0; margin-bottom: 1rem; }
-  .upload-link { color: #3D8D7A; font-weight: 600; }
-  .file-selected { color: #3D8D7A; font-weight: 500; }
+
+  .dark .file-upload-area:hover, 
+  .dark .file-upload-area.drag-over {
+    border-color: #B3D8A8;
+    background-color: rgba(179, 216, 168, 0.05);
+  }
+
+  .file-input { 
+    display: none; 
+  }
+
+  .upload-icon { 
+    color: #a0aec0; 
+    margin-bottom: 1rem; 
+  }
+
+  .dark .upload-icon {
+    color: #6b7280;
+  }
+
+  .upload-link { 
+    color: #3D8D7A; 
+    font-weight: 600; 
+  }
+
+  .dark .upload-link {
+    color: #B3D8A8;
+  }
+
+  .file-selected { 
+    color: #3D8D7A; 
+    font-weight: 500; 
+  }
+
+  .dark .file-selected {
+    color: #B3D8A8;
+  }
 
   /* Template Guide */
   .template-guide {
@@ -1785,29 +1895,64 @@ const canSubmit = computed(() => {
     justify-content: flex-end;
     margin-bottom: 2rem;
   }
-  .btn-submit, .btn-secondary {
+
+  .btn-submit, 
+  .btn-secondary, 
+  .btn-primary {
     padding: 0.75rem 1.5rem;
     border-radius: 10px;
     font-weight: 600;
     font-size: 1rem;
     border: none;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: background-color 0.2s ease;
   }
-  .btn-submit {
+
+  .btn-submit,
+  .btn-primary {
     background: #3D8D7A;
     color: white;
-    box-shadow: 0 4px 12px rgba(61,141,122,0.3);
   }
-  .btn-submit:hover:not(:disabled) {
+
+  .btn-submit:hover:not(:disabled),
+  .btn-primary:hover:not(:disabled) {
     background: #317c6b;
-    transform: translateY(-2px);
   }
+
+  .btn-submit:disabled,
+  .btn-primary:disabled {
+    background: #cbd5e0;
+    cursor: not-allowed;
+  }
+
+  .dark .btn-submit,
+  .dark .btn-primary {
+    background: #B3D8A8;
+    color: #1a1e23;
+  }
+
+  .dark .btn-submit:hover:not(:disabled),
+  .dark .btn-primary:hover:not(:disabled) {
+    background: #9ec795;
+  }
+
   .btn-secondary {
     background: #E2E8F0;
     color: #555;
   }
-  .btn-secondary:hover { background: #cbd5e0; }
+
+  .btn-secondary:hover { 
+    background: #cbd5e0; 
+  }
+
+  .dark .btn-secondary {
+    background: #404040;
+    color: #e1e5e9;
+  }
+
+  .dark .btn-secondary:hover {
+    background: #525252;
+  }
 
   /* Error */
   .error-message {
@@ -1873,12 +2018,14 @@ const canSubmit = computed(() => {
     transform: translateY(0);
   }
 
-  /* Loader */
+  /* Loading Overlay */
   .loading-overlay {
     position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(255,255,255,0.8);
+    top: 0; 
+    left: 0;
+    width: 100%; 
+    height: 100%;
+    background: rgba(251, 255, 228, 0.9);
     backdrop-filter: blur(6px);
     display: flex;
     flex-direction: column;
@@ -1886,15 +2033,113 @@ const canSubmit = computed(() => {
     align-items: center;
     z-index: 1000;
   }
+
+  .dark .loading-overlay {
+    background: rgba(24, 28, 32, 0.9);
+  }
+
   .loader {
-    width: 50px; height: 50px;
+    width: 50px; 
+    height: 50px;
     border: 5px solid #B3D8A8;
     border-top: 5px solid #3D8D7A;
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin-bottom: 1rem;
   }
-  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .dark .loader {
+    border: 5px solid #3D8D7A;
+    border-top: 5px solid #B3D8A8;
+  }
+
+  @keyframes spin { 
+    to { transform: rotate(360deg); } 
+  }
+
+  /* Processing Steps */
+  .processing-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  }
+
+  .dark .processing-steps {
+    background: #2a2d33;
+  }
+
+  .processing-step {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    background: #f8f9fa;
+  }
+
+  .dark .processing-step {
+    background: #1a1e23;
+  }
+
+  .processing-step.active {
+    background: rgba(61, 141, 122, 0.1);
+    border-left: 4px solid #3D8D7A;
+  }
+
+  .dark .processing-step.active {
+    background: rgba(179, 216, 168, 0.1);
+    border-left: 4px solid #B3D8A8;
+  }
+
+  .processing-step.completed {
+    background: rgba(179, 216, 168, 0.2);
+    color: #3D8D7A;
+  }
+
+  .dark .processing-step.completed {
+    background: rgba(61, 141, 122, 0.2);
+    color: #B3D8A8;
+  }
+
+  .step-icon .icon-completed {
+    color: #3D8D7A;
+    font-weight: bold;
+  }
+
+  .dark .step-icon .icon-completed {
+    color: #B3D8A8;
+  }
+
+  .step-icon .icon-active {
+    color: #3D8D7A;
+    animation: rotate 1s linear infinite;
+  }
+
+  .dark .step-icon .icon-active {
+    color: #B3D8A8;
+  }
+
+  @keyframes rotate {
+    to { transform: rotate(360deg); }
+  }
+
+  .step-icon .icon-pending {
+    color: #6b7280;
+  }
+
+  .step-text {
+    color: #333;
+    font-size: 0.9rem;
+  }
+
+  .dark .step-text {
+    color: #e1e5e9;
+  }
 
   /* Answer Key Tabs */
   .answer-key-tabs {
@@ -2230,28 +2475,8 @@ const canSubmit = computed(() => {
     border-top: 1px solid rgba(0, 0, 0, 0.1);
   }
 
-  .btn-primary {
-    background: #3D8D7A;
-    color: white;
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 10px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
-  }
-
-  .btn-primary:hover:not(:disabled) {
-    background: #317c6b;
-    transform: translateY(-2px);
-  }
-
-  .btn-primary:disabled {
-    background: #cbd5e0;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
+  .dark .answer-key-actions {
+    border-top: 1px solid rgba(179, 216, 168, 0.1);
   }
 
   .calculated-total {
