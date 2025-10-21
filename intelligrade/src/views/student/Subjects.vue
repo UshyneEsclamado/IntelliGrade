@@ -1643,13 +1643,16 @@ export default {
 }
 
   .subjects-grid {
-    gap: 0.25rem;
+    gap: 1rem;
     margin-bottom: 0.25rem;
   }
   .subject-card {
-    padding: 0.3rem 0.3rem 0.5rem 0.3rem;
+    padding: 1.2rem 1.2rem 1.5rem 1.2rem;
     gap: 0.15rem;
     border-radius: 6px;
+    border: 2px solid #3D8D7A;
+    box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
+    background: #fff;
   }
   .subject-header {
     gap: 0.15rem;

@@ -1584,6 +1584,9 @@ export default {
 .empty-icon {
   font-size: 4rem;
   margin-bottom: 1rem;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .empty-state h3 {
@@ -1591,6 +1594,9 @@ export default {
   font-weight: 600;
   color: #1f2937;
   margin-bottom: 0.5rem;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .dark .empty-state h3 {
@@ -1918,6 +1924,8 @@ export default {
     margin: 0;
   }
 
+  
+
   .section-header-card {
     margin: 1rem;
     margin-bottom: 1.5rem;
@@ -1956,7 +1964,8 @@ export default {
 
   .header-actions {
     width: 100%;
-    justify-content: flex-start;
+    justify-content: center;
+    display: flex;
   }
 
   .back-btn {
@@ -1985,7 +1994,11 @@ export default {
   }
 
   .grades-section {
+    width: 100%;
     margin: 0 1rem;
+    box-sizing: border-box;
+    padding: 0;
+    overflow-x: hidden;
   }
 
   .quiz-category {
@@ -2152,9 +2165,19 @@ export default {
   }
 
   .empty-state {
-    padding: 2rem 1rem;
-    margin: 1rem;
+    margin: 0 1rem 1.5rem 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    max-width: none;
+    width: calc(100% - 2rem);
+    box-sizing: border-box;
+    padding: 1.5rem;
     border-radius: 16px;
+    background: #fff;
+    border: 2px solid #A3D1C6;
+    box-shadow: 0 2px 8px rgba(61, 141, 122, 0.08);
   }
 
   .empty-icon {
