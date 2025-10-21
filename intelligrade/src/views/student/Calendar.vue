@@ -40,7 +40,11 @@
             <span class="stat-label">Total Events</span>
           </div>
           <div class="stat-item">
-            <span class="stat-number live-indicator">🔴</span>
+            <span class="stat-number live-indicator">
+              <svg class="live-dot" width="18" height="18" viewBox="0 0 24 24" fill="#ef4444">
+                <circle cx="12" cy="12" r="9" />
+              </svg>
+            </span>
             <span class="stat-label">Live</span>
           </div>
         </div>
@@ -1053,7 +1057,7 @@ export default {
 }
 
 .stat-number {
-  font-size: 2rem;
+  font-size: 1.6rem;
   font-weight: 700;
   color: #3D8D7A;
   line-height: 1;
@@ -1349,8 +1353,26 @@ export default {
 }
 
 /* Live Indicator */
+
 .live-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   animation: pulse 2s infinite;
+}
+.live-dot {
+  width: 1.6rem;
+  height: 1.6rem;
+  display: inline-block;
+}
+@media (max-width: 480px) {
+  .stat-number {
+    font-size: 1.1rem;
+  }
+  .live-dot {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
 }
 
 @keyframes pulse {
@@ -2332,18 +2354,15 @@ export default {
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .calendar-container {
-    padding: 1rem 1rem 0 1rem;
-    min-height: calc(100vh - 80px);
-    padding-bottom: 100px;
-  }
-  
-  .section-header-card {
-    flex-direction: column;
+  .current-month {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #3D8D7A;
+    margin: 0 1.2rem;
     text-align: center;
-    gap: 1.5rem;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: -0.5px;
+  }
   }
   
   .section-header-content {
@@ -2427,8 +2446,6 @@ export default {
     min-height: 44px;
     font-size: 16px;
   }
-}
-
 @media (max-width: 480px) {
   .calendar-container {
     padding: 0.75rem 0.75rem 0 0.75rem;
@@ -2499,10 +2516,11 @@ export default {
   
   .month-year-selector {
     min-height: 40px;
-    font-size: 14px;
-    padding: 8px;
+    font-size: 16px;
   }
-}
+  @media (max-width: 480px) {
+    /* ...existing mobile styles... */
+  }
 
 /* iPhone 12 Pro Specific (390px) */
 @media (max-width: 390px) {
@@ -2577,6 +2595,7 @@ export default {
     width: 100%;
     justify-content: flex-end;
   }
+}
 </style>
 
 /* --- Modern Card Header Styles (from Home.vue) --- */
