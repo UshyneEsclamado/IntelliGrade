@@ -1,3 +1,64 @@
+@media (max-width: 768px) {
+  .stats-grid {
+    gap: 0.25rem;
+    margin-bottom: 0.25rem;
+  }
+  .stat-card {
+    gap: 0.25rem;
+    padding: 0.5rem 0.5rem;
+  }
+  .stat-value {
+    font-size: 1.1rem;
+    margin-right: 0.25rem;
+  }
+  .stat-label {
+    font-size: 0.8rem;
+    margin-left: 0.1rem;
+  }
+}
+/* code: Responsive mobile improvements for back button and stat boxes */
+@media (max-width: 768px) {
+  .section-header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .back-btn {
+    align-self: flex-start;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    min-width: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    justify-content: center;
+    font-size: 1.25rem;
+    gap: 0;
+  }
+  .back-btn span {
+    display: none;
+  }
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .stat-card {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+  }
+  .stat-value {
+    font-size: 1.25rem;
+    margin-right: 0.5rem;
+  }
+  .stat-label {
+    font-size: 0.85rem;
+    margin-left: 0.25rem;
+  }
+}
 <template>
   <div class="subjects-container">
     <!-- Header Section (Uniform Card Style) -->
@@ -1581,19 +1642,19 @@ export default {
   margin-bottom: 1.2rem;
 }
 
-.subject-card {
-  background: #fbffe4;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.08);
-  border: 2px solid #a3d1c6;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  position: relative;
-}
+  .subjects-grid {
+    gap: 0.25rem;
+    margin-bottom: 0.25rem;
+  }
+  .subject-card {
+    padding: 0.3rem 0.3rem 0.5rem 0.3rem;
+    gap: 0.15rem;
+    border-radius: 6px;
+  }
+  .subject-header {
+    gap: 0.15rem;
+    margin-bottom: 0.08rem;
+  }
 
 .subject-card:hover {
   transform: translateY(-2px);
@@ -2327,17 +2388,17 @@ export default {
     width: 100%;
   }
   .subjects-container {
-    padding: 0;
-    min-height: calc(100vh - 150px);
+    padding: 0.25rem;
+    min-height: calc(100vh - 120px);
   }
 
   /* Header optimizations for mobile */
   .section-header-card,
   .minimal-header-card {
-    margin: 1rem;
-    margin-bottom: 1.5rem;
-    padding: 1rem;
-    border-radius: 12px;
+    margin: 0.5rem;
+    margin-bottom: 0.75rem;
+    padding: 0.5rem;
+    border-radius: 10px;
   }
 
   .minimal-header-icon {
