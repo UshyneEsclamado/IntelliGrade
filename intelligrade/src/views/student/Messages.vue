@@ -2050,25 +2050,33 @@ onUnmounted(() => {
   color: #adb5bd;
 }
 
-.filter-tab:hover {
-  border-color: #A3D1C6;
-  color: #2c3e50;
-}
-.dark .filter-tab:hover {
-  border-color: #20c997;
-  color: #ffffff;
-}
 
-.filter-tab.active {
-  background: #A3D1C6;
-  border-color: #A3D1C6;
-  color: white;
-  font-weight: 600;
-}
-.dark .filter-tab.active {
-  background: #20c997;
-  border-color: #20c997;
-}
+  .filter-tabs {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    flex: 1 1 100%;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    flex-wrap: nowrap;
+  background: none;
+  }
+
+  .filter-tab {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0.75rem 0.5rem;
+    font-size: 0.85rem;
+    border-radius: 10px;
+    white-space: nowrap;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-color: #20c997;
+  }
 
 /* Content Area */
 .content-area {
@@ -3040,10 +3048,13 @@ onUnmounted(() => {
   
   /* Header mobile optimization */
   .section-header-card {
-    margin: 1rem;
-    margin-bottom: 1.5rem;
+    margin: 0.5rem;
+    margin-bottom: 1rem;
     padding: 1rem;
     border-radius: 12px;
+    width: calc(100vw - 1rem);
+    max-width: 100vw;
+    box-sizing: border-box;
   }
   
   .section-header-left {
@@ -3067,17 +3078,22 @@ onUnmounted(() => {
   
   /* Controls section mobile optimization */
   .controls-section {
-    margin: 0 1rem 1.5rem 1rem;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
+    margin: 0.5rem;
+    margin-bottom: 1rem;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
     padding: 1rem;
     border-radius: 12px;
+    width: calc(100vw - 1rem);
+    max-width: 100vw;
+    box-sizing: border-box;
   }
   
   .search-box {
-    min-width: auto;
-    width: 100%;
+    min-width: 120px;
+    width: 45%;
+    flex: 1 1 45%;
   }
   
   .search-input {
@@ -3087,10 +3103,20 @@ onUnmounted(() => {
   }
   
   .filter-tabs {
-    justify-content: flex-start;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.25rem;
+    width: 55%;
+    flex: 1 1 55%;
     overflow-x: auto;
     padding-bottom: 0.25rem;
-    gap: 0.5rem;
+    flex-wrap: nowrap;
+  }
+  .filter-tab {
+    height: 48px;
+    display: flex;
+    align-items: center;
   }
   
   .filter-tab {
@@ -3118,9 +3144,9 @@ onUnmounted(() => {
   
   /* Subject sections mobile layout */
   .subject-section {
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.25rem;
     border-radius: 12px;
-    padding: 1rem;
+    padding: 0.75rem;
   }
   
   .subject-section-header {
@@ -3140,12 +3166,12 @@ onUnmounted(() => {
   }
   
   .teachers-cards {
-    gap: 0.875rem;
+    gap: 0.5rem;
   }
   
   /* Teacher card mobile optimization */
   .teacher-card {
-    padding: 1rem;
+    padding: 0.75rem;
     border-radius: 12px;
     position: relative;
   }
