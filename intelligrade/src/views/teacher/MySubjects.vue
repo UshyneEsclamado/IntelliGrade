@@ -1517,7 +1517,6 @@ const subjectOptions = computed(() => {
 const filteredSubjects = computed(() => {
   let filtered = subjects.value
   
-  // Filter by dropdown selection
   if (subjectDropdown.value && subjectDropdown.value.toLowerCase() !== 'all') {
     filtered = filtered.filter(s => {
       const subjectName = (s.subject_name || s.name || '').toLowerCase()
@@ -1525,7 +1524,6 @@ const filteredSubjects = computed(() => {
     })
   }
   
-  // Filter by search query
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.trim().toLowerCase()
     filtered = filtered.filter(s => {
@@ -1573,7 +1571,6 @@ const fetchSubjects = async (forceRefresh = false) => {
     isLoading.value = true
     loadingMessage.value = 'Loading your subjects...'
 
-    // Get teacher's subjects with sections
     const { data: subjectsData, error: subjectsError } = await supabase
       .from('subjects')
       .select(`
@@ -1607,7 +1604,6 @@ const fetchSubjects = async (forceRefresh = false) => {
       return
     }
 
-    // Process subjects - group by name and aggregate sections
     const subjectGroups = new Map()
 
     for (const subject of subjectsData) {
@@ -1630,7 +1626,6 @@ const fetchSubjects = async (forceRefresh = false) => {
         const subjectGroup = subjectGroups.get(subjectName)
         subjectGroup.grade_levels.add(subject.grade_level)
 
-        // Fetch enrollment count for each section
         for (const section of subject.sections) {
           if (section.is_active) {
             const { count, error: countError } = await supabase
@@ -1662,13 +1657,12 @@ const fetchSubjects = async (forceRefresh = false) => {
       }
     }
 
-    // Convert to array and format for display
     const processedSubjects = Array.from(subjectGroups.values()).map(group => {
       const gradeLevelsArray = Array.from(group.grade_levels).sort((a, b) => a - b)
       return {
         ...group,
         grade_levels: gradeLevelsArray,
-        grade_level: gradeLevelsArray[0], // For delete modal display
+        grade_level: gradeLevelsArray[0],
         grade_level_display: gradeLevelsArray.length === 1 
           ? `Grade ${gradeLevelsArray[0]}` 
           : `Grades ${gradeLevelsArray.join(', ')}`
@@ -1694,11 +1688,13 @@ const selectSubject = (subject) => {
   selectedSection.value = null
   selectedGradeFilter.value = 'all'
   viewMode.value = 'sections'
+  openSubjectMenuId.value = null
 }
 
 const selectSection = (section) => {
   selectedSection.value = section
   viewMode.value = 'section-detail'
+  openMenuId.value = null
 }
 
 const goBackToSubjects = () => {
@@ -1706,11 +1702,14 @@ const goBackToSubjects = () => {
   selectedSection.value = null
   selectedGradeFilter.value = 'all'
   viewMode.value = 'subjects'
+  openSubjectMenuId.value = null
+  openMenuId.value = null
 }
 
 const goBackToSections = () => {
   selectedSection.value = null
   viewMode.value = 'sections'
+  openMenuId.value = null
 }
 
 const setGradeFilter = (grade) => {
@@ -1855,7 +1854,6 @@ const saveSubject = async () => {
       
       subjectId = currentSubjectId.value
 
-      // Delete old sections
       await supabase
         .from('sections')
         .delete()
@@ -1873,7 +1871,6 @@ const saveSubject = async () => {
       subjectId = newSubject.id
     }
 
-    // Create new sections
     const sectionsToInsert = []
     const createdSectionCodes = []
     
@@ -1907,7 +1904,6 @@ const saveSubject = async () => {
     successMessage.value = `Subject "${formData.value.name}" ${isEditing.value ? 'updated' : 'created'} successfully!\n\nSection Codes:\n${sectionCodesText}\n\nShare these codes with your students so they can join their respective sections.`
     showSuccessModal.value = true
 
-    // Refresh subjects
     await fetchSubjects(true)
     
     isLoading.value = false
@@ -1934,6 +1930,7 @@ const editSubject = (subject) => {
   }
   currentStep.value = 1
   showCreateModal.value = true
+  openSubjectMenuId.value = null
 }
 
 // ============================================================
@@ -2024,7 +2021,6 @@ const deleteSubjectConfirmed = async (subjectId) => {
     isDeleting.value = true
     const subject = subjects.value.find(s => s.id === subjectId)
 
-    // First, delete all enrollments for all sections of this subject
     const sectionIds = subject.sections.map(s => s.id)
     
     if (sectionIds.length > 0) {
@@ -2039,7 +2035,6 @@ const deleteSubjectConfirmed = async (subjectId) => {
       }
     }
 
-    // Then delete all sections
     const { error: sectionsError } = await supabase
       .from('sections')
       .delete()
@@ -2050,7 +2045,6 @@ const deleteSubjectConfirmed = async (subjectId) => {
       throw sectionsError
     }
 
-    // Finally delete the subject
     const { error: subjectError } = await supabase
       .from('subjects')
       .delete()
@@ -2062,7 +2056,6 @@ const deleteSubjectConfirmed = async (subjectId) => {
       throw subjectError
     }
     
-    // Update local state
     subjects.value = subjects.value.filter(s => s.id !== subjectId)
     
     showToast(`Subject "${subject?.name}" and all its sections deleted successfully!`, 'success')
@@ -2079,7 +2072,6 @@ const deleteSectionConfirmed = async (sectionId) => {
   try {
     isDeleting.value = true
 
-    // First delete all enrollments for this section
     const { error: enrollmentError } = await supabase
       .from('enrollments')
       .delete()
@@ -2090,7 +2082,6 @@ const deleteSectionConfirmed = async (sectionId) => {
       throw enrollmentError
     }
 
-    // Then delete the section
     const { error: sectionError } = await supabase
       .from('sections')
       .delete()
@@ -2101,22 +2092,18 @@ const deleteSectionConfirmed = async (sectionId) => {
       throw sectionError
     }
     
-    // Update local state
     if (selectedSubject.value) {
       selectedSubject.value.sections = selectedSubject.value.sections.filter(s => s.id !== sectionId)
       selectedSubject.value.section_count = selectedSubject.value.sections.length
       
-      // Recalculate total students
       selectedSubject.value.total_students = selectedSubject.value.sections.reduce((sum, s) => sum + (s.student_count || 0), 0)
       
-      // Update the subject in the subjects array
       const subjectIndex = subjects.value.findIndex(s => s.id === selectedSubject.value.id)
       if (subjectIndex !== -1) {
         subjects.value[subjectIndex] = { ...selectedSubject.value }
       }
     }
     
-    // If we're in section detail view and deleted that section, go back
     if (viewMode.value === 'section-detail' && selectedSection.value?.id === sectionId) {
       goBackToSections()
     }
@@ -2152,16 +2139,27 @@ const hideNotification = () => {
 // SECTION MENU
 // ============================================================
 const toggleSectionMenu = (sectionId) => {
-  openMenuId.value = openMenuId.value === sectionId ? null : sectionId
+  if (openMenuId.value === sectionId) {
+    openMenuId.value = null
+  } else {
+    openMenuId.value = sectionId
+    openSubjectMenuId.value = null
+  }
 }
 
 const toggleSubjectMenu = (subjectId) => {
-  openSubjectMenuId.value = openSubjectMenuId.value === subjectId ? null : subjectId
+  if (openSubjectMenuId.value === subjectId) {
+    openSubjectMenuId.value = null
+  } else {
+    openSubjectMenuId.value = subjectId
+    openMenuId.value = null
+  }
 }
 
 const editSection = (section) => {
   console.log('Edit section:', section)
   showToast('Edit section feature coming soon!', 'info')
+  openMenuId.value = null
 }
 
 const toggleArchiveSection = async (section) => {
@@ -2182,7 +2180,11 @@ const toggleArchiveSection = async (section) => {
 }
 
 const handleClickOutside = (event) => {
-  if (!event.target.closest('.section-menu-container') && !event.target.closest('.subject-menu-container')) {
+  const targetElement = event.target
+  const isOutsideSectionMenu = !targetElement.closest('.section-menu-container')
+  const isOutsideSubjectMenu = !targetElement.closest('.subject-menu-container')
+  
+  if (isOutsideSectionMenu && isOutsideSubjectMenu) {
     openMenuId.value = null
     openSubjectMenuId.value = null
   }
@@ -2316,11 +2318,9 @@ onMounted(async () => {
   try {
     initDarkMode()
     
-    // Initialize authentication with better error handling
     const { initializeAuth, setupAuthListener } = useTeacherAuth()
     setupAuthListener()
     
-    // Try to initialize auth, with fallback for refresh scenarios
     const authResult = await initializeAuth()
     
     if (!authResult.success) {
@@ -2329,25 +2329,20 @@ onMounted(async () => {
         await router.push('/login')
         return
       }
-      // For network errors, continue and try to load data anyway
       console.warn('Auth initialization had issues, but continuing...')
     }
     
-    // Wait a moment for teacherInfo to be available, then fetch
     const checkTeacherInfo = setInterval(async () => {
       if (teacherInfo.value?.id) {
         clearInterval(checkTeacherInfo)
         await fetchSubjects()
       } else if (authResult.success === false && authResult.needsLogin) {
-        // Clear interval if we know auth failed definitively
         clearInterval(checkTeacherInfo)
       }
     }, 200)
 
-    // Timeout after 10 seconds (more generous for slow connections)
     setTimeout(() => {
       clearInterval(checkTeacherInfo)
-      // If still no teacher info after 10 seconds, but we have some auth, try fetching anyway
       if (!teacherInfo.value?.id && isAuthenticated.value) {
         console.warn('Timeout waiting for teacher info, but authenticated - trying to fetch anyway')
         fetchSubjects()
@@ -2358,8 +2353,6 @@ onMounted(async () => {
     
   } catch (error) {
     console.error('Component mount error:', error)
-    // Don't immediately redirect on error - might be a network issue
-    // Let the router guard handle auth redirections
   }
 })
 
