@@ -285,9 +285,7 @@
           </div>
         </div>
 
-        <!-- ========================================
-             BROADCAST TAB - ENHANCED DESIGN
-             ======================================== -->
+        <!-- Broadcast Tab -->
         <div v-else-if="currentTab === 'broadcast'" class="tab-content">
           <div v-if="!showBroadcastHistory" class="broadcast-section">
             <!-- Enhanced Broadcast Header -->
@@ -727,7 +725,13 @@
           </div>
         </div>
         <div class="modal-body">
-          <div class="messages-container" ref="messagesContainer">
+          <!-- Loading indicator for messages -->
+          <div v-if="loadingMessages" class="messages-loading">
+            <div class="messages-loading-spinner"></div>
+            <p>Loading messages...</p>
+          </div>
+          
+          <div v-else class="messages-container" ref="messagesContainer">
             <div 
               v-for="message in currentMessages" 
               :key="message.id" 
@@ -738,8 +742,17 @@
               <!-- Display attachments if any -->
               <div v-if="message.attachments && message.attachments.length > 0" class="message-attachments">
                 <div v-for="(attachment, idx) in message.attachments" :key="idx" class="attachment-item">
-                  <!-- Image preview -->
-                  <img v-if="attachment.type === 'image'" :src="attachment.url" class="attachment-image" @click="viewAttachment(attachment)" />
+                  <!-- Image preview with better visibility -->
+                  <div v-if="attachment.type === 'image'" class="attachment-image-container" @click="viewAttachment(attachment)">
+                    <img :src="attachment.url" class="attachment-image" alt="Attachment" />
+                    <div class="image-overlay">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                      <span>Click to view</span>
+                    </div>
+                  </div>
                   
                   <!-- File download -->
                   <div v-else class="attachment-file">
@@ -851,11 +864,11 @@
     </div>
 
     <!-- Attachment Viewer Modal -->
-    <div v-if="viewingAttachment" class="modal-overlay" @click.self="closeAttachmentViewer">
+    <div v-if="viewingAttachment" class="modal-overlay attachment-modal-overlay" @click.self="closeAttachmentViewer">
       <div class="attachment-viewer">
-        <button @click="closeAttachmentViewer" class="close-btn">&times;</button>
+        <button @click="closeAttachmentViewer" class="close-btn viewer-close-btn">&times;</button>
         <div class="attachment-viewer-content">
-          <img v-if="viewingAttachment.type === 'image'" :src="viewingAttachment.url" class="viewer-image" />
+          <img v-if="viewingAttachment.type === 'image'" :src="viewingAttachment.url" class="viewer-image" alt="Attachment" />
           <div v-else class="viewer-file">
             <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
@@ -915,6 +928,7 @@ const isModalOpen = ref(false)
 const isBroadcastModalOpen = ref(false)
 const isLoading = ref(false)
 const loadingMessage = ref('Loading...')
+const loadingMessages = ref(false)
 const showArchive = ref(false)
 const showBroadcastHistory = ref(false)
 const showChatOptions = ref(false)
@@ -1107,11 +1121,9 @@ const getCurrentUser = async () => {
 const copyToClipboard = async (text) => {
   try {
     await navigator.clipboard.writeText(text)
-    // Simple feedback - you could add a toast notification here
     console.log('Section code copied to clipboard:', text)
   } catch (err) {
     console.error('Failed to copy to clipboard:', err)
-    // Fallback for older browsers
     const textArea = document.createElement('textarea')
     textArea.value = text
     document.body.appendChild(textArea)
@@ -1176,7 +1188,8 @@ const loadTeacherContacts = async () => {
       enrolled_date: contact.enrolled_date,
       last_message_date: contact.last_message_date,
       last_message: contact.last_message || `Enrolled ${formatDate(contact.enrolled_date)}`,
-      unread_count: contact.unread_count || 0
+      unread_count: contact.unread_count || 0,
+      auth_user_id: contact.auth_user_id
     }))
     
     studentContacts.value = mappedContacts
@@ -1204,7 +1217,8 @@ const loadContactsManually = async () => {
           full_name,
           email,
           student_id,
-          grade_level
+          grade_level,
+          profile_id
         ),
         sections:section_id (
           id,
@@ -1234,6 +1248,26 @@ const loadContactsManually = async () => {
     
     console.log('Manual query raw results:', contacts.length)
     
+    // Get auth_user_ids for students
+    const studentProfileIds = contacts
+      .filter(e => e.students?.profile_id)
+      .map(e => e.students.profile_id)
+    
+    let authUserMap = {}
+    if (studentProfileIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, auth_user_id')
+        .in('id', studentProfileIds)
+      
+      if (profiles) {
+        authUserMap = profiles.reduce((acc, p) => {
+          acc[p.id] = p.auth_user_id
+          return acc
+        }, {})
+      }
+    }
+    
     const transformedContacts = contacts
       .filter(enrollment => {
         return enrollment.students && 
@@ -1255,7 +1289,8 @@ const loadContactsManually = async () => {
         enrolled_date: enrollment.enrolled_at,
         last_message_date: null,
         last_message: `Enrolled ${formatDate(enrollment.enrolled_at)}`,
-        unread_count: 0
+        unread_count: 0,
+        auth_user_id: authUserMap[enrollment.students.profile_id] || null
       }))
     
     console.log('Transformed contacts:', transformedContacts.length)
@@ -1566,6 +1601,8 @@ const loadConversationMessages = async (studentId, sectionId) => {
   try {
     if (!currentTeacherId.value) return
     
+    loadingMessages.value = true
+    
     console.log('Loading messages between teacher and student:', { 
       teacherId: currentTeacherId.value, 
       studentId, 
@@ -1625,6 +1662,8 @@ const loadConversationMessages = async (studentId, sectionId) => {
   } catch (error) {
     console.error('Error loading conversation messages:', error)
     currentMessages.value = []
+  } finally {
+    loadingMessages.value = false
   }
 }
 
@@ -1735,6 +1774,7 @@ const closeModal = () => {
   currentMessages.value = []
   messageAttachments.value = []
   showChatOptions.value = false
+  loadingMessages.value = false
 }
 
 const markConversationAsRead = async (sectionId, studentId) => {
@@ -1801,8 +1841,6 @@ const handleBroadcastFileSelect = (event) => {
         file: file
       })
     }
-    
-
     
     reader.readAsDataURL(file)
   })
@@ -1935,7 +1973,7 @@ const sendBroadcastMessage = async () => {
       .insert({
         section_id: broadcastSection.value,
         sender_id: currentTeacherId.value,
-        recipient_id: null, // null for broadcast messages
+        recipient_id: null,
         message_text: broadcastMessage.value.trim(),
         message_type: 'announcement',
         is_read: false
@@ -6719,5 +6757,553 @@ onUnmounted(() => {
     flex-direction: column;
     gap: 0.5rem;
   }
+}
+
+/* ============================================
+   MESSAGES LOADING INDICATOR
+   ============================================ */
+
+.messages-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  min-height: 300px;
+}
+
+.messages-loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(61, 141, 122, 0.2);
+  border-left: 4px solid #3D8D7A;
+  border-top: 4px solid #20c997;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.dark .messages-loading-spinner {
+  border: 4px solid rgba(32, 201, 151, 0.2);
+  border-left: 4px solid #20c997;
+  border-top: 4px solid #18a577;
+}
+
+.messages-loading p {
+  font-size: 0.938rem;
+  font-weight: 600;
+  color: #3D8D7A;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.dark .messages-loading p {
+  color: #20c997;
+}
+
+/* ============================================
+   ENHANCED IMAGE ATTACHMENTS WITH BETTER VISIBILITY
+   ============================================ */
+
+.message-attachments {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.attachment-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Image Container with Overlay */
+.attachment-image-container {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  max-width: 100%;
+  min-width: 250px;
+  background: #f3f4f6;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dark .attachment-image-container {
+  background: #1f2937;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.attachment-image-container:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 24px rgba(61, 141, 122, 0.25);
+}
+
+.dark .attachment-image-container:hover {
+  box-shadow: 0 8px 24px rgba(32, 201, 151, 0.25);
+}
+
+.attachment-image {
+  width: 100%;
+  height: auto;
+  max-height: 400px;
+  object-fit: contain;
+  display: block;
+  background: #ffffff;
+  padding: 0.5rem;
+}
+
+.dark .attachment-image {
+  background: #23272b;
+}
+
+/* Image Overlay */
+.image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.1) 0%,
+    rgba(0, 0, 0, 0.3) 100%
+  );
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  color: white;
+}
+
+.attachment-image-container:hover .image-overlay {
+  opacity: 1;
+}
+
+.image-overlay svg {
+  color: white;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.image-overlay span {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  font-family: 'Inter', sans-serif;
+}
+
+/* File Attachment Styling */
+.attachment-file {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.dark .attachment-file {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+.attachment-file:hover {
+  background: white;
+  border-color: #3D8D7A;
+  transform: translateX(2px);
+}
+
+.dark .attachment-file:hover {
+  background: #374151;
+  border-color: #20c997;
+}
+
+.attachment-file > svg {
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.dark .attachment-file > svg {
+  color: #9ca3af;
+}
+
+.attachment-file > span {
+  flex: 1;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dark .attachment-file > span {
+  color: #e5e7eb;
+}
+
+.attachment-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.attachment-btn {
+  width: 32px;
+  height: 32px;
+  background: #3D8D7A;
+  border: none;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.attachment-btn:hover {
+  background: #2d6b5a;
+  transform: scale(1.1);
+}
+
+.dark .attachment-btn {
+  background: #20c997;
+  color: #181c20;
+}
+
+.dark .attachment-btn:hover {
+  background: #18a577;
+}
+
+/* ============================================
+   ENHANCED ATTACHMENT VIEWER MODAL
+   ============================================ */
+
+.attachment-modal-overlay {
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+}
+
+.attachment-viewer {
+  background: white;
+  border-radius: 16px;
+  max-width: 90vw;
+  max-height: 90vh;
+  width: auto;
+  height: auto;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  position: relative;
+  animation: zoomIn 0.3s ease;
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.dark .attachment-viewer {
+  background: #23272b;
+  border: 2px solid #374151;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.viewer-close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 40px;
+  height: 40px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 10;
+  line-height: 1;
+  padding: 0;
+}
+
+.viewer-close-btn:hover {
+  background: rgba(239, 68, 68, 0.9);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: rotate(90deg) scale(1.1);
+}
+
+.attachment-viewer-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  min-width: 300px;
+  min-height: 300px;
+  max-height: 90vh;
+}
+
+.viewer-image {
+  max-width: 100%;
+  max-height: calc(90vh - 4rem);
+  height: auto;
+  width: auto;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.viewer-file {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+.viewer-file svg {
+  color: #6b7280;
+}
+
+.dark .viewer-file svg {
+  color: #9ca3af;
+}
+
+.viewer-file h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+  max-width: 400px;
+  word-wrap: break-word;
+  font-family: 'Inter', sans-serif;
+}
+
+.dark .viewer-file h3 {
+  color: #e5e7eb;
+}
+
+.download-viewer-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.75rem;
+  background: linear-gradient(135deg, #3D8D7A 0%, #20c997 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.938rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Inter', sans-serif;
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
+}
+
+.download-viewer-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(61, 141, 122, 0.4);
+}
+
+.dark .download-viewer-btn {
+  background: linear-gradient(135deg, #20c997 0%, #18a577 100%);
+}
+
+/* ============================================
+   SENT MESSAGE BUBBLE ATTACHMENTS
+   ============================================ */
+
+.message-bubble.sent .attachment-image-container {
+  background: rgba(61, 141, 122, 0.1);
+}
+
+.dark .message-bubble.sent .attachment-image-container {
+  background: rgba(32, 201, 151, 0.1);
+}
+
+.message-bubble.sent .attachment-file {
+  background: rgba(61, 141, 122, 0.05);
+  border-color: rgba(61, 141, 122, 0.2);
+}
+
+.dark .message-bubble.sent .attachment-file {
+  background: rgba(32, 201, 151, 0.05);
+  border-color: rgba(32, 201, 151, 0.2);
+}
+
+/* ============================================
+   RECEIVED MESSAGE BUBBLE ATTACHMENTS
+   ============================================ */
+
+.message-bubble.received .attachment-image-container {
+  background: #f9fafb;
+}
+
+.dark .message-bubble.received .attachment-image-container {
+  background: #2a2d35;
+}
+
+.message-bubble.received .attachment-file {
+  background: white;
+  border-color: #e5e7eb;
+}
+
+.dark .message-bubble.received .attachment-file {
+  background: #2a2d35;
+  border-color: #374151;
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS FOR ATTACHMENTS
+   ============================================ */
+
+@media (max-width: 768px) {
+  .attachment-image-container {
+    min-width: 200px;
+  }
+
+  .attachment-image {
+    max-height: 300px;
+  }
+
+  .attachment-viewer {
+    max-width: 95vw;
+    max-height: 95vh;
+  }
+
+  .attachment-viewer-content {
+    padding: 1rem;
+  }
+
+  .viewer-image {
+    max-height: calc(95vh - 2rem);
+  }
+
+  .viewer-close-btn {
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 36px;
+    height: 36px;
+  }
+
+  .image-overlay {
+    opacity: 1;
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.2) 0%,
+      rgba(0, 0, 0, 0.4) 100%
+    );
+  }
+}
+
+@media (max-width: 480px) {
+  .attachment-image-container {
+    min-width: 150px;
+  }
+
+  .attachment-image {
+    max-height: 250px;
+  }
+
+  .attachment-file {
+    padding: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .attachment-actions {
+    width: 100%;
+    justify-content: flex-end;
+    margin-left: 0;
+    margin-top: 0.5rem;
+  }
+
+  .viewer-file {
+    padding: 1rem;
+  }
+
+  .viewer-file h3 {
+    font-size: 1rem;
+    max-width: 250px;
+  }
+
+  .download-viewer-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY IMPROVEMENTS
+   ============================================ */
+
+.attachment-image-container:focus-visible,
+.attachment-btn:focus-visible,
+.download-viewer-btn:focus-visible {
+  outline: 3px solid #3D8D7A;
+  outline-offset: 2px;
+}
+
+.dark .attachment-image-container:focus-visible,
+.dark .attachment-btn:focus-visible,
+.dark .download-viewer-btn:focus-visible {
+  outline-color: #20c997;
+}
+
+/* Screen reader only text */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ============================================
+   LOADING STATE FOR ATTACHMENT IMAGES
+   ============================================ */
+
+.attachment-image-container::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(61, 141, 122, 0.2);
+  border-top-color: #3D8D7A;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  z-index: 1;
+}
+
+.attachment-image-container.loaded::before {
+  display: none;
+}
+
+.dark .attachment-image-container::before {
+  border: 3px solid rgba(32, 201, 151, 0.2);
+  border-top-color: #20c997;
 }
 </style>
