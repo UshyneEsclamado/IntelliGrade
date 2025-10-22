@@ -288,7 +288,7 @@
 </template>
 
 <script lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { supabase } from '../../supabase.js'
 import { useDarkMode } from '../../composables/useDarkMode.js'
 
@@ -368,6 +368,11 @@ export default {
     const selectedStudent = ref<StudentData | null>(null)
     const studentQuizResults = ref<QuizResult[]>([])
     const teacherId = ref<string>('')
+    
+    // Real-time subscription channels
+    let quizAttemptsSubscription: any = null
+    let quizzesSubscription: any = null
+    let enrollmentsSubscription: any = null
 
     // Computed properties
     const overallStats = computed(() => {
@@ -507,7 +512,280 @@ export default {
       }
     }
 
-    // Fetch analytics data using database views
+    // Fetch student performance data with manual calculation
+    const fetchStudentPerformanceData = async (currentTeacherId: string) => {
+      try {
+        console.log('Fetching student performance data...')
+        
+        // Get all enrolled students in teacher's sections
+        const { data: enrollments, error: enrollError } = await supabase
+          .from('enrollments')
+          .select(`
+            student_id,
+            section_id,
+            subject_id,
+            students!inner (
+              id,
+              student_id,
+              full_name,
+              email,
+              grade_level
+            ),
+            sections!inner (
+              id,
+              name,
+              section_code,
+              subjects!inner (
+                id,
+                name,
+                teacher_id,
+                teachers!inner (
+                  id,
+                  full_name
+                )
+              )
+            )
+          `)
+          .eq('status', 'active')
+          .eq('sections.subjects.teacher_id', currentTeacherId)
+
+        if (enrollError) throw enrollError
+
+        if (!enrollments || enrollments.length === 0) {
+          console.log('No enrollments found')
+          studentData.value = []
+          return
+        }
+
+        // Get all quiz attempts for these students
+        const studentIds = enrollments.map((e: any) => e.student_id)
+        
+        const { data: attempts, error: attemptsError } = await supabase
+          .from('quiz_attempts')
+          .select(`
+            id,
+            student_id,
+            quiz_id,
+            percentage,
+            submitted_at,
+            attempt_number,
+            status,
+            quizzes!inner (
+              id,
+              title,
+              section_id
+            )
+          `)
+          .in('student_id', studentIds)
+          .in('status', ['submitted', 'graded'])
+
+        if (attemptsError) throw attemptsError
+
+        console.log('Found attempts:', attempts?.length || 0)
+
+        // Calculate stats for each student
+        const studentStats = enrollments.map((enrollment: any) => {
+          const student = enrollment.students
+          const section = enrollment.sections
+          const subject = section.subjects
+          const teacher = subject.teachers
+
+          // Get all attempts for this student in this teacher's sections
+          const studentAttempts = (attempts || []).filter((a: any) => 
+            a.student_id === student.id &&
+            enrollments.some((e: any) => 
+              e.student_id === student.id && 
+              e.section_id === a.quizzes.section_id
+            )
+          )
+
+          // Calculate statistics
+          const totalAttempts = studentAttempts.length
+          const uniqueQuizzes = new Set(studentAttempts.map((a: any) => a.quiz_id)).size
+          
+          let averageScore = 0
+          let bestScore = 0
+          let lowestScore = 0
+          let lastQuizDate = ''
+          let performanceStatus = 'No Data'
+
+          if (totalAttempts > 0) {
+            const scores = studentAttempts.map((a: any) => a.percentage || 0)
+            averageScore = Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length)
+            bestScore = Math.max(...scores)
+            lowestScore = Math.min(...scores)
+            
+            // Get most recent attempt date
+            const sortedAttempts = studentAttempts.sort((a: any, b: any) => 
+              new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime()
+            )
+            lastQuizDate = sortedAttempts[0]?.submitted_at || ''
+
+            // Determine performance status
+            if (averageScore >= 90) performanceStatus = 'Excellent'
+            else if (averageScore >= 80) performanceStatus = 'Good'
+            else if (averageScore >= 75) performanceStatus = 'Satisfactory'
+            else performanceStatus = 'Needs Help'
+          }
+
+          // Count attempts in last week
+          const oneWeekAgo = new Date()
+          oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
+          const attemptsLastWeek = studentAttempts.filter((a: any) => 
+            new Date(a.submitted_at) >= oneWeekAgo
+          ).length
+
+          return {
+            student_id: student.id,
+            student_name: student.full_name,
+            student_number: student.student_id,
+            student_email: student.email,
+            grade_level: student.grade_level,
+            section_id: section.id,
+            section_name: section.name,
+            section_code: section.section_code,
+            subject_id: subject.id,
+            subject_name: subject.name,
+            teacher_id: teacher.id,
+            teacher_name: teacher.full_name,
+            total_quiz_attempts: totalAttempts,
+            quizzes_attempted: uniqueQuizzes,
+            average_score: averageScore,
+            best_score: bestScore,
+            lowest_score: lowestScore,
+            last_quiz_date: lastQuizDate,
+            attempts_last_week: attemptsLastWeek,
+            performance_status: performanceStatus
+          }
+        })
+
+        studentData.value = studentStats
+        console.log('Student data updated:', studentStats.length, 'students')
+
+      } catch (error) {
+        console.error('Error fetching student performance:', error)
+        studentData.value = []
+      }
+    }
+
+    // Fetch quiz performance data with manual calculation
+    const fetchQuizPerformanceData = async (currentTeacherId: string) => {
+      try {
+        console.log('Fetching quiz performance data...')
+
+        // Get all quizzes for this teacher
+        const { data: quizzes, error: quizzesError } = await supabase
+          .from('quizzes')
+          .select(`
+            id,
+            title,
+            quiz_code,
+            section_id,
+            sections!inner (
+              id,
+              name,
+              subject_id,
+              subjects!inner (
+                id,
+                name,
+                teacher_id,
+                teachers!inner (
+                  id,
+                  full_name
+                )
+              )
+            )
+          `)
+          .eq('sections.subjects.teacher_id', currentTeacherId)
+
+        if (quizzesError) throw quizzesError
+
+        if (!quizzes || quizzes.length === 0) {
+          console.log('No quizzes found')
+          quizPerformanceData.value = []
+          return
+        }
+
+        // Get all attempts for these quizzes
+        const quizIds = quizzes.map((q: any) => q.id)
+        
+        const { data: attempts, error: attemptsError } = await supabase
+          .from('quiz_attempts')
+          .select('id, quiz_id, student_id, percentage, status')
+          .in('quiz_id', quizIds)
+          .in('status', ['submitted', 'graded'])
+
+        if (attemptsError) throw attemptsError
+
+        console.log('Found quiz attempts:', attempts?.length || 0)
+
+        // Calculate stats for each quiz
+        const quizStats = quizzes.map((quiz: any) => {
+          const section = quiz.sections
+          const subject = section.subjects
+          const teacher = subject.teachers
+
+          // Get all attempts for this quiz
+          const quizAttempts = (attempts || []).filter((a: any) => a.quiz_id === quiz.id)
+          
+          const totalAttempts = quizAttempts.length
+          const uniqueStudents = new Set(quizAttempts.map((a: any) => a.student_id)).size
+
+          let averageScore = 0
+          let highestScore = 0
+          let lowestScore = 0
+          let countExcellent = 0
+          let countGood = 0
+          let countSatisfactory = 0
+          let countNeedsHelp = 0
+
+          if (totalAttempts > 0) {
+            const scores = quizAttempts.map((a: any) => a.percentage || 0)
+            averageScore = Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length)
+            highestScore = Math.max(...scores)
+            lowestScore = Math.min(...scores)
+
+            // Count by performance level
+            scores.forEach(score => {
+              if (score >= 90) countExcellent++
+              else if (score >= 80) countGood++
+              else if (score >= 75) countSatisfactory++
+              else countNeedsHelp++
+            })
+          }
+
+          return {
+            quiz_id: quiz.id,
+            quiz_title: quiz.title,
+            quiz_code: quiz.quiz_code,
+            section_id: section.id,
+            section_name: section.name,
+            subject_id: subject.id,
+            subject_name: subject.name,
+            teacher_id: teacher.id,
+            teacher_name: teacher.full_name,
+            total_attempts: totalAttempts,
+            students_attempted: uniqueStudents,
+            average_score: averageScore,
+            highest_score: highestScore,
+            lowest_score: lowestScore,
+            count_excellent: countExcellent,
+            count_good: countGood,
+            count_satisfactory: countSatisfactory,
+            count_needs_help: countNeedsHelp
+          }
+        })
+
+        quizPerformanceData.value = quizStats
+        console.log('Quiz performance data updated:', quizStats.length, 'quizzes')
+
+      } catch (error) {
+        console.error('Error fetching quiz performance:', error)
+        quizPerformanceData.value = []
+      }
+    }
+
+    // Fetch all analytics data
     const fetchData = async () => {
       loading.value = true
       try {
@@ -519,34 +797,13 @@ export default {
         }
 
         teacherId.value = currentTeacherId
+        console.log('Teacher ID:', currentTeacherId)
 
-        // Fetch student performance data from view
-        const { data: students, error: studentsError } = await supabase
-          .from('student_performance_analytics')
-          .select('*')
-          .eq('teacher_id', teacherId.value)
-          .order('student_name')
-
-        if (studentsError) {
-          console.error('Error fetching student data:', studentsError)
-          throw studentsError
-        }
-
-        studentData.value = students || []
-
-        // Fetch quiz performance data from view
-        const { data: quizzes, error: quizzesError } = await supabase
-          .from('quiz_performance_analytics')
-          .select('*')
-          .eq('teacher_id', teacherId.value)
-          .order('quiz_title')
-
-        if (quizzesError) {
-          console.error('Error fetching quiz data:', quizzesError)
-          throw quizzesError
-        }
-
-        quizPerformanceData.value = quizzes || []
+        // Fetch both student and quiz performance data
+        await Promise.all([
+          fetchStudentPerformanceData(currentTeacherId),
+          fetchQuizPerformanceData(currentTeacherId)
+        ])
 
         // Build unique sections list for filter
         const uniqueSections = new Map()
@@ -572,6 +829,87 @@ export default {
       } finally {
         loading.value = false
       }
+    }
+
+    // Setup real-time subscriptions
+    const setupRealtimeSubscriptions = async () => {
+      if (!teacherId.value) return
+
+      console.log('Setting up real-time subscriptions...')
+
+      // Subscribe to quiz attempts changes
+      quizAttemptsSubscription = supabase
+        .channel('quiz_attempts_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'quiz_attempts'
+          },
+          async (payload) => {
+            console.log('Quiz attempt changed:', payload)
+            // Refresh data when attempts are created, updated, or deleted
+            await fetchStudentPerformanceData(teacherId.value)
+            await fetchQuizPerformanceData(teacherId.value)
+          }
+        )
+        .subscribe()
+
+      // Subscribe to quizzes changes
+      quizzesSubscription = supabase
+        .channel('quizzes_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'quizzes'
+          },
+          async (payload) => {
+            console.log('Quiz changed:', payload)
+            // Refresh quiz performance data
+            await fetchQuizPerformanceData(teacherId.value)
+          }
+        )
+        .subscribe()
+
+      // Subscribe to enrollments changes
+      enrollmentsSubscription = supabase
+        .channel('enrollments_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'enrollments'
+          },
+          async (payload) => {
+            console.log('Enrollment changed:', payload)
+            // Refresh student data
+            await fetchStudentPerformanceData(teacherId.value)
+          }
+        )
+        .subscribe()
+
+      console.log('Real-time subscriptions active')
+    }
+
+    // Cleanup subscriptions
+    const cleanupSubscriptions = () => {
+      if (quizAttemptsSubscription) {
+        supabase.removeChannel(quizAttemptsSubscription)
+        quizAttemptsSubscription = null
+      }
+      if (quizzesSubscription) {
+        supabase.removeChannel(quizzesSubscription)
+        quizzesSubscription = null
+      }
+      if (enrollmentsSubscription) {
+        supabase.removeChannel(enrollmentsSubscription)
+        enrollmentsSubscription = null
+      }
+      console.log('Real-time subscriptions cleaned up')
     }
 
     // View student details
@@ -683,6 +1021,11 @@ export default {
     onMounted(async () => {
       initDarkMode()
       await fetchData()
+      await setupRealtimeSubscriptions()
+    })
+
+    onUnmounted(() => {
+      cleanupSubscriptions()
     })
 
     return {
