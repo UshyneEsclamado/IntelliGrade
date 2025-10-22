@@ -1,5 +1,14 @@
+
 <template>
   <div class="messages-container">
+    <!-- Global Loading Overlay -->
+    <div v-if="isInitialLoading" class="loading-overlay">
+      <div class="loading-spinner">
+        <div class="spinner"></div>
+        <p>Loading your messages...</p>
+      </div>
+    </div>
+
     <!-- Header Section (Uniform Card Style) -->
     <div class="section-header-card minimal-header-card">
       <div class="section-header-left">
@@ -59,6 +68,7 @@
             <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
           </svg>
           Notifications
+          <span v-if="unreadNotificationsCount > 0" class="notification-badge">{{ unreadNotificationsCount }}</span>
         </button>
       </div>
     </div>
@@ -68,8 +78,16 @@
       <!-- Teachers Tab -->
       <div v-if="currentTab === 'teachers' || currentTab === 'archive'" class="tab-content">
 
+        <!-- Loading State -->
+        <div v-if="isLoadingTeachers" class="loading-state">
+          <div class="loading-spinner-small">
+            <div class="spinner"></div>
+          </div>
+          <p>Loading teachers...</p>
+        </div>
+
         <!-- Empty state when no deleted conversations -->
-        <div v-if="filteredTeachers.length === 0 && !hasDeletedConversations" class="empty-state">
+        <div v-else-if="filteredTeachers.length === 0 && !hasDeletedConversations" class="empty-state">
           <div class="empty-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -127,7 +145,6 @@
                     </div>
                   </div>
                   <div class="teacher-card-right">
-                    <!-- unread-badge removed as requested -->
                     <button 
                       class="options-btn" 
                       @click.stop="toggleTeacherOptions(`${teacher.id}-${teacher.section_id}`)"
@@ -159,6 +176,7 @@
                 
                 <div class="teacher-card-body">
                   <p class="last-message">{{ teacher.last_message || 'Start a conversation' }}</p>
+                  <span v-if="teacher.last_message_time" class="last-message-time">{{ formatTime(teacher.last_message_time) }}</span>
                 </div>
               </div>
             </div>
@@ -183,7 +201,7 @@
               Unread
             </button>
           </div>
-          <button class="action-btn" @click="clearNotifications">
+          <button class="action-btn" @click="clearNotifications" v-if="unreadNotificationsCount > 0">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="20,6 9,17 4,12"/>
             </svg>
@@ -191,7 +209,15 @@
           </button>
         </div>
         
-        <div v-if="Object.keys(groupedBroadcasts).length === 0" class="empty-state">
+        <!-- Loading State for Notifications -->
+        <div v-if="isLoadingNotifications" class="loading-state">
+          <div class="loading-spinner-small">
+            <div class="spinner"></div>
+          </div>
+          <p>Loading notifications...</p>
+        </div>
+        
+        <div v-else-if="Object.keys(groupedBroadcasts).length === 0" class="empty-state">
           <div class="empty-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -228,6 +254,8 @@
         </div>
       </div>
     </div>
+
+    <!-- Chat Modal -->
     <div v-if="isModalOpen" class="modal-overlay" @click.self="closeModal">
       <div class="modal-content">
         <div class="modal-header">
@@ -248,7 +276,16 @@
           </button>
         </div>
         <div class="modal-body">
-          <div class="messages-container" ref="messagesContainer">
+          <!-- Loading Messages -->
+          <div v-if="isLoadingMessages" class="loading-messages">
+            <div class="loading-spinner-small">
+              <div class="spinner"></div>
+            </div>
+            <p>Loading conversation...</p>
+          </div>
+
+          <!-- Messages Container -->
+          <div v-else class="messages-container" ref="messagesContainer">
             <div 
               v-for="message in currentMessages" 
               :key="message.id" 
@@ -288,7 +325,7 @@
                 </span>
               </div>
             </div>
-            <div v-if="currentMessages.length === 0" class="no-messages">
+            <div v-if="currentMessages.length === 0 && !isLoadingMessages" class="no-messages">
               <p>No messages yet. Start the conversation!</p>
             </div>
           </div>
@@ -321,7 +358,7 @@
               style="display: none" 
               accept="image/*,.pdf,.doc,.docx,.txt"
             />
-            <button class="attach-btn" @click="$refs.fileInput.click()">
+            <button class="attach-btn" @click="$refs.fileInput.click()" :disabled="isSendingMessage">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
               </svg>
@@ -332,12 +369,14 @@
               @keyup.enter="sendMessage" 
               placeholder="Type your message to your teacher..." 
               class="message-input"
+              :disabled="isSendingMessage"
             />
-            <button class="send-btn" @click="sendMessage" :disabled="!newMessage.trim() && !selectedFile">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <button class="send-btn" @click="sendMessage" :disabled="(!newMessage.trim() && !selectedFile) || isSendingMessage">
+              <svg v-if="!isSendingMessage" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="22" y1="2" x2="11" y2="13"></line>
                 <polygon points="22 2 15.46 22 11 13 2 9.54 22 2"></polygon>
               </svg>
+              <div v-else class="button-spinner"></div>
             </button>
           </div>
         </div>
@@ -532,7 +571,14 @@ const selectedBroadcastGroup = ref(null)
 const newMessage = ref('')
 const messagesContainer = ref(null)
 const fileInput = ref(null)
-const isLoading = ref(false)
+
+// Loading states
+const isInitialLoading = ref(true)
+const isLoadingTeachers = ref(false)
+const isLoadingNotifications = ref(false)
+const isLoadingMessages = ref(false)
+const isSendingMessage = ref(false)
+
 const activeTeacherOptionsId = ref(null)
 const showArchive = ref(false)
 const selectedFile = ref(null)
@@ -553,77 +599,13 @@ const currentStudentId = ref(null)
 const teacherPresence = ref({})
 
 // ================================
-// FILE UPLOAD FUNCTIONS
+// COMPUTED PROPERTIES
 // ================================
 
-const uploadFileToStorage = async (file, folder = 'message-attachments') => {
-  try {
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-    const filePath = `${folder}/${fileName}`
-    
-    const { error } = await supabase.storage
-      .from('attachments')
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: false
-      })
-    
-    if (error) {
-      console.error('Upload error:', error)
-      throw error
-    }
-    
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from('attachments')
-      .getPublicUrl(filePath)
-    
-    // Return the file info object (inside the function)
-    return {
-      path: filePath,
-      url: urlData.publicUrl,
-      name: file.name,
-      type: file.type.startsWith('image/') ? 'image' : 'file',
-      size: file.size,
-      mimeType: file.type
-    }
-  } catch (error) {
-    console.error('Error uploading file:', error)
-    throw error
-  }
-}
+const unreadNotificationsCount = computed(() => {
+  return notifications.value.filter(n => !n.is_read).length
+})
 
-const saveMessageAttachments = async (messageId, attachments) => {
-  try {
-    const attachmentRecords = attachments.map(att => ({
-      message_id: messageId,
-      file_name: att.name,
-      file_path: att.path,
-      file_url: att.url,
-      file_type: att.type,
-      file_size: att.size,
-      mime_type: att.mimeType
-    }))
-    
-    const { data, error } = await supabase
-      .from('message_attachments')
-      .insert(attachmentRecords)
-      .select()
-    
-    if (error) {
-      console.error('Error saving attachments:', error)
-      throw error
-    }
-    
-    return data
-  } catch (error) {
-    console.error('Error saving message attachments:', error)
-    throw error
-  }
-}
-
-// Computed properties
 const hasDeletedConversations = computed(() => {
   return deletedConversationKeys.value.size > 0 && filteredTeachers.value.length === 0 && !showArchive.value
 })
@@ -689,7 +671,80 @@ const groupedBroadcasts = computed(() => {
   return groups
 })
 
-// Handler methods
+// ================================
+// FILE UPLOAD FUNCTIONS
+// ================================
+
+const uploadFileToStorage = async (file, folder = 'message-attachments') => {
+  try {
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
+    const filePath = `${folder}/${fileName}`
+    
+    const { error } = await supabase.storage
+      .from('attachments')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      })
+    
+    if (error) {
+      console.error('Upload error:', error)
+      throw error
+    }
+    
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('attachments')
+      .getPublicUrl(filePath)
+    
+    return {
+      path: filePath,
+      url: urlData.publicUrl,
+      name: file.name,
+      type: file.type.startsWith('image/') ? 'image' : 'file',
+      size: file.size,
+      mimeType: file.type
+    }
+  } catch (error) {
+    console.error('Error uploading file:', error)
+    throw error
+  }
+}
+
+const saveMessageAttachments = async (messageId, attachments) => {
+  try {
+    const attachmentRecords = attachments.map(att => ({
+      message_id: messageId,
+      file_name: att.name,
+      file_path: att.path,
+      file_url: att.url,
+      file_type: att.type,
+      file_size: att.size,
+      mime_type: att.mimeType
+    }))
+    
+    const { data, error } = await supabase
+      .from('message_attachments')
+      .insert(attachmentRecords)
+      .select()
+    
+    if (error) {
+      console.error('Error saving attachments:', error)
+      throw error
+    }
+    
+    return data
+  } catch (error) {
+    console.error('Error saving message attachments:', error)
+    throw error
+  }
+}
+
+// ================================
+// HANDLER METHODS
+// ================================
+
 const toggleTeacherOptions = (teacherId) => {
   activeTeacherOptionsId.value = activeTeacherOptionsId.value === teacherId ? null : teacherId
 }
@@ -812,8 +867,6 @@ const openBroadcastGroup = async (group) => {
         announcement.attachments = []
         announcement.has_attachments = false
       }
-    } else {
-      console.log('Announcement already has attachments:', announcement.attachments)
     }
   }
   
@@ -825,12 +878,9 @@ const closeBroadcastModal = () => {
   selectedBroadcastGroup.value = null
 }
 
-// New methods for announcement detail
 const openAnnouncementDetail = async (announcement) => {
   selectedAnnouncement.value = announcement
-  // Always fetch attachments from DB for reliability
   await loadAnnouncementAttachments(announcement.notification_id)
-  // Mark as read
   await markBroadcastAsRead(announcement)
   isAnnouncementDetailOpen.value = true
 }
@@ -901,16 +951,13 @@ const markBroadcastAsRead = async (announcement) => {
     
     if (error) throw error
     
-    // Update local state
     announcement.is_read = true
     
-    // Update notifications array
     const notificationIndex = notifications.value.findIndex(n => n.notification_id === announcement.notification_id)
     if (notificationIndex !== -1) {
       notifications.value[notificationIndex].is_read = true
     }
     
-    // Update selectedBroadcastGroup if it exists
     if (selectedBroadcastGroup.value) {
       const groupAnnouncement = selectedBroadcastGroup.value.announcements.find(a => a.notification_id === announcement.notification_id)
       if (groupAnnouncement) {
@@ -934,7 +981,10 @@ const handleClickOutside = (event) => {
   }
 }
 
-// Authentication methods
+// ================================
+// AUTHENTICATION METHODS
+// ================================
+
 const getCurrentUser = async () => {
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -980,7 +1030,10 @@ const getCurrentUser = async () => {
   }
 }
 
-// Data loading methods
+// ================================
+// DATA LOADING METHODS
+// ================================
+
 const loadEnrolledSubjectsAndTeachers = async () => {
   try {
     if (!currentStudentId.value) {
@@ -988,7 +1041,7 @@ const loadEnrolledSubjectsAndTeachers = async () => {
       return
     }
     
-    isLoading.value = true
+    isLoadingTeachers.value = true
     console.log('Loading subjects and teachers for student:', currentStudentId.value)
     
     const { data: enrollments, error: enrollError } = await supabase
@@ -1093,6 +1146,7 @@ const loadEnrolledSubjectsAndTeachers = async () => {
         .select('message_text, sent_at')
         .eq('section_id', section.id)
         .or(`and(sender_id.eq.${currentStudentId.value},recipient_id.eq.${teacher.id}),and(sender_id.eq.${teacher.id},recipient_id.eq.${currentStudentId.value})`)
+        .eq('message_type', 'direct')
         .order('sent_at', { ascending: false })
         .limit(1)
       
@@ -1125,7 +1179,7 @@ const loadEnrolledSubjectsAndTeachers = async () => {
     console.error('Error loading enrolled data:', error)
     alert('Error loading messaging data. Please check console for details.')
   } finally {
-    isLoading.value = false
+    isLoadingTeachers.value = false
   }
 }
 
@@ -1133,6 +1187,7 @@ const loadNotifications = async () => {
   try {
     if (!currentStudentId.value) return
     
+    isLoadingNotifications.value = true
     console.log('Loading notifications for student:', currentStudentId.value)
     
     const { data: enrollments } = await supabase
@@ -1162,14 +1217,12 @@ const loadNotifications = async () => {
       return
     }
     
-    // Load attachments for all messages
     const messageIds = messages.map(m => m.id)
     const { data: attachments } = await supabase
       .from('message_attachments')
       .select('*')
       .in('message_id', messageIds)
     
-    // Group attachments by message_id
     const attachmentsMap = {}
     if (attachments) {
       attachments.forEach(att => {
@@ -1234,10 +1287,15 @@ const loadNotifications = async () => {
     
   } catch (error) {
     console.error('Error loading notifications:', error)
+  } finally {
+    isLoadingNotifications.value = false
   }
 }
 
-// Chat methods
+// ================================
+// CHAT METHODS
+// ================================
+
 const startChatWithTeacher = async (teacher) => {
   console.log('Starting chat with teacher:', teacher)
   
@@ -1268,6 +1326,7 @@ const loadConversationMessages = async (teacherId, sectionId) => {
       sectionId 
     })
     
+    isLoadingMessages.value = true
     currentMessages.value = []
     
     const { data: messages, error } = await supabase
@@ -1288,17 +1347,16 @@ const loadConversationMessages = async (teacherId, sectionId) => {
     if (!messages || messages.length === 0) {
       console.log('No messages found in database')
       currentMessages.value = []
+      isLoadingMessages.value = false
       return
     }
     
-    // Load attachments for all messages
     const messageIds = messages.map(m => m.id)
     const { data: attachments } = await supabase
       .from('message_attachments')
       .select('*')
       .in('message_id', messageIds)
     
-    // Group attachments by message_id
     const attachmentsMap = {}
     if (attachments) {
       attachments.forEach(att => {
@@ -1335,16 +1393,17 @@ const loadConversationMessages = async (teacherId, sectionId) => {
   } catch (error) {
     console.error('Error loading conversation messages:', error)
     currentMessages.value = []
+  } finally {
+    isLoadingMessages.value = false
   }
 }
 
 const sendMessage = async () => {
-  if ((!newMessage.value.trim() && !selectedFile.value) || !activeTeacher.value || !currentStudentId.value) return
+  if ((!newMessage.value.trim() && !selectedFile.value) || !activeTeacher.value || !currentStudentId.value || isSendingMessage.value) return
   
   const messageText = newMessage.value.trim()
   const fileToUpload = selectedFile.value
   
-  // Create temporary message for UI
   const tempMessage = {
     id: 'temp-' + Date.now(),
     sender_id: currentStudentId.value,
@@ -1369,15 +1428,13 @@ const sendMessage = async () => {
   scrollToBottom()
   
   try {
-    isLoading.value = true
+    isSendingMessage.value = true
     
-    // Upload file first if exists
     let uploadedAttachment = null
     if (fileToUpload) {
       uploadedAttachment = await uploadFileToStorage(fileToUpload)
     }
     
-    // Insert message
     const { data: newMsg, error: sendError } = await supabase
       .from('messages')
       .insert({
@@ -1395,12 +1452,10 @@ const sendMessage = async () => {
     
     console.log('Message sent successfully:', newMsg)
     
-    // Save attachments to database if exists
     if (uploadedAttachment) {
       await saveMessageAttachments(newMsg.id, [uploadedAttachment])
     }
     
-    // Update temp message with real data
     const tempIndex = currentMessages.value.findIndex(m => m.id === tempMessage.id)
     if (tempIndex !== -1) {
       currentMessages.value[tempIndex] = {
@@ -1433,7 +1488,7 @@ const sendMessage = async () => {
     
     alert('Failed to send message. Please try again.')
   } finally {
-    isLoading.value = false
+    isSendingMessage.value = false
   }
 }
 
@@ -1443,7 +1498,6 @@ const markMessagesAsRead = async (teacherId, sectionId) => {
     
     console.log('Marking messages as read:', { teacherId, sectionId })
     
-    // First, update the database
     const { data: updatedMessages, error } = await supabase
       .from('messages')
       .update({ is_read: true, read_at: new Date().toISOString() })
@@ -1458,7 +1512,6 @@ const markMessagesAsRead = async (teacherId, sectionId) => {
     
     console.log('Database updated, affected rows:', updatedMessages?.length || 0)
     
-    // Update local message state
     currentMessages.value.forEach(m => {
       if (m.sender_id === teacherId && !m.is_read) {
         m.is_read = true
@@ -1466,12 +1519,10 @@ const markMessagesAsRead = async (teacherId, sectionId) => {
       }
     })
     
-    // IMMEDIATE: Update the specific teacher's unread count to 0
     const teacherIndex = enrolledTeachers.value.findIndex(t => 
       t.id === teacherId && t.section_id === sectionId
     )
     if (teacherIndex !== -1) {
-      // Force Vue reactivity by creating a new array
       enrolledTeachers.value = enrolledTeachers.value.map((teacher, index) => {
         if (index === teacherIndex) {
           console.log(`Immediately reset unread count to 0 for teacher ${teacher.teacher_name}`)
@@ -1523,7 +1574,10 @@ const clearNotifications = async () => {
   }
 }
 
-// Real-time methods
+// ================================
+// REAL-TIME METHODS
+// ================================
+
 const setupRealTimeSubscriptions = () => {
   if (!currentStudentId.value) return
   
@@ -1551,7 +1605,6 @@ const setupRealTimeSubscriptions = () => {
         if (newMessageData.recipient_id === currentStudentId.value && 
             newMessageData.message_type === 'direct') {
           
-          // Reload teacher list to update unread counts
           await loadEnrolledSubjectsAndTeachers()
           
           if (isModalOpen.value && 
@@ -1559,7 +1612,6 @@ const setupRealTimeSubscriptions = () => {
               newMessageData.section_id === activeTeacher.value.section_id &&
               newMessageData.sender_id === activeTeacher.value.id) {
             
-            // Load attachments for the new message
             const { data: attachments } = await supabase
               .from('message_attachments')
               .select('*')
@@ -1592,7 +1644,6 @@ const setupRealTimeSubscriptions = () => {
             await nextTick()
             scrollToBottom()
             
-            // Mark as read and immediately update teacher's unread count
             await markMessagesAsRead(newMessageData.sender_id, newMessageData.section_id)
           }
         }
@@ -1629,7 +1680,6 @@ const setupRealTimeSubscriptions = () => {
       async (payload) => {
         console.log('New attachment received:', payload.new)
         
-        // If we're viewing the conversation and a new attachment is added
         if (isModalOpen.value && activeTeacher.value) {
           const messageIndex = currentMessages.value.findIndex(m => m.id === payload.new.message_id)
           if (messageIndex !== -1) {
@@ -1661,7 +1711,10 @@ const cleanupRealTimeSubscriptions = () => {
   }
 }
 
-// Utility methods
+// ================================
+// UTILITY METHODS
+// ================================
+
 const scrollToBottom = () => {
   if (messagesContainer.value) {
     messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
@@ -1687,7 +1740,10 @@ const formatTime = (dateString) => {
   }
 }
 
-// Presence status methods
+// ================================
+// PRESENCE STATUS METHODS
+// ================================
+
 const getPresenceStatus = (teacherId) => {
   const presence = teacherPresence.value[teacherId]
   if (!presence || !presence.last_seen) return 'Offline'
@@ -1721,12 +1777,10 @@ const getPresenceStatus = (teacherId) => {
 const setupPresenceTracking = async () => {
   if (!currentStudentId.value) return
   
-  // Get all teacher IDs from enrolled teachers
   const teacherIds = [...new Set(enrolledTeachers.value.map(t => t.id))]
   
   if (teacherIds.length === 0) return
   
-  // Fetch initial presence status for all teachers
   const { data: presenceData, error } = await supabase
     .from('user_presence')
     .select('*')
@@ -1737,7 +1791,6 @@ const setupPresenceTracking = async () => {
     return
   }
   
-  // Initialize presence data
   if (presenceData) {
     presenceData.forEach(p => {
       teacherPresence.value[p.user_id] = {
@@ -1747,7 +1800,6 @@ const setupPresenceTracking = async () => {
     })
   }
   
-  // Subscribe to presence changes
   presenceChannel = supabase
     .channel('teacher-presence-tracking')
     .on(
@@ -1800,7 +1852,10 @@ const updateStudentPresence = async (isOnline) => {
   }
 }
 
-// Lifecycle
+// ================================
+// LIFECYCLE
+// ================================
+
 onMounted(async () => {
   console.log('Student messages component mounted')
   
@@ -1815,11 +1870,14 @@ onMounted(async () => {
       loadNotifications()
     ])
     
+    isInitialLoading.value = false
+    
     setupRealTimeSubscriptions()
     await setupPresenceTracking()
     await updateStudentPresence(true)
   } else {
     console.error('Authentication failed or user is not a student')
+    isInitialLoading.value = false
   }
 })
 
@@ -1833,6 +1891,7 @@ onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
 })
 </script>
+
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -3504,5 +3563,138 @@ onUnmounted(() => {
   .message-bubble {
     max-width: 95%;
   }
+}
+
+/* ADD THESE STYLES TO YOUR EXISTING <style scoped> SECTION */
+
+/* Loading Overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(251, 255, 228, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.dark .loading-overlay {
+  background: rgba(24, 28, 32, 0.95);
+}
+
+.loading-spinner {
+  text-align: center;
+}
+
+.loading-spinner p {
+  margin-top: 1rem;
+  font-size: 1.1rem;
+  color: #2c3e50;
+  font-weight: 500;
+}
+.dark .loading-spinner p {
+  color: #ffffff;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #e9ecef;
+  border-top-color: #A3D1C6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto;
+}
+.dark .spinner {
+  border-color: #495057;
+  border-top-color: #20c997;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  color: #6c757d;
+}
+.dark .loading-state {
+  color: #adb5bd;
+}
+
+.loading-spinner-small {
+  margin-bottom: 1rem;
+}
+
+.loading-spinner-small .spinner {
+  width: 40px;
+  height: 40px;
+  border-width: 3px;
+}
+
+.loading-state p {
+  font-size: 1rem;
+  color: #495057;
+}
+.dark .loading-state p {
+  color: #ced4da;
+}
+
+.loading-messages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  min-height: 300px;
+}
+
+.loading-messages p {
+  margin-top: 1rem;
+  font-size: 1rem;
+  color: #6c757d;
+}
+.dark .loading-messages p {
+  color: #adb5bd;
+}
+
+.button-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+/* Notification Badge */
+.notification-badge {
+  background: #dc3545;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.4rem;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+  margin-left: 0.25rem;
+}
+
+/* Last Message Time */
+.last-message-time {
+  display: block;
+  font-size: 0.75rem;
+  color: #6c757d;
+  margin-top: 0.25rem;
+  font-style: normal;
+}
+.dark .last-message-time {
+  color: #adb5bd;
 }
 </style>
