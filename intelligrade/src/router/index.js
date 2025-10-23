@@ -324,30 +324,8 @@ router.beforeEach(async (to, from, next) => {
     const isAuthenticated = !!session?.user
     console.log('Is authenticated:', isAuthenticated)
 
-    // Handle guest-only routes (redirect authenticated users away)
-    if (to.meta.guestOnly && isAuthenticated) {
-      console.log('Guest-only route but user is authenticated, redirecting to dashboard')
-      
-      // Get user role to redirect to correct dashboard
-      try {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('auth_user_id', session.user.id)
-          .single()
-        
-        const redirectPath = profile?.role === 'student' 
-          ? '/student/dashboard' 
-          : '/teacher/dashboard'
-        next(redirectPath)
-        return
-      } catch (error) {
-        console.error('Error getting profile for redirect:', error)
-        // Fallback to teacher dashboard
-        next('/teacher/dashboard')
-        return
-      }
-    }
+    // Allow access to guest-only routes even when authenticated
+    // Users can visit login/signup pages to logout or switch accounts
 
     // Handle routes that require authentication
     if (to.meta.requiresAuth) {
