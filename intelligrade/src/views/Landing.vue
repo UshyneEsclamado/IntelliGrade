@@ -1,3 +1,46 @@
+.navbar-links {
+  display: flex;
+  flex-direction: row;
+  gap: 2.2rem;
+  align-items: center;
+}
+.navbar-links a,
+.sign-in-btn {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 1.08rem;
+  font-weight: 600;
+  color: #355c4c;
+  padding: 0.7rem 2.1rem;
+  border-radius: 12px;
+  background: #f6faf7;
+  border: 1.5px solid #dbeee2;
+  box-shadow: 0 2px 8px rgba(53,92,76,0.07);
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: box-shadow 0.2s, background 0.2s, color 0.2s, border 0.2s, transform 0.2s;
+}
+  .sign-in-btn {
+    font-size: 1rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: 10px;
+  }
+}
+@media (max-width: 480px) {
+  .navbar-links {
+    gap: 0.7rem;
+  }
+  .navbar-links a,
+  .sign-in-btn {
+    font-size: 0.95rem;
+    padding: 0.5rem 0.8rem;
+    border-radius: 9px;
+  }
+}
 <template>
   <div class="landing-wrapper">
     <!-- Enhanced animated background elements -->
@@ -231,6 +274,64 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* Formal Navbar Button Styles */
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 2.2rem;
+}
+.navbar-links a {
+  color: #218c5a;
+  font-weight: 600;
+  font-size: 1.08rem;
+  padding: 0.5rem 1.2rem;
+  border-radius: 8px;
+  background: none;
+  border: none;
+  box-shadow: none;
+  transition: color 0.3s, box-shadow 0.3s;
+  position: relative;
+  cursor: pointer;
+}
+.navbar-links a.active {
+  color: #355c4c;
+  background: #f5faf7;
+  box-shadow: 0 2px 0 #20c997;
+}
+.navbar-links a:not(.active):hover {
+  color: #20c997;
+}
+.sign-in-btn {
+  background: linear-gradient(135deg, #355c4c 0%, #218c5a 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.08rem;
+  border-radius: 12px;
+  padding: 0.7rem 2.1rem;
+  margin-left: 2.2rem;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.13);
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+.sign-in-btn:hover {
+  background: linear-gradient(135deg, #218c5a 0%, #20c997 100%);
+  box-shadow: 0 8px 30px rgba(32, 201, 151, 0.18);
+}
+@media (max-width: 600px) {
+  .navbar-links {
+    gap: 1.2rem;
+  }
+  .navbar-links a {
+    font-size: 0.98rem;
+    padding: 0.45rem 0.9rem;
+  }
+  .sign-in-btn {
+    font-size: 0.98rem;
+    padding: 0.55rem 1.2rem;
+    margin-left: 1.2rem;
+  }
+}
 .landing-wrapper {
   min-height: 100vh;
   width: 100vw;
@@ -465,11 +566,12 @@ onUnmounted(() => {
   animation: fadeInRight 1.2s ease-out;
 }
 
-.navbar-links a {
-  color: #39645a;
-  font-weight: 600;
-  text-decoration: none;
-  font-size: 1.05rem;
+  .navbar-links {
+    flex-direction: row !important;
+    gap: 0.7rem;
+    width: auto;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
   padding: 0.5rem 1rem;
   border-radius: 8px;
   transition: all 0.4s ease;
