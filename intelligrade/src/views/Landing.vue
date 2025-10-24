@@ -107,7 +107,7 @@
     </section>
 
     <!-- Enhanced About section with complete content -->
-    <section id="about" class="about-section">
+  <section id="about" :class="['about-section', { active: activeSection === 'about' }]">
       <div class="about-container">
         <div class="about-header">
           <div class="section-badge">
@@ -728,12 +728,32 @@ onUnmounted(() => {
 .about-section {
   background: linear-gradient(135deg, #39645a 0%, #B3D8A8 50%, #39645a 100%);
   min-height: 100vh;
-  padding: 6rem 2rem 3rem;
+  padding: 12rem 2rem 3rem; /* Increased top padding for desktop */
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   box-sizing: border-box;
+  overflow: visible;
+}
+
+.about-section.active {
+  overflow-y: auto;
+  max-height: 100vh;
+  scrollbar-width: thin;
+  scrollbar-color: #20c997 #e0ede5;
+}
+
+.about-section.active::-webkit-scrollbar {
+  width: 8px;
+}
+.about-section.active::-webkit-scrollbar-thumb {
+  background: #20c997;
+  border-radius: 8px;
+}
+.about-section.active::-webkit-scrollbar-track {
+  background: #e0ede5;
+  border-radius: 8px;
 }
 
 .about-section::before {
@@ -849,6 +869,7 @@ onUnmounted(() => {
 
 .features-header {
   text-align: center;
+  margin-top: 2.5rem;
   margin-bottom: 2.5rem;
 }
 
@@ -872,7 +893,7 @@ onUnmounted(() => {
   grid-template-columns: repeat(2, 1fr);
   gap: 2rem;
   max-width: 1000px;
-  margin: 0 auto 4rem;
+  margin: 1.5rem auto 4rem; /* Add top margin to push cards lower */
 }
 
 .feature-card {
@@ -1206,27 +1227,575 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
+  .navbar {
+    padding: 1rem 4vw;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+  }
+  
+  .navbar-left {
+    gap: 0.8rem;
+    flex: 0 0 auto;
+  }
+  
+  .navbar-logo {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .logo-image {
+    width: 38px;
+    height: 38px;
+  }
+  
+  .navbar-title {
+    font-size: 1.5rem;
+  }
+  
+  .navbar-links {
+    gap: 0.9rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+    flex: 1 1 100%;
+  }
+  
+  .navbar-links a {
+    font-size: 0.98rem;
+    padding: 0.6rem 1.5rem;
+    flex: 0 1 auto;
+  }
+  
+  .sign-in-btn {
+    font-size: 0.98rem !important;
+    padding: 0.6rem 1.6rem !important;
+  }
+  
+  .hero-section {
+    min-height: 100vh;
+    padding: 0 1.5rem;
+  }
+  
+  .hero-title {
+    font-size: 3.5rem;
+    letter-spacing: -1.5px;
+  }
+  
+  .hero-desc {
+    font-size: 1.15rem;
+    padding: 0 1rem;
+  }
+  
+  .hero-badge {
+    font-size: 0.85rem;
+    padding: 0.55rem 1.3rem;
+  }
+  
   .about-section {
-    padding: 6rem 1.5rem 4rem;
+    padding: 23rem 1.5rem 2.5rem; /* Increased top padding for mobile/tablet */
+    min-height: auto;
+  }
+  
+  .about-section h2 {
+    font-size: 2.5rem;
+  }
+  
+  .about-intro {
+    font-size: 1.05rem;
+  }
+  
+  .section-badge {
+    font-size: 0.8rem;
+    padding: 0.45rem 1.1rem;
   }
   
   .mission-vision-container {
     grid-template-columns: 1fr;
-    gap: 1.5rem;
+    gap: 1.2rem;
+    margin-bottom: 2rem;
+  }
+  
+  .mission-vision-card {
+    padding: 1.8rem 1.3rem;
+  }
+  
+  .mv-icon-wrapper {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 1.2rem;
+  }
+  
+  .mission-vision-card h3 {
+    font-size: 1.3rem;
+  }
+  
+  .mission-vision-card p {
+    font-size: 1rem;
+  }
+  
+  .features-header {
+    margin-bottom: 2rem;
+  }
+  
+  .features-header h3 {
+    font-size: 1.8rem;
+  }
+  
+  .features-header p {
+    font-size: 1.05rem;
   }
   
   .features-grid {
     grid-template-columns: 1fr;
+    gap: 1.2rem;
+    margin-bottom: 2rem;
+    max-width: 500px;
+  }
+  
+  .feature-card {
+    padding: 1.8rem 1.3rem;
+  }
+  
+  .feature-icon {
+    width: 52px;
+    height: 52px;
+  }
+  
+  .feature-content h3 {
+    font-size: 1.25rem;
+  }
+  
+  .feature-content p {
+    font-size: 0.98rem;
+  }
+  
+  .audience-section {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+  }
+  
+  .audience-section h3 {
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
   }
   
   .audience-grid {
     grid-template-columns: 1fr;
+    gap: 1.2rem;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  
+  .audience-card {
+    padding: 1.8rem 1.3rem;
+  }
+  
+  .audience-card h4 {
+    font-size: 1.2rem;
+  }
+  
+  .audience-card p {
+    font-size: 0.98rem;
+  }
+  
+  .commitment-section {
+    margin-top: 2rem;
+  }
+  
+  .commitment-content {
+    padding: 2rem 1.5rem;
+  }
+  
+  .commitment-content h3 {
+    font-size: 1.6rem;
+  }
+  
+  .commitment-content p {
+    font-size: 1.05rem;
+  }
+  
+  .bg-logo-image {
+    width: 650px;
+    height: 650px;
+    opacity: 0.15;
+  }
+  
+  .scroll-indicator {
+    bottom: 2.5rem;
+  }
+  
+  .shape-1,
+  .shape-2,
+  .shape-3,
+  .shape-4,
+  .shape-5,
+  .shape-6 {
+    opacity: 0.06;
+  }
+  
+  .floating-element {
+    opacity: 0.1;
   }
 }
 
 @media (max-width: 480px) {
+  .navbar {
+    padding: 0.9rem 3vw;
+    gap: 0.8rem;
+  }
+  
+  .navbar-left {
+    gap: 0.7rem;
+  }
+  
+  .navbar-logo {
+    width: 42px;
+    height: 42px;
+  }
+  
+  .logo-image {
+    width: 34px;
+    height: 34px;
+  }
+  
+  .navbar-title {
+    font-size: 1.3rem;
+  }
+  
+  .navbar-links {
+    gap: 0.7rem;
+  }
+  
+  .navbar-links a {
+    font-size: 0.9rem;
+    padding: 0.55rem 1.2rem;
+  }
+  
+  .sign-in-btn {
+    font-size: 0.9rem !important;
+    padding: 0.55rem 1.4rem !important;
+  }
+  
+  .hero-section {
+    min-height: 100vh;
+    padding: 0 1.2rem;
+  }
+  
+  .hero-title {
+    font-size: 2.8rem;
+    letter-spacing: -1px;
+  }
+  
+  .hero-desc {
+    font-size: 1.05rem;
+    padding: 0 0.8rem;
+  }
+  
+  .hero-badge {
+    font-size: 0.8rem;
+    padding: 0.5rem 1.1rem;
+  }
+  
   .about-section {
-    padding: 5.5rem 1.2rem 3.5rem;
+    padding: 22rem 1.2rem 2rem; /* Increased top padding for small screens */
+    min-height: auto;
+  }
+  
+  .about-section h2 {
+    font-size: 2.2rem;
+  }
+  
+  .about-intro {
+    font-size: 1rem;
+  }
+  
+  .section-badge {
+    font-size: 0.75rem;
+    padding: 0.4rem 1rem;
+  }
+  
+  .mission-vision-container {
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .mission-vision-card {
+    padding: 1.6rem 1.2rem;
+  }
+  
+  .mv-icon-wrapper {
+    width: 52px;
+    height: 52px;
+  }
+  
+  .mission-vision-card h3 {
+    font-size: 1.2rem;
+  }
+  
+  .mission-vision-card p {
+    font-size: 0.95rem;
+  }
+  
+  .features-header {
+    margin-bottom: 1.5rem;
+  }
+  
+  .features-header h3 {
+    font-size: 1.6rem;
+  }
+  
+  .features-header p {
+    font-size: 1rem;
+  }
+  
+  .features-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    max-width: 100%;
+  }
+  
+  .feature-card {
+    padding: 1.6rem 1.2rem;
+  }
+  
+  .feature-icon {
+    width: 50px;
+    height: 50px;
+    margin-bottom: 1.2rem;
+  }
+  
+  .feature-content h3 {
+    font-size: 1.15rem;
+  }
+  
+  .feature-content p {
+    font-size: 0.95rem;
+  }
+  
+  .audience-section {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .audience-section h3 {
+    font-size: 1.6rem;
+    margin-bottom: 1.2rem;
+  }
+  
+  .audience-grid {
+    gap: 1rem;
+    max-width: 100%;
+  }
+  
+  .audience-card {
+    padding: 1.6rem 1.2rem;
+  }
+  
+  .audience-card svg {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .audience-card h4 {
+    font-size: 1.15rem;
+  }
+  
+  .audience-card p {
+    font-size: 0.95rem;
+  }
+  
+  .commitment-section {
+    margin-top: 1.5rem;
+  }
+  
+  .commitment-content {
+    padding: 1.8rem 1.3rem;
+  }
+  
+  .commitment-content svg {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .commitment-content h3 {
+    font-size: 1.45rem;
+  }
+  
+  .commitment-content p {
+    font-size: 1rem;
+  }
+  
+  .bg-logo-image {
+    width: 500px;
+    height: 500px;
+    opacity: 0.12;
+    filter: blur(0.8px);
+  }
+  
+  .scroll-indicator {
+    bottom: 2rem;
+  }
+  
+  .scroll-arrow {
+    width: 22px;
+    height: 22px;
+  }
+  
+  .shape-1,
+  .shape-2,
+  .shape-3,
+  .shape-4,
+  .shape-5,
+  .shape-6 {
+    opacity: 0.05;
+  }
+  
+  .floating-element {
+    opacity: 0.08;
+  }
+}
+
+@media (max-width: 360px) {
+  .navbar {
+    padding: 0.8rem 2.5vw;
+  }
+  
+  .navbar-logo {
+    width: 38px;
+    height: 38px;
+  }
+  
+  .logo-image {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .navbar-title {
+    font-size: 1.15rem;
+  }
+  
+  .navbar-links a {
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+  }
+  
+  .sign-in-btn {
+    font-size: 0.85rem !important;
+    padding: 0.5rem 1.2rem !important;
+  }
+  
+  .hero-section {
+    min-height: 100vh;
+    padding: 0 1rem;
+  }
+  
+  .hero-title {
+    font-size: 2.4rem;
+  }
+  
+  .hero-desc {
+    font-size: 0.98rem;
+  }
+  
+  .hero-badge {
+    font-size: 0.75rem;
+    padding: 0.45rem 1rem;
+  }
+  
+  .about-section {
+    padding: 21rem 1rem 1.5rem; /* Increased top padding for very small screens */
+  }
+  
+  .about-section h2 {
+    font-size: 2rem;
+  }
+  
+  .about-intro {
+    font-size: 0.95rem;
+  }
+  
+  .section-badge {
+    font-size: 0.7rem;
+    padding: 0.35rem 0.9rem;
+  }
+  
+  .mission-vision-card {
+    padding: 1.5rem 1rem;
+  }
+  
+  .mv-icon-wrapper {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .mission-vision-card h3 {
+    font-size: 1.1rem;
+  }
+  
+  .mission-vision-card p {
+    font-size: 0.9rem;
+  }
+  
+  .features-header h3 {
+    font-size: 1.5rem;
+  }
+  
+  .features-header p {
+    font-size: 0.95rem;
+  }
+  
+  .audience-section h3 {
+    font-size: 1.5rem;
+  }
+  
+  .commitment-content {
+    padding: 1.6rem 1.2rem;
+  }
+  
+  .commitment-content h3 {
+    font-size: 1.35rem;
+  }
+  
+  .commitment-content p {
+    font-size: 0.95rem;
+  }
+  
+  .feature-card {
+    padding: 1.5rem 1rem;
+  }
+  
+  .feature-icon {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .feature-content h3 {
+    font-size: 1.1rem;
+  }
+  
+  .feature-content p {
+    font-size: 0.92rem;
+  }
+  
+  .bg-logo-image {
+    width: 380px;
+    height: 380px;
+    opacity: 0.1;
+  }
+  
+  .shape-1,
+  .shape-2,
+  .shape-3,
+  .shape-4,
+  .shape-5,
+  .shape-6 {
+    opacity: 0.04;
+  }
+  
+  .floating-element {
+    opacity: 0.06;
   }
 }
 </style>
