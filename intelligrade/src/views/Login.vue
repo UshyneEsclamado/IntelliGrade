@@ -2,14 +2,7 @@
   <div class="auth-wrapper">
     <div class="geometric-shapes"></div>
     
-    <!-- Background logo with blur effect -->
-    <div class="background-logo">
-      <img 
-        src="@/assets/New IntelliGrade Logo Way BG.png"
-        alt="Background Logo" 
-        class="bg-logo-image"
-      />
-    </div>
+
     
     <div class="floating-elements">
       <!-- Educational floating elements with proper animations -->
@@ -521,30 +514,7 @@ export default {
 }
 
 /* Background logo with blur effect */
-.background-logo {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
 
-.bg-logo-image {
-  width: 800px;
-  height: 800px;
-  object-fit: contain;
-  opacity: 0.18;
-  filter: blur(0.5px);
-  animation: logoFloat 20s ease-in-out infinite;
-  transform-origin: center;
-}
 
 /* Educational floating elements with proper animations */
 .floating-element {
