@@ -70,14 +70,14 @@
     </div>
     
     <div class="auth-container">
-      <div class="logo-space">
+      <div class="logo-space logo-align">
         <div class="intelligrade-branding">
           <div class="logo-container">
-            <div class="logo-image-container">
+            <div class="logo-image-container large-logo">
               <img 
                 src="@/assets/New IntelliGrade Logo Way BG 3.png"
                 alt="IntelliGrade Logo" 
-                class="logo-image"
+                class="logo-image large-logo-img"
               />
             </div>
             <p class="brand-tagline">Empower your teaching with AI-powered grading solutions</p>
@@ -546,6 +546,17 @@ export default {
   height: 100%;
 }
 
+.logo-space.logo-align {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 450px;
+  height: 100%;
+  /* Align logo vertically with wordings */
+  margin-top: 0;
+}
+
 .intelligrade-branding {
   text-align: center;
   transition: all 0.3s ease;
@@ -572,22 +583,31 @@ export default {
   height: 300px;
   display: flex;
   align-items: center;
+  justify-content: center;
+  object-fit: contain;
+  animation: gentleFloat 8s ease-in-out infinite;
+  background: transparent;
+}
 
-  .login-link {
-          color: #3D8D7A;
-          text-decoration: none;
-          font-weight: 600;
-          margin-left: 4px;
-          transition: all 0.3s ease;
-          padding-bottom: 2px;
-          border-bottom: 2px solid transparent;
-        }
-        .login-link:hover {
-          border-bottom-color: rgba(61, 141, 122, 0.5);
-          color: #26796a;
-        }
-  width: 280px;
-  height: 280px;
+.logo-image-container.large-logo {
+  width: 340px;
+  height: 340px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 15px 40px rgba(74, 155, 142, 0.3));
+  transition: all 0.4s ease;
+  margin-bottom: 0.75rem;
+}
+
+.logo-image-container.large-logo:hover {
+  filter: drop-shadow(0 20px 50px rgba(74, 155, 142, 0.4));
+  transform: scale(1.05);
+}
+
+.logo-image.large-logo-img {
+  width: 320px;
+  height: 320px;
   object-fit: contain;
   animation: gentleFloat 8s ease-in-out infinite;
   background: transparent;

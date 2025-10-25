@@ -3,17 +3,102 @@
     <div class="geometric-shapes"></div>
     <div class="floating-elements">
       <!-- Educational floating elements with proper animations -->
+      <!-- LEFT SIDE - Around Logo/Tagline -->
+      <!-- Document symbols -->
+      <div class="floating-element element-1">
+        <svg width="35" height="35" viewBox="0 0 24 24" fill="#4A9B8E">
+          <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3M19 19H5V5H19V19M17 17H7V15H17V17M17 13H7V11H17V13M17 9H7V7H17V9Z"/>
+        </svg>
+      </div>
+      
+      <!-- Education/School symbols -->
+      <div class="floating-element element-2">
+        <svg width="33" height="33" viewBox="0 0 24 24" fill="#4A9B8E">
+          <path d="M12 3L1 9L12 15L21 10.09V17H23V9L12 3M5 13.18V17.18L12 21L19 17.18V13.18L12 17L5 13.18Z"/>
+        </svg>
+      </div>
+      
+      <!-- Search symbols -->
+      <div class="floating-element element-3">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="#4A9B8E">
+          <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
+        </svg>
+      </div>
+      
+      <!-- Star symbols -->
+      <div class="floating-element element-4">
+        <svg width="38" height="38" viewBox="0 0 24 24" fill="#4A9B8E">
+          <path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z"/>
+        </svg>
+      </div>
+      
+      <!-- Calendar symbols -->
+      <div class="floating-element element-5">
+        <svg width="33" height="33" viewBox="0 0 24 24" fill="#4A9B8E">
+          <path d="M19,19H5V8H19M16,1V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3H18V1M17,12H12V17H17V12Z"/>
+        </svg>
+      </div>
+      
+      <!-- Chat/Message symbols -->
+      <div class="floating-element element-6">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="#4A9B8E">
+          <path d="M20,2H4A2,2 0 0,0 2,4V16A2,2 0 0,0 4,18H18L22,22V4A2,2 0 0,0 20,2M6,9H18V11H6M4,6H20V8H4M6,12H16V14H6"/>
+        </svg>
+      </div>
+      
+      <!-- Calculator symbols -->
+      <div class="floating-element element-8">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="#4A9B8E">
+          <path d="M9,11H7V9H9V11M13,11H11V9H13V11M17,11H15V9H17V11M19,3H18V1H16V1H6V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.9 20.1,3 19,3H18V1M17,12H12V17H17V12Z"/>
+        </svg>
+      </div>
+      
+      <!-- User symbols -->
+      <div class="floating-element element-9">
+        <svg width="29" height="29" viewBox="0 0 24 24" fill="#4A9B8E">
+          <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M7.07,18.28C7.5,17.38 10.12,16.5 12,16.5C13.88,16.5 16.5,17.38 16.93,18.28C15.57,19.36 13.86,20 12,20C10.14,20 8.43,19.36 7.07,18.28M18.36,16.83C16.93,15.09 13.46,14.5 12,14.5C10.54,14.5 7.07,15.09 5.64,16.83C4.62,15.5 4,13.82 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,13.82 19.38,15.5 18.36,16.83M12,6C10.06,6 8.5,7.56 8.5,9.5C8.5,11.44 10.06,13 12,13C13.94,13 15.5,11.44 15.5,9.5C15.5,7.56 13.94,6 12,6M12,11A1.5,1.5 0 0,1 10.5,9.5A1.5,1.5 0 0,1 12,8A1.5,1.5 0 0,1 13.5,9.5A1.5,1.5 0 0,1 12,11Z"/>
+        </svg>
+      </div>
+
+      <!-- RIGHT SIDE - Around Signup Form -->
+      <!-- Document symbols (duplicate) -->
+      <div class="floating-element element-13">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="#4A9B8E">
+          <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3M19 19H5V5H19V19M17 17H7V15H17V17M17 13H7V11H17V13M17 9H7V7H17V9Z"/>
+        </svg>
+      </div>
+      
+      <!-- Education/School symbols (duplicate) -->
+      <div class="floating-element element-14">
+        <svg width="29" height="29" viewBox="0 0 24 24" fill="#4A9B8E">
+          <path d="M12 3L1 9L12 15L21 10.09V17H23V9L12 3M5 13.18V17.18L12 21L19 17.18V13.18L12 17L5 13.18Z"/>
+        </svg>
+      </div>
+      
+      <!-- Search symbols (duplicate) -->
+      <div class="floating-element element-15">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="#4A9B8E">
+          <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
+        </svg>
+      </div>
+      
+      <!-- Star symbols (duplicate) -->
+      <div class="floating-element element-16">
+        <svg width="31" height="31" viewBox="0 0 24 24" fill="#4A9B8E">
+          <path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z"/>
+        </svg>
+      </div>
     </div>
 
     <div class="auth-container">
-      <div class="logo-space">
+      <div class="logo-space logo-align">
         <div class="intelligrade-branding">
           <div class="logo-container">
-            <div class="logo-image-container">
+            <div class="logo-image-container large-logo">
               <img 
                 src="@/assets/New IntelliGrade Logo Way BG 3.png"
                 alt="IntelliGrade Logo" 
-                class="logo-image"
+                class="logo-image large-logo-img"
               />
             </div>
             <p class="brand-tagline">Empowering students with smart assessment tools and personalized learning insights</p>
@@ -505,6 +590,17 @@ export default {
   height: 100%;
 }
 
+.logo-space.logo-align {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 450px;
+  height: 100%;
+  /* Align logo vertically with wordings */
+  margin-top: 0;
+}
+
 .intelligrade-branding {
   text-align: center;
   transition: all 0.3s ease;
@@ -531,21 +627,31 @@ export default {
   height: 300px;
   display: flex;
   align-items: center;
-        .login-link {
-          color: #3D8D7A;
-          text-decoration: none;
-          font-weight: 600;
-          margin-left: 4px;
-          transition: all 0.3s ease;
-          padding-bottom: 2px;
-          border-bottom: 2px solid transparent;
-        }
-        .login-link:hover {
-          border-bottom-color: rgba(61, 141, 122, 0.5);
-          color: #26796a;
-        }
-  width: 280px;
-  height: 280px;
+  justify-content: center;
+  object-fit: contain;
+  animation: gentleFloat 8s ease-in-out infinite;
+  background: transparent;
+}
+
+.logo-image-container.large-logo {
+  width: 340px;
+  height: 340px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 15px 40px rgba(74, 155, 142, 0.3));
+  transition: all 0.4s ease;
+  margin-bottom: 0.75rem;
+}
+
+.logo-image-container.large-logo:hover {
+  filter: drop-shadow(0 20px 50px rgba(74, 155, 142, 0.4));
+  transform: scale(1.05);
+}
+
+.logo-image.large-logo-img {
+  width: 320px;
+  height: 320px;
   object-fit: contain;
   animation: gentleFloat 8s ease-in-out infinite;
   background: transparent;
