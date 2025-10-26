@@ -313,6 +313,14 @@
         </div>
       </div>
     </div>
+
+    <!-- Logging Out Overlay -->
+    <div v-if="isLoggingOut" class="logging-out-overlay">
+      <div class="logging-out-content">
+        <div class="spinner"></div>
+        <p>Logging out...</p>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -353,7 +361,8 @@ export default {
       profileSubscription: null,
       studentSubscription: null,
       currentProfileId: null,
-      isHelpMenuOpen: false
+      isHelpMenuOpen: false,
+      isLoggingOut: false
     };
   },
   computed: {
@@ -663,8 +672,17 @@ export default {
 
     async confirmLogout() {
       this.isLogoutModalVisible = false;
+      this.isLoggingOut = true;
+      
+      // Set a timeout to force redirect after 2 seconds max
+      const redirectTimeout = setTimeout(() => {
+        localStorage.clear();
+        window.location.replace('/login');
+      }, 2000);
       
       try {
+        console.log('Starting logout process...');
+        
         // Clean up subscriptions
         if (this.profileSubscription) {
           supabase.removeChannel(this.profileSubscription);
@@ -674,20 +692,29 @@ export default {
         }
         
         // Sign out from Supabase
-        const { error } = await supabase.auth.signOut();
-        if (error) {
-          console.error('Logout error:', error);
-        }
+        await supabase.auth.signOut();
         
         // Clear local storage
-        localStorage.removeItem('userProfile');
-        localStorage.removeItem('darkMode');
+        localStorage.clear();
         
-        console.log('User logged out successfully');
-        this.$router.push('/');
+        console.log('User logged out successfully, redirecting...');
+        
+        // Clear the timeout since we're done
+        clearTimeout(redirectTimeout);
+        
+        // Small delay before redirect for smooth UX
+        setTimeout(() => {
+          window.location.replace('/login');
+        }, 500);
+        
       } catch (error) {
         console.error('Error during logout:', error);
-        this.$router.push('/');
+        // Clear timeout and force logout anyway
+        clearTimeout(redirectTimeout);
+        localStorage.clear();
+        setTimeout(() => {
+          window.location.replace('/login');
+        }, 500);
       }
     },
 
@@ -1765,6 +1792,49 @@ export default {
     right: 1rem;
     left: 1rem;
   }
+}
+
+/* Logging Out Overlay */
+.logging-out-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.logging-out-content {
+  text-align: center;
+  color: white;
+}
+
+.spinner {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 1.5rem;
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  border-top: 4px solid var(--accent-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.logging-out-content p {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: white;
+  margin: 0;
 }
 </style>
 

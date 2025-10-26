@@ -23,35 +23,55 @@
       </div>
 
       <nav class="nav-links">
-        <router-link to="/teacher/dashboard" class="nav-item">
+        <router-link 
+          to="/teacher/dashboard" 
+          class="nav-item"
+          :class="{ 'is-active': $route.path === '/teacher/dashboard' || $route.name === 'TeacherDashboardHome' }"
+        >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" />
           </svg>
           <span>Home</span>
         </router-link>
 
-        <router-link to="/teacher/subjects" class="nav-item">
+        <router-link 
+          to="/teacher/subjects" 
+          class="nav-item"
+          :class="{ 'is-active': $route.path.startsWith('/teacher/subjects') || $route.name === 'TeacherSubjects' }"
+        >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M19,3A2,2 0 0,1 21,5V19A2,2 0 0,1 19,21H5A2,2 0 0,1 3,19V5A2,2 0 0,1 5,3H19M19,19V5H5V19H19M16.5,16.25L19,14L16.5,11.75V13.5H10V14.5H16.5V16.25M7.5,7.75L5,10L7.5,12.25V10.5H14V9.5H7.5V7.75Z" />
           </svg>
           <span>My Subjects</span>
         </router-link>
 
-        <router-link to="/teacher/analytics" class="nav-item">
+        <router-link 
+          to="/teacher/analytics" 
+          class="nav-item"
+          :class="{ 'is-active': $route.path === '/teacher/analytics' || $route.name === 'TeacherAnalytics' }"
+        >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M22,21H2V3H4V19H6V17H10V19H12V16H16V19H18V17H22V21M2,2H4V4H2V2M5,2H7V4H5V2M8,2H10V4H8V2M11,2H13V4H11V2M14,2H16V4H14V2M17,2H19V4H17V2M20,2H22V4H20V2Z" />
           </svg>
           <span>Analytics</span>
         </router-link>
         
-        <router-link to="/teacher/messages" class="nav-item">
+        <router-link 
+          to="/teacher/messages" 
+          class="nav-item"
+          :class="{ 'is-active': $route.path === '/teacher/messages' || $route.name === 'TeacherMessages' }"
+        >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zM4 6h16v.5l-8 5-8-5V6zm0 13.5V8l8 5 8-5v11.5H4z"/>
           </svg>
           <span>Messages</span>
         </router-link>
         
-        <router-link to="/teacher/settings" class="nav-item">
+        <router-link 
+          to="/teacher/settings" 
+          class="nav-item"
+          :class="{ 'is-active': $route.path === '/teacher/settings' || $route.name === 'TeacherSettings' }"
+        >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11.03L21.54,9.37C21.73,9.22 21.78,8.95 21.67,8.75L19.67,5.27C19.56,5.08 19.3,5.03 19.1,5.12L16.9,6C16.5,5.65 16.08,5.36 15.61,5.1L15.2,2.83C15.15,2.56 14.9,2.33 14.62,2.33L9.38,2.33C9.1,2.33 8.85,2.56 8.8,2.83L8.39,5.09C7.92,5.34 7.5,5.65 7.1,6L4.9,5.12C4.7,5.03 4.44,5.08 4.33,5.27L2.33,8.75C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11.03C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.33,15.25L4.33,18.73C4.44,18.92 4.7,18.97 4.9,18.88L7.1,18C7.5,18.35 7.92,18.64 8.39,18.9L8.8,21.17C8.85,21.44 9.1,21.67 9.38,21.67L14.62,21.67C14.9,21.67 15.15,21.44 15.2,21.17L15.61,18.91C16.08,18.66 16.5,18.35 16.9,18L19.1,18.88C19.3,18.97 19.56,18.92 19.67,18.73L21.67,15.25C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" />
           </svg>
@@ -160,6 +180,14 @@
         </div>
       </div>
     </div>
+
+    <!-- Logging Out Overlay -->
+    <div v-if="isLoggingOut" class="logging-out-overlay">
+      <div class="logging-out-content">
+        <div class="spinner"></div>
+        <p>Logging out...</p>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -183,6 +211,7 @@ const {
 
 const isLogoutModalVisible = ref(false);
 const isHelpMenuOpen = ref(false);
+const isLoggingOut = ref(false);
 
 // Computed profile data from the composable
 const profileData = computed(() => {
@@ -236,21 +265,41 @@ const hideLogoutModal = () => {
 
 const confirmLogout = async () => {
   isLogoutModalVisible.value = false;
+  isLoggingOut.value = true;
+  
+  // Set a timeout to force redirect after 2 seconds max
+  const redirectTimeout = setTimeout(() => {
+    localStorage.clear();
+    window.location.replace('/login');
+  }, 2000);
   
   try {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      throw error;
-    }
+    console.log('Starting logout process...');
     
-    localStorage.removeItem('userProfile');
-    localStorage.removeItem('darkMode');
+    // Sign out from Supabase
+    await supabase.auth.signOut();
     
-    console.log('User logged out successfully');
-    router.push('/login');
+    // Clear local storage
+    localStorage.clear();
+    
+    console.log('User logged out successfully, redirecting...');
+    
+    // Clear the timeout since we're done
+    clearTimeout(redirectTimeout);
+    
+    // Small delay before redirect for smooth UX
+    setTimeout(() => {
+      window.location.replace('/login');
+    }, 500);
+    
   } catch (err) {
-    console.error('Logout error:', err);
-    router.push('/login');
+    console.error('Error during logout:', err);
+    // Clear timeout and force logout anyway
+    clearTimeout(redirectTimeout);
+    localStorage.clear();
+    setTimeout(() => {
+      window.location.replace('/login');
+    }, 500);
   }
 };
 
@@ -500,6 +549,7 @@ onMounted(async () => {
   left: 0;
 }
 
+.nav-item.is-active,
 .nav-item.router-link-exact-active {
   background: rgba(95, 179, 160, 0.12);
   border-color: rgba(95, 179, 160, 0.3);
@@ -508,16 +558,19 @@ onMounted(async () => {
   transform: none;
 }
 
+.nav-item.is-active svg,
 .nav-item.router-link-exact-active svg {
   fill: var(--accent-color);
 }
 
+.nav-item.is-active span,
 .nav-item.router-link-exact-active span {
   color: var(--accent-color);
   font-weight: 600;
 }
 
 /* Dark mode active state */
+:root.dark .nav-item.is-active,
 :root.dark .nav-item.router-link-exact-active {
   background: rgba(95, 179, 160, 0.15);
   border-color: rgba(95, 179, 160, 0.35);
@@ -1038,6 +1091,49 @@ onMounted(async () => {
     right: 1rem;
     left: 1rem;
   }
+}
+
+/* Logging Out Overlay */
+.logging-out-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.logging-out-content {
+  text-align: center;
+  color: white;
+}
+
+.spinner {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 1.5rem;
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  border-top: 4px solid var(--accent-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.logging-out-content p {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: white;
+  margin: 0;
 }
 </style>
 
