@@ -377,7 +377,7 @@ export default {
     this.initializeDarkMode();
     
     // Listen for profile updates from Settings component
-    window.addEventListener('profileUpdated', this.handleProfileUpdate);
+    window.addEventListener('studentProfileUpdated', this.handleProfileUpdate);
     
     // Add click outside listener for mobile profile menu
     document.addEventListener('click', this.handleClickOutside);
@@ -389,7 +389,7 @@ export default {
     if (this.studentSubscription) {
       supabase.removeChannel(this.studentSubscription);
     }
-    window.removeEventListener('profileUpdated', this.handleProfileUpdate);
+    window.removeEventListener('studentProfileUpdated', this.handleProfileUpdate);
     document.removeEventListener('click', this.handleClickOutside);
   },
   methods: {
@@ -492,13 +492,15 @@ export default {
             filter: `id=eq.${this.currentProfileId}`
           },
           async (payload) => {
-            console.log('Profile updated via real-time:', payload);
+            console.log('🔔 Profile updated via real-time:', payload);
             
-            // Smoothly update profile data without full reload
+            // Smoothly update profile data
             if (payload.new) {
               this.userProfile.fullName = payload.new.full_name || this.userProfile.fullName;
               this.userProfile.email = payload.new.email || this.userProfile.email;
               this.userProfile.profilePhoto = payload.new.profile_photo || null;
+              
+              console.log('✅ Profile updated in UI:', this.userProfile);
             }
           }
         )
@@ -516,14 +518,23 @@ export default {
             filter: `profile_id=eq.${this.currentProfileId}`
           },
           async (payload) => {
-            console.log('Student data updated via real-time:', payload);
+            console.log('🔔 Student data updated via real-time:', payload);
             
-            // Smoothly update student data without full reload
+            // Smoothly update student data
             if (payload.new) {
+              const oldGrade = this.userProfile.grade;
+              const newGrade = payload.new.grade_level;
+              
               this.userProfile.fullName = payload.new.full_name || this.userProfile.fullName;
               this.userProfile.email = payload.new.email || this.userProfile.email;
               this.userProfile.studentId = payload.new.student_id || this.userProfile.studentId;
-              this.userProfile.grade = payload.new.grade_level || this.userProfile.grade;
+              this.userProfile.grade = newGrade || this.userProfile.grade;
+              
+              if (oldGrade !== newGrade) {
+                console.log(`🎓 Grade level changed in UI: ${oldGrade} → ${newGrade}`);
+              }
+              
+              console.log('✅ Student data updated in UI:', this.userProfile);
             }
           }
         )
@@ -647,10 +658,31 @@ export default {
       };
     },
 
-    handleProfileUpdate() {
-      console.log('Profile update event received');
-      // The realtime subscription will handle the update automatically
-      // No need to reload, updates happen via real-time listeners
+    handleProfileUpdate(event) {
+      console.log('📢 Received profile update event in StudentDashboard:', event.detail);
+      const { gradeChanged, nameChanged, oldGrade, newGrade, newName } = event.detail || {};
+      
+      if (gradeChanged) {
+        console.log(`🎓 Grade changed: ${oldGrade} → ${newGrade}`);
+        // Update grade immediately with Vue.set to ensure reactivity
+        this.$set(this.userProfile, 'grade', newGrade);
+      }
+      
+      if (nameChanged) {
+        console.log(`✏️ Name changed to: ${newName}`);
+        // Update name immediately with Vue.set to ensure reactivity
+        this.$set(this.userProfile, 'fullName', newName);
+      }
+      
+      // Force Vue to re-render by updating the entire object
+      this.userProfile = { ...this.userProfile };
+      
+      // Also reload full profile as backup
+      setTimeout(() => {
+        this.loadUserProfile();
+      }, 100);
+      
+      console.log('✅ StudentDashboard profile updated:', this.userProfile);
     },
 
     initializeDarkMode() {

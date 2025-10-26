@@ -335,9 +335,12 @@
           <div v-if="profileSuccess" class="success-message">{{ profileSuccess }}</div>
         </div>
         <div class="modal-footer">
-          <button @click="closeProfileModal" class="btn-secondary">Cancel</button>
-          <button @click="saveProfile" class="btn-primary" :disabled="isSaving">
+          <button v-if="!profileSuccess" @click="closeProfileModal" class="btn-secondary">Cancel</button>
+          <button v-if="!profileSuccess" @click="saveProfile" class="btn-primary" :disabled="isSaving">
             {{ isSaving ? 'Saving...' : 'Save Profile' }}
+          </button>
+          <button v-if="profileSuccess" @click="closeProfileModal" class="btn-primary">
+            OK
           </button>
         </div>
       </div>
@@ -669,10 +672,10 @@ export default {
         
         this.currentUser = user;
         
-        // Get profile data
+        // Get profile data with profile_photo
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('*')
+          .select('id, full_name, email, role, profile_photo')
           .eq('auth_user_id', user.id)
           .single();
         
@@ -690,12 +693,20 @@ export default {
         // Get student details
         const { data: studentData, error: studentError } = await supabase
           .from('students')
-          .select('*')
+          .select('id, student_id, grade_level, full_name, email, profile_photo_url')
           .eq('profile_id', profile.id)
           .single();
         
         if (studentError) throw studentError;
-        this.userProfile = { ...this.userProfile, ...studentData };
+        
+        // Merge all data
+        this.userProfile = { 
+          ...this.userProfile, 
+          ...studentData,
+          profile_photo_url: profile.profile_photo || studentData.profile_photo_url
+        };
+        
+        console.log('✅ User profile loaded in Settings:', this.userProfile);
         
       } catch (error) {
         console.error('Error loading user data:', error);
@@ -733,12 +744,17 @@ export default {
         return;
       }
       
+      console.log('Opening profile modal with data:', this.userProfile);
+      
       // Load current user data into the form
       this.profileData = {
         full_name: this.userProfile.full_name || '',
-        profile_photo_url: this.userProfile.profile_photo_url || '',
+        profile_photo_url: this.userProfile.profile_photo_url || this.userProfile.profile_photo || '',
         grade_level: this.userProfile.grade_level?.toString() || '7'
       };
+      
+      console.log('Profile modal data set to:', this.profileData);
+      
       this.selectedPhotoFile = null;
       this.showProfileModal = true;
       this.clearMessages();
@@ -817,6 +833,15 @@ export default {
         const previousGradeLevel = this.userProfile.grade_level;
         const newGradeLevel = parseInt(this.profileData.grade_level);
         const gradeChanged = previousGradeLevel !== newGradeLevel;
+        const nameChanged = this.profileData.full_name.trim() !== this.userProfile.full_name;
+        
+        console.log('Saving profile:', {
+          previousGrade: previousGradeLevel,
+          newGrade: newGradeLevel,
+          gradeChanged,
+          nameChanged,
+          newName: this.profileData.full_name.trim()
+        });
         
         let photoUrl = this.userProfile.profile_photo_url;
         
@@ -859,24 +884,29 @@ export default {
           photoUrl = null;
         }
         
-        // If grade level changed, archive old enrollments
+        // If grade level changed, archive old enrollments FIRST
         if (gradeChanged) {
           await this.handleGradeTransition(previousGradeLevel, newGradeLevel);
         }
         
-        // Update profiles table
+        // Update profiles table (this will trigger real-time update)
         const { error: profileError } = await supabase
           .from('profiles')
           .update({
             full_name: this.profileData.full_name.trim(),
-            profile_photo_url: photoUrl,
+            profile_photo: photoUrl,
             updated_at: new Date().toISOString()
           })
           .eq('id', this.userProfile.id);
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error('Profile update error:', profileError);
+          throw profileError;
+        }
+        
+        console.log('✅ Profiles table updated');
 
-        // Update students table
+        // Update students table (this will also trigger real-time update)
         const { error: studentError } = await supabase
           .from('students')
           .update({
@@ -887,22 +917,39 @@ export default {
           })
           .eq('profile_id', this.userProfile.id);
 
-        if (studentError) throw studentError;
-
-        this.profileSuccess = gradeChanged 
-          ? 'Profile updated! Your grade level has been changed and previous enrollments have been archived.' 
-          : 'Profile updated successfully!';
+        if (studentError) {
+          console.error('Student update error:', studentError);
+          throw studentError;
+        }
         
-        // Reload user data to reflect changes
+        console.log('✅ Students table updated');
+
+        let successMessage = 'Profile updated successfully!';
+        if (gradeChanged) {
+          successMessage = `Profile updated! Your grade level has been changed from ${previousGradeLevel} to ${newGradeLevel}. Previous enrollments have been archived.`;
+        } else if (nameChanged) {
+          successMessage = 'Profile updated! Your name has been changed.';
+        }
+        
+        this.profileSuccess = successMessage;
+        
+        // Reload user data to reflect changes in Settings sidebar immediately
         await this.loadUserData();
         
-        setTimeout(() => {
-          this.closeProfileModal();
-          if (gradeChanged) {
-            // Optionally redirect to dashboard to see the fresh state
-            this.$router.push('/student-dashboard');
+        console.log('✅ Settings sidebar updated with new data:', this.userProfile);
+        
+        // Dispatch custom event for StudentDashboard to pick up
+        window.dispatchEvent(new CustomEvent('studentProfileUpdated', {
+          detail: {
+            gradeChanged,
+            nameChanged,
+            oldGrade: previousGradeLevel,
+            newGrade: newGradeLevel,
+            newName: this.profileData.full_name.trim()
           }
-        }, 2000);
+        }));
+        
+        // Don't auto-close, let user read the message and click OK
         
       } catch (error) {
         console.error('Error saving profile:', error);
@@ -914,20 +961,37 @@ export default {
     
     async handleGradeTransition(oldGrade, newGrade) {
       try {
-        // Archive all active enrollments
-        const { error: archiveError } = await supabase
+        console.log(`Starting grade transition: Grade ${oldGrade} → Grade ${newGrade}`);
+        
+        // Get all active enrollments to archive
+        const { data: activeEnrollments, error: fetchError } = await supabase
           .from('enrollments')
-          .update({
-            status: 'completed',
-            updated_at: new Date().toISOString()
-          })
+          .select('id, section_id, subject_id')
           .eq('student_id', this.userProfile.id)
           .eq('status', 'active');
         
-        if (archiveError) throw archiveError;
+        if (fetchError) throw fetchError;
         
-        // Log the grade transition
-        await supabase
+        const enrollmentCount = activeEnrollments?.length || 0;
+        console.log(`Found ${enrollmentCount} active enrollments to archive`);
+        
+        // Archive all active enrollments (mark as completed)
+        if (enrollmentCount > 0) {
+          const { error: archiveError } = await supabase
+            .from('enrollments')
+            .update({
+              status: 'completed',
+              updated_at: new Date().toISOString()
+            })
+            .eq('student_id', this.userProfile.id)
+            .eq('status', 'active');
+          
+          if (archiveError) throw archiveError;
+          console.log(`Successfully archived ${enrollmentCount} enrollments`);
+        }
+        
+        // Log the grade transition in security_events
+        const { error: logError } = await supabase
           .from('security_events')
           .insert({
             profile_id: this.userProfile.profile_id,
@@ -936,14 +1000,23 @@ export default {
               old_grade: oldGrade,
               new_grade: newGrade,
               transition_date: new Date().toISOString(),
-              enrollments_archived: true
+              enrollments_archived: true,
+              enrollments_count: enrollmentCount
             }
           });
         
-        console.log(`Grade transition: ${oldGrade} → ${newGrade}. All enrollments archived.`);
+        if (logError) {
+          console.warn('Failed to log grade transition event:', logError);
+          // Don't throw error, logging is not critical
+        }
+        
+        console.log(`✅ Grade transition completed: ${oldGrade} → ${newGrade}`);
+        console.log(`📦 ${enrollmentCount} enrollments archived`);
+        console.log(`🎓 Student can now only join Grade ${newGrade} subjects`);
+        
       } catch (error) {
         console.error('Error handling grade transition:', error);
-        throw new Error('Failed to process grade level change');
+        throw new Error('Failed to process grade level change: ' + error.message);
       }
     },
     
@@ -1077,46 +1150,71 @@ export default {
       this.isDeletingAccount = true;
 
       try {
+        console.log('🗑️ Starting account deletion...');
+        
         // Delete profile photo if exists
-        if (this.userProfile.profile_photo_url) {
-          const photoPath = this.userProfile.profile_photo_url.split('/').pop();
-          await supabase.storage
-            .from('profile-photos')
-            .remove([`profile-photos/${photoPath}`]);
+        if (this.userProfile.profile_photo_url || this.userProfile.profile_photo) {
+          try {
+            const photoUrl = this.userProfile.profile_photo_url || this.userProfile.profile_photo;
+            const photoPath = photoUrl.split('/').pop();
+            await supabase.storage
+              .from('profile-photos')
+              .remove([`profile-photos/${photoPath}`]);
+            console.log('✅ Profile photo deleted');
+          } catch (photoError) {
+            console.warn('Could not delete photo:', photoError);
+          }
         }
         
         // Log the deletion event
-        await supabase
-          .from('security_events')
-          .insert({
-            profile_id: this.userProfile.id,
-            event_type: 'account_deletion',
-            details: {
-              deleted_at: new Date().toISOString(),
-              user_role: 'student'
-            }
-          });
+        try {
+          await supabase
+            .from('security_events')
+            .insert({
+              profile_id: this.userProfile.id,
+              event_type: 'account_deletion',
+              details: {
+                deleted_at: new Date().toISOString(),
+                user_role: 'student'
+              }
+            });
+          console.log('✅ Deletion logged');
+        } catch (logError) {
+          console.warn('Could not log deletion:', logError);
+        }
 
-        // Delete the profile (cascade will handle related records)
-        const { error: deleteError } = await supabase
-          .from('profiles')
-          .delete()
-          .eq('id', this.userProfile.id);
+        // Call the RPC function to delete user account
+        console.log('Calling delete_user_account RPC function...');
+        const { data, error: rpcError } = await supabase.rpc('delete_user_account');
 
-        if (deleteError) throw deleteError;
+        if (rpcError) {
+          console.error('❌ RPC Error:', rpcError);
+          throw new Error('Failed to delete account: ' + rpcError.message);
+        }
+        
+        console.log('✅ RPC Response:', data);
 
         // Sign out the user
         await supabase.auth.signOut();
+        console.log('✅ User signed out');
 
         this.isDeletingAccount = false;
         this.showDeleteModal = false;
+        
+        // Clear local storage
+        localStorage.clear();
+        
         alert('Your account has been permanently deleted. You will now be redirected to the login page.');
-        this.$router.push('/login');
+        
+        // Redirect to login
+        setTimeout(() => {
+          window.location.replace('/login');
+        }, 500);
 
       } catch (error) {
-        console.error('Error deleting account:', error);
+        console.error('❌ Error deleting account:', error);
         this.isDeletingAccount = false;
-        alert('Failed to delete account. Please try again or contact support.');
+        alert('Failed to delete account: ' + (error.message || 'Unknown error') + '\n\nPlease contact support at support@intelligrade.edu');
       }
     },
     
