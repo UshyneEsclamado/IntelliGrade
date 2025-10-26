@@ -327,6 +327,29 @@ const reportIssue = () => {
   isHelpMenuOpen.value = false;
 };
 
+// Listen for profile updates from Settings component
+const handleProfileUpdate = async (event: CustomEvent) => {
+  console.log('📢 Received profile update event in TeacherDashboard:', event.detail);
+  const { nameChanged, photoChanged, newName, newPhoto } = event.detail || {};
+  
+  if (nameChanged && teacherProfile.value) {
+    console.log(`✏️ Name changed to: ${newName}`);
+    // Update the profile data immediately
+    teacherProfile.value.full_name = newName;
+  }
+  
+  if (photoChanged && teacherInfo.value) {
+    console.log('📸 Profile photo changed');
+    // Update the profile photo immediately
+    teacherInfo.value.profile_pic = newPhoto;
+  }
+  
+  // Also reload to ensure consistency
+  await initializeAuth();
+  
+  console.log('✅ TeacherDashboard profile updated:', profileData.value);
+};
+
 onMounted(async () => {
   console.log('\n🚀 TeacherDashboard mounted\n');
   initializeDarkMode();
@@ -340,6 +363,16 @@ onMounted(async () => {
     console.error('Failed to initialize teacher dashboard');
     router.push('/login');
   }
+  
+  // Listen for profile updates from Settings component
+  window.addEventListener('teacherProfileUpdated', handleProfileUpdate as EventListener);
+});
+
+// Cleanup on unmount
+import { onUnmounted } from 'vue';
+
+onUnmounted(() => {
+  window.removeEventListener('teacherProfileUpdated', handleProfileUpdate as EventListener);
 });
 </script>
 

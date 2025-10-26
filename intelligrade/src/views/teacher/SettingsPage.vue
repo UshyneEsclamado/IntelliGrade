@@ -602,6 +602,25 @@ const saveProfile = async () => {
     }
 
     profileSuccess.value = 'Profile updated successfully!';
+    
+    // Dispatch event to notify TeacherDashboard about profile update
+    const nameChanged = profileData.value.full_name.trim() !== profileData.value.full_name;
+    const photoChanged = selectedImage.value !== null;
+    
+    window.dispatchEvent(new CustomEvent('teacherProfileUpdated', {
+      detail: {
+        nameChanged: true,
+        photoChanged: photoChanged,
+        newName: profileData.value.full_name.trim(),
+        newPhoto: profileUrl
+      }
+    }));
+    
+    console.log('✅ teacherProfileUpdated event dispatched', {
+      nameChanged: true,
+      photoChanged,
+      newName: profileData.value.full_name.trim()
+    });
 
     setTimeout(() => {
       closeProfileModal();
@@ -726,58 +745,46 @@ const deleteAccount = async () => {
   deleteError.value = '';
 
   try {
+    console.log('🗑️ Starting account deletion process...');
+    
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('No user logged in');
 
-    // Get profile data
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id, role')
-      .eq('auth_user_id', user.id)
-      .single();
+    console.log('👤 User ID:', user.id);
 
-    if (!profile) throw new Error('Profile not found');
+    // Call the delete_user_account function
+    const { data, error: rpcError } = await supabase.rpc('delete_user_account');
 
-    // Delete from role-specific table (cascades will handle related data)
-    if (profile.role === 'student') {
-      const { error: deleteStudentError } = await supabase
-        .from('students')
-        .delete()
-        .eq('profile_id', profile.id);
-      
-      if (deleteStudentError) throw deleteStudentError;
-    } else if (profile.role === 'teacher') {
-      const { error: deleteTeacherError } = await supabase
-        .from('teachers')
-        .delete()
-        .eq('profile_id', profile.id);
-      
-      if (deleteTeacherError) throw deleteTeacherError;
+    if (rpcError) {
+      console.error('❌ RPC Error:', rpcError);
+      throw rpcError;
     }
 
-    // Delete from profiles table
-    const { error: deleteProfileError } = await supabase
-      .from('profiles')
-      .delete()
-      .eq('auth_user_id', user.id);
+    console.log('✅ Account deletion response:', data);
 
-    if (deleteProfileError) throw deleteProfileError;
+    if (data && !data.success) {
+      throw new Error(data.message || 'Failed to delete account');
+    }
 
-    // Delete auth user (this should be the last step)
-    await supabase.auth.admin.deleteUser(user.id);
-    
-    // Note: admin.deleteUser might not be available in client-side
-    // You may need to call a server function or edge function for this
+    console.log('✅ Account deleted successfully! Redirecting to login...');
     
     // Sign out the user
     await supabase.auth.signOut();
+    
+    // Clear local storage
+    localStorage.clear();
 
-    // Redirect to login or home page
-    window.location.href = '/login';
+    // Show success message briefly before redirecting
+    alert('Account deleted successfully. You will be redirected to the login page.');
+
+    // Redirect to login page
+    setTimeout(() => {
+      window.location.href = '/login';
+    }, 1000);
 
   } catch (error) {
-    console.error('Delete account error:', error);
-    deleteError.value = error.message || 'Failed to delete account. Please contact support.';
+    console.error('❌ Delete account error:', error);
+    deleteError.value = error.message || 'Failed to delete account. Please try again or contact support.';
   } finally {
     isDeleting.value = false;
   }
