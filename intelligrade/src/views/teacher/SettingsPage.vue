@@ -146,7 +146,6 @@
         <button @click="closeProfileModal" class="close-btn">×</button>
       </div>
       <div class="modal-body">
-        <!-- Profile Picture Section -->
         <div class="form-group">
           <label>Profile Picture</label>
           <div class="avatar-upload-section">
@@ -183,7 +182,6 @@
           </div>
         </div>
         
-        <!-- Full Name Section -->
         <div class="form-group">
           <label>Full Name</label>
           <input 
@@ -194,7 +192,6 @@
           >
         </div>
         
-        <!-- Error/Success Messages -->
         <div v-if="profileError" class="error-message">{{ profileError }}</div>
         <div v-if="profileSuccess" class="success-message">{{ profileSuccess }}</div>
       </div>
@@ -243,7 +240,6 @@
           >
         </div>
         
-        <!-- Error/Success Messages -->
         <div v-if="passwordError" class="error-message">{{ passwordError }}</div>
         <div v-if="passwordSuccess" class="success-message">{{ passwordSuccess }}</div>
       </div>
@@ -332,36 +328,46 @@
     </div>
   </div>
 
-  <!-- Delete Account Confirmation Modal (Settings.vue Style) -->
-  <div v-if="showDeleteModal" class="modal-overlay" @click="showDeleteModal = false">
+  <!-- Delete Account Confirmation Modal -->
+  <div v-if="showDeleteModal" class="modal-overlay" @click="closeDeleteModal">
     <div class="modal-content delete-modal" @click.stop>
       <div class="modal-header delete-header">
         <h3>Delete Account</h3>
-        <button @click="showDeleteModal = false" class="close-btn">×</button>
+        <button @click="closeDeleteModal" class="close-btn" v-if="!isDeleting">×</button>
       </div>
       <div class="modal-body">
         <p class="delete-warning-text">This action cannot be undone. This will permanently delete your account and all associated data.</p>
         
-        <div class="form-group">
-          <label class="delete-label">Type DELETE to confirm:</label>
-          <input 
-            type="text" 
-            v-model="deleteConfirmation" 
-            placeholder="TYPE DELETE TO CONFIRM"
-            class="form-input delete-input"
-          >
+        <!-- Show form when not deleting -->
+        <div v-if="!isDeleting">
+          <div class="form-group">
+            <label class="delete-label">Type DELETE to confirm:</label>
+            <p class="helper-text">⚠️ Must be typed in CAPS LOCK: <strong>DELETE</strong></p>
+            <input 
+              type="text" 
+              v-model="deleteConfirmation" 
+              placeholder="TYPE DELETE TO CONFIRM"
+              class="form-input delete-input"
+            >
+          </div>
+          
+          <div v-if="deleteError" class="error-message">{{ deleteError }}</div>
         </div>
         
-        <div v-if="deleteError" class="error-message">{{ deleteError }}</div>
+        <!-- Show loading indicator when deleting -->
+        <div v-if="isDeleting" class="loading-container">
+          <div class="spinner"></div>
+          <p class="loading-text">{{ deleteSuccess }}</p>
+        </div>
       </div>
-      <div class="modal-footer">
-        <button @click="showDeleteModal = false" class="btn-secondary">Cancel</button>
+      <div class="modal-footer" v-if="!isDeleting">
+        <button @click="closeDeleteModal" class="btn-secondary">Cancel</button>
         <button 
           @click="deleteAccount" 
           class="btn-danger" 
-          :disabled="deleteConfirmation !== 'DELETE' || isDeleting"
+          :disabled="deleteConfirmation.trim() !== 'DELETE'"
         >
-          {{ isDeleting ? 'Deleting...' : 'DELETE ACCOUNT' }}
+          DELETE ACCOUNT
         </button>
       </div>
     </div>
@@ -442,7 +448,6 @@ const loadUserProfile = async () => {
       return;
     }
 
-    // Get profile data
     const { data: profile, error: fetchError } = await supabase
       .from('profiles')
       .select('id, full_name, role, auth_user_id')
@@ -457,7 +462,6 @@ const loadUserProfile = async () => {
       profileData.value.full_name = profile.full_name || '';
       userRole.value = profile.role;
 
-      // Load role-specific data (students or teachers table)
       if (profile.role === 'student') {
         const { data: studentData } = await supabase
           .from('students')
@@ -557,13 +561,11 @@ const saveProfile = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('No user logged in');
 
-    // Upload new image if selected
     let profileUrl = currentProfilePicture.value;
     if (selectedImage.value) {
       profileUrl = await uploadImage();
     }
 
-    // Update profiles table
     const { error: profileUpdateError } = await supabase
       .from('profiles')
       .update({ 
@@ -574,7 +576,6 @@ const saveProfile = async () => {
 
     if (profileUpdateError) throw profileUpdateError;
 
-    // Update role-specific table
     if (userRole.value === 'student') {
       const { error: studentError } = await supabase
         .from('students')
@@ -593,8 +594,7 @@ const saveProfile = async () => {
           updated_at: new Date().toISOString()
         })
         .eq('profile_id', profileData.value.profile_id);
-      
-      if (teacherError) throw teacherError;
+        if (teacherError) throw teacherError;
     }
 
     if (profileUrl) {
@@ -603,24 +603,14 @@ const saveProfile = async () => {
 
     profileSuccess.value = 'Profile updated successfully!';
     
-    // Dispatch event to notify TeacherDashboard about profile update
-    const nameChanged = profileData.value.full_name.trim() !== profileData.value.full_name;
-    const photoChanged = selectedImage.value !== null;
-    
     window.dispatchEvent(new CustomEvent('teacherProfileUpdated', {
       detail: {
         nameChanged: true,
-        photoChanged: photoChanged,
+        photoChanged: selectedImage.value !== null,
         newName: profileData.value.full_name.trim(),
         newPhoto: profileUrl
       }
     }));
-    
-    console.log('✅ teacherProfileUpdated event dispatched', {
-      nameChanged: true,
-      photoChanged,
-      newName: profileData.value.full_name.trim()
-    });
 
     setTimeout(() => {
       closeProfileModal();
@@ -645,7 +635,6 @@ const passwordError = ref('');
 const passwordSuccess = ref('');
 const isChangingPassword = ref(false);
 
-// Password Modal Functions
 const openPasswordModal = () => {
   showPasswordModal.value = true;
   resetPasswordForm();
@@ -665,7 +654,6 @@ const resetPasswordForm = () => {
   };
 };
 
-// Change password
 const changePassword = async () => {
   clearMessages();
 
@@ -693,7 +681,6 @@ const changePassword = async () => {
     
     if (error) throw error;
 
-    // Update password_changed_at in profiles table
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       await supabase
@@ -727,65 +714,86 @@ const showTermsOfService = () => {
 // ===== DELETE ACCOUNT =====
 const deleteConfirmation = ref('');
 const deleteError = ref('');
+const deleteSuccess = ref('');
 const isDeleting = ref(false);
 
 const openDeleteAccountModal = () => {
   showDeleteModal.value = true;
   deleteConfirmation.value = '';
   deleteError.value = '';
+  deleteSuccess.value = '';
+};
+
+const closeDeleteModal = () => {
+  if (!isDeleting.value) {
+    showDeleteModal.value = false;
+    deleteConfirmation.value = '';
+    deleteError.value = '';
+    deleteSuccess.value = '';
+  }
 };
 
 const deleteAccount = async () => {
-  if (deleteConfirmation.value !== 'DELETE') {
-    deleteError.value = 'Please type DELETE to confirm';
+  if (deleteConfirmation.value.trim() !== 'DELETE') {
+    deleteError.value = 'You must type DELETE exactly (in uppercase) to confirm';
     return;
   }
 
   isDeleting.value = true;
   deleteError.value = '';
+  deleteSuccess.value = 'Deleting your account...';
 
   try {
-    console.log('🗑️ Starting account deletion process...');
+    console.log('🗑️ Step 1: Starting deletion...');
     
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('No user logged in');
 
-    console.log('👤 User ID:', user.id);
-
-    // Call the delete_user_account function
+    console.log('🗑️ Step 2: Calling RPC function...');
     const { data, error: rpcError } = await supabase.rpc('delete_user_account');
 
     if (rpcError) {
       console.error('❌ RPC Error:', rpcError);
-      throw rpcError;
+      throw new Error(rpcError.message || 'Failed to delete account');
     }
 
-    console.log('✅ Account deletion response:', data);
+    console.log('📝 Step 3: RPC Response:', data);
 
     if (data && !data.success) {
       throw new Error(data.message || 'Failed to delete account');
     }
 
-    console.log('✅ Account deleted successfully! Redirecting to login...');
+    console.log('✅ Step 4: Account deleted!');
+    deleteSuccess.value = '✅ Account deleted successfully!';
     
-    // Sign out the user
-    await supabase.auth.signOut();
-    
-    // Clear local storage
+    console.log('🧹 Step 5: Clearing all storage...');
     localStorage.clear();
-
-    // Show success message briefly before redirecting
-    alert('Account deleted successfully. You will be redirected to the login page.');
-
-    // Redirect to login page
+    sessionStorage.clear();
+    
+    console.log('🚪 Step 6: Signing out...');
+    await supabase.auth.signOut({ scope: 'local' });
+    
+    console.log('🔄 Step 7: Redirecting to login page...');
+    deleteSuccess.value = '🔄 Redirecting to login page...';
+    
+    // Force immediate redirect with multiple methods
     setTimeout(() => {
       window.location.href = '/login';
-    }, 1000);
+    }, 100);
+    
+    // Backup redirect method
+    setTimeout(() => {
+      window.location.replace('/login');
+    }, 200);
+    
+    // Ultimate fallback - complete page reload to login
+    setTimeout(() => {
+      window.location.href = '/login';
+    }, 300);
 
   } catch (error) {
-    console.error('❌ Delete account error:', error);
-    deleteError.value = error.message || 'Failed to delete account. Please try again or contact support.';
-  } finally {
+    console.error('❌ Error:', error);
+    deleteError.value = error.message || 'Failed to delete account';
     isDeleting.value = false;
   }
 };
@@ -796,6 +804,8 @@ const clearMessages = () => {
   profileSuccess.value = '';
   passwordError.value = '';
   passwordSuccess.value = '';
+  deleteError.value = '';
+  deleteSuccess.value = '';
 };
 
 // ===== INITIALIZATION =====
@@ -2057,5 +2067,95 @@ input:checked + .slider:before {
   background: #2a2e36;
   color: #20c997;
   border: 2px solid #dc3545 !important;
+}
+
+.helper-text {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  background: rgba(220, 53, 69, 0.05);
+  border-left: 3px solid #dc3545;
+  border-radius: 4px;
+}
+
+.dark .helper-text {
+  color: #9ca3af;
+  background: rgba(220, 53, 69, 0.1);
+}
+
+.helper-text strong {
+  color: #dc3545;
+  font-weight: 700;
+}
+
+/* Loading Container */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  gap: 1rem;
+  min-height: 150px;
+}
+
+/* Spinner */
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(220, 53, 69, 0.1);
+  border-top: 4px solid #dc3545;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+  color: #dc3545;
+  font-weight: 600;
+  font-size: 1rem;
+  text-align: center;
+  margin: 0;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.dark .loading-text {
+  color: #ff6b6b;
+}
+
+.dark .spinner {
+  border: 4px solid rgba(255, 107, 107, 0.1);
+  border-top: 4px solid #ff6b6b;
+}
+
+/* Helper Text */
+.helper-text {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  background: rgba(220, 53, 69, 0.05);
+  border-left: 3px solid #dc3545;
+  border-radius: 4px;
+}
+
+.dark .helper-text {
+  color: #9ca3af;
+  background: rgba(220, 53, 69, 0.1);
+}
+
+.helper-text strong {
+  color: #dc3545;
+  font-weight: 700;
 }
 </style>
