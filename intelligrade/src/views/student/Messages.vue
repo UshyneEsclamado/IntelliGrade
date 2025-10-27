@@ -119,15 +119,15 @@
 
         <!-- Teachers Grid -->
         <div v-else class="teachers-grid">
-          <div v-for="subject in groupedTeachers" :key="subject.id" class="subject-section">
+          <div v-for="subject in groupedTeachers" :key="(subject as any).id" class="subject-section">
             <div class="subject-section-header">
-              <h3 class="subject-section-name">{{ subject.name }}</h3>
-              <span class="subject-section-code">{{ subject.code }}</span>
+              <h3 class="subject-section-name">{{ (subject as any).name }}</h3>
+              <span class="subject-section-code">{{ (subject as any).code }}</span>
             </div>
             
             <div class="teachers-cards">
               <div 
-                v-for="teacher in subject.teachers" 
+                v-for="teacher in (subject as any).teachers" 
                 :key="`${teacher.id}-${teacher.section_id}`"
                 :class="['teacher-card', { 'has-unread': teacher.unread_count > 0 }]"
                 @click="startChatWithTeacher(teacher)"
@@ -242,13 +242,13 @@
                 </svg>
               </div>
               <div class="notification-card-right">
-                <span class="notification-count">{{ group.announcements.length }}</span>
-                <span v-if="group.announcements.some(a => !a.is_read)" class="unread-dot"></span>
+                <span class="notification-count">{{ (group as any).announcements.length }}</span>
+                <span v-if="(group as any).announcements.some((a: any) => !a.is_read)" class="unread-dot"></span>
               </div>
             </div>
             <div class="notification-card-body">
-              <h3 class="notification-title">{{ group.section }}: {{ group.subject }}</h3>
-              <p class="notification-teacher">Teacher: {{ group.teacher }}</p>
+              <h3 class="notification-title">{{ (group as any).section }}: {{ (group as any).subject }}</h3>
+              <p class="notification-teacher">Teacher: {{ (group as any).teacher }}</p>
             </div>
           </div>
         </div>
@@ -358,7 +358,7 @@
               style="display: none" 
               accept="image/*,.pdf,.doc,.docx,.txt"
             />
-            <button class="attach-btn" @click="$refs.fileInput.click()" :disabled="isSendingMessage">
+            <button class="attach-btn" @click="($refs.fileInput as HTMLInputElement)?.click()" :disabled="isSendingMessage">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
               </svg>
@@ -547,6 +547,7 @@
 </template>
 
 <script setup lang="ts">
+defineOptions({ name: 'StudentMessages' })
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { supabase } from '@/supabase.js'
@@ -554,7 +555,7 @@ import { supabase } from '@/supabase.js'
 // Watch for route changes
 const route = useRoute()
 watch(() => route.fullPath, () => {
-  loadSections()
+  loadEnrolledSubjectsAndTeachers()
 })
 
 // State management
@@ -1726,7 +1727,7 @@ const formatTime = (dateString) => {
   
   const date = new Date(dateString)
   const now = new Date()
-  const diffMs = now - date
+  const diffMs = now.getTime() - date.getTime()
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
   
   if (diffDays === 0) {
@@ -1754,7 +1755,7 @@ const getPresenceStatus = (teacherId) => {
   
   const now = new Date()
   const lastSeen = new Date(presence.last_seen)
-  const diffMs = now - lastSeen
+  const diffMs = now.getTime() - lastSeen.getTime()
   const diffMinutes = Math.floor(diffMs / (1000 * 60))
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
@@ -1813,7 +1814,7 @@ const setupPresenceTracking = async () => {
       (payload) => {
         console.log('Presence update received:', payload)
         
-        const userId = payload.new?.user_id || payload.old?.user_id
+        const userId = (payload.new as { user_id?: string })?.user_id || (payload.old as { user_id?: string })?.user_id
         
         if (payload.eventType === 'DELETE') {
           if (teacherPresence.value[userId]) {

@@ -236,7 +236,7 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import { supabase } from '../supabase'
 
 export default {
