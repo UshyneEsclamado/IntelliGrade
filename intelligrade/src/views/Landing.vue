@@ -218,8 +218,13 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
+
+// Define component name to fix Vue linting rule
+defineOptions({
+  name: 'LandingPage'
+})
 
 const activeSection = ref('home')
 const features = ref([
@@ -270,8 +275,8 @@ onMounted(() => {
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
-        entry.target.style.opacity = '1'
-        entry.target.style.transform = 'translateY(0) scale(1)'
+        (entry.target as HTMLElement).style.opacity = '1';
+        (entry.target as HTMLElement).style.transform = 'translateY(0) scale(1)'
       }
     })
   }, observerOptions)
@@ -279,9 +284,10 @@ onMounted(() => {
   setTimeout(() => {
     const featureCards = document.querySelectorAll('.feature-card')
     featureCards.forEach(card => {
-      card.style.opacity = '0'
-      card.style.transform = 'translateY(30px) scale(0.95)'
-      card.style.transition = 'all 0.8s ease'
+      const cardElement = card as HTMLElement;
+      cardElement.style.opacity = '0';
+      cardElement.style.transform = 'translateY(30px) scale(0.95)';
+      cardElement.style.transition = 'all 0.8s ease';
       observer.observe(card)
     })
   }, 100)

@@ -100,15 +100,15 @@
         </div>
 
         <div class="buttons">
-          <router-link to="/signup-student" class="role-btn student-btn">
-            <svg class="btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <router-link to="/signup-student" class="role-btn login-btn">
+            <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 3L1 9L12 15L21 10.09V17H23V9M5 13.18V17.18L12 21L19 17.18V13.18L12 17L5 13.18Z"/>
             </svg>
             Student
           </router-link>
           
-          <router-link to="/signup" class="role-btn teacher-btn">
-            <svg class="btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <router-link to="/signup" class="role-btn login-btn">
+            <svg class="btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
               <path d="M20,17A2,2 0 0,0 22,15V4A2,2 0 0,0 20,2H9.46C9.81,2.61 10,3.3 10,4H20V15H11V17M15,7V9H9V22H7V16H5V22H3V14H1.5V9A2,2 0 0,1 3.5,7H15M8,4A2,2 0 0,1 6,6A2,2 0 0,1 4,4A2,2 0 0,1 6,2A2,2 0 0,1 8,4Z"/>
             </svg>
             Teacher
@@ -125,7 +125,7 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 export default {
   name: "RoleSelection"
 };
@@ -494,6 +494,49 @@ h1::after {
   gap: 0.6rem;
   margin: 0.8rem auto;
   max-width: 380px;
+}
+
+.login-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  color: #fff;
+  padding: 0.7rem 1.1rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 8px 30px rgba(61, 141, 122, 0.18), 0 2px 10px rgba(61, 141, 122, 0.08), inset 0 1px 0 rgba(255,255,255,0.18);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.login-btn .btn-icon {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.login-btn:hover {
+  background: linear-gradient(135deg, #267c6e 0%, #4A9B8E 100%);
+  color: #fff;
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 15px 40px rgba(61, 141, 122, 0.25), 0 5px 15px rgba(61, 141, 122, 0.13), inset 0 1px 0 rgba(255,255,255,0.22);
+}
+
+.login-btn:active {
+  transform: translateY(0.5px) scale(0.99);
+  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+}
+
+.login-btn:hover .btn-icon {
+  transform: scale(1.13) rotate(7deg);
 }
 
 .role-btn {
