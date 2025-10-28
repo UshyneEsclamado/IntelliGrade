@@ -570,9 +570,6 @@ export default {
 
     let quizSubscription = null;
 
-    // ============================================
-    // Format UTC date to Philippines Time for display
-    // ============================================
     const formatPHTime = (utcDateString) => {
       if (!utcDateString) return 'Not set';
       try {
@@ -593,9 +590,6 @@ export default {
       }
     };
 
-    // ============================================
-    // Get current time in UTC for proper comparison
-    // ============================================
     const getCurrentUTCTime = () => {
       return new Date();
     };
@@ -607,9 +601,6 @@ export default {
       return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     };
 
-    // ============================================
-    // Shuffle array function
-    // ============================================
     const shuffleArray = (array) => {
       const shuffled = [...array];
       for (let i = shuffled.length - 1; i > 0; i--) {
@@ -619,7 +610,6 @@ export default {
       return shuffled;
     };
 
-    // Computed
     const newQuizzes = computed(() => {
       const now = getCurrentUTCTime();
       return quizzes.value.filter(quiz => {
@@ -655,19 +645,15 @@ export default {
       return questions.value.length - answeredCount.value;
     });
 
-    // ============================================
-    // Compute remaining attempts
-    // ============================================
     const remainingAttempts = computed(() => {
       if (!selectedQuiz.value) return 0;
-      if (selectedQuiz.value.attempts_allowed === 999) return 999; // Unlimited
+      if (selectedQuiz.value.attempts_allowed === 999) return 999;
       
       const result = quizResults.value.find(r => r.quiz_id === selectedQuiz.value.id);
       const usedAttempts = result ? result.total_attempts : 0;
       return Math.max(0, selectedQuiz.value.attempts_allowed - usedAttempts);
     });
 
-    // Methods
     const loadStudentInfo = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -745,9 +731,6 @@ export default {
       }
     };
 
-    // ============================================
-    // UPDATED: Load quiz results with proper attempt counting
-    // ============================================
     const loadQuizResults = async () => {
       try {
         if (quizzes.value.length === 0) {
@@ -755,14 +738,12 @@ export default {
           return;
         }
 
-        // Get all quiz results for this student
         const { data: results } = await supabase
           .from('quiz_results')
           .select('*')
           .eq('student_id', studentInfo.value.student_id)
           .in('quiz_id', quizzes.value.map(q => q.id));
 
-        // Get all attempts for accurate counting
         const { data: attempts } = await supabase
           .from('quiz_attempts')
           .select('quiz_id, id, status')
@@ -770,7 +751,6 @@ export default {
           .in('quiz_id', quizzes.value.map(q => q.id))
           .in('status', ['submitted', 'graded', 'reviewed']);
 
-        // Build quiz results with accurate attempt counts
         const resultsMap = new Map();
         
         for (const quiz of quizzes.value) {
@@ -842,7 +822,6 @@ export default {
         return 'expired';
       }
       
-      // Check if all attempts used
       const result = quizResults.value.find(r => r.quiz_id === selectedQuiz.value.id);
       const usedAttempts = result ? result.total_attempts : 0;
       if (selectedQuiz.value.attempts_allowed !== 999 && usedAttempts >= selectedQuiz.value.attempts_allowed) {
@@ -863,7 +842,6 @@ export default {
         return 'Quiz Expired';
       }
       
-      // Check if all attempts used
       const result = quizResults.value.find(r => r.quiz_id === selectedQuiz.value.id);
       const usedAttempts = result ? result.total_attempts : 0;
       if (selectedQuiz.value.attempts_allowed !== 999 && usedAttempts >= selectedQuiz.value.attempts_allowed) {
@@ -879,27 +857,21 @@ export default {
       await loadPreviousAttempts(quiz.id);
     };
 
-    // ============================================
-    // UPDATED: Check quiz eligibility with proper attempt tracking
-    // ============================================
     const checkQuizEligibility = async (quiz) => {
       const now = getCurrentUTCTime();
       
-      // Check if quiz has started
       if (quiz.start_date && new Date(quiz.start_date) > now) {
         canTakeCurrentQuiz.value = false;
         quizUnavailableReason.value = 'This quiz is not yet available.';
         return;
       }
       
-      // Check if quiz has expired
       if (quiz.end_date && new Date(quiz.end_date) <= now) {
         canTakeCurrentQuiz.value = false;
         quizUnavailableReason.value = 'This quiz has expired.';
         return;
       }
       
-      // Check attempt limit with accurate counting from quiz_attempts
       const { data: completedAttempts } = await supabase
         .from('quiz_attempts')
         .select('id')
@@ -937,71 +909,90 @@ export default {
       }
     };
 
-    // ============================================
-    // Start quiz with proper shuffle implementation
-    // ============================================
     const startQuiz = async () => {
-      if (!canTakeCurrentQuiz.value) return;
+      if (!canTakeCurrentQuiz.value || isStarting.value) return;
       
       isStarting.value = true;
+      console.log('🚀 Starting quiz:', selectedQuiz.value.id);
       
       try {
-        // Clean up any in-progress attempts
-        const { data: existingAttempts } = await supabase
+        await supabase
           .from('quiz_attempts')
-          .select('id')
+          .delete()
           .eq('quiz_id', selectedQuiz.value.id)
           .eq('student_id', studentInfo.value.student_id)
           .eq('status', 'in_progress');
 
-        if (existingAttempts && existingAttempts.length > 0) {
-          for (const attempt of existingAttempts) {
-            await supabase.from('quiz_attempts').delete().eq('id', attempt.id);
-          }
-        }
+        console.log('✅ Cleaned up old attempts');
 
-        // Load questions
-        const { data: questionsData } = await supabase
+        console.log('📥 Loading questions...');
+        const { data: questionsData, error: questionsError } = await supabase
           .from('quiz_questions')
           .select('id, question_number, question_type, question_text, points')
           .eq('quiz_id', selectedQuiz.value.id)
           .order('question_number');
 
-        if (!questionsData || questionsData.length === 0) {
-          throw new Error('No questions found');
+        if (questionsError) {
+          console.error('❌ Questions error:', questionsError);
+          throw new Error('Failed to load questions: ' + questionsError.message);
         }
 
-        // Load options for each question
+        if (!questionsData || questionsData.length === 0) {
+          throw new Error('No questions found for this quiz');
+        }
+
+        console.log(`✅ Loaded ${questionsData.length} questions`);
+
         const questionsWithOptions = await Promise.all(
           questionsData.map(async (question) => {
+            console.log(`📝 Processing Q${question.question_number}: ${question.question_type}`);
+            
             if (question.question_type === 'multiple_choice') {
-              const { data: options } = await supabase
+              const { data: options, error: optionsError } = await supabase
                 .from('question_options')
-                .select('id, option_number, option_text')
+                .select('id, option_number, option_text, is_correct')
                 .eq('question_id', question.id)
                 .order('option_number');
 
+              if (optionsError) {
+                console.error(`❌ Options error for Q${question.id}:`, optionsError);
+                return { ...question, options: [] };
+              }
+
+              console.log(`   ✅ Loaded ${options?.length || 0} options`);
+
               let finalOptions = options || [];
-              if (selectedQuiz.value.shuffle_options) {
+              if (selectedQuiz.value.shuffle_options && finalOptions.length > 0) {
                 finalOptions = shuffleArray(finalOptions);
+                console.log(`   🔀 Shuffled options`);
               }
 
               return { ...question, options: finalOptions };
             }
+            
             return { ...question, options: [] };
           })
         );
 
-        // Shuffle questions if enabled
         if (selectedQuiz.value.shuffle_questions) {
           questions.value = shuffleArray(questionsWithOptions);
+          console.log('🔀 Questions shuffled');
         } else {
           questions.value = questionsWithOptions;
         }
 
+        const mcQuestions = questions.value.filter(q => q.question_type === 'multiple_choice');
+        console.log(`📊 Multiple choice questions: ${mcQuestions.length}`);
+        mcQuestions.forEach((q, idx) => {
+          console.log(`   Q${idx + 1}: ${q.options?.length || 0} options`);
+        });
+
+        if (questions.value.length === 0) {
+          throw new Error('No questions loaded');
+        }
+
         const maxScore = questions.value.reduce((sum, q) => sum + (q.points || 1), 0);
 
-        // Get next attempt number
         const { data: allAttempts } = await supabase
           .from('quiz_attempts')
           .select('attempt_number')
@@ -1014,8 +1005,9 @@ export default {
           ? allAttempts[0].attempt_number + 1 
           : 1;
 
-        // Create attempt
-        const { data: attempt } = await supabase
+        console.log('📝 Creating attempt #' + nextAttemptNumber);
+
+        const { data: attempt, error: attemptError } = await supabase
           .from('quiz_attempts')
           .insert({
             quiz_id: selectedQuiz.value.id,
@@ -1027,9 +1019,14 @@ export default {
           .select()
           .single();
 
-        currentAttempt.value = attempt;
+        if (attemptError) {
+          console.error('❌ Attempt creation error:', attemptError);
+          throw new Error('Failed to create quiz attempt: ' + attemptError.message);
+        }
 
-        // Initialize answers
+        currentAttempt.value = attempt;
+        console.log('✅ Attempt created:', attempt.id);
+
         studentAnswers.value = {};
         questions.value.forEach(q => {
           studentAnswers.value[q.id] = {
@@ -1038,18 +1035,23 @@ export default {
           };
         });
 
-        // Start timer
+        console.log('✅ Initialized answers for', questions.value.length, 'questions');
+
         if (selectedQuiz.value.has_time_limit) {
           timeRemaining.value = selectedQuiz.value.time_limit_minutes * 60;
           startTimer();
+          console.log('⏱️ Timer started:', selectedQuiz.value.time_limit_minutes, 'minutes');
         }
 
         startTime.value = Date.now();
-        takingQuiz.value = true;
         currentQuestionIndex.value = 0;
+        takingQuiz.value = true;
+
+        console.log('🎉 Quiz started successfully!');
+        console.log('Current question:', questions.value[0]);
 
       } catch (error) {
-        console.error('Error starting quiz:', error);
+        console.error('❌ Error starting quiz:', error);
         alert(`Failed to start quiz: ${error.message}`);
       } finally {
         isStarting.value = false;
@@ -1070,12 +1072,14 @@ export default {
     };
 
     const selectOption = async (questionId, optionId) => {
+      console.log('✅ Selected option:', { questionId, optionId });
       studentAnswers.value[questionId].selected_option_id = optionId;
       studentAnswers.value[questionId].answer_text = '';
       await saveAnswer(questionId);
     };
 
     const selectTrueFalse = async (questionId, value) => {
+      console.log('✅ Selected true/false:', { questionId, value });
       studentAnswers.value[questionId].answer_text = value;
       studentAnswers.value[questionId].selected_option_id = null;
       await saveAnswer(questionId);
@@ -1106,11 +1110,15 @@ export default {
     };
 
     const previousQuestion = () => {
-      if (currentQuestionIndex.value > 0) currentQuestionIndex.value--;
+      if (currentQuestionIndex.value > 0) {
+        currentQuestionIndex.value--;
+      }
     };
 
     const nextQuestion = () => {
-      if (currentQuestionIndex.value < questions.value.length - 1) currentQuestionIndex.value++;
+      if (currentQuestionIndex.value < questions.value.length - 1) {
+        currentQuestionIndex.value++;
+      }
     };
 
     const goToQuestion = (index) => {
@@ -1122,7 +1130,7 @@ export default {
     };
 
     // ============================================
-    // UPDATED: Submit quiz with proper result tracking
+    // FIXED: Use database function to avoid timeout
     // ============================================
     const submitQuiz = async () => {
       if (isSubmitting.value) return;
@@ -1130,39 +1138,48 @@ export default {
       isSubmitting.value = true;
       showSubmitModal.value = false;
 
+      console.log('📤 Submitting quiz...');
+
       try {
         if (timerInterval.value) clearInterval(timerInterval.value);
 
         const timeTaken = Math.floor((Date.now() - startTime.value) / 1000);
 
-        // Submit the attempt
-        await supabase
-          .from('quiz_attempts')
-          .update({
-            status: 'submitted',
-            submitted_at: new Date().toISOString(),
-            time_taken_minutes: Math.ceil(timeTaken / 60)
-          })
-          .eq('id', currentAttempt.value.id);
+        console.log('💾 Calling database function to submit...');
+        
+        // Use database function instead of direct update
+        const { data, error: rpcError } = await supabase.rpc('submit_quiz_attempt', {
+          p_attempt_id: currentAttempt.value.id,
+          p_time_taken_minutes: Math.ceil(timeTaken / 60)
+        });
 
+        if (rpcError) {
+          console.error('❌ RPC error:', rpcError);
+          throw new Error('Failed to submit quiz: ' + rpcError.message);
+        }
+
+        if (!data) {
+          throw new Error('Failed to submit quiz: Database function returned false');
+        }
+
+        console.log('✅ Quiz submitted successfully!');
         alert('Quiz submitted successfully!');
 
-        // Reset quiz state
         takingQuiz.value = false;
         currentAttempt.value = null;
         questions.value = [];
         studentAnswers.value = {};
         currentQuestionIndex.value = 0;
 
-        // Reload quizzes and results to update attempt count
+        console.log('🔄 Reloading quizzes...');
         await loadQuizzes();
         
-        // Go back to quiz list instead of staying on details
         selectedQuiz.value = null;
+        console.log('✅ Redirected to quiz list');
 
       } catch (error) {
-        console.error('Error submitting quiz:', error);
-        alert(`Failed to submit: ${error.message}`);
+        console.error('❌ Error submitting quiz:', error);
+        alert(`Failed to submit: ${error.message}\n\nPlease try again or contact your teacher if the problem persists.`);
       } finally {
         isSubmitting.value = false;
       }
