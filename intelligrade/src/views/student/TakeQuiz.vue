@@ -93,10 +93,6 @@
           <div class="stat-value">{{ completedQuizzes.length }}</div>
           <div class="stat-label">Completed</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-value">{{ averageScore }}%</div>
-          <div class="stat-label">Average Score</div>
-        </div>
       </div>
 
       <!-- Quizzes Categories -->
@@ -612,7 +608,7 @@ export default {
     };
 
     // ============================================
-    // FIXED: Shuffle array function
+    // Shuffle array function
     // ============================================
     const shuffleArray = (array) => {
       const shuffled = [...array];
@@ -645,13 +641,7 @@ export default {
     });
 
     const completedQuizzes = computed(() => {
-      return quizResults.value.filter(r => r.status === 'completed');
-    });
-
-    const averageScore = computed(() => {
-      if (completedQuizzes.value.length === 0) return 0;
-      const sum = completedQuizzes.value.reduce((acc, r) => acc + r.best_percentage, 0);
-      return Math.round(sum / completedQuizzes.value.length);
+      return quizResults.value.filter(r => r.total_attempts > 0);
     });
 
     const answeredCount = computed(() => {
@@ -666,7 +656,7 @@ export default {
     });
 
     // ============================================
-    // FIXED: Compute remaining attempts
+    // Compute remaining attempts
     // ============================================
     const remainingAttempts = computed(() => {
       if (!selectedQuiz.value) return 0;
@@ -755,15 +745,50 @@ export default {
       }
     };
 
+    // ============================================
+    // UPDATED: Load quiz results with proper attempt counting
+    // ============================================
     const loadQuizResults = async () => {
       try {
-        const { data } = await supabase
+        if (quizzes.value.length === 0) {
+          quizResults.value = [];
+          return;
+        }
+
+        // Get all quiz results for this student
+        const { data: results } = await supabase
           .from('quiz_results')
           .select('*')
           .eq('student_id', studentInfo.value.student_id)
           .in('quiz_id', quizzes.value.map(q => q.id));
 
-        quizResults.value = data || [];
+        // Get all attempts for accurate counting
+        const { data: attempts } = await supabase
+          .from('quiz_attempts')
+          .select('quiz_id, id, status')
+          .eq('student_id', studentInfo.value.student_id)
+          .in('quiz_id', quizzes.value.map(q => q.id))
+          .in('status', ['submitted', 'graded', 'reviewed']);
+
+        // Build quiz results with accurate attempt counts
+        const resultsMap = new Map();
+        
+        for (const quiz of quizzes.value) {
+          const existingResult = results?.find(r => r.quiz_id === quiz.id);
+          const quizAttempts = attempts?.filter(a => a.quiz_id === quiz.id) || [];
+          const totalAttempts = quizAttempts.length;
+
+          resultsMap.set(quiz.id, {
+            quiz_id: quiz.id,
+            student_id: studentInfo.value.student_id,
+            total_attempts: totalAttempts,
+            best_percentage: existingResult?.best_percentage || 0,
+            best_score: existingResult?.best_score || 0,
+            status: totalAttempts > 0 ? 'completed' : 'not_started'
+          });
+        }
+
+        quizResults.value = Array.from(resultsMap.values());
       } catch (error) {
         console.error('Error loading quiz results:', error);
       }
@@ -816,6 +841,14 @@ export default {
       if (selectedQuiz.value.end_date && new Date(selectedQuiz.value.end_date) <= now) {
         return 'expired';
       }
+      
+      // Check if all attempts used
+      const result = quizResults.value.find(r => r.quiz_id === selectedQuiz.value.id);
+      const usedAttempts = result ? result.total_attempts : 0;
+      if (selectedQuiz.value.attempts_allowed !== 999 && usedAttempts >= selectedQuiz.value.attempts_allowed) {
+        return 'expired';
+      }
+      
       return 'available';
     };
 
@@ -829,6 +862,14 @@ export default {
       if (selectedQuiz.value.end_date && new Date(selectedQuiz.value.end_date) <= now) {
         return 'Quiz Expired';
       }
+      
+      // Check if all attempts used
+      const result = quizResults.value.find(r => r.quiz_id === selectedQuiz.value.id);
+      const usedAttempts = result ? result.total_attempts : 0;
+      if (selectedQuiz.value.attempts_allowed !== 999 && usedAttempts >= selectedQuiz.value.attempts_allowed) {
+        return 'No Attempts Remaining';
+      }
+      
       return 'Available Now';
     };
 
@@ -839,7 +880,7 @@ export default {
     };
 
     // ============================================
-    // FIXED: Check quiz eligibility with proper attempt tracking
+    // UPDATED: Check quiz eligibility with proper attempt tracking
     // ============================================
     const checkQuizEligibility = async (quiz) => {
       const now = getCurrentUTCTime();
@@ -858,9 +899,15 @@ export default {
         return;
       }
       
-      // Check attempt limit
-      const result = quizResults.value.find(r => r.quiz_id === quiz.id);
-      const usedAttempts = result ? result.total_attempts : 0;
+      // Check attempt limit with accurate counting from quiz_attempts
+      const { data: completedAttempts } = await supabase
+        .from('quiz_attempts')
+        .select('id')
+        .eq('quiz_id', quiz.id)
+        .eq('student_id', studentInfo.value.student_id)
+        .in('status', ['submitted', 'graded', 'reviewed']);
+
+      const usedAttempts = completedAttempts ? completedAttempts.length : 0;
       
       if (quiz.attempts_allowed !== 999) {
         if (usedAttempts >= quiz.attempts_allowed) {
@@ -891,7 +938,7 @@ export default {
     };
 
     // ============================================
-    // FIXED: Start quiz with proper shuffle implementation
+    // Start quiz with proper shuffle implementation
     // ============================================
     const startQuiz = async () => {
       if (!canTakeCurrentQuiz.value) return;
@@ -934,7 +981,6 @@ export default {
                 .eq('question_id', question.id)
                 .order('option_number');
 
-              // FIXED: Shuffle options if shuffle is enabled
               let finalOptions = options || [];
               if (selectedQuiz.value.shuffle_options) {
                 finalOptions = shuffleArray(finalOptions);
@@ -946,7 +992,7 @@ export default {
           })
         );
 
-        // FIXED: Shuffle questions if shuffle is enabled
+        // Shuffle questions if enabled
         if (selectedQuiz.value.shuffle_questions) {
           questions.value = shuffleArray(questionsWithOptions);
         } else {
@@ -1076,7 +1122,7 @@ export default {
     };
 
     // ============================================
-    // FIXED: Submit quiz with proper state management
+    // UPDATED: Submit quiz with proper result tracking
     // ============================================
     const submitQuiz = async () => {
       if (isSubmitting.value) return;
@@ -1111,11 +1157,8 @@ export default {
         // Reload quizzes and results to update attempt count
         await loadQuizzes();
         
-        // Reload quiz details to update eligibility
-        if (selectedQuiz.value) {
-          await checkQuizEligibility(selectedQuiz.value);
-          await loadPreviousAttempts(selectedQuiz.value.id);
-        }
+        // Go back to quiz list instead of staying on details
+        selectedQuiz.value = null;
 
       } catch (error) {
         console.error('Error submitting quiz:', error);
@@ -1171,7 +1214,7 @@ export default {
 
     return {
       loading, studentInfo, subject, section, quizzes, newQuizzes, pastQuizzes,
-      completedQuizzes, averageScore, selectedQuiz, takingQuiz, currentAttempt,
+      completedQuizzes, selectedQuiz, takingQuiz, currentAttempt,
       questions, studentAnswers, currentQuestionIndex, timeRemaining, previousAttempts,
       canTakeCurrentQuiz, quizUnavailableReason, isStarting, showSubmitModal,
       isSubmitting, answeredCount, unansweredCount, remainingAttempts,
