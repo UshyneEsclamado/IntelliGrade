@@ -69,7 +69,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
             </svg>
-            Back to Subjects
+            <span>Back to Subjects</span>
           </button>
         </div>
       </div>
@@ -295,6 +295,17 @@
                   <div class="info-content">
                     <span class="info-label">Attempts</span>
                     <span class="info-value">{{ selectedQuiz.attempts_allowed === 999 ? 'Unlimited' : selectedQuiz.attempts_allowed }}</span>
+                  </div>
+                </div>
+                <div class="info-item">
+                  <div class="info-icon">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </div>
+                  <div class="info-content">
+                    <span class="info-label">Remaining Attempts</span>
+                    <span class="info-value">{{ remainingAttempts === 999 ? 'Unlimited' : remainingAttempts }}</span>
                   </div>
                 </div>
               </div>
@@ -560,13 +571,61 @@ export default {
     const isStarting = ref(false);
     const showSubmitModal = ref(false);
     const isSubmitting = ref(false);
-    const autoSaveTimeout = ref(null);
 
     let quizSubscription = null;
 
+    // ============================================
+    // Format UTC date to Philippines Time for display
+    // ============================================
+    const formatPHTime = (utcDateString) => {
+      if (!utcDateString) return 'Not set';
+      try {
+        const utcDate = new Date(utcDateString);
+        const options = {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          timeZone: 'Asia/Manila',
+          hour12: true
+        };
+        return utcDate.toLocaleString('en-PH', options) + ' PHT';
+      } catch (error) {
+        console.error('Error formatting PH time:', error);
+        return 'Invalid date';
+      }
+    };
+
+    // ============================================
+    // Get current time in UTC for proper comparison
+    // ============================================
+    const getCurrentUTCTime = () => {
+      return new Date();
+    };
+
+    const formatTime = (seconds) => {
+      if (!seconds || seconds < 0) return '00:00';
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    // ============================================
+    // FIXED: Shuffle array function
+    // ============================================
+    const shuffleArray = (array) => {
+      const shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    };
+
     // Computed
     const newQuizzes = computed(() => {
-      const now = getPHTime();
+      const now = getCurrentUTCTime();
       return quizzes.value.filter(quiz => {
         const result = quizResults.value.find(r => r.quiz_id === quiz.id);
         const isNotTaken = !result || result.total_attempts === 0;
@@ -576,7 +635,7 @@ export default {
     });
 
     const pastQuizzes = computed(() => {
-      const now = getPHTime();
+      const now = getCurrentUTCTime();
       return quizzes.value.filter(quiz => {
         const result = quizResults.value.find(r => r.quiz_id === quiz.id);
         const isTaken = result && result.total_attempts > 0;
@@ -606,34 +665,19 @@ export default {
       return questions.value.length - answeredCount.value;
     });
 
+    // ============================================
+    // FIXED: Compute remaining attempts
+    // ============================================
+    const remainingAttempts = computed(() => {
+      if (!selectedQuiz.value) return 0;
+      if (selectedQuiz.value.attempts_allowed === 999) return 999; // Unlimited
+      
+      const result = quizResults.value.find(r => r.quiz_id === selectedQuiz.value.id);
+      const usedAttempts = result ? result.total_attempts : 0;
+      return Math.max(0, selectedQuiz.value.attempts_allowed - usedAttempts);
+    });
+
     // Methods
-    const getPHTime = () => {
-      const now = new Date();
-      const phTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
-      return phTime;
-    };
-
-    const formatPHTime = (utcDateString) => {
-      if (!utcDateString) return 'Not set';
-      const date = new Date(utcDateString);
-      const options = {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'Asia/Manila'
-      };
-      return date.toLocaleString('en-PH', options) + ' PHT';
-    };
-
-    const formatTime = (seconds) => {
-      if (!seconds || seconds < 0) return '00:00';
-      const mins = Math.floor(seconds / 60);
-      const secs = seconds % 60;
-      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    };
-
     const loadStudentInfo = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -751,7 +795,7 @@ export default {
 
     const getQuizStatus = (quiz) => {
       const result = quizResults.value.find(r => r.quiz_id === quiz.id);
-      const now = getPHTime();
+      const now = getCurrentUTCTime();
       
       if (result && result.total_attempts > 0) return 'completed';
       if (quiz.end_date && new Date(quiz.end_date) <= now) return 'expired';
@@ -764,7 +808,7 @@ export default {
 
     const getQuizAvailabilityClass = () => {
       if (!selectedQuiz.value) return '';
-      const now = getPHTime();
+      const now = getCurrentUTCTime();
       
       if (selectedQuiz.value.start_date && new Date(selectedQuiz.value.start_date) > now) {
         return 'not-started';
@@ -777,7 +821,7 @@ export default {
 
     const getQuizAvailabilityText = () => {
       if (!selectedQuiz.value) return '';
-      const now = getPHTime();
+      const now = getCurrentUTCTime();
       
       if (selectedQuiz.value.start_date && new Date(selectedQuiz.value.start_date) > now) {
         return 'Not Yet Available';
@@ -794,26 +838,34 @@ export default {
       await loadPreviousAttempts(quiz.id);
     };
 
+    // ============================================
+    // FIXED: Check quiz eligibility with proper attempt tracking
+    // ============================================
     const checkQuizEligibility = async (quiz) => {
-      const now = getPHTime();
+      const now = getCurrentUTCTime();
       
+      // Check if quiz has started
       if (quiz.start_date && new Date(quiz.start_date) > now) {
         canTakeCurrentQuiz.value = false;
         quizUnavailableReason.value = 'This quiz is not yet available.';
         return;
       }
       
+      // Check if quiz has expired
       if (quiz.end_date && new Date(quiz.end_date) <= now) {
         canTakeCurrentQuiz.value = false;
         quizUnavailableReason.value = 'This quiz has expired.';
         return;
       }
       
+      // Check attempt limit
       const result = quizResults.value.find(r => r.quiz_id === quiz.id);
-      if (result && quiz.attempts_allowed !== 999) {
-        if (result.total_attempts >= quiz.attempts_allowed) {
+      const usedAttempts = result ? result.total_attempts : 0;
+      
+      if (quiz.attempts_allowed !== 999) {
+        if (usedAttempts >= quiz.attempts_allowed) {
           canTakeCurrentQuiz.value = false;
-          quizUnavailableReason.value = `You have used all ${quiz.attempts_allowed} attempt(s).`;
+          quizUnavailableReason.value = `You have used all ${quiz.attempts_allowed} attempt(s). No more attempts remaining.`;
           return;
         }
       }
@@ -838,6 +890,9 @@ export default {
       }
     };
 
+    // ============================================
+    // FIXED: Start quiz with proper shuffle implementation
+    // ============================================
     const startQuiz = async () => {
       if (!canTakeCurrentQuiz.value) return;
       
@@ -869,7 +924,7 @@ export default {
           throw new Error('No questions found');
         }
 
-        // Load options
+        // Load options for each question
         const questionsWithOptions = await Promise.all(
           questionsData.map(async (question) => {
             if (question.question_type === 'multiple_choice') {
@@ -879,13 +934,24 @@ export default {
                 .eq('question_id', question.id)
                 .order('option_number');
 
-              return { ...question, options: options || [] };
+              // FIXED: Shuffle options if shuffle is enabled
+              let finalOptions = options || [];
+              if (selectedQuiz.value.shuffle_options) {
+                finalOptions = shuffleArray(finalOptions);
+              }
+
+              return { ...question, options: finalOptions };
             }
             return { ...question, options: [] };
           })
         );
 
-        questions.value = questionsWithOptions;
+        // FIXED: Shuffle questions if shuffle is enabled
+        if (selectedQuiz.value.shuffle_questions) {
+          questions.value = shuffleArray(questionsWithOptions);
+        } else {
+          questions.value = questionsWithOptions;
+        }
 
         const maxScore = questions.value.reduce((sum, q) => sum + (q.points || 1), 0);
 
@@ -970,8 +1036,7 @@ export default {
     };
 
     const autoSaveAnswer = (questionId) => {
-      if (autoSaveTimeout.value) clearTimeout(autoSaveTimeout.value);
-      autoSaveTimeout.value = setTimeout(() => saveAnswer(questionId), 1000);
+      saveAnswer(questionId);
     };
 
     const saveAnswer = async (questionId) => {
@@ -1010,6 +1075,9 @@ export default {
       showSubmitModal.value = true;
     };
 
+    // ============================================
+    // FIXED: Submit quiz with proper state management
+    // ============================================
     const submitQuiz = async () => {
       if (isSubmitting.value) return;
       
@@ -1021,7 +1089,7 @@ export default {
 
         const timeTaken = Math.floor((Date.now() - startTime.value) / 1000);
 
-        // Simple direct update - NO TIMEOUT
+        // Submit the attempt
         await supabase
           .from('quiz_attempts')
           .update({
@@ -1033,15 +1101,21 @@ export default {
 
         alert('Quiz submitted successfully!');
 
-        // Reset
+        // Reset quiz state
         takingQuiz.value = false;
-        selectedQuiz.value = null;
         currentAttempt.value = null;
         questions.value = [];
         studentAnswers.value = {};
         currentQuestionIndex.value = 0;
 
+        // Reload quizzes and results to update attempt count
         await loadQuizzes();
+        
+        // Reload quiz details to update eligibility
+        if (selectedQuiz.value) {
+          await checkQuizEligibility(selectedQuiz.value);
+          await loadPreviousAttempts(selectedQuiz.value.id);
+        }
 
       } catch (error) {
         console.error('Error submitting quiz:', error);
@@ -1093,7 +1167,6 @@ export default {
     onUnmounted(() => {
       if (timerInterval.value) clearInterval(timerInterval.value);
       if (quizSubscription) supabase.removeChannel(quizSubscription);
-      if (autoSaveTimeout.value) clearTimeout(autoSaveTimeout.value);
     });
 
     return {
@@ -1101,7 +1174,8 @@ export default {
       completedQuizzes, averageScore, selectedQuiz, takingQuiz, currentAttempt,
       questions, studentAnswers, currentQuestionIndex, timeRemaining, previousAttempts,
       canTakeCurrentQuiz, quizUnavailableReason, isStarting, showSubmitModal,
-      isSubmitting, answeredCount, unansweredCount, formatPHTime, formatTime,
+      isSubmitting, answeredCount, unansweredCount, remainingAttempts,
+      formatPHTime, formatTime,
       getQuizStatus, getQuizResult, getQuizAvailabilityClass, getQuizAvailabilityText,
       viewQuizDetails, startQuiz, selectOption, selectTrueFalse, autoSaveAnswer,
       previousQuestion, nextQuestion, goToQuestion, showSubmitConfirmation,

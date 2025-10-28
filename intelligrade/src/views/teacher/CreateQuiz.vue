@@ -600,13 +600,20 @@ export default {
       }
     });
 
-    // Convert Philippines time to UTC for storage
+    // ============================================
+    // FIXED: Convert Philippines time to UTC for storage
+    // ============================================
     const convertPHTimeToUTC = (phDateString) => {
       if (!phDateString) return null;
       try {
-        const phDate = new Date(phDateString);
-        const utcTime = new Date(phDate.getTime() - (8 * 60 * 60 * 1000));
-        return utcTime.toISOString();
+        // The datetime-local input gives us a string like "2025-10-28T07:30"
+        // We need to treat this as Philippines Time (UTC+8) and convert to UTC
+        
+        // Create a date string that explicitly states it's in Asia/Manila timezone
+        const phDateWithTimezone = new Date(phDateString + '+08:00');
+        
+        // Return as ISO string (which is in UTC)
+        return phDateWithTimezone.toISOString();
       } catch (error) {
         console.error('Error converting PH time to UTC:', error);
         return null;
@@ -870,33 +877,28 @@ export default {
     };
 
     // ============================================
-    // IMPROVED PUBLISH FUNCTION WITH BETTER ERROR HANDLING
+    // REAL-TIME PUBLISH - NO TIMEOUTS
     // ============================================
     const publishQuiz = async () => {
-      // Validate quiz before proceeding
       if (!validateQuiz()) {
         console.log('❌ Validation failed');
         return;
       }
 
-      // Confirm publication
       if (!confirm(`Publish "${quiz.value.title}"?\n\nStudents will be able to see and take this quiz immediately.`)) {
         return;
       }
 
-      // Set publishing state
       isPublishing.value = true;
       console.log('🚀 Starting quiz publication...');
 
       try {
-        // Verify teacher info exists
         if (!teacherInfo.value.teacher_id) {
           throw new Error('Teacher ID not found. Please refresh and try again.');
         }
 
         console.log('✅ Teacher verified:', teacherInfo.value.teacher_id);
 
-        // Prepare quiz data
         const quizData = {
           subject_id: subject.value.id,
           section_id: section.value.id,
@@ -994,7 +996,7 @@ export default {
 
         console.log(`✅ Prepared ${allOptions.length} options and ${allAnswers.length} answers`);
 
-        // === STEP 5: Insert Options ===
+        // === STEP 5: Insert Options (NO BATCH LIMIT) ===
         if (allOptions.length > 0) {
           console.log('📤 Step 5: Inserting options...');
           const { error: optionsError } = await supabase
@@ -1010,7 +1012,7 @@ export default {
           console.log('⏭️ Step 5 skipped: No options to insert');
         }
 
-        // === STEP 6: Insert Answers ===
+        // === STEP 6: Insert Answers (NO BATCH LIMIT) ===
         if (allAnswers.length > 0) {
           console.log('📤 Step 6: Inserting answers...');
           const { error: answersError } = await supabase
@@ -1035,30 +1037,26 @@ export default {
           questions: insertedQuestions.length
         });
 
-        // Show success message
         alert(`✅ Quiz Published Successfully!\n\n📝 ${newQuiz.title}\n🔑 Quiz Code: ${newQuiz.quiz_code}\n📊 ${insertedQuestions.length} questions\n\n✨ Students can now take this quiz!`);
 
-        // Navigate back to quizzes page
-        setTimeout(() => {
-          router.push({
-            name: 'ViewQuizzes',
-            params: {
-              subjectId: subject.value.id,
-              sectionId: section.value.id
-            },
-            query: {
-              subjectName: subject.value.name,
-              sectionName: section.value.name,
-              gradeLevel: route.query.gradeLevel,
-              sectionCode: route.query.sectionCode
-            }
-          });
-        }, 500);
+        // IMMEDIATE REDIRECT - NO TIMEOUT
+        router.push({
+          name: 'ViewQuizzes',
+          params: {
+            subjectId: subject.value.id,
+            sectionId: section.value.id
+          },
+          query: {
+            subjectName: subject.value.name,
+            sectionName: section.value.name,
+            gradeLevel: route.query.gradeLevel,
+            sectionCode: route.query.sectionCode
+          }
+        });
 
       } catch (error) {
         console.error('❌ Publication error:', error);
 
-        // Determine error message
         let errorMessage = '❌ Failed to Publish Quiz\n\n';
 
         if (error.code === '23505') {
@@ -1076,7 +1074,6 @@ export default {
         alert(errorMessage);
 
       } finally {
-        // Always reset publishing state
         isPublishing.value = false;
         console.log('🏁 Publishing process completed');
       }
