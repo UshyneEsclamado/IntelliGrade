@@ -572,10 +572,8 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { supabase } from '@/supabase.js'
 import { useDarkMode } from '@/composables/useDarkMode.js'
 
-// Dark mode support
 const { isDarkMode } = useDarkMode()
 
-// Component state
 const loading = ref(true)
 const loadingQuestions = ref(false)
 const savingGrade = ref(false)
@@ -583,109 +581,64 @@ const error = ref(null)
 const searchQuery = ref('')
 const teacherId = ref(null)
 
-// Hierarchy state
 const subjects = ref([])
 const selectedSubject = ref(null)
 const sections = ref([])
 const selectedSection = ref(null)
 const submissions = ref([])
 
-// Table state
 const selectedStatus = ref('')
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
 const sortField = ref('submitted_at')
 const sortDirection = ref('desc')
 
-// Review modal state
 const showReviewModal = ref(false)
 const selectedSubmission = ref(null)
 const reviewQuestions = ref([])
 const reviewFeedback = ref('')
 const modalMode = ref('view')
 
-// Subject filtering
 const selectedSubjectFilter = ref('')
 
-    const sectionStats = computed(() => {
-      const pending = submissions.value.filter(s => s.status === 'submitted').length
-      const graded = submissions.value.filter(s => s.status === 'graded').length
-      const total = submissions.value.length
-      const averageScore = total > 0 
-        ? Math.round(submissions.value.reduce((sum, s) => sum + (s.percentage || 0), 0) / total)
-        : 0
-      return { pendingReview: pending, graded, total, averageScore }
-    })
+const sectionStats = computed(() => {
+  const pending = submissions.value.filter(s => s.status === 'submitted').length
+  const graded = submissions.value.filter(s => s.status === 'graded').length
+  const total = submissions.value.length
+  const averageScore = total > 0 
+    ? Math.round(submissions.value.reduce((sum, s) => sum + (s.percentage || 0), 0) / total)
+    : 0
+  return { pendingReview: pending, graded, total, averageScore }
+})
 
-    const correctAnswerCount = computed(() => {
-      return reviewQuestions.value.filter(q => q.is_correct).length
-    })
+const correctAnswerCount = computed(() => {
+  return reviewQuestions.value.filter(q => q.is_correct).length
+})
 
-    const maxReviewScore = computed(() => {
-      return reviewQuestions.value.reduce((sum, q) => sum + (q.points || 1), 0)
-    })
+const maxReviewScore = computed(() => {
+  return reviewQuestions.value.reduce((sum, q) => sum + (q.points || 1), 0)
+})
 
 const availableSubjectTypes = computed(() => {
   const types = new Set()
   subjects.value.forEach(subject => {
-    const name = subject.name.toLowerCase()
-    if (name.includes('math') || name.includes('algebra') || name.includes('geometry') || name.includes('calculus')) {
-      types.add('Mathematics')
-    } else if (name.includes('english') || name.includes('literature') || name.includes('writing')) {
-      types.add('English')
-    } else if (name.includes('science') || name.includes('biology') || name.includes('chemistry') || name.includes('physics')) {
-      types.add('Science')
-    } else if (name.includes('filipino') || name.includes('tagalog')) {
-      types.add('Filipino')
-    } else if (name.includes('history') || name.includes('social')) {
-      types.add('History')
-    } else if (name.includes('art') || name.includes('music') || name.includes('creative')) {
-      types.add('Arts')
-    } else if (name.includes('pe') || name.includes('physical') || name.includes('sports')) {
-      types.add('PE')
-    } else if (name.includes('computer') || name.includes('ict') || name.includes('programming') || name.includes('technology')) {
-      types.add('Computer')
-    }
+    types.add(subject.name)
   })
   
   return Array.from(types).map(type => ({
     name: type,
-    color: getSubjectTypeColor(type),
-    icon: getSubjectTypeIcon(type)
+    color: getSubjectIconColor(type),
+    icon: getSubjectIconSvg(type)
   }))
 })
 
 const filteredSubjects = computed(() => {
   let filtered = subjects.value
   
-  // Filter by subject type
   if (selectedSubjectFilter.value) {
-    filtered = filtered.filter(subject => {
-      const name = subject.name.toLowerCase()
-      const filter = selectedSubjectFilter.value.toLowerCase()
-      
-      if (filter === 'mathematics') {
-        return name.includes('math') || name.includes('algebra') || name.includes('geometry') || name.includes('calculus')
-      } else if (filter === 'english') {
-        return name.includes('english') || name.includes('literature') || name.includes('writing')
-      } else if (filter === 'science') {
-        return name.includes('science') || name.includes('biology') || name.includes('chemistry') || name.includes('physics')
-      } else if (filter === 'filipino') {
-        return name.includes('filipino') || name.includes('tagalog')
-      } else if (filter === 'history') {
-        return name.includes('history') || name.includes('social')
-      } else if (filter === 'arts') {
-        return name.includes('art') || name.includes('music') || name.includes('creative')
-      } else if (filter === 'pe') {
-        return name.includes('pe') || name.includes('physical') || name.includes('sports')
-      } else if (filter === 'computer') {
-        return name.includes('computer') || name.includes('ict') || name.includes('programming') || name.includes('technology')
-      }
-      return true
-    })
+    filtered = filtered.filter(subject => subject.name === selectedSubjectFilter.value)
   }
   
-  // Filter by search query
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     filtered = filtered.filter(s => 
@@ -698,321 +651,312 @@ const filteredSubjects = computed(() => {
 })
 
 const filteredSections = computed(() => {
-      if (!searchQuery.value) return sections.value
-      const query = searchQuery.value.toLowerCase()
-      return sections.value.filter(s => 
-        s.name.toLowerCase().includes(query) || 
-        s.section_code.toLowerCase().includes(query)
-      )
-    })
+  if (!searchQuery.value) return sections.value
+  const query = searchQuery.value.toLowerCase()
+  return sections.value.filter(s => 
+    s.name.toLowerCase().includes(query) || 
+    s.section_code.toLowerCase().includes(query)
+  )
+})
 
-    const filteredSubmissions = computed(() => {
-      let filtered = submissions.value
+const filteredSubmissions = computed(() => {
+  let filtered = submissions.value
 
-      if (searchQuery.value) {
-        const query = searchQuery.value.toLowerCase()
-        filtered = filtered.filter(submission => 
-          submission.student_name.toLowerCase().includes(query) ||
-          submission.quiz_title.toLowerCase().includes(query) ||
-          submission.student_email.toLowerCase().includes(query)
-        )
-      }
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    filtered = filtered.filter(submission => 
+      submission.student_name.toLowerCase().includes(query) ||
+      submission.quiz_title.toLowerCase().includes(query) ||
+      submission.student_email.toLowerCase().includes(query)
+    )
+  }
 
-      if (selectedStatus.value) {
-        filtered = filtered.filter(submission => 
-          submission.status === selectedStatus.value
-        )
-      }
+  if (selectedStatus.value) {
+    filtered = filtered.filter(submission => 
+      submission.status === selectedStatus.value
+    )
+  }
 
-      filtered.sort((a, b) => {
-        let aValue = a[sortField.value]
-        let bValue = b[sortField.value]
+  filtered.sort((a, b) => {
+    let aValue = a[sortField.value]
+    let bValue = b[sortField.value]
 
-        if (sortField.value === 'submitted_at') {
-          aValue = new Date(aValue)
-          bValue = new Date(bValue)
-        }
-
-        if (aValue < bValue) {
-          return sortDirection.value === 'asc' ? -1 : 1
-        }
-        if (aValue > bValue) {
-          return sortDirection.value === 'asc' ? 1 : -1
-        }
-        return 0
-      })
-
-      return filtered
-    })
-
-    const paginatedSubmissions = computed(() => {
-      const start = (currentPage.value - 1) * itemsPerPage.value
-      const end = start + itemsPerPage.value
-      return filteredSubmissions.value.slice(start, end)
-    })
-
-    const totalPages = computed(() => {
-      return Math.ceil(filteredSubmissions.value.length / itemsPerPage.value)
-    })
-
-    const getTeacherInfo = async () => {
-      try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-        if (sessionError || !session) {
-          error.value = 'Authentication error'
-          return false
-        }
-
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, role')
-          .eq('auth_user_id', session.user.id)
-          .single()
-
-        if (profileError || !profile || profile.role !== 'teacher') {
-          error.value = 'Access denied - Teacher role required'
-          return false
-        }
-
-        const { data: teacher, error: teacherError } = await supabase
-          .from('teachers')
-          .select('id')
-          .eq('profile_id', profile.id)
-          .single()
-
-        if (teacherError || !teacher) {
-          error.value = 'Teacher record not found'
-          return false
-        }
-
-        teacherId.value = teacher.id
-        return true
-      } catch (err) {
-        console.error('Error in getTeacherInfo:', err)
-        error.value = 'An error occurred'
-        return false
-      }
+    if (sortField.value === 'submitted_at') {
+      aValue = new Date(aValue)
+      bValue = new Date(bValue)
     }
 
-    const fetchSubjects = async () => {
-      try {
-        loading.value = true
-        error.value = null
+    if (aValue < bValue) {
+      return sortDirection.value === 'asc' ? -1 : 1
+    }
+    if (aValue > bValue) {
+      return sortDirection.value === 'asc' ? 1 : -1
+    }
+    return 0
+  })
 
-        // Optimized: Get subjects with aggregated stats in a single query
-        const { data: subjectsData, error: subjectsError } = await supabase
-          .from('subjects')
-          .select(`
-            id,
-            name,
-            grade_level,
-            description,
-            sections (id),
-            quizzes (id)
-          `)
-          .eq('teacher_id', teacherId.value)
-          .eq('is_active', true)
+  return filtered
+})
 
-        if (subjectsError) throw subjectsError
+const paginatedSubmissions = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  const end = start + itemsPerPage.value
+  return filteredSubmissions.value.slice(start, end)
+})
 
-        // Process subjects with pending count
-        const subjectsWithStats = await Promise.all(
-          (subjectsData || []).map(async (subject) => {
-            const sectionCount = subject.sections?.length || 0
-            const quizIds = subject.quizzes?.map(q => q.id) || []
-            
-            let pendingCount = 0
-            if (quizIds.length > 0) {
-              const { count } = await supabase
-                .from('quiz_attempts')
-                .select('id', { count: 'exact', head: true })
-                .in('quiz_id', quizIds)
-                .eq('status', 'submitted')
-                .not('submitted_at', 'is', null)
+const totalPages = computed(() => {
+  return Math.ceil(filteredSubmissions.value.length / itemsPerPage.value)
+})
 
-              pendingCount = count || 0
-            }
-
-            return {
-              id: subject.id,
-              name: subject.name,
-              grade_level: subject.grade_level,
-              description: subject.description || '',
-              section_count: sectionCount,
-              pending_count: pendingCount
-            }
-          })
-        )
-
-        subjects.value = subjectsWithStats
-      } catch (err) {
-        console.error('Error fetching subjects:', err)
-        error.value = `Failed to load subjects: ${err.message}`
-      } finally {
-        loading.value = false
-      }
+const getTeacherInfo = async () => {
+  try {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    if (sessionError || !session) {
+      error.value = 'Authentication error'
+      return false
     }
 
-    const selectSubject = async (subject) => {
-      selectedSubject.value = subject
-      await fetchSections(subject.id)
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, role')
+      .eq('auth_user_id', session.user.id)
+      .single()
+
+    if (profileError || !profile || profile.role !== 'teacher') {
+      error.value = 'Access denied - Teacher role required'
+      return false
     }
 
-    const fetchSections = async (subjectId) => {
-      try {
-        loading.value = true
-        error.value = null
+    const { data: teacher, error: teacherError } = await supabase
+      .from('teachers')
+      .select('id')
+      .eq('profile_id', profile.id)
+      .single()
 
-        // Optimized: Get sections with quiz data
-        const { data: sectionsData, error: sectionsError } = await supabase
+    if (teacherError || !teacher) {
+      error.value = 'Teacher record not found'
+      return false
+    }
+
+    teacherId.value = teacher.id
+    return true
+  } catch (err) {
+    console.error('Error in getTeacherInfo:', err)
+    error.value = err.message || 'An error occurred'
+    return false
+  }
+}
+
+const fetchSubjects = async () => {
+  try {
+    loading.value = true
+    error.value = null
+
+    const { data: subjectsData, error: subjectsError } = await supabase
+      .from('subjects')
+      .select('id, name, grade_level, description')
+      .eq('teacher_id', teacherId.value)
+      .eq('is_active', true)
+
+    if (subjectsError) throw subjectsError
+
+    const subjectsWithStats = await Promise.all(
+      (subjectsData || []).map(async (subject) => {
+        const { count: sectionCount } = await supabase
           .from('sections')
-          .select(`
-            id,
-            name,
-            section_code,
-            max_students,
-            quizzes (id)
-          `)
-          .eq('subject_id', subjectId)
+          .select('id', { count: 'exact', head: true })
+          .eq('subject_id', subject.id)
           .eq('is_active', true)
 
-        if (sectionsError) throw sectionsError
-
-        // Process sections with pending count
-        const sectionsWithStats = await Promise.all(
-          (sectionsData || []).map(async (section) => {
-            const quizCount = section.quizzes?.length || 0
-            const quizIds = section.quizzes?.map(q => q.id) || []
-            
-            let pendingCount = 0
-            if (quizIds.length > 0) {
-              const { count } = await supabase
-                .from('quiz_attempts')
-                .select('id', { count: 'exact', head: true })
-                .in('quiz_id', quizIds)
-                .eq('status', 'submitted')
-                .not('submitted_at', 'is', null)
-
-              pendingCount = count || 0
-            }
-
-            return {
-              id: section.id,
-              name: section.name,
-              section_code: section.section_code,
-              max_students: section.max_students,
-              quiz_count: quizCount,
-              pending_count: pendingCount
-            }
-          })
-        )
-
-        sections.value = sectionsWithStats
-      } catch (err) {
-        console.error('Error fetching sections:', err)
-        error.value = `Failed to load sections: ${err.message}`
-      } finally {
-        loading.value = false
-      }
-    }
-
-    const selectSection = async (section) => {
-      selectedSection.value = section
-      await fetchSubmissions(section.id)
-    }
-
-    const fetchSubmissions = async (sectionId) => {
-      try {
-        loading.value = true
-        error.value = null
-
-        // Step 1: Get all quizzes for this section
-        const { data: quizzes, error: quizzesError } = await supabase
+        const { data: quizzes } = await supabase
           .from('quizzes')
-          .select('id, title, quiz_code')
-          .eq('section_id', sectionId)
+          .select('id')
+          .eq('subject_id', subject.id)
 
-        if (quizzesError) throw quizzesError
+        const quizIds = quizzes?.map(q => q.id) || []
+        
+        let pendingCount = 0
+        if (quizIds.length > 0) {
+          const { count } = await supabase
+            .from('quiz_attempts')
+            .select('id', { count: 'exact', head: true })
+            .in('quiz_id', quizIds)
+            .eq('status', 'submitted')
+            .not('submitted_at', 'is', null)
 
-        if (!quizzes || quizzes.length === 0) {
-          submissions.value = []
-          loading.value = false
-          return
+          pendingCount = count || 0
         }
 
-        const quizIds = quizzes.map(q => q.id)
+        return {
+          id: subject.id,
+          name: subject.name,
+          grade_level: subject.grade_level,
+          description: subject.description || '',
+          section_count: sectionCount || 0,
+          pending_count: pendingCount
+        }
+      })
+    )
 
-        // Step 2: Get all quiz attempts for these quizzes
-        const { data: submissionsData, error: submissionsError } = await supabase
-          .from('quiz_attempts')
-          .select(`
-            id,
-            quiz_id,
-            student_id,
-            attempt_number,
-            total_score,
-            max_score,
-            percentage,
-            status,
-            submitted_at,
-            time_taken_minutes,
-            teacher_feedback,
-            students (
-              id,
-              full_name,
-              email
-            )
-          `)
-          .in('quiz_id', quizIds)
-          .order('submitted_at', { ascending: false })
+    subjects.value = subjectsWithStats
+  } catch (err) {
+    console.error('Error fetching subjects:', err)
+    error.value = `Failed to load subjects: ${err.message}`
+  } finally {
+    loading.value = false
+  }
+}
 
-        if (submissionsError) throw submissionsError
+const selectSubject = async (subject) => {
+  selectedSubject.value = subject
+  await fetchSections(subject.id)
+}
 
-        // Create quiz lookup
-        const quizMap = {}
-        quizzes.forEach(q => { quizMap[q.id] = q })
+const fetchSections = async (subjectId) => {
+  try {
+    loading.value = true
+    error.value = null
 
-        // Map submissions with all data
-        submissions.value = (submissionsData || []).map(attempt => ({
-          id: attempt.id,
-          quiz_id: attempt.quiz_id,
-          student_id: attempt.student_id,
-          attempt_number: attempt.attempt_number,
-          student_name: attempt.students?.full_name || 'Unknown Student',
-          student_email: attempt.students?.email || '',
-          quiz_title: quizMap[attempt.quiz_id]?.title || 'Unknown Quiz',
-          quiz_code: quizMap[attempt.quiz_id]?.quiz_code || '',
-          total_score: attempt.total_score || 0,
-          max_score: attempt.max_score || 0,
-          percentage: Math.round(attempt.percentage || 0),
-          status: attempt.status || 'submitted',
-          submitted_at: attempt.submitted_at,
-          time_taken_minutes: attempt.time_taken_minutes,
-          teacher_feedback: attempt.teacher_feedback
-        }))
+    const { data: sectionsData, error: sectionsError } = await supabase
+      .from('sections')
+      .select('id, name, section_code, max_students')
+      .eq('subject_id', subjectId)
+      .eq('is_active', true)
 
-        console.log('Submissions loaded:', submissions.value.length)
-      } catch (err) {
-        console.error('Error fetching submissions:', err)
-        error.value = `Failed to load submissions: ${err.message}`
-      } finally {
-        loading.value = false
-      }
-    }
+    if (sectionsError) throw sectionsError
 
-    const resetToSubjects = () => {
-      selectedSubject.value = null
-      selectedSection.value = null
-      sections.value = []
+    const sectionsWithStats = await Promise.all(
+      (sectionsData || []).map(async (section) => {
+        const { data: quizzes } = await supabase
+          .from('quizzes')
+          .select('id')
+          .eq('section_id', section.id)
+
+        const quizCount = quizzes?.length || 0
+        const quizIds = quizzes?.map(q => q.id) || []
+        
+        let pendingCount = 0
+        if (quizIds.length > 0) {
+          const { count } = await supabase
+            .from('quiz_attempts')
+            .select('id', { count: 'exact', head: true })
+            .in('quiz_id', quizIds)
+            .eq('status', 'submitted')
+            .not('submitted_at', 'is', null)
+
+          pendingCount = count || 0
+        }
+
+        return {
+          id: section.id,
+          name: section.name,
+          section_code: section.section_code,
+          max_students: section.max_students,
+          quiz_count: quizCount,
+          pending_count: pendingCount
+        }
+      })
+    )
+
+    sections.value = sectionsWithStats
+  } catch (err) {
+    console.error('Error fetching sections:', err)
+    error.value = `Failed to load sections: ${err.message}`
+  } finally {
+    loading.value = false
+  }
+}
+
+const selectSection = async (section) => {
+  selectedSection.value = section
+  await fetchSubmissions(section.id)
+}
+
+const fetchSubmissions = async (sectionId) => {
+  try {
+    loading.value = true
+    error.value = null
+
+    const { data: quizzes, error: quizzesError } = await supabase
+      .from('quizzes')
+      .select('id, title, quiz_code')
+      .eq('section_id', sectionId)
+
+    if (quizzesError) throw quizzesError
+
+    if (!quizzes || quizzes.length === 0) {
       submissions.value = []
-      searchQuery.value = ''
+      loading.value = false
+      return
     }
 
-    const resetToSections = () => {
-      selectedSection.value = null
-      submissions.value = []
-      searchQuery.value = ''
+    const quizIds = quizzes.map(q => q.id)
+
+    const { data: attempts, error: attemptsError } = await supabase
+      .from('quiz_attempts')
+      .select('*')
+      .in('quiz_id', quizIds)
+      .order('submitted_at', { ascending: false })
+
+    if (attemptsError) throw attemptsError
+
+    const studentIds = [...new Set(attempts?.map(a => a.student_id) || [])]
+    
+    let studentsMap = {}
+    if (studentIds.length > 0) {
+      const { data: students } = await supabase
+        .from('students')
+        .select('id, full_name, email')
+        .in('id', studentIds)
+
+      students?.forEach(s => {
+        studentsMap[s.id] = s
+      })
     }
+
+    const quizMap = {}
+    quizzes.forEach(q => { quizMap[q.id] = q })
+
+    submissions.value = (attempts || []).map(attempt => ({
+      id: attempt.id,
+      quiz_id: attempt.quiz_id,
+      student_id: attempt.student_id,
+      attempt_number: attempt.attempt_number,
+      student_name: studentsMap[attempt.student_id]?.full_name || 'Unknown Student',
+      student_email: studentsMap[attempt.student_id]?.email || '',
+      quiz_title: quizMap[attempt.quiz_id]?.title || 'Unknown Quiz',
+      quiz_code: quizMap[attempt.quiz_id]?.quiz_code || '',
+      total_score: attempt.total_score || 0,
+      max_score: attempt.max_score || 0,
+      percentage: Math.round(attempt.percentage || 0),
+      status: attempt.status || 'submitted',
+      submitted_at: attempt.submitted_at,
+      time_taken_minutes: attempt.time_taken_minutes,
+      teacher_feedback: attempt.teacher_feedback
+    }))
+
+    console.log('Submissions loaded:', submissions.value.length)
+  } catch (err) {
+    console.error('Error fetching submissions:', err)
+    error.value = `Failed to load submissions: ${err.message}`
+  } finally {
+    loading.value = false
+  }
+}
+
+const resetToSubjects = () => {
+  selectedSubject.value = null
+  selectedSection.value = null
+  sections.value = []
+  submissions.value = []
+  searchQuery.value = ''
+}
+
+const resetToSections = () => {
+  selectedSection.value = null
+  submissions.value = []
+  searchQuery.value = ''
+}
 
 const refreshData = async () => {
   if (!selectedSubject.value && !selectedSection.value) {
@@ -1024,252 +968,260 @@ const refreshData = async () => {
   }
 }
 
-    const loadQuestionsAndAnswers = async (submission) => {
-      try {
-        loadingQuestions.value = true
+const loadQuestionsAndAnswers = async (submission) => {
+  try {
+    loadingQuestions.value = true
 
-        // Optimized: Get all question data with related records
-        const { data: questions, error: questionsError } = await supabase
-          .from('quiz_questions')
-          .select(`
-            id,
-            question_number,
-            question_type,
-            question_text,
-            points,
-            question_options (
-              id,
-              option_number,
-              option_text,
-              is_correct
-            ),
-            question_answers (
-              correct_answer
-            )
-          `)
-          .eq('quiz_id', submission.quiz_id)
-          .order('question_number')
+    const { data: questions, error: questionsError } = await supabase
+      .from('quiz_questions')
+      .select('id, question_number, question_type, question_text, points')
+      .eq('quiz_id', submission.quiz_id)
+      .order('question_number')
 
-        if (questionsError) throw questionsError
+    if (questionsError) throw questionsError
 
-        if (!questions || questions.length === 0) {
-          reviewQuestions.value = []
-          return
-        }
-
-        // Get student answers for this attempt
-        const { data: studentAnswers, error: studentAnswersError } = await supabase
-          .from('student_answers')
-          .select('*')
-          .eq('attempt_id', submission.id)
-
-        if (studentAnswersError) throw studentAnswersError
-
-        // Map everything together
-        reviewQuestions.value = questions.map(q => {
-          const studentAnswer = (studentAnswers || []).find(sa => sa.question_id === q.id)
-          const questionAnswer = q.question_answers?.[0]
-
-          return {
-            id: q.id,
-            question_number: q.question_number,
-            question_type: q.question_type,
-            question_text: q.question_text,
-            points: q.points || 1,
-            options: q.question_options || [],
-            correct_answer: questionAnswer?.correct_answer || null,
-            selected_option_id: studentAnswer?.selected_option_id || null,
-            answer_text: studentAnswer?.answer_text || null,
-            is_correct: studentAnswer?.is_correct || false,
-            points_earned: studentAnswer?.points_earned || 0,
-            teacher_comment: studentAnswer?.teacher_comment || '',
-            manualPoints: studentAnswer?.points_earned || 0,
-            student_answer_id: studentAnswer?.id || null
-          }
-        })
-      } catch (err) {
-        console.error('Error loading questions:', err)
-        alert('Failed to load questions: ' + err.message)
-      } finally {
-        loadingQuestions.value = false
-      }
-    }
-
-    const reviewSubmission = async (submission) => {
-      modalMode.value = 'grade'
-      selectedSubmission.value = submission
-      reviewFeedback.value = submission.teacher_feedback || ''
-      showReviewModal.value = true
-      await loadQuestionsAndAnswers(submission)
-    }
-
-    const viewSubmission = async (submission) => {
-      modalMode.value = 'view'
-      selectedSubmission.value = submission
-      reviewFeedback.value = submission.teacher_feedback || ''
-      showReviewModal.value = true
-      await loadQuestionsAndAnswers(submission)
-    }
-
-    const updateQuestionPoints = (question) => {
-      if (question.manualPoints > question.points) {
-        question.manualPoints = question.points
-      }
-      if (question.manualPoints < 0) {
-        question.manualPoints = 0
-      }
-    }
-
-    const calculateReviewScore = () => {
-      if (modalMode.value === 'grade') {
-        return reviewQuestions.value.reduce((sum, q) => sum + (parseFloat(q.manualPoints) || 0), 0)
-      } else {
-        return reviewQuestions.value.reduce((sum, q) => sum + (parseFloat(q.points_earned) || 0), 0)
-      }
-    }
-
-    const calculateReviewPercentage = () => {
-      if (maxReviewScore.value === 0) return 0
-      return Math.round((calculateReviewScore() / maxReviewScore.value) * 100)
-    }
-
-    const closeReviewModal = () => {
-      showReviewModal.value = false
-      selectedSubmission.value = null
+    if (!questions || questions.length === 0) {
       reviewQuestions.value = []
-      reviewFeedback.value = ''
-      modalMode.value = 'view'
+      return
     }
 
-    const getCorrectOptionLabel = (question) => {
-      const correctOption = question.options.find(opt => opt.is_correct)
-      if (correctOption) {
-        return String.fromCharCode(65 + correctOption.option_number - 1)
+    const questionIds = questions.map(q => q.id)
+
+    const { data: options } = await supabase
+      .from('question_options')
+      .select('*')
+      .in('question_id', questionIds)
+      .order('option_number')
+
+    const { data: answers } = await supabase
+      .from('question_answers')
+      .select('*')
+      .in('question_id', questionIds)
+
+    const { data: studentAnswers } = await supabase
+      .from('student_answers')
+      .select('*')
+      .eq('attempt_id', submission.id)
+
+    const optionsMap = {}
+    options?.forEach(opt => {
+      if (!optionsMap[opt.question_id]) {
+        optionsMap[opt.question_id] = []
       }
-      return 'N/A'
-    }
+      optionsMap[opt.question_id].push(opt)
+    })
 
-    const saveGrade = async () => {
-      try {
-        if (!selectedSubmission.value) return
+    const answersMap = {}
+    answers?.forEach(ans => {
+      answersMap[ans.question_id] = ans
+    })
 
-        savingGrade.value = true
-        const finalScore = calculateReviewScore()
-        const finalPercentage = calculateReviewPercentage()
+    const studentAnswersMap = {}
+    studentAnswers?.forEach(sa => {
+      studentAnswersMap[sa.question_id] = sa
+    })
 
-        // Update quiz attempt
-        const { error: updateError } = await supabase
-          .from('quiz_attempts')
-          .update({
-            total_score: finalScore,
-            percentage: finalPercentage,
-            status: 'graded',
-            teacher_feedback: reviewFeedback.value,
-            manually_reviewed: true,
-            graded_by: teacherId.value,
-            graded_at: new Date().toISOString()
-          })
-          .eq('id', selectedSubmission.value.id)
+    reviewQuestions.value = questions.map(q => {
+      const studentAnswer = studentAnswersMap[q.id]
+      const correctAnswer = answersMap[q.id]
 
-        if (updateError) throw updateError
+      return {
+        id: q.id,
+        question_number: q.question_number,
+        question_type: q.question_type,
+        question_text: q.question_text,
+        points: q.points || 1,
+        options: optionsMap[q.id] || [],
+        correct_answer: correctAnswer?.correct_answer || null,
+        selected_option_id: studentAnswer?.selected_option_id || null,
+        answer_text: studentAnswer?.answer_text || null,
+        is_correct: studentAnswer?.is_correct || false,
+        points_earned: studentAnswer?.points_earned || 0,
+        teacher_comment: studentAnswer?.teacher_comment || '',
+        manualPoints: studentAnswer?.points_earned || 0,
+        teacherComment: studentAnswer?.teacher_comment || '',
+        student_answer_id: studentAnswer?.id || null
+      }
+    })
+  } catch (err) {
+    console.error('Error loading questions:', err)
+    alert('Failed to load questions: ' + err.message)
+  } finally {
+    loadingQuestions.value = false
+  }
+}
 
-        // Batch update student answers
-        const answerUpdates = reviewQuestions.value
-          .filter(q => q.student_answer_id)
-          .map(q => ({
-            id: q.student_answer_id,
-            teacher_comment: q.teacherComment || null,
-            points_earned: parseFloat(q.manualPoints) || 0
-          }))
+const reviewSubmission = async (submission) => {
+  modalMode.value = 'grade'
+  selectedSubmission.value = submission
+  reviewFeedback.value = submission.teacher_feedback || ''
+  showReviewModal.value = true
+  await loadQuestionsAndAnswers(submission)
+}
 
-        if (answerUpdates.length > 0) {
-          for (const update of answerUpdates) {
-            await supabase
-              .from('student_answers')
-              .update({
-                teacher_comment: update.teacher_comment,
-                points_earned: update.points_earned
-              })
-              .eq('id', update.id)
-          }
-        }
+const viewSubmission = async (submission) => {
+  modalMode.value = 'view'
+  selectedSubmission.value = submission
+  reviewFeedback.value = submission.teacher_feedback || ''
+  showReviewModal.value = true
+  await loadQuestionsAndAnswers(submission)
+}
 
-        // Upsert quiz results
+const updateQuestionPoints = (question) => {
+  if (question.manualPoints > question.points) {
+    question.manualPoints = question.points
+  }
+  if (question.manualPoints < 0) {
+    question.manualPoints = 0
+  }
+}
+
+const calculateReviewScore = () => {
+  if (modalMode.value === 'grade') {
+    return reviewQuestions.value.reduce((sum, q) => sum + (parseFloat(q.manualPoints) || 0), 0)
+  } else {
+    return reviewQuestions.value.reduce((sum, q) => sum + (parseFloat(q.points_earned) || 0), 0)
+  }
+}
+
+const calculateReviewPercentage = () => {
+  if (maxReviewScore.value === 0) return 0
+  return Math.round((calculateReviewScore() / maxReviewScore.value) * 100)
+}
+
+const closeReviewModal = () => {
+  showReviewModal.value = false
+  selectedSubmission.value = null
+  reviewQuestions.value = []
+  reviewFeedback.value = ''
+  modalMode.value = 'view'
+}
+
+const getCorrectOptionLabel = (question) => {
+  const correctOption = question.options.find(opt => opt.is_correct)
+  if (correctOption) {
+    return String.fromCharCode(65 + correctOption.option_number - 1)
+  }
+  return 'N/A'
+}
+
+const saveGrade = async () => {
+  try {
+    if (!selectedSubmission.value) return
+
+    savingGrade.value = true
+    const finalScore = calculateReviewScore()
+    const finalPercentage = calculateReviewPercentage()
+
+    const { error: updateError } = await supabase
+      .from('quiz_attempts')
+      .update({
+        total_score: finalScore,
+        percentage: finalPercentage,
+        status: 'graded',
+        teacher_feedback: reviewFeedback.value,
+        manually_reviewed: true,
+        graded_by: teacherId.value,
+        graded_at: new Date().toISOString()
+      })
+      .eq('id', selectedSubmission.value.id)
+
+    if (updateError) throw updateError
+
+    const answerUpdates = reviewQuestions.value
+      .filter(q => q.student_answer_id)
+      .map(q => ({
+        id: q.student_answer_id,
+        teacher_comment: q.teacherComment || null,
+        points_earned: parseFloat(q.manualPoints) || 0
+      }))
+
+    if (answerUpdates.length > 0) {
+      for (const update of answerUpdates) {
         await supabase
-          .from('quiz_results')
-          .upsert({
-            quiz_id: selectedSubmission.value.quiz_id,
-            student_id: selectedSubmission.value.student_id,
-            best_attempt_id: selectedSubmission.value.id,
-            best_score: finalScore,
-            best_percentage: finalPercentage,
-            total_attempts: selectedSubmission.value.attempt_number,
-            latest_attempt_date: selectedSubmission.value.submitted_at,
-            status: 'graded',
-            finalized: true,
-            visible_to_student: true
-          }, {
-            onConflict: 'quiz_id,student_id',
-            ignoreDuplicates: false
+          .from('student_answers')
+          .update({
+            teacher_comment: update.teacher_comment,
+            points_earned: update.points_earned
           })
-
-        // Update local data
-        const index = submissions.value.findIndex(s => s.id === selectedSubmission.value.id)
-        if (index !== -1) {
-          submissions.value[index].status = 'graded'
-          submissions.value[index].total_score = finalScore
-          submissions.value[index].percentage = finalPercentage
-          submissions.value[index].teacher_feedback = reviewFeedback.value
-        }
-
-        closeReviewModal()
-        alert('Grade saved successfully!')
-      } catch (err) {
-        console.error('Error saving grade:', err)
-        alert(`Error saving grade: ${err.message}`)
-      } finally {
-        savingGrade.value = false
+          .eq('id', update.id)
       }
     }
 
-    const sortBy = (field) => {
-      if (sortField.value === field) {
-        sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
-      } else {
-        sortField.value = field
-        sortDirection.value = 'asc'
-      }
+    await supabase
+      .from('quiz_results')
+      .upsert({
+        quiz_id: selectedSubmission.value.quiz_id,
+        student_id: selectedSubmission.value.student_id,
+        best_attempt_id: selectedSubmission.value.id,
+        best_score: finalScore,
+        best_percentage: finalPercentage,
+        total_attempts: selectedSubmission.value.attempt_number,
+        latest_attempt_date: selectedSubmission.value.submitted_at,
+        status: 'graded',
+        finalized: true,
+        visible_to_student: true
+      }, {
+        onConflict: 'quiz_id,student_id',
+        ignoreDuplicates: false
+      })
+
+    const index = submissions.value.findIndex(s => s.id === selectedSubmission.value.id)
+    if (index !== -1) {
+      submissions.value[index].status = 'graded'
+      submissions.value[index].total_score = finalScore
+      submissions.value[index].percentage = finalPercentage
+      submissions.value[index].teacher_feedback = reviewFeedback.value
     }
 
-    const getSortIcon = (field) => {
-      if (sortField.value !== field) return ''
-      return sortDirection.value === 'asc' ? 'fa-sort-up' : 'fa-sort-down'
-    }
+    closeReviewModal()
+    alert('Grade saved successfully!')
+  } catch (err) {
+    console.error('Error saving grade:', err)
+    alert(`Error saving grade: ${err.message}`)
+  } finally {
+    savingGrade.value = false
+  }
+}
 
-    const getInitials = (name) => {
-      if (!name) return '?'
-      return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
-    }
+const sortBy = (field) => {
+  if (sortField.value === field) {
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortField.value = field
+    sortDirection.value = 'asc'
+  }
+}
 
-    const formatDate = (dateString) => {
-      if (!dateString) return 'N/A'
-      return new Date(dateString).toLocaleDateString()
-    }
+const getSortIcon = (field) => {
+  if (sortField.value !== field) return ''
+  return sortDirection.value === 'asc' ? 'fa-sort-up' : 'fa-sort-down'
+}
 
-    const formatTime = (dateString) => {
-      if (!dateString) return 'N/A'
-      return new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    }
+const getInitials = (name) => {
+  if (!name) return '?'
+  return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
+}
 
-    const getStatusText = (status) => {
-      const map = {
-        'in_progress': 'In Progress',
-        'submitted': 'Pending Review',
-        'graded': 'Graded',
-        'reviewed': 'Reviewed'
-      }
-      return map[status] || status
-    }
+const formatDate = (dateString) => {
+  if (!dateString) return 'N/A'
+  return new Date(dateString).toLocaleDateString()
+}
+
+const formatTime = (dateString) => {
+  if (!dateString) return 'N/A'
+  return new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
+
+const getStatusText = (status) => {
+  const map = {
+    'in_progress': 'In Progress',
+    'submitted': 'Pending Review',
+    'graded': 'Graded',
+    'reviewed': 'Reviewed'
+  }
+  return map[status] || status
+}
 
 const getScoreClass = (percentage) => {
   if (percentage >= 90) return 'excellent'
@@ -1278,7 +1230,6 @@ const getScoreClass = (percentage) => {
   return 'needs-improvement'
 }
 
-// Subject icon functions
 const getSubjectIconSvg = (subjectName) => {
   const name = subjectName.toLowerCase()
   
@@ -1314,7 +1265,6 @@ const getSubjectIconSvg = (subjectName) => {
     return '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M4,6H20V16H4M20,18A2,2 0 0,0 22,16V6C22,4.89 21.1,4 20,4H4C2.89,4 2,4.89 2,6V16A2,2 0 0,0 4,18H0V20H24V18H20Z" /></svg>'
   }
   
-  // Default book icon for other subjects
   return '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5C3.9 3 3 3.9 3 5V19C3.9 19 5 18.1 5 17V9H19C20.1 9 21 8.1 21 7V5C21 3.9 20.1 3 19 3Z" /></svg>'
 }
 
@@ -1322,67 +1272,47 @@ const getSubjectIconColor = (subjectName) => {
   const name = subjectName.toLowerCase()
   
   if (name.includes('math') || name.includes('algebra') || name.includes('geometry') || name.includes('calculus')) {
-    return '#2563eb' // Blue
+    return '#2563eb'
   }
   
   if (name.includes('english') || name.includes('literature') || name.includes('writing')) {
-    return '#dc2626' // Red
+    return '#dc2626'
   }
   
   if (name.includes('science') || name.includes('biology') || name.includes('chemistry') || name.includes('physics')) {
-    return '#16a34a' // Green
+    return '#16a34a'
   }
   
   if (name.includes('filipino') || name.includes('tagalog')) {
-    return '#ca8a04' // Yellow/Gold
+    return '#ca8a04'
   }
   
   if (name.includes('history') || name.includes('social')) {
-    return '#9333ea' // Purple
+    return '#9333ea'
   }
   
   if (name.includes('art') || name.includes('music') || name.includes('creative')) {
-    return '#ec4899' // Pink
+    return '#ec4899'
   }
   
   if (name.includes('pe') || name.includes('physical') || name.includes('sports')) {
-    return '#ea580c' // Orange
+    return '#ea580c'
   }
   
   if (name.includes('computer') || name.includes('ict') || name.includes('programming') || name.includes('technology')) {
-    return '#0891b2' // Cyan
+    return '#0891b2'
   }
   
-  // Default color
   return '#3D8D7A'
 }
 
 const getSubjectTypeColor = (type) => {
-  const colors = {
-    'Mathematics': '#2563eb',
-    'English': '#dc2626',
-    'Science': '#16a34a',
-    'Filipino': '#ca8a04',
-    'History': '#9333ea',
-    'Arts': '#ec4899',
-    'PE': '#ea580c',
-    'Computer': '#0891b2'
-  }
-  return colors[type] || '#3D8D7A'
+  return getSubjectIconColor(type)
 }
 
 const getSubjectTypeIcon = (type) => {
-  const icons = {
-    'Mathematics': '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M7,7H9V9H7V7M7,11H9V13H7V11M7,15H9V17H7V15M11,7H17V9H11V7M11,11H17V13H11V11M11,15H17V17H11V15Z" /></svg>',
-    'English': '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" /></svg>',
-    'Science': '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M5,13H6.5L9.5,6H14.5L17.5,13H19L15.5,4H8.5L5,13M15,16A1,1 0 0,1 16,17A1,1 0 0,1 15,18A1,1 0 0,1 14,17A1,1 0 0,1 15,16M15,10A1,1 0 0,1 16,11A1,1 0 0,1 15,12A1,1 0 0,1 14,11A1,1 0 0,1 15,10Z" /></svg>',
-    'Filipino': '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12.87,15.07L15.28,17.48L17.48,15.28L15.07,12.87L17.48,10.46L15.28,8.26L12.87,10.67L10.46,8.26L8.26,10.46L10.67,12.87L8.26,15.28L10.46,17.48L12.87,15.07M17.5,12A1.5,1.5 0 0,1 16,10.5A1.5,1.5 0 0,1 17.5,9A1.5,1.5 0 0,1 19,10.5A1.5,1.5 0 0,1 17.5,12M10,10.5C10,9.67 9.33,9 8.5,9C7.67,9 7,9.67 7,10.5C7,11.33 7.67,12 8.5,12C9.33,12 10,11.33 10,10.5M12,14C12,11.34 14.33,9.2 17.35,9.04C17.75,6.27 15.41,4 12.5,4C9.59,4 7.25,6.27 7.65,9.04C10.67,9.2 13,11.34 13,14H12Z" /></svg>',
-    'History': '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M13,3V9H21V3M13,21H21V11H13M3,21H11V15H3M3,13H11V3H3V13Z" /></svg>',
-    'Arts': '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12,3V13.55C11.41,13.21 10.73,13 10,13A4,4 0 0,0 6,17A4,4 0 0,0 10,21A4,4 0 0,0 14,17V7H18V3H12Z" /></svg>',
-    'PE': '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6.5,2A7.5,7.5 0 0,1 14,9.5C14,10.87 13.61,12.14 12.94,13.22L19.07,19.36L17.66,20.78L11.5,14.63C10.42,15.28 9.17,15.67 7.83,15.67A7.67,7.67 0 0,1 0.17,8A7.5,7.5 0 0,1 6.5,2M6.5,4A5.5,5.5 0 0,0 1,9.5A5.5,5.5 0 0,0 6.5,15A5.5,5.5 0 0,0 12,9.5A5.5,5.5 0 0,0 6.5,4Z" /></svg>',
-    'Computer': '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M4,6H20V16H4M20,18A2,2 0 0,0 22,16V6C22,4.89 21.1,4 20,4H4C2.89,4 2,4.89 2,6V16A2,2 0 0,0 4,18H0V20H24V18H20Z" /></svg>'
-  }
-  return icons[type] || '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5C3.9 3 3 3.9 3 5V19C3.9 19 5 18.1 5 17V9H19C20.1 9 21 8.1 21 7V5C21 3.9 20.1 3 19 3Z" /></svg>'
+  return get
+SubjectIconSvg(type)
 }
 
 watch([searchQuery, selectedStatus], () => {
