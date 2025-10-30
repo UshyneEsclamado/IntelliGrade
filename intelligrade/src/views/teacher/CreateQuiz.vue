@@ -62,40 +62,25 @@
     <div class="main-content">
       <!-- Landing State with Enhanced Design -->
       <div v-if="currentStep === 'landing'" class="landing-section">
-        <div class="landing-card">
-          <div class="landing-icon">
-            <div class="icon-bg">
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
-              </svg>
-            </div>
-            <div class="icon-glow"></div>
+        <div class="landing-card compact-landing">
+          <div class="landing-icon enhanced-landing-icon">
+            <svg width="64" height="64" viewBox="0 0 32 32" fill="none" style="display: block; margin: 0 auto;">
+              <rect x="4" y="4" width="24" height="24" rx="8" fill="#20c997"/>
+              <rect x="12" y="12" width="8" height="8" rx="2" fill="#fff"/>
+            </svg>
           </div>
-          <h2>Create a New Quiz</h2>
-          <p>Design an engaging quiz experience for your students with our intuitive AI-powered quiz builder</p>
-          <div class="features-preview">
-            <div class="feature-item">
-              <span class="feature-icon">🎯</span>
-              <span>Smart Questions</span>
-            </div>
-            <div class="feature-item">
-              <span class="feature-icon">⚡</span>
-              <span>Instant Grading</span>
-            </div>
-            <div class="feature-item">
-              <span class="feature-icon">📊</span>
-              <span>Analytics</span>
-            </div>
+          <h2 class="landing-title enhanced-title compact-title">Create a New Quiz</h2>
+          <p class="landing-desc enhanced-desc compact-desc">Quickly create a quiz for your class. Set questions, options, and let our system handle the rest!</p>
+          <div style="display: flex; justify-content: center;">
+            <button @click="currentStep = 'details'" class="create-quiz-btn enhanced-btn compact-btn">
+              <span class="btn-content centered-btn-content" style="display: flex; align-items: center; justify-content: center;">
+                <span style="display: flex; align-items: center; justify-content: center;">Start Creating</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                </svg>
+              </span>
+            </button>
           </div>
-          <button @click="currentStep = 'details'" class="create-quiz-btn">
-            <span class="btn-content">
-              <span>Start Creating</span>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-              </svg>
-            </span>
-            <div class="btn-bg"></div>
-          </button>
         </div>
       </div>
 
@@ -117,7 +102,9 @@
           <div class="form-grid">
             <div class="form-group">
               <label class="form-label">
-                <span class="label-icon">📝</span>
+                <span class="label-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><path d="M4 20h4l10-10a2.828 2.828 0 0 0-4-4L4 16v4z"/><path d="M14.5 5.5l4 4"/></svg>
+                </span>
                 Quiz Title *
               </label>
               <input v-model="quiz.title" type="text" placeholder="e.g., Biology Chapter 5 Quiz" class="form-input enhanced-input" />
@@ -125,7 +112,9 @@
 
             <div class="form-group">
               <label class="form-label">
-                <span class="label-icon">🔢</span>
+                <span class="label-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><text x="7" y="17" font-size="10" fill="#20c997">#</text></svg>
+                </span>
                 Number of Questions *
               </label>
               <input v-model.number="quiz.numberOfQuestions" type="number" min="1" max="50" placeholder="e.g., 10" class="form-input enhanced-input" />
@@ -134,7 +123,9 @@
 
           <div class="form-group">
             <label class="form-label">
-              <span class="label-icon">📋</span>
+              <span class="label-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 2v4m8-4v4"/><path d="M4 10h16"/></svg>
+              </span>
               Description / Instructions
             </label>
             <textarea v-model="quiz.description" rows="4" placeholder="Add instructions or context for this quiz..." class="form-input form-textarea enhanced-input"></textarea>
@@ -168,7 +159,9 @@
           <div class="section-content">
             <h2 class="section-title">Build Your Questions</h2>
             <div class="question-counter">
-              <span class="counter-icon">🎯</span>
+              <span class="counter-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+              </span>
               {{ quiz.questions.length }} / {{ quiz.numberOfQuestions }}
             </div>
           </div>
@@ -192,19 +185,23 @@
             <div class="question-content">
               <div class="form-group">
                 <label class="form-label">
-                  <span class="label-icon">🔧</span>
+                  <span class="label-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><path d="M22 12.08A10 10 0 1 1 11.92 2a5 5 0 0 0 6.9 6.9z"/></svg>
+                  </span>
                   Question Type
                 </label>
                 <select v-model="question.type" class="form-input form-select enhanced-input">
-                  <option value="multiple_choice">📝 Multiple Choice</option>
-                  <option value="true_false">✅ True/False</option>
-                  <option value="fill_blank">📝 Fill in the Blanks</option>
+                  <option value="multiple_choice">Multiple Choice</option>
+                  <option value="true_false">True/False</option>
+                  <option value="fill_blank">Fill in the Blanks</option>
                 </select>
               </div>
 
               <div class="form-group">
                 <label class="form-label">
-                  <span class="label-icon">❓</span>
+                  <span class="label-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 1 1 5.82 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r="1"/></svg>
+                  </span>
                   Question Text
                 </label>
                 <textarea v-model="question.text" rows="3" placeholder="Enter your question here..." class="form-input form-textarea enhanced-input"></textarea>
@@ -213,7 +210,9 @@
               <!-- Multiple Choice Options with Enhanced Design -->
               <div v-if="question.type === 'multiple_choice'" class="option-group">
                 <label class="form-label">
-                  <span class="label-icon">📋</span>
+                  <span class="label-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 2v4m8-4v4"/><path d="M4 10h16"/></svg>
+                  </span>
                   Answer Options
                 </label>
                 <div class="options-container">
@@ -250,21 +249,27 @@
               <!-- True/False Options with Enhanced Design -->
               <div v-if="question.type === 'true_false'" class="option-group">
                 <label class="form-label">
-                  <span class="label-icon">✅</span>
+                  <span class="label-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  </span>
                   Correct Answer
                 </label>
                 <div class="tf-options">
                   <label class="tf-option" :class="question.correctAnswer === 'true' ? 'selected' : ''">
                     <input type="radio" v-model="question.correctAnswer" value="true" class="hidden" />
                     <div class="tf-content">
-                      <div class="tf-icon">✅</div>
+                      <div class="tf-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                      </div>
                       <div class="tf-label">True</div>
                     </div>
                   </label>
                   <label class="tf-option" :class="question.correctAnswer === 'false' ? 'selected' : ''">
                     <input type="radio" v-model="question.correctAnswer" value="false" class="hidden" />
                     <div class="tf-content">
-                      <div class="tf-icon">❌</div>
+                      <div class="tf-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      </div>
                       <div class="tf-label">False</div>
                     </div>
                   </label>
@@ -274,7 +279,9 @@
               <!-- Fill in the Blanks with Enhanced Design -->
               <div v-if="question.type === 'fill_blank'" class="form-group">
                 <label class="form-label">
-                  <span class="label-icon">✏️</span>
+                  <span class="label-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><path d="M4 20h4l10-10a2.828 2.828 0 0 0-4-4L4 16v4z"/><path d="M14.5 5.5l4 4"/></svg>
+                  </span>
                   Correct Answer (exact match)
                 </label>
                 <input v-model="question.correctAnswer" type="text" placeholder="Enter the correct answer..." class="form-input enhanced-input" />
@@ -332,7 +339,9 @@
           <div class="setting-card enhanced-setting">
             <div class="setting-header">
               <div class="setting-info">
-                <span class="setting-emoji">⏱️</span>
+                <span class="setting-emoji">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </span>
                 <div class="setting-details">
                   <h3>Time Limit</h3>
                   <p>Set a time constraint for this quiz</p>
@@ -355,7 +364,9 @@
           <div class="setting-card enhanced-setting">
             <div class="setting-header">
               <div class="setting-info">
-                <span class="setting-emoji">🔁</span>
+                <span class="setting-emoji">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.51 15M3.51 9A9 9 0 0 1 18.49 15"/></svg>
+                </span>
                 <div class="setting-details">
                   <h3>Attempts Allowed</h3>
                   <p>How many times can students retake?</p>
@@ -387,7 +398,9 @@
           <div class="setting-card enhanced-setting">
             <div class="setting-header">
               <div class="setting-info">
-                <span class="setting-emoji">🔀</span>
+                <span class="setting-emoji">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+                </span>
                 <div class="setting-details">
                   <h3>Shuffle Questions</h3>
                   <p>Randomize question and answer order</p>
@@ -404,7 +417,9 @@
           <div class="setting-card enhanced-setting schedule-card">
             <div class="setting-header">
               <div class="setting-info">
-                <span class="setting-emoji">📅</span>
+                <span class="setting-emoji">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </span>
                 <div class="setting-details">
                   <h3>Schedule</h3>
                   <p>Set when students can access this quiz</p>
@@ -415,7 +430,9 @@
               <div class="schedule-grid">
                 <div class="form-group">
                   <label class="form-label-small">
-                    <span class="label-icon">🕐</span>
+                    <span class="label-icon">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </span>
                     Start Date & Time (PHT)
                   </label>
                   <input v-model="quiz.settings.startDate" type="datetime-local" class="form-input enhanced-input" />
@@ -423,7 +440,9 @@
                 </div>
                 <div class="form-group">
                   <label class="form-label-small">
-                    <span class="label-icon">🕕</span>
+                    <span class="label-icon">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 12 12 18 18 18"/></svg>
+                    </span>
                     End Date & Time (PHT)
                   </label>
                   <input v-model="quiz.settings.endDate" type="datetime-local" class="form-input enhanced-input" />
@@ -454,14 +473,18 @@
       <div v-if="currentStep === 'preview'" class="content-card slide-up">
         <div class="preview-header">
           <div class="preview-badge">
-            <span class="badge-icon">👁️</span>
+            <span class="badge-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><ellipse cx="12" cy="12" rx="10" ry="6"/><circle cx="12" cy="12" r="3"/></svg>
+            </span>
             PREVIEW MODE
           </div>
           <h2 class="preview-title">{{ quiz.title }}</h2>
           <p class="preview-description">{{ quiz.description }}</p>
           <div class="preview-stats">
             <div class="stat-card">
-              <div class="stat-icon">⏱️</div>
+              <div class="stat-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
               <div class="stat-value">
                 <span v-if="quiz.settings.hasTimeLimit">{{ quiz.settings.timeLimit }} min</span>
                 <span v-else>No limit</span>
@@ -469,12 +492,16 @@
               <div class="stat-label">Time</div>
             </div>
             <div class="stat-card">
-              <div class="stat-icon">📝</div>
+              <div class="stat-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><path d="M4 20h4l10-10a2.828 2.828 0 0 0-4-4L4 16v4z"/><path d="M14.5 5.5l4 4"/></svg>
+              </div>
               <div class="stat-value">{{ quiz.questions.length }}</div>
               <div class="stat-label">Questions</div>
             </div>
             <div class="stat-card">
-              <div class="stat-icon">🔁</div>
+              <div class="stat-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.51 15M3.51 9A9 9 0 0 1 18.49 15"/></svg>
+              </div>
               <div class="stat-value">{{ quiz.settings.attemptsAllowed === 999 ? '∞' : quiz.settings.attemptsAllowed }}</div>
               <div class="stat-label">Attempts</div>
             </div>
@@ -486,9 +513,15 @@
             <div class="preview-question-header">
               <div class="preview-question-number">{{ index + 1 }}</div>
               <div class="question-type-badge" :class="question.type">
-                <span v-if="question.type === 'multiple_choice'">📝 MCQ</span>
-                <span v-else-if="question.type === 'true_false'">✅ T/F</span>
-                <span v-else>✏️ Fill</span>
+                <span v-if="question.type === 'multiple_choice'">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2" style="vertical-align:middle;"><path d="M4 20h4l10-10a2.828 2.828 0 0 0-4-4L4 16v4z"/><path d="M14.5 5.5l4 4"/></svg> MCQ
+                </span>
+                <span v-else-if="question.type === 'true_false'">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2" style="vertical-align:middle;"><polyline points="20 6 9 17 4 12"/></svg> T/F
+                </span>
+                <span v-else>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2" style="vertical-align:middle;"><path d="M4 20h4l10-10a2.828 2.828 0 0 0-4-4L4 16v4z"/><path d="M14.5 5.5l4 4"/></svg> Fill
+                </span>
               </div>
             </div>
             <h3 class="preview-question-text">{{ question.text }}</h3>
@@ -499,21 +532,31 @@
                    :class="['preview-option', question.correctAnswer === optIndex ? 'correct-option' : '']">
                 <div class="option-marker">{{ String.fromCharCode(65 + optIndex) }}</div>
                 <span class="option-text">{{ option }}</span>
-                <span v-if="question.correctAnswer === optIndex" class="correct-mark">✓</span>
+                <span v-if="question.correctAnswer === optIndex" class="correct-mark">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                </span>
               </div>
             </div>
 
             <!-- True/False Preview -->
             <div v-if="question.type === 'true_false'" class="preview-options">
               <div :class="['preview-option', question.correctAnswer === 'true' ? 'correct-option' : '']">
-                <div class="option-marker">✅</div>
+                <div class="option-marker">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
                 <span class="option-text">True</span>
-                <span v-if="question.correctAnswer === 'true'" class="correct-mark">✓</span>
+                <span v-if="question.correctAnswer === 'true'" class="correct-mark">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                </span>
               </div>
               <div :class="['preview-option', question.correctAnswer === 'false' ? 'correct-option' : '']">
-                <div class="option-marker">❌</div>
+                <div class="option-marker">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </div>
                 <span class="option-text">False</span>
-                <span v-if="question.correctAnswer === 'false'" class="correct-mark">✓</span>
+                <span v-if="question.correctAnswer === 'false'" class="correct-mark">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                </span>
               </div>
             </div>
 
@@ -523,7 +566,9 @@
                 <input type="text" disabled placeholder="Student answer here..." class="form-input" />
               </div>
               <div class="correct-answer-display">
-                <span class="correct-label">✓ Correct Answer:</span>
+                <span class="correct-label">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2" style="vertical-align:middle;"><polyline points="20 6 9 17 4 12"/></svg> Correct Answer:
+                </span>
                 <span class="correct-text">{{ question.correctAnswer }}</span>
               </div>
             </div>
@@ -1134,6 +1179,124 @@ export default {
 </script>
 
 <style scoped>
+.enhanced-landing-card {
+  background: linear-gradient(135deg, #f9ffe4 60%, #e6fff7 100%);
+  border: 2.5px solid #20c997;
+  border-radius: 22px;
+  max-width: 440px;
+  margin: 40px auto 0 auto;
+  padding: 2.8rem 2.2rem 2.8rem 2.2rem;
+  box-shadow: 0 8px 40px rgba(32,201,151,0.13), 0 1.5px 8px rgba(32,201,151,0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.enhanced-landing-icon {
+  margin-bottom: 1.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.enhanced-landing-icon-bg {
+  border-radius: 16px;
+  box-shadow: 0 4px 24px #20c99733;
+}
+.enhanced-title {
+  color: #222;
+  font-size: 2.1rem;
+  font-weight: 800;
+  margin-bottom: 0.7rem;
+  text-align: center;
+  letter-spacing: -0.5px;
+}
+.enhanced-desc {
+  color: #333;
+  font-size: 1.13rem;
+  margin-bottom: 2.3rem;
+  text-align: center;
+  font-weight: 500;
+  line-height: 1.5;
+}
+.enhanced-features-row {
+  display: flex;
+  gap: 1.3rem;
+  width: 100%;
+  justify-content: center;
+  margin-bottom: 2.5rem;
+}
+.enhanced-feature-icon {
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 2px 8px #20c99733);
+}
+.enhanced-feature-box, .feature-item {
+  min-width: 110px;
+  width: 100%;
+  padding: 1.2rem 1.1rem 1rem 1.1rem;
+  background: #f9ffe4;
+  border: 2px solid #20c997;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: box-shadow 0.2s, border 0.2s, background 0.2s, color 0.2s;
+  box-shadow: 0 2px 8px rgba(32,201,151,0.07);
+  font-size: 1.08rem;
+  font-weight: 600;
+  color: #20c997;
+  cursor: pointer;
+}
+.enhanced-feature-box:hover, .feature-item:hover {
+  box-shadow: 0 6px 24px rgba(32,201,151,0.13);
+  border-color: #139e75;
+  background: #e6fff7;
+  color: #139e75;
+}
+.enhanced-btn {
+  margin-top: 0.7rem;
+  background: #20c997;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 1rem 2.2rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(32,201,151,0.10);
+  transition: background 0.2s, color 0.2s, transform 0.15s;
+}
+.enhanced-btn:hover {
+  background: #139e75;
+  color: #fff;
+  transform: translateY(-2px) scale(1.03);
+}
+@media (max-width: 600px) {
+  .enhanced-landing-card {
+    padding: 1.2rem 0.5rem 1.5rem 0.5rem;
+    max-width: 98vw;
+  }
+  .enhanced-title {
+    font-size: 1.3rem;
+  }
+  .enhanced-desc {
+    font-size: 0.98rem;
+  }
+  .enhanced-features-row {
+    flex-direction: column;
+    gap: 0.7rem;
+    align-items: center;
+  }
+  .enhanced-feature-box, .feature-item {
+    min-width: 90px;
+    width: 100%;
+    padding: 1rem 0.7rem 0.8rem 0.7rem;
+  }
+}
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 * {
@@ -1483,8 +1646,10 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
-  max-width: 420px;
+  max-width: 1200px;
   width: 100%;
+  margin-left: auto;
+  margin-right: auto;
   transition: box-shadow 0.2s, border-color 0.2s;
 }
 .dark .landing-card {
@@ -1504,7 +1669,7 @@ export default {
   box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
 }
 .landing-title {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: #1f2937;
   margin-bottom: 0.5rem;
@@ -1580,6 +1745,11 @@ export default {
   transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
   margin-top: 0.7rem;
   box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
+  display: inline-flex;
+  width: auto;
+  min-width: 0;
+  margin-left: 0;
+  margin-right: 0;
 }
 .create-quiz-btn:hover {
   background: #A3D1C6;
@@ -2756,6 +2926,76 @@ input[type="datetime-local"]::-webkit-clear-button {
   .modal-actions .btn {
     width: 100%;
   }
+}
+
+/* Compact Landing Design */
+.compact-landing {
+  max-width: 720px !important;
+  margin: 0 auto;
+  padding: 2.5rem 2rem !important;
+}
+
+.compact-title {
+  font-size: 2rem !important;
+  margin: 1.5rem 0 1rem 0 !important;
+}
+
+.compact-desc {
+  font-size: 1rem !important;
+  margin: 0 0 2rem 0 !important;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.compact-features {
+  gap: 1.5rem !important;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 2rem 0 !important;
+}
+
+.compact-feature {
+  flex: none !important;
+  min-width: 140px;
+  text-align: center;
+}
+
+.compact-btn {
+  padding: 0.875rem 2rem !important;
+  font-size: 1rem !important;
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+/* Centered Button Content */
+.centered-btn-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+/* Button Text Centering for All Buttons */
+.btn, .btn-secondary, .btn-primary, .btn-publish, .back-btn, .create-quiz-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.5rem;
+}
+
+.action-buttons .btn {
+  min-width: 140px;
+}
+
+.btn-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
 }
 
 </style>

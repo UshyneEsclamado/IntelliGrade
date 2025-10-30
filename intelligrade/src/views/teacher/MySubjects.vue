@@ -741,7 +741,7 @@
 
 
 <template>
-  <div :class="['subjects-page', isDarkMode ? 'dark' : '']">
+  <div class="subjects-page">
     <!-- Header Card -->
     <div class="header-card">
       <div class="header-content">
