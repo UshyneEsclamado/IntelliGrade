@@ -22,11 +22,11 @@
             </svg>
             Create Quiz
           </button>
-          <button @click="goBack" class="back-button">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <button @click="goBack" class="back-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
             </svg>
-            Back to Section
+            Back to Subjects
           </button>
         </div>
       </div>
@@ -595,13 +595,39 @@ onUnmounted(() => {
   background: #2d6a5a;
 }
 
-.back-button {
-  background: #f3f4f6;
-  color: #374151;
-}
 
-.back-button:hover {
-  background: #e5e7eb;
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  cursor: pointer;
+  text-decoration: none;
+  outline: none;
+  border: 2px solid #20c997;
+  background: #20c997;
+  color: #181c20;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
+}
+.back-btn:hover {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
+  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.18);
+}
+.dark-mode .back-btn {
+  background: #20c997;
+  color: #181c20;
+  border-color: #A3D1C6;
+}
+.dark-mode .back-btn:hover {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
 }
 
 /* Main Wrapper */
@@ -1278,4 +1304,5 @@ onUnmounted(() => {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
 </style>

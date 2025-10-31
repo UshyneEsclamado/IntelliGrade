@@ -60,27 +60,22 @@
 
     <!-- Main Content -->
     <div class="main-content">
-      <!-- Landing State with Enhanced Design -->
-      <div v-if="currentStep === 'landing'" class="landing-section">
-        <div class="landing-card compact-landing">
-          <div class="landing-icon enhanced-landing-icon">
-            <svg width="64" height="64" viewBox="0 0 32 32" fill="none" style="display: block; margin: 0 auto;">
-              <rect x="4" y="4" width="24" height="24" rx="8" fill="#20c997"/>
-              <rect x="12" y="12" width="8" height="8" rx="2" fill="#fff"/>
+      <!-- Landing State: Minimal Card Design (exactly like ViewQuizzes.vue empty state) -->
+      <div v-if="currentStep === 'landing'" style="display: flex; justify-content: center; align-items: center; min-height: 60vh;">
+        <div style="background: #fff; border-radius: 12px; border: none; box-shadow: 0 2px 16px rgba(61,141,122,0.10); padding: 3rem 2rem; max-width: 600px; width: 100%; text-align: center;">
+          <div style="color: #9ca3af; margin-bottom: 1rem; display: flex; justify-content: center;">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
             </svg>
           </div>
-          <h2 class="landing-title enhanced-title compact-title">Create a New Quiz</h2>
-          <p class="landing-desc enhanced-desc compact-desc">Quickly create a quiz for your class. Set questions, options, and let our system handle the rest!</p>
-          <div style="display: flex; justify-content: center;">
-            <button @click="currentStep = 'details'" class="create-quiz-btn enhanced-btn compact-btn">
-              <span class="btn-content centered-btn-content" style="display: flex; align-items: center; justify-content: center;">
-                <span style="display: flex; align-items: center; justify-content: center;">Start Creating</span>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                </svg>
-              </span>
-            </button>
-          </div>
+          <h3 style="color: #3D8D7A; font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">No Quizzes Available</h3>
+          <p style="color: #6b7280; margin-bottom: 1.5rem;">You haven't created any quizzes for this section yet.</p>
+          <button @click="currentStep = 'details'" style="display: inline-flex; align-items: center; gap: 0.5rem; background: #3D8D7A; color: #fff; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: background 0.2s;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+            </svg>
+            Create Your First Quiz
+          </button>
         </div>
       </div>
 
