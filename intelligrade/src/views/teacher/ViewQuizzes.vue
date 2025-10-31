@@ -1,40 +1,32 @@
 <template>
   <div class="view-quizzes-container" :class="{ 'dark-mode': isDarkMode }">
-    <!-- Enhanced Header Section -->
+    <!-- Simple Header Section -->
     <div class="section-header-card">
-      <div class="header-bg-decoration"></div>
-      <div class="floating-shapes">
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
-      </div>
-      
       <div class="section-header-content">
         <div class="section-header-left">
           <div class="section-header-icon">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
               <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
             </svg>
           </div>
           <div class="header-text">
             <div class="section-header-title">Quiz Management</div>
-            <div class="section-header-subtitle">{{ subjectName }} (Grade {{ gradeLevel }})</div>
-            <div class="section-header-description">{{ sectionName }} - {{ sectionCode }}</div>
+            <div class="section-header-subtitle">{{ subjectName }} (Grade {{ gradeLevel }}) - {{ sectionName }} ({{ sectionCode }})</div>
           </div>
         </div>
         
         <div class="header-actions">
           <button @click="navigateToCreateQuiz" class="create-quiz-btn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
               <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
             </svg>
-            Create New Quiz
+            Create Quiz
           </button>
           <button @click="goBack" class="back-button">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M10 19l-7-7 7-7m-7 7h18"></path>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
             </svg>
-            Back to Subjects
+            Back to Section
           </button>
         </div>
       </div>
@@ -255,13 +247,10 @@ import { useRouter, useRoute } from 'vue-router'
 import { supabase } from '../../supabase.js'
 import { useDarkMode } from '../../composables/useDarkMode.js'
 
-// Dark mode
 const { isDarkMode, initDarkMode } = useDarkMode()
-
 const router = useRouter()
 const route = useRoute()
 
-// Get data from route
 const subjectId = ref(route.params.subjectId)
 const sectionId = ref(route.params.sectionId)
 const subjectName = ref(route.query.subjectName || '')
@@ -269,7 +258,6 @@ const sectionName = ref(route.query.sectionName || '')
 const gradeLevel = ref(route.query.gradeLevel || '')
 const sectionCode = ref(route.query.sectionCode || '')
 
-// State
 const quizzes = ref([])
 const selectedQuiz = ref(null)
 const selectedQuizQuestions = ref([])
@@ -278,196 +266,99 @@ const loadingQuestions = ref(false)
 const error = ref(null)
 const teacherId = ref(null)
 
-// Real-time subscription
 let quizSubscription = null
 
-// Load teacher information
 const loadTeacherInfo = async () => {
   try {
-    console.log('🔍 Loading teacher information...')
-    
-    // Get auth user
     const { data: { user }, error: userError } = await supabase.auth.getUser()
-    
-    if (userError) {
-      console.error('❌ Auth error:', userError)
-      throw new Error('Authentication failed')
-    }
-    
-    if (!user) {
-      console.error('❌ No user found')
-      throw new Error('Please login to continue')
-    }
+    if (userError) throw new Error('Authentication failed')
+    if (!user) throw new Error('Please login to continue')
 
-    console.log('✅ User authenticated:', user.id)
-
-    // Get profile
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('id')
       .eq('auth_user_id', user.id)
       .single()
+    if (profileError || !profile) throw new Error('Profile not found')
 
-    if (profileError) {
-      console.error('❌ Profile error:', profileError)
-      throw new Error('Profile not found')
-    }
-
-    if (!profile) {
-      console.error('❌ No profile found')
-      throw new Error('Profile not found')
-    }
-
-    console.log('✅ Profile loaded:', profile.id)
-
-    // Get teacher
     const { data: teacher, error: teacherError } = await supabase
       .from('teachers')
       .select('id')
       .eq('profile_id', profile.id)
       .single()
-
-    if (teacherError) {
-      console.error('❌ Teacher error:', teacherError)
-      throw new Error('Teacher profile not found')
-    }
-
-    if (!teacher) {
-      console.error('❌ No teacher found')
-      throw new Error('Teacher profile not found')
-    }
+    if (teacherError || !teacher) throw new Error('Teacher profile not found')
 
     teacherId.value = teacher.id
-    console.log('✅ Teacher loaded:', teacherId.value)
-    
     return teacher.id
   } catch (err) {
-    console.error('❌ Error loading teacher info:', err)
     throw err
   }
 }
 
-// Fetch quizzes with real-time data
 const fetchQuizzes = async () => {
   isLoading.value = true
   error.value = null
   
   try {
-    console.log('🔍 Fetching quizzes...')
-    console.log('📋 Parameters:', {
-      subjectId: subjectId.value,
-      sectionId: sectionId.value,
-      teacherId: teacherId.value
-    })
+    if (!teacherId.value) await loadTeacherInfo()
 
-    // Load teacher info first if not already loaded
-    if (!teacherId.value) {
-      console.log('⚠️ Teacher ID not found, loading...')
-      await loadTeacherInfo()
-    }
-
-    // Fetch quizzes with question count
     const { data: quizzesData, error: quizzesError } = await supabase
       .from('quizzes')
-      .select(`
-        *,
-        quiz_questions(id, points)
-      `)
+      .select(`*, quiz_questions(id, points)`)
       .eq('subject_id', subjectId.value)
       .eq('section_id', sectionId.value)
       .eq('teacher_id', teacherId.value)
       .order('created_at', { ascending: false })
 
-    if (quizzesError) {
-      console.error('❌ Quizzes fetch error:', quizzesError)
-      throw quizzesError
-    }
+    if (quizzesError) throw quizzesError
 
-    console.log('📊 Raw quizzes data:', quizzesData)
-
-    // Process quiz data to add question count and total points
     quizzes.value = (quizzesData || []).map(quiz => {
       const questions = quiz.quiz_questions || []
-      const processedQuiz = {
+      return {
         ...quiz,
         question_count: questions.length,
         total_points: questions.reduce((sum, q) => sum + (q.points || 0), 0),
         quiz_questions: undefined
       }
-      
-      console.log('✅ Processed quiz:', {
-        id: processedQuiz.id,
-        title: processedQuiz.title,
-        quiz_code: processedQuiz.quiz_code,
-        question_count: processedQuiz.question_count,
-        total_points: processedQuiz.total_points,
-        status: processedQuiz.status
-      })
-      
-      return processedQuiz
     })
-
-    console.log('✅ Total quizzes loaded:', quizzes.value.length)
-
   } catch (err) {
-    console.error('❌ Error fetching quizzes:', err)
     error.value = err.message
-    
     if (err.message.includes('login') || err.message.includes('not found')) {
       alert('Session expired. Please login again.')
       router.push('/login')
     }
   } finally {
     isLoading.value = false
-    console.log('🏁 Fetch quizzes completed')
   }
 }
 
-// View quiz details with real-time question fetching
 const viewQuizDetails = async (quiz) => {
-  console.log('👁️ Viewing quiz details:', quiz.id)
-  
   selectedQuiz.value = quiz
   selectedQuizQuestions.value = []
   loadingQuestions.value = true
   
   try {
-    console.log('📤 Fetching questions for quiz:', quiz.id)
-    
     const { data: questions, error } = await supabase
       .from('quiz_questions')
       .select('*')
       .eq('quiz_id', quiz.id)
       .order('question_number')
     
-    if (error) {
-      console.error('❌ Questions fetch error:', error)
-      throw error
-    }
-    
+    if (error) throw error
     selectedQuizQuestions.value = questions || []
-    console.log('✅ Questions loaded:', selectedQuizQuestions.value.length)
-    
   } catch (err) {
-    console.error('❌ Error fetching quiz questions:', err)
     selectedQuizQuestions.value = []
     alert('Error loading quiz questions: ' + err.message)
   } finally {
     loadingQuestions.value = false
-    console.log('🏁 View quiz details completed')
   }
 }
 
-// Edit quiz
 const editQuiz = async (quiz) => {
   try {
-    console.log('✏️ Navigating to edit quiz:', quiz.id)
-    
     await router.push({
       name: 'EditQuiz',
-      params: { 
-        quizId: quiz.id 
-      },
+      params: { quizId: quiz.id },
       query: {
         subjectId: subjectId.value,
         sectionId: sectionId.value,
@@ -478,91 +369,46 @@ const editQuiz = async (quiz) => {
       }
     })
   } catch (error) {
-    console.error('❌ Navigation error:', error)
     alert('Error navigating to edit page: ' + error.message)
   }
 }
 
-// Toggle quiz status (publish/unpublish)
 const toggleQuizStatus = async (quiz) => {
   const newStatus = quiz.status === 'published' ? 'draft' : 'published'
-  
-  console.log('🔄 Toggling quiz status:', {
-    quizId: quiz.id,
-    currentStatus: quiz.status,
-    newStatus: newStatus
-  })
-  
-  if (!confirm(`Are you sure you want to ${newStatus === 'published' ? 'publish' : 'unpublish'} this quiz?`)) {
-    return
-  }
+  if (!confirm(`Are you sure you want to ${newStatus === 'published' ? 'publish' : 'unpublish'} this quiz?`)) return
   
   try {
     const { error } = await supabase
       .from('quizzes')
-      .update({ 
-        status: newStatus,
-        updated_at: new Date().toISOString()
-      })
+      .update({ status: newStatus, updated_at: new Date().toISOString() })
       .eq('id', quiz.id)
     
-    if (error) {
-      console.error('❌ Status update error:', error)
-      throw error
-    }
-    
-    // Update local state immediately
+    if (error) throw error
     quiz.status = newStatus
-    console.log('✅ Quiz status updated successfully')
     alert(`Quiz ${newStatus === 'published' ? 'published' : 'unpublished'} successfully!`)
-    
   } catch (err) {
-    console.error('❌ Error updating quiz status:', err)
     alert(`Error updating quiz: ${err.message}`)
   }
 }
 
-// Delete quiz
 const deleteQuiz = async (quiz) => {
-  console.log('🗑️ Attempting to delete quiz:', quiz.id)
-  
-  if (!confirm(`Are you sure you want to delete "${quiz.title}"?\n\nThis action cannot be undone and will delete all associated questions, student attempts, and results.`)) {
-    return
-  }
+  if (!confirm(`Are you sure you want to delete "${quiz.title}"?\n\nThis action cannot be undone and will delete all associated questions, student attempts, and results.`)) return
   
   try {
-    const { error } = await supabase
-      .from('quizzes')
-      .delete()
-      .eq('id', quiz.id)
-    
-    if (error) {
-      console.error('❌ Delete error:', error)
-      throw error
-    }
-    
-    // Remove from local state immediately
+    const { error } = await supabase.from('quizzes').delete().eq('id', quiz.id)
+    if (error) throw error
     quizzes.value = quizzes.value.filter(q => q.id !== quiz.id)
-    console.log('✅ Quiz deleted successfully')
     alert('Quiz deleted successfully!')
-    
   } catch (err) {
-    console.error('❌ Error deleting quiz:', err)
     alert(`Error deleting quiz: ${err.message}`)
   }
 }
 
-// Navigate to create quiz
 const navigateToCreateQuiz = async () => {
   try {
-    console.log('➕ Navigating to create quiz')
-    
     await router.push({
       name: 'CreateQuiz',
-      params: {
-        subjectId: subjectId.value,
-        sectionId: sectionId.value
-      },
+      params: { subjectId: subjectId.value, sectionId: sectionId.value },
       query: {
         subjectName: subjectName.value,
         sectionName: sectionName.value,
@@ -571,47 +417,31 @@ const navigateToCreateQuiz = async () => {
       }
     })
   } catch (error) {
-    console.error('❌ Navigation error:', error)
+    console.error('Navigation error:', error)
   }
 }
 
-// Go back to subjects
 const goBack = async () => {
   try {
-    console.log('⬅️ Navigating back to subjects')
     await router.push({ name: 'MySubjects' })
   } catch (error) {
-    console.error('❌ Navigation error:', error)
     router.back()
   }
 }
 
-// Close modal
 const closeModal = () => {
-  console.log('❌ Closing modal')
   selectedQuiz.value = null
   selectedQuizQuestions.value = []
   loadingQuestions.value = false
 }
 
-// Format status
-const formatStatus = (status) => {
-  if (!status) return 'Unknown'
-  return status.charAt(0).toUpperCase() + status.slice(1)
-}
+const formatStatus = (status) => status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Unknown'
 
-// Format date
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A'
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'short', 
-    day: 'numeric' 
-  })
+  return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-// Format question type
 const formatQuestionType = (type) => {
   const types = {
     'multiple_choice': 'Multiple Choice',
@@ -621,38 +451,23 @@ const formatQuestionType = (type) => {
   return types[type] || type
 }
 
-// Setup real-time subscription for quiz changes
 const setupRealtimeSubscription = () => {
-  if (!teacherId.value) {
-    console.warn('⚠️ Cannot setup realtime: teacher_id not available')
-    return
-  }
-
-  console.log('📡 Setting up real-time subscription for teacher:', teacherId.value)
+  if (!teacherId.value) return
 
   quizSubscription = supabase
     .channel('quiz-changes')
-    .on(
-      'postgres_changes',
-      {
+    .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'quizzes',
         filter: `teacher_id=eq.${teacherId.value}`
       },
       (payload) => {
-        console.log('📡 Real-time event received:', payload.eventType, payload)
-        
         if (payload.eventType === 'INSERT') {
-          // New quiz created - fetch fresh data
-          console.log('➕ New quiz detected, refreshing list...')
           fetchQuizzes()
         } else if (payload.eventType === 'UPDATE') {
-          // Quiz updated - update local state
-          console.log('🔄 Quiz updated:', payload.new.id)
           const index = quizzes.value.findIndex(q => q.id === payload.new.id)
           if (index !== -1) {
-            // Preserve question count and total points
             quizzes.value[index] = {
               ...payload.new,
               question_count: quizzes.value[index].question_count,
@@ -660,49 +475,29 @@ const setupRealtimeSubscription = () => {
             }
           }
         } else if (payload.eventType === 'DELETE') {
-          // Quiz deleted - remove from local state
-          console.log('🗑️ Quiz deleted:', payload.old.id)
           quizzes.value = quizzes.value.filter(q => q.id !== payload.old.id)
         }
       }
     )
-    .subscribe((status) => {
-      console.log('📡 Subscription status:', status)
-    })
+    .subscribe()
 }
 
-// Lifecycle
 onMounted(async () => {
-  console.log('🔧 Component mounted')
   initDarkMode()
   
-  // Validate required parameters
   if (!subjectId.value || !sectionId.value) {
-    console.error('❌ Missing required parameters')
     error.value = 'Missing required parameters'
     alert('Missing subject or section information. Redirecting back...')
     router.push('/teacher/subjects')
     return
   }
 
-  console.log('✅ Required parameters present')
-  
-  // Fetch quizzes
   await fetchQuizzes()
-  
-  // Setup real-time subscription
   setupRealtimeSubscription()
-  
-  console.log('✅ Component initialization complete')
 })
 
 onUnmounted(() => {
-  console.log('🧹 Component unmounting')
-  
-  if (quizSubscription) {
-    supabase.removeChannel(quizSubscription)
-    console.log('✅ Real-time subscription cleaned up')
-  }
+  if (quizSubscription) supabase.removeChannel(quizSubscription)
 })
 </script>
 
@@ -720,99 +515,38 @@ onUnmounted(() => {
   transition: all 0.3s ease;
 }
 
-/* Enhanced Header Section */
+/* Simple Header Section */
 .section-header-card {
-  position: relative;
   background: white;
-  border-radius: 16px;
-  padding: 2rem;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
   margin-bottom: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  border: 2px solid #A3D1C6;
-  overflow: hidden;
-}
-
-.header-bg-decoration {
-  position: absolute;
-  top: -50%;
-  right: -10%;
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(163, 209, 198, 0.15) 0%, transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.floating-shapes {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.shape {
-  position: absolute;
-  background: #3D8D7A;
-  opacity: 0.05;
-  border-radius: 50%;
-}
-
-.shape-1 {
-  width: 150px;
-  height: 150px;
-  top: 10%;
-  left: 5%;
-  animation: float 6s ease-in-out infinite;
-}
-
-.shape-2 {
-  width: 100px;
-  height: 100px;
-  top: 60%;
-  left: 80%;
-  animation: float 8s ease-in-out infinite 1s;
-}
-
-.shape-3 {
-  width: 80px;
-  height: 80px;
-  top: 30%;
-  left: 70%;
-  animation: float 7s ease-in-out infinite 2s;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-20px) rotate(180deg); }
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .section-header-content {
-  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  z-index: 1;
+  gap: 1rem;
 }
 
 .section-header-left {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .section-header-icon {
-  width: 64px;
-  height: 64px;
-  background: linear-gradient(135deg, #3D8D7A 0%, #2d6a5a 100%);
-  border-radius: 16px;
+  width: 48px;
+  height: 48px;
+  background: #3D8D7A;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
+  flex-shrink: 0;
 }
 
 .header-text {
@@ -822,21 +556,16 @@ onUnmounted(() => {
 }
 
 .section-header-title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #3D8D7A;
-  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 0.25rem 0;
 }
 
 .section-header-subtitle {
-  font-size: 1rem;
+  font-size: 0.875rem;
   color: #6b7280;
   margin: 0;
-}
-
-.section-header-description {
-  font-size: 0.875rem;
-  color: #9ca3af;
 }
 
 .header-actions {
@@ -848,9 +577,9 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
+  padding: 0.625rem 1.25rem;
   border-radius: 8px;
-  font-weight: 600;
+  font-weight: 500;
   font-size: 0.875rem;
   transition: all 0.2s;
   cursor: pointer;
@@ -860,21 +589,19 @@ onUnmounted(() => {
 .create-quiz-btn {
   background: #3D8D7A;
   color: white;
-  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.2);
 }
 
 .create-quiz-btn:hover {
   background: #2d6a5a;
-  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.3);
 }
 
 .back-button {
-  background: #e5e7eb;
+  background: #f3f4f6;
   color: #374151;
 }
 
 .back-button:hover {
-  background: #d1d5db;
+  background: #e5e7eb;
 }
 
 /* Main Wrapper */
@@ -888,7 +615,6 @@ onUnmounted(() => {
   padding: 3rem 2rem;
   background: white;
   border-radius: 12px;
-  border: 2px solid #A3D1C6;
 }
 
 .loading-spinner {
@@ -961,7 +687,7 @@ onUnmounted(() => {
 
 .quiz-card {
   background: white;
-  border: 2px solid #A3D1C6;
+  border: 1px solid #e5e7eb;
   border-radius: 12px;
   padding: 1.5rem;
   transition: all 0.2s ease;
@@ -1187,7 +913,6 @@ onUnmounted(() => {
   width: 100%;
   max-height: 80vh;
   overflow-y: auto;
-  border: 2px solid #A3D1C6;
 }
 
 .modal-header {
@@ -1394,7 +1119,7 @@ onUnmounted(() => {
 .dark-mode .error-state,
 .dark-mode .empty-state,
 .dark-mode .modal-content {
-  background: #23272b;
+  background: #2d3238;
   border-color: #3D8D7A;
   color: #A3D1C6;
 }
@@ -1403,8 +1128,7 @@ onUnmounted(() => {
   color: #A3D1C6;
 }
 
-.dark-mode .section-header-subtitle,
-.dark-mode .section-header-description {
+.dark-mode .section-header-subtitle {
   color: #9ca3af;
 }
 
@@ -1511,6 +1235,15 @@ onUnmounted(() => {
 
 .dark-mode .quiz-code-section {
   border-bottom-color: rgba(163, 209, 198, 0.2);
+}
+
+.dark-mode .back-button {
+  background: #3a3f45;
+  color: #A3D1C6;
+}
+
+.dark-mode .back-button:hover {
+  background: #444951;
 }
 
 /* Responsive Design */
