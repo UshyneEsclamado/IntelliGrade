@@ -1441,7 +1441,7 @@
 
 <script setup>
 import { ref, onMounted, computed, onUnmounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { supabase } from '../../supabase.js'
 import { useDarkMode } from '../../composables/useDarkMode.js'
 import { useTeacherAuth } from '../../composables/useTeacherAuth.js'
@@ -1454,7 +1454,6 @@ const { teacherInfo, isAuthenticated } = useTeacherAuth()
 
 // Router
 const router = useRouter()
-const route = useRoute()
 
 // Local State - Main data
 const subjects = ref([])
@@ -2312,45 +2311,6 @@ const exportStudentRoster = () => {
   }
 }
 
-// Handle route parameters to automatically navigate to section detail view
-const handleRouteParameters = async () => {
-  // Check if we have route params and query indicating we should show section detail
-  if (route.params.subjectId && route.params.sectionId && route.query.viewMode === 'section-detail') {
-    const subjectId = route.params.subjectId
-    const sectionId = route.params.sectionId
-    const subjectName = route.query.subjectName
-    const sectionName = route.query.sectionName
-    const gradeLevel = route.query.gradeLevel
-    const sectionCode = route.query.sectionCode
-    
-    // Wait for subjects to be loaded first
-    if (subjects.value.length === 0) {
-      return
-    }
-    
-    // Find the subject in our subjects list
-    const foundSubject = subjects.value.find(sub => sub.id === subjectId)
-    
-    if (foundSubject && foundSubject.sections) {
-      const foundSection = foundSubject.sections.find(sec => 
-        sec.section_id === sectionId || sec.id === sectionId
-      )
-      
-      if (foundSection) {
-        selectedSubject.value = foundSubject
-        selectedSection.value = {
-          ...foundSection,
-          subject_name: subjectName || foundSubject.name,
-          section_name: sectionName || foundSection.section_name,
-          grade_level: gradeLevel || foundSection.grade_level,
-          section_code: sectionCode || foundSection.section_code
-        }
-        viewMode.value = 'section-detail'
-      }
-    }
-  }
-}
-
 // ============================================================
 // LIFECYCLE
 // ============================================================
@@ -2376,10 +2336,6 @@ onMounted(async () => {
       if (teacherInfo.value?.id) {
         clearInterval(checkTeacherInfo)
         await fetchSubjects()
-        // Handle route parameters after subjects are loaded
-        setTimeout(() => {
-          handleRouteParameters()
-        }, 100) // Small delay to ensure everything is ready
       } else if (authResult.success === false && authResult.needsLogin) {
         clearInterval(checkTeacherInfo)
       }
@@ -2389,11 +2345,7 @@ onMounted(async () => {
       clearInterval(checkTeacherInfo)
       if (!teacherInfo.value?.id && isAuthenticated.value) {
         console.warn('Timeout waiting for teacher info, but authenticated - trying to fetch anyway')
-        fetchSubjects().then(() => {
-          setTimeout(() => {
-            handleRouteParameters()
-          }, 100)
-        })
+        fetchSubjects()
       }
     }, 10000)
     

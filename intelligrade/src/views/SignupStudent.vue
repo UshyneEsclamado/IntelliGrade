@@ -1028,19 +1028,19 @@ input::placeholder {
     font-size: 0.7rem;
   }
   
-  .logo-image-container {
+  .logo-image-container.large-logo {
     width: 200px;
     height: 200px;
+    margin-bottom: 0.3rem;
   }
-  
-  .logo-image {
+  .logo-image.large-logo-img {
     width: 180px;
     height: 180px;
   }
-  
   .brand-tagline {
     font-size: 0.8rem;
     max-width: 280px;
+    margin-bottom: 0.2rem;
   }
 
   /* Hide some duplicate elements on mobile to reduce clutter */
@@ -1050,19 +1050,19 @@ input::placeholder {
 }
 
 @media (max-width: 480px) {
-  .logo-image-container {
+  .logo-image-container.large-logo {
     width: 160px;
     height: 160px;
+    margin-bottom: 0.15rem;
   }
-  
-  .logo-image {
+  .logo-image.large-logo-img {
     width: 140px;
     height: 140px;
   }
-  
   .brand-tagline {
     font-size: 0.75rem;
     max-width: 240px;
+    margin-bottom: 0.1rem;
   }
   
   .element-8, .element-9, .element-13, .element-14, .element-15, .element-16 {

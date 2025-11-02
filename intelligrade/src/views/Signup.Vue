@@ -933,29 +933,24 @@ input::placeholder {
   .auth-container {
     flex-direction: column;
     gap: 1.25rem;
-    min-height: auto;
-    padding: 1rem 0;
+    height: auto;
+    max-height: 95vh;
   }
-  
-  .logo-space {
+  .logo-space.logo-align {
     order: -1;
     max-width: 100%;
   }
-  
-  .logo-image-container {
+  .logo-image-container.large-logo {
     width: 250px;
     height: 250px;
   }
-  
-  .logo-image {
+  .logo-image.large-logo-img {
     width: 230px;
     height: 230px;
   }
-  
   .brand-tagline {
     font-size: 0.9rem;
   }
-
   .auth-box {
     max-width: 100%;
     max-height: none;
@@ -966,98 +961,83 @@ input::placeholder {
   .auth-wrapper {
     padding: 0.75rem;
     overflow-y: auto;
-    align-items: flex-start;
   }
-  
   .auth-box {
     padding: 1.25rem;
     max-width: 100%;
     height: auto;
     max-height: none;
   }
-
   .user-icon {
     width: 40px;
     height: 40px;
   }
-
   h1 {
     font-size: 1.3rem;
   }
-
   .subtitle {
     font-size: 0.75rem;
   }
-
   input {
-    padding: 0.6rem 0.6rem 0.6rem 2rem;
+    padding: 0.65rem 0.65rem 0.65rem 2rem;
     font-size: 0.8rem;
   }
-
   .input-icon {
     left: 0.65rem;
     width: 12px !important;
     height: 12px !important;
   }
-
   .signup-btn {
     font-size: 0.8rem;
     padding: 0.65rem;
   }
-
   .login-section {
     font-size: 0.7rem;
   }
-  
-  .logo-image-container {
+  .logo-image-container.large-logo {
     width: 200px;
     height: 200px;
+    margin-bottom: 0.3rem;
   }
-  
-  .logo-image {
+  .logo-image.large-logo-img {
     width: 180px;
     height: 180px;
   }
-  
   .brand-tagline {
     font-size: 0.8rem;
     max-width: 280px;
+    margin-bottom: 0.2rem;
   }
-
   /* Hide some duplicate elements on mobile to reduce clutter */
-  .element-13, .element-14, .element-15, .element-16 {
+  .element-13, .element-14, .element-15, .element-16, .element-17, .element-18, .element-19, .element-20, .element-21 {
     display: none;
   }
 }
 
 @media (max-width: 480px) {
-  .logo-image-container {
+  .logo-image-container.large-logo {
     width: 160px;
     height: 160px;
+    margin-bottom: 0.15rem;
   }
-  
-  .logo-image {
+  .logo-image.large-logo-img {
     width: 140px;
     height: 140px;
   }
-  
   .brand-tagline {
     font-size: 0.75rem;
     max-width: 240px;
+    margin-bottom: 0.1rem;
   }
-  
-  .element-8, .element-9, .element-13, .element-14, .element-15, .element-16 {
+  .element-8, .element-9, .element-10, .element-13, .element-14, .element-15, .element-16, .element-17, .element-18, .element-19, .element-20, .element-21 {
     display: none;
   }
-
   .auth-container {
     gap: 1rem;
   }
-
   .auth-box {
     padding: 1rem;
   }
-
   .form-group {
     margin-bottom: 0.8rem;
   }

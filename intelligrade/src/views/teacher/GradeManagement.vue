@@ -466,21 +466,10 @@ const fetchData = async () => {
 }
 
 const goBack = () => {
-  // Go back to MySubjects.vue and set viewMode to 'section-detail' with correct params
-  router.push({
-    name: 'MySubjects',
-    params: {
-      subjectId: subjectId.value,
-      sectionId: sectionId.value
-    },
-    query: {
-      viewMode: 'section-detail',
-      subjectName: subject.value?.name || '',
-      sectionName: section.value?.section_name || '',
-      gradeLevel: section.value?.grade_level || '',
-      sectionCode: section.value?.section_code || ''
-    }
-  });
+  router.push({ 
+    name: 'ViewStudents', 
+    params: { subjectId: subjectId.value, sectionId: sectionId.value } 
+  })
 }
 
 const exportGrades = () => {
