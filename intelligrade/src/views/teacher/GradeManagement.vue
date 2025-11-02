@@ -18,7 +18,7 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
           </svg>
-          Back to Subjects
+          Back to Section
         </button>
       </div>
     </div>
@@ -466,10 +466,21 @@ const fetchData = async () => {
 }
 
 const goBack = () => {
-  router.push({ 
-    name: 'ViewStudents', 
-    params: { subjectId: subjectId.value, sectionId: sectionId.value } 
-  })
+  // Go back to MySubjects.vue and set viewMode to 'section-detail' with correct params
+  router.push({
+    name: 'MySubjects',
+    params: {
+      subjectId: subjectId.value,
+      sectionId: sectionId.value
+    },
+    query: {
+      viewMode: 'section-detail',
+      subjectName: subject.value?.name || '',
+      sectionName: section.value?.section_name || '',
+      gradeLevel: section.value?.grade_level || '',
+      sectionCode: section.value?.section_code || ''
+    }
+  });
 }
 
 const exportGrades = () => {
