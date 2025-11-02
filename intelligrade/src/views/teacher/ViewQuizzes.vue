@@ -417,21 +417,11 @@ const navigateToCreateQuiz = async () => {
 }
 
 const goBack = async () => {
-  // Go back to MySubjects.vue and set viewMode to 'section-detail' with correct params
-  router.push({
-    name: 'MySubjects',
-    params: {
-      subjectId: subjectId.value,
-      sectionId: sectionId.value
-    },
-    query: {
-      viewMode: 'section-detail',
-      subjectName: subjectName.value,
-      sectionName: sectionName.value,
-      gradeLevel: gradeLevel.value,
-      sectionCode: sectionCode.value
-    }
-  });
+  try {
+    await router.push({ name: 'MySubjects' })
+  } catch (error) {
+    router.back()
+  }
 }
 
 const closeModal = () => {

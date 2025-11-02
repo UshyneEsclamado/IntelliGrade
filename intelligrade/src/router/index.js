@@ -129,7 +129,7 @@ const routes = [
         component: DashboardHome
       },
       {
-        path: 'subjects/:subjectId?/:sectionId?',
+        path: 'subjects',
         name: 'MySubjects',
         component: MySubjects
       },
