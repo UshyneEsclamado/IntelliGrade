@@ -2072,9 +2072,10 @@ export default {
 
 .subject-actions {
   display: flex;
-  gap: 0.75rem;
+  gap: 1.2rem;
   position: relative;
   z-index: 2; /* Higher than the card */
+  margin-top: 1.1rem;
 }
 
 .action-btn {
@@ -2532,6 +2533,10 @@ export default {
   .subjects-container {
     padding: 0.25rem;
     min-height: calc(100vh - 120px);
+    }
+
+    .dark .subjects-container {
+      background: #181c20;
   }
 
   /* Header optimizations for mobile */
@@ -2541,6 +2546,12 @@ export default {
     margin-bottom: 0.75rem;
     padding: 0.5rem;
     border-radius: 10px;
+    }
+
+    .dark .minimal-header-card {
+      background: #23272b;
+      box-shadow: 0 2px 8px rgba(32, 201, 151, 0.08);
+      border: 2px solid #20c997;
   }
 
   .minimal-header-icon {
@@ -3005,20 +3016,72 @@ export default {
   .header-stats-mobile {
     display: block !important;
     width: 100%;
-    margin-top: 1.1rem;
+    margin-top: 0.7rem;
+    margin-bottom: 0.2rem;
   }
   .formal-mobile-card {
-    background: #f8fffe;
+    background: #fff;
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(61, 141, 122, 0.06);
-    border: 1.5px solid #e6f2ed;
+    box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
+    border: 1.5px solid #20c997;
     padding: 1.1rem 1rem 1.2rem 1rem;
-    margin-top: 0.5rem;
-    margin-bottom: 0.2rem;
+    margin: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1.2rem;
+  }
+  .dark .formal-mobile-card {
+    background: #23272b;
+    border-color: #20c997;
+    box-shadow: 0 2px 8px rgba(32, 201, 151, 0.13);
+  }
+  .formal-mobile-stats {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1.2rem;
+  }
+  .formal-mobile-stats .stat-item {
+    flex: 1;
+    text-align: left;
     display: flex;
     flex-direction: column;
-    align-items: stretch;
-    gap: 0.9rem;
+    align-items: flex-start;
+    gap: 0.1rem;
+  }
+  .formal-mobile-stats .stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #20c997;
+    margin-bottom: 0.1rem;
+  }
+  .formal-mobile-stats .stat-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #20c997;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .formal-join-btn {
+    background: #20c997;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 0.85rem 1.3rem;
+    box-shadow: 0 2px 8px rgba(32, 201, 151, 0.13);
+    margin-left: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background 0.2s, box-shadow 0.2s;
+  }
+  .formal-join-btn:hover {
+    background: #1ba085;
+    box-shadow: 0 4px 12px rgba(32, 201, 151, 0.22);
   }
   .formal-mobile-stats {
     display: flex;
