@@ -70,12 +70,14 @@
           </div>
           <h3 style="color: #3D8D7A; font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">No Quizzes Available</h3>
           <p style="color: #6b7280; margin-bottom: 1.5rem;">You haven't created any quizzes for this section yet.</p>
-          <button @click="currentStep = 'details'" style="display: inline-flex; align-items: center; gap: 0.5rem; background: #3D8D7A; color: #fff; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: background 0.2s;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
-            </svg>
-            Create Your First Quiz
-          </button>
+          <div style="display: flex; justify-content: center;">
+            <button @click="currentStep = 'details'" class="create-quiz-btn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+              </svg>
+              Create Your First Quiz
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1734,7 +1736,7 @@ export default {
   border: 2px solid #20c997;
   border-radius: 8px;
   padding: 0.6rem 1.5rem;
-  font-weight: 600;
+  font-weight: 400;
   font-size: 1rem;
   cursor: pointer;
   transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;

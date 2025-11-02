@@ -16,12 +16,7 @@
         </div>
         
         <div class="header-actions">
-          <button @click="navigateToCreateQuiz" class="create-quiz-btn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
-            </svg>
-            Create Quiz
-          </button>
+          <!-- Create Quiz button removed as requested -->
           <button @click="goBack" class="back-btn">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
@@ -61,7 +56,7 @@
         </div>
         <h3>No Quizzes Available</h3>
         <p>You haven't created any quizzes for this section yet.</p>
-        <button @click="navigateToCreateQuiz" class="create-first-quiz-btn">
+        <button @click="navigateToCreateQuiz" class="create-quiz-btn">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
           </svg>
@@ -686,22 +681,43 @@ onUnmounted(() => {
   margin-bottom: 1.5rem;
 }
 
-.create-first-quiz-btn, .retry-btn {
+
+/* Uniform system-wide quiz button style */
+.create-quiz-btn {
+  background: #20c997;
+  color: #181c20;
+  border: 2px solid #20c997;
+  border-radius: 8px;
+  padding: 0.6rem 1.5rem;
+  font-weight: 400;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
+  margin-top: 0.7rem;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
   display: inline-flex;
+  width: auto;
+  min-width: 0;
+  margin-left: 0;
+  margin-right: 0;
   align-items: center;
   gap: 0.5rem;
-  background: #3D8D7A;
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
 }
-
-.create-first-quiz-btn:hover, .retry-btn:hover {
-  background: #2d6a5a;
+.create-quiz-btn:hover {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
+  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.18);
+}
+.dark-mode .create-quiz-btn {
+  background: #20c997;
+  color: #181c20;
+  border-color: #A3D1C6;
+}
+.dark-mode .create-quiz-btn:hover {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
 }
 
 /* Quizzes Grid */
@@ -1304,5 +1320,4 @@ onUnmounted(() => {
     grid-template-columns: repeat(2, 1fr);
   }
 }
-
 </style>
