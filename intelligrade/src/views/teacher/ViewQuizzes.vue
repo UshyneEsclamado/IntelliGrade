@@ -21,7 +21,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
             </svg>
-            Back to Subjects
+            Back to Section
           </button>
         </div>
       </div>
@@ -417,11 +417,21 @@ const navigateToCreateQuiz = async () => {
 }
 
 const goBack = async () => {
-  try {
-    await router.push({ name: 'MySubjects' })
-  } catch (error) {
-    router.back()
-  }
+  // Go back to MySubjects.vue and set viewMode to 'section-detail' with correct params
+  router.push({
+    name: 'MySubjects',
+    params: {
+      subjectId: subjectId.value,
+      sectionId: sectionId.value
+    },
+    query: {
+      viewMode: 'section-detail',
+      subjectName: subjectName.value,
+      sectionName: sectionName.value,
+      gradeLevel: gradeLevel.value,
+      sectionCode: sectionCode.value
+    }
+  });
 }
 
 const closeModal = () => {
