@@ -1170,14 +1170,14 @@ export default {
 .modal-container {
   background: var(--card-background);
   backdrop-filter: blur(20px);
-  border-radius: 24px;
+  border-radius: 20px;
   padding: 2.5rem;
-  max-width: 450px;
+  max-width: 420px;
   width: 90%;
   box-shadow: 
-    0 20px 60px rgba(61, 141, 122, 0.3),
-    0 0 0 1px rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(61, 141, 122, 0.1);
+    0 8px 40px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   animation: modalSlideIn 0.3s ease-out;
   text-align: center;
 }
@@ -1186,7 +1186,7 @@ export default {
   background: rgba(30, 35, 34, 0.95);
   border: 1px solid rgba(95, 179, 160, 0.2);
   box-shadow: 
-    0 20px 60px rgba(0, 0, 0, 0.4),
+    0 8px 40px rgba(0, 0, 0, 0.3),
     0 0 0 1px rgba(95, 179, 160, 0.1);
 }
 
@@ -1197,32 +1197,33 @@ export default {
 .modal-icon {
   width: 80px;
   height: 80px;
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
+  background: linear-gradient(135deg, #5FB3A0 0%, #A3D1C6 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 1.5rem;
   color: white;
-  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.3);
+  box-shadow: 0 4px 20px rgba(95, 179, 160, 0.3);
 }
 
 .modal-icon svg {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
 }
 
 .modal-title {
-  font-size: 1.7rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  color: var(--accent-color);
+  color: var(--text-primary);
   margin-bottom: 0.75rem;
+  letter-spacing: -0.01em;
 }
 
 .modal-message {
-  font-size: 1.15rem;
+  font-size: 1rem;
   color: var(--text-secondary);
-  line-height: 1.6;
+  line-height: 1.5;
   margin-bottom: 0;
 }
 
@@ -1230,52 +1231,58 @@ export default {
   display: flex;
   gap: 1rem;
   justify-content: center;
+  margin-top: 2rem;
 }
 
 .btn-cancel,
 .btn-confirm {
-  padding: 0.875rem 2rem;
+  padding: 0.75rem 1.75rem;
   border: none;
-  border-radius: 16px;
+  border-radius: 12px;
   font-weight: 600;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  min-width: 120px;
-  position: relative;
-  overflow: hidden;
+  transition: all 0.2s ease;
+  min-width: 110px;
+  outline: none;
 }
 
 .btn-cancel {
-  background: var(--bg-accent);
+  background: rgba(95, 179, 160, 0.1);
   color: var(--accent-color);
-  border: 2px solid var(--border-color);
+  border: 1.5px solid rgba(95, 179, 160, 0.3);
 }
 
 .btn-cancel:hover {
-  background: var(--bg-accent-hover);
-  border-color: rgba(61, 141, 122, 0.3);
-  transform: none;
-  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.08);
+  background: rgba(95, 179, 160, 0.15);
+  border-color: var(--accent-color);
 }
 
 .btn-confirm {
   background: var(--accent-color);
-  color: var(--text-inverse);
-  box-shadow: 0 2px 8px var(--shadow-medium);
+  color: white;
+  box-shadow: 0 2px 8px rgba(95, 179, 160, 0.25);
 }
 
 .btn-confirm:hover {
   background: var(--accent-hover);
-  color: var(--text-inverse);
-  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.15);
-  transform: none;
+  box-shadow: 0 4px 12px rgba(95, 179, 160, 0.3);
 }
 
 :root.dark .btn-cancel {
   background: rgba(95, 179, 160, 0.1);
   color: var(--accent-color);
-  border: 2px solid rgba(95, 179, 160, 0.3);
+  border: 1.5px solid rgba(95, 179, 160, 0.3);
+}
+
+:root.dark .btn-cancel:hover {
+  background: rgba(95, 179, 160, 0.18);
+  border-color: var(--accent-color);
+}
+
+:root.dark .btn-confirm {
+  background: var(--accent-color);
+  color: white;
 }
 
 :root.dark .btn-cancel:hover {

@@ -20,7 +20,7 @@
         </div>
         
         <!-- Notification Bell -->
-        <div class="notif-wrapper">
+        <div class="notif-wrapper" ref="notifWrapper">
           <button class="notif-btn" @click="toggleNotifDropdown" aria-label="Notifications">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
@@ -31,12 +31,24 @@
           
           <!-- Notification Dropdown -->
           <div v-if="showNotifDropdown" class="notif-dropdown">
-            <div class="notif-header">Notifications</div>
-            <div v-if="notifications.length === 0" class="notif-empty">No notifications</div>
-            <div v-for="notif in notifications" :key="notif.id" class="notif-item">
-              <div class="notif-title">{{ notif.title }}</div>
-              <div class="notif-body">{{ notif.body }}</div>
-              <div class="notif-date">{{ notif.date }}</div>
+            <!-- Mobile backdrop overlay -->
+            <div class="notif-backdrop" @click="closeNotifDropdown"></div>
+            <div class="notif-content">
+              <div class="notif-header">
+                <span>Notifications</span>
+                <button @click="closeNotifDropdown" class="close-notif-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+              <div v-if="notifications.length === 0" class="notif-empty">No notifications</div>
+              <div v-for="notif in notifications" :key="notif.id" class="notif-item">
+                <div class="notif-title">{{ notif.title }}</div>
+                <div class="notif-body">{{ notif.body }}</div>
+                <div class="notif-date">{{ notif.date }}</div>
+              </div>
             </div>
           </div>
         </div>
@@ -278,6 +290,17 @@ export default {
   methods: {
     toggleNotifDropdown() {
       this.showNotifDropdown = !this.showNotifDropdown;
+    },
+
+    closeNotifDropdown() {
+      this.showNotifDropdown = false;
+    },
+
+    handleClickOutside(event) {
+      const notifWrapper = this.$refs.notifWrapper;
+      if (notifWrapper && !notifWrapper.contains(event.target)) {
+        this.closeNotifDropdown();
+      }
     },
     
     openHelpModal() {
@@ -1060,6 +1083,9 @@ export default {
   async mounted() {
     console.log('🚀 Home component mounted');
     
+    // Add click outside listener for notifications
+    document.addEventListener('click', this.handleClickOutside);
+    
     // Load initial data
     await this.loadStudentProfile();
     await this.loadNotifications();
@@ -1089,6 +1115,9 @@ export default {
 
   beforeUnmount() {
     console.log('🛑 Home component unmounting');
+    
+    // Remove click outside listener
+    document.removeEventListener('click', this.handleClickOutside);
     
     if (this.pollInterval) {
       clearInterval(this.pollInterval);
@@ -1484,6 +1513,15 @@ export default {
   box-shadow: 0 8px 24px rgba(0,0,0,0.35);
 }
 
+.notif-backdrop {
+  display: none;
+}
+
+.notif-content {
+  position: relative;
+  z-index: 1001;
+}
+
 .notif-header {
   padding: 1rem 1.25rem;
   font-weight: 600;
@@ -1492,11 +1530,41 @@ export default {
   position: sticky;
   top: 0;
   background: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 .dark .notif-header {
   color: #A3D1C6;
   background: #23272b;
   border-bottom: 1px solid #3D8D7A;
+}
+
+.close-notif-btn {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-notif-btn:hover {
+  background: #f3f4f6;
+  color: #1f2937;
+}
+
+.dark .close-notif-btn {
+  color: #9ca3af;
+}
+
+.dark .close-notif-btn:hover {
+  background: #374151;
+  color: #e5e7eb;
 }
 
 .notif-empty {
@@ -2038,7 +2106,7 @@ export default {
 
   .notif-dropdown {
     position: fixed;
-    top: 80px;
+    top: 120px;
     right: 1rem;
     left: 1rem;
     width: auto;
@@ -2046,6 +2114,33 @@ export default {
     overflow-y: auto;
     border-radius: 16px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    z-index: 1001;
+  }
+
+  .notif-backdrop {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 999;
+    backdrop-filter: blur(2px);
+  }
+
+  .notif-content {
+    position: relative;
+    z-index: 1001;
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+  }
+
+  .dark .notif-content {
+    background: #23272b;
+    border-color: #3D8D7A;
   }
 
   /* Stats grid mobile optimization */
