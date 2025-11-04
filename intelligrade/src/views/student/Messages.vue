@@ -89,12 +89,6 @@
 
         <!-- Empty state when no deleted conversations -->
         <div v-else-if="filteredTeachers.length === 0 && !hasDeletedConversations" class="empty-state">
-          <div class="empty-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
-            </svg>
-          </div>
           <p>{{ showArchive ? 'No archived conversations' : 'No teachers found' }}</p>
           <span class="empty-subtext">{{ showArchive ? 'Archived conversations will appear here.' : 'Teachers from your enrolled subjects will appear here.' }}</span>
         </div>
@@ -130,54 +124,63 @@
               <div 
                 v-for="teacher in (subject as any).teachers" 
                 :key="`${teacher.id}-${teacher.section_id}`"
-                :class="['teacher-card', { 'has-unread': teacher.unread_count > 0 }]"
+                :class="['simple-teacher-card', { 'has-unread': teacher.unread_count > 0 }]"
                 @click="startChatWithTeacher(teacher)"
               >
-                <div class="teacher-card-header">
-                  <div class="teacher-card-left">
-                    <div class="teacher-avatar">
+                <div class="simple-teacher-header">
+                  <div class="simple-teacher-left">
+                    <div class="simple-teacher-avatar">
                       <span>{{ teacher.teacher_name?.[0] || 'T' }}</span>
-                      <span v-if="teacherPresence[teacher.id]?.is_online" class="online-indicator" title="Online now"></span>
                     </div>
-                    <div class="teacher-info">
-                      <h4 class="teacher-name">{{ teacher.teacher_name }}</h4>
-                      <p class="teacher-email">{{ teacher.email }}</p>
-                      <p class="presence-status">{{ getPresenceStatus(teacher.id) }}</p>
+                    <div class="simple-teacher-info">
+                      <h4 class="simple-teacher-name">{{ teacher.teacher_name }}</h4>
+                      <p class="simple-teacher-email">{{ teacher.email }}</p>
+                      <div v-if="teacherPresence[teacher.id]?.is_online" class="simple-presence-status">
+                        <div class="simple-online-dot"></div>
+                        <span>Online</span>
+                      </div>
                     </div>
                   </div>
-                  <div class="teacher-card-right">
-                    <button 
-                      class="options-btn" 
-                      @click.stop="toggleTeacherOptions(`${teacher.id}-${teacher.section_id}`)"
-                      :title="'More options'"
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12,16A2,2 0 0,1 14,18A2,2 0 0,1 12,20A2,2 0 0,1 10,18A2,2 0 0,1 12,16M12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12A2,2 0 0,1 12,10M12,4A2,2 0 0,1 14,6A2,2 0 0,1 12,8A2,2 0 0,1 10,6A2,2 0 0,1 12,4Z" />
-                      </svg>
-                    </button>
-                    <div v-if="activeTeacherOptionsId === `${teacher.id}-${teacher.section_id}`" class="options-dropdown" @click.stop>
-                      <button @click.stop="archiveConversation(teacher); activeTeacherOptionsId = null" class="dropdown-item">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <polyline points="21 8 21 21 3 21 3 8"></polyline>
-                          <rect x="1" y="3" width="22" height="5"></rect>
-                          <line x1="10" y1="12" x2="14" y2="12"></line>
+                  <div class="simple-teacher-right">
+                    <div v-if="teacher.unread_count > 0" class="simple-unread-badge">{{ teacher.unread_count }}</div>
+                    <div class="options-btn-dropdown-wrapper" style="position: relative; display: inline-block;">
+                      <button 
+                        class="simple-options-btn" 
+                        @click.stop="toggleTeacherOptions(`${teacher.id}-${teacher.section_id}`)"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12,16A2,2 0 0,1 14,18A2,2 0 0,1 12,20A2,2 0 0,1 10,18A2,2 0 0,1 12,16M12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12A2,2 0 0,1 12,10M12,4A2,2 0 0,1 14,6A2,2 0 0,1 12,8A2,2 0 0,1 10,6A2,2 0 0,1 12,4Z" />
                         </svg>
-                        {{ teacher.archived ? 'Unarchive' : 'Archive' }}
                       </button>
-                      <button @click.stop="deleteConversation(teacher); activeTeacherOptionsId = null" class="dropdown-item delete-option">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <polyline points="3 6 5 6 21 6"></polyline>
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                        </svg>
-                        Delete
-                      </button>
+                      <div v-if="activeTeacherOptionsId === `${teacher.id}-${teacher.section_id}`" class="simple-options-dropdown" @click.stop>
+                        <button @click.stop="archiveConversation(teacher); activeTeacherOptionsId = null" class="simple-dropdown-item">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="21 8 21 21 3 21 3 8"></polyline>
+                            <rect x="1" y="3" width="22" height="5"></rect>
+                            <line x1="10" y1="12" x2="14" y2="12"></line>
+                          </svg>
+                          {{ teacher.archived ? 'Unarchive' : 'Archive' }}
+                        </button>
+                        <button @click.stop="deleteConversation(teacher); activeTeacherOptionsId = null" class="simple-dropdown-item delete-option">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          </svg>
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
                 
-                <div class="teacher-card-body">
-                  <p class="last-message">{{ teacher.last_message || 'Start a conversation' }}</p>
-                  <span v-if="teacher.last_message_time" class="last-message-time">{{ formatTime(teacher.last_message_time) }}</span>
+                <div class="simple-teacher-body">
+                  <p class="simple-last-message">{{ teacher.last_message || 'Start a conversation' }}</p>
+                  <div class="simple-message-meta">
+                    <span v-if="teacher.last_message_time" class="simple-message-time">{{ formatTime(teacher.last_message_time) }}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="simple-chat-icon">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                  </div>
                 </div>
               </div>
             </div>
@@ -271,46 +274,46 @@
       </div>
     </div>
 
-    <!-- Chat Modal -->
+    <!-- Simple Chat Modal -->
     <div v-if="isModalOpen" class="modal-overlay" @click.self="closeModal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <div class="header-info">
-            <div class="teacher-avatar-chat">
+      <div class="simple-modal-content">
+        <div class="simple-modal-header">
+          <div class="simple-header-info">
+            <div class="simple-teacher-avatar-chat">
               <span>{{ activeTeacher?.teacher_name?.[0] || 'T' }}</span>
             </div>
-            <div class="header-details">
-              <h2 class="modal-title">{{ activeTeacher?.teacher_name }}</h2>
-              <span class="subject-info">{{ activeTeacher?.subject_name }}</span>
+            <div class="simple-header-details">
+              <h2 class="simple-modal-title">{{ activeTeacher?.teacher_name }}</h2>
+              <span class="simple-subject-info">{{ activeTeacher?.subject_name }}</span>
             </div>
           </div>
-          <button @click="closeModal" class="close-btn">
+          <button @click="closeModal" class="simple-close-btn">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
           </button>
         </div>
-        <div class="modal-body">
+        <div class="simple-modal-body">
           <!-- Loading Messages -->
-          <div v-if="isLoadingMessages" class="loading-messages">
-            <div class="loading-spinner-small">
-              <div class="spinner"></div>
+          <div v-if="isLoadingMessages" class="simple-loading-messages">
+            <div class="simple-loading-spinner">
+              <div class="simple-spinner"></div>
             </div>
             <p>Loading conversation...</p>
           </div>
 
           <!-- Messages Container -->
-          <div v-else class="messages-container" ref="messagesContainer">
+          <div v-else class="simple-messages-container" ref="messagesContainer">
             <div 
               v-for="message in currentMessages" 
               :key="message.id" 
-              :class="['message-bubble', { 'sent': message.sender_id === currentStudentId, 'received': message.sender_id !== currentStudentId }]"
+              :class="['simple-message-bubble', { 'sent': message.sender_id === currentStudentId, 'received': message.sender_id !== currentStudentId }]"
             >
-              <div v-if="message.attachments && message.attachments.length > 0" class="message-attachments">
-                <div v-for="(attachment, idx) in message.attachments" :key="idx" class="attachment">
-                  <img v-if="attachment.type === 'image'" :src="attachment.url" :alt="attachment.name" class="attachment-image" @click="viewAttachment(attachment)" />
-                  <div v-else class="attachment-file" @click="downloadAttachment(attachment)">
+              <div v-if="message.attachments && message.attachments.length > 0" class="simple-message-attachments">
+                <div v-for="(attachment, idx) in message.attachments" :key="idx" class="simple-attachment">
+                  <img v-if="attachment.type === 'image'" :src="attachment.url" :alt="attachment.name" class="simple-attachment-image" @click="viewAttachment(attachment)" />
+                  <div v-else class="simple-attachment-file" @click="downloadAttachment(attachment)">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
                       <polyline points="13 2 13 9 20 9"></polyline>
@@ -325,11 +328,11 @@
                 </div>
               </div>
               
-              <p v-if="message.content" class="message-text">{{ message.content }}</p>
+              <p v-if="message.content" class="simple-message-text">{{ message.content }}</p>
               
-              <div class="message-footer">
-                <span class="message-time">{{ formatTime(message.sent_at) }}</span>
-                <span v-if="message.sender_id === currentStudentId" class="message-status">
+              <div class="simple-message-footer">
+                <span class="simple-message-time">{{ formatTime(message.sent_at) }}</span>
+                <span v-if="message.sender_id === currentStudentId" class="simple-message-status">
                   <svg v-if="!message.is_read" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="20 6 9 17 4 12"></polyline>
                   </svg>
@@ -337,27 +340,29 @@
                     <polyline points="20 6 9 17 4 12"></polyline>
                     <polyline points="20 6 9 17 4 12" transform="translate(4, 0)"></polyline>
                   </svg>
-                  <span v-if="message.is_read && message.read_at" class="read-time">Read {{ formatTime(message.read_at) }}</span>
                 </span>
               </div>
             </div>
-            <div v-if="currentMessages.length === 0 && !isLoadingMessages" class="no-messages">
+            <div v-if="currentMessages.length === 0 && !isLoadingMessages" class="simple-no-messages">
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="simple-no-messages-icon">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
               <p>No messages yet. Start the conversation!</p>
             </div>
           </div>
         </div>
-        <div class="modal-footer">
-          <div v-if="selectedFile" class="file-preview">
-            <div class="preview-content">
-              <img v-if="previewFile" :src="previewFile" alt="Preview" class="preview-image" />
-              <div v-else class="preview-file">
+        <div class="simple-modal-footer">
+          <div v-if="selectedFile" class="simple-file-preview">
+            <div class="simple-preview-content">
+              <img v-if="previewFile" :src="previewFile" alt="Preview" class="simple-preview-image" />
+              <div v-else class="simple-preview-file">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
                   <polyline points="13 2 13 9 20 9"></polyline>
                 </svg>
                 <span>{{ selectedFile.name }}</span>
               </div>
-              <button @click="removeFile" class="remove-file-btn">
+              <button @click="removeFile" class="simple-remove-file-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
                   <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -366,7 +371,7 @@
             </div>
           </div>
           
-          <div class="message-input-area">
+          <div class="simple-message-input-area">
             <input 
               type="file" 
               ref="fileInput" 
@@ -374,7 +379,7 @@
               style="display: none" 
               accept="image/*,.pdf,.doc,.docx,.txt"
             />
-            <button class="attach-btn" @click="($refs.fileInput as HTMLInputElement)?.click()" :disabled="isSendingMessage">
+            <button class="simple-attach-btn" @click="($refs.fileInput as HTMLInputElement)?.click()" :disabled="isSendingMessage">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
               </svg>
@@ -384,15 +389,15 @@
               v-model="newMessage" 
               @keyup.enter="sendMessage" 
               placeholder="Type your message to your teacher..." 
-              class="message-input"
+              class="simple-message-input"
               :disabled="isSendingMessage"
             />
-            <button class="send-btn" @click="sendMessage" :disabled="(!newMessage.trim() && !selectedFile) || isSendingMessage">
+            <button class="simple-send-btn" @click="sendMessage" :disabled="(!newMessage.trim() && !selectedFile) || isSendingMessage">
               <svg v-if="!isSendingMessage" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="22" y1="2" x2="11" y2="13"></line>
                 <polygon points="22 2 15.46 22 11 13 2 9.54 22 2"></polygon>
               </svg>
-              <div v-else class="button-spinner"></div>
+              <div v-else class="simple-button-spinner"></div>
             </button>
           </div>
         </div>
@@ -1070,10 +1075,10 @@ const markBroadcastAsRead = async (announcement) => {
 }
 
 const handleClickOutside = (event) => {
-  const optionsMenu = document.querySelector('.options-menu')
-  const optionsBtn = event.target.closest('.options-btn')
+  const optionsDropdown = event.target.closest('.simple-options-dropdown')
+  const optionsBtn = event.target.closest('.simple-options-btn')
   
-  if (optionsMenu && !optionsMenu.contains(event.target) && !optionsBtn) {
+  if (!optionsDropdown && !optionsBtn) {
     activeTeacherOptionsId.value = null
   }
 }
@@ -2114,12 +2119,12 @@ onUnmounted(() => {
 
 .search-input:focus {
   outline: none;
-  border-color: #A3D1C6;
-  box-shadow: 0 0 0 3px rgba(163, 209, 198, 0.1);
+  border-color: #2d6a4f;
+  box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.1);
 }
 .dark .search-input:focus {
-  border-color: #20c997;
-  box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.1);
+  border-color: #1b4332;
+  box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1);
 }
 
 .filter-tabs {
@@ -2130,6 +2135,7 @@ onUnmounted(() => {
 .filter-tab {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   padding: 0.75rem 1.25rem;
   border: 2px solid #e9ecef;
@@ -2148,27 +2154,27 @@ onUnmounted(() => {
 }
 
 .filter-tab:hover {
-  border-color: #A3D1C6;
-  background: rgba(163, 209, 198, 0.1);
+  border-color: #2d6a4f;
+  background: rgba(45, 106, 79, 0.1);
   color: #2c3e50;
   transform: translateY(-1px);
 }
 .dark .filter-tab:hover {
-  border-color: #20c997;
-  background: rgba(32, 201, 151, 0.1);
+  border-color: #1b4332;
+  background: rgba(27, 67, 50, 0.1);
   color: #ffffff;
 }
 
 .filter-tab.active {
-  border-color: #A3D1C6;
-  background: #A3D1C6;
+  border-color: #2d6a4f;
+  background: #2d6a4f;
   color: white;
-  box-shadow: 0 4px 12px rgba(163, 209, 198, 0.3);
+  box-shadow: 0 4px 12px rgba(45, 106, 79, 0.3);
 }
 .dark .filter-tab.active {
-  border-color: #20c997;
-  background: #20c997;
-  color: #1a1d20;
+  border-color: #1b4332;
+  background: #1b4332;
+  color: #ffffff;
 }
 
 /* Archive Indicator */
@@ -2225,7 +2231,7 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-color: #20c997;
+    border-color: #1b4332;
   }
 
 /* Content Area */
@@ -2248,11 +2254,14 @@ onUnmounted(() => {
 }
 
 .empty-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   margin-bottom: 1.5rem;
-  color: #A3D1C6;
+  color: #2d6a4f;
 }
 .dark .empty-icon {
-  color: #20c997;
+  color: #1b4332;
 }
 
 .empty-state p {
@@ -2280,10 +2289,10 @@ onUnmounted(() => {
 
 .deleted-icon {
   margin-bottom: 1.5rem;
-  color: #A3D1C6;
+  color: #2d6a4f;
 }
 .dark .deleted-icon {
-  color: #20c997;
+  color: #1b4332;
 }
 
 .show-teachers-btn {
@@ -2292,7 +2301,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.875rem 1.5rem;
-  background: #A3D1C6;
+  background: #2d6a4f;
   color: white;
   border: none;
   border-radius: 10px;
@@ -2301,15 +2310,15 @@ onUnmounted(() => {
   transition: all 0.2s ease;
 }
 .dark .show-teachers-btn {
-  background: #20c997;
+  background: #1b4332;
 }
 
 .show-teachers-btn:hover {
-  background: #87C5B8;
+  background: #1b4332;
   transform: translateY(-1px);
 }
 .dark .show-teachers-btn:hover {
-  background: #17a085;
+  background: #0f2319;
 }
 
 /* Teachers Grid */
@@ -2356,14 +2365,14 @@ onUnmounted(() => {
 .subject-section-code {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #A3D1C6;
-  background: rgba(163, 209, 198, 0.1);
+  color: #2d6a4f;
+  background: rgba(45, 106, 79, 0.1);
   padding: 0.25rem 0.75rem;
   border-radius: 6px;
 }
 .dark .subject-section-code {
-  color: #20c997;
-  background: rgba(32, 201, 151, 0.1);
+  color: #1b4332;
+  background: rgba(27, 67, 50, 0.1);
 }
 
 .teachers-cards {
@@ -2390,22 +2399,22 @@ onUnmounted(() => {
 }
 
 .teacher-card:hover {
-  border-color: #A3D1C6;
+  border-color: #2d6a4f;
   transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(163, 209, 198, 0.25);
+  box-shadow: 0 8px 25px rgba(45, 106, 79, 0.25);
 }
 .dark .teacher-card:hover {
-  border-color: #20c997;
-  box-shadow: 0 8px 25px rgba(32, 201, 151, 0.25);
+  border-color: #1b4332;
+  box-shadow: 0 8px 25px rgba(27, 67, 50, 0.25);
 }
 
 .teacher-card.has-unread {
-  border-color: #A3D1C6;
-  background: rgba(163, 209, 198, 0.05);
+  border-color: #2d6a4f;
+  background: rgba(45, 106, 79, 0.05);
 }
 .dark .teacher-card.has-unread {
-  border-color: #20c997;
-  background: rgba(32, 201, 151, 0.05);
+  border-color: #1b4332;
+  background: rgba(27, 67, 50, 0.05);
 }
 
 .teacher-card-header {
@@ -2425,7 +2434,7 @@ onUnmounted(() => {
 .teacher-avatar {
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, #A3D1C6 0%, #87C5B8 100%);
+  background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -2437,7 +2446,7 @@ onUnmounted(() => {
   position: relative;
 }
 .dark .teacher-avatar {
-  background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
+  background: linear-gradient(135deg, #1b4332 0%, #0f2319 100%);
 }
 
 .online-indicator {
@@ -2455,21 +2464,26 @@ onUnmounted(() => {
 .dark .online-indicator {
   border-color: #23272b;
 }
-
-@keyframes pulse-online {
-  0%, 100% {
-    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.1);
-  }
+.options-btn-dropdown-wrapper {
+  position: relative;
+  display: inline-block;
 }
 
-.teacher-info {
-  flex: 1;
-  min-width: 0;
+.simple-options-dropdown {
+  position: absolute;
+  top: 110%; /* just below the button */
+  right: 0;
+  min-width: 140px;
+  background: var(--dropdown-bg, #fff);
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  z-index: 100;
+  padding: 6px 0;
+  display: flex;
+  flex-direction: column;
+  animation: fadeIn 0.15s;
 }
-
 .teacher-name {
   font-size: 1rem;
   font-weight: 600;
@@ -2502,7 +2516,7 @@ onUnmounted(() => {
   font-weight: 500;
 }
 .dark .presence-status {
-  color: #20c997;
+  color: #1b4332;
 }
 
 .teacher-card-right {
@@ -2711,20 +2725,20 @@ onUnmounted(() => {
 }
 
 .filter-btn:hover {
-  border-color: #A3D1C6;
+  border-color: #2d6a4f;
 }
 .dark .filter-btn:hover {
-  border-color: #20c997;
+  border-color: #1b4332;
 }
 
 .filter-btn.active {
-  background: #A3D1C6;
-  border-color: #A3D1C6;
+  background: #2d6a4f;
+  border-color: #2d6a4f;
   color: white;
 }
 .dark .filter-btn.active {
-  background: #20c997;
-  border-color: #20c997;
+  background: #1b4332;
+  border-color: #1b4332;
 }
 
 .action-btn {
@@ -2732,7 +2746,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  background: #A3D1C6;
+  background: #2d6a4f;
   color: white;
   border: none;
   border-radius: 8px;
@@ -2741,14 +2755,14 @@ onUnmounted(() => {
   transition: all 0.2s ease;
 }
 .dark .action-btn {
-  background: #20c997;
+  background: #1b4332;
 }
 
 .action-btn:hover {
-  background: #87C5B8;
+  background: #1b4332;
 }
 .dark .action-btn:hover {
-  background: #17a085;
+  background: #0f2319;
 }
 
 .notifications-grid {
@@ -2781,23 +2795,23 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #A3D1C6 0%, #87C5B8 100%);
+  background: linear-gradient(90deg, #2d6a4f 0%, #1b4332 100%);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.3s ease;
 }
 .dark .notification-card::before {
-  background: linear-gradient(90deg, #20c997 0%, #17a085 100%);
+  background: linear-gradient(90deg, #1b4332 0%, #0f2319 100%);
 }
 
 .notification-card:hover {
-  border-color: #A3D1C6;
+  border-color: #2d6a4f;
   transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(163, 209, 198, 0.25);
+  box-shadow: 0 8px 25px rgba(45, 106, 79, 0.25);
 }
 .dark .notification-card:hover {
-  border-color: #20c997;
-  box-shadow: 0 8px 25px rgba(32, 201, 151, 0.25);
+  border-color: #1b4332;
+  box-shadow: 0 8px 25px rgba(27, 67, 50, 0.25);
 }
 
 .notification-card:hover::before {
@@ -2822,18 +2836,18 @@ onUnmounted(() => {
 .notification-icon {
   width: 44px;
   height: 44px;
-  background: linear-gradient(135deg, #A3D1C6 0%, #87C5B8 100%);
+  background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(163, 209, 198, 0.3);
+  box-shadow: 0 4px 12px rgba(45, 106, 79, 0.3);
 }
 .dark .notification-icon {
-  background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
-  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.3);
+  background: linear-gradient(135deg, #1b4332 0%, #0f2319 100%);
+  box-shadow: 0 4px 12px rgba(27, 67, 50, 0.3);
 }
 
 .notification-info {
@@ -2873,7 +2887,7 @@ onUnmounted(() => {
 }
 
 .notification-count {
-  background: #A3D1C6;
+  background: #2d6a4f;
   color: white;
   font-size: 0.75rem;
   font-weight: 700;
@@ -2881,11 +2895,11 @@ onUnmounted(() => {
   border-radius: 8px;
   min-width: 24px;
   text-align: center;
-  box-shadow: 0 2px 4px rgba(163, 209, 198, 0.3);
+  box-shadow: 0 2px 4px rgba(45, 106, 79, 0.3);
 }
 .dark .notification-count {
-  background: #20c997;
-  box-shadow: 0 2px 4px rgba(32, 201, 151, 0.3);
+  background: #1b4332;
+  box-shadow: 0 2px 4px rgba(27, 67, 50, 0.3);
 }
 
 .unread-dot {
@@ -2928,25 +2942,25 @@ onUnmounted(() => {
 }
 
 .notification-teacher svg {
-  color: #A3D1C6;
+  color: #2d6a4f;
   flex-shrink: 0;
 }
 .dark .notification-teacher svg {
-  color: #20c997;
+  color: #1b4332;
 }
 
 .announcement-count {
   font-size: 0.8rem;
-  color: #A3D1C6;
+  color: #2d6a4f;
   font-weight: 600;
-  background: rgba(163, 209, 198, 0.1);
+  background: rgba(45, 106, 79, 0.1);
   padding: 0.25rem 0.5rem;
   border-radius: 6px;
   display: inline-block;
 }
 .dark .announcement-count {
-  color: #20c997;
-  background: rgba(32, 201, 151, 0.1);
+  color: #1b4332;
+  background: rgba(27, 67, 50, 0.1);
 }
 
 /* Modal Styles */
@@ -3002,7 +3016,7 @@ onUnmounted(() => {
 .teacher-avatar-chat {
   width: 36px;
   height: 36px;
-  background: linear-gradient(135deg, #A3D1C6 0%, #87C5B8 100%);
+  background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -3012,7 +3026,7 @@ onUnmounted(() => {
   font-size: 1rem;
 }
 .dark .teacher-avatar-chat {
-  background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
+  background: linear-gradient(135deg, #1b4332 0%, #0f2319 100%);
 }
 
 .header-details {
@@ -3095,12 +3109,12 @@ onUnmounted(() => {
 
 .message-bubble.sent {
   align-self: flex-end;
-  background: #A3D1C6;
+  background: #2d6a4f;
   color: white;
   border-bottom-right-radius: 4px;
 }
 .dark .message-bubble.sent {
-  background: #20c997;
+  background: #1b4332;
 }
 
 .message-text {
@@ -3201,19 +3215,19 @@ onUnmounted(() => {
 }
 
 .attach-btn:hover {
-  background: #A3D1C6;
+  background: #2d6a4f;
   color: white;
 }
 .dark .attach-btn:hover {
-  background: #20c997;
+  background: #1b4332;
 }
 
 .attach-btn:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(163, 209, 198, 0.3);
+  box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.3);
 }
 .dark .attach-btn:focus {
-  box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.3);
+  box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.3);
 }
 
 .message-input {
@@ -3234,18 +3248,18 @@ onUnmounted(() => {
 
 .message-input:focus {
   outline: none;
-  border-color: #A3D1C6;
-  box-shadow: 0 0 0 3px rgba(163, 209, 198, 0.1);
+  border-color: #2d6a4f;
+  box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.1);
 }
 .dark .message-input:focus {
-  border-color: #20c997;
-  box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.1);
+  border-color: #1b4332;
+  box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1);
 }
 
 .send-btn {
   width: 40px;
   height: 40px;
-  background: #A3D1C6;
+  background: #2d6a4f;
   border: none;
   border-radius: 10px;
   display: flex;
@@ -3256,15 +3270,15 @@ onUnmounted(() => {
   transition: all 0.2s ease;
 }
 .dark .send-btn {
-  background: #20c997;
+  background: #1b4332;
 }
 
 .send-btn:hover {
-  background: #87C5B8;
+  background: #1b4332;
   transform: scale(1.05);
 }
 .dark .send-btn:hover {
-  background: #17a085;
+  background: #0f2319;
 }
 
 .send-btn:disabled {
@@ -3959,14 +3973,14 @@ onUnmounted(() => {
   width: 50px;
   height: 50px;
   border: 4px solid #e9ecef;
-  border-top-color: #A3D1C6;
+  border-top-color: #2d6a4f;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin: 0 auto;
 }
 .dark .spinner {
   border-color: #495057;
-  border-top-color: #20c997;
+  border-top-color: #1b4332;
 }
 
 @keyframes spin {
@@ -4069,7 +4083,7 @@ onUnmounted(() => {
 }
 
 .simple-announcement-header {
-  background: linear-gradient(135deg, #A3D1C6 0%, #87C5B8 100%);
+  background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
   color: white;
   padding: 1.5rem;
   position: relative;
@@ -4078,7 +4092,7 @@ onUnmounted(() => {
   justify-content: space-between;
 }
 .dark .simple-announcement-header {
-  background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
+  background: linear-gradient(135deg, #1b4332 0%, #0f2319 100%);
 }
 
 .simple-announcement-badge {
@@ -4134,10 +4148,10 @@ onUnmounted(() => {
 }
 
 .simple-subject-item svg {
-  color: #A3D1C6;
+  color: #2d6a4f;
 }
 .dark .simple-subject-item svg {
-  color: #20c997;
+  color: #1b4332;
 }
 
 .simple-announcement-body {
@@ -4180,7 +4194,7 @@ onUnmounted(() => {
 .simple-meta-icon {
   width: 36px;
   height: 36px;
-  background: linear-gradient(135deg, #A3D1C6 0%, #87C5B8 100%);
+  background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -4189,7 +4203,7 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 .dark .simple-meta-icon {
-  background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
+  background: linear-gradient(135deg, #1b4332 0%, #0f2319 100%);
 }
 
 .simple-meta-content {
@@ -4248,10 +4262,10 @@ onUnmounted(() => {
 }
 
 .simple-content-header svg {
-  color: #A3D1C6;
+  color: #2d6a4f;
 }
 .dark .simple-content-header svg {
-  color: #20c997;
+  color: #1b4332;
 }
 
 .simple-content-body {
@@ -4309,10 +4323,10 @@ onUnmounted(() => {
 }
 
 .simple-attachments-header svg {
-  color: #A3D1C6;
+  color: #2d6a4f;
 }
 .dark .simple-attachments-header svg {
-  color: #20c997;
+  color: #1b4332;
 }
 
 .simple-attachments-grid {
@@ -4351,17 +4365,17 @@ onUnmounted(() => {
 }
 
 .simple-attachment-file:hover {
-  border-color: #A3D1C6;
+  border-color: #2d6a4f;
 }
 .dark .simple-attachment-file:hover {
-  border-color: #20c997;
+  border-color: #1b4332;
 }
 
 .simple-file-icon {
-  color: #A3D1C6;
+  color: #2d6a4f;
 }
 .dark .simple-file-icon {
-  color: #20c997;
+  color: #1b4332;
 }
 
 .simple-file-info {
@@ -4399,7 +4413,7 @@ onUnmounted(() => {
 }
 
 .simple-close-announcement-btn {
-  background: linear-gradient(135deg, #A3D1C6 0%, #87C5B8 100%);
+  background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
   color: white;
   border: none;
   border-radius: 10px;
@@ -4410,15 +4424,15 @@ onUnmounted(() => {
   transition: all 0.2s ease;
 }
 .dark .simple-close-announcement-btn {
-  background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
+  background: linear-gradient(135deg, #1b4332 0%, #0f2319 100%);
 }
 
 .simple-close-announcement-btn:hover {
-  background: linear-gradient(135deg, #87C5B8 0%, #6fb3a8 100%);
+  background: linear-gradient(135deg, #1b4332 0%, #6fb3a8 100%);
   transform: translateY(-1px);
 }
 .dark .simple-close-announcement-btn:hover {
-  background: linear-gradient(135deg, #17a085 0%, #138a73 100%);
+  background: linear-gradient(135deg, #0f2319 0%, #138a73 100%);
 }
 
 /* Enhanced Modal Base */
@@ -4463,18 +4477,18 @@ onUnmounted(() => {
 .enhanced-simple-subject-icon {
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, #A3D1C6 0%, #87C5B8 100%);
+  background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(163, 209, 198, 0.3);
+  box-shadow: 0 4px 12px rgba(45, 106, 79, 0.3);
 }
 .dark .enhanced-simple-subject-icon {
-  background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
-  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.3);
+  background: linear-gradient(135deg, #1b4332 0%, #0f2319 100%);
+  box-shadow: 0 4px 12px rgba(27, 67, 50, 0.3);
 }
 
 .enhanced-simple-modal-title {
@@ -4499,20 +4513,20 @@ onUnmounted(() => {
   font-size: 0.8rem;
   font-weight: 600;
   color: #6c757d;
-  background: rgba(163, 209, 198, 0.1);
+  background: rgba(45, 106, 79, 0.1);
   padding: 0.25rem 0.5rem;
   border-radius: 6px;
 }
 .dark .enhanced-teacher-item {
   color: #adb5bd;
-  background: rgba(32, 201, 151, 0.1);
+  background: rgba(27, 67, 50, 0.1);
 }
 
 .enhanced-teacher-item svg {
-  color: #A3D1C6;
+  color: #2d6a4f;
 }
 .dark .enhanced-teacher-item svg {
-  color: #20c997;
+  color: #1b4332;
 }
 
 .enhanced-simple-close-btn {
@@ -4574,17 +4588,17 @@ onUnmounted(() => {
 .enhanced-count-icon {
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, #A3D1C6 0%, #87C5B8 100%);
+  background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 2px 8px rgba(163, 209, 198, 0.3);
+  box-shadow: 0 2px 8px rgba(45, 106, 79, 0.3);
 }
 .dark .enhanced-count-icon {
-  background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
-  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.3);
+  background: linear-gradient(135deg, #1b4332 0%, #0f2319 100%);
+  box-shadow: 0 2px 8px rgba(27, 67, 50, 0.3);
 }
 
 .enhanced-simple-announcement-list {
@@ -4618,12 +4632,12 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #A3D1C6 0%, #87C5B8 100%);
+  background: linear-gradient(90deg, #2d6a4f 0%, #1b4332 100%);
   transform: scaleX(0);
   transition: transform 0.3s ease;
 }
 .dark .enhanced-simple-announcement-item::before {
-  background: linear-gradient(90deg, #20c997 0%, #17a085 100%);
+  background: linear-gradient(90deg, #1b4332 0%, #0f2319 100%);
 }
 
 .enhanced-simple-announcement-item.unread::before {
@@ -4631,13 +4645,13 @@ onUnmounted(() => {
 }
 
 .enhanced-simple-announcement-item:hover {
-  border-color: #A3D1C6;
+  border-color: #2d6a4f;
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(163, 209, 198, 0.2);
+  box-shadow: 0 8px 25px rgba(45, 106, 79, 0.2);
 }
 .dark .enhanced-simple-announcement-item:hover {
-  border-color: #20c997;
-  box-shadow: 0 8px 25px rgba(32, 201, 151, 0.2);
+  border-color: #1b4332;
+  box-shadow: 0 8px 25px rgba(27, 67, 50, 0.2);
 }
 
 .enhanced-simple-announcement-item:hover::before {
@@ -4647,18 +4661,18 @@ onUnmounted(() => {
 .enhanced-simple-announcement-icon {
   width: 36px;
   height: 36px;
-  background: linear-gradient(135deg, #A3D1C6 0%, #87C5B8 100%);
+  background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(163, 209, 198, 0.3);
+  box-shadow: 0 4px 12px rgba(45, 106, 79, 0.3);
 }
 .dark .enhanced-simple-announcement-icon {
-  background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
-  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.3);
+  background: linear-gradient(135deg, #1b4332 0%, #0f2319 100%);
+  box-shadow: 0 4px 12px rgba(27, 67, 50, 0.3);
 }
 
 .enhanced-simple-announcement-content {
@@ -4731,26 +4745,26 @@ onUnmounted(() => {
 }
 
 .enhanced-simple-announcement-date svg {
-  color: #A3D1C6;
+  color: #2d6a4f;
 }
 .dark .enhanced-simple-announcement-date svg {
-  color: #20c997;
+  color: #1b4332;
 }
 
 .enhanced-attachment-indicator {
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  background: rgba(163, 209, 198, 0.1);
-  color: #A3D1C6;
+  background: rgba(45, 106, 79, 0.1);
+  color: #2d6a4f;
   font-size: 0.75rem;
   font-weight: 600;
   padding: 0.25rem 0.5rem;
   border-radius: 6px;
 }
 .dark .enhanced-attachment-indicator {
-  background: rgba(32, 201, 151, 0.1);
-  color: #20c997;
+  background: rgba(27, 67, 50, 0.1);
+  color: #1b4332;
 }
 
 /* Simple Broadcast Modal */
@@ -4784,7 +4798,7 @@ onUnmounted(() => {
 .simple-subject-icon {
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, #A3D1C6 0%, #87C5B8 100%);
+  background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -4793,7 +4807,7 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 .dark .simple-subject-icon {
-  background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
+  background: linear-gradient(135deg, #1b4332 0%, #0f2319 100%);
 }
 
 .simple-modal-title {
@@ -4818,10 +4832,10 @@ onUnmounted(() => {
 }
 
 .simple-teacher-info svg {
-  color: #A3D1C6;
+  color: #2d6a4f;
 }
 .dark .simple-teacher-info svg {
-  color: #20c997;
+  color: #1b4332;
 }
 
 .simple-close-btn {
@@ -4876,10 +4890,10 @@ onUnmounted(() => {
 }
 
 .simple-announcement-count svg {
-  color: #A3D1C6;
+  color: #2d6a4f;
 }
 .dark .simple-announcement-count svg {
-  color: #20c997;
+  color: #1b4332;
 }
 
 .simple-announcement-list {
@@ -4905,19 +4919,19 @@ onUnmounted(() => {
 }
 
 .simple-announcement-item:hover {
-  border-color: #A3D1C6;
+  border-color: #2d6a4f;
   transform: translateX(4px);
-  box-shadow: 0 2px 8px rgba(163, 209, 198, 0.15);
+  box-shadow: 0 2px 8px rgba(45, 106, 79, 0.15);
 }
 .dark .simple-announcement-item:hover {
-  border-color: #20c997;
-  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.15);
+  border-color: #1b4332;
+  box-shadow: 0 2px 8px rgba(27, 67, 50, 0.15);
 }
 
 .simple-announcement-icon {
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, #A3D1C6 0%, #87C5B8 100%);
+  background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -4926,7 +4940,7 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 .dark .simple-announcement-icon {
-  background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
+  background: linear-gradient(135deg, #1b4332 0%, #0f2319 100%);
 }
 
 .simple-announcement-content {
@@ -4965,10 +4979,10 @@ onUnmounted(() => {
 }
 
 .simple-announcement-date svg {
-  color: #A3D1C6;
+  color: #2d6a4f;
 }
 .dark .simple-announcement-date svg {
-  color: #20c997;
+  color: #1b4332;
 }
 
 .modal-header {
@@ -4994,19 +5008,19 @@ onUnmounted(() => {
 .broadcast-icon-large {
   width: 64px;
   height: 64px;
-  background: linear-gradient(135deg, #A3D1C6 0%, #87C5B8 100%);
+  background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
   border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 8px 20px rgba(163, 209, 198, 0.4);
+  box-shadow: 0 8px 20px rgba(45, 106, 79, 0.4);
   margin-right: 1.25rem;
   border: 3px solid rgba(255, 255, 255, 0.2);
 }
 .dark .broadcast-icon-large {
-  background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
-  box-shadow: 0 8px 20px rgba(32, 201, 151, 0.4);
+  background: linear-gradient(135deg, #1b4332 0%, #0f2319 100%);
+  box-shadow: 0 8px 20px rgba(27, 67, 50, 0.4);
 }
 
 /* Enhanced Modal Subtitle */
@@ -5024,11 +5038,11 @@ onUnmounted(() => {
 }
 
 .modal-subtitle svg {
-  color: #A3D1C6;
+  color: #2d6a4f;
   flex-shrink: 0;
 }
 .dark .modal-subtitle svg {
-  color: #20c997;
+  color: #1b4332;
 }
 
 .section-text, .teacher-text {
@@ -5071,24 +5085,24 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.75rem;
   padding: 1rem 1.5rem;
-  background: rgba(163, 209, 198, 0.1);
-  border: 2px solid rgba(163, 209, 198, 0.2);
+  background: rgba(45, 106, 79, 0.1);
+  border: 2px solid rgba(45, 106, 79, 0.2);
   border-radius: 12px;
   margin-bottom: 1.5rem;
   font-weight: 600;
   color: #2c3e50;
 }
 .dark .announcement-count-header {
-  background: rgba(32, 201, 151, 0.1);
-  border-color: rgba(32, 201, 151, 0.2);
+  background: rgba(27, 67, 50, 0.1);
+  border-color: rgba(27, 67, 50, 0.2);
   color: #ffffff;
 }
 
 .announcement-count-header svg {
-  color: #A3D1C6;
+  color: #2d6a4f;
 }
 .dark .announcement-count-header svg {
-  color: #20c997;
+  color: #1b4332;
 }
 
 /* Enhanced Broadcast List */
@@ -5134,41 +5148,41 @@ onUnmounted(() => {
 }
 
 .broadcast-item.unread::before {
-  background: linear-gradient(180deg, #A3D1C6 0%, #87C5B8 100%);
+  background: linear-gradient(180deg, #2d6a4f 0%, #1b4332 100%);
   width: 8px;
-  box-shadow: 0 0 10px rgba(163, 209, 198, 0.5);
+  box-shadow: 0 0 10px rgba(45, 106, 79, 0.5);
 }
 .dark .broadcast-item.unread::before {
-  background: linear-gradient(180deg, #20c997 0%, #17a085 100%);
-  box-shadow: 0 0 10px rgba(32, 201, 151, 0.5);
+  background: linear-gradient(180deg, #1b4332 0%, #0f2319 100%);
+  box-shadow: 0 0 10px rgba(27, 67, 50, 0.5);
 }
 
 .broadcast-item:hover {
-  border-color: #A3D1C6;
+  border-color: #2d6a4f;
   transform: translateX(12px);
-  box-shadow: 0 8px 25px rgba(163, 209, 198, 0.25);
+  box-shadow: 0 8px 25px rgba(45, 106, 79, 0.25);
 }
 .dark .broadcast-item:hover {
-  border-color: #20c997;
-  box-shadow: 0 8px 25px rgba(32, 201, 151, 0.25);
+  border-color: #1b4332;
+  box-shadow: 0 8px 25px rgba(27, 67, 50, 0.25);
 }
 
 /* Broadcast Item Icon */
 .broadcast-item-icon {
   width: 44px;
   height: 44px;
-  background: linear-gradient(135deg, #A3D1C6 0%, #87C5B8 100%);
+  background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(163, 209, 198, 0.3);
+  box-shadow: 0 4px 12px rgba(45, 106, 79, 0.3);
 }
 .dark .broadcast-item-icon {
-  background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
-  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.3);
+  background: linear-gradient(135deg, #1b4332 0%, #0f2319 100%);
+  box-shadow: 0 4px 12px rgba(27, 67, 50, 0.3);
 }
 
 /* Broadcast Item Content */
@@ -5264,10 +5278,10 @@ onUnmounted(() => {
 }
 
 .time-section svg {
-  color: #A3D1C6;
+  color: #2d6a4f;
 }
 .dark .time-section svg {
-  color: #20c997;
+  color: #1b4332;
 }
 
 /* Enhanced Attachment Indicator */
@@ -5275,18 +5289,18 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #A3D1C6;
+  color: #2d6a4f;
   font-weight: 600;
-  background: rgba(163, 209, 198, 0.15);
+  background: rgba(45, 106, 79, 0.15);
   padding: 0.4rem 0.8rem;
   border-radius: 8px;
-  border: 1px solid rgba(163, 209, 198, 0.3);
+  border: 1px solid rgba(45, 106, 79, 0.3);
   font-size: 0.8rem;
 }
 .dark .attachment-indicator {
-  color: #20c997;
-  background: rgba(32, 201, 151, 0.15);
-  border-color: rgba(32, 201, 151, 0.3);
+  color: #1b4332;
+  background: rgba(27, 67, 50, 0.15);
+  border-color: rgba(27, 67, 50, 0.3);
 }
 
 /* Announcement Detail Modal */
@@ -5298,19 +5312,19 @@ onUnmounted(() => {
 .announcement-icon {
   width: 64px;
   height: 64px;
-  background: linear-gradient(135deg, #A3D1C6 0%, #87C5B8 100%);
+  background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
   border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 8px 20px rgba(163, 209, 198, 0.4);
+  box-shadow: 0 8px 20px rgba(45, 106, 79, 0.4);
   margin-right: 1.25rem;
   border: 3px solid rgba(255, 255, 255, 0.2);
 }
 .dark .announcement-icon {
-  background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
-  box-shadow: 0 8px 20px rgba(32, 201, 151, 0.4);
+  background: linear-gradient(135deg, #1b4332 0%, #0f2319 100%);
+  box-shadow: 0 8px 20px rgba(27, 67, 50, 0.4);
 }
 
 /* Enhanced Modal Title with Icon */
@@ -5328,10 +5342,10 @@ onUnmounted(() => {
 }
 
 .modal-title svg {
-  color: #A3D1C6;
+  color: #2d6a4f;
 }
 .dark .modal-title svg {
-  color: #20c997;
+  color: #1b4332;
 }
 
 /* Enhanced Subject Info */
@@ -5349,11 +5363,11 @@ onUnmounted(() => {
 }
 
 .subject-info svg {
-  color: #A3D1C6;
+  color: #2d6a4f;
   flex-shrink: 0;
 }
 .dark .subject-info svg {
-  color: #20c997;
+  color: #1b4332;
 }
 
 .subject-info span {
@@ -5379,15 +5393,15 @@ onUnmounted(() => {
 .announcement-header {
   border-bottom: 2px solid #e9ecef;
   padding-bottom: 1.5rem;
-  background: rgba(163, 209, 198, 0.05);
+  background: rgba(45, 106, 79, 0.05);
   padding: 1.5rem;
   border-radius: 12px;
-  border: 2px solid rgba(163, 209, 198, 0.1);
+  border: 2px solid rgba(45, 106, 79, 0.1);
 }
 .dark .announcement-header {
   border-bottom-color: #495057;
-  background: rgba(32, 201, 151, 0.05);
-  border-color: rgba(32, 201, 151, 0.1);
+  background: rgba(27, 67, 50, 0.05);
+  border-color: rgba(27, 67, 50, 0.1);
 }
 
 .announcement-title {
@@ -5409,21 +5423,21 @@ onUnmounted(() => {
 
 .teacher-info .teacher-name {
   font-size: 1.1rem;
-  color: #A3D1C6;
+  color: #2d6a4f;
   font-weight: 700;
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 .dark .teacher-info .teacher-name {
-  color: #20c997;
+  color: #1b4332;
 }
 
 .teacher-info .teacher-name::before {
   content: '';
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, #A3D1C6 0%, #87C5B8 100%);
+  background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -5433,7 +5447,7 @@ onUnmounted(() => {
   background-position: center;
 }
 .dark .teacher-info .teacher-name::before {
-  background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
+  background: linear-gradient(135deg, #1b4332 0%, #0f2319 100%);
 }
 
 .announcement-date {
@@ -5446,23 +5460,23 @@ onUnmounted(() => {
   background: rgba(108, 117, 125, 0.1);
   padding: 0.75rem 1rem;
   border-radius: 10px;
-  border-left: 4px solid #A3D1C6;
+  border-left: 4px solid #2d6a4f;
 }
 .dark .announcement-date {
   color: #adb5bd;
   background: rgba(173, 181, 189, 0.1);
-  border-left-color: #20c997;
+  border-left-color: #1b4332;
 }
 
 .announcement-date svg {
-  color: #A3D1C6;
+  color: #2d6a4f;
   background: white;
   padding: 4px;
   border-radius: 6px;
-  box-shadow: 0 2px 4px rgba(163, 209, 198, 0.2);
+  box-shadow: 0 2px 4px rgba(45, 106, 79, 0.2);
 }
 .dark .announcement-date svg {
-  color: #20c997;
+  color: #1b4332;
   background: #2c3135;
 }
 
@@ -5471,13 +5485,13 @@ onUnmounted(() => {
   border-radius: 16px;
   padding: 2rem;
   border: 2px solid #e9ecef;
-  border-left: 6px solid #A3D1C6;
+  border-left: 6px solid #2d6a4f;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 .dark .announcement-body {
   background: linear-gradient(135deg, #23272b 0%, #2c3135 100%);
   border-color: #495057;
-  border-left-color: #20c997;
+  border-left-color: #1b4332;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
@@ -5521,14 +5535,14 @@ onUnmounted(() => {
 }
 
 .attachments-title svg {
-  color: #A3D1C6;
-  background: rgba(163, 209, 198, 0.1);
+  color: #2d6a4f;
+  background: rgba(45, 106, 79, 0.1);
   padding: 8px;
   border-radius: 8px;
 }
 .dark .attachments-title svg {
-  color: #20c997;
-  background: rgba(32, 201, 151, 0.1);
+  color: #1b4332;
+  background: rgba(27, 67, 50, 0.1);
 }
 
 /* Enhanced Close Button */
@@ -5536,7 +5550,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  background: linear-gradient(135deg, #A3D1C6 0%, #87C5B8 100%);
+  background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
   color: white;
   border: none;
   border-radius: 12px;
@@ -5545,21 +5559,21 @@ onUnmounted(() => {
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(163, 209, 198, 0.3);
+  box-shadow: 0 4px 12px rgba(45, 106, 79, 0.3);
 }
 .dark .close-detail-btn {
-  background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
-  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.3);
+  background: linear-gradient(135deg, #1b4332 0%, #0f2319 100%);
+  box-shadow: 0 4px 12px rgba(27, 67, 50, 0.3);
 }
 
 .close-detail-btn:hover {
-  background: linear-gradient(135deg, #87C5B8 0%, #6fb3a8 100%);
+  background: linear-gradient(135deg, #1b4332 0%, #6fb3a8 100%);
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(163, 209, 198, 0.4);
+  box-shadow: 0 6px 16px rgba(45, 106, 79, 0.4);
 }
 .dark .close-detail-btn:hover {
-  background: linear-gradient(135deg, #17a085 0%, #138a73 100%);
-  box-shadow: 0 6px 16px rgba(32, 201, 151, 0.4);
+  background: linear-gradient(135deg, #0f2319 0%, #138a73 100%);
+  box-shadow: 0 6px 16px rgba(27, 67, 50, 0.4);
 }
 
 .close-detail-btn svg {
@@ -5593,13 +5607,13 @@ onUnmounted(() => {
 }
 
 .attachment-item:hover {
-  border-color: #A3D1C6;
+  border-color: #2d6a4f;
   transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(163, 209, 198, 0.25);
+  box-shadow: 0 8px 25px rgba(45, 106, 79, 0.25);
 }
 .dark .attachment-item:hover {
-  border-color: #20c997;
-  box-shadow: 0 8px 25px rgba(32, 201, 151, 0.25);
+  border-color: #1b4332;
+  box-shadow: 0 8px 25px rgba(27, 67, 50, 0.25);
 }
 
 .attachment-image-container {
@@ -5673,28 +5687,28 @@ onUnmounted(() => {
 }
 
 .attachment-file-large:hover {
-  background: rgba(163, 209, 198, 0.08);
+  background: rgba(45, 106, 79, 0.08);
   transform: translateX(4px);
 }
 .dark .attachment-file-large:hover {
-  background: rgba(32, 201, 151, 0.08);
+  background: rgba(27, 67, 50, 0.08);
 }
 
 .file-icon {
   width: 56px;
   height: 56px;
-  background: linear-gradient(135deg, #A3D1C6 0%, #87C5B8 100%);
+  background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(163, 209, 198, 0.3);
+  box-shadow: 0 4px 12px rgba(45, 106, 79, 0.3);
 }
 .dark .file-icon {
-  background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
-  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.3);
+  background: linear-gradient(135deg, #1b4332 0%, #0f2319 100%);
+  box-shadow: 0 4px 12px rgba(27, 67, 50, 0.3);
 }
 
 .file-info {
@@ -5727,28 +5741,28 @@ onUnmounted(() => {
 }
 
 .download-file-btn {
-  background: linear-gradient(135deg, #A3D1C6 0%, #87C5B8 100%);
+  background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
   color: white;
   border: none;
   border-radius: 10px;
   padding: 0.75rem;
   flex-shrink: 0;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(163, 209, 198, 0.3);
+  box-shadow: 0 2px 8px rgba(45, 106, 79, 0.3);
 }
 .dark .download-file-btn {
-  background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
-  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.3);
+  background: linear-gradient(135deg, #1b4332 0%, #0f2319 100%);
+  box-shadow: 0 2px 8px rgba(27, 67, 50, 0.3);
 }
 
 .download-file-btn:hover {
-  background: linear-gradient(135deg, #87C5B8 0%, #6fb3a8 100%);
+  background: linear-gradient(135deg, #1b4332 0%, #6fb3a8 100%);
   transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(163, 209, 198, 0.4);
+  box-shadow: 0 4px 12px rgba(45, 106, 79, 0.4);
 }
 .dark .download-file-btn:hover {
-  background: linear-gradient(135deg, #17a085 0%, #138a73 100%);
-  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.4);
+  background: linear-gradient(135deg, #0f2319 0%, #138a73 100%);
+  box-shadow: 0 4px 12px rgba(27, 67, 50, 0.4);
 }
 
 /* Enhanced Announcement Detail Modal Styles */
@@ -5795,14 +5809,14 @@ onUnmounted(() => {
 
 /* Enhanced Header */
 .enhanced-header {
-  background: linear-gradient(135deg, #A3D1C6 0%, #87C5B8 100%);
+  background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
   color: white;
   padding: 2rem;
   position: relative;
   overflow: hidden;
 }
 .dark .enhanced-header {
-  background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
+  background: linear-gradient(135deg, #1b4332 0%, #0f2319 100%);
 }
 
 .enhanced-header::before {
@@ -5908,11 +5922,11 @@ onUnmounted(() => {
 }
 
 .enhanced-announcement-body::-webkit-scrollbar-thumb {
-  background: #A3D1C6;
+  background: #2d6a4f;
   border-radius: 10px;
 }
 .dark .enhanced-announcement-body::-webkit-scrollbar-thumb {
-  background: #20c997;
+  background: #1b4332;
 }
 
 /* Enhanced Title Section */
@@ -5970,22 +5984,22 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #A3D1C6 0%, #87C5B8 100%);
+  background: linear-gradient(90deg, #2d6a4f 0%, #1b4332 100%);
   transform: scaleX(0);
   transition: transform 0.3s ease;
 }
 .dark .meta-card::before {
-  background: linear-gradient(90deg, #20c997 0%, #17a085 100%);
+  background: linear-gradient(90deg, #1b4332 0%, #0f2319 100%);
 }
 
 .meta-card:hover {
-  border-color: #A3D1C6;
+  border-color: #2d6a4f;
   transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(163, 209, 198, 0.2);
+  box-shadow: 0 8px 25px rgba(45, 106, 79, 0.2);
 }
 .dark .meta-card:hover {
-  border-color: #20c997;
-  box-shadow: 0 8px 25px rgba(32, 201, 151, 0.2);
+  border-color: #1b4332;
+  box-shadow: 0 8px 25px rgba(27, 67, 50, 0.2);
 }
 
 .meta-card:hover::before {
@@ -5995,18 +6009,18 @@ onUnmounted(() => {
 .meta-icon {
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, #A3D1C6 0%, #87C5B8 100%);
+  background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(163, 209, 198, 0.3);
+  box-shadow: 0 4px 12px rgba(45, 106, 79, 0.3);
 }
 .dark .meta-icon {
-  background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
-  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.3);
+  background: linear-gradient(135deg, #1b4332 0%, #0f2319 100%);
+  box-shadow: 0 4px 12px rgba(27, 67, 50, 0.3);
 }
 
 .meta-content {
@@ -6051,7 +6065,7 @@ onUnmounted(() => {
 }
 
 .content-header {
-  background: rgba(163, 209, 198, 0.1);
+  background: rgba(45, 106, 79, 0.1);
   padding: 1rem 1.5rem;
   border-bottom: 2px solid #e9ecef;
   display: flex;
@@ -6061,16 +6075,16 @@ onUnmounted(() => {
   color: #2c3e50;
 }
 .dark .content-header {
-  background: rgba(32, 201, 151, 0.1);
+  background: rgba(27, 67, 50, 0.1);
   border-bottom-color: #495057;
   color: #ffffff;
 }
 
 .content-header svg {
-  color: #A3D1C6;
+  color: #2d6a4f;
 }
 .dark .content-header svg {
-  color: #20c997;
+  color: #1b4332;
 }
 
 .announcement-body {
@@ -6103,7 +6117,7 @@ onUnmounted(() => {
 }
 
 .attachments-header {
-  background: rgba(163, 209, 198, 0.1);
+  background: rgba(45, 106, 79, 0.1);
   padding: 1rem 1.5rem;
   border-bottom: 2px solid #e9ecef;
   display: flex;
@@ -6111,7 +6125,7 @@ onUnmounted(() => {
   justify-content: space-between;
 }
 .dark .attachments-header {
-  background: rgba(32, 201, 151, 0.1);
+  background: rgba(27, 67, 50, 0.1);
   border-bottom-color: #495057;
 }
 
@@ -6129,24 +6143,24 @@ onUnmounted(() => {
 }
 
 .attachments-title svg {
-  color: #A3D1C6;
+  color: #2d6a4f;
 }
 .dark .attachments-title svg {
-  color: #20c997;
+  color: #1b4332;
 }
 
 .attachments-count {
-  background: #A3D1C6;
+  background: #2d6a4f;
   color: white;
   font-size: 0.8rem;
   font-weight: 700;
   padding: 0.4rem 0.8rem;
   border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(163, 209, 198, 0.3);
+  box-shadow: 0 2px 8px rgba(45, 106, 79, 0.3);
 }
 .dark .attachments-count {
-  background: #20c997;
-  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.3);
+  background: #1b4332;
+  box-shadow: 0 2px 8px rgba(27, 67, 50, 0.3);
 }
 
 /* Enhanced Footer */
@@ -6162,7 +6176,7 @@ onUnmounted(() => {
 }
 
 .enhanced-close-detail-btn {
-  background: linear-gradient(135deg, #A3D1C6 0%, #87C5B8 100%);
+  background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
   color: white;
   border: none;
   border-radius: 12px;
@@ -6175,21 +6189,21 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.75rem;
   margin: 0 auto;
-  box-shadow: 0 4px 12px rgba(163, 209, 198, 0.3);
+  box-shadow: 0 4px 12px rgba(45, 106, 79, 0.3);
 }
 .dark .enhanced-close-detail-btn {
-  background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
-  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.3);
+  background: linear-gradient(135deg, #1b4332 0%, #0f2319 100%);
+  box-shadow: 0 4px 12px rgba(27, 67, 50, 0.3);
 }
 
 .enhanced-close-detail-btn:hover {
-  background: linear-gradient(135deg, #87C5B8 0%, #6fb3a8 100%);
+  background: linear-gradient(135deg, #1b4332 0%, #6fb3a8 100%);
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(163, 209, 198, 0.4);
+  box-shadow: 0 6px 16px rgba(45, 106, 79, 0.4);
 }
 .dark .enhanced-close-detail-btn:hover {
-  background: linear-gradient(135deg, #17a085 0%, #138a73 100%);
-  box-shadow: 0 6px 16px rgba(32, 201, 151, 0.4);
+  background: linear-gradient(135deg, #0f2319 0%, #138a73 100%);
+  box-shadow: 0 6px 16px rgba(27, 67, 50, 0.4);
 }
 
 .enhanced-close-detail-btn svg {
@@ -6260,6 +6274,993 @@ onUnmounted(() => {
   
   .announcement-detail-body {
     padding: 1rem;
+  }
+}
+
+/* ================================
+   CLEAN PROFESSIONAL TEACHER CARDS
+   ================================ */
+
+.simple-teacher-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  position: relative;
+  margin-bottom: 0.875rem;
+  overflow: visible;
+  z-index: 1;
+}
+
+.simple-teacher-card:hover {
+  z-index: 2;
+}
+
+.simple-teacher-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #2d6a4f 0%, #1b4332 100%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.simple-teacher-card:hover::before {
+  opacity: 1;
+}
+.dark .simple-teacher-card {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.simple-teacher-card:hover {
+  border-color: #2d6a4f;
+  box-shadow: 0 2px 4px rgba(45, 106, 79, 0.08);
+  transform: translateY(-1px);
+}
+.dark .simple-teacher-card:hover {
+  border-color: #1b4332;
+  box-shadow: 0 2px 4px rgba(27, 67, 50, 0.08);
+}
+
+.simple-teacher-card.has-unread {
+  border-left: 3px solid #dc3545;
+  background: #fefefe;
+}
+.dark .simple-teacher-card.has-unread {
+  border-left: 3px solid #dc3545;
+  background: #1f2937;
+}
+
+.simple-teacher-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.simple-teacher-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.simple-teacher-avatar {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(45, 106, 79, 0.2);
+}
+.dark .simple-teacher-avatar {
+  background: linear-gradient(135deg, #1b4332 0%, #0f2319 100%);
+  box-shadow: 0 2px 4px rgba(27, 67, 50, 0.2);
+}
+
+.simple-teacher-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.simple-teacher-name {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.125rem 0;
+  line-height: 1.4;
+}
+.dark .simple-teacher-name {
+  color: #f8fafc;
+}
+
+.simple-teacher-email {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0 0 0.25rem 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dark .simple-teacher-email {
+  color: #94a3b8;
+}
+
+.simple-presence-status {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8rem;
+  color: #059669;
+  font-weight: 500;
+}
+.dark .simple-presence-status {
+  color: #10b981;
+}
+
+.simple-online-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.simple-teacher-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.simple-unread-badge {
+  background: #dc3545;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  min-width: 18px;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(220, 53, 69, 0.2);
+}
+
+.simple-options-btn {
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  z-index: 10;
+}
+.dark .simple-options-btn {
+  border-color: #334155;
+  color: #94a3b8;
+}
+
+.simple-options-btn:hover {
+  background: #f8fafc;
+  border-color: #2d6a4f;
+  color: #2d6a4f;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+.dark .simple-options-btn:hover {
+  background: #334155;
+  border-color: #1b4332;
+  color: #1b4332;
+}
+
+.simple-options-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12), 0 4px 10px rgba(0, 0, 0, 0.08);
+  z-index: 1000;
+  min-width: 140px;
+  overflow: hidden;
+  transform-origin: top right;
+  animation: dropdownSlideIn 0.2s ease-out;
+  will-change: transform, opacity;
+}
+
+.dark .simple-options-dropdown {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes dropdownSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-8px);
+    visibility: hidden;
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    visibility: visible;
+  }
+}
+
+/* Position dropdown upward if it would go below viewport */
+.simple-options-dropdown.position-up {
+  top: auto;
+  bottom: calc(100% + 0.5rem);
+  transform-origin: bottom right;
+}
+
+.dark .simple-options-dropdown {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2), 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.simple-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  border-bottom: 1px solid #f1f5f9;
+  position: relative;
+}
+
+.simple-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dark .simple-dropdown-item {
+  color: #d1d5db;
+  border-bottom-color: #334155;
+}
+
+.simple-dropdown-item:hover {
+  background: #f8fafc;
+  color: #1e293b;
+  transform: translateX(4px);
+  padding-left: 1.125rem;
+}
+.dark .simple-dropdown-item:hover {
+  background: #334155;
+  color: #f8fafc;
+}
+
+.simple-dropdown-item.delete-option:hover {
+  background: #fef2f2;
+  color: #dc2626;
+  transform: translateX(4px);
+  padding-left: 1.125rem;
+}
+.dark .simple-dropdown-item.delete-option:hover {
+  background: #7f1d1d;
+  color: #fca5a5;
+}
+
+.simple-dropdown-item svg {
+  width: 16px;
+  height: 16px;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.simple-dropdown-item:hover svg {
+  opacity: 1;
+}
+
+.simple-teacher-body {
+  padding-top: 0.75rem;
+  border-top: 1px solid #f1f5f9;
+}
+.dark .simple-teacher-body {
+  border-top-color: #334155;
+}
+
+.simple-last-message {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.dark .simple-last-message {
+  color: #94a3b8;
+}
+
+.simple-message-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.simple-message-time {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+.dark .simple-message-time {
+  color: #64748b;
+}
+
+.simple-chat-icon {
+  color: #2d6a4f;
+  width: 16px;
+  height: 16px;
+  opacity: 0.7;
+}
+.dark .simple-chat-icon {
+  color: #1b4332;
+}
+
+/* ================================
+   CLEAN PROFESSIONAL CHAT MODAL
+   ================================ */
+
+.simple-modal-content {
+  background: #ffffff;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 580px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+.dark .simple-modal-content {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2), 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.simple-modal-header {
+  background: linear-gradient(135deg, #2d6a4f 0%, #40916c 100%);
+  color: white;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.dark .simple-modal-header {
+  background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%);
+}
+
+.simple-header-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.simple-teacher-avatar-chat {
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 1.2rem;
+  backdrop-filter: blur(10px);
+}
+
+.simple-header-details {
+  flex: 1;
+}
+
+.simple-modal-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: white;
+  margin: 0 0 0.25rem 0;
+  line-height: 1.3;
+}
+
+.simple-subject-info {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 500;
+}
+
+.simple-close-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  backdrop-filter: blur(10px);
+}
+
+.simple-close-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+}
+
+.simple-modal-body {
+  flex: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+  min-height: 400px;
+  max-height: 60vh;
+  background: #fafbfc;
+}
+.dark .simple-modal-body {
+  background: #0f172a;
+}
+
+.simple-modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.simple-modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.simple-modal-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+.dark .simple-modal-body::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.simple-modal-body::-webkit-scrollbar-thumb:hover {
+  background: #2d6a4f;
+}
+.dark .simple-modal-body::-webkit-scrollbar-thumb:hover {
+  background: #1b4332;
+}
+
+.simple-loading-messages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  gap: 1rem;
+  color: #64748b;
+}
+.dark .simple-loading-messages {
+  color: #94a3b8;
+}
+
+.simple-loading-spinner {
+  position: relative;
+}
+
+.simple-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e2e8f0;
+  border-top: 3px solid #2d6a4f;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+.dark .simple-spinner {
+  border-color: #334155;
+  border-top-color: #1b4332;
+}
+
+.simple-messages-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 300px;
+}
+
+.simple-message-bubble {
+  max-width: 70%;
+  padding: 0.875rem 1rem;
+  border-radius: 8px;
+  word-wrap: break-word;
+  position: relative;
+}
+
+.simple-message-bubble.sent {
+  align-self: flex-end;
+  background: linear-gradient(135deg, #2d6a4f 0%, #40916c 100%);
+  color: white;
+  border-bottom-right-radius: 4px;
+  box-shadow: 0 1px 2px rgba(45, 106, 79, 0.2);
+}
+.dark .simple-message-bubble.sent {
+  background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%);
+  box-shadow: 0 1px 2px rgba(27, 67, 50, 0.2);
+}
+
+.simple-message-bubble.received {
+  align-self: flex-start;
+  background: #ffffff;
+  color: #1e293b;
+  border: 1px solid #e2e8f0;
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.dark .simple-message-bubble.received {
+  background: #334155;
+  color: #f8fafc;
+  border-color: #475569;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.simple-message-attachments {
+  margin-bottom: 0.75rem;
+}
+
+.simple-attachment {
+  margin-bottom: 0.5rem;
+}
+
+.simple-attachment-image-container {
+  position: relative;
+  display: inline-block;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  transition: all 0.15s ease;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+.dark .simple-attachment-image-container {
+  background: #0f172a;
+  border-color: #334155;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.simple-attachment-image-container:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.dark .simple-attachment-image-container:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.simple-attachment-image {
+  max-width: 100%;
+  max-height: 280px;
+  min-height: 120px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: block;
+  object-fit: cover;
+  transition: all 0.15s ease;
+}
+
+.simple-attachment-image:hover {
+  opacity: 0.95;
+  transform: scale(1.02);
+}
+
+/* Image overlay for better interaction feedback */
+.simple-attachment-image-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, rgba(45, 106, 79, 0) 0%, rgba(45, 106, 79, 0.05) 100%);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+  border-radius: 8px;
+}
+
+.simple-attachment-image-container:hover::before {
+  opacity: 1;
+}
+.dark .simple-attachment-image-container::before {
+  background: linear-gradient(45deg, rgba(27, 67, 50, 0) 0%, rgba(27, 67, 50, 0.1) 100%);
+}
+
+.simple-attachment-file {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.simple-attachment-file:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.simple-message-text {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.simple-message-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.625rem;
+  gap: 0.5rem;
+}
+
+.simple-message-time {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  font-weight: 500;
+}
+
+.simple-message-status {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  opacity: 0.7;
+}
+
+.simple-no-messages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 250px;
+  gap: 1rem;
+  color: #64748b;
+  text-align: center;
+}
+.dark .simple-no-messages {
+  color: #94a3b8;
+}
+
+.simple-no-messages-icon {
+  color: #2d6a4f;
+  opacity: 0.6;
+}
+.dark .simple-no-messages-icon {
+  color: #1b4332;
+}
+
+.simple-modal-footer {
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+.dark .simple-modal-footer {
+  border-top-color: #334155;
+  background: #1e293b;
+}
+
+.simple-file-preview {
+  margin-bottom: 1rem;
+}
+
+.simple-preview-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 0.75rem;
+  position: relative;
+}
+.dark .simple-preview-content {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+.simple-preview-image {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 2px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.15s ease;
+}
+.dark .simple-preview-image {
+  border-color: #334155;
+}
+
+.simple-preview-image:hover {
+  border-color: #2d6a4f;
+  transform: scale(1.05);
+}
+.dark .simple-preview-image:hover {
+  border-color: #1b4332;
+}
+
+.simple-preview-file {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #475569;
+  font-size: 0.875rem;
+}
+.dark .simple-preview-file {
+  color: #cbd5e1;
+}
+
+.simple-remove-file-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(220, 53, 69, 0.2);
+}
+
+.simple-remove-file-btn:hover {
+  background: #c82333;
+  transform: scale(1.1);
+}
+
+.simple-message-input-area {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.75rem;
+  transition: all 0.15s ease;
+}
+.dark .simple-message-input-area {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+.simple-message-input-area:focus-within {
+  border-color: #2d6a4f;
+  box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.1);
+}
+.dark .simple-message-input-area:focus-within {
+  border-color: #1b4332;
+  box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1);
+}
+
+.simple-attach-btn {
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.dark .simple-attach-btn {
+  border-color: #334155;
+  color: #94a3b8;
+}
+
+.simple-attach-btn:hover:not(:disabled) {
+  background: #2d6a4f;
+  border-color: #2d6a4f;
+  color: white;
+  transform: scale(1.05);
+}
+.dark .simple-attach-btn:hover:not(:disabled) {
+  background: #1b4332;
+  border-color: #1b4332;
+}
+
+.simple-attach-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.simple-message-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 0.9rem;
+  color: #1e293b;
+  padding: 0.5rem;
+  line-height: 1.4;
+}
+.dark .simple-message-input {
+  color: #f8fafc;
+}
+
+.simple-message-input::placeholder {
+  color: #64748b;
+}
+.dark .simple-message-input::placeholder {
+  color: #94a3b8;
+}
+
+.simple-send-btn {
+  background: linear-gradient(135deg, #2d6a4f 0%, #40916c 100%);
+  border: none;
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(45, 106, 79, 0.2);
+}
+.dark .simple-send-btn {
+  background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%);
+  box-shadow: 0 1px 2px rgba(27, 67, 50, 0.2);
+}
+
+.simple-send-btn:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 2px 4px rgba(45, 106, 79, 0.3);
+}
+.dark .simple-send-btn:hover:not(:disabled) {
+  box-shadow: 0 2px 4px rgba(27, 67, 50, 0.3);
+}
+
+.simple-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.simple-button-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Mobile Responsive for Simple Design */
+@media (max-width: 768px) {
+  .simple-teacher-card {
+    padding: 0.875rem;
+  }
+  
+  .simple-teacher-left {
+    gap: 0.625rem;
+  }
+  
+  .simple-teacher-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
+  }
+  
+  .simple-modal-content {
+    margin: 0.5rem;
+    max-height: 90vh;
+  }
+  
+  .simple-modal-header {
+    padding: 1rem 1.25rem;
+  }
+  
+  .simple-modal-body {
+    padding: 1rem;
+  }
+  
+  .simple-modal-footer {
+    padding: 1rem;
+  }
+  
+  .simple-message-bubble {
+    max-width: 85%;
+  }
+}
+
+@media (max-width: 480px) {
+  .simple-teacher-card {
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    border-radius: 8px;
+  }
+  
+  .simple-teacher-name {
+    font-size: 0.95rem;
+  }
+  
+  .simple-teacher-email {
+    font-size: 0.8rem;
+  }
+  
+  .simple-options-dropdown {
+    min-width: 130px;
+    right: 0;
+    top: calc(100% + 0.25rem);
+  }
+  
+  .simple-dropdown-item {
+    padding: 0.75rem 0.875rem;
+    font-size: 0.875rem;
+    gap: 0.5rem;
+  }
+  
+  .simple-dropdown-item:hover {
+    transform: translateX(2px);
+  }
+  
+  .simple-teacher-avatar-chat {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+  
+  .simple-attachment-image {
+    max-height: 200px;
+    min-height: 100px;
+  }
+  
+  .simple-attachment-image-container {
+    margin: 0.5rem 0;
+  }
+  
+  .simple-preview-image {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .simple-modal-title {
+    font-size: 1.1rem;
   }
 }
 </style>
