@@ -284,7 +284,7 @@
             </div>
             <div class="simple-header-details">
               <h2 class="simple-modal-title">{{ activeTeacher?.teacher_name }}</h2>
-              <span class="simple-subject-info">{{ activeTeacher?.subject_name }}</span>
+              <span class="simple-teacher-label">Teacher</span>
             </div>
           </div>
           <button @click="closeModal" class="simple-close-btn">
@@ -2355,11 +2355,11 @@ onUnmounted(() => {
 .subject-section-name {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #2c3e50;
+  color: #2d6a4f;
   margin: 0;
 }
 .dark .subject-section-name {
-  color: #ffffff;
+  color: #1b4332;
 }
 
 .subject-section-code {
@@ -2871,12 +2871,12 @@ onUnmounted(() => {
 
 .notification-section {
   font-size: 0.875rem;
-  color: #6c757d;
+  color: #2d6a4f;
   margin: 0;
   font-weight: 500;
 }
 .dark .notification-section {
-  color: #adb5bd;
+  color: #1b4332;
 }
 
 .notification-card-right {
@@ -2934,11 +2934,11 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
-  color: #6c757d;
+  color: #2d6a4f;
   font-weight: 500;
 }
 .dark .notification-teacher {
-  color: #adb5bd;
+  color: #1b4332;
 }
 
 .notification-teacher svg {
@@ -2976,6 +2976,12 @@ onUnmounted(() => {
   justify-content: center;
   z-index: 1000;
   backdrop-filter: blur(4px);
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.modal-overlay * {
+  box-sizing: border-box;
 }
 
 .modal-content {
@@ -4820,6 +4826,19 @@ onUnmounted(() => {
   color: #ffffff;
 }
 
+.simple-teacher-label {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+[data-theme="dark"] .simple-teacher-label {
+  color: rgba(232, 245, 232, 0.8);
+}
+
 .simple-teacher-info {
   display: flex;
   align-items: center;
@@ -5372,10 +5391,10 @@ onUnmounted(() => {
 
 .subject-info span {
   font-weight: 600;
-  color: #2c3e50;
+  color: #2d6a4f;
 }
 .dark .subject-info span {
-  color: #ffffff;
+  color: #1b4332;
 }
 
 .announcement-detail-body {
@@ -6633,31 +6652,106 @@ onUnmounted(() => {
 
 .simple-modal-content {
   background: #ffffff;
-  border-radius: 8px;
+  border-radius: 12px;
   width: 100%;
-  max-width: 580px;
-  max-height: 85vh;
+  max-width: 650px;
+  height: 85vh;
+  min-height: 500px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   border: 1px solid #e2e8f0;
   overflow: hidden;
+  margin: auto;
 }
 .dark .simple-modal-content {
   background: #1e293b;
   border-color: #334155;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2), 0 4px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
 }
 
-.simple-modal-header {
-  background: linear-gradient(135deg, #2d6a4f 0%, #40916c 100%);
-  color: white;
-  padding: 1.25rem 1.5rem;
+.modal-overlay .simple-modal-content .simple-modal-header {
+  background: #2d6a4f !important;
+  background: linear-gradient(135deg, #2d6a4f 0%, #40916c 100%) !important;
+  color: white !important;
+  padding: 1rem 1.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
+
+.modal-overlay .simple-modal-content .simple-modal-header::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #2d6a4f;
+  background: linear-gradient(135deg, #2d6a4f 0%, #40916c 100%);
+  z-index: -2;
+}
+
+.modal-overlay .simple-modal-content .simple-modal-header * {
+  background: transparent !important;
+  color: white !important;
+}
+
+.simple-modal-header input,
+.simple-modal-header textarea,
+.simple-modal-header .input,
+.simple-modal-header .search-input,
+.simple-modal-header [class*="input"],
+.simple-modal-header [class*="subject"] {
+  background: transparent !important;
+  color: white !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.simple-modal-header {
+  background: #2d6a4f !important;
+  background: linear-gradient(135deg, #2d6a4f 0%, #40916c 100%) !important;
+  color: white;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.simple-modal-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #2d6a4f;
+  background: linear-gradient(135deg, #2d6a4f 0%, #40916c 100%);
+  z-index: -1;
+}
+
 .dark .simple-modal-header {
+  background: #1b4332 !important;
+  background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%) !important;
+}
+
+.dark .simple-modal-header::before {
+  background: #1b4332;
   background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%);
 }
 
@@ -6666,25 +6760,32 @@ onUnmounted(() => {
   align-items: center;
   gap: 1rem;
   flex: 1;
+  background: transparent;
+  position: relative;
+  z-index: 1;
 }
 
 .simple-teacher-avatar-chat {
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   background: rgba(255, 255, 255, 0.15);
   border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-weight: 600;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .simple-header-details {
   flex: 1;
+  background: transparent;
+  position: relative;
+  z-index: 1;
 }
 
 .simple-modal-title {
@@ -6714,6 +6815,8 @@ onUnmounted(() => {
   cursor: pointer;
   transition: all 0.15s ease;
   backdrop-filter: blur(10px);
+  position: relative;
+  z-index: 1;
 }
 
 .simple-close-btn:hover {
@@ -6723,11 +6826,12 @@ onUnmounted(() => {
 
 .simple-modal-body {
   flex: 1;
-  padding: 1.5rem;
+  padding: 1rem 1.5rem;
   overflow-y: auto;
-  min-height: 400px;
-  max-height: 60vh;
   background: #fafbfc;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 .dark .simple-modal-body {
   background: #0f172a;
@@ -6761,9 +6865,10 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 200px;
+  flex: 1;
   gap: 1rem;
   color: #64748b;
+  min-height: 200px;
 }
 .dark .simple-loading-messages {
   color: #94a3b8;
@@ -6790,27 +6895,36 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  min-height: 300px;
+  flex: 1;
+  min-height: 0;
+  padding-bottom: 1rem;
 }
 
 .simple-message-bubble {
   max-width: 70%;
-  padding: 0.875rem 1rem;
-  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
   word-wrap: break-word;
   position: relative;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  transition: all 0.15s ease;
+}
+
+.simple-message-bubble:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 }
 
 .simple-message-bubble.sent {
   align-self: flex-end;
   background: linear-gradient(135deg, #2d6a4f 0%, #40916c 100%);
   color: white;
-  border-bottom-right-radius: 4px;
-  box-shadow: 0 1px 2px rgba(45, 106, 79, 0.2);
+  border-bottom-right-radius: 6px;
+  box-shadow: 0 2px 8px rgba(45, 106, 79, 0.25);
 }
 .dark .simple-message-bubble.sent {
   background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%);
-  box-shadow: 0 1px 2px rgba(27, 67, 50, 0.2);
+  box-shadow: 0 2px 8px rgba(27, 67, 50, 0.25);
 }
 
 .simple-message-bubble.received {
@@ -6818,14 +6932,14 @@ onUnmounted(() => {
   background: #ffffff;
   color: #1e293b;
   border: 1px solid #e2e8f0;
-  border-bottom-left-radius: 4px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  border-bottom-left-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
 }
 .dark .simple-message-bubble.received {
   background: #334155;
   color: #f8fafc;
   border-color: #475569;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .simple-message-attachments {
@@ -6862,18 +6976,19 @@ onUnmounted(() => {
 
 .simple-attachment-image {
   max-width: 100%;
-  max-height: 280px;
+  max-height: 300px;
   min-height: 120px;
   border-radius: 8px;
   cursor: pointer;
   display: block;
   object-fit: cover;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
 }
 
 .simple-attachment-image:hover {
   opacity: 0.95;
   transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* Image overlay for better interaction feedback */
@@ -6948,10 +7063,11 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 250px;
+  flex: 1;
   gap: 1rem;
   color: #64748b;
   text-align: center;
+  min-height: 200px;
 }
 .dark .simple-no-messages {
   color: #94a3b8;
@@ -6966,9 +7082,10 @@ onUnmounted(() => {
 }
 
 .simple-modal-footer {
-  padding: 1.25rem 1.5rem;
+  padding: 1rem 1.5rem;
   border-top: 1px solid #e2e8f0;
   background: #ffffff;
+  flex-shrink: 0;
 }
 .dark .simple-modal-footer {
   border-top-color: #334155;
@@ -7054,37 +7171,42 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.75rem;
   background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 0.75rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.875rem;
   transition: all 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 .dark .simple-message-input-area {
   background: #0f172a;
   border-color: #334155;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .simple-message-input-area:focus-within {
   border-color: #2d6a4f;
-  box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.1);
+  box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.1), 0 1px 3px rgba(0, 0, 0, 0.04);
+  background: #ffffff;
 }
 .dark .simple-message-input-area:focus-within {
   border-color: #1b4332;
-  box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1);
+  box-shadow: 0 0 0 3px rgba(27, 67, 50, 0.1), 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: #1e293b;
 }
 
 .simple-attach-btn {
   background: transparent;
   border: 1px solid #e2e8f0;
   color: #64748b;
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 .dark .simple-attach-btn {
   border-color: #334155;
@@ -7112,10 +7234,11 @@ onUnmounted(() => {
   background: transparent;
   border: none;
   outline: none;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   color: #1e293b;
-  padding: 0.5rem;
+  padding: 0.625rem;
   line-height: 1.4;
+  font-family: inherit;
 }
 .dark .simple-message-input {
   color: #f8fafc;
@@ -7132,19 +7255,19 @@ onUnmounted(() => {
   background: linear-gradient(135deg, #2d6a4f 0%, #40916c 100%);
   border: none;
   color: white;
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.15s ease;
-  box-shadow: 0 1px 2px rgba(45, 106, 79, 0.2);
+  box-shadow: 0 2px 4px rgba(45, 106, 79, 0.2);
 }
 .dark .simple-send-btn {
   background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%);
-  box-shadow: 0 1px 2px rgba(27, 67, 50, 0.2);
+  box-shadow: 0 2px 4px rgba(27, 67, 50, 0.2);
 }
 
 .simple-send-btn:hover:not(:disabled) {
@@ -7171,7 +7294,45 @@ onUnmounted(() => {
 }
 
 /* Mobile Responsive for Simple Design */
+@media (min-width: 1024px) {
+  .simple-modal-content {
+    max-width: 750px;
+    height: 90vh;
+    min-height: 600px;
+  }
+  
+  .simple-modal-header {
+    padding: 1.25rem 2rem;
+  }
+  
+  .simple-modal-body {
+    padding: 1.5rem 2rem;
+  }
+  
+  .simple-modal-footer {
+    padding: 1.25rem 2rem;
+  }
+  
+  .simple-message-bubble {
+    max-width: 65%;
+  }
+  
+  .simple-messages-container {
+    gap: 1.25rem;
+  }
+}
+
 @media (max-width: 768px) {
+  .modal-overlay {
+    padding: 0.5rem;
+  }
+  
+  .simple-modal-content {
+    height: 95vh;
+    min-height: 400px;
+    border-radius: 8px;
+  }
+  
   .simple-teacher-card {
     padding: 0.875rem;
   }
@@ -7262,5 +7423,34 @@ onUnmounted(() => {
   .simple-modal-title {
     font-size: 1.1rem;
   }
+}
+
+/* Additional Dark Mode Coverage for Modal Header */
+[data-theme="dark"] .modal-overlay .simple-modal-content .simple-modal-header {
+  background: #1b4332 !important;
+  background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%) !important;
+  color: #E8F5E8 !important;
+}
+
+[data-theme="dark"] .modal-overlay .simple-modal-content .simple-modal-header::after {
+  background: #1b4332;
+  background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%);
+}
+
+[data-theme="dark"] .modal-overlay .simple-modal-content .simple-modal-header * {
+  background: transparent !important;
+  color: #E8F5E8 !important;
+}
+
+[data-theme="dark"] .simple-modal-header input,
+[data-theme="dark"] .simple-modal-header textarea,
+[data-theme="dark"] .simple-modal-header .input,
+[data-theme="dark"] .simple-modal-header .search-input,
+[data-theme="dark"] .simple-modal-header [class*="input"],
+[data-theme="dark"] .simple-modal-header [class*="subject"] {
+  background: transparent !important;
+  color: #E8F5E8 !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 </style>
