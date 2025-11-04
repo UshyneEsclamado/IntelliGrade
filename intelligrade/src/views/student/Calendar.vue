@@ -1,14 +1,11 @@
 <template>
   <div class="calendar-container">
-    <!-- Loading Overlay matching Subjects.vue -->
-    <div v-if="loading" class="loading-overlay">
-      <div class="loading-content">
-        <div class="loading-spinner-container">
-          <div class="loading-spinner"></div>
-        </div>
-        <p class="loading-text">Loading your calendar...</p>
-        <p class="loading-subtext">Please wait a moment...</p>
+    <!-- Simple Loading (uniform with Messages.vue) -->
+    <div v-if="loading" class="simple-loading-messages">
+      <div class="simple-loading-spinner">
+        <div class="simple-spinner"></div>
       </div>
+      <p>Loading calendar...</p>
     </div>
 
     <!-- Error State -->
@@ -2594,6 +2591,56 @@ export default {
     flex-direction: row;
     width: 100%;
     justify-content: flex-end;
+  }
+}
+
+/* ==================== SIMPLE LOADING STYLES (uniform with Messages.vue) ==================== */
+.simple-loading-messages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 1rem;
+  color: #64748b;
+  min-height: 200px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(251, 255, 228, 0.95);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+}
+.dark .simple-loading-messages {
+  color: #94a3b8;
+  background: rgba(24, 28, 32, 0.95);
+}
+
+.simple-loading-spinner {
+  position: relative;
+}
+
+.simple-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e2e8f0;
+  border-top: 3px solid #2d6a4f;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+.dark .simple-spinner {
+  border-color: #334155;
+  border-top-color: #1b4332;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
   }
 }
 </style>
