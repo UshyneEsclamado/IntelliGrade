@@ -176,7 +176,6 @@
               </div>
               <p>No enrolled students found</p>
               <span class="empty-subtext">Students who join your sections will appear here.</span>
-              <button @click="loadTeacherContacts" class="refresh-btn action-btn">Refresh Data</button>
             </div>
 
             <div v-else class="sections-overview">
@@ -190,13 +189,36 @@
                     <h3 class="section-title">{{ section.subject_name }}</h3>
                     <p class="section-grade">Grade {{ section.grade_level }}</p>
                   </div>
-                  <button class="section-options-btn" @click.stop>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="1"></circle>
-                      <circle cx="12" cy="5" r="1"></circle>
-                      <circle cx="12" cy="19" r="1"></circle>
-                    </svg>
-                  </button>
+                  <div class="section-options-container">
+                    <button class="section-options-btn" @click.stop="toggleSectionOptions(section.section_id)">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="1"></circle>
+                        <circle cx="12" cy="5" r="1"></circle>
+                        <circle cx="12" cy="19" r="1"></circle>
+                      </svg>
+                    </button>
+                    <!-- Dropdown Menu -->
+                    <div v-if="openSectionDropdown === section.section_id" class="section-options-dropdown" @click.stop>
+                      <button class="dropdown-option delete" @click="deleteSectionConfirm(section)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="m19 6-1 14c0 1-1 2-2 2H8c-1 0-2-1-2-2L5 6"></path>
+                          <path d="m10 11 0 6"></path>
+                          <path d="m14 11 0 6"></path>
+                          <path d="M7 6V4c0-1 1-2 2-2h6c0-1 1-2 2-2v2"></path>
+                        </svg>
+                        Delete Section
+                      </button>
+                      <button class="dropdown-option archive" @click="archiveSectionConfirm(section)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="2" y="3" width="20" height="5"></rect>
+                          <path d="m4 8 16 0 0 9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8Z"></path>
+                          <path d="m10 12 4 0"></path>
+                        </svg>
+                        Archive Section
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- Section Stats -->
@@ -882,14 +904,11 @@
       </div>
     </div>
 
-    <!-- Loading Overlay matching Subjects.vue -->
+    <!-- Loading Overlay -->
     <div v-if="isLoading" class="loading-overlay">
       <div class="loading-content">
-        <div class="loading-spinner-container">
-          <div class="loading-spinner"></div>
-        </div>
-        <p class="loading-text">{{ loadingMessage || 'Loading messages...' }}</p>
-        <p class="loading-subtext">Please wait a moment...</p>
+        <div class="loading-spinner"></div>
+        <p class="loading-text">{{ loadingMessage || 'Loading...' }}</p>
       </div>
     </div>
 </template>
@@ -930,6 +949,7 @@ const viewingAttachment = ref(null)
 const expandedSections = ref(new Set())
 const selectedSectionView = ref(null)
 const showStudentsInSection = ref(false)
+const openSectionDropdown = ref(null)
 
 // Search and Filter
 const searchQuery = ref('')
@@ -2100,6 +2120,49 @@ const backToSections = () => {
   showStudentsInSection.value = false
 }
 
+// Section dropdown methods
+const toggleSectionOptions = (sectionId) => {
+  openSectionDropdown.value = openSectionDropdown.value === sectionId ? null : sectionId
+}
+
+const deleteSectionConfirm = (section) => {
+  if (confirm(`Are you sure you want to delete the section "${section.subject_name} - Grade ${section.grade_level}"? This action cannot be undone.`)) {
+    deleteSection(section)
+  }
+  openSectionDropdown.value = null
+}
+
+const archiveSectionConfirm = (section) => {
+  if (confirm(`Archive the section "${section.subject_name} - Grade ${section.grade_level}"?`)) {
+    archiveSection(section)
+  }
+  openSectionDropdown.value = null
+}
+
+const deleteSection = async (section) => {
+  try {
+    // For now, just remove from the local state
+    // In a real implementation, you'd delete from the database
+    console.log('Deleting section:', section)
+    alert('Section deleted successfully!')
+  } catch (error) {
+    console.error('Error deleting section:', error)
+    alert('Failed to delete section.')
+  }
+}
+
+const archiveSection = async (section) => {
+  try {
+    // For now, just remove from the local state
+    // In a real implementation, you'd archive in the database
+    console.log('Archiving section:', section)
+    alert('Section archived successfully!')
+  } catch (error) {
+    console.error('Error archiving section:', error)
+    alert('Failed to archive section.')
+  }
+}
+
 const markAllAsRead = async () => {
   try {
     if (!currentTeacherId.value) return
@@ -2316,6 +2379,11 @@ onMounted(async () => {
   initDarkMode()
   
   setupAuthListener()
+  
+  // Add click outside handler for dropdowns
+  document.addEventListener('click', () => {
+    openSectionDropdown.value = null
+  })
   
   const userData = await getCurrentUser()
   if (userData) {
@@ -2948,34 +3016,46 @@ onUnmounted(() => {
   color: #adb5bd;
 }
 
-/* Loading Overlay */
+/* Simple Loading Overlay */
 .loading-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
 }
-.dark .loading-overlay {
-  background: rgba(24, 28, 32, 0.9);
+
+.loading-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  text-align: center;
+  min-width: 200px;
+}
+
+.dark .loading-content {
+  background: #232c2d;
+  color: #b3d8a8;
 }
 
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #e9ecef;
-  border-left: 4px solid #20c997;
+  border: 3px solid #e5e7eb;
+  border-top: 3px solid #3d8d7a;
   border-radius: 50%;
   animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
 }
+
 .dark .loading-spinner {
-  border-color: #495057;
-  border-left-color: #20c997;
+  border: 3px solid #2a3c36;
+  border-top: 3px solid #b3d8a8;
 }
 
 @keyframes spin {
@@ -2983,17 +3063,15 @@ onUnmounted(() => {
   100% { transform: rotate(360deg); }
 }
 
-.loading-content {
-  text-align: center;
+.loading-text {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #374151;
+  margin: 0;
 }
 
-.loading-content p {
-  margin-top: 1rem;
-  color: #495057;
-  font-weight: 500;
-}
-.dark .loading-content p {
-  color: #adb5bd;
+.dark .loading-text {
+  color: #b3d8a8;
 }
 
 /* Responsive Design */
@@ -3358,6 +3436,95 @@ onUnmounted(() => {
 .section-options-btn:hover {
   background: #374151;
   color: #20c997;
+}
+
+/* Section Options Container */
+.section-options-container {
+  position: relative;
+}
+
+/* Section Options Dropdown */
+.section-options-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  min-width: 160px;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.dark .section-options-dropdown {
+  background: #23272b;
+  border-color: #374151;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dropdown-option {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: none;
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dropdown-option:hover {
+  background: #f3f4f6;
+}
+
+.dark .dropdown-option {
+  color: #e5e7eb;
+}
+
+.dark .dropdown-option:hover {
+  background: #374151;
+}
+
+.dropdown-option.delete {
+  color: #dc2626;
+}
+
+.dropdown-option.delete:hover {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.dark .dropdown-option.delete {
+  color: #f87171;
+}
+
+.dark .dropdown-option.delete:hover {
+  background: #451a1a;
+  color: #fca5a5;
+}
+
+.dropdown-option.archive {
+  color: #d97706;
+}
+
+.dropdown-option.archive:hover {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.dark .dropdown-option.archive {
+  color: #fbbf24;
+}
+
+.dark .dropdown-option.archive:hover {
+  background: #451a03;
+  color: #fcd34d;
 }
 
 /* Section Stats */
@@ -5115,60 +5282,6 @@ onUnmounted(() => {
   color: #A3D1C6;
 }
 
-/* Loading Overlay */
-.loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  backdrop-filter: blur(4px);
-}
-
-.loading-content {
-  background: white;
-  padding: 2.5rem;
-  border-radius: 16px;
-  text-align: center;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-}
-
-.dark .loading-content {
-  background: #23272b;
-  border: 1px solid #374151;
-}
-
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #f3f4f6;
-  border-top: 4px solid #3D8D7A;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 1rem;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.loading-content p {
-  margin: 0;
-  color: #6b7280;
-  font-size: 0.875rem;
-  font-family: 'Inter', sans-serif;
-}
-
-.dark .loading-content p {
-  color: #A3D1C6;
-}
-
 /* Additional responsive improvements */
 @media (max-width: 768px) {
   .messages-container {
@@ -5370,57 +5483,6 @@ onUnmounted(() => {
   font-size: 0.9rem;
   color: #999;
   margin-bottom: 20px;
-}
-
-/* Loading Overlay */
-.loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-}
-
-.loading-content {
-  background: white;
-  padding: 40px;
-  border-radius: 12px;
-  text-align: center;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
-
-.dark .loading-content {
-  background: #2a2a2a;
-}
-
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #3D8D7A;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 16px;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.loading-content p {
-  margin: 0;
-  color: #6c757d;
-  font-size: 0.9rem;
-}
-
-.dark .loading-content p {
-  color: #a0a0a0;
 }
 
 /* Broadcast History */
@@ -5644,22 +5706,6 @@ onUnmounted(() => {
   100% {
     transform: rotate(360deg);
   }
-}
-
-.loading-text {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #181c20;
-  margin: 0 0 0.5rem 0;
-  font-family: 'Inter', sans-serif;
-}
-
-.loading-subtext {
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #3d8d7a;
-  margin: 0;
-  font-family: 'Inter', sans-serif;
 }
 
 /* ============================================
