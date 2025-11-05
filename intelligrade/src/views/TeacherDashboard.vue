@@ -250,8 +250,13 @@ const initializeDarkMode = () => {
     document.documentElement.classList.add('dark');
     document.body.classList.add('dark-mode');
   } else {
+    // Default to light mode for new users or when dark mode is not enabled
     document.documentElement.classList.remove('dark');
     document.body.classList.remove('dark-mode');
+    // If no theme was saved, save light mode as default
+    if (savedTheme === null) {
+      localStorage.setItem('darkMode', 'false');
+    }
   }
 };
 
