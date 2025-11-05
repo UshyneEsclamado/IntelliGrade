@@ -1,36 +1,73 @@
 <template>
   <div class="messages-container" :class="{ 'dark': isDarkMode }">
-    <!-- Unified Header Card -->
-    <div class="header-card">
-      <div class="header-content">
-        <div class="header-left">
-          <div class="header-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-              <rect width="24" height="24" rx="6" fill="none"/>
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="#fff"/>
-            </svg>
-          </div>
-          <div>
-            <h1 class="header-title">Class Messaging</h1>
-            <p class="header-subtitle">Communicate with your students</p>
-          </div>
+    <!-- Simple Header Card -->
+    <div class="section-header-card">
+      <div class="section-header-left">
+        <div class="section-header-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
         </div>
-        <div class="header-actions">
-          <button @click="markAllAsRead" class="action-btn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <polyline points="20,6 9,17 4,12"/>
-            </svg>
-            Mark All Read
-          </button>
+        <div>
+          <div class="section-header-title">Teacher Messages</div>
+          <div class="section-header-sub">Connect with your students and manage communication</div>
         </div>
       </div>
     </div>
 
+    <!-- Filter and Search Controls -->
+    <div class="controls-section">
+      <div class="search-box">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" />
+        </svg>
+        <input 
+          type="text" 
+          v-model="searchQuery" 
+          placeholder="Search students or sections..."
+          class="search-input"
+        />
+      </div>
+      <div class="filter-tabs">
+        <button 
+          :class="['filter-tab', { 'active': currentTab === 'students' && !showArchive }]"
+          @click="currentTab = 'students'; showArchive = false; showBroadcastHistory = false"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+          My Students
+        </button>
+        <button 
+          :class="['filter-tab', { 'active': currentTab === 'broadcast' && !showBroadcastHistory }]"
+          @click="currentTab = 'broadcast'; showArchive = false; showBroadcastHistory = false"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 3h4a8 8 0 0 1 0 16v-2.5"/>
+            <path d="M6 14c2-2 3-3.5 3-6"/>
+          </svg>
+          Broadcast
+        </button>
+        <button 
+          :class="['filter-tab', { 'active': showArchive }]"
+          @click="currentTab = 'students'; showArchive = true; showBroadcastHistory = false"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="21 8 21 21 3 21 3 8"></polyline>
+            <rect x="1" y="3" width="22" height="5"></rect>
+            <line x1="10" y1="12" x2="14" y2="12"></line>
+          </svg>
+          Archive
+        </button>
+      </div>
+    </div>
+
     <!-- Debug Info -->
-    <div v-if="debugMode" class="content-card">
-      <div class="card-header">
+    <div v-if="debugMode" class="debug-section">
+      <div class="debug-header">
         <h3>Debug Information</h3>
-        <button @click="debugMode = false" class="close-btn">×</button>
+        <button @click="debugMode = false" class="close-debug-btn">×</button>
       </div>
       <div class="debug-content">
         <p><strong>Auth User ID:</strong> {{ currentUser?.id || 'None' }}</p>
@@ -41,43 +78,8 @@
       </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="content-card">
-      <div class="card-header">
-        <div class="tabs">
-          <button 
-            :class="['tab-btn', { 'active': currentTab === 'students' }]"
-            @click="currentTab = 'students'; showArchive = false"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-              <circle cx="8.5" cy="7" r="4"/>
-            </svg>
-            My Students
-          </button>
-          <button 
-            :class="['tab-btn', { 'active': currentTab === 'broadcast' }]"
-            @click="currentTab = 'broadcast'; showBroadcastHistory = false"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3 11l18-5v12L3 14v-3z"/>
-            </svg>
-            Broadcast Message
-          </button>
-          <button 
-            :class="['tab-btn', { 'active': showArchive }]"
-            @click="currentTab = 'students'; showArchive = true"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <rect x="1" y="3" width="22" height="5"></rect>
-            </svg>
-            Archive
-          </button>
-          <button @click="debugMode = true" class="debug-btn">Debug</button>
-        </div>
-      </div>
-
-      <div class="tab-contents-wrapper">
+    <!-- Main Content Area -->
+    <div class="content-area">
         <!-- Students Tab -->
         <div v-if="currentTab === 'students' && !showArchive" class="tab-content">
           <!-- Section Students View -->
@@ -241,10 +243,6 @@
 
         <!-- Archive Tab -->
         <div v-else-if="currentTab === 'students' && showArchive" class="tab-content">
-          <div class="archive-header">
-            <h3>Archived Conversations</h3>
-            <p>View and restore archived student conversations</p>
-          </div>
 
           <div v-if="archivedChats.length === 0" class="empty-state">
             <div class="empty-icon">
@@ -288,19 +286,21 @@
         <!-- Broadcast Tab -->
         <div v-else-if="currentTab === 'broadcast'" class="tab-content">
           <div v-if="!showBroadcastHistory" class="broadcast-section">
-            <!-- Enhanced Broadcast Header -->
-            <div class="broadcast-main-header">
-              <div class="broadcast-header-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3 11l18-5v12L3 14v-3z"/>
-                  <circle cx="12" cy="12" r="2"/>
-                </svg>
+            <!-- Simple Broadcast Header -->
+            <div class="simple-broadcast-header">
+              <div class="simple-header-content">
+                <div class="simple-header-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 11l18-5v12L3 14v-3z"/>
+                    <circle cx="12" cy="12" r="2"/>
+                  </svg>
+                </div>
+                <div class="simple-header-text">
+                  <h2>Send Broadcast Message</h2>
+                  <p>Announce to your entire section instantly</p>
+                </div>
               </div>
-              <div class="broadcast-header-text">
-                <h2>Send Broadcast Message</h2>
-                <p>Announce to your entire section instantly</p>
-              </div>
-              <button class="view-history-link" @click="showBroadcastHistory = true">
+              <button class="simple-history-btn" @click="showBroadcastHistory = true">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="12" cy="12" r="10"></circle>
                   <polyline points="12 6 12 12 16 14"></polyline>
@@ -571,20 +571,20 @@
               </div>
             </div>
 
-            <!-- Broadcast History Overview -->
+            <!-- Simple Broadcast History Overview -->
             <div v-else>
-              <div class="broadcast-history-header">
-                <div class="history-header-content">
-                  <button class="back-to-broadcast-btn" @click="showBroadcastHistory = false">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <div class="simple-history-header">
+                <div class="simple-history-content">
+                  <button class="simple-back-btn" @click="showBroadcastHistory = false">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <line x1="19" y1="12" x2="5" y2="12"></line>
                       <polyline points="12 19 5 12 12 5"></polyline>
                     </svg>
                     Back to Broadcast
                   </button>
-                  <div class="history-title-section">
-                    <div class="history-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <div class="simple-history-info">
+                    <div class="simple-history-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"></circle>
                         <polyline points="12 6 12 12 16 14"></polyline>
                       </svg>
@@ -594,9 +594,9 @@
                       <p>View and manage all your section announcements</p>
                     </div>
                   </div>
-                  <div class="history-stats-badge">
-                    <span class="stats-number">{{ groupedBroadcasts.length }}</span>
-                    <span class="stats-label">Sections</span>
+                  <div class="simple-stats-badge">
+                    <span class="simple-stats-number">{{ groupedBroadcasts.length }}</span>
+                    <span class="simple-stats-label">SECTIONS</span>
                   </div>
                 </div>
               </div>
@@ -618,64 +618,58 @@
                 </button>
               </div>
 
-              <div v-else class="broadcast-history-grid">
-                <div v-for="section in groupedBroadcasts" :key="section.section_id" class="broadcast-history-card" @click="viewBroadcastSection(section)">
-                  <div class="history-card-header">
-                    <div class="subject-badge">
-                      <div class="subject-icon">
+              <div v-else class="simple-history-grid">
+                <div v-for="section in groupedBroadcasts" :key="section.section_id" class="simple-history-card" @click="viewBroadcastSection(section)">
+                  <div class="simple-card-header">
+                    <div class="simple-subject-info">
+                      <div class="simple-subject-icon">
                         <span>{{ section.subject_name.charAt(0) }}</span>
                       </div>
-                      <div class="subject-info">
+                      <div class="simple-subject-details">
                         <h3>{{ section.subject_name }}</h3>
                         <p>{{ section.section_name }}</p>
                       </div>
                     </div>
-                    <div class="broadcast-counter">
-                      <div class="counter-bubble">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <path d="M3 11l18-5v12L3 14v-3z"/>
-                        </svg>
-                        <span>{{ section.broadcasts.length }}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div class="history-card-body">
-                    <div class="section-metadata">
-                      <div class="metadata-item">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                        </svg>
-                        <span>{{ section.section_code }}</span>
-                      </div>
-                      <div class="metadata-item">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-                        </svg>
-                        <span>Grade {{ section.grade_level }}</span>
-                      </div>
-                    </div>
-                    
-                    <div class="latest-broadcast-preview" v-if="section.broadcasts && section.broadcasts.length > 0">
-                      <div class="preview-label">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <circle cx="12" cy="12" r="10"></circle>
-                          <polyline points="12 6 12 12 16 14"></polyline>
-                        </svg>
-                        Latest
-                      </div>
-                      <p class="preview-text">{{ section.broadcasts[0].message }}</p>
-                      <span class="preview-date">{{ formatDate(section.broadcasts[0].sent_at) }}</span>
-                    </div>
-                  </div>
-                  
-                  <div class="history-card-footer">
-                    <button class="view-all-btn">
-                      <span>View All Broadcasts</span>
+                    <div class="simple-broadcast-count">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="9 18 15 12 9 6"></polyline>
+                        <path d="M3 11l18-5v12L3 14v-3z"/>
                       </svg>
-                    </button>
+                      <span>{{ section.broadcasts.length }}</span>
+                    </div>
+                  </div>
+                  
+                  <div class="simple-card-meta">
+                    <div class="simple-meta-item">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                      </svg>
+                      <span>{{ section.section_code }}</span>
+                    </div>
+                    <div class="simple-meta-item">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                      </svg>
+                      <span>Grade {{ section.grade_level }}</span>
+                    </div>
+                  </div>
+                  
+                  <div class="simple-latest-broadcast" v-if="section.broadcasts && section.broadcasts.length > 0">
+                    <div class="simple-latest-label">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                      </svg>
+                      Latest
+                    </div>
+                    <p class="simple-latest-text">{{ section.broadcasts[0].message }}</p>
+                    <span class="simple-latest-date">{{ formatDate(section.broadcasts[0].sent_at) }}</span>
+                  </div>
+                  
+                  <div class="simple-card-footer">
+                    <span>View All Broadcasts</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
                   </div>
                 </div>
               </div>
@@ -898,7 +892,6 @@
         <p class="loading-subtext">Please wait a moment...</p>
       </div>
     </div>
-  </div>
 </template>
 
 <script setup lang="ts">
@@ -908,7 +901,7 @@ import { supabase } from '@/supabase.js'
 import { useDarkMode } from '../../composables/useDarkMode.js'
 
 // Dark mode
-const { isDarkMode, toggleDarkMode } = useDarkMode()
+const { isDarkMode, toggleDarkMode, initDarkMode } = useDarkMode()
 
 const router = useRouter()
 
@@ -1207,6 +1200,7 @@ const loadContactsManually = async () => {
   try {
     console.log('Loading contacts manually for teacher:', currentTeacherId.value)
     
+    // @ts-expect-error - Supabase types need updating for complex joins
     const { data: contacts, error } = await supabase
       .from('enrollments')
       .select(`
@@ -1250,8 +1244,8 @@ const loadContactsManually = async () => {
     
     // Get auth_user_ids for students
     const studentProfileIds = contacts
-      .filter(e => e.students?.profile_id)
-      .map(e => e.students.profile_id)
+      .filter(e => e.students && (e.students as any).profile_id)
+      .map(e => (e.students as any).profile_id)
     
     let authUserMap = {}
     if (studentProfileIds.length > 0) {
@@ -1272,25 +1266,25 @@ const loadContactsManually = async () => {
       .filter(enrollment => {
         return enrollment.students && 
                enrollment.sections && 
-               enrollment.sections.subjects &&
-               enrollment.sections.subjects.teacher_id === currentTeacherId.value
+               (enrollment.sections as any).subjects &&
+               (enrollment.sections as any).subjects.teacher_id === currentTeacherId.value
       })
       .map(enrollment => ({
-        student_id: enrollment.students.id,
-        student_name: enrollment.students.full_name,
-        student_email: enrollment.students.email,
-        student_number: enrollment.students.student_id,
-        grade_level: enrollment.students.grade_level,
-        subject_id: enrollment.sections.subjects.id,
-        subject_name: enrollment.sections.subjects.name,
-        section_id: enrollment.sections.id,
-        section_name: enrollment.sections.name,
-        section_code: enrollment.sections.section_code,
+        student_id: (enrollment.students as any).id,
+        student_name: (enrollment.students as any).full_name,
+        student_email: (enrollment.students as any).email,
+        student_number: (enrollment.students as any).student_id,
+        grade_level: (enrollment.students as any).grade_level,
+        subject_id: (enrollment.sections as any).subjects.id,
+        subject_name: (enrollment.sections as any).subjects.name,
+        section_id: (enrollment.sections as any).id,
+        section_name: (enrollment.sections as any).name,
+        section_code: (enrollment.sections as any).section_code,
         enrolled_date: enrollment.enrolled_at,
         last_message_date: null,
         last_message: `Enrolled ${formatDate(enrollment.enrolled_at)}`,
         unread_count: 0,
-        auth_user_id: authUserMap[enrollment.students.profile_id] || null
+        auth_user_id: authUserMap[(enrollment.students as any).profile_id] || null
       }))
     
     console.log('Transformed contacts:', transformedContacts.length)
@@ -1803,22 +1797,27 @@ const markConversationAsRead = async (sectionId, studentId) => {
 // ================================
 
 const handleMessageFileSelect = (event) => {
+  // @ts-ignore - File input event handling
   const files = Array.from(event.target.files)
   
   files.forEach(file => {
     const reader = new FileReader()
+    // @ts-ignore - File type checking
     const fileType = file.type.startsWith('image/') ? 'image' : 'file'
     
     reader.onload = (e) => {
       messageAttachments.value.push({
         type: fileType,
+        // @ts-ignore - File properties
         name: file.name,
+        // @ts-ignore - File properties  
         size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
         url: e.target.result,
         file: file
       })
     }
     
+    // @ts-ignore - FileReader API
     reader.readAsDataURL(file)
   })
   
@@ -1826,22 +1825,27 @@ const handleMessageFileSelect = (event) => {
 }
 
 const handleBroadcastFileSelect = (event) => {
+  // @ts-ignore - File input event handling
   const files = Array.from(event.target.files)
   
   files.forEach(file => {
     const reader = new FileReader()
+    // @ts-ignore - File type checking
     const fileType = file.type.startsWith('image/') ? 'image' : 'file'
     
     reader.onload = (e) => {
       broadcastAttachments.value.push({
         type: fileType,
+        // @ts-ignore - File properties
         name: file.name,
+        // @ts-ignore - File properties
         size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
         url: e.target.result,
         file: file
       })
     }
     
+    // @ts-ignore - FileReader API
     reader.readAsDataURL(file)
   })
   
@@ -2135,6 +2139,7 @@ const formatTime = (dateString) => {
   
   const date = new Date(dateString)
   const now = new Date()
+  // @ts-expect-error - Date arithmetic
   const diffMs = now - date
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
   
@@ -2165,6 +2170,7 @@ const getPresenceStatus = (authUserId) => {
   
   const now = new Date()
   const lastSeen = new Date(presence.last_seen)
+  // @ts-expect-error - Date arithmetic
   const diffMs = now - lastSeen
   const diffMinutes = Math.floor(diffMs / (1000 * 60))
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
@@ -2305,6 +2311,10 @@ const setupAuthListener = () => {
 onMounted(async () => {
   console.log('Teacher messages component mounted')
   
+  // Initialize dark mode with proper defaults
+  const { initDarkMode } = useDarkMode()
+  initDarkMode()
+  
   setupAuthListener()
   
   const userData = await getCurrentUser()
@@ -2324,7 +2334,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 * {
   margin: 0;
@@ -2332,33 +2342,700 @@ onUnmounted(() => {
   box-sizing: border-box;
 }
 
-/* Main Container - Enhanced to match MySubjects.vue */
+/* Main Container */
 .messages-container {
   min-height: 100vh;
   background: #FBFFE4;
-  padding: 1.5rem;
+  padding: 1.5rem 2rem;
   font-family: 'Inter', sans-serif;
+  max-width: 1400px;
+  margin: 0 auto;
 }
-
 .dark .messages-container {
   background: #181c20;
 }
 
-/* Header Card - Enhanced to match MySubjects.vue style */
-.header-card {
-  background: #ffffff;
-  border: 1.5px solid #3D8D7A;
+/* Header Section (Simple Uniform Style) */
+.section-header-card {
+  background: white;
   border-radius: 16px;
-  padding: 1.5rem;
+  padding: 1.5rem 2.5rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 2px solid #A3D1C6;
+  width: 100%;
+  max-width: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.dark .section-header-card {
+  background: #23272b;
+  border: 2px solid #20c997;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
 
-.dark .header-card {
-  background: #23272b;
-  border: 1.5px solid #A3D1C6;
-  box-shadow: 0 2px 8px rgba(163, 209, 198, 0.1);
+.section-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
+
+.section-header-icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #A3D1C6 0%, #87C5B8 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 4px 12px rgba(163, 209, 198, 0.3);
+}
+.dark .section-header-icon {
+  background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
+}
+
+.section-header-title {
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: #2c3e50;
+  margin-bottom: 0.25rem;
+}
+.dark .section-header-title {
+  color: #ffffff;
+}
+
+.section-header-sub {
+  font-size: 1rem;
+  color: #6c757d;
+  font-weight: 400;
+}
+.dark .section-header-sub {
+  color: #adb5bd;
+}
+
+/* Header Actions */
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.simple-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e9ecef;
+  background: white;
+  color: #6c757d;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+.dark .simple-action-btn {
+  background: #2c3135;
+  border-color: #495057;
+  color: #adb5bd;
+}
+
+.simple-action-btn:hover {
+  border-color: #20c997;
+  background: rgba(32, 201, 151, 0.1);
+  color: #2c3e50;
+  transform: translateY(-1px);
+}
+.dark .simple-action-btn:hover {
+  border-color: #20c997;
+  background: rgba(32, 201, 151, 0.1);
+  color: #ffffff;
+}
+
+.simple-action-btn.primary {
+  border-color: #20c997;
+  background: #20c997;
+  color: white;
+  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.3);
+}
+.dark .simple-action-btn.primary {
+  border-color: #20c997;
+  background: #20c997;
+  color: #ffffff;
+}
+
+.simple-action-btn.icon-only {
+  padding: 0.75rem;
+}
+
+/* Controls Section */
+.controls-section {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-box {
+  position: relative;
+  flex: 1;
+  min-width: 300px;
+}
+
+.search-box svg {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6c757d;
+}
+.dark .search-box svg {
+  color: #adb5bd;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.875rem 1rem 0.875rem 3rem;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 400;
+  background: white;
+  color: #495057;
+  transition: all 0.2s ease;
+}
+.dark .search-input {
+  background: #2c3135;
+  border-color: #495057;
+  color: #ffffff;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #20c997;
+  box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.1);
+}
+.dark .search-input:focus {
+  border-color: #20c997;
+  box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.1);
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filter-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border: 2px solid #e9ecef;
+  background: white;
+  color: #6c757d;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+.dark .filter-tab {
+  background: #2c3135;
+  border-color: #495057;
+  color: #adb5bd;
+}
+
+.filter-tab:hover {
+  border-color: #20c997;
+  background: rgba(32, 201, 151, 0.1);
+  color: #2c3e50;
+  transform: translateY(-1px);
+}
+.dark .filter-tab:hover {
+  border-color: #20c997;
+  background: rgba(32, 201, 151, 0.1);
+  color: #ffffff;
+}
+
+.filter-tab.active {
+  border-color: #20c997;
+  background: #20c997;
+  color: white;
+  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.3);
+}
+.dark .filter-tab.active {
+  border-color: #20c997;
+  background: #20c997;
+  color: #ffffff;
+}
+
+.filter-tab.debug {
+  border-color: #ffc107;
+  color: #856404;
+}
+.dark .filter-tab.debug {
+  border-color: #ffc107;
+  color: #ffc107;
+}
+
+/* Debug Section */
+.debug-section {
+  background: white;
+  border: 2px solid #ffc107;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.dark .debug-section {
+  background: #23272b;
+  border-color: #ffc107;
+}
+
+.debug-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.debug-header h3 {
+  color: #856404;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+.dark .debug-header h3 {
+  color: #ffc107;
+}
+
+.close-debug-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #856404;
+  cursor: pointer;
+}
+.dark .close-debug-btn {
+  color: #ffc107;
+}
+
+.debug-content p {
+  margin-bottom: 0.5rem;
+  color: #495057;
+}
+.dark .debug-content p {
+  color: #adb5bd;
+}
+
+/* Content Area */
+.content-area {
+  min-height: 400px;
+}
+
+.tab-content {
+  width: 100%;
+}
+
+/* Section Overview Cards */
+.section-overview-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  margin-bottom: 1rem;
+}
+
+.section-overview-card:hover {
+  border-color: #20c997;
+  box-shadow: 0 2px 4px rgba(32, 201, 151, 0.08);
+  transform: translateY(-1px);
+}
+
+.dark .section-overview-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+.dark .section-overview-card:hover {
+  border-color: #20c997;
+  box-shadow: 0 2px 4px rgba(32, 201, 151, 0.08);
+}
+
+.section-icon {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #20c997 0%, #20c997 100%);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+.dark .section-title {
+  color: #f8fafc;
+}
+
+.section-grade {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 1rem;
+}
+.dark .section-grade {
+  color: #94a3b8;
+}
+
+.section-students-count {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+.dark .section-students-count {
+  color: #94a3b8;
+}
+
+.section-code-value {
+  background: #f1f5f9;
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 0.875rem;
+  color: #1e293b;
+  cursor: pointer;
+}
+.dark .section-code-value {
+  background: #334155;
+  color: #f8fafc;
+}
+
+.broadcast-quick-btn {
+  background: #20c997;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.broadcast-quick-btn:hover {
+  background: #17a085;
+}
+
+/* Section Students View */
+.section-students-view {
+  width: 100%;
+}
+
+.section-students-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+.dark .section-students-header {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.back-to-sections-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.back-to-sections-btn:hover {
+  border-color: #20c997;
+  color: #20c997;
+}
+.dark .back-to-sections-btn {
+  background: #334155;
+  border-color: #475569;
+  color: #94a3b8;
+}
+
+.section-students-info h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+.dark .section-students-info h3 {
+  color: #f8fafc;
+}
+
+.section-students-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+.dark .section-students-meta {
+  color: #94a3b8;
+}
+
+.section-broadcast-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #20c997;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.section-broadcast-btn:hover {
+  background: #17a085;
+}
+
+.section-students-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.section-student-item {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.section-student-item:hover {
+  border-color: #20c997;
+  box-shadow: 0 2px 4px rgba(32, 201, 151, 0.08);
+  transform: translateY(-1px);
+}
+
+.dark .section-student-item {
+  background: #1e293b;
+  border-color: #334155;
+}
+.dark .section-student-item:hover {
+  border-color: #20c997;
+}
+
+.section-student-item.has-unread {
+  border-left: 3px solid #dc3545;
+}
+
+.section-student-avatar {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #20c997 0%, #20c997 100%);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 1.1rem;
+  position: relative;
+}
+
+.online-indicator {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  background: #10b981;
+  border: 2px solid white;
+  border-radius: 50%;
+  animation: pulse-online 2s infinite;
+}
+
+.section-student-details {
+  flex: 1;
+}
+
+.section-student-name {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+.dark .section-student-name {
+  color: #f8fafc;
+}
+
+.section-student-email {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 0.25rem;
+}
+.dark .section-student-email {
+  color: #94a3b8;
+}
+
+.section-student-id {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-bottom: 0.25rem;
+}
+.dark .section-student-id {
+  color: #64748b;
+}
+
+.presence-status {
+  font-size: 0.75rem;
+  color: #10b981;
+}
+
+.section-last-message {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-top: 0.5rem;
+}
+.dark .section-last-message {
+  color: #94a3b8;
+}
+
+/* Empty States */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #6c757d;
+}
+.dark .empty-state {
+  color: #adb5bd;
+}
+
+.empty-state p {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #495057;
+}
+.dark .empty-state p {
+  color: #ffffff;
+}
+
+.empty-subtext {
+  font-size: 1rem;
+  color: #6c757d;
+}
+.dark .empty-subtext {
+  color: #adb5bd;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.dark .loading-overlay {
+  background: rgba(24, 28, 32, 0.9);
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e9ecef;
+  border-left: 4px solid #20c997;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+.dark .loading-spinner {
+  border-color: #495057;
+  border-left-color: #20c997;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-content {
+  text-align: center;
+}
+
+.loading-content p {
+  margin-top: 1rem;
+  color: #495057;
+  font-weight: 500;
+}
+.dark .loading-content p {
+  color: #adb5bd;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .messages-container {
+    padding: 1rem;
+  }
+  
+  .section-header-card {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .header-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .controls-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-box {
+    min-width: auto;
+  }
+  
+  .filter-tabs {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .filter-tab {
+    flex: 1;
+    min-width: 0;
+    padding: 0.75rem 0.5rem;
+    font-size: 0.85rem;
+  }
+}
+
+/* Keep existing modal and specialized component styles below this comment */
 
 .header-content {
   display: flex;
@@ -4986,113 +5663,124 @@ onUnmounted(() => {
 }
 
 /* ============================================
-   ENHANCED BROADCAST MESSAGE STYLES
+   SIMPLE BROADCAST MESSAGE STYLES
    ============================================ */
 
-/* Broadcast Main Header */
-.broadcast-main-header {
+/* Simple Broadcast Header */
+.simple-broadcast-header {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-  padding: 1.5rem;
-  background: linear-gradient(135deg, #3D8D7A 0%, #20c997 100%);
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(61, 141, 122, 0.2);
-  position: relative;
-  overflow: hidden;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(32,201,151,0.07);
 }
 
-.broadcast-main-header::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
-  pointer-events: none;
+.dark .simple-broadcast-header {
+  background: #23272b;
+  border-color: #374151;
 }
 
-.dark .broadcast-main-header {
-  background: linear-gradient(135deg, #20c997 0%, #18a577 100%);
+.simple-header-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
-.broadcast-header-icon {
-  width: 60px;
-  height: 60px;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
+.simple-header-icon {
+  width: 40px;
+  height: 40px;
+  background: #20c997;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.broadcast-header-text {
-  flex: 1;
-  color: white;
-}
-
-.broadcast-header-text h2 {
-  font-size: 1.75rem;
-  font-weight: 700;
+.simple-header-text h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
   margin: 0 0 0.25rem 0;
-  color: white;
+  color: #222;
   font-family: 'Inter', sans-serif;
 }
 
-.broadcast-header-text p {
-  font-size: 0.938rem;
-  margin: 0;
-  color: rgba(255, 255, 255, 0.9);
-  font-weight: 500;
+.dark .simple-header-text h2 {
+  color: #fff;
 }
 
-.view-history-link {
+.simple-header-text p {
+  font-size: 0.9rem;
+  margin: 0;
+  color: #666;
+  font-weight: 400;
+}
+
+.dark .simple-header-text p {
+  color: #A3D1C6;
+}
+
+.simple-history-btn {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  border: 1.5px solid rgba(255, 255, 255, 0.3);
-  border-radius: 12px;
-  color: white;
+  padding: 0.75rem 1rem;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  color: #059669;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   font-family: 'Inter', sans-serif;
 }
 
-.view-history-link:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.simple-history-btn:hover {
+  background: #f1f5f9;
+  border-color: #20c997;
+}
+
+.dark .simple-history-btn {
+  background: #374151;
+  border-color: #4b5563;
+  color: #20c997;
+}
+
+.dark .simple-history-btn:hover {
+  background: #4b5563;
+  border-color: #20c997;
 }
 
 /* Broadcast Form Container */
 .broadcast-form-container {
-  max-width: 800px;
-  margin: 0 auto;
+  max-width: 700px;
+  margin: 1.5rem auto;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 4px rgba(32,201,151,0.07);
+  padding: 2rem 0;
 }
 
 .broadcast-form-card {
-  background: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(32,201,151,0.07);
+  border: 1px solid #e5e7eb;
+  padding: 2rem 2rem 1.5rem 2rem;
+  margin: 0 2rem;
 }
 
 .dark .broadcast-form-card {
   background: #23272b;
-  border: 2px solid #374151;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border: 1px solid #374151;
+  box-shadow: 0 1px 4px rgba(32,201,151,0.13);
 }
 
 /* Form Fields */
@@ -5104,10 +5792,10 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.938rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 0.75rem;
+  font-size: 0.98rem;
+  font-weight: 500;
+  color: #222;
+  margin-bottom: 0.5rem;
   font-family: 'Inter', sans-serif;
 }
 
@@ -5130,17 +5818,34 @@ onUnmounted(() => {
   margin-left: 0.25rem;
 }
 
+/* Form Inputs */
+.form-select-enhanced, .form-textarea-enhanced {
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  margin-top: 0.5rem;
+  width: 100%;
+  transition: border-color 0.2s;
+  font-family: 'Inter', sans-serif;
+}
 
-.dark .form-select-enhanced {
+.form-select-enhanced:focus, .form-textarea-enhanced:focus {
+  border-color: #20c997;
+  outline: none;
+  background: #fff;
+}
+
+.dark .form-select-enhanced, .dark .form-textarea-enhanced {
   background: #1f2937;
   border-color: #374151;
   color: #A3D1C6;
 }
 
-.dark .form-select-enhanced:focus {
+.dark .form-select-enhanced:focus, .dark .form-textarea-enhanced:focus {
   border-color: #20c997;
   background: #23272b;
-  box-shadow: 0 0 0 4px rgba(32, 201, 151, 0.1);
 }
 
 .select-arrow {
@@ -5393,32 +6098,31 @@ onUnmounted(() => {
 /* Upload Button */
 .upload-btn {
   width: 100%;
-  padding: 1.5rem;
-  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-  border: 2px dashed #d1d5db;
-  border-radius: 12px;
+  padding: 1rem;
+  background: #f8fafc;
+  border: 1px dashed #d1d5db;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   font-family: 'Inter', sans-serif;
 }
 
 .upload-btn:hover {
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-  border-color: #3D8D7A;
-  transform: translateY(-2px);
+  background: #f1f5f9;
+  border-color: #20c997;
 }
 
 .dark .upload-btn {
-  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  background: #1f2937;
   border-color: #4b5563;
 }
 
 .dark .upload-btn:hover {
-  background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+  background: #374151;
   border-color: #20c997;
 }
 
@@ -5431,9 +6135,9 @@ onUnmounted(() => {
 }
 
 .upload-btn span {
-  font-size: 0.938rem;
-  font-weight: 600;
-  color: #1f2937;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #444;
 }
 
 .dark .upload-btn span {
@@ -5441,72 +6145,68 @@ onUnmounted(() => {
 }
 
 .upload-hint {
-  font-size: 0.813rem !important;
+  font-size: 0.8rem !important;
   font-weight: 400 !important;
   color: #9ca3af !important;
 }
 
 /* Broadcast Preview Box */
 .broadcast-preview {
-  padding: 1.25rem;
-  background: linear-gradient(135deg, #dbeafe 0%, #ddd6fe 100%);
-  border: 2px solid #93c5fd;
-  border-radius: 12px;
-  margin-bottom: 1.5rem;
-  animation: slideDown 0.3s ease;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  padding: 1rem 1.5rem;
+  margin-top: 1.5rem;
+  box-shadow: none;
 }
 
 .dark .broadcast-preview {
-  background: linear-gradient(135deg, #1e3a8a 0%, #5b21b6 100%);
-  border-color: #60a5fa;
+  background: #23272b;
+  border-color: #374151;
 }
 
 .preview-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  font-weight: 500;
+  color: #059669;
   margin-bottom: 0.5rem;
-  color: #1e40af;
-  font-weight: 700;
-  font-size: 0.938rem;
+  font-size: 0.98rem;
 }
 
 .dark .preview-header {
-  color: #93c5fd;
+  color: #20c997;
 }
 
 .preview-header svg {
-  color: #3b82f6;
+  color: #059669;
 }
 
 .dark .preview-header svg {
-  color: #60a5fa;
+  color: #20c997;
 }
 
 .preview-text {
-  margin: 0;
-  font-size: 0.875rem;
-  color: #1e40af;
-  font-weight: 500;
+  margin-top: 0.5rem;
+  color: #444;
+  font-size: 0.98rem;
+  font-weight: 400;
   line-height: 1.5;
 }
 
 .dark .preview-text {
-  color: #bfdbfe;
+  color: #A3D1C6;
 }
 
 /* Form Actions */
 .form-actions {
   display: flex;
   gap: 1rem;
-  justify-content: flex-end;
   margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 2px solid #e5e7eb;
-}
-
-.dark .form-actions {
-  border-top-color: #374151;
+  justify-content: flex-end;
+  border-top: none;
+  padding-top: 0;
 }
 
 .cancel-btn-enhanced,
@@ -5514,84 +6214,60 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.875rem 1.75rem;
-  border-radius: 12px;
-  font-size: 0.938rem;
-  font-weight: 600;
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   font-family: 'Inter', sans-serif;
-  border: 2px solid transparent;
+  border: none;
 }
 
 .cancel-btn-enhanced {
-  background: white;
-  border-color: #e5e7eb;
-  color: #6b7280;
+  background: #fff;
+  color: #059669;
+  border: 1px solid #e5e7eb;
 }
 
 .cancel-btn-enhanced:hover {
-  background: #f9fafb;
-  border-color: #d1d5db;
-  color: #1f2937;
-  transform: translateY(-2px);
+  background: #f8fafc;
+  border-color: #20c997;
 }
 
 .dark .cancel-btn-enhanced {
-  background: #1f2937;
+  background: #23272b;
   border-color: #374151;
-  color: #9ca3af;
+  color: #20c997;
 }
 
 .dark .cancel-btn-enhanced:hover {
   background: #374151;
-  border-color: #4b5563;
-  color: #e5e7eb;
+  border-color: #20c997;
 }
 
 .send-btn-enhanced {
-  background: linear-gradient(135deg, #3D8D7A 0%, #20c997 100%);
-  color: white;
-  border: none;
-  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
-  position: relative;
-  overflow: hidden;
-}
-
-.send-btn-enhanced::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-  transition: left 0.5s ease;
-}
-
-.send-btn-enhanced:hover::before {
-  left: 100%;
-}
-
-.send-btn-enhanced:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(61, 141, 122, 0.4);
-}
-
-.send-btn-enhanced:disabled {
-  background: #d1d5db;
-  color: #9ca3af;
-  cursor: not-allowed;
-  transform: none;
+  background: #20c997;
+  color: #fff;
   box-shadow: none;
 }
 
-.send-btn-enhanced:disabled::before {
-  display: none;
+.send-btn-enhanced:hover {
+  background: #18a577;
+}
+
+.send-btn-enhanced:disabled {
+  background: #e5e7eb;
+  color: #aaa;
+  cursor: not-allowed;
 }
 
 .dark .send-btn-enhanced {
-  background: linear-gradient(135deg, #20c997 0%, #18a577 100%);
+  background: #20c997;
+}
+
+.dark .send-btn-enhanced:hover {
+  background: #18a577;
 }
 
 .dark .send-btn-enhanced:disabled {
@@ -5702,74 +6378,137 @@ onUnmounted(() => {
   outline-color: #20c997;
 }
 /* ============================================
-   BROADCAST HISTORY - MODERN REDESIGN
+   SIMPLE BROADCAST HISTORY STYLES
    ============================================ */
 
-/* Broadcast History Header */
-.broadcast-history-header {
-  background: linear-gradient(135deg, #3D8D7A 0%, #20c997 100%);
-  border-radius: 16px;
-  padding: 2rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.2);
-  position: relative;
-  overflow: hidden;
-  animation: slideDown 0.5s ease;
-}
-
-.broadcast-history-header::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -10%;
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
-  pointer-events: none;
-}
-
-.dark .broadcast-history-header {
-  background: linear-gradient(135deg, #20c997 0%, #18a577 100%);
-  box-shadow: 0 8px 32px rgba(32, 201, 151, 0.2);
-}
-
-.history-header-content {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  position: relative;
-  z-index: 1;
-}
-
-.back-to-broadcast-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  border: 1.5px solid rgba(255, 255, 255, 0.3);
+/* Simple History Header */
+.simple-history-header {
+  background: #fff;
+  border: 1px solid #e5e7eb;
   border-radius: 12px;
-  color: white;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-family: 'Inter', sans-serif;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 4px rgba(32,201,151,0.07);
 }
 
-.back-to-broadcast-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateX(-4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+.dark .simple-history-header {
+  background: #23272b;
+  border-color: #374151;
 }
 
-.history-title-section {
-  flex: 1;
+.simple-history-content {
   display: flex;
   align-items: center;
   gap: 1rem;
+  justify-content: space-between;
+}
+
+.simple-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  color: #059669;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.simple-back-btn:hover {
+  background: #f1f5f9;
+  border-color: #20c997;
+}
+
+.dark .simple-back-btn {
+  background: #374151;
+  border-color: #4b5563;
+  color: #20c997;
+}
+
+.dark .simple-back-btn:hover {
+  background: #4b5563;
+  border-color: #20c997;
+}
+
+.simple-history-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.simple-history-icon {
+  width: 40px;
+  height: 40px;
+  background: #20c997;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: white;
+  flex-shrink: 0;
+}
+
+.simple-history-info h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+  color: #222;
+  font-family: 'Inter', sans-serif;
+}
+
+.dark .simple-history-info h2 {
+  color: #fff;
+}
+
+.simple-history-info p {
+  font-size: 0.9rem;
+  margin: 0;
+  color: #666;
+  font-weight: 400;
+}
+
+.dark .simple-history-info p {
+  color: #A3D1C6;
+}
+
+.simple-stats-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  min-width: 80px;
+}
+
+.dark .simple-stats-badge {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.simple-stats-number {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #20c997;
+  line-height: 1;
+}
+
+.simple-stats-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #666;
+  margin-top: 0.25rem;
+}
+
+.dark .simple-stats-label {
+  color: #A3D1C6;
 }
 
 .history-icon {
@@ -5897,256 +6636,230 @@ onUnmounted(() => {
   background: linear-gradient(135deg, #20c997 0%, #18a577 100%);
 }
 
-/* Broadcast History Grid */
-.broadcast-history-grid {
+/* Simple History Grid */
+.simple-history-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: 1.5rem;
-  animation: fadeIn 0.5s ease;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1rem;
 }
 
-.broadcast-history-card {
-  background: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 1.5rem;
+.simple-history-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.25rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   position: relative;
-  overflow: hidden;
 }
 
-.broadcast-history-card::before {
+.simple-history-card::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
-  width: 4px;
+  width: 3px;
   height: 100%;
-  background: linear-gradient(180deg, #3D8D7A 0%, #20c997 100%);
+  background: #20c997;
+  border-radius: 12px 0 0 12px;
   transform: scaleY(0);
-  transition: transform 0.3s ease;
+  transition: transform 0.2s ease;
 }
 
-.broadcast-history-card:hover {
-  border-color: #3D8D7A;
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(61, 141, 122, 0.15);
+.simple-history-card:hover {
+  border-color: #20c997;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.1);
 }
 
-.broadcast-history-card:hover::before {
+.simple-history-card:hover::before {
   transform: scaleY(1);
 }
 
-.dark .broadcast-history-card {
+.dark .simple-history-card {
   background: #23272b;
-  border: 2px solid #374151;
+  border-color: #374151;
 }
 
-.dark .broadcast-history-card:hover {
+.dark .simple-history-card:hover {
   border-color: #20c997;
-  box-shadow: 0 8px 24px rgba(32, 201, 151, 0.15);
+  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.15);
 }
 
-/* History Card Header */
-.history-card-header {
+/* Simple Card Header */
+.simple-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1rem;
   padding-bottom: 1rem;
-  border-bottom: 2px solid #f3f4f6;
+  border-bottom: 1px solid #f3f4f6;
 }
 
-.dark .history-card-header {
+.dark .simple-card-header {
   border-bottom-color: #374151;
 }
 
-.subject-badge {
+.simple-subject-info {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
   flex: 1;
 }
 
-.subject-icon {
-  width: 56px;
-  height: 56px;
-  background: linear-gradient(135deg, #3D8D7A 0%, #20c997 100%);
-  border-radius: 14px;
+.simple-subject-icon {
+  width: 40px;
+  height: 40px;
+  background: #20c997;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 1.5rem;
-  font-weight: 700;
-  flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.2);
-}
-
-.dark .subject-icon {
-  background: linear-gradient(135deg, #20c997 0%, #18a577 100%);
-}
-
-.subject-info h3 {
   font-size: 1.125rem;
-  font-weight: 700;
-  color: #1f2937;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.simple-subject-details h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #222;
   margin: 0 0 0.25rem 0;
   font-family: 'Inter', sans-serif;
 }
 
-.dark .subject-info h3 {
+.dark .simple-subject-details h3 {
+  color: #fff;
+}
+
+.simple-subject-details p {
+  font-size: 0.875rem;
+  color: #666;
+  margin: 0;
+  font-weight: 400;
+}
+
+.dark .simple-subject-details p {
   color: #A3D1C6;
 }
 
-.subject-info p {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin: 0;
-  font-weight: 500;
-}
-
-.dark .subject-info p {
-  color: #9ca3af;
-}
-
-.broadcast-counter {
-  flex-shrink: 0;
-}
-
-.counter-bubble {
+.simple-broadcast-count {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%);
-  border: 2px solid #93c5fd;
-  border-radius: 999px;
-  color: #1e40af;
-  font-weight: 700;
-  font-size: 1rem;
+  padding: 0.5rem 0.75rem;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  color: #059669;
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 
-.dark .counter-bubble {
-  background: linear-gradient(135deg, #1e3a8a 0%, #5b21b6 100%);
-  border-color: #60a5fa;
-  color: #bfdbfe;
+.dark .simple-broadcast-count {
+  background: #374151;
+  border-color: #4b5563;
+  color: #20c997;
 }
 
-/* History Card Body */
-.history-card-body {
-  margin-bottom: 1rem;
-}
-
-.section-metadata {
+/* Simple Card Metadata */
+.simple-card-meta {
   display: flex;
   gap: 1rem;
   margin-bottom: 1rem;
 }
 
-.metadata-item {
+.simple-meta-item {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 0.813rem;
-  font-weight: 600;
-  color: #6b7280;
+  color: #666;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
-.dark .metadata-item {
-  background: #1f2937;
-  border-color: #374151;
-  color: #9ca3af;
+.dark .simple-meta-item {
+  color: #A3D1C6;
 }
 
-.metadata-item svg {
-  color: #3D8D7A;
-  flex-shrink: 0;
-}
-
-.dark .metadata-item svg {
+.simple-meta-item svg {
   color: #20c997;
 }
 
-/* Latest Broadcast Preview */
-.latest-broadcast-preview {
-  background: linear-gradient(135deg, #f0fdf4 0%, #dbeafe 100%);
-  border: 1.5px solid #86efac;
-  border-radius: 12px;
+/* Simple Latest Broadcast */
+.simple-latest-broadcast {
+  margin-bottom: 1rem;
   padding: 1rem;
-  margin-top: 1rem;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
 }
 
-.dark .latest-broadcast-preview {
-  background: linear-gradient(135deg, #064e3b 0%, #1e3a8a 100%);
-  border-color: #10b981;
+.dark .simple-latest-broadcast {
+  background: #374151;
+  border-color: #4b5563;
 }
 
-.preview-label {
+.simple-latest-label {
   display: flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: 0.5rem;
+  color: #059669;
   font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #166534;
+  font-weight: 600;
   margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.dark .preview-label {
-  color: #6ee7b7;
+.dark .simple-latest-label {
+  color: #20c997;
 }
 
-.preview-label svg {
-  color: #22c55e;
-}
-
-.dark .preview-label svg {
-  color: #34d399;
-}
-
-.preview-text {
+.simple-latest-text {
+  color: #444;
   font-size: 0.875rem;
-  color: #1f2937;
   margin: 0 0 0.5rem 0;
-  line-height: 1.5;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
-.dark .preview-text {
+.dark .simple-latest-text {
   color: #e5e7eb;
 }
 
-.preview-date {
+.simple-latest-date {
+  color: #666;
   font-size: 0.75rem;
-  color: #6b7280;
-  font-weight: 600;
+  font-weight: 500;
 }
 
-.dark .preview-date {
+.dark .simple-latest-date {
   color: #9ca3af;
 }
 
-/* History Card Footer */
-.history-card-footer {
-  padding-top: 1rem;
-  border-top: 2px solid #f3f4f6;
+/* Simple Card Footer */
+.simple-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #059669;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
-.dark .history-card-footer {
-  border-top-color: #374151;
+.dark .simple-card-footer {
+  color: #20c997;
 }
 
-.view-all-btn {
+/* Clean Simple Card Footer Button */
+.simple-view-all-btn {
   width: 100%;
   display: flex;
   align-items: center;
@@ -6154,21 +6867,30 @@ onUnmounted(() => {
   gap: 0.5rem;
   padding: 0.75rem 1rem;
   background: transparent;
-  border: 2px solid #e5e7eb;
-  border-radius: 10px;
-  color: #3D8D7A;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  color: #059669;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   font-family: 'Inter', sans-serif;
 }
 
-.view-all-btn:hover {
-  background: #3D8D7A;
-  border-color: #3D8D7A;
-  color: white;
-  transform: translateX(4px);
+.simple-view-all-btn:hover {
+  background: #f8fafc;
+  border-color: #20c997;
+  color: #059669;
+}
+
+.dark .simple-view-all-btn {
+  border-color: #4b5563;
+  color: #20c997;
+}
+
+.dark .simple-view-all-btn:hover {
+  background: #374151;
+  border-color: #20c997;
 }
 
 .dark .view-all-btn {

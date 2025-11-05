@@ -10,8 +10,8 @@ export function useDarkMode() {
     if (savedMode !== null) {
       isDarkMode.value = savedMode === 'true'
     } else {
-      // Check system preference
-      isDarkMode.value = window.matchMedia('(prefers-color-scheme: dark)').matches
+      // Default to light mode for new users (teacher login)
+      isDarkMode.value = false
     }
     applyDarkMode()
   }
