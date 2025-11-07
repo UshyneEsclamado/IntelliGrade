@@ -56,7 +56,7 @@
         </div>
         <div>
           <div class="stat-number">{{ totalClasses }}</div>
-          <div class="stat-label">Total Classes</div>
+          <div class="stat-label">Total Subjects</div>
         </div>
       </div>
 
@@ -155,34 +155,19 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { useTeacherAuth } from '../../composables/useTeacherAuth.js'
-import { useTeacherData } from '../../composables/useTeacherData.js'
-
-// Use composables
-const { teacherProfile, isAuthenticated, isLoading } = useTeacherAuth()
-const { 
-  dashboardStats, 
-  fetchDashboardStats, 
-  getCachedDashboardStats,
-  setupAutoRefresh 
-} = useTeacherData()
+import { supabase } from '../../supabase.js'
 
 // Local state
 const notifications = ref([])
 const showNotifDropdown = ref(false)
-
-// Computed properties
-const fullName = computed(() => {
-  if (isLoading.value) return 'Loading...'
-  return teacherProfile.value?.full_name || 'Teacher'
-})
-
-const isLoadingName = computed(() => isLoading.value)
-
-const totalClasses = computed(() => dashboardStats.value?.totalClasses || 0)
-const gradedToday = computed(() => dashboardStats.value?.gradedToday || 0)
-const pendingReviews = computed(() => dashboardStats.value?.pendingReviews || 0)
-const assessmentsToGrade = computed(() => dashboardStats.value?.assessmentsToGrade || [])
+const fullName = ref('Teacher')
+const isLoadingName = ref(false)
+const totalClasses = ref(0)
+const gradedToday = ref(0)
+const pendingReviews = ref(0)
+const assessmentsToGrade = ref([])
+const teacherId = ref(null)
+const userId = ref(null)
 
 // Methods
 const toggleNotifDropdown = () => {
@@ -194,32 +179,173 @@ const gradeAssessment = (assessment) => {
   // TODO: Implement grade assessment functionality
 }
 
-const loadDashboardData = async () => {
-  if (!isAuthenticated.value) {
-    console.warn('Cannot load dashboard data: not authenticated')
+// Load teacher profile
+const loadTeacherProfile = async () => {
+  try {
+    console.log('🔍 Loading teacher profile...')
+    
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      console.error('❌ No user found:', userError)
+      return false
+    }
+    
+    userId.value = user.id
+    console.log('✅ User ID:', user.id)
+    
+    // Get profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, full_name, role')
+      .eq('auth_user_id', user.id)
+      .single()
+    
+    if (profileError || !profile) {
+      console.error('❌ Profile error:', profileError)
+      return false
+    }
+    
+    console.log('✅ Profile found:', profile)
+    
+    // Get teacher data
+    const { data: teacher, error: teacherError } = await supabase
+      .from('teachers')
+      .select('id, full_name')
+      .eq('profile_id', profile.id)
+      .single()
+    
+    if (teacherError || !teacher) {
+      console.error('❌ Teacher error:', teacherError)
+      return false
+    }
+    
+    teacherId.value = teacher.id
+    fullName.value = teacher.full_name || profile.full_name || 'Teacher'
+    
+    console.log('✅ Teacher loaded:', { id: teacher.id, name: fullName.value })
+    return true
+    
+  } catch (error) {
+    console.error('❌ Error loading profile:', error)
+    return false
+  }
+}
+
+// Load dashboard stats
+const loadDashboardStats = async () => {
+  if (!teacherId.value) {
+    console.warn('⚠️ No teacher ID, cannot load stats')
     return
   }
-
-  // Try to use cached data first for instant display
-  const cached = getCachedDashboardStats()
-  if (cached && (cached.totalClasses > 0 || cached.assessmentsToGrade.length > 0)) {
-    console.log('Using cached dashboard data for instant display')
+  
+  try {
+    console.log('📊 Loading dashboard stats for teacher:', teacherId.value)
+    
+    // Get total classes (subjects)
+    const { data: subjects, error: subjectsError } = await supabase
+      .from('subjects')
+      .select('id')
+      .eq('teacher_id', teacherId.value)
+      .eq('is_active', true)
+    
+    if (!subjectsError && subjects) {
+      totalClasses.value = subjects.length
+      console.log('📚 Total classes:', subjects.length)
+    }
+    
+    // Get graded today
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const todayISO = today.toISOString()
+    
+    const { data: graded, error: gradedError } = await supabase
+      .from('quiz_attempts')
+      .select('id, quiz_id!inner(teacher_id)')
+      .eq('quiz_id.teacher_id', teacherId.value)
+      .eq('status', 'graded')
+      .gte('graded_at', todayISO)
+    
+    if (!gradedError && graded) {
+      gradedToday.value = graded.length
+      console.log('✅ Graded today:', graded.length)
+    }
+    
+    // Get pending assessments
+    const { data: quizzes, error: quizzesError } = await supabase
+      .from('quizzes')
+      .select(`
+        id,
+        title,
+        subject_id,
+        section_id,
+        subjects!inner(name),
+        sections!inner(name)
+      `)
+      .eq('teacher_id', teacherId.value)
+      .eq('status', 'published')
+    
+    if (!quizzesError && quizzes) {
+      const assessmentsWithSubmissions = []
+      
+      for (const quiz of quizzes) {
+        // Get submitted attempts
+        const { data: attempts } = await supabase
+          .from('quiz_attempts')
+          .select('id, student_id')
+          .eq('quiz_id', quiz.id)
+          .eq('status', 'submitted')
+        
+        if (attempts && attempts.length > 0) {
+          // Get total students in section
+          const { data: enrollments } = await supabase
+            .from('enrollments')
+            .select('student_id')
+            .eq('section_id', quiz.section_id)
+            .eq('status', 'active')
+          
+          assessmentsWithSubmissions.push({
+            id: quiz.id,
+            title: quiz.title,
+            className: `${quiz.subjects.name} - ${quiz.sections.name}`,
+            studentsSubmitted: attempts.length,
+            totalStudents: enrollments?.length || 0,
+            sectionId: quiz.section_id,
+            subjectId: quiz.subject_id
+          })
+        }
+      }
+      
+      assessmentsToGrade.value = assessmentsWithSubmissions
+      pendingReviews.value = assessmentsWithSubmissions.length
+      
+      console.log('📝 Assessments to grade:', assessmentsWithSubmissions.length)
+    }
+    
+    console.log('✅ Dashboard stats loaded successfully')
+    
+  } catch (error) {
+    console.error('❌ Error loading dashboard stats:', error)
   }
-
-  // Fetch fresh data in the background
-  await fetchDashboardStats()
 }
 
 // Lifecycle
 onMounted(async () => {
-  if (isAuthenticated.value) {
-    await loadDashboardData()
+  console.log('🚀 Dashboard mounting...')
+  
+  const profileLoaded = await loadTeacherProfile()
+  
+  if (profileLoaded) {
+    await loadDashboardStats()
     
-    // Setup auto-refresh
-    const cleanup = setupAutoRefresh()
+    // Auto-refresh every 30 seconds
+    const intervalId = setInterval(() => {
+      loadDashboardStats()
+    }, 30000)
     
     // Cleanup on unmount
-    return cleanup
+    return () => {
+      clearInterval(intervalId)
+    }
   }
 })
 </script>
