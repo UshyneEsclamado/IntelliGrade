@@ -1418,7 +1418,9 @@
     <!-- Loading Overlay -->
     <div v-if="isLoading" class="loading-overlay">
       <div class="loading-content">
-        <div class="loading-spinner"></div>
+        <div class="loading-spinner-container">
+          <div class="loading-spinner"></div>
+        </div>
         <p class="loading-text">{{ loadingMessage || 'Loading...' }}</p>
       </div>
     </div>
@@ -3616,62 +3618,106 @@ onUnmounted(() => {
   }
 }
 
-/* Simple Loading Overlay */
+/* Enhanced Loading Overlay - Matches MessagesPage */
 .loading-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(251, 255, 228, 0.95);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.dark .loading-overlay {
+  background: rgba(24, 28, 32, 0.95);
 }
 
 .loading-content {
   background: white;
-  padding: 2rem;
-  border-radius: 8px;
+  padding: 3rem 4rem;
+  border-radius: 20px;
   text-align: center;
-  min-width: 200px;
+  box-shadow: 0 20px 60px rgba(61, 141, 122, 0.15);
+  border: 2px solid #a3d1c6;
+  animation: slideUp 0.4s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .dark .loading-content {
-  background: #232c2d;
-  color: #b3d8a8;
+  background: #23272b;
+  border-color: #374151;
+}
+
+.loading-spinner-container {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
 }
 
 .loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid #e5e7eb;
-  border-top: 3px solid #3d8d7a;
+  width: 80px;
+  height: 80px;
+  border: 5px solid rgba(61, 141, 122, 0.1);
+  border-left: 5px solid #3d8d7a;
+  border-top: 5px solid #20c997;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin: 0 auto 1rem;
-}
-
-.dark .loading-spinner {
-  border: 3px solid #2a3c36;
-  border-top: 3px solid #b3d8a8;
+  margin: 0 auto;
+  box-shadow: 0 0 20px rgba(61, 141, 122, 0.1);
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.dark .loading-spinner {
+  border: 5px solid rgba(32, 201, 151, 0.1);
+  border-left: 5px solid #20c997;
+  border-top: 5px solid #18a577;
+  box-shadow: 0 0 20px rgba(32, 201, 151, 0.1);
 }
 
 .loading-text {
-  font-size: 1rem;
-  font-weight: 500;
-  color: #374151;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
   margin: 0;
+  letter-spacing: 0.025em;
 }
 
 .dark .loading-text {
-  color: #b3d8a8;
+  color: #A3D1C6;
 }
 
 /* ============================================
