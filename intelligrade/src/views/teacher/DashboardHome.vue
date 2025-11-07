@@ -61,6 +61,18 @@
       </div>
 
       <div class="stat-card">
+        <div class="stat-icon stat-students">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M16 17v2H2v-2s0-4 7-4 7 4 7 4m-3.5-9.5A3.5 3.5 0 1 0 9 11a3.5 3.5 0 0 0 3.5-3.5m3.44 5.5A5.32 5.32 0 0 1 18 17v2h4v-2s0-3.63-6.06-4M15 4a3.39 3.39 0 0 0-1.93.59 5 5 0 0 1 0 5.82A3.39 3.39 0 0 0 15 11a3.5 3.5 0 0 0 0-7z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="stat-number">{{ totalStudents }}</div>
+          <div class="stat-label">Total Students</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
         <div class="stat-icon stat-graded">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M22 11.08V12a10 10 0 1 1-5.93-8.66"></path>
@@ -163,6 +175,7 @@ const showNotifDropdown = ref(false)
 const fullName = ref('Teacher')
 const isLoadingName = ref(false)
 const totalClasses = ref(0)
+const totalStudents = ref(0)
 const gradedToday = ref(0)
 const pendingReviews = ref(0)
 const assessmentsToGrade = ref([])
@@ -250,7 +263,30 @@ const loadDashboardStats = async () => {
     
     if (!subjectsError && subjects) {
       totalClasses.value = subjects.length
-      console.log('📚 Total classes:', subjects.length)
+      console.log('📚 Total subjects:', subjects.length)
+    }
+    
+    // Get total students across all sections
+    const { data: allSections, error: sectionsError } = await supabase
+      .from('sections')
+      .select('id')
+      .eq('teacher_id', teacherId.value)
+    
+    if (!sectionsError && allSections) {
+      let studentCount = 0
+      
+      for (const section of allSections) {
+        const { data: enrollments } = await supabase
+          .from('enrollments')
+          .select('id')
+          .eq('section_id', section.id)
+          .eq('status', 'active')
+        
+        studentCount += enrollments?.length || 0
+      }
+      
+      totalStudents.value = studentCount
+      console.log('👥 Total students:', studentCount)
     }
     
     // Get graded today
@@ -573,7 +609,7 @@ onMounted(async () => {
 /* Stats Grid */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
   margin-bottom: 1.5rem;
 }
@@ -605,6 +641,7 @@ onMounted(async () => {
 }
 
 .stat-classes { background: #3D8D7A; }
+.stat-students { background: #20c997; }
 .stat-graded { background: #B3D8A8; }
 .stat-pending { background: #A3D1C6; }
 
