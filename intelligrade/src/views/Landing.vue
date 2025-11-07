@@ -536,16 +536,16 @@ onUnmounted(() => {
   animation: fadeInRight 1.2s ease-out;
 }
 
+
 .navbar-links a {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 1.05rem;
-  font-weight: 600;
+  font-weight: 500;
   color: #355c4c;
-  padding: 0.65rem 1.8rem;
-  border-radius: 10px;
-  background: #f8faf9;
-  border: 1.5px solid #e0ede5;
-  box-shadow: 0 2px 6px rgba(53, 92, 76, 0.08);
+  padding: 0.6rem 1.5rem;
+  border-radius: 8px;
+  background: transparent;
+  border: 1.5px solid #b3d8a8;
   outline: none;
   display: flex;
   align-items: center;
@@ -553,47 +553,33 @@ onUnmounted(() => {
   position: relative;
   white-space: nowrap;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
   text-decoration: none;
 }
 
 .navbar-links a:hover,
 .navbar-links a.active {
-  background: #ffffff;
-  border-color: #20c997;
-  color: #2d4a39;
-  box-shadow: 0 3px 12px rgba(32, 201, 151, 0.12);
-  transform: translateY(-1px);
+  background: #f8faf9;
+  border-color: #218c5a;
+  color: #218c5a;
 }
 
 .link-underline {
-  position: absolute;
-  bottom: -1px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 2px;
-  background: #20c997;
-  transition: width 0.3s ease;
-}
-
-.navbar-links a:hover .link-underline,
-.navbar-links a.active .link-underline {
-  width: 80%;
+  display: none;
 }
 
 .sign-in-btn {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: linear-gradient(135deg, #355c4c 0%, #218c5a 100%) !important;
-  color: white !important;
-  font-weight: 700;
+  background: #218c5a !important;
+  color: #fff !important;
+  font-weight: 600;
   font-size: 1.05rem;
-  border-radius: 10px;
-  padding: 0.65rem 1.8rem;
+  border-radius: 8px;
+  padding: 0.6rem 1.5rem;
   text-decoration: none;
-  box-shadow: 0 4px 16px rgba(53, 92, 76, 0.2);
-  transition: all 0.25s ease;
-  border: none !important;
+  border: 1.5px solid #218c5a !important;
+  box-shadow: none;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
   position: relative;
   overflow: hidden;
   white-space: nowrap;
@@ -604,24 +590,10 @@ onUnmounted(() => {
   margin-left: 0.5rem;
 }
 
-.btn-shine {
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.8s ease;
-}
-
-.sign-in-btn:hover .btn-shine {
-  left: 100%;
-}
-
 .sign-in-btn:hover {
-  background: linear-gradient(135deg, #218c5a 0%, #20c997 100%) !important;
-  box-shadow: 0 6px 20px rgba(32, 201, 151, 0.25);
-  transform: translateY(-1px);
+  background: #176b44 !important;
+  border-color: #176b44 !important;
+  color: #fff !important;
 }
 
 .hero-section {
