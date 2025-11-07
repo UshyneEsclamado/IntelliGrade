@@ -266,27 +266,41 @@ const loadDashboardStats = async () => {
       console.log('📚 Total subjects:', subjects.length)
     }
     
-    // Get total students across all sections
-    const { data: allSections, error: sectionsError } = await supabase
+    // Get total students across all sections taught by this teacher
+    // First, get all sections for this teacher's subjects
+    const { data: teacherSections, error: sectionsError } = await supabase
       .from('sections')
-      .select('id')
-      .eq('teacher_id', teacherId.value)
+      .select(`
+        id,
+        subject_id,
+        subjects!inner(teacher_id)
+      `)
+      .eq('subjects.teacher_id', teacherId.value)
     
-    if (!sectionsError && allSections) {
-      let studentCount = 0
+    if (!sectionsError && teacherSections && teacherSections.length > 0) {
+      console.log('📋 Found sections:', teacherSections.length)
       
-      for (const section of allSections) {
-        const { data: enrollments } = await supabase
-          .from('enrollments')
-          .select('id')
-          .eq('section_id', section.id)
-          .eq('status', 'active')
-        
-        studentCount += enrollments?.length || 0
+      // Get unique student count across all sections
+      const sectionIds = teacherSections.map(s => s.id)
+      
+      const { data: enrollments, error: enrollError } = await supabase
+        .from('enrollments')
+        .select('student_id')
+        .in('section_id', sectionIds)
+        .eq('status', 'active')
+      
+      if (!enrollError && enrollments) {
+        // Count unique students (in case a student is in multiple sections)
+        const uniqueStudents = new Set(enrollments.map(e => e.student_id))
+        totalStudents.value = uniqueStudents.size
+        console.log('👥 Total unique students:', uniqueStudents.size)
+        console.log('� Total enrollments:', enrollments.length)
+      } else {
+        console.error('❌ Enrollment error:', enrollError)
       }
-      
-      totalStudents.value = studentCount
-      console.log('👥 Total students:', studentCount)
+    } else {
+      console.log('⚠️ No sections found for teacher')
+      if (sectionsError) console.error('❌ Sections error:', sectionsError)
     }
     
     // Get graded today
