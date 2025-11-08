@@ -833,7 +833,14 @@
           <!-- Subject Card Header with Menu -->
           <div class="subject-card-header">
             <div class="subject-title-area" @click="selectSubject(subject)">
-              <div class="subject-icon" :title="subject.subject_name">
+              <div 
+                class="subject-icon" 
+                :title="subject.subject_name"
+                :style="{
+                  background: getSubjectIconColor(subject.subject_name || subject.name || 'N').bg,
+                  boxShadow: `0 2px 6px ${getSubjectIconColor(subject.subject_name || subject.name || 'N').shadow}`
+                }"
+              >
                 <span class="subject-initial">{{ (subject.subject_name || subject.name || 'N').charAt(0) }}</span>
               </div>
               <div class="subject-info">
@@ -876,9 +883,19 @@
             </div>
           </div>
           
-          <div class="subject-divider"></div>
-          <div class="subject-stats-container" @click="selectSubject(subject)">
-            <p class="subject-stats-simple">{{ subject.section_count }} sections • {{ subject.total_students }} students</p>
+          <!-- Enhanced content area -->
+          <div class="subject-content-enhanced">
+            <div class="subject-stats-row">
+              <div class="stat-item">
+                <div class="stat-number">{{ subject.section_count }}</div>
+                <div class="stat-label">Sections</div>
+              </div>
+              <div class="stat-divider"></div>
+              <div class="stat-item">
+                <div class="stat-number">{{ subject.total_students }}</div>
+                <div class="stat-label">Students</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -922,7 +939,13 @@
           <div class="section-card-header">
             <!-- Section icon and title -->
             <div class="section-title-area" @click="selectSection(section)">
-              <div class="section-icon">
+              <div 
+                class="section-icon"
+                :style="{
+                  background: getSectionIconColor(section.section_name, section.grade_level).bg,
+                  boxShadow: `0 2px 6px ${getSectionIconColor(section.section_name, section.grade_level).shadow}`
+                }"
+              >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
                 </svg>
@@ -1559,6 +1582,65 @@ const availableGrades = computed(() => {
   const grades = [...new Set(selectedSubject.value.sections.map(section => section.grade_level))]
   return grades.sort((a, b) => a - b)
 })
+
+// ============================================================
+// COLOR GENERATION FOR SUBJECT ICONS
+// ============================================================
+const getSubjectIconColor = (subjectName) => {
+  const colors = [
+    { bg: 'linear-gradient(135deg, #10b981, #059669)', shadow: 'rgba(16, 185, 129, 0.3)' }, // Green
+    { bg: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', shadow: 'rgba(59, 130, 246, 0.3)' }, // Blue
+    { bg: 'linear-gradient(135deg, #f59e0b, #d97706)', shadow: 'rgba(245, 158, 11, 0.3)' }, // Orange
+    { bg: 'linear-gradient(135deg, #ef4444, #dc2626)', shadow: 'rgba(239, 68, 68, 0.3)' }, // Red
+    { bg: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', shadow: 'rgba(139, 92, 246, 0.3)' }, // Purple
+    { bg: 'linear-gradient(135deg, #06b6d4, #0891b2)', shadow: 'rgba(6, 182, 212, 0.3)' }, // Cyan
+    { bg: 'linear-gradient(135deg, #84cc16, #65a30d)', shadow: 'rgba(132, 204, 22, 0.3)' }, // Lime
+    { bg: 'linear-gradient(135deg, #f97316, #ea580c)', shadow: 'rgba(249, 115, 22, 0.3)' }, // Orange
+    { bg: 'linear-gradient(135deg, #ec4899, #db2777)', shadow: 'rgba(236, 72, 153, 0.3)' }, // Pink
+    { bg: 'linear-gradient(135deg, #6366f1, #4f46e5)', shadow: 'rgba(99, 102, 241, 0.3)' }, // Indigo
+  ]
+  
+  // Generate a consistent index based on subject name
+  let hash = 0
+  for (let i = 0; i < subjectName.length; i++) {
+    const char = subjectName.charCodeAt(i)
+    hash = ((hash << 5) - hash) + char
+    hash = hash & hash // Convert to 32bit integer
+  }
+  
+  const index = Math.abs(hash) % colors.length
+  return colors[index]
+}
+
+// ============================================================
+// COLOR GENERATION FOR SECTION ICONS
+// ============================================================
+const getSectionIconColor = (sectionName, gradeLevel) => {
+  const colors = [
+    { bg: 'linear-gradient(135deg, #10b981, #059669)', shadow: 'rgba(16, 185, 129, 0.3)' }, // Green
+    { bg: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', shadow: 'rgba(59, 130, 246, 0.3)' }, // Blue
+    { bg: 'linear-gradient(135deg, #f59e0b, #d97706)', shadow: 'rgba(245, 158, 11, 0.3)' }, // Orange
+    { bg: 'linear-gradient(135deg, #ef4444, #dc2626)', shadow: 'rgba(239, 68, 68, 0.3)' }, // Red
+    { bg: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', shadow: 'rgba(139, 92, 246, 0.3)' }, // Purple
+    { bg: 'linear-gradient(135deg, #06b6d4, #0891b2)', shadow: 'rgba(6, 182, 212, 0.3)' }, // Cyan
+    { bg: 'linear-gradient(135deg, #84cc16, #65a30d)', shadow: 'rgba(132, 204, 22, 0.3)' }, // Lime
+    { bg: 'linear-gradient(135deg, #f97316, #ea580c)', shadow: 'rgba(249, 115, 22, 0.3)' }, // Orange
+    { bg: 'linear-gradient(135deg, #ec4899, #db2777)', shadow: 'rgba(236, 72, 153, 0.3)' }, // Pink
+    { bg: 'linear-gradient(135deg, #6366f1, #4f46e5)', shadow: 'rgba(99, 102, 241, 0.3)' }, // Indigo
+  ]
+  
+  // Generate a consistent index based on section name and grade level
+  const combinedString = `${sectionName}-${gradeLevel}`
+  let hash = 0
+  for (let i = 0; i < combinedString.length; i++) {
+    const char = combinedString.charCodeAt(i)
+    hash = ((hash << 5) - hash) + char
+    hash = hash & hash // Convert to 32bit integer
+  }
+  
+  const index = Math.abs(hash) % colors.length
+  return colors[index]
+}
 
 // ============================================================
 // FETCH SUBJECTS - MAIN FUNCTION
@@ -2746,14 +2828,13 @@ onUnmounted(() => {
 .subject-icon {
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, #10b981, #059669);
   border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+  transition: transform 0.2s ease;
 }
 
 .subject-initial {
@@ -2828,6 +2909,75 @@ onUnmounted(() => {
 /* Subject Stats Container */
 .subject-stats-container {
   padding: 1rem 1.2rem 1.2rem 1.2rem;
+}
+
+/* Enhanced Subject Content Area */
+.subject-content-enhanced {
+  padding: 16px 20px;
+  border-top: 1px solid #e5e7eb;
+  background: rgba(249, 250, 251, 0.5);
+  margin-top: auto;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dark .subject-content-enhanced {
+  border-top-color: #374151;
+  background: rgba(31, 41, 55, 0.5);
+}
+
+.subject-content-enhanced:hover {
+  background: rgba(249, 250, 251, 0.8);
+}
+
+.dark .subject-content-enhanced:hover {
+  background: rgba(31, 41, 55, 0.8);
+}
+
+.subject-stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
+.stat-item {
+  text-align: center;
+  flex: 1;
+}
+
+.stat-number {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+.dark .stat-number {
+  color: #f3f4f6;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.dark .stat-label {
+  color: #9ca3af;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 32px;
+  background: #e5e7eb;
+  flex-shrink: 0;
+}
+
+.dark .stat-divider {
+  background: #374151;
 }
 
 .subject-stats-simple {
@@ -3074,13 +3224,11 @@ onUnmounted(() => {
 .section-icon {
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, #3D8D7A, #B3D8A8);
   border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
   transition: all 0.3s ease;
   flex-shrink: 0;
 }
@@ -3394,7 +3542,6 @@ onUnmounted(() => {
   justify-content: center;
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, #10b981, #059669);
   border-radius: 12px;
   color: white;
 }
