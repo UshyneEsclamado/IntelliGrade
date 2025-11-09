@@ -146,25 +146,7 @@
 
           <!-- Sections Overview -->
           <div v-else>
-            <div class="section-actions">
-              <div class="search-bar">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon">
-                  <circle cx="11" cy="11" r="8"></circle>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-                <input type="text" v-model="searchQuery" placeholder="Search students or sections..." class="search-input" />
-              </div>
-              <div class="action-buttons horizontal-align">
-                <div class="filter-section">
-                  <select v-model="selectedSection" class="section-filter">
-                    <option value="">All Sections</option>
-                    <option v-for="section in uniqueSections" :key="section.section_id" :value="section.section_id">
-                      {{ section.section_name }} - {{ section.subject_name }}
-                    </option>
-                  </select>
-                </div>
-              </div>
-            </div>
+            <!-- Removed redundant search bar and section filter -->
             
             <!-- Students grouped by section -->
             <div v-if="groupedStudents.length === 0" class="empty-state">
@@ -179,7 +161,7 @@
             </div>
 
             <div v-else class="sections-overview">
-              <div v-for="section in groupedStudents" :key="section.section_id" class="section-overview-card" @click="viewSectionStudents(section)">
+              <div v-for="section in (groupedStudents as any[])" :key="section.section_id" class="section-overview-card" @click="viewSectionStudents(section)">
                 <!-- Subject Icon and Title -->
                 <div class="section-card-header">
                   <div class="section-icon">
@@ -331,151 +313,164 @@
               </button>
             </div>
             
-            <!-- Enhanced Broadcast Form -->
-            <div class="broadcast-form-container">
-              <div class="broadcast-form-card">
-                <!-- Section Selection -->
-                <div class="form-field">
-                  <label class="form-label">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                      <circle cx="8.5" cy="7" r="4"/>
-                      <path d="M20 8v6M23 11h-6"/>
-                    </svg>
-                    Select Section
-                  </label>
-                  <div class="select-wrapper">
-                    <select v-model="broadcastSection" class="form-select-enhanced">
-                      <option value="" disabled>Choose a section to broadcast...</option>
-                      <option v-for="section in uniqueSections" :key="section.section_id" :value="section.section_id">
-                        {{ section.section_name }} - {{ section.subject_name }} (Grade {{ section.grade_level }})
-                      </option>
-                    </select>
-                    <svg class="select-arrow" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="6 9 12 15 18 9"></polyline>
-                    </svg>
-                  </div>
-                  
-                  <!-- Selected Section Info -->
-                  <div v-if="broadcastSection" class="selected-section-info">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                      <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                    </svg>
-                    <span>Broadcasting to all students in selected section</span>
-                  </div>
-                </div>
-
-                <!-- Message Input -->
-                <div class="form-field">
-                  <label class="form-label">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                    </svg>
-                    Your Message
-                  </label>
-                  <div class="textarea-wrapper">
-                    <textarea 
-                      v-model="broadcastMessage" 
-                      placeholder="Type your announcement here... Make it clear and engaging for your students."
-                      class="form-textarea-enhanced"
-                      rows="6"
-                      maxlength="500"
-                    ></textarea>
-                    <div class="textarea-footer">
-                      <span class="char-count" :class="{ 'limit-near': broadcastMessage.length > 450 }">
-                        {{ broadcastMessage.length }} / 500 characters
-                      </span>
+            <!-- Full Screen Enhanced Broadcast Form -->
+            <div class="broadcast-form-fullscreen">
+              <div class="broadcast-form-columns">
+                <!-- Left Column: Form Fields -->
+                <div class="broadcast-form-left">
+                  <!-- Section Selection -->
+                  <div class="broadcast-form-row">
+                    <div class="form-group-compact">
+                      <label>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                          <circle cx="8.5" cy="7" r="4"/>
+                          <path d="M20 8v6M23 11h-6"/>
+                        </svg>
+                        Select Section
+                      </label>
+                      <select v-model="broadcastSection" class="form-input-compact">
+                        <option value="" disabled>Choose a section to broadcast...</option>
+                        <option v-for="section in uniqueSections" :key="section.section_id" :value="section.section_id">
+                          {{ section.section_name }} - {{ section.subject_name }} (Grade {{ section.grade_level }})
+                        </option>
+                      </select>
                     </div>
                   </div>
+
+                  <!-- Message Input -->
+                  <div class="broadcast-form-row">
+                    <div class="form-group-compact">
+                      <label>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        Your Message
+                      </label>
+                      <textarea 
+                        v-model="broadcastMessage" 
+                        placeholder="Type your announcement here... Make it clear and engaging for your students."
+                        class="form-textarea-compact"
+                        maxlength="500"
+                      ></textarea>
+                      <div class="char-count-inline">{{ broadcastMessage.length }} / 500 characters</div>
+                    </div>
+                  </div>
+
+                  <!-- File Upload Row -->
+                  <div class="broadcast-form-row">
+                    <div class="form-group-compact">
+                      <label>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                        </svg>
+                        Attachments (Optional)
+                      </label>
+                    </div>
+                    <input 
+                      type="file" 
+                      ref="broadcastFileInput" 
+                      @change="handleBroadcastFileSelect" 
+                      multiple 
+                      accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
+                      style="display: none"
+                    />
+                    <button class="upload-button-inline" @click="($refs.broadcastFileInput as HTMLInputElement)?.click()">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                      </svg>
+                      Add Files
+                    </button>
+                  </div>
+
+                  <!-- Action Buttons -->
+                  <div class="action-buttons-fullwidth">
+                    <button class="btn-cancel-full" @click="cancelBroadcast()">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                      Cancel
+                    </button>
+                    <button 
+                      class="btn-send-full"
+                      @click="sendBroadcastMessage"
+                      :disabled="!broadcastMessage.trim() || !broadcastSection"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15.46 22 11 13 2 9.54 22 2"></polygon>
+                      </svg>
+                      Send Broadcast
+                    </button>
+                  </div>
                 </div>
 
-                <!-- Attachment Area -->
-                <div class="form-field">
-                  <label class="form-label">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-                    </svg>
-                    Attachments <span class="optional-label">(Optional)</span>
-                  </label>
+                <!-- Right Column: Preview & Attachments -->
+                <div class="broadcast-form-right">
+                  <!-- Preview Section -->
+                  <div class="preview-section-compact">
+                    <h4>Preview</h4>
+                    <div v-if="broadcastMessage.trim()" class="preview-content">
+                      <p>{{ broadcastMessage }}</p>
+                    </div>
+                    <div v-else class="preview-placeholder">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                      </svg>
+                      <span>Your message preview will appear here</span>
+                    </div>
+                  </div>
 
-                  <!-- Attachments Preview -->
-                  <div v-if="broadcastAttachments.length > 0" class="attachments-grid">
-                    <div v-for="(att, idx) in broadcastAttachments" :key="idx" class="attachment-card">
-                      <div class="attachment-preview">
-                        <img v-if="att.type === 'image'" :src="att.url" class="attachment-img" />
-                        <div v-else class="attachment-file-icon">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
-                            <polyline points="13 2 13 9 20 9"/>
-                          </svg>
+                  <!-- Attachments Section -->
+                  <div class="attachments-section-compact">
+                    <h4>Attachments</h4>
+                    <div v-if="broadcastAttachments.length > 0" class="attachments-preview-grid">
+                      <div v-for="(att, idx) in broadcastAttachments" :key="idx" class="attachment-preview-card">
+                        <div class="attachment-preview-thumb">
+                          <img v-if="att.type === 'image'" :src="att.url" class="attachment-preview-img" />
+                          <div v-else class="attachment-file-preview">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                              <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                              <polyline points="13 2 13 9 20 9"/>
+                            </svg>
+                          </div>
                         </div>
-                        <button @click="broadcastAttachments.splice(idx, 1)" class="remove-attachment">
+                        <div class="attachment-preview-info">
+                          <p class="attachment-preview-name">{{ att.name }}</p>
+                          <span class="attachment-preview-size">{{ att.size }}</span>
+                        </div>
+                        <button @click="broadcastAttachments.splice(idx, 1)" class="attachment-remove-btn">
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="18" y1="6" x2="6" y2="18"></line>
                             <line x1="6" y1="6" x2="18" y2="18"></line>
                           </svg>
                         </button>
                       </div>
-                      <div class="attachment-info">
-                        <p class="attachment-name">{{ att.name }}</p>
-                        <span class="attachment-size">{{ att.size }}</span>
-                      </div>
+                    </div>
+                    <div v-else class="attachments-placeholder">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                      </svg>
+                      <span>No attachments selected</span>
                     </div>
                   </div>
 
-                  <!-- Upload Button -->
-                  <input 
-                    type="file" 
-                    ref="broadcastFileInput" 
-                    @change="handleBroadcastFileSelect" 
-                    multiple 
-                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
-                    style="display: none"
-                  />
-                  <button class="upload-btn" @click="$refs.broadcastFileInput.click()">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                      <polyline points="17 8 12 3 7 8"></polyline>
-                      <line x1="12" y1="3" x2="12" y2="15"></line>
-                    </svg>
-                    <span>Choose Files to Attach</span>
-                    <span class="upload-hint">Images, PDFs, Documents</span>
-                  </button>
-                </div>
-
-                <!-- Preview Box (when message ready) -->
-                <div v-if="broadcastMessage.trim() && broadcastSection" class="broadcast-preview">
-                  <div class="preview-header">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <polyline points="12 6 12 12 16 14"></polyline>
-                    </svg>
-                    <span>Ready to Broadcast</span>
+                  <!-- Ready Status -->
+                  <div v-if="broadcastMessage.trim() && broadcastSection" class="ready-status">
+                    <div class="ready-indicator">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                      </svg>
+                      Ready to broadcast
+                    </div>
                   </div>
-                  <p class="preview-text">Your message will be sent to all students in the selected section instantly.</p>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="form-actions">
-                  <button class="cancel-btn-enhanced" @click="cancelBroadcast()">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <line x1="18" y1="6" x2="6" y2="18"></line>
-                      <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                    Cancel
-                  </button>
-                  <button 
-                    class="send-btn-enhanced"
-                    @click="sendBroadcastMessage"
-                    :disabled="!broadcastMessage.trim() || !broadcastSection"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <line x1="22" y1="2" x2="11" y2="13"></line>
-                      <polygon points="22 2 15.46 22 11 13 2 9.54 22 2"></polygon>
-                    </svg>
-                    Send Broadcast
-                  </button>
                 </div>
               </div>
             </div>
@@ -510,10 +505,10 @@
                 </div>
               </div>
 
-              <div class="broadcast-messages-list">
-                <div v-for="broadcast in selectedBroadcastSection?.broadcasts || []" :key="broadcast.id" class="broadcast-message-card">
-                  <div class="broadcast-card-header">
-                    <div class="broadcast-timestamp">
+              <div class="broadcast-messages-list-enhanced">
+                <div v-for="broadcast in selectedBroadcastSection?.broadcasts || []" :key="broadcast.id" class="broadcast-message-card-enhanced">
+                  <div class="broadcast-card-header-enhanced">
+                    <div class="broadcast-timestamp-enhanced">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"></circle>
                         <polyline points="12 6 12 12 16 14"></polyline>
@@ -548,7 +543,7 @@
                         <button class="dropdown-item danger" @click="deleteBroadcast(broadcast.id)">
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="3 6 5 6 21 6"></polyline>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2h4a2 2 0 0 1 2 2v2"></path>
                           </svg>
                           Delete
                         </button>
@@ -556,35 +551,67 @@
                     </div>
                   </div>
                   
-                  <div class="broadcast-card-body">
-                    <div class="broadcast-icon-badge">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 11l18-5v12L3 14v-3z"/>
-                      </svg>
+                  <div class="broadcast-content-enhanced">
+                    <div class="broadcast-message-section">
+                      <div class="broadcast-icon-badge-enhanced">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M3 11l18-5v12L3 14v-3z"/>
+                        </svg>
+                      </div>
+                      <p class="broadcast-message-text-enhanced">{{ broadcast.message }}</p>
                     </div>
-                    <p class="broadcast-message-text">{{ broadcast.message }}</p>
-                  </div>
-                  
-                  <div v-if="broadcast.attachments && broadcast.attachments.length > 0" class="broadcast-attachments-section">
-                    <div class="attachments-header">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-                      </svg>
-                      <span>{{ broadcast.attachments.length }} attachment{{ broadcast.attachments.length > 1 ? 's' : '' }}</span>
-                    </div>
-                    <div class="attachments-grid-view">
-                      <div v-for="(att, idx) in broadcast.attachments" :key="idx" class="attachment-preview-card" @click="viewAttachment(att)">
-                        <div class="attachment-thumbnail">
-                          <img v-if="att.type === 'image'" :src="att.url" class="attachment-thumb-image" />
-                          <div v-else class="attachment-file-preview">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                              <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
-                              <polyline points="13 2 13 9 20 9"/>
-                            </svg>
+                    
+                    <!-- Enhanced Attachments with Full Screen Utilization -->
+                    <div v-if="broadcast.attachments && broadcast.attachments.length > 0" class="attachments-section-enhanced">
+                      <div class="attachments-header-enhanced">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                        </svg>
+                        <span>{{ broadcast.attachments.length }} attachment{{ broadcast.attachments.length > 1 ? 's' : '' }}</span>
+                      </div>
+                      
+                      <!-- Enhanced Attachments Gallery with Full Space Usage -->
+                      <div class="attachments-gallery-enhanced">
+                        <div v-for="(att, idx) in broadcast.attachments" :key="idx" class="attachment-item-enhanced" @click="viewAttachment(att)">
+                          <div v-if="att.type === 'image'" class="image-attachment-enhanced">
+                            <img :src="att.url" class="attachment-image-full" :alt="att.name" />
+                            <div class="image-overlay-enhanced">
+                              <div class="overlay-content">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                  <circle cx="11" cy="11" r="8"></circle>
+                                  <path d="m21 21-4.35-4.35"></path>
+                                </svg>
+                                <span>View Full Size</span>
+                              </div>
+                            </div>
+                            <div class="image-info-badge">
+                              <span class="image-filename">{{ att.name }}</span>
+                            </div>
                           </div>
-                        </div>
-                        <div class="attachment-info-overlay">
-                          <span class="attachment-filename">{{ att.name }}</span>
+                          
+                          <div v-else class="file-attachment-enhanced">
+                            <div class="file-preview-enhanced">
+                              <div class="file-icon-large">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                  <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                                  <polyline points="13 2 13 9 20 9"/>
+                                </svg>
+                              </div>
+                              <div class="file-type-badge">{{ att.name.split('.').pop()?.toUpperCase() || 'FILE' }}</div>
+                            </div>
+                            <div class="file-details-enhanced">
+                              <p class="file-name-enhanced">{{ att.name }}</p>
+                              <span class="file-size-enhanced">{{ att.size || 'Unknown size' }}</span>
+                              <button class="download-btn-enhanced" @click.stop="downloadAttachment(att)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                  <polyline points="7 10 12 15 17 10"></polyline>
+                                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                Download
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -640,58 +667,95 @@
                 </button>
               </div>
 
-              <div v-else class="simple-history-grid">
-                <div v-for="section in groupedBroadcasts" :key="section.section_id" class="simple-history-card" @click="viewBroadcastSection(section)">
-                  <div class="simple-card-header">
-                    <div class="simple-subject-info">
-                      <div class="simple-subject-icon">
+              <div v-else class="history-grid-enhanced">
+                <div v-for="section in (groupedBroadcasts as any[])" :key="section.section_id" class="history-card-enhanced" @click="viewBroadcastSection(section)">
+                  <div class="card-header-enhanced">
+                    <div class="subject-info-enhanced">
+                      <div class="subject-avatar-enhanced">
                         <span>{{ section.subject_name.charAt(0) }}</span>
                       </div>
-                      <div class="simple-subject-details">
+                      <div class="subject-details-enhanced">
                         <h3>{{ section.subject_name }}</h3>
-                        <p>{{ section.section_name }}</p>
+                        <div class="section-badges-enhanced">
+                          <span class="section-badge">{{ section.section_name }}</span>
+                          <span class="code-badge">{{ section.section_code }}</span>
+                          <span class="grade-badge">Grade {{ section.grade_level }}</span>
+                        </div>
                       </div>
                     </div>
-                    <div class="simple-broadcast-count">
+                    <div class="broadcast-stats-enhanced">
+                      <div class="stats-number">{{ section.broadcasts.length }}</div>
+                      <div class="stats-label">broadcasts</div>
+                    </div>
+                  </div>
+                  
+                  <div v-if="section.broadcasts && section.broadcasts.length > 0" class="latest-broadcast-enhanced">
+                    <div class="latest-header-enhanced">
+                      <div class="latest-indicator">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <span>Latest Broadcast</span>
+                      </div>
+                      <span class="latest-timestamp">{{ formatDate(section.broadcasts[0].sent_at) }}</span>
+                    </div>
+                    
+                    <div class="latest-content-enhanced">
+                      <p class="latest-message">{{ section.broadcasts[0].message }}</p>
+                      
+                      <!-- Enhanced Attachments Preview -->
+                      <div v-if="section.broadcasts[0].attachments && section.broadcasts[0].attachments.length > 0" class="attachments-preview-enhanced">
+                        <div class="attachments-grid-enhanced">
+                          <div 
+                            v-for="(att, idx) in section.broadcasts[0].attachments.slice(0, 4)" 
+                            :key="idx" 
+                            class="attachment-tile-enhanced"
+                          >
+                            <div v-if="att.type === 'image'" class="image-tile-enhanced">
+                              <img :src="att.url" class="tile-image" />
+                              <div class="image-overlay">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                  <circle cx="9" cy="9" r="2"/>
+                                  <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                                </svg>
+                              </div>
+                            </div>
+                            <div v-else class="file-tile-enhanced">
+                              <div class="file-icon-enhanced">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                  <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                                  <polyline points="13 2 13 9 20 9"/>
+                                </svg>
+                              </div>
+                              <div class="file-extension">{{ att.name.split('.').pop().toUpperCase() }}</div>
+                            </div>
+                          </div>
+                          
+                          <div v-if="section.broadcasts[0].attachments.length > 4" class="more-attachments-tile">
+                            <div class="more-count">+{{ section.broadcasts[0].attachments.length - 4 }}</div>
+                            <div class="more-label">more</div>
+                          </div>
+                        </div>
+                        
+                        <div class="attachments-summary">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                          </svg>
+                          <span>{{ section.broadcasts[0].attachments.length }} attachment{{ section.broadcasts[0].attachments.length > 1 ? 's' : '' }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="card-footer-enhanced">
+                    <div class="view-action">
+                      <span>View All Broadcasts</span>
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 11l18-5v12L3 14v-3z"/>
+                        <polyline points="9 18 15 12 9 6"></polyline>
                       </svg>
-                      <span>{{ section.broadcasts.length }}</span>
                     </div>
-                  </div>
-                  
-                  <div class="simple-card-meta">
-                    <div class="simple-meta-item">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                      </svg>
-                      <span>{{ section.section_code }}</span>
-                    </div>
-                    <div class="simple-meta-item">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-                      </svg>
-                      <span>Grade {{ section.grade_level }}</span>
-                    </div>
-                  </div>
-                  
-                  <div class="simple-latest-broadcast" v-if="section.broadcasts && section.broadcasts.length > 0">
-                    <div class="simple-latest-label">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <polyline points="12 6 12 12 16 14"></polyline>
-                      </svg>
-                      Latest
-                    </div>
-                    <p class="simple-latest-text">{{ section.broadcasts[0].message }}</p>
-                    <span class="simple-latest-date">{{ formatDate(section.broadcasts[0].sent_at) }}</span>
-                  </div>
-                  
-                  <div class="simple-card-footer">
-                    <span>View All Broadcasts</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <polyline points="9 18 15 12 9 6"></polyline>
-                    </svg>
                   </div>
                 </div>
               </div>
@@ -856,7 +920,7 @@
               accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
               style="display: none"
             />
-            <button class="attach-file-btn" @click="$refs.messageFileInput.click()">
+            <button class="attach-file-btn" @click="($refs.messageFileInput as HTMLInputElement)?.click()">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
               </svg>
@@ -2403,6 +2467,939 @@ onUnmounted(() => {
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* Full Screen Broadcast Form Enhancement */
+.broadcast-form-fullscreen {
+  width: 100%;
+  min-height: calc(100vh - 200px);
+  padding: 24px;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.broadcast-form-columns {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 32px;
+  min-height: calc(100vh - 280px);
+}
+
+.broadcast-form-left {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.broadcast-form-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: end;
+}
+
+.form-group-compact {
+  margin-bottom: 0;
+  flex: 1;
+}
+
+.form-group-compact label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-input-compact, .form-textarea-compact {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 15px;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.form-input-compact {
+  min-height: 44px;
+}
+
+.form-textarea-compact {
+  min-height: 140px;
+  resize: vertical;
+}
+
+.form-input-compact:focus, .form-textarea-compact:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.char-count-inline {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 6px;
+  text-align: right;
+}
+
+.upload-button-inline {
+  padding: 12px 20px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  height: 44px;
+}
+
+.upload-button-inline:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.broadcast-form-right {
+  width: 380px;
+  border-left: 1px solid #f1f5f9;
+  padding-left: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.preview-section-compact, .attachments-section-compact {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #f1f5f9;
+}
+
+.preview-section-compact h4, .attachments-section-compact h4 {
+  margin: 0 0 16px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.preview-content p {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #4b5563;
+  margin: 0;
+}
+
+.preview-placeholder, .attachments-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.attachments-preview-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.attachment-preview-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+  position: relative;
+}
+
+.attachment-preview-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.attachment-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.attachment-file-preview {
+  width: 100%;
+  height: 100%;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+}
+
+.attachment-preview-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.attachment-preview-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attachment-preview-size {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.attachment-remove-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: #fee2e2;
+  color: #dc2626;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.attachment-remove-btn:hover {
+  background: #fecaca;
+}
+
+.ready-status {
+  background: #ecfdf5;
+  border: 1px solid #d1fae5;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: auto;
+}
+
+.ready-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #059669;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.action-buttons-fullwidth {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 16px;
+  padding-top: 24px;
+  border-top: 1px solid #f1f5f9;
+  margin-top: auto;
+}
+
+.btn-cancel-full, .btn-send-full {
+  padding: 14px 24px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+}
+
+.btn-cancel-full {
+  flex: 1;
+  background: #f8fafc;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.btn-cancel-full:hover {
+  background: #f1f5f9;
+  transform: translateY(-1px);
+}
+
+.btn-send-full {
+  flex: 2;
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-send-full:hover:not(:disabled) {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.btn-send-full:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Enhanced Individual Broadcast Message Cards */
+.broadcast-messages-list-enhanced {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+  max-width: 100%;
+}
+
+.broadcast-message-card-enhanced {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s;
+  overflow: hidden;
+}
+
+.broadcast-message-card-enhanced:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.broadcast-card-header-enhanced {
+  padding: 20px 24px 16px 24px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.broadcast-timestamp-enhanced {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.broadcast-content-enhanced {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.broadcast-message-section {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.broadcast-icon-badge-enhanced {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.broadcast-message-text-enhanced {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #374151;
+  margin: 0;
+  flex: 1;
+}
+
+.attachments-section-enhanced {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 24px;
+}
+
+.attachments-header-enhanced {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.attachments-gallery-enhanced {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  width: 100%;
+}
+
+.attachment-item-enhanced {
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid #e5e7eb;
+}
+
+.attachment-item-enhanced:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.image-attachment-enhanced {
+  position: relative;
+  width: 100%;
+  height: 240px;
+  overflow: hidden;
+  background: #f8fafc;
+}
+
+.attachment-image-full {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+
+.attachment-item-enhanced:hover .attachment-image-full {
+  transform: scale(1.05);
+}
+
+.image-overlay-enhanced {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(29, 78, 216, 0.8));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.attachment-item-enhanced:hover .image-overlay-enhanced {
+  opacity: 1;
+}
+
+.overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: white;
+  font-weight: 600;
+}
+
+.image-info-badge {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  padding: 16px;
+}
+
+.image-filename {
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.file-attachment-enhanced {
+  background: #f8fafc;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-height: 120px;
+}
+
+.file-preview-enhanced {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.file-icon-large {
+  color: #6b7280;
+}
+
+.file-type-badge {
+  background: #3b82f6;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.file-details-enhanced {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.file-name-enhanced {
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+}
+
+.file-size-enhanced {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.download-btn-enhanced {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  align-self: flex-start;
+}
+
+.download-btn-enhanced:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+/* Responsive for Enhanced Message Cards */
+@media (max-width: 768px) {
+  .broadcast-messages-list-enhanced {
+    padding: 16px;
+    gap: 16px;
+  }
+  
+  .broadcast-content-enhanced {
+    padding: 20px;
+  }
+  
+  .attachments-gallery-enhanced {
+    grid-template-columns: 1fr;
+  }
+  
+  .image-attachment-enhanced {
+    height: 200px;
+  }
+  
+  .file-attachment-enhanced {
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .attachments-gallery-enhanced {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+}
+
+/* Enhanced History Grid Responsive */
+.history-grid-enhanced {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 20px;
+  width: 100%;
+  padding: 20px;
+}
+
+.history-card-enhanced {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.history-card-enhanced:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.12);
+  transform: translateY(-2px);
+}
+
+.card-header-enhanced {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.subject-info-enhanced {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+}
+
+.subject-avatar-enhanced {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 20px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.subject-details-enhanced {
+  min-width: 0;
+  flex: 1;
+}
+
+.subject-details-enhanced h3 {
+  margin: 0 0 10px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.3;
+}
+
+.section-badges-enhanced {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.section-badge, .code-badge, .grade-badge {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.section-badge {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.code-badge {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.grade-badge {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.broadcast-stats-enhanced {
+  text-align: center;
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 12px 16px;
+  border: 1px solid #f1f5f9;
+  min-width: 80px;
+}
+
+.stats-number {
+  font-size: 24px;
+  font-weight: 800;
+  color: #3b82f6;
+  line-height: 1;
+}
+
+.stats-label {
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 600;
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.latest-broadcast-enhanced {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 18px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border: 1px solid #f1f5f9;
+}
+
+.latest-header-enhanced {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.latest-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #059669;
+}
+
+.latest-timestamp {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.latest-content-enhanced {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1;
+}
+
+.latest-message {
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.5;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.attachments-preview-enhanced {
+  background: white;
+  border-radius: 10px;
+  padding: 14px;
+  border: 1px solid #e5e7eb;
+}
+
+.attachments-grid-enhanced {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.attachment-tile-enhanced {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+}
+
+.image-tile-enhanced {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.tile-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.attachment-tile-enhanced:hover .image-overlay {
+  opacity: 1;
+}
+
+.file-tile-enhanced {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: #f9fafb;
+}
+
+.file-icon-enhanced {
+  color: #6b7280;
+}
+
+.file-extension {
+  font-size: 10px;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+}
+
+.more-attachments-tile {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.more-count {
+  font-size: 16px;
+  font-weight: 800;
+  color: #3b82f6;
+}
+
+.more-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.attachments-summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.card-footer-enhanced {
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.view-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #3b82f6;
+}
+
+/* Responsive Design */
+@media (max-width: 1400px) {
+  .broadcast-form-columns {
+    grid-template-columns: 1fr 320px;
+    gap: 24px;
+  }
+  
+  .broadcast-form-right {
+    width: 320px;
+    padding-left: 24px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .broadcast-form-columns {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  .broadcast-form-right {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid #f1f5f9;
+    padding-left: 0;
+    padding-top: 24px;
+  }
+  
+  .history-grid-enhanced {
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 16px;
+    padding: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .broadcast-form-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .upload-button-inline {
+    align-self: flex-start;
+  }
+  
+  .history-grid-enhanced {
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+  
+  .card-header-enhanced {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .broadcast-stats-enhanced {
+    align-self: flex-end;
+  }
+  
+  .attachments-grid-enhanced {
+    grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  }
+  
+  .attachment-tile-enhanced, .more-attachments-tile {
+    width: 60px;
+    height: 60px;
+  }
+}
 
 * {
   margin: 0;
