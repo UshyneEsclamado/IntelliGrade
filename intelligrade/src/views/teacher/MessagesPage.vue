@@ -63,6 +63,26 @@
       </div>
     </div>
 
+    <!-- Grade Level Filter (only show for students tab and not in archive) -->
+    <div v-if="currentTab === 'students' && !showArchive && !showStudentsInSection" class="grade-filters">
+      <div class="grade-filter-tabs">
+        <button 
+          :class="['grade-tab', { 'active': selectedGradeFilter === 'all' }]"
+          @click="selectedGradeFilter = 'all'"
+        >
+          All Grades
+        </button>
+        <button 
+          v-for="grade in availableGrades" 
+          :key="grade"
+          :class="['grade-tab', { 'active': selectedGradeFilter === grade }]"
+          @click="selectedGradeFilter = grade"
+        >
+          Grade {{ grade }}
+        </button>
+      </div>
+    </div>
+
     <!-- Debug Info -->
     <div v-if="debugMode" class="debug-section">
       <div class="debug-header">
@@ -161,10 +181,10 @@
             </div>
 
             <div v-else class="sections-overview">
-              <div v-for="section in (groupedStudents as any[])" :key="section.section_id" class="section-overview-card" @click="viewSectionStudents(section)">
+              <div v-for="(section, idx) in (groupedStudents as any[])" :key="section.section_id" class="section-overview-card" @click="viewSectionStudents(section)">
                 <!-- Subject Icon and Title -->
                 <div class="section-card-header">
-                  <div class="section-icon">
+                  <div class="section-icon" :style="{ background: getSectionIconColor(idx) }">
                     <span>{{ section.subject_name.charAt(0) }}</span>
                   </div>
                   <div class="section-title-area">
@@ -779,30 +799,6 @@
               <span class="section-info">{{ activeConversation?.subject_name }}</span>
             </div>
           </div>
-          <button class="options-menu-btn" @click="showChatOptions = !showChatOptions">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="1"></circle>
-              <circle cx="12" cy="5" r="1"></circle>
-              <circle cx="12" cy="19" r="1"></circle>
-            </svg>
-          </button>
-          <div v-if="showChatOptions" class="chat-options-menu">
-            <button @click="handleArchiveChat(activeConversation?.student_id)">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="21 8 21 21 3 21 3 8"></polyline>
-                <rect x="1" y="3" width="22" height="5"></rect>
-                <line x1="10" y1="12" x2="14" y2="12"></line>
-              </svg>
-              Archive Chat
-            </button>
-            <button @click="handleDeleteChat(activeConversation?.student_id)" class="delete-option">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-              </svg>
-              Delete Chat
-            </button>
-          </div>
         </div>
         <div class="modal-body">
           <!-- Loading indicator for messages -->
@@ -1018,6 +1014,7 @@ const openSectionDropdown = ref(null)
 // Search and Filter
 const searchQuery = ref('')
 const selectedSection = ref('')
+const selectedGradeFilter = ref('all')
 
 // Chat State
 const selectedChat = ref(null)
@@ -1592,7 +1589,16 @@ const filteredStudents = computed(() => {
 const groupedStudents = computed(() => {
   const sections = {}
   
-  filteredStudents.value.forEach(student => {
+  let filteredData = filteredStudents.value
+  
+  // Filter by grade level if not 'all'
+  if (selectedGradeFilter.value !== 'all') {
+    filteredData = filteredData.filter(student => 
+      student.grade_level === selectedGradeFilter.value
+    )
+  }
+  
+  filteredData.forEach(student => {
     const sectionKey = student.section_id
     if (!sections[sectionKey]) {
       sections[sectionKey] = {
@@ -1611,6 +1617,16 @@ const groupedStudents = computed(() => {
   })
   
   return Object.values(sections)
+})
+
+const availableGrades = computed(() => {
+  const grades = new Set()
+  studentContacts.value.forEach(student => {
+    if (student.grade_level) {
+      grades.add(student.grade_level)
+    }
+  })
+  return Array.from(grades).sort()
 })
 
 const groupedBroadcasts = computed(() => {
@@ -2404,6 +2420,23 @@ const updateTeacherPresence = async (isOnline) => {
   } catch (error) {
     console.error('Error updating teacher presence:', error)
   }
+}
+
+// ================================
+// SECTION ICON COLORS
+// ================================
+
+const sectionIconColors = [
+  'linear-gradient(135deg, #20c997 0%, #20c997 100%)', // green
+  'linear-gradient(135deg, #6366f1 0%, #6366f1 100%)', // blue
+  'linear-gradient(135deg, #f59e0b 0%, #f59e0b 100%)', // yellow
+  'linear-gradient(135deg, #ef4444 0%, #ef4444 100%)', // red
+  'linear-gradient(135deg, #8b5cf6 0%, #8b5cf6 100%)', // purple
+  'linear-gradient(135deg, #10b981 0%, #10b981 100%)', // teal
+]
+
+const getSectionIconColor = (idx) => {
+  return sectionIconColors[idx % sectionIconColors.length]
 }
 
 // ================================
@@ -3638,6 +3671,55 @@ onUnmounted(() => {
   color: #ffffff;
 }
 
+/* Grade Filter Tabs */
+.grade-filter-tabs {
+  display: flex;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.grade-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  border: 2px solid #e9ecef;
+  background: white;
+  color: #6c757d;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.85rem;
+}
+
+.dark .grade-tab {
+  background: #2c3135;
+  border-color: #495057;
+  color: #adb5bd;
+}
+
+.grade-tab:hover {
+  border-color: #20c997;
+  background: rgba(32, 201, 151, 0.1);
+  color: #2c3e50;
+  transform: translateY(-1px);
+}
+
+.dark .grade-tab:hover {
+  background: rgba(32, 201, 151, 0.15);
+  color: #e9ecef;
+}
+
+.grade-tab.active {
+  border-color: #20c997;
+  background: #20c997;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(32, 201, 151, 0.3);
+}
+
 .filter-tab.debug {
   border-color: #ffc107;
   color: #856404;
@@ -4107,6 +4189,17 @@ onUnmounted(() => {
     min-width: 0;
     padding: 0.75rem 0.5rem;
     font-size: 0.85rem;
+  }
+  
+  .grade-filter-tabs {
+    justify-content: center;
+    gap: 0.25rem;
+  }
+  
+  .grade-tab {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    min-width: auto;
   }
 }
 
@@ -5717,37 +5810,35 @@ onUnmounted(() => {
   font-size: 0.7rem;
 }
 
-/* Modal Styles */
+/* Modal Styles - Simple & Clean Design */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  backdrop-filter: blur(4px);
 }
 
 .modal-content {
   background: white;
-  border-radius: 16px;
+  border-radius: 12px;
   max-width: 700px;
   width: 90%;
   max-height: 85vh;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
 }
 
 .dark .modal-content {
-  background: #23272b;
+  background: #1f2937;
   border: 1px solid #374151;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
 }
 
 .modal-header {
@@ -5756,10 +5847,12 @@ onUnmounted(() => {
   align-items: center;
   padding: 1.5rem;
   border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
 }
 
 .dark .modal-header {
   border-bottom-color: #374151;
+  background: #111827;
 }
 
 .modal-title {
@@ -5771,7 +5864,7 @@ onUnmounted(() => {
 }
 
 .dark .modal-title {
-  color: #A3D1C6;
+  color: #f3f4f6;
 }
 
 .header-info {
@@ -5781,39 +5874,162 @@ onUnmounted(() => {
   flex: 1;
 }
 
+.student-avatar {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: #20c997;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.1rem;
+  font-family: 'Inter', sans-serif;
+}
+
 .header-details {
   flex: 1;
+  min-width: 0;
 }
 
 .section-info {
   font-size: 0.875rem;
   color: #6b7280;
   font-weight: 500;
+  margin-top: 0.25rem;
 }
+
 .dark .section-info {
-  color: #A3D1C6;
+  color: #d1d5db;
 }
 
 .close-btn {
-  background: none;
-  border: none;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
   font-size: 1.5rem;
   color: #6b7280;
   cursor: pointer;
   padding: 0.5rem;
   border-radius: 8px;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   line-height: 1;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .close-btn:hover {
-  background: #f3f4f6;
-  color: #ef4444;
+  background: #ef4444;
+  border-color: #ef4444;
+  color: white;
+}
+
+.dark .close-btn {
+  background: #374151;
+  border-color: #4b5563;
+  color: #9ca3af;
 }
 
 .dark .close-btn:hover {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: white;
+}
+
+.options-menu-btn {
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-right: 0.5rem;
+}
+
+.options-menu-btn:hover {
+  background: #20c997;
+  border-color: #20c997;
+  color: white;
+}
+
+.dark .options-menu-btn {
   background: #374151;
+  border-color: #4b5563;
+  color: #9ca3af;
+}
+
+.dark .options-menu-btn:hover {
+  background: #20c997;
+  border-color: #20c997;
+  color: white;
+}
+
+.chat-options-menu {
+  position: absolute;
+  top: 100%;
+  right: 4rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  min-width: 160px;
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.dark .chat-options-menu {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.chat-options-menu button {
+  width: 100%;
+  padding: 0.75rem;
+  border: none;
+  background: transparent;
+  color: #4b5563;
+  cursor: pointer;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.chat-options-menu button:hover {
+  background: #f3f4f6;
+  color: #1f2937;
+}
+
+.chat-options-menu button.delete-option:hover {
+  background: #fef2f2;
   color: #ef4444;
+}
+
+.dark .chat-options-menu button {
+  color: #d1d5db;
+}
+
+.dark .chat-options-menu button:hover {
+  background: #4b5563;
+  color: #f3f4f6;
+}
+
+.dark .chat-options-menu button.delete-option:hover {
+  background: #450a0a;
+  color: #f87171;
 }
 
 .modal-body {
@@ -5821,25 +6037,77 @@ onUnmounted(() => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  background: #ffffff;
 }
 
-/* Message Container in Modal */
-.messages-container .modal-body .messages-container {
+.dark .modal-body {
+  background: #1f2937;
+}
+
+/* Simple Messages Container */
+.modal-body .messages-container {
   flex: 1;
   overflow-y: auto;
-  padding: 1rem;
-  background: #f9fafb;
-  margin: 1rem;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  padding: 1.5rem;
+  background: transparent;
+  margin: 0;
+  border: none;
+  border-radius: 0;
 }
 
-.dark .modal-body .messages-container {
-  background: #1f2937;
-  border-color: #374151;
+.modal-body .messages-container::-webkit-scrollbar {
+  width: 6px;
 }
 
-/* Message Bubbles */
+.modal-body .messages-container::-webkit-scrollbar-track {
+  background: #f3f4f6;
+}
+
+.modal-body .messages-container::-webkit-scrollbar-thumb {
+  background: #20c997;
+  border-radius: 3px;
+}
+
+.dark .modal-body .messages-container::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+/* Simple Loading */
+.messages-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: #6b7280;
+  font-family: 'Inter', sans-serif;
+}
+
+.messages-loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #e5e7eb;
+  border-top: 2px solid #20c997;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.messages-loading p {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.dark .messages-loading {
+  color: #9ca3af;
+}
+
+.dark .messages-loading-spinner {
+  border-color: #4b5563;
+  border-top-color: #20c997;
+}
+
+/* Simple Message Bubbles */
 .message-bubble {
   margin-bottom: 1rem;
   display: flex;
@@ -5856,40 +6124,60 @@ onUnmounted(() => {
 
 .message-text {
   max-width: 75%;
-  padding: 0.75rem 1rem;
-  border-radius: 18px;
-  background: #3D8D7A;
+  padding: 0.875rem 1rem;
+  border-radius: 16px;
+  background: #20c997;
   color: white;
   word-wrap: break-word;
   margin: 0;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   line-height: 1.5;
   font-family: 'Inter', sans-serif;
+  font-weight: 500;
+}
+
+.message-bubble.sent .message-text {
+  border-bottom-right-radius: 4px;
 }
 
 .message-bubble.received .message-text {
   background: white;
   color: #1f2937;
   border: 1px solid #e5e7eb;
+  border-bottom-left-radius: 4px;
 }
 
 .dark .message-bubble.received .message-text {
   background: #374151;
-  color: #A3D1C6;
+  color: #f3f4f6;
   border-color: #4b5563;
 }
 
 .message-footer {
-  margin-top: 0.25rem;
-  font-size: 0.75rem;
-  color: #6b7280;
+  margin-top: 0.375rem;
+  font-size: 0.8rem;
+  color: #9ca3af;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  padding: 0 0.25rem;
+}
+
+.message-bubble.sent .message-footer {
+  justify-content: flex-end;
+}
+
+.message-bubble.received .message-footer {
+  justify-content: flex-start;
 }
 
 .message-time {
   font-size: 0.75rem;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.dark .message-time {
   color: #6b7280;
 }
 
@@ -5902,14 +6190,22 @@ onUnmounted(() => {
 .status-read, .status-sent {
   display: flex;
   align-items: center;
-  gap: 0.125rem;
-  color: #3D8D7A;
+  gap: 0.25rem;
+  color: #20c997;
   font-size: 0.75rem;
+  font-weight: 500;
 }
 
 .read-time {
-  color: #3D8D7A;
-  font-size: 0.688rem;
+  color: #20c997;
+  font-size: 0.7rem;
+  margin-left: 0.25rem;
+}
+
+.dark .status-read, 
+.dark .status-sent,
+.dark .read-time {
+  color: #34d399;
 }
 
 /* Form Elements */
@@ -5968,82 +6264,112 @@ onUnmounted(() => {
   box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.1);
 }
 
-/* Message Input Area */
+/* Simple Message Input Area */
 .message-input-area {
   padding: 1rem;
   border-top: 1px solid #e5e7eb;
   display: flex;
   gap: 0.75rem;
   align-items: center;
+  background: #f9fafb;
 }
 
 .dark .message-input-area {
   border-top-color: #374151;
+  background: #111827;
 }
 
 .attach-file-btn, .send-btn {
   padding: 0.75rem;
-  border: none;
-  border-radius: 50%;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   flex-shrink: 0;
+  width: 42px;
+  height: 42px;
 }
 
 .attach-file-btn {
-  background: #B3D8A8;
-  color: #1f2937;
+  background: white;
+  color: #20c997;
 }
 
 .attach-file-btn:hover {
-  background: #9bc993;
-  transform: scale(1.05);
-}
-
-.send-btn {
-  background: #3D8D7A;
+  background: #20c997;
+  border-color: #20c997;
   color: white;
 }
 
+.send-btn {
+  background: #20c997;
+  color: white;
+  border-color: #20c997;
+}
+
 .send-btn:hover:not(:disabled) {
-  background: #2d6b5a;
-  transform: scale(1.05);
+  background: #17a085;
+  border-color: #17a085;
 }
 
 .send-btn:disabled {
   background: #d1d5db;
+  border-color: #d1d5db;
   cursor: not-allowed;
-  transform: none;
+  color: #9ca3af;
+}
+
+.dark .attach-file-btn {
+  background: #374151;
+  border-color: #4b5563;
+  color: #20c997;
+}
+
+.dark .attach-file-btn:hover {
+  background: #20c997;
+  border-color: #20c997;
+  color: white;
 }
 
 .dark .send-btn:disabled {
   background: #4b5563;
+  border-color: #4b5563;
+  color: #6b7280;
 }
 
 .message-input {
   flex: 1;
-  padding: 0.75rem 1rem;
+  padding: 0.875rem 1rem;
   border: 1px solid #e5e7eb;
-  border-radius: 20px;
-  font-size: 0.875rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
   font-family: 'Inter', sans-serif;
   background: white;
   color: #1f2937;
+  transition: all 0.2s ease;
+}
+
+.message-input::placeholder {
+  color: #9ca3af;
 }
 
 .message-input:focus {
   outline: none;
-  border-color: #3D8D7A;
-  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
+  border-color: #20c997;
+  box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.1);
 }
 
 .dark .message-input {
   background: #374151;
   border-color: #4b5563;
-  color: #A3D1C6;
+  color: #f3f4f6;
+}
+
+.dark .message-input::placeholder {
+  color: #6b7280;
 }
 
 .dark .message-input:focus {
@@ -6051,7 +6377,7 @@ onUnmounted(() => {
   box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.1);
 }
 
-/* Attachments */
+/* Simple Attachments */
 .attachments-preview {
   background: #f9fafb;
   border: 1px solid #e5e7eb;
@@ -6061,8 +6387,8 @@ onUnmounted(() => {
 }
 
 .dark .attachments-preview {
-  background: #1f2937;
-  border-color: #374151;
+  background: #374151;
+  border-color: #4b5563;
 }
 
 .attachment-preview-list {
@@ -6079,6 +6405,159 @@ onUnmounted(() => {
   border: 1px solid #e5e7eb;
   border-radius: 6px;
   padding: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.attachment-preview-item:hover {
+  border-color: #20c997;
+}
+
+.dark .attachment-preview-item {
+  background: #4b5563;
+  border-color: #6b7280;
+}
+
+.dark .attachment-preview-item:hover {
+  border-color: #20c997;
+}
+
+.attachment-preview-image {
+  width: 30px;
+  height: 30px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.attachment-preview-file {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.attachment-preview-file svg {
+  color: #20c997;
+}
+
+.attachment-name {
+  font-size: 0.8rem;
+  color: #1f2937;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dark .attachment-name {
+  color: #f3f4f6;
+}
+
+.remove-attachment-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.remove-attachment-btn:hover {
+  background: #dc2626;
+}
+
+/* Simple No Messages State */
+.no-messages {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #6b7280;
+  font-family: 'Inter', sans-serif;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px dashed #d1d5db;
+  margin: 1rem 0;
+}
+
+.no-messages p {
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0;
+  color: #4b5563;
+}
+
+.dark .no-messages {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.dark .no-messages p {
+  color: #9ca3af;
+}
+
+/* Simple Mobile Responsive */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    max-height: 90vh;
+  }
+  
+  .modal-header {
+    padding: 1rem;
+  }
+  
+  .modal-title {
+    font-size: 1.1rem;
+  }
+  
+  .student-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+  
+  .header-info {
+    gap: 0.75rem;
+  }
+  
+  .modal-body .messages-container {
+    padding: 1rem;
+  }
+  
+  .message-text {
+    max-width: 85%;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  .message-input-area {
+    padding: 1rem;
+  }
+  
+  .message-input {
+    padding: 0.75rem;
+    font-size: 0.875rem;
+  }
+  
+  .attach-file-btn, .send-btn {
+    width: 38px;
+    height: 38px;
+    padding: 0.625rem;
+  }
+  
+  .close-btn, .options-menu-btn {
+    width: 36px;
+    height: 36px;
+    padding: 0.5rem;
+  }
+  
+  .no-messages {
+    padding: 2rem 1rem;
+  }
 }
 
 .dark .attachment-preview-item {
