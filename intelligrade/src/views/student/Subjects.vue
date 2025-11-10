@@ -379,12 +379,15 @@
       </div>
     </div>
 
-    <!-- Simple Loading (uniform with Messages.vue) -->
-    <div v-if="isLoading" class="simple-loading-messages">
-      <div class="simple-loading-spinner">
-        <div class="simple-spinner"></div>
+    <!-- Loading Overlay -->
+    <div v-if="isLoading" class="loading-overlay">
+      <div class="loading-content">
+        <div class="loading-spinner-container">
+          <div class="loading-spinner"></div>
+        </div>
+        <p class="loading-text">{{ loadingMessage }}</p>
+        <p class="loading-subtext">Please wait a moment...</p>
       </div>
-      <p>Loading subjects...</p>
     </div>
   </div>
 </template>
@@ -693,133 +696,106 @@ export default {
     },
 
     async validateSectionCode() {
-      // Clear previous state
-      this.previewSubject = null
-      this.joinError = ''
-
-      if (!this.joinForm.sectionCode || this.joinForm.sectionCode.trim().length === 0) {
+      if (!this.joinForm.sectionCode || this.joinForm.sectionCode.length < 8) {
+        this.previewSubject = null
+        this.joinError = ''
         return
       }
 
-      const searchCode = this.joinForm.sectionCode.trim().toUpperCase()
-      
-      // Basic validation - section codes should be at least 10 characters (e.g., ESP7-2025-60926902)
-      if (searchCode.length < 10) {
-        return // Don't show error yet, wait for more input
-      }
-
       try {
+        const searchCode = this.joinForm.sectionCode.trim().toUpperCase()
         console.log('🔍 Validating section code:', searchCode)
 
-        // Step 1: Look up the section by exact code match
         const { data: sectionData, error: sectionError } = await supabase
           .from('sections')
-          .select(`
-            id,
-            name,
-            section_code,
-            max_students,
-            is_active,
-            subject_id,
-            subjects!inner (
-              id,
-              name,
-              grade_level,
-              is_active,
-              teacher_id,
-              teachers!inner (
-                id,
-                full_name,
-                is_active
-              )
-            )
-          `)
+          .select('id, name, section_code, max_students, is_active, subject_id')
           .eq('section_code', searchCode)
           .eq('is_active', true)
-          .maybeSingle()
+          .single()
 
-        if (sectionError) {
+        if (sectionError || !sectionData) {
           console.error('❌ Section lookup error:', sectionError)
-          this.joinError = 'Error looking up section. Please check your code and try again.'
+          this.joinError = 'Section not found or inactive. Please check the code with your teacher.'
+          this.previewSubject = null
           return
         }
 
-        if (!sectionData) {
-          this.joinError = 'Section code not found. Please check with your teacher.'
-          return
-        }
+        console.log('✓ Found section:', sectionData.name)
 
-        console.log('✓ Found section:', sectionData)
+        const { data: subjectData, error: subjectError } = await supabase
+          .from('subjects')
+          .select('id, name, grade_level, is_active, teacher_id')
+          .eq('id', sectionData.subject_id)
+          .eq('is_active', true)
+          .single()
 
-        // Extract subject and teacher info from joined data
-        const subjectData = sectionData.subjects
-        const teacherData = subjectData.teachers
-
-        if (!subjectData || !subjectData.is_active) {
+        if (subjectError || !subjectData) {
+          console.error('❌ Subject lookup error:', subjectError)
           this.joinError = 'This section\'s subject is currently inactive.'
+          this.previewSubject = null
           return
         }
 
-        if (!teacherData || !teacherData.is_active) {
+        console.log('✓ Found subject:', subjectData.name, `(Grade ${subjectData.grade_level})`)
+
+        const { data: teacherData, error: teacherError } = await supabase
+          .from('teachers')
+          .select('id, full_name, is_active')
+          .eq('id', subjectData.teacher_id)
+          .eq('is_active', true)
+          .single()
+
+        if (teacherError || !teacherData) {
+          console.error('❌ Teacher lookup error:', teacherError)
           this.joinError = 'This section\'s teacher is currently inactive.'
+          this.previewSubject = null
           return
         }
 
-        console.log('✓ Subject:', subjectData.name, `Grade ${subjectData.grade_level}`)
-        console.log('✓ Teacher:', teacherData.full_name)
+        console.log('✓ Found teacher:', teacherData.full_name)
 
-        // Step 2: Check grade level match
-        if (this.studentInfo && parseInt(subjectData.grade_level) !== parseInt(this.studentInfo.grade_level)) {
+        if (this.studentInfo && subjectData.grade_level !== this.studentInfo.grade_level) {
           this.joinError = `This subject is for Grade ${subjectData.grade_level} students. You are enrolled in Grade ${this.studentInfo.grade_level}.`
+          this.previewSubject = null
           return
         }
 
-        // Step 3: Check if already enrolled in THIS specific section
         const { data: existingEnrollment, error: existingError } = await supabase
           .from('enrollments')
-          .select('id, status')
+          .select('id')
           .eq('student_id', this.studentInfo.id)
           .eq('section_id', sectionData.id)
+          .eq('status', 'active')
           .maybeSingle()
 
         if (existingError && existingError.code !== 'PGRST116') {
-          console.error('❌ Error checking enrollment:', existingError)
-          this.joinError = 'Error checking enrollment status. Please try again.'
-          return
+          console.error('❌ Error checking existing enrollment:', existingError)
         }
 
         if (existingEnrollment) {
-          if (existingEnrollment.status === 'active') {
-            this.joinError = 'You are already enrolled in this section.'
-            return
-          } else if (existingEnrollment.status === 'dropped') {
-            this.joinError = 'You previously dropped this section. Please contact your teacher to re-enroll.'
-            return
-          }
+          this.joinError = 'You are already enrolled in this section.'
+          this.previewSubject = null
+          return
         }
 
-        // Step 4: Check if already enrolled in ANOTHER section of the same subject
         const { data: sameSubjectEnrollment, error: sameSubjectError } = await supabase
           .from('enrollments')
           .select('id, section_id')
           .eq('student_id', this.studentInfo.id)
-          .eq('subject_id', subjectData.id)
-          .neq('section_id', sectionData.id)
+          .eq('subject_id', sectionData.subject_id)
           .eq('status', 'active')
           .maybeSingle()
 
         if (sameSubjectError && sameSubjectError.code !== 'PGRST116') {
-          console.error('❌ Error checking same subject:', sameSubjectError)
-          this.joinError = 'Error checking enrollment status. Please try again.'
-          return
+          console.error('❌ Error checking same subject enrollment:', sameSubjectError)
         }
 
         if (sameSubjectEnrollment) {
           this.joinError = 'You are already enrolled in another section of this subject. Students can only join one section per subject.'
+          this.previewSubject = null
           return
         }
 
-        // Step 5: Check section capacity
         const { count: enrollmentCount, error: countError } = await supabase
           .from('enrollments')
           .select('id', { count: 'exact', head: true })
@@ -835,12 +811,12 @@ export default {
 
         if (!hasSpace) {
           this.joinError = `This section is full (${currentEnrollments}/${sectionData.max_students} students). Please contact your teacher for another section.`
+          this.previewSubject = null
           return
         }
 
-        // All validations passed! Set preview
         this.previewSubject = {
-          id: subjectData.id,
+          id: sectionData.subject_id,
           name: subjectData.name,
           code: sectionData.section_code,
           section: sectionData.name,
@@ -851,13 +827,15 @@ export default {
           currentEnrollments: currentEnrollments,
           maxStudents: sectionData.max_students
         }
+        this.joinError = ''
 
-        console.log('✅ Section validated successfully!')
+        console.log('✅ Preview subject validated successfully!')
         console.log('📊 Available spots:', sectionData.max_students - currentEnrollments, 'of', sectionData.max_students)
 
       } catch (error) {
-        console.error('❌ Validation error:', error)
-        this.joinError = `Unexpected error: ${error.message}. Please try again.`
+        console.error('❌ Error validating section code:', error)
+        this.joinError = `Error validating section code: ${error.message}. Please try again.`
+        this.previewSubject = null
       }
     },
 
@@ -876,86 +854,48 @@ export default {
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
         console.log('🎓 STARTING CLASS ENROLLMENT')
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-        console.log('👤 Student ID:', this.studentInfo.id)
         console.log('👤 Student:', this.studentInfo.full_name)
-        console.log('🎯 Subject ID:', this.previewSubject.id)
         console.log('🎯 Subject:', this.previewSubject.name)
-        console.log('📚 Section ID:', this.previewSubject.sectionId)
         console.log('📚 Section:', this.previewSubject.section)
         console.log('👨‍🏫 Teacher:', this.previewSubject.instructor)
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 
-        // FINAL CHECK: Verify no duplicate enrollment before inserting
-        console.log('Step 1: Final duplicate check...')
-        
-        const { data: existingCheck, error: checkError } = await supabase
-          .from('enrollments')
-          .select('id, status')
-          .eq('student_id', this.studentInfo.id)
-          .eq('section_id', this.previewSubject.sectionId)
-          .maybeSingle()
+        console.log('Step 1: Running final validation...')
+        const { data: validation, error: validationError } = await supabase
+          .rpc('validate_enrollment', {
+            p_student_id: this.studentInfo.id,
+            p_section_id: this.previewSubject.sectionId
+          })
 
-        if (checkError && checkError.code !== 'PGRST116') {
-          console.error('❌ Error checking enrollment:', checkError)
-          throw new Error('Failed to verify enrollment status. Please try again.')
+        if (validationError) {
+          console.error('❌ Validation RPC error:', validationError)
+          throw new Error('Validation failed: ' + validationError.message)
         }
 
-        if (existingCheck) {
-          if (existingCheck.status === 'active') {
-            throw new Error('You are already enrolled in this section.')
-          } else if (existingCheck.status === 'dropped') {
-            throw new Error('You previously dropped this section. Please contact your teacher to re-enroll.')
-          }
+        console.log('Validation result:', validation)
+
+        if (!validation || validation.length === 0 || !validation[0]?.is_valid) {
+          const errorMsg = validation?.[0]?.error_message || 'Enrollment validation failed'
+          throw new Error(errorMsg)
         }
 
-        // Check same subject different section
-        const { data: sameSubjectCheck, error: sameSubjectCheckError } = await supabase
-          .from('enrollments')
-          .select('id')
-          .eq('student_id', this.studentInfo.id)
-          .eq('subject_id', this.previewSubject.id)
-          .neq('section_id', this.previewSubject.sectionId)
-          .eq('status', 'active')
-          .maybeSingle()
-
-        if (sameSubjectCheckError && sameSubjectCheckError.code !== 'PGRST116') {
-          console.error('❌ Error checking same subject:', sameSubjectCheckError)
-          throw new Error('Failed to verify subject enrollment. Please try again.')
-        }
-
-        if (sameSubjectCheck) {
-          throw new Error('You are already enrolled in another section of this subject.')
-        }
-
-        console.log('✓ No duplicate enrollments found')
+        console.log('✓ Validation passed')
 
         console.log('Step 2: Creating enrollment record...')
         const { data: newEnrollment, error: enrollmentError } = await supabase
           .from('enrollments')
-          .insert({
+          .insert([{
             student_id: this.studentInfo.id,
             section_id: this.previewSubject.sectionId,
             subject_id: this.previewSubject.id,
             status: 'active'
-          })
+          }])
           .select()
           .single()
 
         if (enrollmentError) {
           console.error('❌ Enrollment insert error:', enrollmentError)
-          
-          // Handle specific error messages
-          if (enrollmentError.code === '23505') {
-            if (enrollmentError.message.includes('enrollments_student_id_section_id_key')) {
-              throw new Error('You are already enrolled in this section.')
-            } else if (enrollmentError.message.includes('enrollments_student_id_subject_id_key')) {
-              throw new Error('You are already enrolled in another section of this subject.')
-            } else {
-              throw new Error('Duplicate enrollment detected. Please refresh the page.')
-            }
-          }
-          
-          throw new Error(enrollmentError.message || 'Failed to create enrollment.')
+          throw enrollmentError
         }
 
         console.log('✅ Enrollment created successfully!')
@@ -965,7 +905,7 @@ export default {
         this.joinError = ''
 
         console.log('Step 3: Refreshing subject list...')
-        await new Promise(resolve => setTimeout(resolve, 800))
+        await new Promise(resolve => setTimeout(resolve, 1000))
         
         await this.fetchSubjects()
         
@@ -1005,8 +945,12 @@ export default {
       
       clearTimeout(this.validationTimeout)
       this.validationTimeout = setTimeout(() => {
-        this.validateSectionCode()
-      }, 600)
+        if (this.joinForm.sectionCode.length >= 8) {
+          this.validateSectionCode()
+        } else {
+          this.previewSubject = null
+        }
+      }, 800)
     },
 
     closeJoinModal() {
@@ -2069,10 +2013,9 @@ export default {
 
 .subject-actions {
   display: flex;
-  gap: 1.2rem;
+  gap: 0.75rem;
   position: relative;
   z-index: 2; /* Higher than the card */
-  margin-top: 1.1rem;
 }
 
 .action-btn {
@@ -2530,10 +2473,6 @@ export default {
   .subjects-container {
     padding: 0.25rem;
     min-height: calc(100vh - 120px);
-    }
-
-    .dark .subjects-container {
-      background: #181c20;
   }
 
   /* Header optimizations for mobile */
@@ -2543,12 +2482,6 @@ export default {
     margin-bottom: 0.75rem;
     padding: 0.5rem;
     border-radius: 10px;
-    }
-
-    .dark .minimal-header-card {
-      background: #23272b;
-      box-shadow: 0 2px 8px rgba(32, 201, 151, 0.08);
-      border: 2px solid #20c997;
   }
 
   .minimal-header-icon {
@@ -3013,72 +2946,20 @@ export default {
   .header-stats-mobile {
     display: block !important;
     width: 100%;
-    margin-top: 0.7rem;
-    margin-bottom: 0.2rem;
+    margin-top: 1.1rem;
   }
   .formal-mobile-card {
-    background: #fff;
+    background: #f8fffe;
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
-    border: 1.5px solid #20c997;
+    box-shadow: 0 2px 8px rgba(61, 141, 122, 0.06);
+    border: 1.5px solid #e6f2ed;
     padding: 1.1rem 1rem 1.2rem 1rem;
-    margin: 0;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 1.2rem;
-  }
-  .dark .formal-mobile-card {
-    background: #23272b;
-    border-color: #20c997;
-    box-shadow: 0 2px 8px rgba(32, 201, 151, 0.13);
-  }
-  .formal-mobile-stats {
-    flex: 1;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 1.2rem;
-  }
-  .formal-mobile-stats .stat-item {
-    flex: 1;
-    text-align: left;
+    margin-top: 0.5rem;
+    margin-bottom: 0.2rem;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 0.1rem;
-  }
-  .formal-mobile-stats .stat-number {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #20c997;
-    margin-bottom: 0.1rem;
-  }
-  .formal-mobile-stats .stat-label {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #20c997;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  .formal-join-btn {
-    background: #20c997;
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 1rem;
-    padding: 0.85rem 1.3rem;
-    box-shadow: 0 2px 8px rgba(32, 201, 151, 0.13);
-    margin-left: 1.2rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: background 0.2s, box-shadow 0.2s;
-  }
-  .formal-join-btn:hover {
-    background: #1ba085;
-    box-shadow: 0 4px 12px rgba(32, 201, 151, 0.22);
+    align-items: stretch;
+    gap: 0.9rem;
   }
   .formal-mobile-stats {
     display: flex;
@@ -3412,56 +3293,6 @@ export default {
 
   .warning-note span {
     font-size: 0.75rem;
-  }
-}
-
-/* ==================== SIMPLE LOADING STYLES (uniform with Messages.vue) ==================== */
-.simple-loading-messages {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  gap: 1rem;
-  color: #64748b;
-  min-height: 200px;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(251, 255, 228, 0.95);
-  backdrop-filter: blur(8px);
-  z-index: 9999;
-}
-.dark .simple-loading-messages {
-  color: #94a3b8;
-  background: rgba(24, 28, 32, 0.95);
-}
-
-.simple-loading-spinner {
-  position: relative;
-}
-
-.simple-spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid #e2e8f0;
-  border-top: 3px solid #2d6a4f;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-.dark .simple-spinner {
-  border-color: #334155;
-  border-top-color: #1b4332;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
   }
 }
 

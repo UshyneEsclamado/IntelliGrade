@@ -1,49 +1,3 @@
-/* code: Responsive mobile improvements for back button and stat boxes */
-@media (max-width: 768px) {
-  .section-header-content {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-  .back-btn {
-    align-self: flex-start;
-    margin-bottom: 0.5rem;
-    padding: 0.5rem;
-    min-width: 0;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    justify-content: center;
-    font-size: 1.25rem;
-    gap: 0;
-  }
-  .back-btn span {
-    display: none;
-  }
-  .stats-grid {
-    grid-template-columns: 1fr;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
-  }
-  .stat-card {
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 0.3rem;
-    padding: 0.18rem 0.25rem;
-    min-height: auto;
-  }
-  .stat-value {
-    font-size: 0.6rem;
-    margin-right: 0.2rem;
-    font-weight: 700;
-  }
-  .stat-label {
-    font-size: 0.55rem;
-    margin-left: 0.1rem;
-    font-weight: 500;
-  }
-}
 <template>
   <div class="take-quiz-page">
     <!-- Header Section -->
@@ -1414,19 +1368,25 @@ export default {
   box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
 }
 
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.18);
+}
+
 .dark .stat-card {
   background: #23272b;
   border-color: #3D8D7A;
 }
 
 .stat-icon {
-  font-size: 2rem;
+  font-size: 2.5rem;
 }
 
 .stat-value {
   font-size: 2rem;
   font-weight: 700;
   color: #3D8D7A;
+  line-height: 1;
 }
 
 .dark .stat-value {
@@ -1435,8 +1395,8 @@ export default {
 
 .stat-label {
   font-size: 0.875rem;
-  color: #6b7280;
   font-weight: 500;
+  color: #6b7280;
 }
 
 .dark .stat-label {
@@ -2762,7 +2722,7 @@ export default {
   min-width: 100px;
 }
 
-/* Responsive */
+/* Responsive Design - Mobile */
 @media (max-width: 768px) {
   .take-quiz-page {
     padding: 1rem;
@@ -2773,13 +2733,24 @@ export default {
     gap: 1rem;
   }
 
+  /* Mobile Stats Grid - Same as Grades.vue */
   .stats-grid {
-    grid-template-columns: repeat(3, minmax(100px, 1fr));
-    overflow-x: auto;
-    gap: 0.15rem;
-    margin-bottom: 0.3rem;
-    width: 100%;
-    /* Always 3 columns, allow horizontal scroll if too narrow */
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin: 0 1rem 1.5rem 1rem;
+  }
+
+  .stat-card {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
   }
 
   .quiz-timer-header {
