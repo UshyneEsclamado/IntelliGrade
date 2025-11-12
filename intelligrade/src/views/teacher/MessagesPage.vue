@@ -687,10 +687,11 @@
                 </button>
               </div>
 
-              <div v-else class="history-grid-enhanced">
-                <div v-for="section in (groupedBroadcasts as any[])" :key="section.section_id" class="history-card-enhanced" @click="viewBroadcastSection(section)">
-                  <div class="card-header-enhanced">
-                    <div class="subject-info-enhanced">
+              <div v-else class="history-grid-enhanced-fullwidth">
+                <div v-for="section in (groupedBroadcasts as any[])" :key="section.section_id" class="history-card-enhanced-wide" @click="viewBroadcastSection(section)">
+                  <div class="card-layout-horizontal">
+                    <!-- Left Section: Subject Info -->
+                    <div class="subject-info-section">
                       <div class="subject-avatar-enhanced">
                         <span>{{ section.subject_name.charAt(0) }}</span>
                       </div>
@@ -703,82 +704,61 @@
                         </div>
                       </div>
                     </div>
-                    <div class="broadcast-stats-enhanced">
-                      <div class="stats-number">{{ section.broadcasts.length }}</div>
-                      <div class="stats-label">broadcasts</div>
-                    </div>
-                  </div>
-                  
-                  <div v-if="section.broadcasts && section.broadcasts.length > 0" class="latest-broadcast-enhanced">
-                    <div class="latest-header-enhanced">
-                      <div class="latest-indicator">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <circle cx="12" cy="12" r="10"></circle>
-                          <polyline points="12 6 12 12 16 14"></polyline>
-                        </svg>
-                        <span>Latest Broadcast</span>
-                      </div>
-                      <span class="latest-timestamp">{{ formatDate(section.broadcasts[0].sent_at) }}</span>
-                    </div>
-                    
-                    <div class="latest-content-enhanced">
-                      <p class="latest-message">{{ section.broadcasts[0].message }}</p>
-                      
-                      <!-- Enhanced Attachments Preview -->
-                      <div v-if="section.broadcasts[0].attachments && section.broadcasts[0].attachments.length > 0" class="attachments-preview-enhanced">
-                        <div class="attachments-grid-enhanced">
-                          <div 
-                            v-for="(att, idx) in section.broadcasts[0].attachments.slice(0, 4)" 
-                            :key="idx" 
-                            class="attachment-tile-enhanced"
-                          >
-                            <div v-if="att.type === 'image'" class="image-tile-enhanced">
-                              <img :src="att.url" class="tile-image" />
-                              <div class="image-overlay">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                  <rect x="3" y="3" width="18" height="18" rx="2"/>
-                                  <circle cx="9" cy="9" r="2"/>
-                                  <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
-                                </svg>
-                              </div>
-                            </div>
-                            <div v-else class="file-tile-enhanced">
-                              <div class="file-icon-enhanced">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                  <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
-                                  <polyline points="13 2 13 9 20 9"/>
-                                </svg>
-                              </div>
-                              <div class="file-extension">{{ att.name.split('.').pop().toUpperCase() }}</div>
-                            </div>
-                          </div>
-                          
-                          <div v-if="section.broadcasts[0].attachments.length > 4" class="more-attachments-tile">
-                            <div class="more-count">+{{ section.broadcasts[0].attachments.length - 4 }}</div>
-                            <div class="more-label">more</div>
-                          </div>
+
+                    <!-- Middle Section: Latest Broadcast Content -->
+                    <div class="latest-message-content">
+                      <div v-if="section.broadcasts && section.broadcasts.length > 0" class="latest-broadcast-enhanced">
+                        <div class="latest-indicator">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                          </svg>
+                          <span>Latest: {{ formatDate(section.broadcasts[0].sent_at) }}</span>
                         </div>
                         
-                        <div class="attachments-summary">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-                          </svg>
-                          <span>{{ section.broadcasts[0].attachments.length }} attachment{{ section.broadcasts[0].attachments.length > 1 ? 's' : '' }}</span>
+                        <div class="latest-content-enhanced">
+                          <p class="latest-message-text">{{ section.broadcasts[0].message }}</p>
+                          
+                          <!-- Compact Attachments Preview -->
+                          <div v-if="section.broadcasts[0].attachments && section.broadcasts[0].attachments.length > 0" class="attachments-preview-compact">
+                            <div class="attachments-row">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                              </svg>
+                              <span class="attachment-summary-icon">{{ section.broadcasts[0].attachments.length }} attachment{{ section.broadcasts[0].attachments.length > 1 ? 's' : '' }}</span>
+                              <div class="attachments-mini-preview">
+                                <div v-for="(att, idx) in section.broadcasts[0].attachments.slice(0, 3)" :key="idx" class="mini-attachment">
+                                  <div v-if="att.type === 'image'" class="mini-image">
+                                    <img :src="att.url" :alt="att.name" />
+                                  </div>
+                                  <div v-else class="mini-file">
+                                    <span>{{ att.name.split('.').pop()?.toUpperCase() || 'FILE' }}</span>
+                                  </div>
+                                </div>
+                                <div v-if="section.broadcasts[0].attachments.length > 3" class="mini-more">
+                                  +{{ section.broadcasts[0].attachments.length - 3 }}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                  
-                  <div class="card-footer-enhanced">
-                    <div class="view-action">
-                      <span>View All Broadcasts</span>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="9 18 15 12 9 6"></polyline>
-                      </svg>
+
+                    <!-- Right Section: Stats and Action -->
+                    <div class="stats-and-action-section">
+                      <div class="broadcast-stats-enhanced">
+                        <div class="stats-number">{{ section.broadcasts.length }}</div>
+                        <div class="stats-label">broadcasts</div>
+                      </div>
+                      <div class="view-arrow">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
             </div>
           </div>
         </div>
@@ -971,6 +951,7 @@
         <p class="loading-text">{{ loadingMessage || 'Loading...' }}</p>
       </div>
     </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -3063,48 +3044,44 @@ onUnmounted(() => {
   }
 }
 
-/* Enhanced History Grid Responsive */
-.history-grid-enhanced {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-  gap: 20px;
-  width: 100%;
-  padding: 20px;
-}
-
-.history-card-enhanced {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 24px;
-  cursor: pointer;
-  transition: all 0.2s;
-  min-height: 320px;
+/* Enhanced Fullwidth History Grid */
+.history-grid-enhanced-fullwidth {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  position: relative;
+  gap: 12px;
+  width: 100%;
+  padding: 20px;
+  max-width: none;
+}
+
+.history-card-enhanced-wide {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
   overflow: hidden;
 }
 
-.history-card-enhanced:hover {
+.history-card-enhanced-wide:hover {
   border-color: #3b82f6;
-  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.12);
-  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+  transform: translateY(-1px);
 }
 
-.card-header-enhanced {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 20px;
+.card-layout-horizontal {
+  display: grid;
+  grid-template-columns: 280px 1fr 140px;
+  padding: 20px 24px;
+  gap: 24px;
+  align-items: center;
+  min-height: 100px;
 }
 
-.subject-info-enhanced {
+.subject-info-section {
   display: flex;
   gap: 16px;
-  flex: 1;
-  min-width: 0;
+  align-items: center;
 }
 
 .subject-avatar-enhanced {
@@ -3128,7 +3105,7 @@ onUnmounted(() => {
 }
 
 .subject-details-enhanced h3 {
-  margin: 0 0 10px 0;
+  margin: 0 0 8px 0;
   font-size: 18px;
   font-weight: 700;
   color: #111827;
@@ -3138,13 +3115,13 @@ onUnmounted(() => {
 .section-badges-enhanced {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .section-badge, .code-badge, .grade-badge {
-  font-size: 12px;
-  padding: 4px 10px;
-  border-radius: 8px;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 6px;
   font-weight: 600;
   letter-spacing: 0.02em;
 }
@@ -3164,20 +3141,155 @@ onUnmounted(() => {
   color: #166534;
 }
 
+.latest-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.latest-message-content {
+  width: 100%;
+}
+
+.latest-message-text {
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.5;
+  margin: 0 0 8px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attachments-preview-compact {
+  margin-top: 8px;
+}
+
+.attachments-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.attachment-summary-icon {
+  font-weight: 500;
+}
+
+.attachments-mini-preview {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.mini-attachment {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+.mini-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mini-file {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+  font-size: 8px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.mini-more {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.stats-and-action-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: flex-end;
+}
+
 .broadcast-stats-enhanced {
   text-align: center;
   background: #f8fafc;
-  border-radius: 12px;
-  padding: 12px 16px;
+  border-radius: 8px;
+  padding: 8px 12px;
   border: 1px solid #f1f5f9;
-  min-width: 80px;
+  min-width: 60px;
 }
 
 .stats-number {
-  font-size: 24px;
-  font-weight: 800;
-  color: #3b82f6;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
   line-height: 1;
+}
+
+.stats-label {
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.view-arrow {
+  color: #9ca3af;
+  transition: all 0.2s ease;
+}
+
+.history-card-enhanced-wide:hover .view-arrow {
+  color: #3b82f6;
+  transform: translateX(2px);
+}
+
+/* Responsive Design for Fullwidth Layout */
+@media (max-width: 768px) {
+  .history-grid-enhanced-fullwidth {
+    padding: 12px;
+  }
+
+  .card-layout-horizontal {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .subject-info-section {
+    gap: 12px;
+  }
+
+  .stats-and-action-section {
+    justify-content: space-between;
+  }
+
+  .latest-message-text {
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+  }
 }
 
 .stats-label {
@@ -6677,7 +6789,8 @@ onUnmounted(() => {
 
 /* Broadcast Messages - Enhanced to match MySubjects.vue */
 .broadcast-messages-view {
-  max-width: 800px;
+  width: 100%;
+  max-width: none;
 }
 
 .broadcast-messages-header {
@@ -6963,7 +7076,8 @@ onUnmounted(() => {
 
 /* Broadcast History */
 .broadcast-history {
-  max-width: 800px;
+  width: 100%;
+  max-width: none;
 }
 
 .broadcast-history-header {
