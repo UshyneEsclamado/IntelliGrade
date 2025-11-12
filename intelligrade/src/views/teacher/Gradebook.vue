@@ -41,28 +41,33 @@
 
     <!-- Subject Filter Buttons -->
     <div v-if="!selectedSubject && !selectedSection" class="subject-filters">
-      <h3 class="filter-title">Filter by Subject:</h3>
+      <div class="filter-header">
+        <h3 class="filter-title">Filter by Subject</h3>
+        <span class="filter-subtitle">Choose a subject type to filter courses</span>
+      </div>
       <div class="filter-buttons">
         <button 
           @click="selectedSubjectFilter = ''" 
-          class="filter-btn" 
+          class="filter-btn modern" 
           :class="{ 'active': selectedSubjectFilter === '' }"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M9,5V9H21V5M9,19H21V15H9M9,14H21V10H9M4,9H8L6,7L4,9M4,19H8L6,17L4,19M4,14H8L6,12L4,14Z" />
-          </svg>
-          All
+          <div class="filter-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9,5V9H21V5M9,19H21V15H9M9,14H21V10H9M4,9H8L6,7L4,9M4,19H8L6,17L4,19M4,14H8L6,12L4,14Z" />
+            </svg>
+          </div>
+          <span class="filter-text">All Subjects</span>
         </button>
         <button 
           v-for="filterType in availableSubjectTypes" 
           :key="filterType.name"
           @click="selectedSubjectFilter = filterType.name" 
-          class="filter-btn" 
+          class="filter-btn modern" 
           :class="{ 'active': selectedSubjectFilter === filterType.name }"
           :style="{ '--filter-color': filterType.color }"
         >
-          <div v-html="filterType.icon"></div>
-          {{ filterType.name }}
+          <div class="filter-icon" v-html="filterType.icon"></div>
+          <span class="filter-text">{{ filterType.name }}</span>
         </button>
       </div>
     </div>
@@ -104,20 +109,28 @@
     <!-- Main Content -->
     <div v-else class="main-content">
       <!-- LEVEL 1: Subject Selection -->
-      <div v-if="!selectedSubject" class="content-card">
-        <div class="card-header">
-          <h3>Select Subject</h3>
-          <p class="card-desc">Choose a subject to view sections and submissions</p>
+      <div v-if="!selectedSubject" class="content-card modern">
+        <div class="card-header enhanced">
+          <div class="card-title-section">
+            <h3>My Subjects</h3>
+            <p class="card-desc">Choose a subject to view sections and manage submissions</p>
+          </div>
+          <div class="card-stats">
+            <div class="stat-item">
+              <span class="stat-number">{{ filteredSubjects.length }}</span>
+              <span class="stat-label">Subjects</span>
+            </div>
+          </div>
         </div>
         
-        <div class="subjects-grid">
+        <div class="subjects-grid modern">
           <div 
             v-for="subject in filteredSubjects" 
             :key="subject.id"
-            class="subject-card"
+            class="subject-card modern"
             @click="selectSubject(subject)"
           >
-            <div class="subject-icon" :style="{ background: getSubjectIconColor(subject.name) }">
+            <div class="subject-icon modern" :style="{ background: getSubjectIconColor(subject.name) }">
               <div v-html="getSubjectIconSvg(subject.name)"></div>
             </div>
             <div class="subject-info">
@@ -138,17 +151,19 @@
                 </span>
               </div>
             </div>
-            <div class="card-arrow">
+            <div class="card-arrow modern">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" />
               </svg>
             </div>
           </div>
 
-          <div v-if="filteredSubjects.length === 0" class="empty-state">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3.9 19 5 18.1 5 17V9H19C20.1 9 21 8.1 21 7V5C21 3.9 20.1 3 19 3Z" />
-            </svg>
+          <div v-if="filteredSubjects.length === 0" class="empty-state modern">
+            <div class="empty-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3.9 19 5 18.1 5 17V9H19C20.1 9 21 8.1 21 7V5C21 3.9 20.1 3 19 3Z" />
+              </svg>
+            </div>
             <h3>No subjects found</h3>
             <p>You don't have any subjects assigned yet.</p>
           </div>
@@ -156,35 +171,47 @@
       </div>
 
       <!-- LEVEL 2: Section Selection -->
-      <div v-else-if="selectedSubject && !selectedSection" class="content-card">
-        <div class="card-header">
-          <h3>{{ selectedSubject.name }} - Sections</h3>
-          <p class="card-desc">Choose a section to view quiz submissions</p>
+      <div v-else-if="selectedSubject && !selectedSection" class="content-card modern">
+        <div class="card-header enhanced">
+          <div class="card-title-section">
+            <h3>📝 {{ selectedSubject.name }} Sections</h3>
+            <p class="card-desc">Choose a section to view quiz submissions and manage grades</p>
+          </div>
+          <div class="card-stats">
+            <div class="stat-item">
+              <span class="stat-number">{{ filteredSections.length }}</span>
+              <span class="stat-label">Sections</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-number">{{ filteredSections.reduce((sum, s) => sum + (s.quiz_count || 0), 0) }}</span>
+              <span class="stat-label">Quizzes</span>
+            </div>
+          </div>
         </div>
         
-        <div class="sections-grid">
+        <div class="sections-grid enhanced">
           <div 
             v-for="section in filteredSections" 
             :key="section.id"
-            class="section-card"
+            class="section-card modern"
             @click="selectSection(section)"
           >
-            <div class="section-icon">
+            <div class="section-icon modern">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12,5.5A3.5,3.5 0 0,1 15.5,9A3.5,3.5 0 0,1 12,12.5A3.5,3.5 0 0,1 8.5,9A3.5,3.5 0 0,1 12,5.5M5,8C5.56,8 6.08,8.15 6.53,8.42C6.38,9.85 6.8,11.27 7.66,12.38C7.16,13.34 6.16,14 5,14A3,3 0 0,1 2,11A3,3 0 0,1 5,8M19,8A3,3 0 0,1 22,11A3,3 0 0,1 19,14C17.84,14 16.84,13.34 16.34,12.38C17.2,11.27 17.62,9.85 17.47,8.42C17.92,8.15 18.44,8 19,8M5.5,18.25C5.5,16.18 8.41,14.5 12,14.5C15.59,14.5 18.5,16.18 18.5,18.25V20H5.5V18.25M0,20V18.5C0,17.11 1.89,15.94 4.45,15.6C3.86,16.28 3.5,17.22 3.5,18.25V20H0M24,20H20.5V18.25C20.5,17.22 20.14,16.28 19.55,15.6C22.11,15.94 24,17.11 24,18.5V20Z" />
               </svg>
             </div>
-            <div class="section-info">
+            <div class="section-info enhanced">
               <h4>{{ section.name }}</h4>
               <p class="section-code">{{ section.section_code }}</p>
-              <div class="section-stats">
-                <span class="stat-item">
+              <div class="section-stats enhanced">
+                <span class="stat-item modern">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
                   </svg>
                   {{ section.quiz_count }} Quizzes
                 </span>
-                <span class="stat-item pending" v-if="section.pending_count > 0">
+                <span class="stat-item modern pending" v-if="section.pending_count > 0">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M16.2,16.2L11,13V7H12.5V12.2L17,14.9L16.2,16.2Z" />
                   </svg>
@@ -192,19 +219,23 @@
                 </span>
               </div>
             </div>
-            <div class="card-arrow">
+            <div class="card-arrow modern">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" />
               </svg>
             </div>
           </div>
 
-          <div v-if="filteredSections.length === 0" class="empty-state">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12,5.5A3.5,3.5 0 0,1 15.5,9A3.5,3.5 0 0,1 12,12.5A3.5,3.5 0 0,1 8.5,9A3.5,3.5 0 0,1 12,5.5M5,8C5.56,8 6.08,8.15 6.53,8.42C6.38,9.85 6.8,11.27 7.66,12.38C7.16,13.34 6.16,14 5,14A3,3 0 0,1 2,11A3,3 0 0,1 5,8M19,8A3,3 0 0,1 22,11A3,3 0 0,1 19,14C17.84,14 16.84,13.34 16.34,12.38C17.2,11.27 17.62,9.85 17.47,8.42C17.92,8.15 18.44,8 19,8M5.5,18.25C5.5,16.18 8.41,14.5 12,14.5C15.59,14.5 18.5,16.18 18.5,18.25V20H5.5V18.25M0,20V18.5C0,17.11 1.89,15.94 4.45,15.6C3.86,16.28 3.5,17.22 3.5,18.25V20H0M24,20H20.5V18.25C20.5,17.22 20.14,16.28 19.55,15.6C22.11,15.94 24,17.11 24,18.5V20Z" />
-            </svg>
-            <h3>No sections found</h3>
-            <p>No sections available for this subject.</p>
+          <div v-if="filteredSections.length === 0" class="empty-state modern">
+            <div class="empty-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12,5.5A3.5,3.5 0 0,1 15.5,9A3.5,3.5 0 0,1 12,12.5A3.5,3.5 0 0,1 8.5,9A3.5,3.5 0 0,1 12,5.5M5,8C5.56,8 6.08,8.15 6.53,8.42C6.38,9.85 6.8,11.27 7.66,12.38C7.16,13.34 6.16,14 5,14A3,3 0 0,1 2,11A3,3 0 0,1 5,8M19,8A3,3 0 0,1 22,11A3,3 0 0,1 19,14C17.84,14 16.84,13.34 16.34,12.38C17.2,11.27 17.62,9.85 17.47,8.42C17.92,8.15 18.44,8 19,8M5.5,18.25C5.5,16.18 8.41,14.5 12,14.5C15.59,14.5 18.5,16.18 18.5,18.25V20H5.5V18.25M0,20V18.5C0,17.11 1.89,15.94 4.45,15.6C3.86,16.28 3.5,17.22 3.5,18.25V20H0M24,20H20.5V18.25C20.5,17.22 20.14,16.28 19.55,15.6C22.11,15.94 24,17.11 24,18.5V20Z" />
+              </svg>
+            </div>
+            <div class="empty-content">
+              <h3>No sections found</h3>
+              <p>No sections available for this subject.</p>
+            </div>
           </div>
         </div>
       </div>
@@ -1488,19 +1519,46 @@ onMounted(async () => {
   100% { transform: rotate(360deg); }
 }
 
-/* Subject Filter Buttons */
+/* Enhanced Subject Filter Buttons */
 .subject-filters {
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid rgba(61, 141, 122, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.dark .subject-filters {
+  background: #23272b;
+  border-color: #3D8D7A;
+}
+
+.filter-header {
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid rgba(61, 141, 122, 0.1);
+  padding-bottom: 1rem;
+}
+.dark .filter-header {
+  border-bottom-color: #3D8D7A;
 }
 
 .filter-title {
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 1.125rem;
+  font-weight: 700;
   color: #1f2937;
-  margin-bottom: 0.75rem;
+  margin: 0 0 0.25rem 0;
 }
 .dark .filter-title {
   color: #A3D1C6;
+}
+
+.filter-subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+.dark .filter-subtitle {
+  color: #9ca3af;
 }
 
 .filter-buttons {
@@ -1509,47 +1567,62 @@ onMounted(async () => {
   gap: 0.75rem;
 }
 
-.filter-btn {
+.filter-btn.modern {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1rem;
-  border: 2px solid #A3D1C6;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  border: 2px solid #e5e7eb;
   background: white;
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-size: 0.875rem;
-  font-weight: 500;
-  color: #1f2937;
+  font-weight: 600;
+  color: #374151;
+  position: relative;
+  overflow: hidden;
 }
-.dark .filter-btn {
-  background: #23272b;
-  border-color: #3D8D7A;
-  color: #A3D1C6;
+.dark .filter-btn.modern {
+  background: #374151;
+  border-color: #4b5563;
+  color: #d1d5db;
 }
 
-.filter-btn:hover {
+.filter-btn.modern:hover {
+  background: #f9fafb;
+  border-color: var(--filter-color, #3D8D7A);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+.dark .filter-btn.modern:hover {
+  background: #4b5563;
+  border-color: var(--filter-color, #A3D1C6);
+}
+
+.filter-btn.modern.active {
   background: var(--filter-color, #3D8D7A);
   border-color: var(--filter-color, #3D8D7A);
   color: white;
+  box-shadow: 0 4px 15px rgba(61, 141, 122, 0.3);
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.filter-btn.active {
-  background: var(--filter-color, #3D8D7A);
-  border-color: var(--filter-color, #3D8D7A);
-  color: white;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-}
-
-.filter-btn svg {
+.filter-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
 }
 
+.filter-text {
+  font-weight: 600;
+}
+
 /* All button special styling */
-.filter-btn:first-child {
+.filter-btn.modern:first-child {
   --filter-color: #3D8D7A;
 }
 
@@ -1647,51 +1720,106 @@ onMounted(async () => {
   margin-bottom: 1rem;
 }
 
-/* Main Content */
+/* Enhanced Main Content */
 .main-content {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
 
-.content-card {
+.content-card.modern {
   background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(61, 141, 122, 0.1);
+  border-radius: 16px;
+  padding: 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(61, 141, 122, 0.08);
+  overflow: hidden;
 }
-.dark .content-card {
+.dark .content-card.modern {
   background: #23272b;
-  border: 1px solid #3D8D7A;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  border: 1px solid rgba(163, 209, 198, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
-.card-header {
-  margin-bottom: 1.5rem;
+.card-header.enhanced {
+  padding: 2rem 2rem 1.5rem 2rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-bottom: 1px solid rgba(61, 141, 122, 0.1);
-  padding-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
 }
-.dark .card-header {
-  border-bottom-color: #3D8D7A;
+.dark .card-header.enhanced {
+  background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+  border-bottom-color: rgba(163, 209, 198, 0.2);
 }
 
-.card-header h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
+.card-title-section h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
   color: #1f2937;
-  margin-bottom: 0.25rem;
+  margin: 0 0 0.5rem 0;
+  background: linear-gradient(135deg, #3D8D7A, #059669);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
-.dark .card-header h3 {
-  color: #A3D1C6;
+.dark .card-title-section h3 {
+  background: linear-gradient(135deg, #A3D1C6, #34d399);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.card-desc {
+.card-title-section .card-desc {
   font-size: 0.875rem;
   color: #6b7280;
+  margin: 0;
 }
-.dark .card-desc {
+.dark .card-title-section .card-desc {
+  color: #9ca3af;
+}
+
+.card-stats {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.card-stats .stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  min-width: 80px;
+}
+.dark .card-stats .stat-item {
+  background: #1f2937;
+}
+
+.card-stats .stat-number {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #3D8D7A;
+  line-height: 1;
+}
+.dark .card-stats .stat-number {
   color: #A3D1C6;
+}
+
+.card-stats .stat-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.25rem;
+}
+.dark .card-stats .stat-label {
+  color: #9ca3af;
 }
 
 /* Stats Grid */
@@ -1754,11 +1882,90 @@ onMounted(async () => {
   color: #A3D1C6;
 }
 
-/* Subject and Section Cards */
+/* Enhanced Subject and Section Cards */
+.subjects-grid.modern {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1.5rem;
+  padding: 2rem;
+}
+
 .subjects-grid, .sections-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1rem;
+}
+
+.subject-card.modern {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1.5px solid transparent;
+  border-radius: 16px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+.dark .subject-card.modern {
+  background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+  border-color: rgba(163, 209, 198, 0.2);
+}
+
+.subject-card.modern:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #3D8D7A, #059669);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 16px;
+}
+
+.subject-card.modern:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  border-color: rgba(61, 141, 122, 0.3);
+}
+.dark .subject-card.modern:hover {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  border-color: rgba(163, 209, 198, 0.4);
+}
+
+.subject-card.modern:hover:before {
+  opacity: 0.03;
+}
+.dark .subject-card.modern:hover:before {
+  opacity: 0.08;
+}
+
+.subject-icon.modern {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.dark .subject-icon.modern {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.subject-icon.modern svg,
+.subject-icon.modern div {
+  width: 28px;
+  height: 28px;
+  color: white;
+  fill: white;
 }
 
 .subject-card, .section-card {
@@ -3286,5 +3493,197 @@ onMounted(async () => {
     height: 50px;
     font-size: 1.25rem;
   }
+}
+
+/* Enhanced Sections */
+.sections-grid.enhanced {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1.5rem;
+  padding: 2rem;
+}
+
+.section-card.modern {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1.5px solid transparent;
+  border-radius: 16px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+.dark .section-card.modern {
+  background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+  border-color: rgba(163, 209, 198, 0.2);
+}
+
+.section-card.modern:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 16px;
+}
+
+.section-card.modern:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+.dark .section-card.modern:hover {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  border-color: rgba(139, 92, 246, 0.4);
+}
+
+.section-card.modern:hover:before {
+  opacity: 0.03;
+}
+.dark .section-card.modern:hover:before {
+  opacity: 0.08;
+}
+
+.section-icon.modern {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+.dark .section-icon.modern {
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.section-info.enhanced {
+  flex: 1;
+  min-width: 0;
+}
+
+.section-info.enhanced h4 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 0.25rem 0;
+  line-height: 1.3;
+}
+.dark .section-info.enhanced h4 {
+  color: #f9fafb;
+}
+
+.section-stats.enhanced {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.section-stats.enhanced .stat-item.modern {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  background: rgba(99, 102, 241, 0.08);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+.dark .section-stats.enhanced .stat-item.modern {
+  color: #9ca3af;
+  background: rgba(139, 92, 246, 0.15);
+}
+
+.section-stats.enhanced .stat-item.modern.pending {
+  background: rgba(245, 101, 101, 0.1);
+  color: #ef4444;
+}
+.dark .section-stats.enhanced .stat-item.modern.pending {
+  background: rgba(245, 101, 101, 0.2);
+  color: #fca5a5;
+}
+
+.empty-state.modern {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  text-align: center;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 2px dashed rgba(107, 114, 128, 0.2);
+  border-radius: 16px;
+  grid-column: 1 / -1;
+}
+.dark .empty-state.modern {
+  background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+  border-color: rgba(163, 209, 198, 0.2);
+}
+
+.empty-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #e5e7eb, #d1d5db);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  color: #6b7280;
+}
+.dark .empty-icon {
+  background: linear-gradient(135deg, #4b5563, #6b7280);
+  color: #9ca3af;
+}
+
+.empty-content h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #374151;
+  margin: 0 0 0.5rem 0;
+}
+.dark .empty-content h3 {
+  color: #d1d5db;
+}
+
+.empty-content p {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+.dark .empty-content p {
+  color: #9ca3af;
+}
+
+.card-arrow.modern {
+  color: #9ca3af;
+  transition: all 0.3s ease;
+  transform: translateX(0);
+}
+.dark .card-arrow.modern {
+  color: #6b7280;
+}
+
+.subject-card.modern:hover .card-arrow.modern,
+.section-card.modern:hover .card-arrow.modern {
+  color: #3D8D7A;
+  transform: translateX(4px);
+}
+.dark .subject-card.modern:hover .card-arrow.modern,
+.dark .section-card.modern:hover .card-arrow.modern {
+  color: #A3D1C6;
 }
 </style>
