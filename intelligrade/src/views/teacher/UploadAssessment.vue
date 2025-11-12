@@ -1,26 +1,29 @@
 <template>
-    <div :class="['upload-page', isDarkMode ? 'dark' : '']">
-      <!-- Header Card -->
-      <div class="header-card">
-        <div class="header-content">
-          <div class="header-left">
-            <div class="user-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14,2 14,8 20,8"></polyline>
-                <line x1="16" y1="13" x2="8" y2="13"></line>
-                <line x1="16" y1="17" x2="8" y2="17"></line>
-                <polyline points="10,9 9,9 8,9"></polyline>
-              </svg>
-            </div>
-            <div>
-              <h1 class="header-title">Assessment Checker</h1>
-              <p class="header-subtitle">Upload student assessments for instant AI-powered scoring</p>
-            </div>
+  <div :class="['home-container', isDarkMode ? 'dark' : '']">
+    <!-- Uniform Header Card -->
+    <div class="header-card">
+      <div class="header-content">
+        <div class="header-left">
+          <div class="user-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14,2 14,8 20,8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10,9 9,9 8,9"></polyline>
+            </svg>
+          </div>
+          <div>
+            <h1 class="header-title">Assessment Checker</h1>
+            <p class="header-subtitle">Upload student assessments for instant AI-powered scoring</p>
           </div>
         </div>
       </div>
-
+    </div>
+    
+    <!-- Content Grid -->
+    <div class="content-grid">
+      
       <!-- Loading Overlay -->
       <div v-if="isLoading" class="loading-overlay">
         <div class="loader"></div>
@@ -38,11 +41,21 @@
         </div>
       </div>
 
-      <!-- Assessment Configuration -->
-      <div class="card">
+      <!-- Assessment Configuration Card -->
+      <div class="content-card">
         <div class="card-header">
-          <h2>Assessment Configuration</h2>
-          <p>Set up your assessment parameters and scoring system</p>
+          <div class="card-title-wrapper">
+            <div class="card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-4"></path>
+                <path d="M9 11V9a3 3 0 0 1 6 0v2"></path>
+              </svg>
+            </div>
+            <div>
+              <h2>Assessment Configuration</h2>
+              <p>Set up your assessment parameters and scoring system</p>
+            </div>
+          </div>
         </div>
         <div class="card-body">
           <div class="form-row">
@@ -121,10 +134,22 @@
       </div>
 
       <!-- Answer Key Setup -->
-      <div class="card">
+      <div class="content-card">
         <div class="card-header">
-          <h2>Answer Key Setup *</h2>
-          <p>Provide the correct answers for automatic scoring</p>
+          <div class="card-title-wrapper">
+            <div class="card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 12l2 2 4-4"></path>
+                <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"></path>
+                <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"></path>
+                <path d="M12 3v18"></path>
+              </svg>
+            </div>
+            <div>
+              <h2>Answer Key Setup</h2>
+              <p>Provide the correct answers for automatic scoring</p>
+            </div>
+          </div>
         </div>
         <div class="card-body">
           <div class="answer-key-tabs">
@@ -276,10 +301,21 @@
       </div>
 
       <!-- Student Assessment Upload -->
-      <div class="card">
+      <div class="content-card">
         <div class="card-header">
-          <h2>Student Assessment Upload</h2>
-          <p>Upload a student's completed assessment for automatic scoring</p>
+          <div class="card-title-wrapper">
+            <div class="card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17,8 12,3 7,8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+            </div>
+            <div>
+              <h2>Student Assessment Upload</h2>
+              <p>Upload a student's completed assessment for automatic scoring</p>
+            </div>
+          </div>
         </div>
         <div class="card-body">
           <div class="form-row">
@@ -379,10 +415,20 @@
       </div>
 
       <!-- AI Grading Settings -->
-      <div class="card">
+      <div class="content-card">
         <div class="card-header">
-          <h2>AI Grading Configuration</h2>
-          <p>Configure the automated scoring and feedback settings</p>
+          <div class="card-title-wrapper">
+            <div class="card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9.9 15H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-5.9l-3 3-3-3Z"></path>
+                <path d="m8 11 2 2 4-4"></path>
+              </svg>
+            </div>
+            <div>
+              <h2>AI Grading Configuration</h2>
+              <p>Configure the automated scoring and feedback settings</p>
+            </div>
+          </div>
         </div>
         <div class="card-body">
           <div class="ai-settings-grid">
@@ -566,6 +612,7 @@
         </button>
       </div>
     </div>
+  </div>
   </template>
 
   <script>
@@ -1614,7 +1661,8 @@ const canSubmit = computed(() => {
     box-sizing: border-box;
   }
 
-  .upload-page {
+  /* Base Container */
+  .home-container {
     min-height: 100vh;
     background: #FBFFE4;
     font-family: 'Inter', sans-serif;
@@ -1623,8 +1671,147 @@ const canSubmit = computed(() => {
     margin: 0 auto;
   }
 
-  .dark .upload-page {
+  .dark .home-container {
     background: #181c20;
+  }
+
+  /* Uniform Header Section */
+  .header-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem 2.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 2px solid #A3D1C6;
+    width: 100%;
+  }
+
+  .dark .header-card {
+    background: #23272b;
+    border: 2px solid #20c997;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .user-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #20c997, #17a085);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .header-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0;
+    line-height: 1.2;
+  }
+
+  .dark .header-title {
+    color: #e2e8f0;
+  }
+
+  .header-subtitle {
+    font-size: 0.95rem;
+    color: #718096;
+    margin: 0;
+    margin-top: 0.25rem;
+  }
+
+  .dark .header-subtitle {
+    color: #a0aec0;
+  }
+
+  /* Content Grid */
+  .content-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: 1fr;
+  }
+
+  .content-card {
+    background: white;
+    border-radius: 20px;
+    padding: 0;
+    box-shadow: 0 4px 20px rgba(32, 201, 151, 0.08);
+    border: 2px solid rgba(163, 209, 198, 0.3);
+    transition: all 0.3s ease;
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+  }
+
+  .dark .content-card {
+    background: #23272b;
+    border-color: rgba(32, 201, 151, 0.3);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  .content-card:hover {
+    box-shadow: 0 8px 25px rgba(32, 201, 151, 0.15);
+    border-color: rgba(32, 201, 151, 0.6);
+    transform: translateY(-2px);
+  }
+
+  .dark .content-card:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+    border-color: rgba(32, 201, 151, 0.6);
+  }
+
+  .section-header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .section-header-icon {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #A3D1C6 0%, #87C5B8 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 4px 12px rgba(163, 209, 198, 0.3);
+  }
+  .dark .section-header-icon {
+    background: linear-gradient(135deg, #20c997 0%, #17a085 100%);
+  }
+
+  .section-header-title {
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+  }
+  .dark .section-header-title {
+    color: #ffffff;
+  }
+
+  .section-header-sub {
+    font-size: 1rem;
+    color: #6c757d;
+    font-weight: 400;
+  }
+  .dark .section-header-sub {
+    color: #adb5bd;
   }
 
   /* Header Card */
@@ -1701,45 +1888,78 @@ const canSubmit = computed(() => {
     background: #2a2d33;
   }
 
+  /* Enhanced Card Headers */
   .card-header {
-    padding: 1.5rem 2rem;
-    border-bottom: 1px solid rgba(61, 141, 122, 0.1);
+    padding: 1.25rem 1.5rem 1rem 1.5rem;
+    border-bottom: 2px solid rgba(163, 209, 198, 0.15);
+    margin-bottom: 0;
+    background: linear-gradient(135deg, rgba(32, 201, 151, 0.05), rgba(163, 209, 198, 0.05));
   }
 
   .dark .card-header {
-    border-bottom: 1px solid rgba(179, 216, 168, 0.1);
+    border-bottom: 2px solid rgba(32, 201, 151, 0.2);
+    background: linear-gradient(135deg, rgba(32, 201, 151, 0.08), rgba(163, 209, 198, 0.08));
+  }
+
+  .card-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .card-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #20c997, #17a085);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+    box-shadow: 0 3px 8px rgba(32, 201, 151, 0.3);
   }
 
   .card-header h2 {
     margin: 0 0 0.25rem 0;
     font-size: 1.3rem;
-    font-weight: 600;
-    color: #3D8D7A;
+    font-weight: 700;
+    color: #2d3748;
+    background: linear-gradient(135deg, #20c997, #17a085);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 
   .dark .card-header h2 {
-    color: #B3D8A8;
+    color: #e2e8f0;
+    background: linear-gradient(135deg, #20c997, #17a085);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 
   .card-header p {
     margin: 0;
-    font-size: 0.9rem;
-    color: #666;
+    font-size: 0.85rem;
+    color: #718096;
+    font-weight: 500;
   }
 
   .dark .card-header p {
-    color: #888;
+    color: #a0aec0;
   }
 
   .card-body {
-    padding: 2rem;
+    padding: 1.5rem;
   }
 
-  /* Forms */
+  /* Enhanced Forms */
   .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
+    margin-bottom: 1rem;
   }
 
   .form-group {
@@ -1750,68 +1970,101 @@ const canSubmit = computed(() => {
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 600;
-    font-size: 0.95rem;
-    color: #3D8D7A;
+    font-size: 0.9rem;
+    color: #4a5568;
+    position: relative;
   }
 
   .dark .form-group label {
-    color: #B3D8A8;
+    color: #e2e8f0;
   }
 
   .form-control {
     width: 100%;
     padding: 0.75rem 1rem;
-    border: 1px solid #E0E7EE;
-    border-radius: 10px;
-    font-size: 1rem;
-    background: white;
-    color: #333;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    border: 2px solid rgba(163, 209, 198, 0.3);
+    border-radius: 12px;
+    font-size: 0.9rem;
+    background: rgba(255, 255, 255, 0.8);
+    color: #2d3748;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 6px rgba(32, 201, 151, 0.05);
   }
 
   .dark .form-control {
-    border-color: #404040;
-    background: #2a2d33;
-    color: #e1e5e9;
+    border-color: rgba(32, 201, 151, 0.3);
+    background: rgba(45, 55, 72, 0.8);
+    color: #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
 
   .form-control:focus {
-    border-color: #3D8D7A;
-    box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.15);
+    border-color: #20c997;
+    box-shadow: 0 0 0 4px rgba(32, 201, 151, 0.15);
     outline: none;
+    transform: translateY(-1px);
   }
 
   .dark .form-control:focus {
-    border-color: #B3D8A8;
-    box-shadow: 0 0 0 3px rgba(179, 216, 168, 0.15);
+    border-color: #20c997;
+    box-shadow: 0 0 0 4px rgba(32, 201, 151, 0.15);
   }
 
-  /* Upload Areas */
+  /* Enhanced Upload Areas */
   .file-upload-area {
-    border: 2px dashed #E0E7EE;
-    border-radius: 12px;
-    padding: 2rem;
+    border: 3px dashed rgba(32, 201, 151, 0.4);
+    border-radius: 16px;
+    padding: 2rem 1.5rem;
     text-align: center;
-    background: white;
-    transition: all 0.3s ease;
+    background: linear-gradient(135deg, rgba(32, 201, 151, 0.05), rgba(163, 209, 198, 0.05));
+    transition: all 0.4s ease;
     cursor: pointer;
+    margin: 1.5rem 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .file-upload-area::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(32, 201, 151, 0.1) 0%, transparent 50%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
   }
 
   .dark .file-upload-area {
-    border-color: #404040;
-    background: #2a2d33;
+    border-color: rgba(32, 201, 151, 0.5);
+    background: linear-gradient(135deg, rgba(32, 201, 151, 0.08), rgba(163, 209, 198, 0.08));
   }
 
   .file-upload-area:hover, 
   .file-upload-area.drag-over {
-    border-color: #3D8D7A;
-    background-color: rgba(61, 141, 122, 0.05);
+    border-color: #20c997;
+    background: linear-gradient(135deg, rgba(32, 201, 151, 0.12), rgba(163, 209, 198, 0.12));
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(32, 201, 151, 0.25);
+  }
+
+  .file-upload-area:hover::before,
+  .file-upload-area.drag-over::before {
+    opacity: 1;
   }
 
   .dark .file-upload-area:hover, 
   .dark .file-upload-area.drag-over {
-    border-color: #B3D8A8;
-    background-color: rgba(179, 216, 168, 0.05);
+    border-color: #20c997;
+    background: linear-gradient(135deg, rgba(32, 201, 151, 0.15), rgba(163, 209, 198, 0.15));
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+  }
+
+  .upload-content {
+    position: relative;
+    z-index: 1;
   }
 
   .file-input { 
@@ -1819,30 +2072,50 @@ const canSubmit = computed(() => {
   }
 
   .upload-icon { 
-    color: #a0aec0; 
-    margin-bottom: 1rem; 
+    color: #20c997; 
+    margin-bottom: 1rem;
+    filter: drop-shadow(0 3px 6px rgba(32, 201, 151, 0.3));
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
   }
 
   .dark .upload-icon {
-    color: #6b7280;
+    color: #20c997;
   }
 
   .upload-link { 
-    color: #3D8D7A; 
-    font-weight: 600; 
+    color: #20c997; 
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    transition: text-decoration-color 0.3s ease;
+  }
+
+  .upload-link:hover {
+    text-decoration-color: #20c997;
   }
 
   .dark .upload-link {
-    color: #B3D8A8;
+    color: #20c997;
   }
 
   .file-selected { 
-    color: #3D8D7A; 
-    font-weight: 500; 
+    color: #20c997; 
+    font-weight: 600;
+    background: rgba(32, 201, 151, 0.1);
+    padding: 0.75rem;
+    border-radius: 10px;
+    display: inline-block;
+    margin-top: 0.75rem;
   }
 
   .dark .file-selected {
-    color: #B3D8A8;
+    color: #20c997;
+    background: rgba(32, 201, 151, 0.15);
   }
 
   /* Template Guide */
@@ -1888,70 +2161,106 @@ const canSubmit = computed(() => {
     overflow-y: auto;
   }
 
-  /* Buttons */
+  /* Enhanced Buttons */
   .action-buttons {
     display: flex;
     gap: 1rem;
     justify-content: flex-end;
-    margin-bottom: 2rem;
+    margin: 1.5rem 0 0 0;
+    padding: 1.5rem 1.5rem;
+    border-top: 2px solid rgba(163, 209, 198, 0.15);
+    background: linear-gradient(135deg, rgba(32, 201, 151, 0.02), rgba(163, 209, 198, 0.02));
+  }
+
+  .dark .action-buttons {
+    border-top: 2px solid rgba(32, 201, 151, 0.2);
+    background: linear-gradient(135deg, rgba(32, 201, 151, 0.05), rgba(163, 209, 198, 0.05));
   }
 
   .btn-submit, 
   .btn-secondary, 
   .btn-primary {
     padding: 0.75rem 1.5rem;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 1rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.9rem;
     border: none;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    overflow: hidden;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
   .btn-submit,
   .btn-primary {
-    background: #3D8D7A;
+    background: linear-gradient(135deg, #20c997, #17a085);
     color: white;
+    box-shadow: 0 4px 15px rgba(32, 201, 151, 0.3);
+  }
+
+  .btn-submit::before,
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.6s ease;
   }
 
   .btn-submit:hover:not(:disabled),
   .btn-primary:hover:not(:disabled) {
-    background: #317c6b;
+    background: linear-gradient(135deg, #17a085, #138f75);
+    box-shadow: 0 8px 25px rgba(32, 201, 151, 0.4);
+    transform: translateY(-3px);
+  }
+
+  .btn-submit:hover::before,
+  .btn-primary:hover::before {
+    left: 100%;
   }
 
   .btn-submit:disabled,
   .btn-primary:disabled {
     background: #cbd5e0;
     cursor: not-allowed;
-  }
-
-  .dark .btn-submit,
-  .dark .btn-primary {
-    background: #B3D8A8;
-    color: #1a1e23;
-  }
-
-  .dark .btn-submit:hover:not(:disabled),
-  .dark .btn-primary:hover:not(:disabled) {
-    background: #9ec795;
+    box-shadow: none;
+    transform: none;
+    opacity: 0.6;
   }
 
   .btn-secondary {
-    background: #E2E8F0;
-    color: #555;
+    background: white;
+    color: #4a5568;
+    border: 2px solid rgba(163, 209, 198, 0.4);
+    box-shadow: 0 4px 15px rgba(163, 209, 198, 0.2);
   }
 
   .btn-secondary:hover { 
-    background: #cbd5e0; 
+    background: rgba(32, 201, 151, 0.05);
+    border-color: #20c997;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(163, 209, 198, 0.3);
   }
 
   .dark .btn-secondary {
-    background: #404040;
-    color: #e1e5e9;
+    background: #2d3748;
+    color: #e2e8f0;
+    border: 2px solid rgba(32, 201, 151, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   }
 
   .dark .btn-secondary:hover {
-    background: #525252;
+    background: rgba(32, 201, 151, 0.1);
+    border-color: #20c997;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
   }
 
   /* Error */
