@@ -2291,6 +2291,35 @@ export default {
   max-height: calc(80vh - 120px);
 }
 
+/* Custom Scrollbar for Modal Body */
+.modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: rgba(163, 209, 198, 0.1);
+  border-radius: 10px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: linear-gradient(45deg, #3d8d7a, #20c997);
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(61, 141, 122, 0.2);
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(45deg, #2f6b5c, #1ba085);
+  box-shadow: 0 3px 6px rgba(61, 141, 122, 0.3);
+}
+
+.dark .modal-body::-webkit-scrollbar-track {
+  background: rgba(61, 141, 122, 0.1);
+}
+
+.dark .modal-body::-webkit-scrollbar-thumb {
+  background: linear-gradient(45deg, #4dbb98, #20c997);
+}
+
 .event-detail {
   display: flex;
   gap: 1rem;
