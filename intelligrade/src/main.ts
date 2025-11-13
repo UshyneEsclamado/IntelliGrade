@@ -1,4 +1,4 @@
-import './assets/main.css'  // Import global styles (CSS)
+// import './assets/main.css'  // Import global styles (CSS) - temporarily commented out
 import { createApp } from 'vue'  // Import Vue's createApp function
 import { createPinia } from 'pinia'  // Import Pinia for state management
 import App from './App.vue'  // Import the root App component
