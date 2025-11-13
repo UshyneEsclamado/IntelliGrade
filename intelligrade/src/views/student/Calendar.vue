@@ -1,11 +1,14 @@
 <template>
   <div class="calendar-container">
-    <!-- Simple Loading (uniform with Messages.vue) -->
-    <div v-if="loading" class="simple-loading-messages">
-      <div class="simple-loading-spinner">
-        <div class="simple-spinner"></div>
+    <!-- Loading Overlay (uniform with Subjects.vue) -->
+    <div v-if="loading" class="loading-overlay">
+      <div class="loading-content">
+        <div class="loading-spinner-container">
+          <div class="loading-spinner"></div>
+        </div>
+        <div class="loading-text">Loading Calendar</div>
+        <div class="loading-subtext">Please wait while we fetch your schedule...</div>
       </div>
-      <p>Loading calendar...</p>
     </div>
 
     <!-- Error State -->
@@ -1075,7 +1078,7 @@ export default {
   color: #A3D1C6;
 }
 
-/* Loading Overlay (matching Subjects.vue) */
+/* Loading Overlay (uniform with Subjects.vue) */
 .loading-overlay {
   position: fixed;
   top: 0;
@@ -1089,6 +1092,9 @@ export default {
   justify-content: center;
   z-index: 9999;
   animation: fadeIn 0.3s ease;
+}
+.dark .loading-overlay {
+  background: rgba(24, 28, 32, 0.95);
 }
 
 @keyframes fadeIn {
@@ -1108,6 +1114,11 @@ export default {
   box-shadow: 0 20px 60px rgba(61, 141, 122, 0.15);
   border: 2px solid #a3d1c6;
   animation: slideUp 0.4s ease;
+}
+.dark .loading-content {
+  background: #23272b;
+  border-color: #20c997;
+  color: #A3D1C6;
 }
 
 @keyframes slideUp {
@@ -1156,6 +1167,9 @@ export default {
   margin: 0 0 0.5rem 0;
   font-family: 'Inter', sans-serif;
 }
+.dark .loading-text {
+  color: #A3D1C6;
+}
 
 .loading-subtext {
   font-size: 0.95rem;
@@ -1163,6 +1177,9 @@ export default {
   color: #3d8d7a;
   margin: 0;
   font-family: 'Inter', sans-serif;
+}
+.dark .loading-subtext {
+  color: #A3D1C6;
 }
 
 /* Error State */
@@ -2594,55 +2611,7 @@ export default {
   }
 }
 
-/* ==================== SIMPLE LOADING STYLES (uniform with Messages.vue) ==================== */
-.simple-loading-messages {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  gap: 1rem;
-  color: #64748b;
-  min-height: 200px;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(251, 255, 228, 0.95);
-  backdrop-filter: blur(8px);
-  z-index: 9999;
-}
-.dark .simple-loading-messages {
-  color: #94a3b8;
-  background: rgba(24, 28, 32, 0.95);
-}
-
-.simple-loading-spinner {
-  position: relative;
-}
-
-.simple-spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid #e2e8f0;
-  border-top: 3px solid #2d6a4f;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-.dark .simple-spinner {
-  border-color: #334155;
-  border-top-color: #1b4332;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
+/* ==================== SIMPLE LOADING STYLES (removed - now using uniform Subjects.vue loading) ==================== */
 </style>
 
 /* --- Modern Card Header Styles (from Home.vue) --- */
