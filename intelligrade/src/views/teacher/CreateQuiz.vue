@@ -183,173 +183,200 @@
         </div>
       </div>
 
-      <!-- Add Questions with Enhanced Design -->
+      <!-- Add Questions with Clean Design -->
       <div v-if="currentStep === 'questions'" class="content-card slide-up">
         <div class="section-header">
           <div class="section-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
             </svg>
           </div>
           <div class="section-content">
             <h2 class="section-title">Build Your Questions</h2>
             <div class="question-counter">
-              <span class="counter-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-              </span>
-              {{ quiz.questions.length }} / {{ quiz.numberOfQuestions }}
+              <div class="counter-badge">
+                <span class="counter-text">{{ quiz.questions.length }} / {{ quiz.numberOfQuestions }} Questions</span>
+                <div class="progress-bar">
+                  <div class="progress-fill" :style="{ width: (quiz.questions.length / quiz.numberOfQuestions) * 100 + '%' }"></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Question Cards with Enhanced Design -->
-        <div class="questions-container">
-          <div v-for="(question, index) in quiz.questions" :key="index" class="question-card enhanced-card">
-            <div class="question-header">
-              <div class="question-number">
-                <div class="question-badge">{{ index + 1 }}</div>
-                <h3 class="question-title">Question {{ index + 1 }}</h3>
-              </div>
-              <button @click="removeQuestion(index)" class="btn btn-danger delete-btn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        <!-- Questions Container -->
+        <div class="questions-wrapper">
+          <!-- Question Cards -->
+          <div v-for="(question, index) in quiz.questions" :key="index" class="question-card-modern">
+            <div class="question-card-header">
+              <div class="question-badge-modern">{{ index + 1 }}</div>
+              <h3 class="question-title-modern">Question {{ index + 1 }}</h3>
+              <button @click="removeQuestion(index)" class="remove-question-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
                 </svg>
               </button>
             </div>
 
-            <div class="question-content">
-              <div class="form-group">
-                <label class="form-label">
-                  <span class="label-icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><path d="M22 12.08A10 10 0 1 1 11.92 2a5 5 0 0 0 6.9 6.9z"/></svg>
-                  </span>
+            <div class="question-card-body">
+              <!-- Question Type Selection -->
+              <div class="form-field">
+                <label class="field-label">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
+                  </svg>
                   Question Type
                 </label>
-                <select v-model="question.type" class="form-input form-select enhanced-input">
+                <select v-model="question.type" class="modern-select">
                   <option value="multiple_choice">Multiple Choice</option>
                   <option value="true_false">True/False</option>
                   <option value="fill_blank">Fill in the Blanks</option>
                 </select>
               </div>
 
-              <div class="form-group">
-                <label class="form-label">
-                  <span class="label-icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 1 1 5.82 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r="1"/></svg>
-                  </span>
+              <!-- Question Text -->
+              <div class="form-field">
+                <label class="field-label">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                  </svg>
                   Question Text
                 </label>
-                <textarea v-model="question.text" rows="3" placeholder="Enter your question here..." class="form-input form-textarea enhanced-input"></textarea>
+                <textarea 
+                  v-model="question.text" 
+                  rows="3" 
+                  placeholder="Enter your question here..." 
+                  class="modern-textarea"
+                ></textarea>
               </div>
 
-              <!-- Multiple Choice Options with Enhanced Design -->
-              <div v-if="question.type === 'multiple_choice'" class="option-group">
-                <label class="form-label">
-                  <span class="label-icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 2v4m8-4v4"/><path d="M4 10h16"/></svg>
-                  </span>
+              <!-- Multiple Choice Options -->
+              <div v-if="question.type === 'multiple_choice'" class="options-section">
+                <label class="field-label">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z"/>
+                  </svg>
                   Answer Options
                 </label>
-                <div class="options-container">
-                  <div v-for="(option, optIndex) in question.options" :key="optIndex" class="option-item enhanced-option">
-                    <input 
-                      type="radio" 
-                      :name="'correct-' + index" 
-                      :checked="question.correctAnswer === optIndex" 
-                      @change="question.correctAnswer = optIndex" 
-                      class="option-radio"
-                    />
-                    <div class="option-letter">{{ String.fromCharCode(65 + optIndex) }}</div>
+                
+                <div class="options-list">
+                  <div v-for="(option, optIndex) in question.options" :key="optIndex" class="option-row">
+                    <div class="option-controls">
+                      <input 
+                        type="radio" 
+                        :name="'correct-' + index" 
+                        :checked="question.correctAnswer === optIndex" 
+                        @change="question.correctAnswer = optIndex" 
+                        class="option-radio-modern"
+                      />
+                      <div class="option-letter-modern">{{ String.fromCharCode(65 + optIndex) }}</div>
+                    </div>
                     <input 
                       v-model="question.options[optIndex]" 
                       type="text" 
-                      :placeholder="'Option ' + String.fromCharCode(65 + optIndex)" 
-                      class="option-input"
+                      :placeholder="'Enter option ' + String.fromCharCode(65 + optIndex)" 
+                      class="option-input-modern"
                     />
-                    <button v-if="question.options.length > 2" @click="removeOption(index, optIndex)" class="remove-option-btn">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M6 18L18 6M6 6l12 12"/>
+                    <button 
+                      v-if="question.options.length > 2" 
+                      @click="removeOption(index, optIndex)" 
+                      class="remove-option-modern"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
                       </svg>
                     </button>
                   </div>
                 </div>
-                <button @click="addOption(index)" class="btn btn-success add-option-btn">
+                
+                <button @click="addOption(index)" class="add-option-modern">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/>
                   </svg>
                   Add Option
                 </button>
               </div>
 
-              <!-- True/False Options with Enhanced Design -->
-              <div v-if="question.type === 'true_false'" class="option-group">
-                <label class="form-label">
-                  <span class="label-icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                  </span>
+              <!-- True/False Options -->
+              <div v-if="question.type === 'true_false'" class="tf-section">
+                <label class="field-label">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z"/>
+                  </svg>
                   Correct Answer
                 </label>
-                <div class="tf-options">
-                  <label class="tf-option" :class="question.correctAnswer === 'true' ? 'selected' : ''">
-                    <input type="radio" v-model="question.correctAnswer" value="true" class="hidden" />
-                    <div class="tf-content">
-                      <div class="tf-icon">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                      </div>
-                      <div class="tf-label">True</div>
+                
+                <div class="tf-options-modern">
+                  <label class="tf-option-modern" :class="{ active: question.correctAnswer === 'true' }">
+                    <input type="radio" v-model="question.correctAnswer" value="true" class="tf-radio-hidden" />
+                    <div class="tf-icon-modern true">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z"/>
+                      </svg>
                     </div>
+                    <span class="tf-label-modern">True</span>
                   </label>
-                  <label class="tf-option" :class="question.correctAnswer === 'false' ? 'selected' : ''">
-                    <input type="radio" v-model="question.correctAnswer" value="false" class="hidden" />
-                    <div class="tf-content">
-                      <div class="tf-icon">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                      </div>
-                      <div class="tf-label">False</div>
+                  
+                  <label class="tf-option-modern" :class="{ active: question.correctAnswer === 'false' }">
+                    <input type="radio" v-model="question.correctAnswer" value="false" class="tf-radio-hidden" />
+                    <div class="tf-icon-modern false">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
+                      </svg>
                     </div>
+                    <span class="tf-label-modern">False</span>
                   </label>
                 </div>
               </div>
 
-              <!-- Fill in the Blanks with Enhanced Design -->
-              <div v-if="question.type === 'fill_blank'" class="form-group">
-                <label class="form-label">
-                  <span class="label-icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><path d="M4 20h4l10-10a2.828 2.828 0 0 0-4-4L4 16v4z"/><path d="M14.5 5.5l4 4"/></svg>
-                  </span>
-                  Correct Answer (exact match)
+              <!-- Fill in the Blanks -->
+              <div v-if="question.type === 'fill_blank'" class="form-field">
+                <label class="field-label">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                  </svg>
+                  Correct Answer
                 </label>
-                <input v-model="question.correctAnswer" type="text" placeholder="Enter the correct answer..." class="form-input enhanced-input" />
+                <input 
+                  v-model="question.correctAnswer" 
+                  type="text" 
+                  placeholder="Enter the exact answer..." 
+                  class="modern-input"
+                />
               </div>
             </div>
           </div>
 
-          <!-- Add Question Card -->
-          <div v-if="quiz.questions.length < quiz.numberOfQuestions" class="add-question-card" @click="addQuestion">
-            <div class="add-question-content">
-              <div class="add-question-icon">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+          <!-- Add Question Button -->
+          <div v-if="quiz.questions.length < quiz.numberOfQuestions" class="add-question-modern" @click="addQuestion">
+            <div class="add-question-content-modern">
+              <div class="add-icon-modern">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/>
                 </svg>
               </div>
-              <h3>Add Another Question</h3>
-              <p>Click to create question {{ quiz.questions.length + 1 }}</p>
+              <h4>Add Question {{ quiz.questions.length + 1 }}</h4>
+              <p>Click to create a new question</p>
             </div>
           </div>
         </div>
 
-        <!-- Action Buttons -->
-        <div class="action-buttons">
-          <button @click="currentStep = 'details'" class="btn btn-secondary">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M15 19l-7-7 7-7"/>
+        <!-- Navigation Actions -->
+        <div class="action-buttons-modern">
+          <button @click="currentStep = 'details'" class="btn-modern btn-secondary-modern">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/>
             </svg>
             Back
           </button>
-          <button v-if="quiz.questions.length > 0" @click="currentStep = 'settings'" class="btn btn-primary">
+          <button 
+            v-if="quiz.questions.length > 0" 
+            @click="currentStep = 'settings'" 
+            class="btn-modern btn-primary-modern"
+          >
             Continue to Settings
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z"/>
             </svg>
           </button>
         </div>
@@ -360,7 +387,7 @@
         <div class="section-header">
           <div class="section-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+              <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12A3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97c0-.33-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1c0 .33.03.65.07.97L2.46 14.6c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.31.61.22l2.49-1c.52.39 1.06.73 1.69.98l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.25 1.17-.59 1.69-.98l2.49 1c.22.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.63Z"/>
             </svg>
           </div>
           <div class="section-content">
@@ -375,7 +402,10 @@
             <div class="setting-header">
               <div class="setting-info">
                 <span class="setting-emoji">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
                 </span>
                 <div class="setting-details">
                   <h3>Time Limit</h3>
@@ -400,7 +430,11 @@
             <div class="setting-header">
               <div class="setting-info">
                 <span class="setting-emoji">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.51 15M3.51 9A9 9 0 0 1 18.49 15"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                    <polyline points="1 4 1 10 7 10"/>
+                    <polyline points="23 20 23 14 17 14"/>
+                    <path d="M20.49 9A9 9 0 0 0 5.51 15M3.51 9A9 9 0 0 1 18.49 15"/>
+                  </svg>
                 </span>
                 <div class="setting-details">
                   <h3>Attempts Allowed</h3>
@@ -434,7 +468,13 @@
             <div class="setting-header">
               <div class="setting-info">
                 <span class="setting-emoji">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                    <polyline points="16 3 21 3 21 8"/>
+                    <line x1="4" y1="20" x2="21" y2="3"/>
+                    <polyline points="21 16 21 21 16 21"/>
+                    <line x1="15" y1="15" x2="21" y2="21"/>
+                    <line x1="4" y1="4" x2="9" y2="9"/>
+                  </svg>
                 </span>
                 <div class="setting-details">
                   <h3>Shuffle Questions</h3>
@@ -453,7 +493,12 @@
             <div class="setting-header">
               <div class="setting-info">
                 <span class="setting-emoji">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
                 </span>
                 <div class="setting-details">
                   <h3>Schedule</h3>
@@ -466,7 +511,10 @@
                 <div class="form-group">
                   <label class="form-label-small">
                     <span class="label-icon">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                      </svg>
                     </span>
                     Start Date & Time (PHT)
                   </label>
@@ -476,7 +524,10 @@
                 <div class="form-group">
                   <label class="form-label-small">
                     <span class="label-icon">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 12 12 18 18 18"/></svg>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 12 12 18 18 18"/>
+                      </svg>
                     </span>
                     End Date & Time (PHT)
                   </label>
@@ -2294,305 +2345,716 @@ input[type="datetime-local"]::-webkit-clear-button {
   }
 }
 
-/* Questions Section Styles */
-.questions-container {
+/* =============================================== */
+/* MODERN QUESTIONS SECTION STYLES */
+/* =============================================== */
+
+.question-counter {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.counter-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border: 2px solid #10b981;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  min-width: 200px;
+}
+
+.dark .counter-badge {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border-color: #10b981;
+}
+
+.counter-text {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #10b981;
+}
+
+.dark .counter-text {
+  color: #34d399;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.dark .progress-bar {
+  background: #374151;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #059669);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+/* Questions Wrapper */
+.questions-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+/* Modern Question Card */
+.question-card-modern {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.question-card-modern:hover {
+  border-color: #10b981;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
+  transform: translateY(-2px);
+}
+
+.dark .question-card-modern {
+  background: #1e293b;
+  border-color: #374151;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.dark .question-card-modern:hover {
+  border-color: #10b981;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.25);
+}
+
+/* Question Card Header */
+.question-card-header {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 2px solid #e2e8f0;
+  padding: 1.5rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dark .question-card-header {
+  background: linear-gradient(135deg, #374151 0%, #1e293b 100%);
+  border-bottom-color: #475569;
+}
+
+.question-badge-modern {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.125rem;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  margin-right: 1rem;
+}
+
+.question-title-modern {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+  flex: 1;
+}
+
+.dark .question-title-modern {
+  color: #f1f5f9;
+}
+
+.remove-question-btn {
+  width: 36px;
+  height: 36px;
+  background: #fef2f2;
+  border: 2px solid #fecaca;
+  color: #ef4444;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.remove-question-btn:hover {
+  background: #ef4444;
+  border-color: #dc2626;
+  color: white;
+  transform: scale(1.05);
+}
+
+.dark .remove-question-btn {
+  background: #7f1d1d;
+  border-color: #991b1b;
+  color: #fca5a5;
+}
+
+.dark .remove-question-btn:hover {
+  background: #dc2626;
+  border-color: #b91c1c;
+  color: white;
+}
+
+/* Question Card Body */
+.question-card-body {
+  padding: 2rem;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
 
-.question-card {
-  background: #FBFFE4;
-  border: 1px solid #A3D1C6;
-  border-radius: 12px;
-  padding: 1.5rem;
-  transition: all 0.2s;
-}
-.dark .question-card {
-  background: #23272b;
-  border-color: #3D8D7A;
+/* Form Field */
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
-.question-header {
+.field-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+}
+
+.dark .field-label {
+  color: #d1d5db;
+}
+
+.field-label svg {
+  color: #10b981;
+}
+
+/* Modern Form Controls */
+.modern-select,
+.modern-textarea,
+.modern-input {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  background: white;
+  font-size: 0.875rem;
+  font-family: 'Inter', sans-serif;
+  color: #1f2937;
+  transition: all 0.2s ease;
+}
+
+.modern-select:focus,
+.modern-textarea:focus,
+.modern-input:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  background: #f9fafb;
+}
+
+.dark .modern-select,
+.dark .modern-textarea,
+.dark .modern-input {
+  background: #374151;
+  border-color: #475569;
+  color: #f1f5f9;
+}
+
+.dark .modern-select:focus,
+.dark .modern-textarea:focus,
+.dark .modern-input:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  background: #1e293b;
+}
+
+.modern-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* Options Section */
+.options-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.option-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.option-row:hover {
+  border-color: #10b981;
+  background: #f0fdfa;
+}
+
+.dark .option-row {
+  background: #374151;
+  border-color: #475569;
+}
+
+.dark .option-row:hover {
+  border-color: #10b981;
+  background: #1e293b;
+}
+
+.option-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.option-radio-modern {
+  width: 18px;
+  height: 18px;
+  accent-color: #10b981;
+  cursor: pointer;
+}
+
+.option-letter-modern {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.875rem;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+}
+
+.option-input-modern {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  font-size: 0.875rem;
+  color: #1f2937;
+  transition: all 0.2s ease;
+}
+
+.option-input-modern:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
+}
+
+.dark .option-input-modern {
+  background: #1e293b;
+  border-color: #374151;
+  color: #f1f5f9;
+}
+
+.dark .option-input-modern:focus {
+  border-color: #10b981;
+}
+
+.remove-option-modern {
+  width: 28px;
+  height: 28px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #ef4444;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.remove-option-modern:hover {
+  background: #ef4444;
+  border-color: #dc2626;
+  color: white;
+}
+
+.dark .remove-option-modern {
+  background: #7f1d1d;
+  border-color: #991b1b;
+  color: #fca5a5;
+}
+
+.add-option-modern {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: #ecfdf5;
+  border: 2px solid #10b981;
+  color: #059669;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-option-modern:hover {
+  background: #10b981;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+.dark .add-option-modern {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: #10b981;
+  color: #34d399;
+}
+
+.dark .add-option-modern:hover {
+  background: #10b981;
+  color: white;
+}
+
+/* True/False Section */
+.tf-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tf-options-modern {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.tf-option-modern {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tf-option-modern:hover {
+  border-color: #10b981;
+  background: #f0fdfa;
+}
+
+.tf-option-modern.active {
+  border-color: #10b981;
+  background: #ecfdf5;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+.dark .tf-option-modern {
+  background: #374151;
+  border-color: #475569;
+}
+
+.dark .tf-option-modern:hover,
+.dark .tf-option-modern.active {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.tf-radio-hidden {
+  display: none;
+}
+
+.tf-icon-modern {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.tf-icon-modern.true {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.tf-icon-modern.false {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.tf-option-modern.active .tf-icon-modern.true {
+  background: #059669;
+  color: white;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+}
+
+.tf-option-modern.active .tf-icon-modern.false {
+  background: #dc2626;
+  color: white;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.tf-label-modern {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.dark .tf-label-modern {
+  color: #d1d5db;
+}
+
+/* Add Question Button */
+.add-question-modern {
+  background: white;
+  border: 3px dashed #cbd5e1;
+  border-radius: 16px;
+  padding: 3rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1rem;
+}
+
+.add-question-modern:hover {
+  border-color: #10b981;
+  background: #f0fdfa;
+  transform: translateY(-2px);
+}
+
+.dark .add-question-modern {
+  background: #1e293b;
+  border-color: #475569;
+}
+
+.dark .add-question-modern:hover {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.add-question-content-modern {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.add-icon-modern {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 2px solid #10b981;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #10b981;
+  transition: all 0.2s ease;
+}
+
+.add-question-modern:hover .add-icon-modern {
+  background: #10b981;
+  color: white;
+  transform: scale(1.05);
+}
+
+.dark .add-icon-modern {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: #10b981;
+  color: #34d399;
+}
+
+.add-question-content-modern h4 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.dark .add-question-content-modern h4 {
+  color: #f1f5f9;
+}
+
+.add-question-content-modern p {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.dark .add-question-content-modern p {
+  color: #94a3b8;
+}
+
+/* Modern Action Buttons */
+.action-buttons-modern {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid #A3D1C6;
-}
-.dark .question-header {
-  border-bottom-color: #3D8D7A;
-}
-
-.question-header h4 {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #3D8D7A;
-  margin: 0;
-}
-.dark .question-header h4 {
-  color: #A3D1C6;
-}
-
-.remove-btn {
-  background: none;
-  border: none;
-  color: #ef4444;
-  font-size: 1.25rem;
-  cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 4px;
-  transition: background 0.2s;
-}
-.remove-btn:hover {
-  background: rgba(239, 68, 68, 0.1);
-}
-
-.question-body {
-  display: flex;
-  flex-direction: column;
   gap: 1rem;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 2px solid #e5e7eb;
 }
 
-.form-select {
-  padding: 0.7rem 1rem;
-  border-radius: 8px;
-  border: 1.5px solid #A3D1C6;
-  background: #FBFFE4;
-  font-size: 1rem;
-  color: #1f2937;
-  font-family: 'Inter', sans-serif;
-  transition: border-color 0.2s, background 0.2s;
-}
-.form-select:focus {
-  outline: none;
-  border-color: #3D8D7A;
-  background: #fff;
-}
-.dark .form-select {
-  background: #23272b;
-  color: #A3D1C6;
-  border-color: #3D8D7A;
-}
-.dark .form-select:focus {
-  background: #181c20;
-  border-color: #A3D1C6;
+.dark .action-buttons-modern {
+  border-top-color: #374151;
 }
 
-.option-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.options-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.option-item {
+.btn-modern {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem;
-  border-radius: 8px;
-  background: white;
-  border: 1px solid #A3D1C6;
-}
-.dark .option-item {
-  background: #181c20;
-  border-color: #3D8D7A;
-}
-
-.option-radio {
-  margin: 0;
+  gap: 0.5rem;
+  padding: 0.875rem 1.75rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  text-decoration: none;
 }
 
-.option-letter {
-  background: #3D8D7A;
+.btn-secondary-modern {
+  background: #f8fafc;
+  color: #64748b;
+  border: 2px solid #e2e8f0;
+}
+
+.btn-secondary-modern:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+.dark .btn-secondary-modern {
+  background: #374151;
+  color: #94a3b8;
+  border-color: #475569;
+}
+
+.dark .btn-secondary-modern:hover {
+  background: #475569;
+  border-color: #64748b;
+  color: #f1f5f9;
+}
+
+.btn-primary-modern {
+  background: linear-gradient(135deg, #10b981, #059669);
   color: white;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.875rem;
-  font-weight: 600;
+  border: 2px solid #10b981;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
 }
 
-.option-input {
-  flex: 1;
-  padding: 0.5rem;
-  border: 1px solid #A3D1C6;
-  border-radius: 6px;
-  background: #FBFFE4;
-  font-size: 0.875rem;
-}
-.option-input:focus {
-  outline: none;
-  border-color: #3D8D7A;
-}
-.dark .option-input {
-  background: #23272b;
-  color: #A3D1C6;
-  border-color: #3D8D7A;
+.btn-primary-modern:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+  border-color: #047857;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
 }
 
-.remove-option-btn {
-  background: none;
-  border: none;
-  color: #ef4444;
-  font-size: 1.125rem;
-  cursor: pointer;
-  padding: 0.25rem;
-  border-radius: 4px;
-  transition: background 0.2s;
-}
-.remove-option-btn:hover {
-  background: rgba(239, 68, 68, 0.1);
-}
-
-.btn-add {
-  background: #B3D8A8;
-  color: #1f2937;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-  align-self: flex-start;
-}
-.btn-add:hover {
-  background: #9fcf94;
-}
-
-.tf-options {
-  display: flex;
-  gap: 1rem;
-}
-
-.tf-option {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border: 1px solid #A3D1C6;
-  border-radius: 8px;
-  background: white;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.tf-option:hover {
-  border-color: #3D8D7A;
-  background: #FBFFE4;
-}
-.tf-option.selected {
-  border-color: #3D8D7A;
-  background: #FBFFE4;
-}
-.dark .tf-option {
-  background: #23272b;
-  border-color: #3D8D7A;
-  color: #A3D1C6;
-}
-.dark .tf-option:hover,
-.dark .tf-option.selected {
-  background: #181c20;
-  border-color: #A3D1C6;
+@media (max-width: 768px) {
+  .tf-options-modern {
+    grid-template-columns: 1fr;
+  }
+  
+  .option-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  
+  .option-controls {
+    justify-content: flex-start;
+  }
+  
+  .action-buttons-modern {
+    flex-direction: column-reverse;
+    gap: 0.75rem;
+  }
+  
+  .btn-modern {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .question-card-header {
+    padding: 1rem 1.5rem;
+  }
+  
+  .question-card-body {
+    padding: 1.5rem;
+  }
 }
 
-.tf-option input {
-  margin: 0;
-}
+/* =============================================== */
+/* SETTINGS SECTION STYLES */
+/* =============================================== */
 
-.add-question-card {
-  background: white;
-  border: 2px dashed #A3D1C6;
-  border-radius: 12px;
-  padding: 2rem;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.add-question-card:hover {
-  border-color: #3D8D7A;
-  background: #FBFFE4;
-}
-.dark .add-question-card {
-  background: #23272b;
-  border-color: #3D8D7A;
-  color: #A3D1C6;
-}
-.dark .add-question-card:hover {
-  background: #181c20;
-  border-color: #A3D1C6;
-}
-
-.add-question-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.add-question-icon {
-  font-size: 2rem;
-  color: #3D8D7A;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: #FBFFE4;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 0.5rem;
-}
-.dark .add-question-icon {
-  color: #A3D1C6;
-  background: #181c20;
-}
-
-.add-question-content h4 {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #3D8D7A;
-  margin: 0;
-}
-.dark .add-question-content h4 {
-  color: #A3D1C6;
-}
-
-.add-question-content p {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin: 0;
-}
-.dark .add-question-content p {
-  color: #A3D1C6;
-}
-
-/* Settings Section Styles */
-.settings-container {
-  display: flex;
-  flex-direction: column;
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 1.5rem;
+  margin-top: 0;
 }
 
-.setting-group {
-  background: #FBFFE4;
-  border: 1px solid #A3D1C6;
-  border-radius: 12px;
+.setting-card {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
   padding: 1.5rem;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
-.dark .setting-group {
-  background: #23272b;
-  border-color: #3D8D7A;
+
+.setting-card:hover {
+  border-color: #10b981;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.1);
+  transform: translateY(-2px);
+}
+
+.dark .setting-card {
+  background: #1e293b;
+  border-color: #374151;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.dark .setting-card:hover {
+  border-color: #10b981;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.2);
 }
 
 .setting-header {
@@ -2602,34 +3064,62 @@ input[type="datetime-local"]::-webkit-clear-button {
   margin-bottom: 1rem;
 }
 
-.setting-header h4 {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #3D8D7A;
-  margin: 0 0 0.25rem 0;
-}
-.dark .setting-header h4 {
-  color: #A3D1C6;
+.setting-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  flex: 1;
 }
 
-.setting-header p {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin: 0;
+.setting-emoji {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 2px solid #10b981;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
-.dark .setting-header p {
-  color: #A3D1C6;
+
+.dark .setting-emoji {
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.setting-details h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 0.25rem 0;
+}
+
+.dark .setting-details h3 {
+  color: #f1f5f9;
+}
+
+.setting-details p {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.dark .setting-details p {
+  color: #94a3b8;
 }
 
 .setting-content {
   margin-top: 1rem;
 }
 
+/* Toggle Switch */
 .toggle-switch {
   position: relative;
   display: inline-block;
-  width: 48px;
-  height: 24px;
+  width: 52px;
+  height: 28px;
+  flex-shrink: 0;
 }
 
 .toggle-switch input {
@@ -2645,98 +3135,188 @@ input[type="datetime-local"]::-webkit-clear-button {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #ccc;
-  transition: 0.2s;
-  border-radius: 24px;
+  background-color: #e2e8f0;
+  transition: 0.3s;
+  border-radius: 28px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .toggle-slider:before {
   position: absolute;
   content: "";
-  height: 18px;
-  width: 18px;
+  height: 22px;
+  width: 22px;
   left: 3px;
   bottom: 3px;
   background-color: white;
-  transition: 0.2s;
+  transition: 0.3s;
   border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .toggle-switch input:checked + .toggle-slider {
-  background-color: #3D8D7A;
+  background-color: #10b981;
 }
 
 .toggle-switch input:checked + .toggle-slider:before {
   transform: translateX(24px);
 }
 
+.toggle-switch input:focus + .toggle-slider {
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+/* Time Input Group */
 .time-input-group {
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
 
-.time-input-group input {
+.time-input {
   width: 80px;
+  text-align: center;
+  font-weight: 600;
 }
 
 .time-unit {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: #64748b;
   font-weight: 500;
 }
+
 .dark .time-unit {
-  color: #A3D1C6;
+  color: #94a3b8;
 }
 
+/* Attempts Options */
 .attempts-options {
   display: flex;
-  gap: 1rem;
+  gap: 0.75rem;
   flex-wrap: wrap;
 }
 
 .attempt-option {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border: 1px solid #A3D1C6;
-  border-radius: 8px;
+  padding: 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
   background: white;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 80px;
 }
+
 .attempt-option:hover {
-  border-color: #3D8D7A;
-  background: white;
+  border-color: #10b981;
+  background: #f0fdfa;
 }
+
 .attempt-option.selected {
-  border-color: #3D8D7A;
-  background: white;
-  box-shadow: 0 0 0 2px rgba(61, 141, 122, 0.1);
+  border-color: #10b981;
+  background: #ecfdf5;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
 }
+
 .dark .attempt-option {
-  background: #181c20;
-  border-color: #3D8D7A;
-  color: #A3D1C6;
+  background: #374151;
+  border-color: #475569;
 }
+
 .dark .attempt-option:hover,
 .dark .attempt-option.selected {
-  background: #181c20;
-  border-color: #A3D1C6;
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
 }
 
 .attempt-option input {
-  margin: 0;
+  display: none;
+}
+
+.attempt-number {
+  width: 32px;
+  height: 32px;
+  background: #e2e8f0;
+  color: #64748b;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.attempt-option.selected .attempt-number {
+  background: #10b981;
+  color: white;
+}
+
+.attempt-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #64748b;
+  transition: all 0.2s ease;
+}
+
+.attempt-option.selected .attempt-label {
+  color: #10b981;
+}
+
+.dark .attempt-label {
+  color: #94a3b8;
+}
+
+.dark .attempt-option.selected .attempt-label {
+  color: #34d399;
+}
+
+/* Schedule Card */
+.schedule-card {
+  grid-column: 1 / -1;
 }
 
 .schedule-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  gap: 1.5rem;
+}
+
+.form-label-small {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.dark .form-label-small {
+  color: #d1d5db;
+}
+
+.timezone-note {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-style: italic;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.dark .timezone-note {
+  color: #94a3b8;
 }
 
 @media (max-width: 768px) {
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+  
   .schedule-grid {
     grid-template-columns: 1fr;
   }
@@ -2745,75 +3325,127 @@ input[type="datetime-local"]::-webkit-clear-button {
     flex-direction: column;
   }
   
-  .setting-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
+  .attempt-option {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 0.75rem;
   }
 }
 
 /* Preview Section Styles */
-.quiz-preview-info {
-  background: #FBFFE4;
-  border: 1px solid #A3D1C6;
+.preview-header {
+  text-align: center;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #ecfdf5 100%);
   border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
+  border: 2px solid #e2e8f0;
 }
-.dark .quiz-preview-info {
-  background: #23272b;
-  border-color: #3D8D7A;
+
+.dark .preview-header {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border-color: #374151;
+}
+
+.preview-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #ecfdf5;
+  color: #059669;
+  border: 2px solid #10b981;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+}
+
+.dark .preview-badge {
+  background: rgba(16, 185, 129, 0.1);
+  color: #34d399;
+}
+
+.badge-icon {
+  display: flex;
+  align-items: center;
 }
 
 .preview-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #3D8D7A;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
   margin: 0 0 0.5rem 0;
 }
+
 .dark .preview-title {
-  color: #A3D1C6;
+  color: #f1f5f9;
 }
 
 .preview-description {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  color: #64748b;
+  margin: 0 0 1.5rem 0;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
 }
+
 .dark .preview-description {
-  color: #A3D1C6;
+  color: #94a3b8;
 }
 
 .preview-stats {
   display: flex;
-  gap: 1.5rem;
+  justify-content: center;
+  gap: 2rem;
   flex-wrap: wrap;
 }
 
-.stat-item {
+.stat-card {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  align-items: center;
+  gap: 0.5rem;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  min-width: 100px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.dark .stat-card {
+  background: #374151;
+  border-color: #475569;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.stat-icon {
+  color: #10b981;
+}
+
+.stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.dark .stat-value {
+  color: #f1f5f9;
 }
 
 .stat-label {
   font-size: 0.75rem;
   font-weight: 500;
-  color: #6b7280;
+  color: #64748b;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
-.dark .stat-label {
-  color: #A3D1C6;
-}
 
-.stat-value {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #3D8D7A;
-}
-.dark .stat-value {
-  color: #A3D1C6;
+.dark .stat-label {
+  color: #94a3b8;
 }
 
 .preview-questions {
@@ -2822,71 +3454,89 @@ input[type="datetime-local"]::-webkit-clear-button {
   gap: 1.5rem;
 }
 
-.preview-question {
+.preview-card {
   background: white;
-  border: 1px solid #A3D1C6;
+  border: 2px solid #e2e8f0;
   border-radius: 12px;
   padding: 1.5rem;
-  transition: all 0.2s;
-}
-.dark .preview-question {
-  background: #181c20;
-  border-color: #3D8D7A;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.question-preview-header {
+.preview-card:hover {
+  border-color: #10b981;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.1);
+  transform: translateY(-2px);
+}
+
+.dark .preview-card {
+  background: #1e293b;
+  border-color: #374151;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.dark .preview-card:hover {
+  border-color: #10b981;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.2);
+}
+
+.preview-question-header {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  justify-content: space-between;
   margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
 }
 
-.question-number {
-  background: #3D8D7A;
-  color: white;
+.dark .preview-question-header {
+  border-bottom-color: #374151;
+}
+
+.preview-question-number {
   width: 32px;
   height: 32px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 1rem;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
 }
 
-.question-type-tag {
-  background: #B3D8A8;
-  color: #1f2937;
+.question-type-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #10b981;
   padding: 0.25rem 0.75rem;
   border-radius: 20px;
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.question-type-tag.multiple_choice {
-  background: #B3D8A8;
-}
-.question-type-tag.true_false {
-  background: #A3D1C6;
-}
-.question-type-tag.fill_blank {
-  background: #FBFFE4;
-  border: 1px solid #A3D1C6;
-}
-.dark .question-type-tag {
-  color: #1f2937;
+  letter-spacing: 0.025em;
 }
 
-.question-preview-text {
+.dark .question-type-badge {
+  background: rgba(16, 185, 129, 0.1);
+  color: #34d399;
+}
+
+.preview-question-text {
   font-size: 1rem;
-  font-weight: 500;
-  color: #1f2937;
+  font-weight: 600;
+  color: #1e293b;
   margin: 0 0 1rem 0;
   line-height: 1.5;
 }
-.dark .question-preview-text {
-  color: #A3D1C6;
+
+.dark .preview-question-text {
+  color: #f1f5f9;
 }
 
 .preview-options {
@@ -2900,30 +3550,33 @@ input[type="datetime-local"]::-webkit-clear-button {
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem;
-  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
-  background: #f9fafb;
-  transition: all 0.2s;
-}
-.preview-option.correct {
-  border-color: #3D8D7A;
-  background: rgba(61, 141, 122, 0.1);
-}
-.dark .preview-option {
-  background: #23272b;
-  border-color: #3D8D7A;
-  color: #A3D1C6;
-}
-.dark .preview-option.correct {
-  background: rgba(61, 141, 122, 0.2);
-  border-color: #A3D1C6;
+  transition: all 0.2s ease;
 }
 
-.option-letter {
-  background: #6b7280;
-  color: white;
+.preview-option.correct-option {
+  background: #ecfdf5;
+  border-color: #10b981;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
+}
+
+.dark .preview-option {
+  background: #374151;
+  border-color: #475569;
+}
+
+.dark .preview-option.correct-option {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: #10b981;
+}
+
+.option-marker {
   width: 24px;
   height: 24px;
+  background: #64748b;
+  color: white;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -2932,8 +3585,9 @@ input[type="datetime-local"]::-webkit-clear-button {
   font-weight: 600;
   flex-shrink: 0;
 }
-.preview-option.correct .option-letter {
-  background: #3D8D7A;
+
+.preview-option.correct-option .option-marker {
+  background: #10b981;
 }
 
 .option-text {
@@ -2941,66 +3595,111 @@ input[type="datetime-local"]::-webkit-clear-button {
   font-size: 0.875rem;
   color: #1f2937;
 }
+
 .dark .option-text {
-  color: #A3D1C6;
+  color: #d1d5db;
 }
 
-.correct-indicator {
-  color: #3D8D7A;
-  font-weight: 600;
-  font-size: 1rem;
-}
-.dark .correct-indicator {
-  color: #A3D1C6;
+.correct-mark {
+  color: #10b981;
+  display: flex;
+  align-items: center;
 }
 
 .preview-fill-blank {
-  padding: 0.75rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #f9fafb;
-}
-.dark .preview-fill-blank {
-  background: #23272b;
-  border-color: #3D8D7A;
-}
-
-.fill-answer-display {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 0.75rem;
 }
 
-.answer-label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #6b7280;
-}
-.dark .answer-label {
-  color: #A3D1C6;
+.fill-blank-input {
+  position: relative;
 }
 
-.answer-text {
+.fill-blank-input input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px dashed #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  font-size: 0.875rem;
+  color: #64748b;
+  text-align: center;
+}
+
+.dark .fill-blank-input input {
+  background: #374151;
+  border-color: #475569;
+  color: #94a3b8;
+}
+
+.correct-answer-display {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #ecfdf5;
+  border: 1px solid #10b981;
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.dark .correct-answer-display {
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.correct-label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #3D8D7A;
-  background: rgba(61, 141, 122, 0.1);
-  padding: 0.25rem 0.5rem;
+  color: #059669;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.dark .correct-label {
+  color: #34d399;
+}
+
+.correct-text {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #1e293b;
+  background: white;
+  border: 1px solid #10b981;
+  padding: 0.25rem 0.75rem;
   border-radius: 4px;
 }
-.dark .answer-text {
-  color: #A3D1C6;
-  background: rgba(163, 209, 198, 0.1);
+
+.dark .correct-text {
+  background: #1e293b;
+  color: #f1f5f9;
 }
 
 @media (max-width: 768px) {
   .preview-stats {
     flex-direction: column;
+    align-items: center;
     gap: 1rem;
   }
   
-  .question-preview-header {
-    flex-wrap: wrap;
+  .stat-card {
+    min-width: 200px;
+  }
+  
+  .preview-question-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .preview-option {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
+  
+  .option-marker {
+    align-self: center;
   }
 }
 
