@@ -63,20 +63,42 @@
       </div>
 
       <div v-if="filteredStudents.length > 0" class="table-wrapper">
+        <!-- Debug info -->
+        <div v-if="quizzes.length === 0" class="quiz-debug" style="padding: 1rem; background: #fef3c7; margin-bottom: 1rem; border-radius: 8px; color: #92400e;">
+          <p><strong>No quizzes found for this section.</strong></p>
+          <p>Make sure you have published quizzes for this subject and section.</p>
+        </div>
+        
         <table class="grade-table">
           <thead>
             <tr>
-              <th class="student-column">Student</th>
-              <th v-for="quiz in displayedQuizzes" :key="quiz.id" class="quiz-column">
-                {{ quiz.title }}
-                <br>
-                <small>({{ quiz.total_points || 100 }} pts)</small>
+              <th class="student-column">
+                <div class="column-header">
+                  <span>Student</span>
+                </div>
               </th>
-              <th class="average-column">Average</th>
+              <th v-for="quiz in displayedQuizzes" :key="quiz.id" class="quiz-column">
+                <div class="column-header quiz-header">
+                  <span class="quiz-title">{{ quiz.title }}</span>
+                  <small class="quiz-points">({{ quiz.total_points || 100 }} pts)</small>
+                </div>
+              </th>
+              <th v-if="quizzes.length === 0" class="no-quizzes-column">
+                <div class="column-header">
+                  <span>No Quizzes</span>
+                  <small>Publish quizzes to see grades</small>
+                </div>
+              </th>
+              <th class="average-column">
+                <div class="column-header">
+                  <span>Average</span>
+                  <small>Overall Grade</small>
+                </div>
+              </th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="student in filteredStudents" :key="student.id">
+            <tr v-for="student in filteredStudents" :key="student.id" class="student-row">
               <td class="student-column">
                 <div class="student-info">
                   <div class="student-avatar">
@@ -89,24 +111,40 @@
                 </div>
               </td>
               <td v-for="quiz in displayedQuizzes" :key="quiz.id" class="quiz-column">
-                <input
-                  v-if="viewMode === 'edit'"
-                  :value="getGradeValue(student.id, quiz.id)"
-                  @input="updateGrade(student.id, quiz.id, $event)"
-                  @blur="saveGradeToDatabase(student.id, quiz.id)"
-                  type="number"
-                  :min="0"
-                  :max="quiz.total_points || 100"
-                  class="grade-input"
-                  :placeholder="`0/${quiz.total_points || 100}`"
-                />
-                <div v-else class="grade-display" :class="getGradeClass(getGradeValue(student.id, quiz.id), quiz.total_points || 100)">
-                  {{ formatGrade(getGradeValue(student.id, quiz.id), quiz.total_points || 100) }}
+                <div class="grade-cell">
+                  <input
+                    v-if="viewMode === 'edit'"
+                    :value="getGradeValue(student.id, quiz.id)"
+                    @input="updateGrade(student.id, quiz.id, $event)"
+                    @blur="saveGradeToDatabase(student.id, quiz.id)"
+                    type="number"
+                    :min="0"
+                    :max="quiz.total_points || 100"
+                    class="grade-input"
+                    :placeholder="`0/${quiz.total_points || 100}`"
+                  />
+                  <div v-else class="grade-display" :class="getGradeClass(getGradeValue(student.id, quiz.id), quiz.total_points || 100)">
+                    <span class="grade-score">{{ getGradeValue(student.id, quiz.id) }}</span>
+                    <span class="grade-separator">/</span>
+                    <span class="grade-total">{{ quiz.total_points || 100 }}</span>
+                    <div class="grade-percentage">
+                      {{ formatGrade(getGradeValue(student.id, quiz.id), quiz.total_points || 100) }}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td v-if="quizzes.length === 0" class="no-quizzes-column">
+                <div class="no-quiz-message">
+                  <span>No quizzes</span>
                 </div>
               </td>
               <td class="average-column">
-                <div class="average-display" :class="getAverageClass(student.average)">
-                  {{ student.average !== null ? Math.round(student.average) + '%' : 'N/A' }}
+                <div class="average-cell">
+                  <div class="average-display" :class="getAverageClass(student.average)">
+                    <span class="average-percentage">{{ student.average !== null ? Math.round(student.average) + '%' : 'N/A' }}</span>
+                    <small class="average-label" v-if="student.average !== null && student.average > 0">{{ getLetterGrade(student.average) }}</small>
+                    <small class="average-label" v-else>No Grades</small>
+                  </div>
                 </div>
               </td>
             </tr>
@@ -526,8 +564,20 @@ onMounted(async () => {
 .grade-management-page { min-height: 100vh; background: #FBFFE4; padding: 1.5rem; font-family: 'Inter', sans-serif; }
 .dark .grade-management-page { background: #181c20; }
 
-.header-card { background: white; border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-.dark .header-card { background: #23272b; border: 1px solid #3D8D7A; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
+/* Header Card - Matching MySubjects Style */
+.header-card {
+  background: white;
+  border: 1.5px solid #3D8D7A;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.1);
+}
+.dark .header-card {
+  background: #23272b;
+  border: 1.5px solid #A3D1C6;
+  box-shadow: 0 2px 8px rgba(163, 209, 198, 0.1);
+}
 
 .header-content { display: flex; align-items: center; justify-content: space-between; }
 .header-left { display: flex; align-items: center; gap: 1rem; }
@@ -537,63 +587,242 @@ onMounted(async () => {
 .header-subtitle { font-size: 0.875rem; color: #6b7280; }
 .dark .header-subtitle { color: #A3D1C6; }
 
-.back-btn { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1.25rem; border-radius: 8px; font-weight: 500; font-size: 0.875rem; transition: all 0.2s; cursor: pointer; border: 2px solid #3D8D7A; background: #3D8D7A; color: white; box-shadow: 0 2px 8px rgba(61,141,122,0.1); }
-.back-btn:hover { background: #A3D1C6; color: #23272b; border-color: #3D8D7A; box-shadow: 0 4px 16px rgba(61,141,122,0.18); }
+.back-btn { 
+  background: #20c997;
+  color: #181c20;
+  border: 1px solid #A3D1C6;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  outline: none;
+}
+.back-btn:hover {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
+  transform: translateY(-1px);
+}
+.dark .back-btn {
+  background: #20c997;
+  color: #181c20;
+  border: 1px solid #A3D1C6;
+}
+.dark .back-btn:hover {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
+}
 
-.controls-card { background: white; border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-.dark .controls-card { background: #23272b; border: 1px solid #3D8D7A; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
+.controls-card { 
+  background: white; 
+  border: 1.5px solid #e5e7eb;
+  border-radius: 16px; 
+  padding: 1.5rem; 
+  margin-bottom: 1.5rem; 
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  transition: all 0.18s ease;
+}
+.dark .controls-card { 
+  background: #23272b; 
+  border: 1.5px solid #374151; 
+  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.13);
+}
 
-.controls-title { font-size: 1.125rem; font-weight: 600; color: #1f2937; margin-bottom: 1rem; }
-.dark .controls-title { color: #A3D1C6; }
+.controls-title { 
+  font-size: 1.25rem; 
+  font-weight: 700; 
+  color: #1f2937; 
+  margin-bottom: 1rem; 
+  line-height: 1.3;
+}
+.dark .controls-title { 
+  color: #f9fafb; 
+}
 
 .controls-content { display: grid; grid-template-columns: 1fr auto auto; gap: 1rem; align-items: center; }
 .filters { display: flex; gap: 1rem; align-items: center; }
 
-.filter-select { padding: 0.5rem 1rem; border: 1px solid #d1d5db; border-radius: 8px; background: white; color: #374151; font-size: 0.875rem; outline: none; transition: all 0.2s; min-width: 150px; cursor: pointer; }
-.filter-select:focus { border-color: #3D8D7A; box-shadow: 0 0 0 3px rgba(61,141,122,0.1); }
-.dark .filter-select { background: #374151; border-color: #4b5563; color: #e5e7eb; }
+.filter-select { 
+  background: #f8f9fa;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-family: 'Inter', sans-serif;
+  color: #1f2937;
+  transition: all 0.2s;
+  min-width: 150px;
+  cursor: pointer;
+  outline: none;
+}
+.filter-select:focus { 
+  border-color: #10b981; 
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); 
+}
+.dark .filter-select { 
+  background: #374151; 
+  border-color: #4b5563; 
+  color: #f3f4f6; 
+}
+.dark .filter-select:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
 
-.primary-btn, .secondary-btn { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 500; font-size: 0.875rem; cursor: pointer; transition: all 0.2s; border: none; }
-.primary-btn { background: #3D8D7A; color: white; }
-.primary-btn:hover { background: #B3D8A8; color: #1f2937; }
+.primary-btn, .secondary-btn { 
+  display: flex; 
+  align-items: center; 
+  gap: 0.5rem; 
+  padding: 0.5rem 1.25rem; 
+  border-radius: 8px; 
+  font-weight: 500; 
+  font-size: 0.875rem; 
+  cursor: pointer; 
+  transition: all 0.2s; 
+  border: 1px solid transparent;
+  outline: none;
+}
 
-.secondary-btn { background: white; color: #374151; border: 1px solid #d1d5db; }
-.secondary-btn:hover:not(:disabled) { background: #B3D8A8; border-color: #3D8D7A; color: #1f2937; }
-.secondary-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.dark .secondary-btn { background: #374151; color: #e5e7eb; border-color: #4b5563; }
+.primary-btn { 
+  background: #20c997; 
+  color: #181c20;
+  border-color: #A3D1C6;
+}
+.primary-btn:hover { 
+  background: #A3D1C6; 
+  color: #23272b;
+  border-color: #20c997;
+  transform: translateY(-1px);
+}
+.dark .primary-btn {
+  background: #20c997;
+  color: #181c20;
+  border-color: #A3D1C6;
+}
+.dark .primary-btn:hover {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #20c997;
+}
 
-.table-container { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-.dark .table-container { background: #23272b; border: 1px solid #3D8D7A; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
+.secondary-btn { 
+  background: white; 
+  color: #374151; 
+  border: 1px solid #d1d5db; 
+}
+.secondary-btn:hover:not(:disabled) { 
+  background: #B3D8A8; 
+  border-color: #3D8D7A; 
+  color: #1f2937;
+  transform: translateY(-1px);
+}
+.secondary-btn:disabled { 
+  opacity: 0.5; 
+  cursor: not-allowed; 
+}
+.dark .secondary-btn { 
+  background: #374151; 
+  color: #e5e7eb; 
+  border-color: #4b5563; 
+}
+.dark .secondary-btn:hover:not(:disabled) {
+  background: #3D8D7A;
+  border-color: #A3D1C6;
+  color: white;
+}
 
-.table-header { background: #B3D8A8; padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb; }
-.dark .table-header { background: #3D8D7A; border-bottom-color: #4b5563; }
-.table-title { font-size: 1.125rem; font-weight: 600; color: #1f2937; }
-.dark .table-title { color: white; }
+.table-container { 
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 0;
+  margin-bottom: 1rem;
+  transition: all 0.18s ease;
+  overflow: hidden;
+}
+.dark .table-container { 
+  background: #23272b; 
+  border: 1.5px solid #374151; 
+  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.13);
+}
+
+.table-header { 
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  padding: 1.5rem; 
+  border-bottom: 1px solid #e2e8f0;
+}
+.dark .table-header { 
+  background: #1f2937; 
+  border-bottom: 1px solid #374151;
+}
+.table-title { 
+  font-size: 1.25rem; 
+  font-weight: 700; 
+  color: #1f2937; 
+  margin: 0;
+  line-height: 1.3;
+}
+.dark .table-title { 
+  color: #f9fafb; 
+}
 
 .table-wrapper { overflow-x: auto; }
 .grade-table { width: 100%; border-collapse: collapse; min-width: 800px; }
 
 /* Table Styling */
 .grade-table thead tr {
-  background: #f3f4f6;
-  border-bottom: 2px solid #e5e7eb;
+  background: linear-gradient(135deg, #3D8D7A 0%, #20c997 100%);
+  border-bottom: 2px solid #A3D1C6;
 }
 .dark .grade-table thead tr {
-  background: #374151;
-  border-bottom-color: #4b5563;
+  background: linear-gradient(135deg, #20c997 0%, #3D8D7A 100%);
+  border-bottom-color: #A3D1C6;
 }
 
 .grade-table th {
   padding: 1rem;
-  text-align: left;
+  text-align: center;
   font-weight: 600;
-  color: #1f2937;
+  color: #ffffff;
   font-size: 0.875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+.grade-table th:last-child {
+  border-right: none;
 }
 .dark .grade-table th {
-  color: #e5e7eb;
+  color: #ffffff;
+}
+
+.column-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.quiz-header {
+  min-height: 60px;
+  justify-content: center;
+}
+
+.quiz-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.quiz-points {
+  font-size: 0.75rem;
+  opacity: 0.8;
+  font-weight: 400;
 }
 
 .grade-table tbody tr {
@@ -601,57 +830,154 @@ onMounted(async () => {
   transition: background-color 0.2s;
 }
 .grade-table tbody tr:hover {
-  background: #fafafa;
+  background: rgba(61, 141, 122, 0.02);
 }
 .dark .grade-table tbody tr:hover {
-  background: #2d3135;
+  background: rgba(32, 201, 151, 0.05);
+}
+.dark .grade-table tbody tr {
+  border-bottom-color: #374151;
 }
 
 .grade-table td {
   padding: 1rem;
   color: #374151;
+  border-right: 1px solid #f3f4f6;
+  vertical-align: middle;
+}
+.grade-table td:last-child {
+  border-right: none;
 }
 .dark .grade-table td {
   color: #e5e7eb;
+  border-right-color: #374151;
 }
 
 .student-column {
-  min-width: 250px;
-  width: 250px;
+  min-width: 280px;
+  width: 280px;
+  text-align: left;
 }
 
+.quiz-column {
+  min-width: 140px;
+  text-align: center;
+  padding: 0.75rem;
+}
+
+.average-column {
+  min-width: 120px;
+  text-align: center;
+}
+
+/* Grade Cell Styling */
+.grade-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.grade-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem 0.5rem;
+  border-radius: 8px;
+  min-width: 80px;
+  transition: all 0.2s;
+}
+
+.grade-score {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.grade-separator {
+  margin: 0 0.25rem;
+  font-weight: 500;
+  opacity: 0.7;
+}
+
+.grade-total {
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.grade-percentage {
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+}
+
+/* Average Cell Styling */
+.average-cell {
+  display: flex;
+  justify-content: center;
+}
+
+.average-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  min-width: 80px;
+  transition: all 0.2s;
+}
+
+.average-percentage {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.average-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+/* Student Info Styling */
 .student-info {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 1rem;
+  padding: 0.5rem;
 }
 
 .student-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #3D8D7A;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3D8D7A, #20c997);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.875rem;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.2);
 }
 
 .student-details {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  flex: 1;
 }
 
 .student-name {
   font-weight: 600;
   color: #1f2937;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  margin-bottom: 0.25rem;
 }
 .dark .student-name {
   color: #e5e7eb;
@@ -659,56 +985,73 @@ onMounted(async () => {
 
 .student-email {
   font-size: 0.75rem;
-  color: #9ca3af;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: #6b7280;
+  line-height: 1.2;
 }
 .dark .student-email {
   color: #9ca3af;
 }
 
-.quiz-column {
-  min-width: 120px;
-  text-align: center;
-  font-size: 0.8rem;
-}
-
-.average-column {
-  min-width: 100px;
-  text-align: center;
-  font-weight: 600;
-}
-
+/* Grade Input Styling */
 .grade-input {
   width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
+  max-width: 100px;
+  padding: 0.75rem 0.5rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
   font-size: 0.875rem;
   text-align: center;
   outline: none;
   transition: all 0.2s;
+  background: #f8f9fa;
+  font-weight: 500;
 }
 .grade-input:focus {
-  border-color: #3D8D7A;
-  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  background: white;
 }
 .dark .grade-input {
   background: #374151;
   border-color: #4b5563;
   color: #e5e7eb;
 }
-
-.grade-display {
-  padding: 0.5rem;
-  border-radius: 6px;
-  font-weight: 600;
-  text-align: center;
-  font-size: 0.875rem;
-  transition: all 0.2s;
+.dark .grade-input:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  background: #4b5563;
 }
 
+/* No Quizzes Styling */
+.no-quizzes-column {
+  min-width: 200px;
+  text-align: center;
+}
+
+.no-quiz-message {
+  color: #6b7280;
+  font-style: italic;
+  padding: 1rem;
+}
+.dark .no-quiz-message {
+  color: #9ca3af;
+}
+
+.quiz-debug {
+  background: #fef3c7;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  color: #92400e;
+  border: 1px solid #fed7aa;
+}
+.dark .quiz-debug {
+  background: rgba(251, 146, 60, 0.1);
+  color: #fed7aa;
+  border-color: rgba(251, 146, 60, 0.3);
+}
+
+/* Grade Display Classes */
 .grade-a {
   background: #dcfce7;
   color: #166534;
@@ -752,12 +1095,6 @@ onMounted(async () => {
 .dark .grade-f {
   background: rgba(220, 38, 38, 0.2);
   color: #fca5a5;
-}
-
-.average-display {
-  padding: 0.5rem;
-  border-radius: 6px;
-  font-weight: 600;
 }
 
 /* Empty State */
