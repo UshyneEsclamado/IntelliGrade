@@ -1,11 +1,14 @@
 
 <template>
   <div class="messages-container">
-    <!-- Global Loading Overlay -->
+    <!-- Loading Overlay (uniform with Subjects.vue) -->
     <div v-if="isInitialLoading" class="loading-overlay">
-      <div class="loading-spinner">
-        <div class="spinner"></div>
-        <p>Loading your messages...</p>
+      <div class="loading-content">
+        <div class="loading-spinner-container">
+          <div class="loading-spinner"></div>
+        </div>
+        <div class="loading-text">Loading Messages</div>
+        <div class="loading-subtext">Please wait while we fetch your conversations...</div>
       </div>
     </div>
 
@@ -3935,7 +3938,7 @@ onUnmounted(() => {
 
 /* ADD THESE STYLES TO YOUR EXISTING <style scoped> SECTION */
 
-/* Loading Overlay */
+/* Loading Overlay (uniform with Subjects.vue) */
 .loading-overlay {
   position: fixed;
   top: 0;
@@ -3943,45 +3946,100 @@ onUnmounted(() => {
   right: 0;
   bottom: 0;
   background: rgba(251, 255, 228, 0.95);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
+  animation: fadeIn 0.3s ease;
 }
 .dark .loading-overlay {
   background: rgba(24, 28, 32, 0.95);
 }
 
-.loading-spinner {
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.loading-content {
+  background: white;
+  padding: 3rem 4rem;
+  border-radius: 20px;
   text-align: center;
+  box-shadow: 0 20px 60px rgba(61, 141, 122, 0.15);
+  border: 2px solid #a3d1c6;
+  animation: slideUp 0.4s ease;
+}
+.dark .loading-content {
+  background: #23272b;
+  border-color: #20c997;
+  color: #A3D1C6;
 }
 
-.loading-spinner p {
-  margin-top: 1rem;
-  font-size: 1.1rem;
-  color: #2c3e50;
-  font-weight: 500;
-}
-.dark .loading-spinner p {
-  color: #ffffff;
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid #e9ecef;
-  border-top-color: #20c997;
+.loading-spinner-container {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
+}
+
+.loading-spinner {
+  width: 80px;
+  height: 80px;
+  border: 5px solid rgba(61, 141, 122, 0.1);
+  border-left: 5px solid #3d8d7a;
+  border-top: 5px solid #20c997;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: spin 1s linear infinite;
   margin: 0 auto;
-}
-.dark .spinner {
-  border-color: #495057;
-  border-top-color: #20c997;
+  box-shadow: 0 0 20px rgba(61, 141, 122, 0.1);
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #181c20;
+  margin: 0 0 0.5rem 0;
+  font-family: 'Inter', sans-serif;
+}
+.dark .loading-text {
+  color: #A3D1C6;
+}
+
+.loading-subtext {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #3d8d7a;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+}
+.dark .loading-subtext {
+  color: #A3D1C6;
 }
 
 .loading-state {
