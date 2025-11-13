@@ -80,9 +80,6 @@
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </select>
-            <button @click="showAddStudentModal = true" class="add-student-btn" title="Add Student">
-              Add Student
-            </button>
           </div>
           <div v-if="filteredStudents.length > 0" class="students-list-simple">
             <div class="students-list-header">
@@ -97,55 +94,16 @@
             </div>
           </div>
           <div v-else-if="students.length === 0" class="empty-state">
-            <p>No students enrolled yet.</p>
-            <button @click="showAddStudentModal = true" class="empty-action-btn">Add First Student</button>
+            <div class="empty-icon">
+              <svg width="48" height="48" fill="none" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M16,4C18.21,4 20,5.79 20,8C20,10.21 18.21,12 16,12C13.79,12 12,10.21 12,8C12,5.79 13.79,4 16,4M16,14C20.42,14 24,15.79 24,18V20H8V18C8,15.79 11.58,14 16,14M6,6C7.1,6 8,6.9 8,8C8,9.1 7.1,10 6,10C4.9,10 4,9.1 4,8C4,6.9 4.9,6 6,6M6,12C8.67,12 12,13.34 12,16V18H0V16C0,13.34 3.33,12 6,12Z" />
+              </svg>
+            </div>
+            <div class="empty-title">No Students Enrolled</div>
+            <div class="empty-desc">This section doesn't have any students enrolled yet.</div>
           </div>
           <div v-else class="no-results">
             <p>No students found matching "{{ searchQuery }}"</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Add Student Modal -->
-    <div v-if="showAddStudentModal" class="modal-overlay" @click="showAddStudentModal = false">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h2>Add Student to Section</h2>
-          <button @click="showAddStudentModal = false" class="close-btn">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
-            </svg>
-          </button>
-        </div>
-
-        <div class="modal-body">
-          <div class="form-group">
-            <label for="student-email">Student Email</label>
-            <input 
-              type="email" 
-              id="student-email" 
-              v-model="newStudentEmail" 
-              placeholder="student@example.com"
-              required
-            >
-          </div>
-          
-          <div class="form-group">
-            <label for="student-name">Full Name (Optional)</label>
-            <input 
-              type="text" 
-              id="student-name" 
-              v-model="newStudentName" 
-              placeholder="Student's full name"
-            >
-          </div>
-
-          <div class="modal-actions">
-            <button @click="showAddStudentModal = false" class="cancel-btn">Cancel</button>
-            <button @click="addStudent" :disabled="!newStudentEmail" class="add-btn">
-              Add Student
-            </button>
           </div>
         </div>
       </div>
@@ -178,9 +136,6 @@ const sectionCode = ref(route.query.sectionCode || '')
 const students = ref<any[]>([])
 const searchQuery = ref('')
 const filterStatus = ref('all')
-const showAddStudentModal = ref(false)
-const newStudentEmail = ref('')
-const newStudentName = ref('')
 const isLoading = ref(false)
 const isExporting = ref(false)
 const loadingMessage = ref('')
@@ -216,117 +171,65 @@ const fetchStudents = async () => {
   loadingMessage.value = 'Loading students...'
 
   try {
-    // Get enrollments for the section
-    const { data: enrollments, error: enrollError } = await supabase
+    console.log('🔍 Fetching students for section:', sectionId.value)
+
+    // Get enrollments for this section
+    const { data: enrollmentsData, error: enrollError } = await supabase
       .from('enrollments')
       .select('*')
       .eq('section_id', sectionId.value)
+      .eq('status', 'active')
 
-    if (enrollError) throw enrollError
-    if (!enrollments || enrollments.length === 0) {
+    if (enrollError) {
+      console.error('Error fetching enrollments:', enrollError)
+      throw enrollError
+    }
+
+    console.log('✅ Enrollments found:', enrollmentsData)
+
+    if (!enrollmentsData || enrollmentsData.length === 0) {
       students.value = []
       return
     }
 
-    console.log('🔍 Found enrollments:', enrollments)
+    // Get student IDs from enrollments
+    const studentIds = enrollmentsData.map(enrollment => enrollment.student_id)
 
-    // 🎯 COMPREHENSIVE APPROACH: Try multiple ways to get real names
-    const studentPromises = enrollments.map(async (enrollment: any) => {
-      const studentId = enrollment.student_id
-      console.log(`🔍 Processing student ID: ${studentId}`)
+    // Fetch students details
+    const { data: studentsData, error: studentsError } = await supabase
+      .from('students')
+      .select('*')
+      .in('id', studentIds)
+      .eq('is_active', true)
+
+    if (studentsError) {
+      console.error('Error fetching students:', studentsError)
+      throw studentsError
+    }
+
+    console.log('✅ Students data found:', studentsData)
+
+    // Combine enrollment and student data
+    students.value = enrollmentsData.map((enrollment: any) => {
+      const studentData = studentsData?.find(s => s.id === enrollment.student_id)
       
-      let studentName = null
-      let foundMethod = 'none'
-
-      // METHOD 1: Try profiles table with auth_user_id
-      try {
-        const { data: profile1 } = await supabase
-          .from('profiles')
-          .select('full_name, email')
-          .eq('auth_user_id', studentId)
-          .single()
-        
-        if (profile1?.full_name) {
-          studentName = profile1.full_name
-          foundMethod = 'profiles by auth_user_id'
-          console.log(`✅ Method 1 SUCCESS for ${studentId}: ${studentName}`)
-        }
-      } catch (e) {
-        console.log(`❌ Method 1 failed for ${studentId}:`, e)
-      }
-
-      // METHOD 2: Try profiles table with id field
-      if (!studentName) {
-        try {
-          const { data: profile2 } = await supabase
-            .from('profiles')
-            .select('full_name, email')
-            .eq('id', studentId)
-            .single()
-          
-          if (profile2?.full_name) {
-            studentName = profile2.full_name
-            foundMethod = 'profiles by id'
-            console.log(`✅ Method 2 SUCCESS for ${studentId}: ${studentName}`)
-          }
-        } catch (e) {
-          console.log(`❌ Method 2 failed for ${studentId}:`, e)
-        }
-      }
-
-      // METHOD 3: Try students table lookup
-      if (!studentName) {
-        try {
-          const { data: student } = await supabase
-            .from('students')
-            .select('full_name, profile_id')
-            .eq('profile_id', studentId)
-            .single()
-          
-          if (student?.full_name) {
-            studentName = student.full_name
-            foundMethod = 'students table'
-            console.log(`✅ Method 3 SUCCESS for ${studentId}: ${studentName}`)
-          }
-        } catch (e) {
-          console.log(`❌ Method 3 failed for ${studentId}:`, e)
-        }
-      }
-
-      // METHOD 4: Try auth admin API
-      if (!studentName) {
-        try {
-          const { data: authUser } = await supabase.auth.admin.getUserById(studentId)
-          if (authUser?.user) {
-            studentName = authUser.user.user_metadata?.full_name || 
-                        authUser.user.user_metadata?.name ||
-                        authUser.user.email?.split('@')[0]
-            if (studentName) {
-              foundMethod = 'auth admin API'
-              console.log(`✅ Method 4 SUCCESS for ${studentId}: ${studentName}`)
-            }
-          }
-        } catch (e) {
-          console.log(`❌ Method 4 failed for ${studentId}:`, e)
-        }
-      }
-
-      // Final result
-      const finalName = studentName || `Student ${studentId.slice(-8).toUpperCase()}`
-      console.log(`🎯 FINAL for ${studentId}: "${finalName}" (via ${foundMethod})`)
-
       return {
-        id: studentId,
-        full_name: finalName,
+        id: enrollment.student_id,
+        full_name: studentData?.full_name || `Student ${enrollment.student_id.slice(-8)}`,
+        email: studentData?.email || 'No email',
         enrolled_at: enrollment.enrolled_at || enrollment.created_at,
-        status: enrollment.status || 'active'
+        status: enrollment.status || 'active',
+        enrollment_id: enrollment.id,
+        grade_level: studentData?.grade_level || 'N/A'
       }
     })
 
-    students.value = await Promise.all(studentPromises)
+    console.log('✅ Final students data:', students.value)
+
   } catch (error: any) {
     console.error('Error fetching students:', error)
     alert(`Error loading students: ${error?.message || 'Unknown error'}`)
+    students.value = []
   } finally {
     isLoading.value = false
   }
@@ -344,10 +247,11 @@ const getInitials = (name: string) => {
 const formatDate = (dateString: string) => {
   if (!dateString) return 'Never'
   const date = new Date(dateString)
+  // Use compact but accurate date format
   return date.toLocaleDateString('en-US', {
-    year: 'numeric',
     month: 'short',
-    day: 'numeric'
+    day: 'numeric',
+    year: 'numeric'
   })
 }
 
@@ -367,35 +271,6 @@ const goBack = async () => {
       sectionCode: sectionCode.value
     }
   });
-}
-
-const addStudent = async () => {
-  if (!newStudentEmail.value) return
-
-  isLoading.value = true
-  loadingMessage.value = 'Adding student...'
-
-  try {
-    console.log('Adding student:', {
-      email: newStudentEmail.value,
-      name: newStudentName.value,
-      sectionId: sectionId.value
-    })
-
-    alert(`Student "${newStudentEmail.value}" added successfully!`)
-    
-    newStudentEmail.value = ''
-    newStudentName.value = ''
-    showAddStudentModal.value = false
-    
-    await fetchStudents()
-
-  } catch (error: any) {
-    console.error('Error adding student:', error)
-    alert(`Error adding student: ${error?.message || 'Unknown error'}`)
-  } finally {
-    isLoading.value = false
-  }
 }
 
 const removeStudent = async (student: any) => {
@@ -476,17 +351,19 @@ onMounted(() => {
   background: #181c20;
 }
 
+/* Header Card - Matching MySubjects Style */
 .header-card {
   background: white;
+  border: 1.5px solid #3D8D7A;
   border-radius: 16px;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.1);
 }
 .dark .header-card {
   background: #23272b;
-  border: 1px solid #3D8D7A;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  border: 1.5px solid #A3D1C6;
+  box-shadow: 0 2px 8px rgba(163, 209, 198, 0.1);
 }
 
 .header-content {
@@ -494,11 +371,13 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
 }
+
 .header-left {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
+
 .user-icon {
   width: 56px;
   height: 56px;
@@ -509,6 +388,7 @@ onMounted(() => {
   justify-content: center;
   color: white;
 }
+
 .header-title {
   font-size: 1.5rem;
   font-weight: 700;
@@ -518,6 +398,7 @@ onMounted(() => {
 .dark .header-title {
   color: #A3D1C6;
 }
+
 .header-subtitle {
   font-size: 0.875rem;
   color: #6b7280;
@@ -525,362 +406,14 @@ onMounted(() => {
 .dark .header-subtitle {
   color: #A3D1C6;
 }
+
 .header-actions {
   display: flex;
   gap: 1rem;
   align-items: center;
 }
-.export-btn,
-.back-button {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem 1.5rem;
-  border-radius: 16px;
-  font-weight: 600;
-  font-size: 0.95rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
-  text-decoration: none;
-  border: none;
-}
-.export-btn {
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  color: white;
-  box-shadow: 0 4px 14px rgba(61, 141, 122, 0.3);
-}
-.export-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(61, 141, 122, 0.4);
-  background: linear-gradient(135deg, #3D8D7A 0%, #B3D8A8 100%);
-}
-.export-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-  transform: none;
-}
-.back-button {
-  background: #FBFFE4;
-  color: #374151;
-  border: 2px solid #A3D1C6;
-  backdrop-filter: blur(10px);
-}
-.back-button:hover {
-  background: #B3D8A8;
-  border-color: #3D8D7A;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-}
-.main-content-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-.stat-card {
-  background: white;
-  border-radius: 12px;
-  padding: 1.25rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-.dark .stat-card {
-  background: #23272b;
-  border: 1px solid #3D8D7A;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-}
-.stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  flex-shrink: 0;
-}
-.stat-classes { background: #3D8D7A; }
-.stat-graded { background: #B3D8A8; }
-.stat-number {
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: #1f2937;
-  line-height: 1;
-}
-.dark .stat-number {
-  color: #A3D1C6;
-}
-.stat-label {
-  font-size: 0.813rem;
-  color: #6b7280;
-  margin-top: 0.25rem;
-  font-weight: 500;
-}
-.dark .stat-label {
-  color: #A3D1C6;
-}
-.content-card {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-.dark .content-card {
-  background: #23272b;
-  border: 1px solid #3D8D7A;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-}
-.card-header {
-  margin-bottom: 1rem;
-}
-.card-header h3 {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 0.25rem;
-}
-.dark .card-header h3 {
-  color: #A3D1C6;
-}
-.card-desc {
-  font-size: 0.813rem;
-  color: #6b7280;
-}
-.dark .card-desc {
-  color: #A3D1C6;
-}
-.search-controls {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-.search-input-simple {
-  flex: 1;
-  padding: 0.75rem 1rem;
-  border: 1.5px solid #A3D1C6;
-  border-radius: 8px;
-  font-size: 1rem;
-  background: #FBFFE4;
-  color: #1f2937;
-}
-.dark .search-input-simple {
-  background: #23272b;
-  color: #A3D1C6;
-  border-color: #3D8D7A;
-}
-.filter-select-simple {
-  padding: 0.75rem 1rem;
-  border: 1.5px solid #A3D1C6;
-  border-radius: 8px;
-  font-size: 1rem;
-  background: #FBFFE4;
-  color: #1f2937;
-}
-.dark .filter-select-simple {
-  background: #23272b;
-  color: #A3D1C6;
-  border-color: #3D8D7A;
-}
-.add-student-btn {
-  background: #3D8D7A;
-  color: #FBFFE4;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.add-student-btn:hover {
-  background: #B3D8A8;
-  color: #23272b;
-}
-.students-list-simple {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-.students-list-header {
-  display: flex;
-  justify-content: space-between;
-  font-weight: 600;
-  color: #3D8D7A;
-  border-bottom: 1px solid #A3D1C6;
-  padding-bottom: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-.students-list-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #F3F4F6;
-  font-size: 1rem;
-  color: #23272b;
-}
-.dark .students-list-row {
-  color: #A3D1C6;
-  border-bottom: 1px solid #3D8D7A;
-}
-.status-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.85em;
-  font-weight: 600;
-  text-transform: uppercase;
-  background: #B3D8A8;
-  color: #3D8D7A;
-}
-.status-badge.active {
-  background: #B3D8A8;
-  color: #3D8D7A;
-}
-.status-badge.inactive {
-  background: #FEE2E2;
-  color: #991b1b;
-}
-.empty-state, .no-results {
-  text-align: center;
-  color: #6b7280;
-  padding: 2rem 0;
-}
-.empty-action-btn {
-  background: #3D8D7A;
-  color: #FBFFE4;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: 1rem;
-  transition: all 0.2s;
-}
-.empty-action-btn:hover {
-  background: #B3D8A8;
-  color: #23272b;
-}
 
-.dark-mode .summary-card {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-}
-
-.dark-mode .summary-number {
-  color: var(--primary-text-color);
-}
-
-.dark-mode .summary-label {
-  color: var(--secondary-text-color);
-}
-
-.dark-mode .students-section {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-}
-
-.dark-mode .section-title h3 {
-  color: var(--primary-text-color);
-}
-
-.dark-mode .section-title p {
-  color: var(--secondary-text-color);
-}
-
-.dark-mode .students-list {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-}
-
-.dark-mode .list-header {
-  background: var(--bg-primary);
-  border-bottom-color: var(--border-color);
-  color: var(--secondary-text-color);
-}
-
-.dark-mode .student-row {
-  border-bottom-color: var(--border-color);
-}
-
-.dark-mode .student-row:hover {
-  background: var(--bg-primary);
-}
-
-.dark-mode .student-name {
-  color: var(--primary-text-color);
-}
-
-.dark-mode .student-email,
-.dark-mode .student-enrolled {
-  color: var(--secondary-text-color);
-}
-
-.dark-mode .search-input input,
-.dark-mode .filter-select {
-  background: var(--card-background);
-  border-color: var(--border-color);
-  color: var(--primary-text-color);
-}
-
-.dark-mode .search-input input:focus,
-.dark-mode .filter-select:focus {
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 3px rgba(95, 179, 160, 0.1);
-}
-
-.dark-mode .empty-state h3,
-.dark-mode .no-results h4 {
-  color: var(--primary-text-color);
-}
-
-.dark-mode .modal-content {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-}
-
-.dark-mode .modal-header {
-  border-bottom-color: var(--border-color);
-}
-
-.dark-mode .modal-header h2 {
-  color: var(--primary-text-color);
-}
-
-.dark-mode .form-group label {
-  color: var(--secondary-text-color);
-}
-
-.dark-mode .form-group input {
-  background: var(--card-background);
-  border-color: var(--border-color);
-  color: var(--primary-text-color);
-}
-
-.dark-mode .form-group input:focus {
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 3px rgba(95, 179, 160, 0.1);
-}
-
-.dark-mode .cancel-btn {
-  background: var(--border-color);
-  color: var(--secondary-text-color);
-}
-
-.dark-mode .cancel-btn:hover {
-  background: var(--card-background);
-}
-
-/* --- Header Action Button (Reference: MySubjects.vue create-quiz-btn) --- */
+/* Header Action Button - Matching MySubjects create-quiz-btn */
 .header-action-btn {
   background: #20c997;
   color: #181c20;
@@ -915,5 +448,435 @@ onMounted(() => {
   background: #A3D1C6;
   color: #23272b;
   border-color: #20c997;
+}
+
+.main-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Stats Grid - Matching MySubjects */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  background: white;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.18s ease;
+}
+
+.dark .stat-card {
+  background: #23272b;
+  border: 1.5px solid #374151;
+  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.13);
+}
+
+.stat-card:hover {
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.12);
+  border-color: #10b981;
+  background: #f8fdfa;
+  transform: translateY(-2px);
+}
+
+.dark .stat-card:hover {
+  border-color: #20c997;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.18);
+  background: #23272b;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.stat-classes { 
+  background: linear-gradient(135deg, #3D8D7A, #20c997);
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
+}
+.stat-graded { 
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.stat-number {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1;
+}
+.dark .stat-number {
+  color: #f9fafb;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+  font-weight: 500;
+}
+.dark .stat-label {
+  color: #9ca3af;
+}
+
+/* Content Card - Matching MySubjects */
+.content-card {
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 0;
+  margin-bottom: 1rem;
+  transition: all 0.18s ease;
+  overflow: hidden;
+}
+
+.dark .content-card {
+  background: #23272b;
+  border: 1.5px solid #374151;
+  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.13);
+}
+
+.card-header {
+  padding: 1.5rem 1.5rem 1rem 1.5rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.dark .card-header {
+  background: #1f2937;
+  border-bottom: 1px solid #374151;
+}
+
+.card-header h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 0.25rem 0;
+  line-height: 1.3;
+}
+.dark .card-header h3 {
+  color: #f9fafb;
+}
+
+.card-desc {
+  font-size: 0.95rem;
+  color: #10b981;
+  font-weight: 600;
+  margin: 0;
+}
+.dark .card-desc {
+  color: #34d399;
+}
+
+/* Search Controls - Enhanced */
+.search-controls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding: 1.5rem;
+  background: #fff;
+}
+
+.dark .search-controls {
+  background: #23272b;
+}
+
+.search-input-simple {
+  flex: 1;
+  background: #f8f9fa;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-family: 'Inter', sans-serif;
+  color: #1f2937;
+  transition: all 0.2s;
+}
+
+.search-input-simple:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.dark .search-input-simple {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+.dark .search-input-simple:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.filter-select-simple {
+  background: #f8f9fa;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-family: 'Inter', sans-serif;
+  color: #1f2937;
+  transition: all 0.2s;
+  min-width: 150px;
+}
+
+.filter-select-simple:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.dark .filter-select-simple {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+.dark .filter-select-simple:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+/* Students List - Enhanced Design */
+.students-list-simple {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+
+.dark .students-list-simple {
+  background: #23272b;
+}
+
+.students-list-header {
+  display: grid;
+  grid-template-columns: 2fr 120px 180px; /* Name 2fr, Status 120px, Date 180px for full date */
+  gap: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #ffffff;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #3D8D7A 0%, #20c997 100%);
+  border-bottom: 1px solid #A3D1C6;
+}
+
+.dark .students-list-header {
+  background: linear-gradient(135deg, #20c997 0%, #3D8D7A 100%);
+  border-bottom-color: #A3D1C6;
+  color: #ffffff;
+}
+
+.students-list-row {
+  display: grid;
+  grid-template-columns: 2fr 120px 180px; /* Match header grid exactly */
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 0.875rem;
+  color: #1f2937;
+  transition: all 0.2s ease;
+}
+
+.students-list-row:hover {
+  background: linear-gradient(135deg, #f8fdfa 0%, #f1f5f9 100%);
+}
+
+.students-list-row:last-child {
+  border-bottom: none;
+}
+
+.dark .students-list-row {
+  color: #f3f4f6;
+  border-bottom-color: #374151;
+}
+
+.dark .students-list-row:hover {
+  background: #374151;
+}
+
+/* Remove text overflow restrictions for date column */
+.students-list-row span:last-child,
+.students-list-header span:last-child {
+  font-size: 0.875rem;
+  white-space: nowrap;
+  text-align: left;
+}
+
+/* Status Badge - Enhanced */
+.status-badge {
+  padding: 0.375rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+  transition: all 0.2s ease;
+}
+
+.status-badge.active {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  color: #065f46;
+  border: 1px solid #10b981;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.1);
+}
+
+.status-badge.inactive {
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  color: #991b1b;
+  border: 1px solid #ef4444;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.1);
+}
+
+/* Empty State - Matching MySubjects */
+.empty-state {
+  background: white;
+  border-radius: 16px;
+  padding: 2.5rem 1.5rem;
+  margin: 2rem auto;
+  max-width: 480px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+  text-align: center;
+  color: #1f2937;
+}
+.dark .empty-state {
+  background: #23272b;
+  color: #A3D1C6;
+  border: 1px solid #20c997;
+}
+
+.empty-icon {
+  margin-bottom: 1rem;
+  color: #3D8D7A;
+}
+.dark .empty-icon {
+  color: #A3D1C6;
+}
+
+.empty-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.empty-desc {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+}
+
+.dark .empty-desc {
+  color: #9ca3af;
+}
+
+.no-results {
+  text-align: center;
+  color: #6b7280;
+  padding: 2rem;
+  font-size: 0.875rem;
+}
+
+.dark .no-results {
+  color: #9ca3af;
+}
+
+/* Loading State */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(61, 141, 122, 0.1);
+  border-left: 4px solid #3D8D7A;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-state p {
+  color: #6b7280;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.dark .loading-state p {
+  color: #9ca3af;
+}
+
+/* Spinner for buttons */
+.spinner {
+  animation: spin 0.8s linear infinite;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+  
+  .header-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .search-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .students-list-header,
+  .students-list-row {
+    grid-template-columns: 1fr auto;
+    gap: 0.5rem;
+  }
+  
+  .students-list-header span:last-child,
+  .students-list-row span:last-child {
+    display: none;
+  }
 }
 </style>
