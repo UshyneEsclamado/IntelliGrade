@@ -2317,9 +2317,10 @@ onUnmounted(() => {
 
 /* Teachers Grid */
 .teachers-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.5rem;
+  align-items: start;
 }
 
 .subject-section {
@@ -2328,6 +2329,7 @@ onUnmounted(() => {
   padding: 1.5rem;
   border: 2px solid #e9ecef;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  height: fit-content;
 }
 .dark .subject-section {
   background: #23272b;
