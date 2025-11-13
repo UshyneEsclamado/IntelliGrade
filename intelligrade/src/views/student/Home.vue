@@ -1215,6 +1215,26 @@ export default {
   border: 1px solid #A3D1C6;
 }
 
+.modal-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+.dark .modal-content::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: #3D8D7A;
+  border-radius: 3px;
+}
+.dark .modal-content::-webkit-scrollbar-thumb {
+  background: #20c997;
+}
+
 .dark .modal-content {
   background: #23272b;
   border: 1px solid #20c997;
@@ -1283,6 +1303,26 @@ export default {
 .document-body {
   max-height: 60vh;
   overflow-y: auto;
+}
+
+.document-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.document-body::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+.dark .document-body::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+.document-body::-webkit-scrollbar-thumb {
+  background: #3D8D7A;
+  border-radius: 3px;
+}
+.dark .document-body::-webkit-scrollbar-thumb {
+  background: #20c997;
 }
 
 .document-content {
@@ -1513,6 +1553,26 @@ export default {
   box-shadow: 0 8px 24px rgba(0,0,0,0.35);
 }
 
+.notif-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.notif-dropdown::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 3px;
+}
+.dark .notif-dropdown::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+.notif-dropdown::-webkit-scrollbar-thumb {
+  background: #3D8D7A;
+  border-radius: 3px;
+}
+.dark .notif-dropdown::-webkit-scrollbar-thumb {
+  background: #20c997;
+}
+
 .notif-backdrop {
   display: none;
 }
@@ -1697,8 +1757,16 @@ export default {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
-  max-height: 500px;
   border: 2px solid #A3D1C6;
+}
+
+.content-card:first-child {
+  max-height: 500px;
+}
+
+.content-card:last-child {
+  height: fit-content;
+  max-height: 280px;
 }
 .dark .content-card {
   background: #23272b;
@@ -1745,10 +1813,16 @@ export default {
   background: #f3f4f6;
   border-radius: 3px;
 }
+.dark .assessment-list::-webkit-scrollbar-track {
+  background: #374151;
+}
 
 .assessment-list::-webkit-scrollbar-thumb {
-  background: #A3D1C6;
+  background: #3D8D7A;
   border-radius: 3px;
+}
+.dark .assessment-list::-webkit-scrollbar-thumb {
+  background: #20c997;
 }
 
 .assessment-item {
@@ -1908,8 +1982,6 @@ export default {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.5rem;
-  overflow-y: auto;
-  flex: 1;
 }
 
 .quick-links::-webkit-scrollbar {
@@ -1920,27 +1992,35 @@ export default {
   background: #f3f4f6;
   border-radius: 3px;
 }
+.dark .quick-links::-webkit-scrollbar-track {
+  background: #374151;
+}
 
 .quick-links::-webkit-scrollbar-thumb {
-  background: #A3D1C6;
+  background: #3D8D7A;
   border-radius: 3px;
+}
+.dark .quick-links::-webkit-scrollbar-thumb {
+  background: #20c997;
 }
 
 .quick-link {
   background: #FBFFE4;
   border: 1px solid #A3D1C6;
   border-radius: 10px;
-  padding: 1rem;
+  padding: 0.75rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   cursor: pointer;
   transition: all 0.2s;
   text-decoration: none;
   color: #1f2937;
   font-weight: 500;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
+  height: fit-content;
+  min-height: 80px;
 }
 .dark .quick-link {
   background: #23272b;
