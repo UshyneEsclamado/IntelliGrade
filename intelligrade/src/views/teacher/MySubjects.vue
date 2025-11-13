@@ -976,12 +976,6 @@
                     </svg>
                     Delete Section
                   </button>
-                  <button @click.stop="toggleArchiveSection(section)" class="menu-item">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M3,3H21V7H3V3M4,8H20V21H4V8M9.5,11A0.5,0.5 0 0,0 9,11.5V13H15V11.5A0.5,0.5 0 0,0 14.5,11H9.5Z" />
-                    </svg>
-                    {{ (section.status === 'archived') ? 'Unarchive' : 'Archive' }}
-                  </button>
                 </div>
               </transition>
             </div>
@@ -1359,28 +1353,58 @@
         </div>
 
         <div class="delete-modal-body">
-          <div class="delete-item-info">
-            <h3 class="delete-item-name">
-              {{ deleteType === 'subject' ? itemToDelete?.subject_name || itemToDelete?.name : 
-                 `${itemToDelete?.subject_name} - ${itemToDelete?.section_name}` }}
-            </h3>
-            <p class="delete-item-details">
-              {{ deleteType === 'subject' ? 'Subject' : 'Section' }} • Grade {{ itemToDelete?.grade_level }}
-              <template v-if="deleteType === 'subject'">
-                • {{ itemToDelete?.section_count || 0 }} sections • {{ itemToDelete?.total_students || 0 }} students
+          <div class="delete-item-card">
+            <div class="item-icon">
+              <svg v-if="deleteType === 'subject'" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2L2 7V17L12 22L22 17V7M12 4.18L19.55 8L12 11.82L4.45 8M4 9.73L11 13.36V20.27L4 16.64M20 16.64L13 20.27V13.36L20 9.73Z"/>
+              </svg>
+              <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+              </svg>
+            </div>
+            <div class="item-details">
+              <h3 class="item-name">
+                <template v-if="deleteType === 'subject'">
+                  {{ itemToDelete?.subject_name || itemToDelete?.name }}
+                </template>
+                <template v-else>
+                  {{ itemToDelete?.section_name || itemToDelete?.name }}
+                </template>
+              </h3>
+              <div class="item-meta">
+                <span class="item-type">{{ deleteType === 'subject' ? 'Subject' : 'Section' }}</span>
+                <span class="separator">•</span>
+                <span class="item-grade">Grade {{ itemToDelete?.grade_level }}</span>
+                <template v-if="deleteType === 'subject'">
+                  <span class="separator">•</span>
+                  <span class="item-stats">{{ itemToDelete?.section_count || 0 }} sections</span>
+                  <span class="separator">•</span>
+                  <span class="item-stats">{{ itemToDelete?.total_students || 0 }} students</span>
+                </template>
+                <template v-else>
+                  <span class="separator">•</span>
+                  <span class="item-stats">{{ itemToDelete?.student_count || 0 }} students enrolled</span>
+                </template>
+              </div>
+              <template v-if="deleteType === 'section' && itemToDelete?.subject_name">
+                <div class="item-parent">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2L2 7V17L12 22L22 17V7M12 4.18L19.55 8L12 11.82L4.45 8M4 9.73L11 13.36V20.27L4 16.64M20 16.64L13 20.27V13.36L20 9.73Z"/>
+                  </svg>
+                  <span>{{ itemToDelete.subject_name }}</span>
+                </div>
               </template>
-              <template v-else>
-                • {{ itemToDelete?.student_count || 0 }} students enrolled
-              </template>
-            </p>
+            </div>
           </div>
           
           <div class="delete-warning">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z" />
-            </svg>
-            <div class="delete-warning-text">
+            <div class="warning-header">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z" />
+              </svg>
               <h4>This action cannot be undone!</h4>
+            </div>
+            <div class="warning-content">
               <p v-if="deleteType === 'subject'">
                 Deleting this subject will permanently remove <strong>all {{ itemToDelete?.section_count || 0 }} sections</strong> 
                 and <strong>unenroll all {{ itemToDelete?.total_students || 0 }} students</strong>. All associated data, quizzes, and grades will be lost.
@@ -1452,6 +1476,103 @@
           <div class="step" :class="{ active: loadingProgress >= 75 }">Loading enrollments...</div>
           <div class="step" :class="{ active: loadingProgress >= 100 }">Almost done!</div>
         </div>
+      </div>
+    </div>
+
+    <!-- Edit Section Modal -->
+    <div v-if="showEditSectionModal" class="modal-overlay" @click="closeEditSectionModal">
+      <div class="modal-content-enhanced" @click.stop>
+        <!-- Modal Header -->
+        <div class="modal-header-enhanced">
+          <div class="modal-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
+            </svg>
+          </div>
+          <div class="modal-title-area">
+            <h2>Edit Section</h2>
+            <p class="modal-subtitle">Update section information</p>
+          </div>
+          <button @click="closeEditSectionModal" class="close-btn-enhanced">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+            </svg>
+          </button>
+        </div>
+
+        <form @submit.prevent="saveEditedSection" class="subject-form-enhanced">
+          <div class="step-content-enhanced">
+            <div class="form-grid">
+              <div class="form-group-enhanced">
+                <label for="editSectionName">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,5V19H5V5H19Z"/>
+                  </svg>
+                  Section Name <span class="required">*</span>
+                </label>
+                <input
+                  id="editSectionName"
+                  v-model="editingSectionData.name"
+                  type="text"
+                  placeholder="e.g., Section A, Grade 7-A"
+                  required
+                />
+              </div>
+
+              <div class="form-group-enhanced">
+                <label for="editMaxStudents">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16,13C15.71,13 15.38,13 15.03,13.05C16.19,13.89 17,15 17,16.5V19H23V16.5C23,14.17 18.33,13 16,13M8,13C5.67,13 1,14.17 1,16.5V19H15V16.5C15,14.17 10.33,13 8,13M8,11A3,3 0 0,0 11,8A3,3 0 0,0 8,5A3,3 0 0,0 5,8A3,3 0 0,0 8,11M16,11A3,3 0 0,0 19,8A3,3 0 0,0 16,5A3,3 0 0,0 13,8A3,3 0 0,0 16,11Z"/>
+                  </svg>
+                  Max Students <span class="required">*</span>
+                </label>
+                <input
+                  id="editMaxStudents"
+                  v-model="editingSectionData.max_students"
+                  type="number"
+                  min="1"
+                  max="100"
+                  placeholder="40"
+                  required
+                />
+              </div>
+
+              <div class="form-group-enhanced full-width">
+                <label>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9,22A1,1 0 0,1 8,21V18H4A2,2 0 0,1 2,16V4C2,2.89 2.9,2 4,2H20A2,2 0 0,1 22,4V16A2,2 0 0,1 20,18H13.9L10.2,21.71C10,21.9 9.75,22 9.5,22V22H9M10,16V19.08L13.08,16H20V4H4V16H10Z"/>
+                  </svg>
+                  Section Code (Read-only)
+                </label>
+                <input
+                  v-model="editingSectionData.section_code"
+                  type="text"
+                  readonly
+                  style="background: #f3f4f6; color: #6b7280; cursor: not-allowed;"
+                />
+                <small style="color: #6b7280; font-size: 0.75rem;">Section codes cannot be changed after creation</small>
+              </div>
+            </div>
+
+            <div class="modal-actions-enhanced">
+              <button type="button" @click="closeEditSectionModal" class="btn-secondary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
+                </svg>
+                Cancel
+              </button>
+              <button type="submit" :disabled="isLoading" class="btn-primary">
+                <svg v-if="!isLoading" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+                </svg>
+                <svg v-else class="spinner-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/>
+                </svg>
+                {{ isLoading ? 'Updating...' : 'Update Section' }}
+              </button>
+            </div>
+          </div>
+        </form>
       </div>
     </div>
 
@@ -2240,12 +2361,14 @@ const deleteSectionConfirmed = async (sectionId) => {
       throw sectionError
     }
     
-    if (selectedSubject.value) {
+    // Update the sections view if we're currently viewing sections
+    if (selectedSubject.value && viewMode.value === 'sections') {
       selectedSubject.value.sections = selectedSubject.value.sections.filter(s => s.id !== sectionId)
       selectedSubject.value.section_count = selectedSubject.value.sections.length
       
       selectedSubject.value.total_students = selectedSubject.value.sections.reduce((sum, s) => sum + (s.student_count || 0), 0)
       
+      // Update in main subjects array as well
       const subjectIndex = subjects.value.findIndex(s => s.id === selectedSubject.value.id)
       if (subjectIndex !== -1) {
         subjects.value[subjectIndex] = { ...selectedSubject.value }
@@ -2304,28 +2427,98 @@ const toggleSubjectMenu = (subjectId) => {
   }
 }
 
+// ============================================================
+// SECTION EDITING FUNCTIONALITY
+// ============================================================
+const showEditSectionModal = ref(false)
+const editingSectionData = ref({
+  id: null,
+  name: '',
+  max_students: '',
+  section_code: ''
+})
+
 const editSection = (section) => {
-  console.log('Edit section:', section)
-  showToast('Edit section feature coming soon!', 'info')
+  editingSectionData.value = {
+    id: section.id,
+    name: section.section_name || section.name,
+    max_students: section.max_students,
+    section_code: section.section_code
+  }
+  showEditSectionModal.value = true
   openMenuId.value = null
 }
 
-const toggleArchiveSection = async (section) => {
+const saveEditedSection = async () => {
   try {
-    const newStatus = section.status === 'archived' ? 'in-progress' : 'archived'
-    
-    await supabase
+    if (!editingSectionData.value.name?.trim()) {
+      showToast('Section name is required', 'error')
+      return
+    }
+
+    if (!editingSectionData.value.max_students || editingSectionData.value.max_students < 1) {
+      showToast('Max students must be at least 1', 'error')
+      return
+    }
+
+    isLoading.value = true
+
+    const updateData = {
+      name: editingSectionData.value.name.trim(),
+      max_students: parseInt(editingSectionData.value.max_students)
+    }
+
+    const { error } = await supabase
       .from('sections')
-      .update({ status: newStatus })
-      .eq('id', section.id)
-    
-    section.status = newStatus
-    openMenuId.value = null
-    showToast(`Section has been ${newStatus === 'archived' ? 'archived' : 'unarchived'}.`, 'success')
+      .update(updateData)
+      .eq('id', editingSectionData.value.id)
+
+    if (error) throw error
+
+    // Update local data immediately for better UX
+    if (selectedSubject.value && selectedSubject.value.sections) {
+      const sectionIndex = selectedSubject.value.sections.findIndex(s => s.id === editingSectionData.value.id)
+      if (sectionIndex !== -1) {
+        selectedSubject.value.sections[sectionIndex] = {
+          ...selectedSubject.value.sections[sectionIndex],
+          name: updateData.name,
+          section_name: updateData.name,
+          max_students: updateData.max_students
+        }
+
+        // Update in main subjects array as well
+        const subjectIndex = subjects.value.findIndex(s => s.id === selectedSubject.value.id)
+        if (subjectIndex !== -1) {
+          subjects.value[subjectIndex].sections = [...selectedSubject.value.sections]
+        }
+      }
+    }
+
+    showEditSectionModal.value = false
+    showToast('Section updated successfully!', 'success')
+
   } catch (error) {
-    showToast('Error updating section status', 'error')
+    console.error('Error updating section:', error)
+    showToast('Error updating section. Please try again.', 'error')
+  } finally {
+    isLoading.value = false
   }
 }
+
+const closeEditSectionModal = () => {
+  showEditSectionModal.value = false
+  editingSectionData.value = {
+    id: null,
+    name: '',
+    max_students: '',
+    section_code: ''
+  }
+}
+
+// ============================================================
+// ARCHIVE/UNARCHIVE SECTION FUNCTIONALITY - REMOVED
+// ============================================================
+// Archive functionality has been removed as requested
 
 const handleClickOutside = (event) => {
   const targetElement = event.target
@@ -4066,40 +4259,115 @@ onUnmounted(() => {
   padding: 1.5rem 2rem;
 }
 
-.delete-item-info {
-  text-align: center;
+.delete-item-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
   margin-bottom: 1.5rem;
 }
 
-.delete-item-name {
+.dark .delete-item-card {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border-radius: 12px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.item-details {
+  flex: 1;
+}
+
+.item-name {
   font-size: 1.125rem;
   font-weight: 700;
   color: #1f2937;
   margin: 0 0 0.5rem 0;
+  line-height: 1.3;
 }
 
-.dark .delete-item-name {
+.dark .item-name {
   color: #f3f4f6;
 }
 
-.delete-item-details {
+.item-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 0.875rem;
   color: #6b7280;
-  margin: 0;
+  margin-bottom: 0.5rem;
 }
 
-.dark .delete-item-details {
+.dark .item-meta {
+  color: #9ca3af;
+}
+
+.item-type {
+  font-weight: 600;
+  color: #10b981;
+}
+
+.dark .item-type {
+  color: #34d399;
+}
+
+.separator {
+  color: #d1d5db;
+  font-weight: 700;
+}
+
+.dark .separator {
+  color: #6b7280;
+}
+
+.item-stats {
+  font-weight: 500;
+}
+
+.item-parent {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  background: #f1f5f9;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  width: fit-content;
+}
+
+.dark .item-parent {
+  background: #1f2937;
+  color: #d1d5db;
+}
+
+.item-parent svg {
+  color: #6b7280;
+}
+
+.dark .item-parent svg {
   color: #9ca3af;
 }
 
 .delete-warning {
-  display: flex;
-  gap: 1rem;
-  padding: 1rem;
   background: #fef2f2;
-  border: 1px solid #fecaca;
+  border: 2px solid #fecaca;
   border-radius: 12px;
-  margin-top: 1rem;
+  padding: 1.5rem;
 }
 
 .dark .delete-warning {
@@ -4107,72 +4375,90 @@ onUnmounted(() => {
   border-color: #7f1d1d;
 }
 
-.delete-warning svg {
-  flex-shrink: 0;
-  color: #ef4444;
-  margin-top: 0.25rem;
+.warning-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
 }
 
-.dark .delete-warning svg {
+.warning-header svg {
+  color: #ef4444;
+  flex-shrink: 0;
+}
+
+.dark .warning-header svg {
   color: #f87171;
 }
 
-.delete-warning-text h4 {
-  font-size: 0.875rem;
+.warning-header h4 {
+  font-size: 1rem;
   font-weight: 700;
   color: #991b1b;
-  margin: 0 0 0.5rem 0;
+  margin: 0;
 }
 
-.dark .delete-warning-text h4 {
+.dark .warning-header h4 {
   color: #fca5a5;
 }
 
-.delete-warning-text p {
+.warning-content p {
   font-size: 0.875rem;
   color: #7f1d1d;
   margin: 0;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
-.dark .delete-warning-text p {
+.dark .warning-content p {
   color: #fca5a5;
 }
 
-.delete-warning-text strong {
+.warning-content strong {
   font-weight: 700;
   color: #991b1b;
 }
 
-.dark .delete-warning-text strong {
+.dark .warning-content strong {
   color: #fef2f2;
 }
 
 .delete-modal .modal-actions {
-  padding: 1rem 2rem 2rem;
-  justify-content: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem 2rem;
   gap: 1rem;
+  border-top: 1px solid #f3f4f6;
+}
+
+.dark .delete-modal .modal-actions {
+  border-top-color: #374151;
 }
 
 .cancel-btn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  background: white;
+  background: #f8f9fa;
   color: #6b7280;
-  border: 1px solid #d1d5db;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
+  border: 2px solid #e5e7eb;
+  padding: 0.875rem 1.5rem;
+  border-radius: 10px;
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  min-width: 120px;
+  flex: 0 0 auto;
 }
 
 .cancel-btn:hover {
-  background: #f9fafb;
-  border-color: #9ca3af;
-  color: #1f2937;
+  background: #f1f5f9;
+  border-color: #d1d5db;
+  color: #374151;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .dark .cancel-btn {
@@ -4190,22 +4476,26 @@ onUnmounted(() => {
 .delete-confirm-btn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  background: #ef4444;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
   color: white;
   border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
+  padding: 0.875rem 1.5rem;
+  border-radius: 10px;
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  min-width: 140px;
+  flex: 1;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
-.delete-confirm-btn:hover {
-  background: #dc2626;
+.delete-confirm-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
 }
 
 .delete-confirm-btn:disabled {
@@ -4213,14 +4503,15 @@ onUnmounted(() => {
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+  opacity: 0.7;
 }
 
 .dark .delete-confirm-btn {
-  background: #dc2626;
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
 }
 
-.dark .delete-confirm-btn:hover {
-  background: #b91c1c;
+.dark .delete-confirm-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #b91c1c, #991b1b);
 }
 
 .delete-confirm-btn .spinner {
