@@ -1,11 +1,14 @@
 <template>
   <div class="calendar-container">
-    <!-- Simple Loading (uniform with Messages.vue) -->
-    <div v-if="loading" class="simple-loading-messages">
-      <div class="simple-loading-spinner">
-        <div class="simple-spinner"></div>
+    <!-- Loading Overlay (uniform with Subjects.vue) -->
+    <div v-if="loading" class="loading-overlay">
+      <div class="loading-content">
+        <div class="loading-spinner-container">
+          <div class="loading-spinner"></div>
+        </div>
+        <div class="loading-text">Loading Calendar</div>
+        <div class="loading-subtext">Please wait while we fetch your academic events...</div>
       </div>
-      <p>Loading calendar...</p>
     </div>
 
     <!-- Error State -->
@@ -2594,16 +2597,8 @@ export default {
   }
 }
 
-/* ==================== SIMPLE LOADING STYLES (uniform with Messages.vue) ==================== */
-.simple-loading-messages {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  gap: 1rem;
-  color: #64748b;
-  min-height: 200px;
+/* Loading Overlay (uniform with Subjects.vue) */
+.loading-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -2611,28 +2606,68 @@ export default {
   bottom: 0;
   background: rgba(251, 255, 228, 0.95);
   backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 9999;
+  animation: fadeIn 0.3s ease;
 }
-.dark .simple-loading-messages {
-  color: #94a3b8;
+.dark .loading-overlay {
   background: rgba(24, 28, 32, 0.95);
 }
 
-.simple-loading-spinner {
-  position: relative;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-.simple-spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid #e2e8f0;
-  border-top: 3px solid #2d6a4f;
+.loading-content {
+  background: white;
+  padding: 3rem 4rem;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(61, 141, 122, 0.15);
+  border: 2px solid #a3d1c6;
+  animation: slideUp 0.4s ease;
+}
+.dark .loading-content {
+  background: #23272b;
+  border-color: #20c997;
+  color: #A3D1C6;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.loading-spinner-container {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
+}
+
+.loading-spinner {
+  width: 80px;
+  height: 80px;
+  border: 5px solid rgba(61, 141, 122, 0.1);
+  border-left: 5px solid #3d8d7a;
+  border-top: 5px solid #20c997;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-}
-.dark .simple-spinner {
-  border-color: #334155;
-  border-top-color: #1b4332;
+  margin: 0 auto;
+  box-shadow: 0 0 20px rgba(61, 141, 122, 0.1);
 }
 
 @keyframes spin {
@@ -2642,6 +2677,28 @@ export default {
   100% {
     transform: rotate(360deg);
   }
+}
+
+.loading-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #181c20;
+  margin: 0 0 0.5rem 0;
+  font-family: 'Inter', sans-serif;
+}
+.dark .loading-text {
+  color: #A3D1C6;
+}
+
+.loading-subtext {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #3d8d7a;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+}
+.dark .loading-subtext {
+  color: #A3D1C6;
 }
 </style>
 
