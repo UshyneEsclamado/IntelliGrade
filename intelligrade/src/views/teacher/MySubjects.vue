@@ -1443,8 +1443,15 @@
       <div class="loading-content">
         <div class="loading-spinner-container">
           <div class="loading-spinner"></div>
+          <div class="loading-progress">{{ Math.round(loadingProgress) }}%</div>
         </div>
         <p class="loading-text">{{ loadingMessage || 'Loading...' }}</p>
+        <div class="loading-steps">
+          <div class="step" :class="{ active: loadingProgress >= 25 }">Authenticating...</div>
+          <div class="step" :class="{ active: loadingProgress >= 50 }">Fetching subjects...</div>
+          <div class="step" :class="{ active: loadingProgress >= 75 }">Loading enrollments...</div>
+          <div class="step" :class="{ active: loadingProgress >= 100 }">Almost done!</div>
+        </div>
       </div>
     </div>
 
@@ -1510,8 +1517,9 @@ const notificationType = ref('success')
 const openMenuId = ref(null)
 const openSubjectMenuId = ref(null)
 const isLoading = ref(false)
-const loadingMessage = ref('')
+const loadingMessage = ref('Initializing...')
 const isDeleting = ref(false)
+const loadingProgress = ref(0)
 
 // Success modal state
 const showSuccessModal = ref(false)
@@ -1643,7 +1651,7 @@ const getSectionIconColor = (sectionName, gradeLevel) => {
 }
 
 // ============================================================
-// FETCH SUBJECTS - MAIN FUNCTION
+// FETCH SUBJECTS - OPTIMIZED FOR SPEED
 // ============================================================
 const fetchSubjects = async (forceRefresh = false) => {
   try {
@@ -1653,8 +1661,14 @@ const fetchSubjects = async (forceRefresh = false) => {
     }
 
     isLoading.value = true
-    loadingMessage.value = 'Loading your subjects...'
+    loadingProgress.value = 0
+    loadingMessage.value = 'Fetching subjects...'
+    console.time('fetchSubjects')
 
+    // Progress: 25% - Start fetching subjects
+    loadingProgress.value = 25
+
+    // Single optimized query with enrollment counts using a view or RPC
     const { data: subjectsData, error: subjectsError } = await supabase
       .from('subjects')
       .select(`
@@ -1664,7 +1678,7 @@ const fetchSubjects = async (forceRefresh = false) => {
         description,
         is_active,
         created_at,
-        sections (
+        sections!inner (
           id,
           name,
           section_code,
@@ -1675,6 +1689,7 @@ const fetchSubjects = async (forceRefresh = false) => {
       `)
       .eq('teacher_id', teacherInfo.value.id)
       .eq('is_active', true)
+      .eq('sections.is_active', true)
       .order('name')
 
     if (subjectsError) {
@@ -1682,15 +1697,58 @@ const fetchSubjects = async (forceRefresh = false) => {
       throw subjectsError
     }
 
+    // Progress: 50% - Subjects fetched
+    loadingProgress.value = 50
+    loadingMessage.value = 'Loading student enrollments...'
+
     if (!subjectsData || subjectsData.length === 0) {
       subjects.value = []
+      loadingProgress.value = 100
       isLoading.value = false
+      console.timeEnd('fetchSubjects')
       return
     }
 
+    // Get all section IDs for batch enrollment counting
+    const allSectionIds = subjectsData
+      .flatMap(subject => subject.sections || [])
+      .map(section => section.id)
+
+    console.log(`Fetching enrollments for ${allSectionIds.length} sections...`)
+
+    // Progress: 75% - Processing enrollments
+    loadingProgress.value = 75
+
+    // Single batch query for all enrollment counts
+    let enrollmentCounts = {}
+    if (allSectionIds.length > 0) {
+      const { data: enrollmentData, error: enrollmentError } = await supabase
+        .from('enrollments')
+        .select('section_id')
+        .in('section_id', allSectionIds)
+        .eq('status', 'active')
+
+      if (enrollmentError) {
+        console.warn('Error fetching enrollments:', enrollmentError)
+      } else if (enrollmentData) {
+        // Count enrollments per section
+        enrollmentCounts = enrollmentData.reduce((acc, enrollment) => {
+          acc[enrollment.section_id] = (acc[enrollment.section_id] || 0) + 1
+          return acc
+        }, {})
+      }
+    }
+
+    console.log('Enrollment counts:', enrollmentCounts)
+
+    // Progress: 90% - Processing data
+    loadingProgress.value = 90
+    loadingMessage.value = 'Finalizing...'
+
+    // Process subjects efficiently
     const subjectGroups = new Map()
 
-    for (const subject of subjectsData) {
+    subjectsData.forEach(subject => {
       if (subject.sections && subject.sections.length > 0) {
         const subjectName = subject.name
 
@@ -1710,15 +1768,9 @@ const fetchSubjects = async (forceRefresh = false) => {
         const subjectGroup = subjectGroups.get(subjectName)
         subjectGroup.grade_levels.add(subject.grade_level)
 
-        for (const section of subject.sections) {
+        subject.sections.forEach(section => {
           if (section.is_active) {
-            const { count, error: countError } = await supabase
-              .from('enrollments')
-              .select('*', { count: 'exact', head: true })
-              .eq('section_id', section.id)
-              .eq('status', 'active')
-
-            const studentCount = !countError && count ? count : 0
+            const studentCount = enrollmentCounts[section.id] || 0
             subjectGroup.total_students += studentCount
 
             subjectGroup.sections.push({
@@ -1737,9 +1789,9 @@ const fetchSubjects = async (forceRefresh = false) => {
 
             subjectGroup.section_count++
           }
-        }
+        })
       }
-    }
+    })
 
     const processedSubjects = Array.from(subjectGroups.values()).map(group => {
       const gradeLevelsArray = Array.from(group.grade_levels).sort((a, b) => a - b)
@@ -1754,12 +1806,24 @@ const fetchSubjects = async (forceRefresh = false) => {
     })
 
     subjects.value = processedSubjects
+    
+    // Progress: 100% - Complete
+    loadingProgress.value = 100
+    loadingMessage.value = 'Complete!'
+    
     console.log('Subjects loaded:', processedSubjects)
+    console.timeEnd('fetchSubjects')
+
+    // Small delay to show 100% before hiding
+    setTimeout(() => {
+      isLoading.value = false
+      loadingProgress.value = 0
+    }, 300)
 
   } catch (error) {
     console.error('Error fetching subjects:', error)
     showToast('Error loading subjects. Please try again.', 'error')
-  } finally {
+    loadingProgress.value = 0
     isLoading.value = false
   }
 }
@@ -2396,7 +2460,7 @@ const exportStudentRoster = () => {
 }
 
 // ============================================================
-// LIFECYCLE
+// LIFECYCLE - OPTIMIZED FOR SPEED
 // ============================================================
 onMounted(async () => {
   try {
@@ -2405,7 +2469,14 @@ onMounted(async () => {
     const { initializeAuth, setupAuthListener } = useTeacherAuth()
     setupAuthListener()
     
-    const authResult = await initializeAuth()
+    // Start auth but don't wait for full completion
+    const authPromise = initializeAuth()
+    
+    // Set up click handler immediately
+    document.addEventListener('click', handleClickOutside)
+    
+    // Handle auth result
+    const authResult = await authPromise
     
     if (!authResult.success) {
       if (authResult.needsLogin || authResult.wrongRole) {
@@ -2413,30 +2484,36 @@ onMounted(async () => {
         await router.push('/login')
         return
       }
-      console.warn('Auth initialization had issues, but continuing...')
     }
     
-    const checkTeacherInfo = setInterval(async () => {
-      if (teacherInfo.value?.id) {
-        clearInterval(checkTeacherInfo)
-        await fetchSubjects()
-      } else if (authResult.success === false && authResult.needsLogin) {
-        clearInterval(checkTeacherInfo)
-      }
-    }, 200)
-
-    setTimeout(() => {
-      clearInterval(checkTeacherInfo)
-      if (!teacherInfo.value?.id && isAuthenticated.value) {
-        console.warn('Timeout waiting for teacher info, but authenticated - trying to fetch anyway')
-        fetchSubjects()
-      }
-    }, 10000)
+    // Faster teacher info checking with shorter intervals
+    let attempts = 0
+    const maxAttempts = 25 // 5 seconds max
     
-    document.addEventListener('click', handleClickOutside)
+    const quickCheck = setInterval(async () => {
+      attempts++
+      
+      if (teacherInfo.value?.id) {
+        clearInterval(quickCheck)
+        await fetchSubjects()
+      } else if (attempts >= maxAttempts) {
+        clearInterval(quickCheck)
+        if (isAuthenticated.value) {
+          console.warn('Timeout waiting for teacher info - trying fetch anyway')
+          fetchSubjects()
+        } else {
+          console.error('Authentication timeout')
+          await router.push('/login')
+        }
+      }
+    }, 200) // Check every 200ms instead of waiting
     
   } catch (error) {
     console.error('Component mount error:', error)
+    // Try to continue anyway
+    if (teacherInfo.value?.id) {
+      fetchSubjects()
+    }
   }
 })
 
@@ -3837,6 +3914,45 @@ onUnmounted(() => {
   animation: spin 1s linear infinite;
   margin: 0 auto;
   box-shadow: 0 0 20px rgba(61, 141, 122, 0.1);
+}
+
+.loading-progress {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #3d8d7a;
+}
+
+.dark .loading-progress {
+  color: #20c997;
+}
+
+.loading-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  text-align: left;
+}
+
+.loading-steps .step {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  padding: 0.25rem 0;
+  transition: all 0.3s ease;
+}
+
+.loading-steps .step.active {
+  color: #3d8d7a;
+  font-weight: 600;
+  transform: translateX(4px);
+}
+
+.dark .loading-steps .step.active {
+  color: #20c997;
 }
 
 @keyframes spin {
