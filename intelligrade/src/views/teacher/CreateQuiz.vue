@@ -1,81 +1,119 @@
 <template>
   <div class="create-quiz-page">
-    <!-- Enhanced Header Section -->
-    <div class="section-header-card">
-      <div class="header-bg-decoration"></div>
-      <div class="floating-shapes">
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
-        <div class="shape shape-4"></div>
-        <div class="shape shape-5"></div>
-      </div>
-      
-      <div class="section-header-content">
-        <div class="section-header-left">
-          <div class="section-header-icon">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-            </svg>
+    <!-- Header Section - Same style as MySubjects -->
+    <div class="header-section">
+      <div class="header-content">
+        <div class="header-left">
+          <div class="header-icon-wrapper">
+            <div class="header-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+              </svg>
+            </div>
           </div>
-          
           <div class="header-text">
-            <h1 class="section-header-title">Create New Quiz</h1>
-            <p class="section-header-subtitle">{{ subject.name }}<span v-if="section.name"> - {{ section.name }}</span></p>
-            <p class="section-header-description">{{ teacherInfo.full_name }} • {{ teacherInfo.role.toUpperCase() }}</p>
+            <h1 class="header-title">Create New Quiz</h1>
+            <p class="header-subtitle">{{ subject.name }}<span v-if="section.name"> - {{ section.name }}</span></p>
+            <div class="header-breadcrumb">
+              <span class="breadcrumb-item">{{ teacherInfo.full_name }}</span>
+              <span class="breadcrumb-separator">•</span>
+              <span class="breadcrumb-item">{{ teacherInfo.role.toUpperCase() }}</span>
+            </div>
           </div>
         </div>
-        
         <div class="header-actions">
-          <button @click="goBack" class="back-btn">
+          <button @click="goBack" class="action-btn secondary">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
             </svg>
-            Back to Subjects
+            Back to Sections
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Enhanced Progress Steps -->
-    <div v-if="currentStep !== 'landing'" class="progress-container">
-      <div class="progress-card">
-        <div class="progress-track">
-          <div v-for="(step, index) in steps" :key="index" class="progress-step">
-            <div class="step-line" :class="{ 'completed': getStepIndex(currentStep) > index }"></div>
-            <div class="step-indicator" :class="{ 
-              'active': getStepIndex(currentStep) >= index,
-              'completed': getStepIndex(currentStep) > index 
-            }">
-              <div class="step-circle">
-                <span v-if="getStepIndex(currentStep) > index" class="checkmark">✓</span>
-                <span v-else class="step-number">{{ index + 1 }}</span>
+    <!-- Main Content Container - Same as MySubjects -->
+    <div class="main-container">
+      <div class="container">
+        <!-- Enhanced Progress Steps -->
+        <div v-if="currentStep !== 'landing'" class="progress-container">
+          <div class="progress-card">
+            <div class="progress-track">
+              <div v-for="(step, index) in steps" :key="index" class="progress-step">
+                <div class="step-line" :class="{ 'completed': getStepIndex(currentStep) > index }"></div>
+                <div class="step-indicator" :class="{ 
+                  'active': getStepIndex(currentStep) >= index,
+                  'completed': getStepIndex(currentStep) > index 
+                }">
+                  <div class="step-circle">
+                    <span v-if="getStepIndex(currentStep) > index" class="checkmark">✓</span>
+                    <span v-else class="step-number">{{ index + 1 }}</span>
+                  </div>
+                </div>
+                <span class="step-label">{{ step }}</span>
               </div>
             </div>
-            <span class="step-label">{{ step }}</span>
           </div>
         </div>
-      </div>
-    </div>
+      <!-- =============================================== -->
+      <!-- LANDING PAGE: Dynamic Quiz Status Display -->
+      <!-- =============================================== -->
+      <div v-if="currentStep === 'landing'" class="landing-section">
+        
+        <!-- Loading State -->
+        <div v-if="isLoadingQuizzes" class="status-card loading-card">
+          <div class="status-icon">
+            <div class="spinner"></div>
+          </div>
+          <h3 class="status-title">Loading Quiz Data...</h3>
+          <p class="status-description">Please wait while we check your existing quizzes.</p>
+        </div>
 
-    <!-- Main Content -->
-    <div class="main-content">
-      <!-- Landing State: Minimal Card Design (exactly like ViewQuizzes.vue empty state) -->
-      <div v-if="currentStep === 'landing'" style="display: flex; justify-content: center; align-items: center; min-height: 60vh;">
-        <div style="background: #fff; border-radius: 12px; border: none; box-shadow: 0 2px 16px rgba(61,141,122,0.10); padding: 3rem 2rem; max-width: 600px; width: 100%; text-align: center;">
-          <div style="color: #9ca3af; margin-bottom: 1rem; display: flex; justify-content: center;">
+        <!-- No Quizzes State -->
+        <div v-else-if="existingQuizzesCount === 0" class="status-card empty-state-card">
+          <div class="status-icon">
             <svg width="80" height="80" viewBox="0 0 24 24" fill="currentColor">
               <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
             </svg>
           </div>
-          <h3 style="color: #3D8D7A; font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem;">No Quizzes Available</h3>
-          <p style="color: #6b7280; margin-bottom: 1.5rem;">You haven't created any quizzes for this section yet.</p>
-          <div style="display: flex; justify-content: center;">
+          <h3 class="status-title">No Quizzes Available</h3>
+          <p class="status-description">You haven't created any quizzes for this section yet.</p>
+          <div class="status-actions">
             <button @click="currentStep = 'details'" class="create-quiz-btn">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
               </svg>
               Create Your First Quiz
+            </button>
+          </div>
+        </div>
+
+        <!-- Existing Quizzes State -->
+        <div v-else class="status-card existing-quizzes-card">
+          <div class="status-icon success-icon">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+            </svg>
+          </div>
+          <h3 class="status-title">
+            {{ existingQuizzesCount }} Quiz{{ existingQuizzesCount > 1 ? 'es' : '' }} Created
+          </h3>
+          <p class="status-description">
+            You have successfully created {{ existingQuizzesCount }} quiz{{ existingQuizzesCount > 1 ? 'es' : '' }} for <strong>{{ section.name }}</strong>.
+            <br>Create another quiz or go back to manage existing ones.
+          </p>
+          <div class="status-actions">
+            <button @click="goBackToQuizzes" class="btn btn-secondary manage-btn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M15 19l-7-7 7-7"/>
+              </svg>
+              Manage Quizzes
+            </button>
+            <button @click="currentStep = 'details'" class="create-quiz-btn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+              </svg>
+              Create Another Quiz
             </button>
           </div>
         </div>
@@ -590,12 +628,11 @@
             </svg>
           </button>
         </div>
+        </div>
       </div>
     </div>
   </div>
-</template>
-
-<script>
+</template><script>
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { supabase } from '@/supabase.js';
@@ -606,9 +643,17 @@ export default {
     const router = useRouter();
     const route = useRoute();
     
+    // ===============================================
+    // REACTIVE STATE
+    // ===============================================
     const currentStep = ref('landing');
     const steps = ['Details', 'Questions', 'Settings', 'Preview'];
     const isPublishing = ref(false);
+    const isLoadingQuizzes = ref(true);
+    const existingQuizzesCount = ref(0);
+    
+    // Real-time subscription
+    let quizSubscription = null;
     
     const teacherInfo = ref({
       full_name: 'Loading...',
@@ -642,6 +687,10 @@ export default {
       }
     });
 
+    // ===============================================
+    // UTILITY FUNCTIONS
+    // ===============================================
+    
     // Convert Philippines time to UTC for storage
     const convertPHTimeToUTC = (phDateString) => {
       if (!phDateString) return null;
@@ -655,8 +704,20 @@ export default {
       }
     };
 
-    // Real-time subscription
-    let quizSubscription = null;
+    const getStepIndex = (step) => {
+      const stepMap = {
+        'landing': -1,
+        'details': 0,
+        'questions': 1,
+        'settings': 2,
+        'preview': 3
+      };
+      return stepMap[step];
+    };
+
+    // ===============================================
+    // DATA LOADING FUNCTIONS
+    // ===============================================
 
     const loadTeacherInfo = async () => {
       try {
@@ -738,30 +799,42 @@ export default {
       return true;
     };
 
-    const setupRealtimeSubscription = () => {
-      if (!teacherInfo.value.teacher_id) {
-        console.warn('⚠️ Cannot setup realtime: teacher_id not available');
-        return;
+    const loadExistingQuizzes = async () => {
+      try {
+        if (!teacherInfo.value.teacher_id || !subject.value.id || !section.value.id) {
+          console.warn('⚠️ Missing required info for loading quizzes');
+          return;
+        }
+
+        console.log('📊 Loading existing quizzes for section:', section.value.name);
+        
+        const { data: quizzes, error } = await supabase
+          .from('quizzes')
+          .select('id, title, created_at')
+          .eq('teacher_id', teacherInfo.value.teacher_id)
+          .eq('subject_id', subject.value.id)
+          .eq('section_id', section.value.id)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('❌ Error loading quizzes:', error);
+          // Don't show error to user, just proceed with 0 count
+          existingQuizzesCount.value = 0;
+        } else {
+          existingQuizzesCount.value = quizzes ? quizzes.length : 0;
+          console.log(`✅ Found ${existingQuizzesCount.value} existing quizzes`);
+        }
+      } catch (error) {
+        console.error('❌ Exception while loading quizzes:', error);
+        existingQuizzesCount.value = 0;
+      } finally {
+        isLoadingQuizzes.value = false;
       }
-      
-      quizSubscription = supabase
-        .channel('quiz-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'quizzes',
-            filter: `teacher_id=eq.${teacherInfo.value.teacher_id}`
-          },
-          (payload) => {
-            console.log('📡 Real-time: New quiz created:', payload.new);
-          }
-        )
-        .subscribe((status) => {
-          console.log('📡 Subscription status:', status);
-        });
     };
+
+    // ===============================================
+    // NAVIGATION FUNCTIONS
+    // ===============================================
 
     const goBack = () => {
       if (currentStep.value === 'landing') {
@@ -773,15 +846,20 @@ export default {
       }
     };
 
-    const getStepIndex = (step) => {
-      const stepMap = {
-        'landing': -1,
-        'details': 0,
-        'questions': 1,
-        'settings': 2,
-        'preview': 3
-      };
-      return stepMap[step];
+    const goBackToQuizzes = () => {
+      router.push({
+        name: 'ViewQuizzes',
+        params: {
+          subjectId: subject.value.id,
+          sectionId: section.value.id
+        },
+        query: {
+          subjectName: subject.value.name,
+          sectionName: section.value.name,
+          gradeLevel: route.query.gradeLevel,
+          sectionCode: route.query.sectionCode
+        }
+      });
     };
 
     const proceedToQuestions = () => {
@@ -799,6 +877,10 @@ export default {
       }
       currentStep.value = 'questions';
     };
+
+    // ===============================================
+    // QUESTION MANAGEMENT FUNCTIONS
+    // ===============================================
 
     const addQuestion = () => {
       if (quiz.value.questions.length >= quiz.value.numberOfQuestions) {
@@ -839,6 +921,10 @@ export default {
         alert('A question must have at least 2 options');
       }
     };
+
+    // ===============================================
+    // QUIZ VALIDATION FUNCTIONS
+    // ===============================================
 
     const validateQuiz = () => {
       if (!quiz.value.title.trim()) {
@@ -911,9 +997,43 @@ export default {
       return true;
     };
 
-    // ============================================
-    // IMPROVED PUBLISH FUNCTION WITH BETTER ERROR HANDLING
-    // ============================================
+    // ===============================================
+    // REAL-TIME SUBSCRIPTION SETUP
+    // ===============================================
+
+    const setupRealtimeSubscription = () => {
+      if (!teacherInfo.value.teacher_id) {
+        console.warn('⚠️ Cannot setup realtime: teacher_id not available');
+        return;
+      }
+      
+      quizSubscription = supabase
+        .channel('quiz-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'quizzes',
+            filter: `teacher_id=eq.${teacherInfo.value.teacher_id}`
+          },
+          (payload) => {
+            console.log('📡 Real-time: New quiz created:', payload.new);
+            // Update quiz count when new quiz is created
+            if (payload.new.subject_id === subject.value.id && payload.new.section_id === section.value.id) {
+              existingQuizzesCount.value++;
+            }
+          }
+        )
+        .subscribe((status) => {
+          console.log('📡 Subscription status:', status);
+        });
+    };
+
+    // ===============================================
+    // QUIZ PUBLISHING FUNCTION
+    // ===============================================
+    
     const publishQuiz = async () => {
       // Validate quiz before proceeding
       if (!validateQuiz()) {
@@ -1124,6 +1244,10 @@ export default {
       }
     };
 
+    // ===============================================
+    // LIFECYCLE HOOKS
+    // ===============================================
+
     onMounted(async () => {
       console.log('🔧 Component mounted');
       
@@ -1142,6 +1266,9 @@ export default {
         return;
       }
 
+      // Load existing quizzes after teacher and route info is loaded
+      await loadExistingQuizzes();
+      
       setupRealtimeSubscription();
       console.log('✅ Component initialization complete');
     });
@@ -1154,7 +1281,12 @@ export default {
       }
     });
 
+    // ===============================================
+    // RETURN EXPOSED FUNCTIONS AND DATA
+    // ===============================================
+
     return {
+      // State
       currentStep,
       steps,
       teacherInfo,
@@ -1162,13 +1294,22 @@ export default {
       section,
       quiz,
       isPublishing,
+      isLoadingQuizzes,
+      existingQuizzesCount,
+      
+      // Navigation
       goBack,
+      goBackToQuizzes,
       getStepIndex,
       proceedToQuestions,
+      
+      // Question Management
       addQuestion,
       removeQuestion,
       addOption,
       removeOption,
+      
+      // Publishing
       publishQuiz
     };
   }
@@ -1176,125 +1317,11 @@ export default {
 </script>
 
 <style scoped>
-.enhanced-landing-card {
-  background: linear-gradient(135deg, #f9ffe4 60%, #e6fff7 100%);
-  border: 2.5px solid #20c997;
-  border-radius: 22px;
-  max-width: 440px;
-  margin: 40px auto 0 auto;
-  padding: 2.8rem 2.2rem 2.8rem 2.2rem;
-  box-shadow: 0 8px 40px rgba(32,201,151,0.13), 0 1.5px 8px rgba(32,201,151,0.08);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.enhanced-landing-icon {
-  margin-bottom: 1.7rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.enhanced-landing-icon-bg {
-  border-radius: 16px;
-  box-shadow: 0 4px 24px #20c99733;
-}
-.enhanced-title {
-  color: #222;
-  font-size: 2.1rem;
-  font-weight: 800;
-  margin-bottom: 0.7rem;
-  text-align: center;
-  letter-spacing: -0.5px;
-}
-.enhanced-desc {
-  color: #333;
-  font-size: 1.13rem;
-  margin-bottom: 2.3rem;
-  text-align: center;
-  font-weight: 500;
-  line-height: 1.5;
-}
-.enhanced-features-row {
-  display: flex;
-  gap: 1.3rem;
-  width: 100%;
-  justify-content: center;
-  margin-bottom: 2.5rem;
-}
-.enhanced-feature-icon {
-  margin-bottom: 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  filter: drop-shadow(0 2px 8px #20c99733);
-}
-.enhanced-feature-box, .feature-item {
-  min-width: 110px;
-  width: 100%;
-  padding: 1.2rem 1.1rem 1rem 1.1rem;
-  background: #f9ffe4;
-  border: 2px solid #20c997;
-  border-radius: 14px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  transition: box-shadow 0.2s, border 0.2s, background 0.2s, color 0.2s;
-  box-shadow: 0 2px 8px rgba(32,201,151,0.07);
-  font-size: 1.08rem;
-  font-weight: 600;
-  color: #20c997;
-  cursor: pointer;
-}
-.enhanced-feature-box:hover, .feature-item:hover {
-  box-shadow: 0 6px 24px rgba(32,201,151,0.13);
-  border-color: #139e75;
-  background: #e6fff7;
-  color: #139e75;
-}
-.enhanced-btn {
-  margin-top: 0.7rem;
-  background: #20c997;
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  padding: 1rem 2.2rem;
-  font-size: 1.15rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  cursor: pointer;
-  box-shadow: 0 2px 12px rgba(32,201,151,0.10);
-  transition: background 0.2s, color 0.2s, transform 0.15s;
-}
-.enhanced-btn:hover {
-  background: #139e75;
-  color: #fff;
-  transform: translateY(-2px) scale(1.03);
-}
-@media (max-width: 600px) {
-  .enhanced-landing-card {
-    padding: 1.2rem 0.5rem 1.5rem 0.5rem;
-    max-width: 98vw;
-  }
-  .enhanced-title {
-    font-size: 1.3rem;
-  }
-  .enhanced-desc {
-    font-size: 0.98rem;
-  }
-  .enhanced-features-row {
-    flex-direction: column;
-    gap: 0.7rem;
-    align-items: center;
-  }
-  .enhanced-feature-box, .feature-item {
-    min-width: 90px;
-    width: 100%;
-    padding: 1rem 0.7rem 0.8rem 0.7rem;
-  }
-}
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+/* =============================================== */
+/* MAIN PAGE STYLES - Matching MySubjects.vue */
+/* =============================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 * {
   margin: 0;
@@ -1304,127 +1331,278 @@ export default {
 
 .create-quiz-page {
   min-height: 100vh;
-  background: #FBFFE4;
-  padding: 1.5rem;
+  background: #f8fafc;
   font-family: 'Inter', sans-serif;
-}
-.dark .create-quiz-page {
-  background: #181c20;
-}
-
-/* Header */
-.section-header-card {
-  background: white;
-  border-radius: 16px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-.dark .section-header-card {
-  background: #23272b;
-  border: 1px solid #3D8D7A;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-}
-
-.section-header-content {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
 }
 
-.section-header-left {
+.dark .create-quiz-page {
+  background: #0f172a;
+}
+
+/* Header Section - Same as MySubjects */
+.header-section {
+  background: linear-gradient(135deg, #3D8D7A 0%, #2D6A5A 100%);
+  padding: 2rem 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.dark .header-section {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+}
+
+.header-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><defs><radialGradient id="a" cx="50%" cy="0%" r="100%"><stop offset="0%" stop-color="%23ffffff" stop-opacity="0.1"/><stop offset="100%" stop-color="%23ffffff" stop-opacity="0"/></radialGradient></defs><rect width="100" height="20" fill="url(%23a)"/></svg>') repeat-x;
+  opacity: 0.5;
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.header-left {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
-.section-header-icon {
-  width: 56px;
-  height: 56px;
-  background: #3D8D7A;
+.header-icon-wrapper {
+  position: relative;
+}
+
+.header-icon {
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .header-icon {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-text h1.header-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: white;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.025em;
+}
+
+.header-text p.header-subtitle {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 0.25rem 0;
+  font-weight: 500;
+}
+
+.header-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.breadcrumb-item {
+  font-weight: 500;
+}
+
+.breadcrumb-separator {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.action-btn.secondary {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.action-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.dark .action-btn.secondary {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark .action-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Main Content Container - Same as MySubjects */
+.main-container {
+  flex: 1;
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.dark .main-container {
+  background: transparent;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Responsive Header */
+@media (max-width: 768px) {
+  .header-section {
+    padding: 1.5rem 1rem;
+  }
+  
+  .header-content {
+    flex-direction: column;
+    gap: 1.5rem;
+    text-align: center;
+  }
+  
+  .header-left {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .header-text h1.header-title {
+    font-size: 1.5rem;
+  }
+  
+  .header-text p.header-subtitle {
+    font-size: 1rem;
+  }
+  
+  .main-container {
+    padding: 1.5rem 1rem;
+  }
+}
+/* Progress & Content Cards */
+.progress-card,
+.content-card {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(226, 232, 240, 0.5);
+}
+
+.dark .progress-card,
+.dark .content-card {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+/* Section Headers */
+.section-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.dark .section-header {
+  border-bottom-color: #334155;
+}
+
+.section-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #3D8D7A 0%, #2D6A5A 100%);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.2);
+  flex-shrink: 0;
 }
 
-.section-header-title {
+.dark .section-icon {
+  background: linear-gradient(135deg, #3D8D7A 0%, #2D6A5A 100%);
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
+}
+
+.section-content {
+  flex: 1;
+}
+
+.section-title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 0.25rem;
-}
-.dark .section-header-title {
-  color: #A3D1C6;
+  color: #1e293b;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.025em;
 }
 
-.section-header-subtitle {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-.dark .section-header-subtitle {
-  color: #A3D1C6;
+.dark .section-title {
+  color: #f1f5f9;
 }
 
-.section-header-description {
-  font-size: 0.813rem;
+.section-subtitle {
+  font-size: 1rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.dark .section-subtitle {
   color: #94a3b8;
 }
-.dark .section-header-description {
-  color: #A3D1C6;
-}
-
-.back-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1.25rem;
-  border-radius: 8px;
-  font-weight: 500;
-  font-size: 0.875rem;
-  transition: all 0.2s;
-  cursor: pointer;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  outline: none;
-  border: 2px solid #20c997;
-  background: #20c997;
-  color: #181c20;
-  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
-}
-.back-btn:hover {
-  background: #A3D1C6;
-  color: #23272b;
-  border-color: #20c997;
-  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.18);
-}
-.dark .back-btn {
-  background: #20c997;
-  color: #181c20;
-  border-color: #A3D1C6;
-}
-.dark .back-btn:hover {
-  background: #A3D1C6;
-  color: #23272b;
-  border-color: #20c997;
-}
-
-/* Progress */
-.progress-card {
-  background: white;
-  border-radius: 16px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-.dark .progress-card {
-  background: #23272b;
-  border: 1px solid #3D8D7A;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-}
+/* Progress Steps */
 .progress-track {
   display: flex;
   align-items: center;
@@ -1432,6 +1610,7 @@ export default {
   position: relative;
   overflow: hidden;
 }
+
 .progress-step {
   display: flex;
   flex-direction: column;
@@ -1439,6 +1618,7 @@ export default {
   position: relative;
   flex: 1;
 }
+
 .step-line {
   position: absolute;
   top: 20px;
@@ -1449,17 +1629,21 @@ export default {
   z-index: 1;
   transition: all 0.3s ease;
 }
+
 .progress-step:last-child .step-line {
   right: 50%;
 }
+
 .step-line.completed {
   background: #3D8D7A;
 }
+
 .step-indicator {
   position: relative;
   z-index: 2;
   margin-bottom: 0.75rem;
 }
+
 .step-circle {
   width: 40px;
   height: 40px;
@@ -1473,296 +1657,211 @@ export default {
   background: #e5e7eb;
   color: #6b7280;
 }
+
 .step-indicator.active .step-circle,
 .step-indicator.completed .step-circle {
   background: #3D8D7A;
   color: white;
 }
+
 .step-label {
   font-size: 0.875rem;
   font-weight: 500;
   color: #6b7280;
   text-align: center;
 }
+
 .dark .step-label {
-  color: #A3D1C6;
+  color: #94a3b8;
 }
+
 .step-indicator.active + .step-label,
 .step-indicator.completed + .step-label {
   color: #3D8D7A;
   font-weight: 600;
 }
+
 .dark .step-indicator.active + .step-label,
 .dark .step-indicator.completed + .step-label {
-  color: #A3D1C6;
+  color: #3D8D7A;
 }
 
-/* Main Content */
-.main-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
 
-.content-card {
-  background: white;
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-.dark .content-card {
-  background: #23272b;
-  border: 1px solid #3D8D7A;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-}
+/* =============================================== */
+/* LANDING SECTION STYLES - Same as MySubjects */
+/* =============================================== */
 
-/* Card Headers */
-.card-header {
-  margin-bottom: 1.5rem;
-}
-.card-header h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 0.25rem;
-}
-.dark .card-header h3 {
-  color: #A3D1C6;
-}
-.card-desc {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-.dark .card-desc {
-  color: #A3D1C6;
-}
-
-/* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: none;
-}
-.btn-secondary {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 1rem;
-  transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
-  cursor: pointer;
-  text-decoration: none;
-  border: 2px solid #20c997;
-  background: transparent;
-  color: #A3D1C6;
-  box-shadow: none;
-}
-.btn-secondary:hover {
-  background: #23272b;
-  color: #20c997;
-  border-color: #20c997;
-  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
-}
-.dark .btn-secondary {
-  background: transparent;
-  color: #A3D1C6;
-  border-color: #20c997;
-}
-.dark .btn-secondary:hover {
-  background: #23272b;
-  color: #20c997;
-  border-color: #20c997;
-}
-.btn-primary {
-  background: #20c997;
-  color: #181c20;
-  border: 2px solid #20c997;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 1rem;
-  padding: 0.6rem 2.2rem;
-  box-shadow: none;
-  transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
-}
-.btn-primary:hover {
-  background: #A3D1C6;
-  color: #23272b;
-  border-color: #20c997;
-  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
-  transform: translateY(-1px);
-}
-.btn-danger {
-  background: #ef4444;
-  color: white;
-}
-.btn-danger:hover {
-  background: #dc2626;
-}
-.btn-success {
-  background: #B3D8A8;
-  color: #1f2937;
-}
-.btn-success:hover {
-  background: #9fcf94;
-}
-.btn-publish {
-  background: #A3D1C6;
-  color: #1f2937;
-  padding: 1rem 2rem;
-  font-size: 1rem;
-  font-weight: 700;
-}
-.btn-publish:hover {
-  background: #8fbeb6;
-  transform: translateY(-2px);
-}
-
-/* Landing Section */
 .landing-section {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 60vh;
+  padding: 2rem 1rem;
 }
-/* Card style like dashboard */
-.landing-card {
+
+.status-card {
   background: white;
   border-radius: 16px;
-  border: 2px solid #3D8D7A;
-  padding: 2.5rem 2rem;
-  box-shadow: 0 2px 16px rgba(61, 141, 122, 0.10);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  max-width: 1200px;
+  border: 1px solid rgba(226, 232, 240, 0.5);
+  padding: 3rem 2rem;
+  max-width: 600px;
   width: 100%;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.dark .status-card {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.loading-card,
+.empty-state-card {
+  border-color: rgba(61, 141, 122, 0.3);
+}
+
+.existing-quizzes-card {
+  border-color: rgba(61, 141, 122, 0.5);
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.dark .existing-quizzes-card {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+}
+
+.status-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  color: #64748b;
+}
+
+.success-icon {
+  color: #3D8D7A;
+}
+
+.dark .status-icon {
+  color: #94a3b8;
+}
+
+.status-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.75rem;
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+}
+
+.dark .status-title {
+  color: #f1f5f9;
+}
+
+.status-description {
+  font-size: 1rem;
+  color: #64748b;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+  max-width: 450px;
   margin-left: auto;
   margin-right: auto;
-  transition: box-shadow 0.2s, border-color 0.2s;
 }
-.dark .landing-card {
-  background: #181c20;
-  border: 1.5px solid #3D8D7A;
-  box-shadow: 0 2px 12px rgba(61, 141, 122, 0.10);
+
+.dark .status-description {
+  color: #94a3b8;
 }
-.landing-icon {
-  width: 56px;
-  height: 56px;
-  background: linear-gradient(135deg, #3D8D7A 60%, #A3D1C6 100%);
-  border-radius: 12px;
+
+.status-actions {
   display: flex;
-  align-items: center;
   justify-content: center;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
 }
-.landing-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 0.5rem;
-  text-align: center;
-}
-.dark .landing-title {
-  color: #A3D1C6;
-}
-.landing-desc {
-  font-size: 1rem;
-  color: #6b7280;
-  margin-bottom: 1.5rem;
-  text-align: center;
-}
-.dark .landing-desc {
-  color: #A3D1C6;
-}
-.features-preview {
-  display: flex;
-  gap: 1.25rem;
-  margin-bottom: 2rem;
-  width: 100%;
-  justify-content: center;
-}
-.feature-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: #FBFFE4;
-  border: 2px solid #3D8D7A;
-  border-radius: 12px;
-  padding: 1.1rem 1.2rem 0.7rem 1.2rem;
-  min-width: 110px;
-  font-size: 1.05rem;
-  color: #3D8D7A;
-  font-weight: 500;
-  box-shadow: 0 1px 4px rgba(61, 141, 122, 0.07);
-  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
-  cursor: pointer;
-}
-.feature-item:hover {
-  border-color: #B3D8A8;
-  background: #B3D8A8;
-  color: #1f2937;
-  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.13);
-}
-.dark .feature-item {
-  background: #23272b;
-  border-color: #3D8D7A;
-  color: #A3D1C6;
-  box-shadow: 0 1px 4px rgba(61, 141, 122, 0.04);
-}
-.dark .feature-item:hover {
-  background: #3D8D7A;
-  color: #FBFFE4;
-  border-color: #A3D1C6;
-}
-.feature-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 0.4rem;
-}
+
+/* Enhanced Create Quiz Button */
 .create-quiz-btn {
-  background: #20c997;
-  color: #181c20;
-  border: 2px solid #20c997;
-  border-radius: 8px;
-  padding: 0.6rem 1.5rem;
-  font-weight: 400;
+  background: #3D8D7A;
+  color: white;
+  border: 1px solid #3D8D7A;
+  border-radius: 10px;
+  padding: 0.875rem 2rem;
+  font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
-  margin-top: 0.7rem;
-  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.10);
+  transition: all 0.2s ease;
   display: inline-flex;
-  width: auto;
-  min-width: 0;
-  margin-left: 0;
-  margin-right: 0;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 12px rgba(61, 141, 122, 0.15);
+  min-width: 220px;
+  justify-content: center;
 }
+
 .create-quiz-btn:hover {
-  background: #A3D1C6;
-  color: #23272b;
-  border-color: #20c997;
-  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.18);
+  background: #2D6A5A;
+  border-color: #2D6A5A;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(61, 141, 122, 0.25);
 }
-.dark .create-quiz-btn {
-  background: #20c997;
-  color: #181c20;
-  border-color: #A3D1C6;
+
+.manage-btn {
+  min-width: 180px;
+  justify-content: center;
 }
-.dark .create-quiz-btn:hover {
-  background: #A3D1C6;
-  color: #23272b;
-  border-color: #20c997;
+
+/* Spinner Animation */
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f1f5f9;
+  border-top: 3px solid #3D8D7A;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.dark .spinner {
+  border-color: #1e293b;
+  border-top-color: #3D8D7A;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design for Landing */
+@media (max-width: 768px) {
+  .landing-section {
+    padding: 1rem 0.5rem;
+  }
+  
+  .status-card {
+    padding: 2rem 1.5rem;
+    margin: 0 1rem;
+  }
+  
+  .status-title {
+    font-size: 1.25rem;
+  }
+  
+  .status-description {
+    font-size: 0.95rem;
+  }
+  
+  .status-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .create-quiz-btn,
+  .manage-btn {
+    width: 100%;
+    min-width: unset;
+  }
 }
 
 /* Responsive Design */
@@ -1785,62 +1884,204 @@ export default {
   }
 }
 
-/* Quiz Details Form Grid & Inputs */
+/* Form Elements - Same as MySubjects */
 .form-section {
-  margin-top: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  margin-top: 0;
 }
+
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.25rem 2rem;
-  margin-bottom: 1rem;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
 }
+
 @media (max-width: 768px) {
   .form-grid {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
 }
+
 .form-group {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
+
 .form-label {
-  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  color: #3D8D7A;
-  margin-bottom: 0.2rem;
+  color: #374151;
+  margin-bottom: 0.5rem;
 }
+
 .dark .form-label {
-  color: #A3D1C6;
+  color: #f1f5f9;
 }
-.form-input {
-  padding: 0.7rem 1rem;
+
+.label-icon {
+  display: flex;
+  align-items: center;
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 1px solid #d1d5db;
   border-radius: 8px;
-  border: 1.5px solid #A3D1C6;
-  background: #FBFFE4;
-  font-size: 1rem;
-  color: #1f2937;
+  background: white;
+  font-size: 0.875rem;
   font-family: 'Inter', sans-serif;
-  transition: border-color 0.2s, background 0.2s;
+  transition: all 0.2s ease;
+  color: #374151;
 }
-.form-input:focus {
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
   outline: none;
   border-color: #3D8D7A;
-  background: #fff;
+  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
 }
-.dark .form-input {
-  background: #23272b;
-  color: #A3D1C6;
+
+.dark .form-input,
+.dark .form-textarea,
+.dark .form-select {
+  background: #1e293b;
+  border-color: #475569;
+  color: #f1f5f9;
+}
+
+.dark .form-input:focus,
+.dark .form-textarea:focus,
+.dark .form-select:focus {
   border-color: #3D8D7A;
+  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.2);
 }
-.dark .form-input:focus {
-  background: #181c20;
-  border-color: #A3D1C6;
+
+.form-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* Buttons - Same as MySubjects */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: #3D8D7A;
+  color: white;
+  border: 1px solid #3D8D7A;
+}
+
+.btn-primary:hover {
+  background: #2D6A5A;
+  border-color: #2D6A5A;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.25);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+}
+
+.btn-secondary:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+  color: #374151;
+}
+
+.dark .btn-secondary {
+  color: #94a3b8;
+  border-color: #475569;
+}
+
+.dark .btn-secondary:hover {
+  background: #334155;
+  border-color: #64748b;
+  color: #f1f5f9;
+}
+
+.btn-success {
+  background: #10b981;
+  color: white;
+  border: 1px solid #10b981;
+}
+
+.btn-success:hover {
+  background: #059669;
+  border-color: #059669;
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: white;
+  border: 1px solid #ef4444;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.btn-publish {
+  background: #3D8D7A;
+  color: white;
+  border: 1px solid #3D8D7A;
+  padding: 1rem 2rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.btn-publish:hover {
+  background: #2D6A5A;
+  border-color: #2D6A5A;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(61, 141, 122, 0.3);
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.dark .action-buttons {
+  border-top-color: #374151;
+}
+
+@media (max-width: 768px) {
+  .action-buttons {
+    flex-direction: column-reverse;
+    gap: 0.75rem;
+  }
+  
+  .action-buttons .btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /* DateTime Local Calendar Styling */
@@ -2974,25 +3215,9 @@ input[type="datetime-local"]::-webkit-clear-button {
   width: 100%;
 }
 
-/* Button Text Centering for All Buttons */
-.btn, .btn-secondary, .btn-primary, .btn-publish, .back-btn, .create-quiz-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  gap: 0.5rem;
-}
-
-.action-buttons .btn {
-  min-width: 140px;
-}
-
-.btn-content {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 </style>
