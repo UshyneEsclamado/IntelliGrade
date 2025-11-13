@@ -1,62 +1,56 @@
 <template>
   <div class="landing-wrapper">
-    <!-- Enhanced animated background elements -->
-    <div class="background-shapes">
-      <div class="shape shape-1"></div>
-      <div class="shape shape-2"></div>
-      <div class="shape shape-3"></div>
-      <div class="shape shape-4"></div>
-      <div class="shape shape-5"></div>
-      <div class="shape shape-6"></div>
+    <!-- Educational Themed Animation Background -->
+    <div class="educational-animation">
+      <div class="floating-academic-elements">
+        <div class="academic-element book element-1">
+          <div class="book-pages"></div>
+        </div>
+        <div class="academic-element graduation-cap element-2">
+          <div class="cap-top"></div>
+          <div class="cap-tassel"></div>
+        </div>
+        <div class="academic-element pencil element-3">
+          <div class="pencil-tip"></div>
+        </div>
+        <div class="academic-element lightbulb element-4">
+          <div class="bulb-glow"></div>
+        </div>
+        <div class="academic-element calculator element-5">
+          <div class="calc-screen"></div>
+        </div>
+        <div class="academic-element diploma element-6">
+          <div class="diploma-ribbon"></div>
+        </div>
+        <div class="academic-element atom element-7">
+          <div class="electron-orbit orbit-1"></div>
+          <div class="electron-orbit orbit-2"></div>
+          <div class="electron-orbit orbit-3"></div>
+        </div>
+        <div class="academic-element trophy element-8">
+          <div class="trophy-glow"></div>
+        </div>
+      </div>
+      <div class="knowledge-particles">
+        <div class="knowledge-dot dot-1"></div>
+        <div class="knowledge-dot dot-2"></div>
+        <div class="knowledge-dot dot-3"></div>
+        <div class="knowledge-dot dot-4"></div>
+        <div class="knowledge-dot dot-5"></div>
+        <div class="knowledge-dot dot-6"></div>
+        <div class="knowledge-dot dot-7"></div>
+        <div class="knowledge-dot dot-8"></div>
+      </div>
+      <div class="academic-grid-overlay"></div>
     </div>
-
-    <!-- Background logo with blur effect -->
-    <div class="background-logo">
-      <img 
-        src="@/assets/New IntelliGrade Logo Way BG.png"
-        alt="Background Logo" 
-        class="bg-logo-image"
-      />
-    </div>
-
-    <!-- Enhanced floating educational elements -->
-    <div class="floating-elements">
-      <div class="floating-element element-1">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="rgba(74, 155, 142, 0.3)">
-          <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3M19 19H5V5H19V19M17 17H7V15H17V17M17 13H7V11H17V13M17 9H7V7H17V9Z"/>
-        </svg>
-        <div class="element-glow"></div>
-      </div>
-      <div class="floating-element element-2">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="rgba(74, 155, 142, 0.3)">
-          <path d="M12 3L1 9L12 15L21 10.09V17H23V9L12 3M5 13.18V17.18L12 21L19 17.18V13.18L12 17L5 13.18Z"/>
-        </svg>
-        <div class="element-glow"></div>
-      </div>
-      <div class="floating-element element-3">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="rgba(74, 155, 142, 0.3)">
-          <path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z"/>
-        </svg>
-        <div class="element-glow"></div>
-      </div>
-      <div class="floating-element element-4">
-        <svg width="30" height="30" viewBox="0 0 24 24" fill="rgba(74, 155, 142, 0.3)">
-          <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
-        </svg>
-        <div class="element-glow"></div>
-      </div>
-      <div class="floating-element element-5">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="rgba(74, 155, 142, 0.3)">
-          <path d="M19,19H5V8H19M16,1V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3H18V1M17,12H12V17H17V12Z"/>
-        </svg>
-        <div class="element-glow"></div>
-      </div>
-      <div class="floating-element element-6">
-        <svg width="34" height="34" viewBox="0 0 24 24" fill="rgba(74, 155, 142, 0.3)">
-          <path d="M20,2H4A2,2 0 0,0 2,4V16A2,2 0 0,0 4,18H18L22,22V4A2,2 0 0,0 20,2M6,9H18V11H6M4,6H20V8H4M6,12H16V14H6"/>
-        </svg>
-        <div class="element-glow"></div>
-      </div>
+    
+    <!-- Floating particles for subtle animation -->
+    <div class="particles">
+      <div class="particle particle-1"></div>
+      <div class="particle particle-2"></div>
+      <div class="particle particle-3"></div>
+      <div class="particle particle-4"></div>
+      <div class="particle particle-5"></div>
     </div>
 
     <!-- Enhanced navbar with better glassmorphism -->
@@ -64,7 +58,7 @@
       <div class="navbar-left">
         <div class="navbar-logo">
           <img 
-            src="@/assets/New IntelliGrade Logo Way BG 3.png"
+            src="@/assets/LOGO WAY BG.png"
             alt="IntelliGrade Logo" 
             class="logo-image"
           />
@@ -307,151 +301,353 @@ onUnmounted(() => {
 .landing-wrapper {
   min-height: 100vh;
   width: 100vw;
-  background: linear-gradient(135deg, #39645a 0%, #B3D8A8 50%, #39645a 100%);
+  background: linear-gradient(135deg, #B3D8A8 0%, #A3D1C6 30%, #B3D8A8 70%, #3D8D7A 100%);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   overflow-x: hidden;
   position: relative;
 }
 
-.background-shapes {
+/* Educational Themed Animation Background */
+.educational-animation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.floating-academic-elements {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.academic-element {
+  position: absolute;
+  opacity: 0.9;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  z-index: 2;
+}
+
+/* Book Animation */
+.book {
+  width: 40px;
+  height: 30px;
+  background: linear-gradient(135deg, rgba(179, 216, 168, 0.8), rgba(163, 209, 198, 0.7));
+  border-radius: 3px;
+  animation: bookFloat 20s infinite;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.3);
+}
+
+.book-pages {
+  width: 36px;
+  height: 26px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 2px;
+  margin: 2px;
+  position: relative;
+}
+
+.book-pages::after {
+  content: '';
+  position: absolute;
+  width: 30px;
+  height: 2px;
+  background: rgba(61, 141, 122, 0.3);
+  top: 6px;
+  left: 3px;
+  box-shadow: 0 4px 0 rgba(61, 141, 122, 0.2), 0 8px 0 rgba(61, 141, 122, 0.2);
+}
+
+/* Graduation Cap Animation */
+.graduation-cap {
+  width: 50px;
+  height: 35px;
+  animation: capFloat 22s infinite;
+}
+
+.cap-top {
+  width: 50px;
+  height: 8px;
+  background: linear-gradient(135deg, rgba(61, 141, 122, 0.8), rgba(179, 216, 168, 0.7));
+  border-radius: 25px;
+  position: relative;
+  box-shadow: 0 2px 6px rgba(61, 141, 122, 0.4);
+}
+
+.cap-tassel {
+  width: 2px;
+  height: 15px;
+  background: rgba(61, 141, 122, 0.9);
+  position: absolute;
+  right: 10px;
+  top: 8px;
+  animation: tasselSway 3s ease-in-out infinite;
+}
+
+/* Pencil Animation */
+.pencil {
+  width: 8px;
+  height: 60px;
+  background: linear-gradient(to bottom, rgba(179, 216, 168, 0.8), rgba(163, 209, 198, 0.7));
+  border-radius: 4px 4px 0 0;
+  animation: pencilWrite 18s infinite;
+  box-shadow: 0 2px 4px rgba(61, 141, 122, 0.3);
+}
+
+.pencil-tip {
+  width: 6px;
+  height: 8px;
+  background: rgba(61, 141, 122, 0.9);
+  margin: 0 auto;
+  clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
+}
+
+/* Lightbulb Animation */
+.lightbulb {
+  width: 30px;
+  height: 40px;
+  animation: lightPulse 16s infinite;
+}
+
+.bulb-glow {
+  width: 30px;
+  height: 30px;
+  background: radial-gradient(circle, rgba(179, 216, 168, 0.8), rgba(163, 209, 198, 0.6));
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  position: relative;
+  box-shadow: 0 0 10px rgba(179, 216, 168, 0.5);
+}
+
+.bulb-glow::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 10px;
+  background: rgba(61, 141, 122, 0.7);
+  bottom: -10px;
+  left: 5px;
+  border-radius: 2px;
+}
+
+/* Calculator Animation */
+.calculator {
+  width: 35px;
+  height: 45px;
+  background: linear-gradient(135deg, rgba(61, 141, 122, 0.8), rgba(179, 216, 168, 0.7));
+  border-radius: 4px;
+  animation: calcBounce 24s infinite;
+  box-shadow: 0 2px 6px rgba(61, 141, 122, 0.3);
+}
+
+.calc-screen {
+  width: 28px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  margin: 4px auto;
+  border-radius: 2px;
+}
+
+/* Diploma Animation */
+.diploma {
+  width: 50px;
+  height: 35px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 3px;
+  animation: diplomaRoll 26s infinite;
+  position: relative;
+}
+
+.diploma-ribbon {
+  width: 8px;
+  height: 20px;
+  background: rgba(61, 141, 122, 0.4);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Atom Animation */
+.atom {
+  width: 50px;
+  height: 50px;
+  position: relative;
+  animation: atomSpin 15s infinite;
+}
+
+.electron-orbit {
+  position: absolute;
+  border: 1px solid rgba(61, 141, 122, 0.3);
+  border-radius: 50%;
+  animation: orbitRotate 8s linear infinite;
+}
+
+.orbit-1 {
+  width: 50px;
+  height: 50px;
+  animation-duration: 8s;
+}
+
+.orbit-2 {
+  width: 35px;
+  height: 35px;
+  top: 7.5px;
+  left: 7.5px;
+  animation-duration: 6s;
+  animation-direction: reverse;
+}
+
+.orbit-3 {
+  width: 20px;
+  height: 20px;
+  top: 15px;
+  left: 15px;
+  animation-duration: 4s;
+}
+
+.orbit-1::after, .orbit-2::after, .orbit-3::after {
+  content: '';
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: rgba(179, 216, 168, 0.6);
+  border-radius: 50%;
+  top: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Trophy Animation */
+.trophy {
+  width: 40px;
+  height: 45px;
+  animation: trophyShine 28s infinite;
+}
+
+.trophy-glow {
+  width: 30px;
+  height: 25px;
+  background: linear-gradient(135deg, rgba(179, 216, 168, 0.5), rgba(61, 141, 122, 0.3));
+  border-radius: 15px 15px 5px 5px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.trophy-glow::after {
+  content: '';
+  position: absolute;
+  width: 35px;
+  height: 8px;
+  background: rgba(61, 141, 122, 0.4);
+  bottom: -8px;
+  left: -2.5px;
+  border-radius: 0 0 4px 4px;
+}
+
+/* Element Positioning */
+.element-1 { top: 15%; left: 10%; animation-delay: 0s; }
+.element-2 { top: 25%; right: 15%; animation-delay: -3s; }
+.element-3 { top: 60%; left: 8%; animation-delay: -6s; }
+.element-4 { top: 75%; right: 20%; animation-delay: -9s; }
+.element-5 { top: 40%; left: 70%; animation-delay: -12s; }
+.element-6 { bottom: 25%; right: 25%; animation-delay: -15s; }
+.element-7 { top: 10%; left: 85%; animation-delay: -18s; }
+.element-8 { top: 85%; left: 75%; animation-delay: -21s; }
+
+/* Knowledge Particles */
+.knowledge-particles {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.knowledge-dot {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: rgba(179, 216, 168, 0.8);
+  border-radius: 50%;
+  animation: knowledgeFloat 12s ease-in-out infinite;
+  box-shadow: 0 0 6px rgba(179, 216, 168, 0.6);
+}
+
+.dot-1 { top: 20%; left: 25%; animation-delay: 0s; }
+.dot-2 { top: 30%; left: 60%; animation-delay: -1.5s; }
+.dot-3 { top: 50%; left: 15%; animation-delay: -3s; }
+.dot-4 { top: 70%; left: 80%; animation-delay: -4.5s; }
+.dot-5 { top: 80%; left: 40%; animation-delay: -6s; }
+.dot-6 { top: 45%; left: 85%; animation-delay: -7.5s; }
+.dot-7 { top: 15%; left: 50%; animation-delay: -9s; }
+.dot-8 { top: 65%; left: 30%; animation-delay: -10.5s; }
+
+/* Academic Grid Overlay */
+.academic-grid-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 80px 80px;
+  animation: gridSlide 50s linear infinite;
+}
+
+/* Floating Particles */
+.particles {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
-}
-
-.background-logo {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
   z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
 }
 
-.bg-logo-image {
-  width: 800px;
-  height: 800px;
-  object-fit: contain;
-  opacity: 0.18;
-  filter: blur(0.5px);
-  animation: logoFloat 20s ease-in-out infinite;
-  transform-origin: center;
-}
-
-.shape {
+.particle {
   position: absolute;
-  opacity: 0.08;
-  animation: floatShape 25s ease-in-out infinite;
-  border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-  filter: blur(1px);
+  width: 6px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  animation: float 15s ease-in-out infinite;
 }
 
-.shape-1 {
-  top: 10%;
-  left: 8%;
-  width: 120px;
-  height: 120px;
-  background: linear-gradient(45deg, #4A9B8E, #B3D8A8, #ffffff);
+.particle-1 {
+  top: 20%;
+  left: 20%;
   animation-delay: 0s;
 }
 
-.shape-2 {
-  top: 15%;
-  right: 15%;
-  width: 180px;
-  height: 180px;
-  background: linear-gradient(135deg, #B3D8A8, #4A9B8E, #ffffff);
-  animation-delay: 5s;
+.particle-2 {
+  top: 40%;
+  left: 80%;
+  animation-delay: -3s;
 }
 
-.shape-3 {
-  top: 50%;
-  left: 5%;
-  width: 140px;
-  height: 140px;
-  background: linear-gradient(225deg, #4A9B8E, #ffffff, #B3D8A8);
-  animation-delay: 10s;
+.particle-3 {
+  top: 80%;
+  left: 30%;
+  animation-delay: -6s;
 }
 
-.shape-4 {
-  bottom: 25%;
-  right: 8%;
-  width: 100px;
-  height: 100px;
-  background: linear-gradient(315deg, #B3D8A8, #ffffff, #4A9B8E);
-  animation-delay: 15s;
+.particle-4 {
+  top: 10%;
+  left: 70%;
+  animation-delay: -9s;
 }
 
-.shape-5 {
-  top: 35%;
-  left: 60%;
-  width: 90px;
-  height: 90px;
-  background: linear-gradient(45deg, #ffffff, #4A9B8E);
-  animation-delay: 20s;
+.particle-5 {
+  top: 70%;
+  left: 10%;
+  animation-delay: -12s;
 }
-
-.shape-6 {
-  bottom: 40%;
-  left: 25%;
-  width: 110px;
-  height: 110px;
-  background: linear-gradient(180deg, #4A9B8E, #B3D8A8);
-  animation-delay: 12s;
-}
-
-.floating-elements {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.floating-element {
-  position: absolute;
-  animation: educationalFloat 15s ease-in-out infinite;
-  opacity: 0.12;
-  transition: all 0.6s ease;
-  cursor: pointer;
-}
-
-.floating-element:hover {
-  opacity: 0.3;
-  transform: scale(1.15) !important;
-}
-
-.element-glow {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 60px;
-  height: 60px;
-  background: radial-gradient(circle, rgba(74, 155, 142, 0.1) 0%, transparent 70%);
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  animation: pulse 3s ease-in-out infinite;
-}
-
-.element-1 { top: 18%; left: 12%; animation-delay: 0s; }
-.element-2 { top: 28%; right: 18%; animation-delay: 2.5s; }
-.element-3 { top: 65%; left: 8%; animation-delay: 5s; }
-.element-4 { top: 48%; right: 12%; animation-delay: 7.5s; }
-.element-5 { bottom: 28%; left: 15%; animation-delay: 10s; }
-.element-6 { bottom: 38%; right: 20%; animation-delay: 12.5s; }
 
 .navbar {
   display: flex;
@@ -473,32 +669,29 @@ onUnmounted(() => {
 .navbar-left {
   display: flex;
   align-items: center;
-  gap: 1.2rem;
+  gap: 0.3rem;
   animation: fadeInLeft 1.2s ease-out;
 }
 
 .navbar-logo {
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, rgba(57, 100, 90, 0.1) 0%, rgba(179, 216, 168, 0.1) 100%);
+  width: 64px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.4s ease;
-  overflow: hidden;
   position: relative;
   flex-shrink: 0;
+  margin-top: -2px;
 }
 
 .navbar-logo:hover {
-  transform: scale(1.08) rotate(8deg);
-  box-shadow: 0 12px 35px rgba(179, 216, 168, 0.3);
+  transform: scale(1.08);
 }
 
 .logo-image {
-  width: 42px;
-  height: 42px;
+  width: 60px;
+  height: 60px;
   object-fit: contain;
   transition: all 0.4s ease;
   position: relative;
@@ -522,7 +715,7 @@ onUnmounted(() => {
 .navbar-title {
   font-size: 1.7rem;
   font-weight: 900;
-  color: #39645a;
+  color: #2D5A4A;
   letter-spacing: -0.8px;
   animation: fadeInTitle 1.4s ease-out;
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
@@ -541,11 +734,11 @@ onUnmounted(() => {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 1.05rem;
   font-weight: 500;
-  color: #355c4c;
+  color: #2D5A4A;
   padding: 0.6rem 1.5rem;
   border-radius: 8px;
   background: transparent;
-  border: 1.5px solid #b3d8a8;
+  border: 1.5px solid #A3D1C6;
   outline: none;
   display: flex;
   align-items: center;
@@ -553,15 +746,16 @@ onUnmounted(() => {
   position: relative;
   white-space: nowrap;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  transition: all 0.3s ease;
   text-decoration: none;
 }
 
 .navbar-links a:hover,
 .navbar-links a.active {
-  background: #f8faf9;
-  border-color: #218c5a;
-  color: #218c5a;
+  background: rgba(61, 141, 122, 0.1);
+  border-color: #3D8D7A;
+  color: #3D8D7A;
+  transform: translateY(-1px);
 }
 
 .link-underline {
@@ -570,16 +764,16 @@ onUnmounted(() => {
 
 .sign-in-btn {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #218c5a !important;
+  background: #3D8D7A !important;
   color: #fff !important;
   font-weight: 600;
   font-size: 1.05rem;
   border-radius: 8px;
   padding: 0.6rem 1.5rem;
   text-decoration: none;
-  border: 1.5px solid #218c5a !important;
-  box-shadow: none;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  border: 1.5px solid #3D8D7A !important;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.2);
+  transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
   white-space: nowrap;
@@ -591,9 +785,11 @@ onUnmounted(() => {
 }
 
 .sign-in-btn:hover {
-  background: #176b44 !important;
-  border-color: #176b44 !important;
+  background: #2D5A4A !important;
+  border-color: #2D5A4A !important;
   color: #fff !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.3);
 }
 
 .hero-section {
@@ -607,6 +803,8 @@ onUnmounted(() => {
   text-align: center;
   position: relative;
   box-sizing: border-box;
+  background: linear-gradient(135deg, rgba(179, 216, 168, 0.15) 0%, rgba(163, 209, 198, 0.10) 50%, rgba(61, 141, 122, 0.05) 100%);
+  backdrop-filter: blur(20px);
 }
 
 .hero-content {
@@ -617,50 +815,73 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   text-align: center;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%);
+  backdrop-filter: blur(25px);
+  border-radius: 24px;
+  padding: 3rem 2rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 8px 32px rgba(61, 141, 122, 0.1),
+    0 4px 16px rgba(179, 216, 168, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, transparent 0%, rgba(179, 216, 168, 0.05) 50%, transparent 100%);
+  pointer-events: none;
+  border-radius: 24px;
 }
 
 .hero-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 25px;
   padding: 0.6rem 1.5rem;
-  color: rgba(255, 255, 255, 0.95);
+  color: #2D5A4A;
   font-size: 0.9rem;
   font-weight: 700;
   margin-bottom: 2rem;
   backdrop-filter: blur(15px);
   animation: fadeInUp 1s ease-out 0.2s both;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.hero-badge svg {
+  color: #3D8D7A;
 }
 
 .hero-title {
   font-size: 4.5rem;
   font-weight: 900;
-  background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.95) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #ffffff;
   margin-bottom: 1.5rem;
   letter-spacing: -2px;
   animation: fadeInUp 1s ease-out 0.4s both, titleGlow 4s ease-in-out infinite;
-  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8), 0 2px 8px rgba(0, 0, 0, 0.5);
   line-height: 1.1;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
   text-align: center;
 }
 
 .hero-desc {
   font-size: 1.25rem;
-  color: rgba(255, 255, 255, 0.95);
+  color: #ffffff;
   max-width: 600px;
   margin: 0 auto;
   line-height: 1.7;
   animation: fadeInUp 1s ease-out 0.6s both;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7), 0 1px 4px rgba(0, 0, 0, 0.5);
   font-weight: 500;
   text-align: center;
 }
@@ -698,15 +919,15 @@ onUnmounted(() => {
 
 .scroll-arrow::after {
   content: '↓';
-  color: #39645a;
+  color: #2D5A4A;
   font-size: 14px;
   font-weight: bold;
 }
 
 .about-section {
-  background: linear-gradient(135deg, #39645a 0%, #B3D8A8 50%, #39645a 100%);
+  background: linear-gradient(135deg, #FBFFE4 0%, #B3D8A8 50%, #A3D1C6 100%);
   min-height: 100vh;
-  padding: 12rem 2rem 3rem; /* Increased top padding for desktop */
+  padding: 12rem 2rem 3rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -719,14 +940,14 @@ onUnmounted(() => {
   overflow-y: auto;
   max-height: 100vh;
   scrollbar-width: thin;
-  scrollbar-color: #20c997 #e0ede5;
+  scrollbar-color: #3D8D7A #e0ede5;
 }
 
 .about-section.active::-webkit-scrollbar {
   width: 8px;
 }
 .about-section.active::-webkit-scrollbar-thumb {
-  background: #20c997;
+  background: #3D8D7A;
   border-radius: 8px;
 }
 .about-section.active::-webkit-scrollbar-track {
@@ -741,7 +962,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  background: linear-gradient(90deg, transparent, #3D8D7A, transparent);
   animation: gradientShift 4s ease-in-out infinite;
 }
 
@@ -759,28 +980,31 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(61, 141, 122, 0.3);
   border-radius: 25px;
   padding: 0.5rem 1.2rem;
-  color: #2d4a39;
+  color: #3D8D7A;
   font-size: 0.85rem;
   font-weight: 700;
   margin-bottom: 1.5rem;
   backdrop-filter: blur(15px);
   animation: fadeInUp 1s ease-out;
-  text-shadow: 0 1px 3px rgba(179, 216, 168, 0.3);
+}
+
+.section-badge svg {
+  color: #3D8D7A;
 }
 
 .about-section h2 {
   font-size: 3.2rem;
-  color: #2d4a39;
+  color: #2D5A4A;
   font-weight: 900;
   margin-bottom: 1.5rem;
   letter-spacing: -1px;
   animation: fadeInUp 1s ease-out 0.2s both;
-  text-shadow: 0 3px 12px rgba(179, 216, 168, 0.3);
   line-height: 1.2;
+  text-shadow: 0 2px 8px rgba(61, 141, 122, 0.2);
 }
 
 .about-intro {
@@ -788,8 +1012,7 @@ onUnmounted(() => {
   max-width: 700px;
   margin: 1rem auto 0;
   line-height: 1.6;
-  color: #2d4a39;
-  text-shadow: 0 1px 3px rgba(179, 216, 168, 0.3);
+  color: #355C4C;
 }
 
 .mission-vision-container {
@@ -803,7 +1026,7 @@ onUnmounted(() => {
 }
 
 .mission-vision-card {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.9);
   border: 2px solid rgba(179, 216, 168, 0.3);
   border-radius: 16px;
   padding: 2rem 1.5rem;
@@ -814,21 +1037,22 @@ onUnmounted(() => {
 
 .mission-vision-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 12px 35px rgba(57, 100, 90, 0.15);
-  border-color: rgba(74, 155, 142, 0.4);
+  box-shadow: 0 12px 35px rgba(61, 141, 122, 0.15);
+  border-color: rgba(61, 141, 122, 0.4);
+  background: rgba(255, 255, 255, 0.95);
 }
 
 .mv-icon-wrapper {
   width: 64px;
   height: 64px;
   margin: 0 auto 1.5rem;
-  background: linear-gradient(135deg, #4A9B8E 0%, #B3D8A8 100%);
+  background: linear-gradient(135deg, #3D8D7A 0%, #B3D8A8 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 6px 20px rgba(74, 155, 142, 0.3);
+  box-shadow: 0 6px 20px rgba(61, 141, 122, 0.3);
 }
 
 .mission-vision-card h3 {
@@ -1057,6 +1281,180 @@ onUnmounted(() => {
   margin: 0;
 }
 
+/* Educational Animation Keyframes */
+@keyframes bookFloat {
+  0%, 100% { 
+    transform: translateY(0px) rotate(0deg); 
+    opacity: 0.7; 
+  }
+  25% { 
+    transform: translateY(-15px) rotate(2deg); 
+    opacity: 0.9; 
+  }
+  50% { 
+    transform: translateY(-8px) rotate(-1deg); 
+    opacity: 0.6; 
+  }
+  75% { 
+    transform: translateY(-20px) rotate(1deg); 
+    opacity: 0.8; 
+  }
+}
+
+@keyframes capFloat {
+  0%, 100% { 
+    transform: translateY(0px) rotate(0deg); 
+    opacity: 0.7; 
+  }
+  50% { 
+    transform: translateY(-25px) rotate(5deg); 
+    opacity: 0.9; 
+  }
+}
+
+@keyframes tasselSway {
+  0%, 100% { 
+    transform: rotate(0deg); 
+  }
+  50% { 
+    transform: rotate(15deg); 
+  }
+}
+
+@keyframes pencilWrite {
+  0%, 100% { 
+    transform: translateY(0px) rotate(0deg); 
+    opacity: 0.7; 
+  }
+  25% { 
+    transform: translateY(-10px) rotate(-2deg); 
+    opacity: 0.8; 
+  }
+  50% { 
+    transform: translateY(-20px) rotate(1deg); 
+    opacity: 0.9; 
+  }
+  75% { 
+    transform: translateY(-5px) rotate(-1deg); 
+    opacity: 0.6; 
+  }
+}
+
+@keyframes lightPulse {
+  0%, 100% { 
+    transform: translateY(0px) scale(1); 
+    opacity: 0.6; 
+    filter: brightness(1); 
+  }
+  50% { 
+    transform: translateY(-15px) scale(1.1); 
+    opacity: 0.9; 
+    filter: brightness(1.3); 
+  }
+}
+
+@keyframes calcBounce {
+  0%, 100% { 
+    transform: translateY(0px); 
+    opacity: 0.7; 
+  }
+  25% { 
+    transform: translateY(-12px); 
+    opacity: 0.8; 
+  }
+  50% { 
+    transform: translateY(-25px); 
+    opacity: 0.9; 
+  }
+  75% { 
+    transform: translateY(-8px); 
+    opacity: 0.7; 
+  }
+}
+
+@keyframes diplomaRoll {
+  0%, 100% { 
+    transform: translateY(0px) rotate(0deg); 
+    opacity: 0.7; 
+  }
+  50% { 
+    transform: translateY(-20px) rotate(10deg); 
+    opacity: 0.9; 
+  }
+}
+
+@keyframes atomSpin {
+  0%, 100% { 
+    transform: translateY(0px) rotate(0deg); 
+    opacity: 0.7; 
+  }
+  50% { 
+    transform: translateY(-18px) rotate(180deg); 
+    opacity: 0.9; 
+  }
+}
+
+@keyframes orbitRotate {
+  0% { 
+    transform: rotate(0deg); 
+  }
+  100% { 
+    transform: rotate(360deg); 
+  }
+}
+
+@keyframes trophyShine {
+  0%, 100% { 
+    transform: translateY(0px) scale(1); 
+    opacity: 0.7; 
+    filter: brightness(1); 
+  }
+  50% { 
+    transform: translateY(-22px) scale(1.05); 
+    opacity: 0.9; 
+    filter: brightness(1.2); 
+  }
+}
+
+@keyframes knowledgeFloat {
+  0%, 100% { 
+    transform: translateY(0px) scale(1); 
+    opacity: 0.4; 
+  }
+  50% { 
+    transform: translateY(-30px) scale(1.2); 
+    opacity: 0.7; 
+  }
+}
+
+@keyframes gridSlide {
+  0% { 
+    transform: translateX(0) translateY(0); 
+  }
+  100% { 
+    transform: translateX(80px) translateY(80px); 
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px) scale(1);
+    opacity: 0.4;
+  }
+  25% {
+    transform: translateY(-20px) translateX(10px) scale(1.2);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateY(-10px) translateX(-15px) scale(0.8);
+    opacity: 0.5;
+  }
+  75% {
+    transform: translateY(-25px) translateX(5px) scale(1.1);
+    opacity: 0.6;
+  }
+}
+
 @keyframes slideDown {
   from {
     opacity: 0;
@@ -1110,74 +1508,6 @@ onUnmounted(() => {
   }
 }
 
-@keyframes logoFloat {
-  0%, 100% {
-    transform: scale(1) rotate(0deg);
-    opacity: 0.18;
-  }
-  25% {
-    transform: scale(1.05) rotate(2deg);
-    opacity: 0.22;
-  }
-  50% {
-    transform: scale(0.95) rotate(-1deg);
-    opacity: 0.16;
-  }
-  75% {
-    transform: scale(1.02) rotate(1deg);
-    opacity: 0.20;
-  }
-}
-
-@keyframes floatShape {
-  0%, 100% {
-    transform: translateY(0px) translateX(0px) rotate(0deg) scale(1);
-    border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-  }
-  25% {
-    transform: translateY(-25px) translateX(15px) rotate(90deg) scale(1.1);
-    border-radius: 70% 30% 30% 70% / 70% 70% 30% 30%;
-  }
-  50% {
-    transform: translateY(-15px) translateX(-20px) rotate(180deg) scale(0.9);
-    border-radius: 50% 50% 50% 50% / 50% 50% 50% 50%;
-  }
-  75% {
-    transform: translateY(-35px) translateX(8px) rotate(270deg) scale(1.05);
-    border-radius: 30% 70% 30% 70% / 30% 70% 30% 70%;
-  }
-}
-
-@keyframes educationalFloat {
-  0%, 100% { 
-    transform: translateY(0px) translateX(0px) rotate(0deg); 
-    opacity: 0.12;
-  }
-  25% { 
-    transform: translateY(-20px) translateX(15px) rotate(90deg); 
-    opacity: 0.18;
-  }
-  50% { 
-    transform: translateY(-12px) translateX(-18px) rotate(180deg); 
-    opacity: 0.22;
-  }
-  75% { 
-    transform: translateY(-28px) translateX(10px) rotate(270deg); 
-    opacity: 0.16;
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 0.5;
-  }
-  50% {
-    transform: translate(-50%, -50%) scale(1.2);
-    opacity: 0.8;
-  }
-}
-
 @keyframes gradientShift {
   0%, 100% {
     background-position: 0% 50%;
@@ -1223,8 +1553,8 @@ onUnmounted(() => {
   }
   
   .logo-image {
-    width: 38px;
-    height: 38px;
+    width: 44px;
+    height: 44px;
   }
   
   .navbar-title {
@@ -1393,29 +1723,11 @@ onUnmounted(() => {
     font-size: 1.05rem;
   }
   
-  .bg-logo-image {
-    width: 650px;
-    height: 650px;
-    opacity: 0.15;
-  }
-  
   .scroll-indicator {
     bottom: 2.5rem;
   }
-  
-  .shape-1,
-  .shape-2,
-  .shape-3,
-  .shape-4,
-  .shape-5,
-  .shape-6 {
-    opacity: 0.06;
-  }
-  
-  .floating-element {
-    opacity: 0.1;
-  }
 }
+
 
 @media (max-width: 480px) {
   .navbar {
@@ -1433,8 +1745,8 @@ onUnmounted(() => {
   }
   
   .logo-image {
-    width: 34px;
-    height: 34px;
+    width: 38px;
+    height: 38px;
   }
   
   .navbar-title {
@@ -1605,13 +1917,6 @@ onUnmounted(() => {
     font-size: 1rem;
   }
   
-  .bg-logo-image {
-    width: 500px;
-    height: 500px;
-    opacity: 0.12;
-    filter: blur(0.8px);
-  }
-  
   .scroll-indicator {
     bottom: 2rem;
   }
@@ -1619,19 +1924,6 @@ onUnmounted(() => {
   .scroll-arrow {
     width: 22px;
     height: 22px;
-  }
-  
-  .shape-1,
-  .shape-2,
-  .shape-3,
-  .shape-4,
-  .shape-5,
-  .shape-6 {
-    opacity: 0.05;
-  }
-  
-  .floating-element {
-    opacity: 0.08;
   }
 }
 
@@ -1755,25 +2047,6 @@ onUnmounted(() => {
   
   .feature-content p {
     font-size: 0.92rem;
-  }
-  
-  .bg-logo-image {
-    width: 380px;
-    height: 380px;
-    opacity: 0.1;
-  }
-  
-  .shape-1,
-  .shape-2,
-  .shape-3,
-  .shape-4,
-  .shape-5,
-  .shape-6 {
-    opacity: 0.04;
-  }
-  
-  .floating-element {
-    opacity: 0.06;
   }
 }
 </style>
