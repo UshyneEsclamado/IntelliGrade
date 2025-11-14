@@ -741,40 +741,99 @@
 
 
 <template>
-  <div class="subjects-page">
-    <!-- Header Card -->
-    <div class="header-card">
-      <div class="header-content">
-        <div class="header-left">
-          <div class="user-icon">
-            <svg width="40" height="40" fill="none" viewBox="0 0 24 24">
-              <path fill="currentColor" d="M12 2a2 2 0 0 1 2 2v1h4a2 2 0 0 1 2 2v1H4V7a2 2 0 0 1 2-2h4V4a2 2 0 0 1 2-2Zm8 7v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9h16Zm-2 2H6v7h12v-7Z"/>
-            </svg>
-          </div>
-          <div>
-            <h1 class="header-title">My Subjects</h1>
-            <p class="header-subtitle">Manage your classes and student sections</p>
+  <div class="analytics-container">
+    <!-- Top Navigation Bar (Same as Dashboard) -->
+    <nav class="top-navbar">
+      <div class="navbar-content">
+        <!-- Left: Logo and Brand -->
+        <div class="navbar-left">
+          <div class="brand-logo">
+            <img src="@/assets/LOGO WAY BG.png" alt="IntelliGrade" class="logo-img" />
+            <span class="brand-name">IntelliGrade</span>
           </div>
         </div>
         
-        <div class="header-actions">
-          <button class="dark-mode-toggle" @click="toggleDarkMode">
-            <svg v-if="!isDarkMode" width="24" height="24" fill="none" viewBox="0 0 24 24">
-              <path fill="currentColor" d="M12 2a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0V3a1 1 0 0 1 1-1Zm6.364 3.636a1 1 0 0 1 1.414 1.414l-1.414 1.414a1 1 0 1 1-1.414-1.414l1.414-1.414ZM21 11a1 1 0 1 1 0 2h-2a1 1 0 1 1 0-2h2Zm-2.222 7.364a1 1 0 0 1-1.415 1.415l-1.414-1.415a1 1 0 1 1 1.415-1.414l1.414 1.414ZM13 21a1 1 0 1 1-2 0v-2a1 1 0 1 1 2 0v2Zm-7.364-2.222a1 1 0 0 1-1.414-1.415l1.414-1.414a1 1 0 1 1 1.414 1.415l-1.414 1.414ZM3 13a1 1 0 1 1 0-2h2a1 1 0 1 1 0 2H3Zm2.222-7.364a1 1 0 0 1 1.415-1.414l1.414 1.414A1 1 0 1 1 6.05 6.05L4.636 4.636Z"/>
-            </svg>
-            <svg v-else width="24" height="24" fill="none" viewBox="0 0 24 24">
-              <path fill="currentColor" d="M21 12.79A9 9 0 0 1 11.21 3a1 1 0 0 0-1.21 1v.09A9 9 0 1 0 20.91 13a1 1 0 0 0 1-1.21ZM12 21a7 7 0 0 1 0-14V5a7 7 0 0 1 0 14Z"/>
-            </svg>
-          </button>
-          <button @click="showCreateModal = true" class="create-quiz-btn">
+        <!-- Center: Navigation Links -->
+        <div class="navbar-center">
+          <router-link to="/teacher/dashboard" class="nav-item">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+              <path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" />
             </svg>
-            Create New Subject
-          </button>
+            <span>Dashboard</span>
+          </router-link>
+          
+          <router-link to="/teacher/subjects" class="nav-item active">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"/>
+            </svg>
+            <span>Classes</span>
+          </router-link>
+          
+          <router-link to="/teacher/gradebook" class="nav-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19,3H14.82C14.4,1.84 13.3,1 12,1C10.7,1 9.6,1.84 9.18,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M12,3A1,1 0 0,1 13,4A1,1 0 0,1 12,5A1,1 0 0,1 11,4A1,1 0 0,1 12,3Z" />
+            </svg>
+            <span>Gradebook</span>
+          </router-link>
+          
+          <router-link to="/teacher/analytics" class="nav-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z" />
+            </svg>
+            <span>Analytics</span>
+          </router-link>
+          
+          <router-link to="/teacher/messages" class="nav-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            <span>Messages</span>
+          </router-link>
+          
+          <router-link to="/teacher/upload-assessment" class="nav-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9,16V10H5L12,3L19,10H15V16H9M5,20V18H19V20H5Z" />
+            </svg>
+            <span>Upload</span>
+          </router-link>
+        </div>
+        
+        <!-- Right: User Profile and Actions -->
+        <div class="navbar-right">
+          <!-- Navigation actions can go here -->
         </div>
       </div>
-    </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="header-content">
+          <div class="header-left">
+            <div class="header-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"/>
+              </svg>
+            </div>
+            <div>
+              <h1 class="header-title">My Subjects</h1>
+              <p class="header-subtitle">Manage your classes and student sections</p>
+            </div>
+          </div>
+          
+          <div class="header-actions">
+            <button @click="showCreateModal = true" class="create-subject-btn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+              </svg>
+              Create Subject
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content Area -->
 
     <!-- Search Bar and Subjects Grid -->
     <div v-if="viewMode === 'subjects'">
@@ -1461,6 +1520,8 @@
         </div>
       </div>
     </transition>
+
+    </main>
 
     <!-- Loading Overlay -->
     <div v-if="isLoading" class="loading-overlay">
@@ -2716,7 +2777,261 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* Reset and Hide Parent Layouts */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Hide any parent layout elements */
+body, html {
+  overflow-x: hidden !important;
+}
+
+/* Force hide any sidebar or layout from parent components */
+.sidebar,
+.dashboard-sidebar,
+.navigation-sidebar,
+.teacher-layout,
+.dashboard-layout {
+  display: none !important;
+}
+
+/* Ensure our container is on top */
+.analytics-container {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 999999 !important;
+  background: #f8fafc !important;
+  overflow-y: auto !important;
+}
+
+/* Top Navigation Bar (Same as Dashboard) */
+.top-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(61, 141, 122, 0.3);
+}
+
+.navbar-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.logo-img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.brand-name {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: white;
+  letter-spacing: -0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-center {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  justify-content: center;
+  max-width: 600px;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.8);
+  transition: all 0.2s ease;
+  position: relative;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.nav-item.active {
+  color: white;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 3px;
+  background: white;
+  border-radius: 2px 2px 0 0;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.export-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.export-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Main Content */
+.main-content {
+  margin-top: 64px;
+  padding: 1.5rem;
+  width: 100%;
+  min-height: calc(100vh - 64px);
+  position: relative;
+  background: #f8fafc;
+  padding-bottom: 2rem;
+}
+
+/* Page Header */
+.page-header {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.header-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.header-subtitle {
+  font-size: 0.95rem;
+  color: #64748b;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.create-subject-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.2);
+}
+
+.create-subject-btn:hover {
+  background: linear-gradient(135deg, #2d6a5a, #1f4d3d);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
+}
+
+.dark .create-subject-btn {
+  background: linear-gradient(135deg, #20c997, #18a577);
+  color: #ffffff;
+}
+
+.dark .create-subject-btn:hover {
+  background: linear-gradient(135deg, #18a577, #059669);
+}
 
 /* Further Enhanced Search Bar Styles */
 .subject-search-bar.enhanced.extra {
@@ -5398,6 +5713,62 @@ onUnmounted(() => {
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .main-content {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  .main-content {
+    padding: 1rem;
+  }
+  
+  .navbar-center {
+    gap: 0.25rem;
+  }
+  
+  .nav-item {
+    padding: 0.5rem 1rem;
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: 1rem;
+  }
+  
+  .page-header {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .header-actions {
+    align-self: flex-start;
+  }
+  
+  .create-subject-btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.8rem;
+  }
+  
+  .navbar-content {
+    padding: 0 0.5rem;
+  }
+  
+  .brand-name {
+    display: none;
   }
 }
 

@@ -1,39 +1,94 @@
 <template>
-  <div class="create-quiz-page">
-    <!-- Header Section - Same style as MySubjects -->
-    <div class="header-section">
-      <div class="header-content">
-        <div class="header-left">
-          <div class="header-icon-wrapper">
+  <div class="analytics-container">
+    <!-- Top Navigation Bar (Same as Dashboard) -->
+    <nav class="top-navbar">
+      <div class="navbar-content">
+        <!-- Left: Logo and Brand -->
+        <div class="navbar-left">
+          <div class="brand-logo">
+            <img src="@/assets/LOGO WAY BG.png" alt="IntelliGrade" class="logo-img" />
+            <span class="brand-name">IntelliGrade</span>
+          </div>
+        </div>
+        
+        <!-- Center: Navigation Links -->
+        <div class="navbar-center">
+          <router-link to="/teacher/dashboard" class="nav-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" />
+            </svg>
+            <span>Dashboard</span>
+          </router-link>
+          
+          <router-link to="/teacher/subjects" class="nav-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"/>
+            </svg>
+            <span>Classes</span>
+          </router-link>
+          
+          <router-link to="/teacher/gradebook" class="nav-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19,3H14.82C14.4,1.84 13.3,1 12,1C10.7,1 9.6,1.84 9.18,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M12,3A1,1 0 0,1 13,4A1,1 0 0,1 12,5A1,1 0 0,1 11,4A1,1 0 0,1 12,3Z" />
+            </svg>
+            <span>Gradebook</span>
+          </router-link>
+          
+          <router-link to="/teacher/analytics" class="nav-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z" />
+            </svg>
+            <span>Analytics</span>
+          </router-link>
+          
+          <router-link to="/teacher/messages" class="nav-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            <span>Messages</span>
+          </router-link>
+          
+          <router-link to="/teacher/upload-assessment" class="nav-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9,16V10H5L12,3L19,10H15V16H9M5,20V18H19V20H5Z" />
+            </svg>
+            <span>Upload</span>
+          </router-link>
+        </div>
+        
+        <!-- Right: User Profile and Actions -->
+        <div class="navbar-right">
+          <button @click="goBack" class="export-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
+            </svg>
+            <span>Back to Sections</span>
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="header-content">
+          <div class="header-left">
             <div class="header-icon">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
               </svg>
             </div>
-          </div>
-          <div class="header-text">
-            <h1 class="header-title">Create New Quiz</h1>
-            <p class="header-subtitle">{{ subject.name }}<span v-if="section.name"> - {{ section.name }}</span></p>
-            <div class="header-breadcrumb">
-              <span class="breadcrumb-item">{{ teacherInfo.full_name }}</span>
-              <span class="breadcrumb-separator">•</span>
-              <span class="breadcrumb-item">{{ teacherInfo.role.toUpperCase() }}</span>
+            <div>
+              <h1 class="header-title">Create New Quiz</h1>
+              <p class="header-subtitle">{{ subject.name }}<span v-if="section.name"> - {{ section.name }}</span></p>
             </div>
           </div>
         </div>
-        <div class="header-actions">
-          <button @click="goBack" class="action-btn secondary">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
-            </svg>
-            Back to Sections
-          </button>
-        </div>
       </div>
-    </div>
 
-    <!-- Main Content Container - Same as MySubjects -->
-    <div class="main-container">
+      <!-- Content Area -->
+      <div class="main-container">
       <div class="container">
         <!-- Enhanced Progress Steps -->
         <div v-if="currentStep !== 'landing'" class="progress-container">
@@ -80,7 +135,7 @@
           <p class="status-description">You haven't created any quizzes for this section yet.</p>
           <div class="status-actions">
             <button @click="currentStep = 'details'" class="create-quiz-btn">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
                 <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
               </svg>
               Create Your First Quiz
@@ -110,7 +165,7 @@
               Manage Quizzes
             </button>
             <button @click="currentStep = 'details'" class="create-quiz-btn">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
                 <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
               </svg>
               Create Another Quiz
@@ -679,11 +734,14 @@
             </svg>
           </button>
         </div>
+          </div>
         </div>
       </div>
-    </div>
+    </main>
   </div>
-</template><script>
+</template>
+
+<script>
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { supabase } from '@/supabase.js';
@@ -786,15 +844,9 @@ export default {
           .eq('auth_user_id', session.user.id)
           .single();
 
-        if (profileError) {
+        if (profileError || !profile) {
           console.error('Profile error:', profileError);
           alert('Failed to load profile. Please try logging in again.');
-          return false;
-        }
-
-        if (!profile) {
-          console.error('No profile found');
-          alert('Profile not found. Please contact support.');
           return false;
         }
 
@@ -804,14 +856,8 @@ export default {
           .eq('profile_id', profile.id)
           .single();
 
-        if (teacherError) {
+        if (teacherError || !teacher) {
           console.error('Teacher error:', teacherError);
-          alert('Teacher profile not found. Please contact support.');
-          return false;
-        }
-
-        if (!teacher) {
-          console.error('No teacher found');
           alert('Teacher profile not found. Please contact support.');
           return false;
         }
@@ -869,7 +915,6 @@ export default {
 
         if (error) {
           console.error('❌ Error loading quizzes:', error);
-          // Don't show error to user, just proceed with 0 count
           existingQuizzesCount.value = 0;
         } else {
           existingQuizzesCount.value = quizzes ? quizzes.length : 0;
@@ -1070,7 +1115,6 @@ export default {
           },
           (payload) => {
             console.log('📡 Real-time: New quiz created:', payload.new);
-            // Update quiz count when new quiz is created
             if (payload.new.subject_id === subject.value.id && payload.new.section_id === section.value.id) {
               existingQuizzesCount.value++;
             }
@@ -1082,34 +1126,30 @@ export default {
     };
 
     // ===============================================
-    // QUIZ PUBLISHING FUNCTION
+    // QUIZ PUBLISHING FUNCTION (FIXED WITH ONE-BY-ONE INSERTION)
     // ===============================================
     
     const publishQuiz = async () => {
-      // Validate quiz before proceeding
       if (!validateQuiz()) {
         console.log('❌ Validation failed');
         return;
       }
 
-      // Confirm publication
       if (!confirm(`Publish "${quiz.value.title}"?\n\nStudents will be able to see and take this quiz immediately.`)) {
         return;
       }
 
-      // Set publishing state
       isPublishing.value = true;
       console.log('🚀 Starting quiz publication...');
 
       try {
-        // Verify teacher info exists
         if (!teacherInfo.value.teacher_id) {
           throw new Error('Teacher ID not found. Please refresh and try again.');
         }
 
         console.log('✅ Teacher verified:', teacherInfo.value.teacher_id);
 
-        // Prepare quiz data
+        // === STEP 1: Create Quiz ===
         const quizData = {
           subject_id: subject.value.id,
           section_id: section.value.id,
@@ -1128,9 +1168,8 @@ export default {
         };
 
         console.log('📝 Quiz data prepared:', quizData);
-
-        // === STEP 1: Create Quiz ===
         console.log('📤 Step 1: Creating quiz...');
+
         const { data: newQuiz, error: quizError } = await supabase
           .from('quizzes')
           .insert([quizData])
@@ -1148,8 +1187,9 @@ export default {
 
         console.log('✅ Step 1 complete: Quiz created with ID:', newQuiz.id);
 
-        // === STEP 2: Prepare Questions ===
+        // === STEP 2: Insert Questions and Get IDs ===
         console.log('📝 Step 2: Preparing questions...');
+        
         const questionsData = quiz.value.questions.map((q, index) => ({
           quiz_id: newQuiz.id,
           question_number: index + 1,
@@ -1159,9 +1199,8 @@ export default {
         }));
 
         console.log(`✅ Prepared ${questionsData.length} questions`);
+        console.log('📤 Step 2: Inserting questions...');
 
-        // === STEP 3: Insert Questions ===
-        console.log('📤 Step 3: Inserting questions...');
         const { data: insertedQuestions, error: questionsError } = await supabase
           .from('quiz_questions')
           .insert(questionsData)
@@ -1176,68 +1215,75 @@ export default {
           throw new Error(`Expected ${questionsData.length} questions, got ${insertedQuestions?.length || 0}`);
         }
 
-        console.log(`✅ Step 3 complete: ${insertedQuestions.length} questions inserted`);
+        console.log(`✅ Step 2 complete: ${insertedQuestions.length} questions inserted`);
 
-        // === STEP 4: Prepare Options and Answers ===
-        console.log('📝 Step 4: Preparing options and answers...');
-        const allOptions = [];
-        const allAnswers = [];
+        // === STEP 3 & 4: Insert Options and Answers ONE BY ONE ===
+        console.log('📝 Step 3: Inserting options and answers one by one...');
+        
+        let totalOptionsInserted = 0;
+        let totalAnswersInserted = 0;
 
         for (let i = 0; i < quiz.value.questions.length; i++) {
           const question = quiz.value.questions[i];
           const questionId = insertedQuestions[i].id;
 
+          console.log(`Processing question ${i + 1}/${quiz.value.questions.length} (ID: ${questionId})`);
+
           if (question.type === 'multiple_choice') {
-            question.options.forEach((opt, optIndex) => {
-              allOptions.push({
+            // Insert options one by one
+            for (let optIndex = 0; optIndex < question.options.length; optIndex++) {
+              const optionData = {
                 question_id: questionId,
                 option_number: optIndex + 1,
-                option_text: opt.trim(),
+                option_text: question.options[optIndex].trim(),
                 is_correct: question.correctAnswer === optIndex
-              });
-            });
+              };
+
+              console.log(`  Inserting option ${optIndex + 1}:`, optionData);
+
+              const { error: optionError } = await supabase
+                .from('question_options')
+                .insert([optionData]);
+
+              if (optionError) {
+                console.error(`❌ Failed to insert option ${optIndex + 1}:`, optionError);
+                throw new Error(`Failed to insert option ${optIndex + 1} for question ${i + 1}: ${optionError.message}`);
+              }
+
+              totalOptionsInserted++;
+              console.log(`  ✅ Option ${optIndex + 1} inserted successfully`);
+              
+              // Small delay to avoid rate limiting
+              await new Promise(resolve => setTimeout(resolve, 50));
+            }
           } else if (question.type === 'true_false' || question.type === 'fill_blank') {
-            allAnswers.push({
+            // Insert answer
+            const answerData = {
               question_id: questionId,
               correct_answer: String(question.correctAnswer).trim(),
               case_sensitive: question.type === 'fill_blank'
-            });
+            };
+
+            console.log(`  Inserting answer:`, answerData);
+
+            const { error: answerError } = await supabase
+              .from('question_answers')
+              .insert([answerData]);
+
+            if (answerError) {
+              console.error(`❌ Failed to insert answer:`, answerError);
+              throw new Error(`Failed to insert answer for question ${i + 1}: ${answerError.message}`);
+            }
+
+            totalAnswersInserted++;
+            console.log(`  ✅ Answer inserted successfully`);
+            
+            // Small delay
+            await new Promise(resolve => setTimeout(resolve, 50));
           }
         }
 
-        console.log(`✅ Prepared ${allOptions.length} options and ${allAnswers.length} answers`);
-
-        // === STEP 5: Insert Options ===
-        if (allOptions.length > 0) {
-          console.log('📤 Step 5: Inserting options...');
-          const { error: optionsError } = await supabase
-            .from('question_options')
-            .insert(allOptions);
-
-          if (optionsError) {
-            console.error('❌ Options insertion failed:', optionsError);
-            throw new Error(`Failed to insert options: ${optionsError.message}`);
-          }
-          console.log(`✅ Step 5 complete: ${allOptions.length} options inserted`);
-        } else {
-          console.log('⏭️ Step 5 skipped: No options to insert');
-        }
-
-        // === STEP 6: Insert Answers ===
-        if (allAnswers.length > 0) {
-          console.log('📤 Step 6: Inserting answers...');
-          const { error: answersError } = await supabase
-            .from('question_answers')
-            .insert(allAnswers);
-
-          if (answersError) {
-            console.error('❌ Answers insertion failed:', answersError);
-            throw new Error(`Failed to insert answers: ${answersError.message}`);
-          }
-          console.log(`✅ Step 6 complete: ${allAnswers.length} answers inserted`);
-        } else {
-          console.log('⏭️ Step 6 skipped: No answers to insert');
-        }
+        console.log(`✅ Step 3 complete: ${totalOptionsInserted} options and ${totalAnswersInserted} answers inserted`);
 
         // === SUCCESS ===
         console.log('🎉 Quiz published successfully!');
@@ -1245,52 +1291,60 @@ export default {
           id: newQuiz.id,
           code: newQuiz.quiz_code,
           title: newQuiz.title,
-          questions: insertedQuestions.length
+          questions: insertedQuestions.length,
+          options: totalOptionsInserted,
+          answers: totalAnswersInserted
         });
 
-        // Show success message
+        // Reset publishing state first
+        isPublishing.value = false;
+
         alert(`✅ Quiz Published Successfully!\n\n📝 ${newQuiz.title}\n🔑 Quiz Code: ${newQuiz.quiz_code}\n📊 ${insertedQuestions.length} questions\n\n✨ Students can now take this quiz!`);
 
-        // Navigate back to quizzes page
-        setTimeout(() => {
-          router.push({
-            name: 'ViewQuizzes',
-            params: {
-              subjectId: subject.value.id,
-              sectionId: section.value.id
-            },
-            query: {
-              subjectName: subject.value.name,
-              sectionName: section.value.name,
-              gradeLevel: route.query.gradeLevel,
-              sectionCode: route.query.sectionCode
-            }
-          });
-        }, 500);
+        // Redirect immediately after user closes alert
+        router.push({
+          name: 'ViewQuizzes',
+          params: {
+            subjectId: subject.value.id,
+            sectionId: section.value.id
+          },
+          query: {
+            subjectName: subject.value.name,
+            sectionName: section.value.name,
+            gradeLevel: route.query.gradeLevel,
+            sectionCode: route.query.sectionCode
+          }
+        });
 
       } catch (error) {
         console.error('❌ Publication error:', error);
 
-        // Determine error message
-        let errorMessage = '❌ Failed to Publish Quiz\n\n';
+        // Only show error if we're still in publishing state
+        if (isPublishing.value) {
+          let errorMessage = '❌ Failed to Publish Quiz\n\n';
 
-        if (error.code === '23505') {
-          errorMessage += '⚠️ A quiz with this title already exists in this section.\nPlease use a different title.';
-        } else if (error.code === '23503') {
-          errorMessage += '⚠️ Invalid reference detected.\nPlease refresh the page and try again.';
-        } else if (error.code === 'PGRST116') {
-          errorMessage += '⚠️ Database connection issue.\nPlease check your internet connection and try again.';
-        } else if (error.message) {
-          errorMessage += `Error: ${error.message}`;
-        } else {
-          errorMessage += '⚠️ An unexpected error occurred.\nPlease try again or contact support if the problem persists.';
+          if (error.code === '23505') {
+            errorMessage += '⚠️ A quiz with this title already exists in this section.\nPlease use a different title.';
+          } else if (error.code === '23503') {
+            errorMessage += '⚠️ Invalid reference detected.\nPlease refresh the page and try again.';
+          } else if (error.code === 'PGRST116') {
+            errorMessage += '⚠️ Database connection issue.\nPlease check your internet connection and try again.';
+          } else if (error.code === '42501' || error.message.includes('row-level security')) {
+            errorMessage += '⚠️ Permission error while saving quiz data.\n\nThis usually means there\'s an issue with database permissions.\nPlease contact your system administrator or try logging out and back in.';
+          } else if (error.message) {
+            errorMessage += `Error: ${error.message}`;
+          } else {
+            errorMessage += '⚠️ An unexpected error occurred.\nPlease try again or contact support if the problem persists.';
+          }
+
+          alert(errorMessage);
         }
 
-        alert(errorMessage);
-
       } finally {
-        // Always reset publishing state
-        isPublishing.value = false;
+        // Only set to false if still true (not already set in success)
+        if (isPublishing.value) {
+          isPublishing.value = false;
+        }
         console.log('🏁 Publishing process completed');
       }
     };
@@ -1317,9 +1371,7 @@ export default {
         return;
       }
 
-      // Load existing quizzes after teacher and route info is loaded
       await loadExistingQuizzes();
-      
       setupRealtimeSubscription();
       console.log('✅ Component initialization complete');
     });
@@ -1337,7 +1389,6 @@ export default {
     // ===============================================
 
     return {
-      // State
       currentStep,
       steps,
       teacherInfo,
@@ -1347,20 +1398,14 @@ export default {
       isPublishing,
       isLoadingQuizzes,
       existingQuizzesCount,
-      
-      // Navigation
       goBack,
       goBackToQuizzes,
       getStepIndex,
       proceedToQuestions,
-      
-      // Question Management
       addQuestion,
       removeQuestion,
       addOption,
       removeOption,
-      
-      // Publishing
       publishQuiz
     };
   }
@@ -1373,6 +1418,223 @@ export default {
 /* =============================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* Reset and Hide Parent Layouts */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Hide any parent layout elements */
+body, html {
+  overflow-x: hidden !important;
+}
+
+/* Force hide any sidebar or layout from parent components */
+.sidebar,
+.dashboard-sidebar,
+.navigation-sidebar,
+.teacher-layout,
+.dashboard-layout {
+  display: none !important;
+}
+
+/* Ensure our container is on top */
+.analytics-container {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 999999 !important;
+  background: #f8fafc !important;
+  overflow-y: auto !important;
+}
+
+/* Top Navigation Bar (Same as Dashboard) */
+.top-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(61, 141, 122, 0.3);
+}
+
+.navbar-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.logo-img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.brand-name {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: white;
+  letter-spacing: -0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-center {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  justify-content: center;
+  max-width: 600px;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.8);
+  transition: all 0.2s ease;
+  position: relative;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.nav-item.active {
+  color: white;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 3px;
+  background: white;
+  border-radius: 2px 2px 0 0;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.export-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.export-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Main Content */
+.main-content {
+  margin-top: 64px;
+  padding: 1.5rem;
+  width: 100%;
+  min-height: calc(100vh - 64px);
+  position: relative;
+  background: #f8fafc;
+  padding-bottom: 2rem;
+}
+
+/* Page Header */
+.page-header {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.header-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.header-subtitle {
+  font-size: 0.95rem;
+  color: #64748b;
+}
 
 * {
   margin: 0;
@@ -1850,6 +2112,11 @@ export default {
   box-shadow: 0 2px 12px rgba(61, 141, 122, 0.15);
   min-width: 220px;
   justify-content: center;
+}
+
+.create-quiz-btn svg {
+  color: white !important;
+  fill: white !important;
 }
 
 .create-quiz-btn:hover {
@@ -3917,6 +4184,53 @@ input[type="datetime-local"]::-webkit-clear-button {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .main-content {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  .main-content {
+    padding: 1rem;
+  }
+  
+  .navbar-center {
+    gap: 0.25rem;
+  }
+  
+  .nav-item {
+    padding: 0.5rem 1rem;
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: 1rem;
+  }
+  
+  .page-header {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .navbar-content {
+    padding: 0 0.5rem;
+  }
+  
+  .brand-name {
+    display: none;
+  }
 }
 
 </style>

@@ -1,49 +1,103 @@
 <template>
-  <div class="analytics-container" :class="{ 'dark': isDarkMode }">
-    <!-- Simple Header -->
-    <div class="header-card">
-      <div class="header-content">
-        <div class="header-left">
-          <div class="header-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z" />
-            </svg>
-          </div>
-          <div>
-            <h1 class="header-title">Student Analytics</h1>
-            <p class="header-subtitle">Monitor and analyze student performance</p>
+  <div class="analytics-container">
+    <!-- Top Navigation Bar (Same as Dashboard) -->
+    <nav class="top-navbar">
+      <div class="navbar-content">
+        <!-- Left: Logo and Brand -->
+        <div class="navbar-left">
+          <div class="brand-logo">
+            <img src="@/assets/LOGO WAY BG.png" alt="IntelliGrade" class="logo-img" />
+            <span class="brand-name">IntelliGrade</span>
           </div>
         </div>
         
-        <div class="header-actions">
+        <!-- Center: Navigation Links -->
+        <div class="navbar-center">
+          <router-link to="/teacher/dashboard" class="nav-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" />
+            </svg>
+            <span>Dashboard</span>
+          </router-link>
+          
+          <router-link to="/teacher/subjects" class="nav-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"/>
+            </svg>
+            <span>Classes</span>
+          </router-link>
+          
+          <router-link to="/teacher/gradebook" class="nav-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19,3H14.82C14.4,1.84 13.3,1 12,1C10.7,1 9.6,1.84 9.18,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M12,3A1,1 0 0,1 13,4A1,1 0 0,1 12,5A1,1 0 0,1 11,4A1,1 0 0,1 12,3Z" />
+            </svg>
+            <span>Gradebook</span>
+          </router-link>
+          
+          <router-link to="/teacher/analytics" class="nav-item active">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z" />
+            </svg>
+            <span>Analytics</span>
+          </router-link>
+          
+          <router-link to="/teacher/upload-assessment" class="nav-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9,16V10H5L12,3L19,10H15V16H9M5,20V18H19V20H5Z" />
+            </svg>
+            <span>Upload</span>
+          </router-link>
+        </div>
+        
+        <!-- Right: User Profile and Actions -->
+        <div class="navbar-right">
           <select v-model="selectedSection" @change="filterBySection" class="section-filter">
             <option value="">All Sections</option>
             <option v-for="section in sections" :key="section.id" :value="section.id">
               {{ section.name }} - {{ section.subject_name }}
             </option>
           </select>
-          <button @click="exportData" class="grade-btn export-btn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="margin-right:8px;vertical-align:middle;">
-              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" fill="currentColor"/>
+          <button @click="exportData" class="export-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
             </svg>
-            <span style="vertical-align:middle;">Export Data</span>
+            <span>Export</span>
           </button>
         </div>
       </div>
-    </div>
+    </nav>
 
-    <!-- Loading Overlay -->
-    <div v-if="loading" class="loading-overlay">
-      <div class="loading-content">
-        <div class="loading-spinner-container">
-          <div class="loading-spinner"></div>
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="header-content">
+          <div class="header-left">
+            <div class="header-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z" />
+              </svg>
+            </div>
+            <div>
+              <h1 class="header-title">Student Analytics</h1>
+              <p class="header-subtitle">Monitor and analyze student performance</p>
+            </div>
+          </div>
         </div>
-        <p class="loading-text">Loading analytics...</p>
       </div>
-    </div>
 
-    <!-- Stats Cards -->
-    <div v-else class="stats-grid">
+      <!-- Loading Overlay -->
+      <div v-if="loading" class="loading-overlay">
+        <div class="loading-content">
+          <div class="loading-spinner-container">
+            <div class="loading-spinner"></div>
+          </div>
+          <p class="loading-text">Loading analytics...</p>
+        </div>
+      </div>
+
+      <!-- Stats Cards -->
+      <div v-else class="stats-grid">
       <div class="stat-card">
         <div class="stat-icon stat-average">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -68,177 +122,179 @@
         </div>
       </div>
 
-      <div class="stat-card">
-        <div class="stat-icon stat-assessments">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M9,17H7V10H9V17M13,17H11V7H13V17M17,17H15V13H17V17Z" />
-          </svg>
-        </div>
-        <div>
-          <div class="stat-number">{{ overallStats.totalQuizzes }}</div>
-          <div class="stat-label">Quizzes Created</div>
+        <div class="stat-card">
+          <div class="stat-icon stat-assessments">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M9,17H7V10H9V17M13,17H11V7H13V17M17,17H15V13H17V17Z" />
+            </svg>
+          </div>
+          <div>
+            <div class="stat-number">{{ overallStats.totalQuizzes }}</div>
+            <div class="stat-label">Quizzes Created</div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Content Grid -->
-    <div v-if="!loading" class="content-grid">
-      <!-- Quiz Performance -->
-      <div class="content-card">
-        <div class="card-header">
-          <h3>Quiz Performance Summary</h3>
-          <p class="card-desc">Average scores across all quizzes</p>
-        </div>
-        <div class="chart-placeholder">
-          <div v-if="quizPerformanceData.length > 0" class="performance-list">
-            <div v-for="quiz in quizPerformanceData" :key="quiz.quiz_id" class="performance-item">
-              <div class="quiz-info">
-                <div class="quiz-title">{{ quiz.quiz_title }}</div>
-                <div class="quiz-meta">{{ quiz.total_attempts }} attempts • {{ quiz.students_attempted }} students</div>
+      <!-- Content Grid -->
+      <div v-if="!loading" class="content-grid">
+        <!-- Quiz Performance -->
+        <div class="content-card">
+          <div class="card-header">
+            <h3>Quiz Performance Summary</h3>
+            <p class="card-desc">Average scores across all quizzes</p>
+          </div>
+          <div class="chart-placeholder">
+            <div v-if="quizPerformanceData.length > 0" class="performance-list">
+              <div v-for="quiz in quizPerformanceData" :key="quiz.quiz_id" class="performance-item">
+                <div class="quiz-info">
+                  <div class="quiz-title">{{ quiz.quiz_title }}</div>
+                  <div class="quiz-meta">{{ quiz.total_attempts }} attempts • {{ quiz.students_attempted }} students</div>
+                </div>
+                <div class="quiz-score">
+                  <span :class="['score-badge', getScoreClass(quiz.average_score)]">
+                    {{ quiz.average_score }}%
+                  </span>
+                </div>
               </div>
-              <div class="quiz-score">
-                <span :class="['score-badge', getScoreClass(quiz.average_score)]">
-                  {{ quiz.average_score }}%
-                </span>
+            </div>
+            <div v-else class="empty-state">
+              No quiz data available yet. Students need to take quizzes first.
+            </div>
+          </div>
+        </div>
+
+        <!-- Student Distribution -->
+        <div class="content-card">
+          <div class="card-header">
+            <h3>Student Performance Distribution</h3>
+            <p class="card-desc">Count of students by performance level</p>
+          </div>
+          <div class="chart-placeholder">
+            <div v-if="performanceDistribution" class="distribution-list">
+              <div class="dist-item">
+                <span class="dist-label excellent">Excellent (90+)</span>
+                <span class="dist-count">{{ performanceDistribution.excellent }}</span>
+              </div>
+              <div class="dist-item">
+                <span class="dist-label good">Good (80-89)</span>
+                <span class="dist-count">{{ performanceDistribution.good }}</span>
+              </div>
+              <div class="dist-item">
+                <span class="dist-label satisfactory">Satisfactory (75-79)</span>
+                <span class="dist-count">{{ performanceDistribution.satisfactory }}</span>
+              </div>
+              <div class="dist-item">
+                <span class="dist-label warning">Needs Help (<75)</span>
+                <span class="dist-count">{{ performanceDistribution.needsHelp }}</span>
               </div>
             </div>
           </div>
-          <div v-else class="empty-state">
-            No quiz data available yet. Students need to take quizzes first.
-          </div>
         </div>
       </div>
 
-      <!-- Student Distribution -->
-      <div class="content-card">
+      <!-- Student Performance Table -->
+      <div v-if="!loading" class="content-card">
         <div class="card-header">
-          <h3>Student Performance Distribution</h3>
-          <p class="card-desc">Count of students by performance level</p>
-        </div>
-        <div class="chart-placeholder">
-          <div v-if="performanceDistribution" class="distribution-list">
-            <div class="dist-item">
-              <span class="dist-label excellent">Excellent (90+)</span>
-              <span class="dist-count">{{ performanceDistribution.excellent }}</span>
-            </div>
-            <div class="dist-item">
-              <span class="dist-label good">Good (80-89)</span>
-              <span class="dist-count">{{ performanceDistribution.good }}</span>
-            </div>
-            <div class="dist-item">
-              <span class="dist-label satisfactory">Satisfactory (75-79)</span>
-              <span class="dist-count">{{ performanceDistribution.satisfactory }}</span>
-            </div>
-            <div class="dist-item">
-              <span class="dist-label warning">Needs Help (<75)</span>
-              <span class="dist-count">{{ performanceDistribution.needsHelp }}</span>
-            </div>
+          <h3>Student Performance Overview</h3>
+          <p class="card-desc">Quiz results and performance data for each student</p>
+          <div class="table-controls">
+            <input 
+              v-model="searchQuery" 
+              type="text" 
+              placeholder="Search students..."
+              class="search-input"
+            >
+            <select v-model="sortBy" @change="sortStudents" class="sort-select">
+              <option value="name">Sort by Name</option>
+              <option value="average">Sort by Average Score</option>
+              <option value="quizzes">Sort by Quizzes Taken</option>
+            </select>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- Student Performance Table -->
-    <div v-if="!loading" class="content-card">
-      <div class="card-header">
-        <h3>Student Performance Overview</h3>
-        <p class="card-desc">Quiz results and performance data for each student</p>
-        <div class="table-controls">
-          <input 
-            v-model="searchQuery" 
-            type="text" 
-            placeholder="Search students..."
-            class="search-input"
-          >
-          <select v-model="sortBy" @change="sortStudents" class="sort-select">
-            <option value="name">Sort by Name</option>
-            <option value="average">Sort by Average Score</option>
-            <option value="quizzes">Sort by Quizzes Taken</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="table-wrapper">
-        <table class="performance-table">
-          <thead>
-            <tr>
-              <th>Student</th>
-              <th>Section</th>
-              <th>Subject</th>
-              <th>Quizzes Taken</th>
-              <th>Average Score</th>
-              <th>Best Score</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="student in filteredStudents" :key="student.student_id" class="student-row">
-              <td class="student-cell">
-                <div class="student-info">
-                  <div class="student-avatar">
-                    <div class="avatar-placeholder">
-                      {{ getInitials(student.student_name) }}
+        
+        <div class="table-wrapper">
+          <table class="performance-table">
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Section</th>
+                <th>Subject</th>
+                <th>Quizzes Taken</th>
+                <th>Average Score</th>
+                <th>Best Score</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="student in filteredStudents" :key="student.student_id" class="student-row">
+                <td class="student-cell">
+                  <div class="student-info">
+                    <div class="student-avatar">
+                      <div class="avatar-placeholder">
+                        {{ getInitials(student.student_name) }}
+                      </div>
+                    </div>
+                    <div>
+                      <div class="student-name">{{ student.student_name }}</div>
+                      <div class="student-id">ID: {{ student.student_number }}</div>
                     </div>
                   </div>
-                  <div>
-                    <div class="student-name">{{ student.student_name }}</div>
-                    <div class="student-id">ID: {{ student.student_number }}</div>
-                  </div>
-                </div>
-              </td>
-              <td>{{ student.section_name }}</td>
-              <td>{{ student.subject_name }}</td>
-              <td>{{ student.quizzes_attempted }}</td>
-              <td>{{ student.average_score || 0 }}%</td>
-              <td>
-                <span :class="['score-badge', getScoreClass(student.best_score || 0)]">
-                  {{ student.best_score || 0 }}%
-                </span>
-              </td>
-              <td>
-                <span :class="['status-badge', getStatusClass(student.average_score || 0)]">
-                  {{ student.performance_status }}
-                </span>
-              </td>
-              <td class="actions-cell">
-                <button @click="viewStudentDetails(student)" class="action-btn view-btn" title="View Details">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
-                  </svg>
-                </button>
-              </td>
-            </tr>
-            <tr v-if="filteredStudents.length === 0">
-              <td colspan="8" style="text-align: center; padding: 2rem; color: #999;">
-                {{ studentData.length === 0 ? 'No student data yet. Students need to take quizzes first.' : 'No students match your search.' }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+                </td>
+                <td>{{ student.section_name }}</td>
+                <td>{{ student.subject_name }}</td>
+                <td>{{ student.quizzes_attempted }}</td>
+                <td>{{ student.average_score || 0 }}%</td>
+                <td>
+                  <span :class="['score-badge', getScoreClass(student.best_score || 0)]">
+                    {{ student.best_score || 0 }}%
+                  </span>
+                </td>
+                <td>
+                  <span :class="['status-badge', getStatusClass(student.average_score || 0)]">
+                    {{ student.performance_status }}
+                  </span>
+                </td>
+                <td class="actions-cell">
+                  <button @click="viewStudentDetails(student)" class="action-btn view-btn" title="View Details">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+              <tr v-if="filteredStudents.length === 0">
+                <td colspan="8" style="text-align: center; padding: 2rem; color: #999;">
+                  {{ studentData.length === 0 ? 'No student data yet. Students need to take quizzes first.' : 'No students match your search.' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-      <!-- Pagination -->
-      <div class="pagination">
-        <button 
-          @click="currentPage = Math.max(1, currentPage - 1)"
-          :disabled="currentPage === 1"
-          class="page-btn"
-        >
-          Previous
-        </button>
-        <span class="page-info">
-          Page {{ currentPage }} of {{ totalPages }}
-        </span>
-        <button 
-          @click="currentPage = Math.min(totalPages, currentPage + 1)"
-          :disabled="currentPage === totalPages"
-          class="page-btn"
-        >
-          Next
-        </button>
+        <!-- Pagination -->
+        <div class="pagination">
+          <button 
+            @click="currentPage = Math.max(1, currentPage - 1)"
+            :disabled="currentPage === 1"
+            class="page-btn"
+          >
+            Previous
+          </button>
+          <span class="page-info">
+            Page {{ currentPage }} of {{ totalPages }}
+          </span>
+          <button 
+            @click="currentPage = Math.min(totalPages, currentPage + 1)"
+            :disabled="currentPage === totalPages"
+            class="page-btn"
+          >
+            Next
+          </button>
+        </div>
       </div>
-    </div>
+    </main>
+
 
     <!-- Student Detail Modal -->
     <div v-if="selectedStudent" class="modal-overlay" @click.self="selectedStudent = null">
@@ -1062,37 +1118,227 @@ export default {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
+/* Reset and Hide Parent Layouts */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-.analytics-container {
-  min-height: 100vh;
-  background: #FBFFE4;
-  padding: 1.5rem;
-  font-family: 'Inter', sans-serif;
-}
-.dark .analytics-container {
-  background: #181c20;
+/* Hide any parent layout elements */
+body, html {
+  overflow-x: hidden !important;
 }
 
-/* Header */
-.header-card {
-  background: white;
-  border: 1.5px solid #3D8D7A;
-  border-radius: 16px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.1);
+/* Custom Scrollbar Styling - Green Theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
-.dark .header-card {
-  background: #23272b;
-  border: 1.5px solid #A3D1C6;
-  box-shadow: 0 2px 8px rgba(163, 209, 198, 0.1);
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #3D8D7A, #20c997);
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #2d6a5a, #18a577);
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.3);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(135deg, #1e5a4a, #146e5a);
+}
+
+::-webkit-scrollbar-corner {
+  background: #f1f5f9;
+}
+
+/* Firefox Scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3D8D7A #f1f5f9;
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-track {
+  background: #1a1d21;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #20c997, #18a577);
+  border: 1px solid #374151;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #18a577, #146e5a);
+  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.3);
+}
+
+.dark ::-webkit-scrollbar-corner {
+  background: #1a1d21;
+}
+
+.dark * {
+  scrollbar-color: #20c997 #1a1d21;
+}
+
+/* Force hide any sidebar or layout from parent components */
+.sidebar,
+.dashboard-sidebar,
+.navigation-sidebar,
+.teacher-layout,
+.dashboard-layout {
+  display: none !important;
+}
+
+/* Ensure our container is on top */
+.analytics-container {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 999999 !important;
+  background: #f8fafc !important;
+  overflow-y: auto !important;
+}
+
+
+
+/* Top Navigation Bar (Same as Dashboard) */
+.top-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(61, 141, 122, 0.3);
+}
+
+.navbar-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.logo-img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.brand-name {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: white;
+  letter-spacing: -0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-center {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  justify-content: center;
+  max-width: 600px;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.8);
+  transition: all 0.2s ease;
+  position: relative;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.nav-item.active {
+  color: white;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 3px;
+  background: white;
+  border-radius: 2px 2px 0 0;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Main Content */
+.main-content {
+  margin-top: 64px;
+  padding: 1.5rem;
+  width: 100%;
+  min-height: calc(100vh - 64px);
+  position: relative;
+  background: #f8fafc;
+  padding-bottom: 2rem;
+}
+
+/* Page Header */
+.page-header {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .header-content {
@@ -1112,7 +1358,7 @@ export default {
 .header-icon {
   width: 56px;
   height: 56px;
-  background: #3D8D7A;
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -1121,108 +1367,81 @@ export default {
 }
 
 .header-title {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   font-weight: 700;
-  color: #1f2937;
+  color: #1e293b;
   margin-bottom: 0.25rem;
-}
-.dark .header-title {
-  color: #A3D1C6;
 }
 
 .header-subtitle {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-.dark .header-subtitle {
-  color: #A3D1C6;
-}
-
-.header-actions {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  flex-wrap: wrap;
+  font-size: 0.95rem;
+  color: #64748b;
 }
 
 .section-filter {
   padding: 0.75rem 1rem;
-  border: 1px solid #A3D1C6;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
-  background: white;
-  color: #3D8D7A;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
   font-size: 0.875rem;
   font-weight: 500;
 }
-.dark .section-filter {
-  background: #23272b;
-  border-color: #3D8D7A;
-  color: #A3D1C6;
+
+.section-filter:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
-  .export-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: #20c997;
-    color: #181c20;
-    border: 1px solid #A3D1C6;
-    padding: 0.5rem 1.25rem;
-    border-radius: 8px;
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: none;
-  }
-  .dark .export-btn {
-    background: #20c997;
-    color: #181c20;
-    border: 1px solid #A3D1C6;
-  }
-  .export-btn:hover {
-    background: #A3D1C6;
-    color: #23272b;
-    border-color: #20c997;
-    transform: translateY(-1px);
-  }
-  .dark .export-btn:hover {
-    background: #A3D1C6;
-    color: #23272b;
-    border-color: #20c997;
-  }
-  .export-btn svg {
-    margin-right: 8px;
-    color: #3D8D7A;
-  }
+.export-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.export-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
 
 /* Stats Grid */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
+  gap: 1.25rem;
   margin-bottom: 1.5rem;
 }
 
 .stat-card {
   background: white;
-  border-radius: 12px;
-  padding: 1.25rem;
+  border-radius: 16px;
+  padding: 1.5rem;
   display: flex;
   align-items: center;
   gap: 1rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
 }
-.dark .stat-card {
-  background: #23272b;
-  border: 1px solid #20c997;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
 .stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 10px;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1230,29 +1449,23 @@ export default {
   flex-shrink: 0;
 }
 
-.stat-average { background: #3D8D7A; }
-.stat-students { background: #B3D8A8; }
-.stat-assessments { background: #A3D1C6; }
-.stat-help { background: #f59e0b; }
+.stat-average { background: linear-gradient(135deg, #3D8D7A, #2d6a5a); }
+.stat-students { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+.stat-assessments { background: linear-gradient(135deg, #10b981, #059669); }
+.stat-help { background: linear-gradient(135deg, #f59e0b, #d97706); }
 
 .stat-number {
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: #1f2937;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1e293b;
   line-height: 1;
-}
-.dark .stat-number {
-  color: #A3D1C6;
+  margin-bottom: 0.25rem;
 }
 
 .stat-label {
-  font-size: 0.813rem;
-  color: #6b7280;
-  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  color: #64748b;
   font-weight: 500;
-}
-.dark .stat-label {
-  color: #A3D1C6;
 }
 
 /* Content Grid */
@@ -1375,6 +1588,28 @@ export default {
 .table-wrapper {
   overflow-x: auto;
   margin-bottom: 1rem;
+  /* Custom scrollbar for table */
+  scrollbar-width: thin;
+  scrollbar-color: #3D8D7A #f1f5f9;
+}
+
+.table-wrapper::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+  background: #f8fafc;
+  border-radius: 6px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #3D8D7A, #20c997);
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(90deg, #2d6a5a, #18a577);
 }
 
 .performance-table {
@@ -1710,6 +1945,40 @@ export default {
 .history-list {
   max-height: 200px;
   overflow-y: auto;
+  /* Custom scrollbar for modal lists */
+  scrollbar-width: thin;
+  scrollbar-color: #3D8D7A #f1f5f9;
+}
+
+.history-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.history-list::-webkit-scrollbar-track {
+  background: #f8fafc;
+  border-radius: 6px;
+}
+
+.history-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #3D8D7A, #20c997);
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.history-list::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #2d6a5a, #18a577);
+}
+
+.dark .history-list {
+  scrollbar-color: #20c997 #1a1d21;
+}
+
+.dark .history-list::-webkit-scrollbar-track {
+  background: #1a1d21;
+}
+
+.dark .history-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #20c997, #18a577);
 }
 
 .history-item {
@@ -1882,29 +2151,67 @@ export default {
   transform: translateY(-1px);
 }
 
+@media (max-width: 1200px) {
+  .main-content {
+    padding: 1.5rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+}
+
 @media (max-width: 1024px) {
   .content-grid {
     grid-template-columns: 1fr;
   }
+  
+  .main-content {
+    padding: 1rem;
+  }
+  
+  .navbar-center {
+    gap: 0.25rem;
+  }
+  
+  .nav-item {
+    padding: 0.5rem 1rem;
+    font-size: 0.7rem;
+  }
 }
 
 @media (max-width: 768px) {
-  .analytics-container {
+  .main-content {
     padding: 1rem;
+  }
+  
+  .page-header {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
   }
   
   .header-content {
     flex-direction: column;
     align-items: stretch;
+    gap: 1rem;
   }
   
-  .header-actions {
-    flex-direction: column;
-    gap: 0.5rem;
+  .navbar-content {
+    padding: 0 0.5rem;
+  }
+  
+  .brand-name {
+    display: none;
   }
   
   .stats-grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .content-grid {
+    gap: 1rem;
   }
   
   .card-header {
@@ -1932,6 +2239,17 @@ export default {
   
   .student-summary {
     grid-template-columns: 1fr;
+  }
+  
+  .navbar-right {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .section-filter,
+  .export-btn {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
   }
 }
 
@@ -2093,7 +2411,7 @@ export default {
 
 /* Enhanced Loading Overlay - Matches MessagesPage */
 .loading-overlay {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
@@ -2103,7 +2421,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: 100;
   animation: fadeIn 0.3s ease;
 }
 
@@ -2192,4 +2510,4 @@ export default {
 .dark .loading-text {
   color: #A3D1C6;
 }
-</style>
+</style> 

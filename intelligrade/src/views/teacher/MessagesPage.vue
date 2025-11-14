@@ -1,19 +1,103 @@
 <template>
-  <div class="messages-container" :class="{ 'dark': isDarkMode }">
-    <!-- Simple Header Card -->
-    <div class="section-header-card">
-      <div class="section-header-left">
-        <div class="section-header-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-          </svg>
+  <div class="analytics-container">
+    <!-- Top Navigation Bar (Same as Dashboard) -->
+    <nav class="top-navbar">
+      <div class="navbar-content">
+        <!-- Left: Logo and Brand -->
+        <div class="navbar-left">
+          <div class="brand-logo">
+            <img src="@/assets/LOGO WAY BG.png" alt="IntelliGrade" class="logo-img" />
+            <span class="brand-name">IntelliGrade</span>
+          </div>
         </div>
-        <div>
-          <div class="section-header-title">Teacher Messages</div>
-          <div class="section-header-sub">Connect with your students and manage communication</div>
+        
+        <!-- Center: Navigation Links -->
+        <div class="navbar-center">
+          <router-link to="/teacher/dashboard" class="nav-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" />
+            </svg>
+            <span>Dashboard</span>
+          </router-link>
+          
+          <router-link to="/teacher/subjects" class="nav-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"/>
+            </svg>
+            <span>Classes</span>
+          </router-link>
+          
+          <router-link to="/teacher/gradebook" class="nav-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19,3H14.82C14.4,1.84 13.3,1 12,1C10.7,1 9.6,1.84 9.18,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M12,3A1,1 0 0,1 13,4A1,1 0 0,1 12,5A1,1 0 0,1 11,4A1,1 0 0,1 12,3Z" />
+            </svg>
+            <span>Gradebook</span>
+          </router-link>
+          
+          <router-link to="/teacher/analytics" class="nav-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z" />
+            </svg>
+            <span>Analytics</span>
+          </router-link>
+          
+          <router-link to="/teacher/messages" class="nav-item active">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            <span>Messages</span>
+          </router-link>
+          
+          <router-link to="/teacher/upload-assessment" class="nav-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9,16V10H5L12,3L19,10H15V16H9M5,20V18H19V20H5Z" />
+            </svg>
+            <span>Upload</span>
+          </router-link>
+        </div>
+        
+        <!-- Right: User Profile and Actions -->
+        <div class="navbar-right">
+          <button @click="markAllAsRead" class="export-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Mark All Read</span>
+          </button>
         </div>
       </div>
-    </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="header-content">
+          <div class="header-left">
+            <div class="header-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            </div>
+            <div>
+              <h1 class="header-title">Teacher Messages</h1>
+              <p class="header-subtitle">Connect with your students and manage communication</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading Overlay -->
+      <div v-if="isLoading" class="loading-overlay">
+        <div class="loading-content">
+          <div class="loading-spinner-container">
+            <div class="loading-spinner"></div>
+          </div>
+          <p class="loading-text">{{ loadingMessage || 'Loading...' }}</p>
+        </div>
+      </div>
+
+      <!-- Content Area -->
 
     <!-- Filter and Search Controls -->
     <div class="controls-section">
@@ -882,6 +966,129 @@
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
                   </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="message-input-area">
+            <input 
+              type="file" 
+              ref="messageFileInput" 
+              @change="handleMessageFileSelect" 
+              multiple 
+              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
+              style="display: none"
+            />
+            <button class="attach-file-btn" @click="($refs.messageFileInput as HTMLInputElement)?.click()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+              </svg>
+            </button>
+            <input 
+              type="text" 
+              v-model="newMessage" 
+              @keyup.enter="handleSendMessage" 
+              placeholder="Type your message to the student..." 
+              class="message-input"
+            />
+            <button class="send-btn" @click="handleSendMessage" :disabled="!newMessage.trim() && messageAttachments.length === 0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15.46 22 11 13 2 9.54 22 2"></polygon>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Attachment Viewer Modal -->
+    <div v-if="viewingAttachment" class="modal-overlay attachment-modal-overlay" @click.self="closeAttachmentViewer">
+      <div class="attachment-viewer">
+        <button @click="closeAttachmentViewer" class="close-btn viewer-close-btn">&times;</button>
+        <div class="attachment-viewer-content">
+          <img v-if="viewingAttachment.type === 'image'" :src="viewingAttachment.url" class="viewer-image" alt="Attachment" />
+          <div v-else class="viewer-file">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+              <polyline points="13 2 13 9 20 9"/>
+            </svg>
+            <h3>{{ viewingAttachment.name }}</h3>
+            <button @click="downloadAttachment(viewingAttachment)" class="download-viewer-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Download File
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    </main>
+
+
+    <!-- Individual Chat Modal -->
+    <div v-if="isModalOpen" class="modal-overlay" @click.self="closeModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button @click="closeModal" class="close-btn">&times;</button>
+          <div class="header-info">
+            <div class="student-avatar">
+              <span>{{ activeConversation?.student_name?.[0] || 'S' }}</span>
+            </div>
+            <div class="header-details">
+              <h2 class="modal-title">Student: {{ activeConversation?.student_name || 'Student' }}</h2>
+              <span class="section-info">{{ activeConversation?.subject_name }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-body">
+          <!-- Loading indicator for messages -->
+          <div v-if="loadingMessages" class="messages-loading">
+            <div class="messages-loading-spinner"></div>
+            <p>Loading messages...</p>
+          </div>
+          
+          <div v-else class="messages-container" ref="messagesContainer">
+            <div 
+              v-for="message in currentMessages" 
+              :key="message.id" 
+              :class="['message-bubble', { 'sent': message.sender_id === currentTeacherId, 'received': message.sender_id !== currentTeacherId }]"
+            >
+              <p class="message-text">{{ message.message_text }}</p>
+              
+              <!-- Display attachments if any -->
+              <div v-if="message.attachments && message.attachments.length > 0" class="message-attachments">
+                <div v-for="(attachment, idx) in message.attachments" :key="idx" class="attachment-item">
+                </div>
+              </div>
+
+              <div class="message-footer">
+                <span class="message-time">{{ formatTime(message.sent_at) }}</span>
+                
+                <!-- Message Status for Sent Messages -->
+                <span v-if="message.sender_id === currentTeacherId" class="message-status">
+                </span>
+              </div>
+            </div>
+            <div v-if="currentMessages.length === 0" class="no-messages">
+              <p>No messages yet. Start the conversation!</p>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <!-- Attachment Preview -->
+          <div v-if="messageAttachments.length > 0" class="attachments-preview">
+            <div class="attachment-preview-list">
+              <div v-for="(att, idx) in messageAttachments" :key="idx" class="attachment-preview-item">
+                <img v-if="att.type === 'image'" :src="att.url" class="attachment-preview-image" />
+                <div v-else class="attachment-preview-file">
+                </div>
+                <button @click="messageAttachments.splice(idx, 1)" class="remove-attachment-btn">
                 </button>
               </div>
             </div>
@@ -2481,6 +2688,307 @@ onUnmounted(() => {
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* Reset and Hide Parent Layouts */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Hide any parent layout elements */
+body, html {
+  overflow-x: hidden !important;
+}
+
+/* Force hide any sidebar or layout from parent components */
+.sidebar,
+.dashboard-sidebar,
+.navigation-sidebar,
+.teacher-layout,
+.dashboard-layout {
+  display: none !important;
+}
+
+/* Ensure our container is on top */
+.analytics-container {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 999999 !important;
+  background: #f8fafc !important;
+  overflow-y: auto !important;
+}
+
+/* Top Navigation Bar (Same as Dashboard) */
+.top-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(61, 141, 122, 0.3);
+}
+
+.navbar-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.logo-img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.brand-name {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: white;
+  letter-spacing: -0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-center {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  justify-content: center;
+  max-width: 600px;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.8);
+  transition: all 0.2s ease;
+  position: relative;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.nav-item.active {
+  color: white;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 3px;
+  background: white;
+  border-radius: 2px 2px 0 0;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.export-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.export-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Main Content */
+.main-content {
+  margin-top: 64px;
+  padding: 1.5rem;
+  width: 100%;
+  min-height: calc(100vh - 64px);
+  position: relative;
+  background: #f8fafc;
+  padding-bottom: 2rem;
+}
+
+/* Page Header */
+.page-header {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.header-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.header-subtitle {
+  font-size: 0.95rem;
+  color: #64748b;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(251, 255, 228, 0.95);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.loading-content {
+  background: white;
+  padding: 3rem 4rem;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(61, 141, 122, 0.15);
+  border: 2px solid #a3d1c6;
+  animation: slideUp 0.4s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.loading-spinner-container {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
+}
+
+.loading-spinner {
+  width: 80px;
+  height: 80px;
+  border: 5px solid rgba(61, 141, 122, 0.1);
+  border-left: 5px solid #3d8d7a;
+  border-top: 5px solid #20c997;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+  box-shadow: 0 0 20px rgba(61, 141, 122, 0.1);
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+  letter-spacing: 0.025em;
+}
 
 /* Full Screen Broadcast Form Enhancement */
 .broadcast-form-fullscreen {
@@ -4266,20 +4774,49 @@ onUnmounted(() => {
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
-  .messages-container {
+@media (max-width: 1200px) {
+  .main-content {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  .main-content {
     padding: 1rem;
   }
   
-  .section-header-card {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: flex-start;
+  .navbar-center {
+    gap: 0.25rem;
   }
   
-  .header-actions {
-    width: 100%;
-    justify-content: flex-end;
+  .nav-item {
+    padding: 0.5rem 1rem;
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: 1rem;
+  }
+  
+  .page-header {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .navbar-content {
+    padding: 0 0.5rem;
+  }
+  
+  .brand-name {
+    display: none;
   }
   
   .controls-section {

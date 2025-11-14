@@ -1,38 +1,102 @@
 <template>
-  <div :class="['students-home-container', isDarkMode ? 'dark' : '']">
-    <!-- Simple Header Section -->
-    <div class="header-card">
-      <div class="header-content">
-        <div class="header-left">
-          <div class="user-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M16,4C18.21,4 20,5.79 20,8C20,10.21 18.21,12 16,12C13.79,12 12,10.21 12,8C12,5.79 13.79,4 16,4M16,14C20.42,14 24,15.79 24,18V20H8V18C8,15.79 11.58,14 16,14M6,6C7.1,6 8,6.9 8,8C8,9.1 7.1,10 6,10C4.9,10 4,9.1 4,8C4,6.9 4.9,6 6,6M6,12C8.67,12 12,13.34 12,16V18H0V16C0,13.34 3.33,12 6,12Z" />
-            </svg>
-          </div>
-          <div>
-            <h1 class="header-title">Student Management</h1>
-            <p class="header-subtitle">{{ subjectName }} (Grade {{ gradeLevel }}) - {{ sectionName }} ({{ sectionCode }})</p>
+  <div class="analytics-container" :class="{ 'dark': isDarkMode }">
+    <!-- Top Navigation Bar (Same as Dashboard) -->
+    <nav class="top-navbar">
+      <div class="navbar-content">
+        <!-- Left: Logo and Brand -->
+        <div class="navbar-left">
+          <div class="brand-logo">
+            <img src="@/assets/LOGO WAY BG.png" alt="IntelliGrade" class="logo-img" />
+            <span class="brand-name">IntelliGrade</span>
           </div>
         </div>
-        <div class="header-actions">
-          <button @click="exportStudents" class="header-action-btn" :disabled="isExporting">
-            <svg v-if="isExporting" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="spinner">
+        
+        <!-- Center: Navigation Links -->
+        <div class="navbar-center">
+          <router-link to="/teacher/dashboard" class="nav-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" />
+            </svg>
+            <span>Dashboard</span>
+          </router-link>
+          
+          <router-link to="/teacher/subjects" class="nav-item active">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"/>
+            </svg>
+            <span>Classes</span>
+          </router-link>
+          
+          <router-link to="/teacher/gradebook" class="nav-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19,3H14.82C14.4,1.84 13.3,1 12,1C10.7,1 9.6,1.84 9.18,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M12,3A1,1 0 0,1 13,4A1,1 0 0,1 12,5A1,1 0 0,1 11,4A1,1 0 0,1 12,3Z" />
+            </svg>
+            <span>Gradebook</span>
+          </router-link>
+          
+          <router-link to="/teacher/analytics" class="nav-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z" />
+            </svg>
+            <span>Analytics</span>
+          </router-link>
+          
+          <router-link to="/teacher/messages" class="nav-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            <span>Messages</span>
+          </router-link>
+          
+          <router-link to="/teacher/upload-assessment" class="nav-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M9,16V10H5L12,3L19,10H15V16H9M5,20V18H19V20H5Z" />
+            </svg>
+            <span>Upload</span>
+          </router-link>
+        </div>
+        
+        <!-- Right: Actions -->
+        <div class="navbar-right">
+          <button @click="exportStudents" class="export-btn" :disabled="isExporting">
+            <svg v-if="isExporting" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="spinner">
               <path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z" />
             </svg>
-            <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
             </svg>
-            {{ isExporting ? 'Exporting...' : 'Export List' }}
+            <span>{{ isExporting ? 'Exporting...' : 'Export List' }}</span>
           </button>
-          <button @click="goBack" class="header-action-btn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <button @click="goBack" class="export-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
             </svg>
-            Back to Section
+            <span>Back to Section</span>
           </button>
         </div>
       </div>
-    </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="header-content">
+          <div class="header-left">
+            <div class="header-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M16,4C18.21,4 20,5.79 20,8C20,10.21 18.21,12 16,12C13.79,12 12,10.21 12,8C12,5.79 13.79,4 16,4M16,14C20.42,14 24,15.79 24,18V20H8V18C8,15.79 11.58,14 16,14M6,6C7.1,6 8,6.9 8,8C8,9.1 7.1,10 6,10C4.9,10 4,9.1 4,8C4,6.9 4.9,6 6,6M6,12C8.67,12 12,13.34 12,16V18H0V16C0,13.34 3.33,12 6,12Z" />
+              </svg>
+            </div>
+            <div>
+              <h1 class="header-title">Student Management</h1>
+              <p class="header-subtitle">{{ subjectName }} (Grade {{ gradeLevel }}) - {{ sectionName }} ({{ sectionCode }})</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content Area -->
 
     <!-- Main Content -->
     <div class="main-content-wrapper">
@@ -106,8 +170,9 @@
             <p>No students found matching "{{ searchQuery }}"</p>
           </div>
         </div>
+        </div>
       </div>
-    </div>
+    </main>
   </div>
 </template>
 
@@ -340,6 +405,231 @@ onMounted(() => {
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* Reset and Hide Parent Layouts */
+body, html {
+  overflow-x: hidden !important;
+}
+
+/* Force hide any sidebar or layout from parent components */
+.sidebar,
+.dashboard-sidebar,
+.navigation-sidebar,
+.teacher-layout,
+.dashboard-layout {
+  display: none !important;
+}
+
+/* Ensure our container is on top */
+.analytics-container {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 999999 !important;
+  background: #f8fafc !important;
+  overflow-y: auto !important;
+}
+
+/* Top Navigation Bar (Same as Dashboard) */
+.top-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(61, 141, 122, 0.3);
+}
+
+.navbar-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.logo-img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.brand-name {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: white;
+  letter-spacing: -0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-center {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  justify-content: center;
+  max-width: 600px;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.8);
+  transition: all 0.2s ease;
+  position: relative;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.nav-item.active {
+  color: white;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 3px;
+  background: white;
+  border-radius: 2px 2px 0 0;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.export-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.export-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.export-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.spinner {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Main Content */
+.main-content {
+  margin-top: 64px;
+  padding: 1.5rem;
+  width: 100%;
+  min-height: calc(100vh - 64px);
+  position: relative;
+  background: #f8fafc;
+  padding-bottom: 2rem;
+}
+
+/* Page Header */
+.page-header {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.header-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.header-subtitle {
+  font-size: 0.95rem;
+  color: #64748b;
+}
 
 .students-home-container {
   min-height: 100vh;
@@ -847,6 +1137,27 @@ onMounted(() => {
 }
 
 /* Responsive Design */
+@media (max-width: 1200px) {
+  .main-content {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  .main-content {
+    padding: 1rem;
+  }
+  
+  .navbar-center {
+    gap: 0.25rem;
+  }
+  
+  .nav-item {
+    padding: 0.5rem 1rem;
+    font-size: 0.7rem;
+  }
+}
+
 @media (max-width: 768px) {
   .header-content {
     flex-direction: column;
@@ -876,6 +1187,27 @@ onMounted(() => {
   
   .students-list-header span:last-child,
   .students-list-row span:last-child {
+    display: none;
+  }
+  
+  .main-content {
+    padding: 1rem;
+  }
+  
+  .page-header {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .navbar-content {
+    padding: 0 0.5rem;
+  }
+  
+  .brand-name {
+    display: none;
+  }
+  
+  .export-btn span {
     display: none;
   }
 }
