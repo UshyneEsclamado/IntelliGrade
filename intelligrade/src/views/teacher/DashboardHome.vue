@@ -352,12 +352,46 @@
         </div>
       </div>
     </main>
+
+    <!-- Logout Confirmation Modal -->
+    <div v-if="showLogoutModal" class="modal-overlay" @click="closeLogoutModal">
+      <div class="modal-content logout-modal" @click.stop>
+        <div class="modal-header logout-header">
+          <h3>Confirm Logout</h3>
+        </div>
+        <div class="modal-body">
+          <div class="logout-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </div>
+          <p class="logout-message">Are you sure you want to logout?</p>
+          <p class="logout-submessage">You will be redirected to the login page.</p>
+        </div>
+        <div class="modal-footer logout-footer">
+          <button @click="closeLogoutModal" class="btn-cancel" :disabled="isLoggingOut">Cancel</button>
+          <button @click="confirmLogout" class="btn-logout" :disabled="isLoggingOut">
+            <span v-if="!isLoggingOut">Logout</span>
+            <span v-else class="loading-text">
+              <div class="logout-spinner"></div>
+              Redirecting...
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { supabase } from '../../supabase.js'
+
+// Initialize router
+const router = useRouter()
 
 // Local state
 const notifications = ref([])
@@ -416,23 +450,39 @@ const handleScroll = () => {
   showScrollTop.value = window.pageYOffset > 300
 }
 
-const logout = async () => {
-  try {
-    console.log('🚪 Logging out...')
-    
-    // Sign out from Supabase
-    const { error } = await supabase.auth.signOut()
-    
-    if (error) {
-      console.error('❌ Logout error:', error)
-    } else {
-      console.log('✅ Logout successful')
-      // Redirect to login page
-      window.location.href = '/login'
-    }
-  } catch (error) {
-    console.error('❌ Logout error:', error)
-  }
+// Logout confirmation modal
+const showLogoutModal = ref(false)
+
+const openLogoutModal = () => {
+  showLogoutModal.value = true
+}
+
+const closeLogoutModal = () => {
+  showLogoutModal.value = false
+}
+
+const isLoggingOut = ref(false)
+
+const confirmLogout = () => {
+  isLoggingOut.value = true
+  
+  console.log('🚪 Logging out...')
+  
+  // Clear storage immediately
+  localStorage.clear()
+  sessionStorage.clear()
+  
+  // Sign out from Supabase (don't wait for response)
+  supabase.auth.signOut({ scope: 'local' })
+  
+  console.log('✅ Logout successful')
+  
+  // Force immediate redirect - most reliable method
+  window.location.replace('/login')
+}
+
+const logout = () => {
+  openLogoutModal()
 }
 
 const gradeAssessment = (assessment) => {
@@ -2409,6 +2459,147 @@ onMounted(async () => {
     box-shadow: none;
     border: 1px solid #ccc;
   }
+}
+
+/* Logout Confirmation Modal */
+.logout-modal {
+  max-width: 400px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: white;
+  border: 2px solid #3D8D7A;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(-20px) scale(0.95);
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0) scale(1);
+  }
+}
+
+.logout-header {
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  color: white;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.logout-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.modal-body {
+  padding: 2rem;
+  text-align: center;
+  background: #f8fafc;
+}
+
+.logout-icon {
+  margin-bottom: 1rem;
+}
+
+.logout-icon svg {
+  color: #3D8D7A;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+.logout-message {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.logout-submessage {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.logout-footer {
+  padding: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.btn-cancel {
+  padding: 0.75rem 1.5rem;
+  border: 2px solid #e2e8f0;
+  background: white;
+  color: #6b7280;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-cancel:hover {
+  border-color: #3D8D7A;
+  color: #3D8D7A;
+}
+
+.btn-logout {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background: #dc3545;
+  color: white;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-logout:hover {
+  background: #c82333;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.btn-logout:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  opacity: 0.6;
+}
+
+.logout-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+.btn-logout .loading-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.9rem;
 }
 
 /* High contrast mode support */

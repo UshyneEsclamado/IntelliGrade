@@ -63,9 +63,19 @@
           </router-link>
         </div>
         
-        <!-- Right: Actions -->
+        <!-- Right: User Profile -->
         <div class="navbar-right">
-          <!-- No specific actions for Settings page -->
+          <div class="user-profile">
+            <span class="user-name">{{ userProfile.name || 'Teacher' }}</span>
+            <button @click="handleLogout" class="logout-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+              Logout
+            </button>
+          </div>
         </div>
       </div>
     </nav>
@@ -91,124 +101,124 @@
 
       <!-- Content Area -->
       <div class="main-wrapper">
-        <!-- Main Content -->
         <div class="content-card">
-        <!-- Account & Profile Card -->
-        <div class="settings-card">
-          <h2 class="section-title">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="section-icon">
-              <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
-            </svg> 
-            Account & Profile
-          </h2>
-          <p class="section-subtitle">Update your personal information and profile settings</p>
-          <div class="settings-list">
-            <div class="setting-item">
-              <span>Update Profile Info</span>
-              <button @click="openProfileModal" class="action-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-                </svg>
-              </button>
-            </div>
-            <div class="setting-item">
-              <span>Change Password</span>
-              <button @click="openPasswordModal" class="action-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                  <circle cx="12" cy="16" r="1"></circle>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        <!-- App Preferences Card -->
-        <div class="settings-card">
-          <h2 class="section-title">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="section-icon">
-              <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
-            </svg> 
-            App Preferences
-          </h2>
-          <p class="section-subtitle">Customize the app's look and feel</p>
-          <div class="settings-list">
-            <div class="setting-item">
-              <span>Dark Mode</span>
-              <label class="switch">
-                <input type="checkbox" v-model="isDarkMode" @change="handleDarkModeToggle">
-                <span class="slider round"></span>
-              </label>
+          <!-- Account & Profile Card -->
+          <div class="settings-card">
+            <h2 class="section-title">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="section-icon">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg> 
+              Account & Profile
+            </h2>
+            <p class="section-subtitle">Update your personal information and profile settings</p>
+            <div class="settings-list">
+              <div class="setting-item" @click="openProfileModal">
+                <span>Update Profile Info</span>
+                <button class="action-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="setting-item" @click="openPasswordModal">
+                <span>Change Password</span>
+                <button class="action-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <circle cx="12" cy="16" r="1"></circle>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+          
+          <!-- App Preferences Card -->
+          <div class="settings-card">
+            <h2 class="section-title">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="section-icon">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="m12 1 0 6m0 6 0 6"/>
+                <path d="m21 12-6 0m-6 0-6 0"/>
+              </svg> 
+              App Preferences
+            </h2>
+            <p class="section-subtitle">Customize the app's look and feel</p>
+            <div class="settings-list">
+              <div class="setting-item">
+                <span>Dark Mode</span>
+                <label class="switch">
+                  <input type="checkbox" v-model="isDarkMode" @change="handleDarkModeToggle">
+                  <span class="slider round"></span>
+                </label>
+              </div>
+            </div>
+          </div>
 
-        <!-- Privacy & Legal Card -->
-        <div class="settings-card">
-          <h2 class="section-title">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="section-icon">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            </svg> 
-            Privacy & Legal
-          </h2>
-          <p class="section-subtitle">Understand our policies and manage your data</p>
-          <div class="settings-list">
-            <div class="setting-item">
-              <span>Privacy Policy</span>
-              <button @click="showPrivacyPolicy" class="action-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="16" y1="13" x2="8" y2="13" />
-                  <line x1="16" y1="17" x2="8" y2="17" />
-                  <polyline points="10 9 9 9 8 9" />
-                </svg>
-              </button>
-            </div>
-            <div class="setting-item">
-              <span>Terms of Service</span>
-              <button @click="showTermsOfService" class="action-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="16" y1="13" x2="8" y2="13" />
-                  <line x1="16" y1="17" x2="8" y2="17" />
-                  <polyline points="10 9 9 9 8 9" />
-                </svg>
-              </button>
+          <!-- Privacy & Legal Card -->
+          <div class="settings-card">
+            <h2 class="section-title">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="section-icon">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg> 
+              Privacy & Legal
+            </h2>
+            <p class="section-subtitle">Understand our policies and manage your data</p>
+            <div class="settings-list">
+              <div class="setting-item" @click="showPrivacyPolicy">
+                <span>Privacy Policy</span>
+                <button class="action-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                  </svg>
+                </button>
+              </div>
+              <div class="setting-item" @click="showTermsOfService">
+                <span>Terms of Service</span>
+                <button class="action-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Danger Zone Card -->
-        <div class="settings-card danger-zone">
-          <h2 class="section-title">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="section-icon">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-              <line x1="12" y1="9" x2="12" y2="13"/>
-              <line x1="12" y1="17" x2="12.01" y2="17"/>
-            </svg> 
-            Danger Zone
-          </h2>
-          <p class="section-subtitle">Sensitive actions that cannot be undone</p>
-          <div class="settings-list">
-            <div class="setting-item">
-              <span class="danger-text">Delete Account</span>
-              <button @click="openDeleteAccountModal" class="action-btn danger-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3 6l3 0l0 15a2 2 0 0 0 2 2l8 0a2 2 0 0 0 2 -2l0 -15l3 0"/>
-                  <path d="M14 10l0 5"/>
-                  <path d="M10 10l0 5"/>
-                  <path d="M18 6l-12 0"/>
-                  <path d="M10 3l4 0l0 3l-4 0l0 -3z"/>
-                </svg>
-              </button>
+          <!-- Danger Zone Card -->
+          <div class="settings-card danger-zone">
+            <h2 class="section-title">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="section-icon">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg> 
+              Danger Zone
+            </h2>
+            <p class="section-subtitle">Sensitive actions that cannot be undone</p>
+            <div class="settings-list">
+              <div class="setting-item" @click="openDeleteAccountModal">
+                <span class="danger-text">Delete Account</span>
+                <button class="action-btn danger-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 6l3 0l0 15a2 2 0 0 0 2 2l8 0a2 2 0 0 0 2 -2l0 -15l3 0"/>
+                    <path d="M14 10l0 5"/>
+                    <path d="M10 10l0 5"/>
+                    <path d="M18 6l-12 0"/>
+                    <path d="M10 3l4 0l0 3l-4 0l0 -3z"/>
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
     </main>
 
   <!-- Profile Update Modal -->
@@ -445,12 +455,67 @@
       </div>
     </div>
   </div>
+
+  <!-- Logout Confirmation Modal -->
+  <div v-if="showLogoutModal" class="modal-overlay" @click="closeLogoutModal">
+    <div class="modal-content logout-modal" @click.stop>
+      <div class="modal-header logout-header">
+        <h3>Confirm Logout</h3>
+      </div>
+      <div class="modal-body">
+        <div class="logout-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </div>
+        <p class="logout-message">Are you sure you want to logout?</p>
+        <p class="logout-submessage">You will be redirected to the login page.</p>
+      </div>
+      <div class="modal-footer logout-footer">
+        <button @click="closeLogoutModal" class="btn-cancel" :disabled="isLoggingOut">Cancel</button>
+        <button @click="confirmLogout" class="btn-logout" :disabled="isLoggingOut">
+          <span v-if="!isLoggingOut">Logout</span>
+          <span v-else class="loading-text">
+            <div class="logout-spinner"></div>
+            Redirecting...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { supabase } from '../../supabase.js';
+import { useRouter } from 'vue-router';
+
+// Click outside directive
+const vClickOutside = {
+  mounted(el, binding) {
+    el.clickOutsideEvent = function(event) {
+      if (!(el === event.target || el.contains(event.target))) {
+        binding.value();
+      }
+    };
+    document.addEventListener('click', el.clickOutsideEvent);
+  },
+  unmounted(el) {
+    document.removeEventListener('click', el.clickOutsideEvent);
+  }
+};
+
+const router = useRouter();
+
+// ===== USER PROFILE & DROPDOWN =====
+const userProfile = ref({
+  name: '',
+  avatar: null
+});
+const showUserDropdown = ref(false);
 
 // ===== THEME MANAGEMENT =====
 const isDarkMode = ref(false);
@@ -882,10 +947,88 @@ const clearMessages = () => {
   deleteSuccess.value = '';
 };
 
+// ===== USER DROPDOWN FUNCTIONS =====
+const toggleUserDropdown = () => {
+  showUserDropdown.value = !showUserDropdown.value;
+};
+
+const closeUserDropdown = () => {
+  showUserDropdown.value = false;
+};
+
+// Logout confirmation modal
+const showLogoutModal = ref(false);
+
+const openLogoutModal = () => {
+  showLogoutModal.value = true;
+};
+
+const closeLogoutModal = () => {
+  showLogoutModal.value = false;
+};
+
+const isLoggingOut = ref(false);
+
+const confirmLogout = () => {
+  isLoggingOut.value = true;
+  
+  console.log('🚪 Logging out...');
+  
+  // Clear storage immediately
+  localStorage.clear();
+  sessionStorage.clear();
+  
+  // Sign out from Supabase (don't wait for response)
+  supabase.auth.signOut({ scope: 'local' });
+  
+  console.log('✅ Logout successful');
+  
+  // Force immediate redirect - most reliable method
+  window.location.replace('/login');
+};
+
+const handleLogout = () => {
+  openLogoutModal();
+};
+
+// Load user profile for navbar
+const loadUserProfileForNavbar = async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id, full_name, role')
+      .eq('auth_user_id', user.id)
+      .single();
+
+    if (profile) {
+      userProfile.value.name = profile.full_name || 'User';
+      
+      // Get role-specific data
+      if (profile.role === 'teacher') {
+        const { data: teacherData } = await supabase
+          .from('teachers')
+          .select('full_name')
+          .eq('profile_id', profile.id)
+          .single();
+        
+        if (teacherData) {
+          userProfile.value.name = teacherData.full_name || 'Teacher';
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error loading user profile for navbar:', error);
+  }
+};
+
 // ===== INITIALIZATION =====
 onMounted(() => {
   initializeTheme();
   loadUserProfile();
+  loadUserProfileForNavbar();
 });
 </script>
 
@@ -1021,6 +1164,43 @@ body, html {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+/* User Profile Section */
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: white;
+}
+
+.user-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: white;
+}
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
 }
 
 /* Main Content */
@@ -2436,5 +2616,174 @@ input:checked + .slider:before {
 .helper-text strong {
   color: #dc3545;
   font-weight: 700;
+}
+
+/* Logout Confirmation Modal */
+.logout-modal {
+  max-width: 400px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: white;
+  border: 2px solid #3D8D7A;
+}
+
+.dark .logout-modal {
+  background: #2a2e36;
+  border: 2px solid #20c997;
+}
+
+.logout-header {
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  color: white;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.dark .logout-header {
+  background: linear-gradient(135deg, #20c997, #17a085);
+}
+
+.logout-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: white;
+}
+
+.logout-icon {
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: center;
+}
+
+.logout-icon svg {
+  color: #3D8D7A;
+  animation: pulse 2s infinite;
+}
+
+.dark .logout-icon svg {
+  color: #20c997;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+.logout-message {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.dark .logout-message {
+  color: #e5e7eb;
+}
+
+.logout-submessage {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0;
+  text-align: center;
+}
+
+.dark .logout-submessage {
+  color: #9ca3af;
+}
+
+.logout-footer {
+  padding: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.dark .logout-footer {
+  border-top: 1px solid #3D8D7A;
+  background: #1e2127;
+}
+
+.btn-cancel {
+  padding: 0.75rem 1.5rem;
+  border: 2px solid #e2e8f0;
+  background: white;
+  color: #6b7280;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  min-width: 100px;
+}
+
+.dark .btn-cancel {
+  background: #2a2e36;
+  border-color: #3D8D7A;
+  color: #9ca3af;
+}
+
+.btn-cancel:hover {
+  border-color: #3D8D7A;
+  color: #3D8D7A;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.2);
+}
+
+.dark .btn-cancel:hover {
+  border-color: #20c997;
+  color: #20c997;
+}
+
+.btn-logout {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  color: white;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  min-width: 100px;
+}
+
+.btn-logout:hover {
+  background: linear-gradient(135deg, #c82333, #a71e2a);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.btn-logout:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  opacity: 0.6;
+}
+
+.logout-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+.btn-logout .loading-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.9rem;
 }
 </style>
