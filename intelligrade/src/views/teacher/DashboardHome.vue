@@ -63,7 +63,7 @@
                 <div v-if="notifications.length === 0" class="no-notifications">
                   No new notifications
                 </div>
-                <div v-for="notif in notifications" :key="notif.id" class="notification-item">
+                <div v-for="notif in notifications" :key="notif.id" class="notification-item" @click="handleNotificationClick(notif)">
                   <div class="notif-content">
                     <h4>{{ notif.title }}</h4>
                     <p>{{ notif.body }}</p>
@@ -232,7 +232,7 @@
                 <p class="card-description">Review pending student submissions</p>
               </div>
               <div class="card-actions">
-                <button class="refresh-btn">
+                <button class="refresh-btn" @click="refreshAssessments">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z" />
                   </svg>
@@ -478,9 +478,23 @@ const logout = () => {
   openLogoutModal()
 }
 
+const refreshAssessments = async () => {
+  console.log('🔄 Refreshing assessments...')
+  await loadDashboardStats()
+  await loadNotifications()
+}
+
 const gradeAssessment = (assessment) => {
   console.log('Grading assessment:', assessment)
-  // TODO: Implement grade assessment functionality
+  // Navigate to gradebook with the specific assessment
+  router.push({
+    path: '/teacher/gradebook',
+    query: {
+      assessmentId: assessment.id,
+      sectionId: assessment.sectionId,
+      subjectId: assessment.subjectId
+    }
+  })
 }
 
 // Load teacher profile
@@ -532,6 +546,89 @@ const loadTeacherProfile = async () => {
   } catch (error) {
     console.error('❌ Error loading profile:', error)
     return false
+  }
+}
+
+// Load notifications
+const loadNotifications = async () => {
+  if (!teacherId.value) {
+    console.warn('⚠️ No teacher ID, cannot load notifications')
+    return
+  }
+  
+  try {
+    console.log('🔔 Loading notifications for teacher:', teacherId.value)
+    
+    // Get recent quiz submissions (last 24 hours)
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+    const yesterdayISO = yesterday.toISOString()
+    
+    const { data: recentSubmissions, error: submissionsError } = await supabase
+      .from('quiz_attempts')
+      .select(`
+        id,
+        submitted_at,
+        student_id,
+        quiz_id,
+        quizzes!inner(title, teacher_id),
+        students!inner(full_name)
+      `)
+      .eq('quizzes.teacher_id', teacherId.value)
+      .eq('status', 'submitted')
+      .gte('submitted_at', yesterdayISO)
+      .order('submitted_at', { ascending: false })
+      .limit(10)
+    
+    if (!submissionsError && recentSubmissions) {
+      const submissionNotifications = recentSubmissions.map(submission => ({
+        id: `submission-${submission.id}`,
+        title: 'New Quiz Submission',
+        body: `${submission.students.full_name} submitted "${submission.quizzes.title}"`,
+        date: new Date(submission.submitted_at).toLocaleString(),
+        type: 'submission'
+      }))
+      
+      notifications.value = [...submissionNotifications]
+      console.log('✅ Loaded', submissionNotifications.length, 'submission notifications')
+    }
+    
+    // Get recent messages from students using your existing schema
+    try {
+      const { data: recentMessages, error: messagesError } = await supabase
+        .from('messages')
+        .select(`
+          id, 
+          message_text, 
+          sent_at,
+          sender_id,
+          students!sender_id(full_name)
+        `)
+        .eq('recipient_id', teacherId.value)
+        .eq('message_type', 'direct')
+        .not('message_reads.reader_id', 'eq', teacherId.value)
+        .order('sent_at', { ascending: false })
+        .limit(5)
+      
+      if (!messagesError && recentMessages) {
+        const messageNotifications = recentMessages.map(message => ({
+          id: `message-${message.id}`,
+          title: 'New Message',
+          body: `${message.students?.full_name || 'Student'}: ${message.message_text.substring(0, 50)}...`,
+          date: new Date(message.sent_at).toLocaleString(),
+          type: 'message'
+        }))
+        
+        notifications.value = [...notifications.value, ...messageNotifications]
+        console.log('✅ Loaded', messageNotifications.length, 'message notifications')
+      }
+    } catch (msgError) {
+      console.log('ℹ️ Messages table not configured or no messages:', msgError.message)
+      // Don't throw error if messages table doesn't have data yet
+    }
+    
+  } catch (error) {
+    console.error('❌ Error loading notifications:', error)
   }
 }
 
@@ -677,22 +774,92 @@ onMounted(async () => {
   
   if (profileLoaded) {
     await loadDashboardStats()
+    await loadNotifications()
     
     // Auto-refresh every 30 seconds
-    const intervalId = setInterval(() => {
+    const statsIntervalId = setInterval(() => {
       loadDashboardStats()
     }, 30000)
+    
+    // Refresh notifications every 15 seconds
+    const notifIntervalId = setInterval(() => {
+      loadNotifications()
+    }, 15000)
     
     // Add scroll listener for scroll-to-top button
     window.addEventListener('scroll', handleScroll)
     
+    // Set up real-time subscription for quiz submissions
+    const quizSubscription = supabase
+      .channel('quiz_attempts_channel')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'quiz_attempts',
+        filter: `status=eq.submitted`
+      }, (payload) => {
+        console.log('🆕 New quiz submission:', payload)
+        loadNotifications() // Refresh notifications when new submission
+        loadDashboardStats() // Refresh stats
+      })
+      .subscribe()
+    
+    // Set up real-time subscription for messages using your schema
+    const messageSubscription = supabase
+      .channel('messages_channel')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages',
+        filter: `recipient_id=eq.${teacherId.value}`
+      }, (payload) => {
+        console.log('💬 New message received:', payload)
+        loadNotifications() // Refresh notifications when new message
+      })
+      .subscribe()
+    
     // Cleanup on unmount
     return () => {
-      clearInterval(intervalId)
+      clearInterval(statsIntervalId)
+      clearInterval(notifIntervalId)
       window.removeEventListener('scroll', handleScroll)
+      quizSubscription.unsubscribe()
+      messageSubscription.unsubscribe()
     }
   }
 })
+
+// Notification click handler
+const handleNotificationClick = async (notification) => {
+  console.log('📱 Clicked notification:', notification)
+  
+  if (notification.type === 'submission') {
+    // Navigate to gradebook for quiz submissions
+    router.push('/teacher/gradebook')
+  } else if (notification.type === 'message') {
+    // Navigate to messages for message notifications
+    router.push('/teacher/messages')
+    
+    // Mark message as read using your schema
+    try {
+      const messageId = notification.id.replace('message-', '')
+      
+      // Use the mark_message_read function from your schema
+      await supabase.rpc('mark_message_read', {
+        p_message_id: messageId,
+        p_reader_id: teacherId.value
+      })
+      
+      // Refresh notifications to update count
+      await loadNotifications()
+    } catch (error) {
+      console.error('❌ Error marking message as read:', error)
+    }
+  }
+  
+  // Close notification dropdown
+  showNotifDropdown.value = false
+}
 </script>
 
 <style scoped>
@@ -1158,7 +1325,7 @@ onMounted(async () => {
   box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
 }
 
-/* Floating Action Buttons - Removed (now using compact buttons) */
+/* Floating Action Buttons - Removed (now using compact buttons)*/
 
 
 
@@ -2109,7 +2276,7 @@ onMounted(async () => {
   }
   
   .welcome-header {
-    margin: 0 0.25rem 1rem;
+    margin: 0 0.25rem 0.75rem;
     padding: 1rem 0.75rem;
   }
   
@@ -2162,7 +2329,7 @@ onMounted(async () => {
   }
   
   .welcome-header {
-    margin: 0 0.125rem 0.75rem;
+    margin: 0.125rem 0.125rem 0.75rem;
     padding: 0.75rem 0.5rem;
   }
   
@@ -2198,7 +2365,7 @@ onMounted(async () => {
   }
   
   .content-section {
-    margin: 0 0.125rem 0.75rem;
+    margin: 0.125rem 0.125rem 0.75rem;
   }
   
   .content-card {
