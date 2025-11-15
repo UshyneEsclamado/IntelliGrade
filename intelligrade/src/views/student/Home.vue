@@ -263,7 +263,7 @@
   </div>
 </template>
 
-<script lang="ts">
+<script>
 import { supabase } from '../../supabase.js';
 
 export default {
@@ -284,7 +284,18 @@ export default {
       showNotifDropdown: false,
       subscriptions: [],
       isActive: false,
-      enrolledSectionIds: []
+      enrolledSectionIds: [],
+      // Add caching
+      _cache: {
+        subjects: new Map(),
+        sections: new Map(),
+        lastUpdated: null
+      },
+      _loading: {
+        profile: false,
+        stats: false,
+        notifications: false
+      }
     };
   },
   methods: {
@@ -331,191 +342,81 @@ export default {
     },
 
     async loadNotifications() {
-      if (!this.studentRecordId) {
-        console.log('Cannot load notifications: no studentRecordId');
-        return;
-      }
+      if (!this.studentRecordId || this._loading.notifications) return;
+      this._loading.notifications = true;
       
       try {
-        console.log('Loading notifications for student:', this.studentRecordId);
         const notifications = [];
         
-        // Ensure we have enrolled sections
-        if (this.enrolledSectionIds.length === 0) {
-          await this.loadEnrolledSections();
-        }
-
-        // 1. Get unread direct messages
-        const { data: messages, error: msgError } = await supabase
-          .from('messages')
-          .select('id, message_text, message_type, sent_at, sender_id, section_id')
-          .eq('recipient_id', this.studentRecordId)
-          .is('read_at', null)
-          .order('sent_at', { ascending: false })
-          .limit(10);
-
-        if (msgError) {
-          console.error('Error loading direct messages:', msgError);
-        } else if (messages && messages.length > 0) {
-          console.log('Found', messages.length, 'unread direct messages');
-          for (const msg of messages) {
-            try {
-              const { data: section } = await supabase
-                .from('sections')
-                .select('name, subject_id')
-                .eq('id', msg.section_id)
-                .maybeSingle();
-
-              let subjectName = 'Unknown Subject';
-              if (section?.subject_id) {
-                const { data: subject } = await supabase
-                  .from('subjects')
-                  .select('name')
-                  .eq('id', section.subject_id)
-                  .maybeSingle();
-                subjectName = subject?.name || 'Unknown Subject';
-              }
-
-              const sectionName = section?.name || 'Unknown Section';
-              const messagePreview = msg.message_text?.substring(0, 100) || '';
-              const messageSuffix = msg.message_text?.length > 100 ? '...' : '';
-              
-              notifications.push({
-                id: `msg-${msg.id}`,
-                title: msg.message_type === 'announcement' ? 'New Announcement' : 'New Message',
-                body: `${subjectName} - ${sectionName}: ${messagePreview}${messageSuffix}`,
-                date: new Date(msg.sent_at).toLocaleString(),
-                type: 'message',
-                rawDate: new Date(msg.sent_at)
-              });
-            } catch (err) {
-              console.error('Error processing message:', err);
-            }
-          }
-        }
-
-        // 2. Get broadcast announcements from enrolled sections
-        if (this.enrolledSectionIds.length > 0) {
-          const { data: broadcasts, error: broadcastError } = await supabase
+        // Load only critical notifications - messages and urgent quizzes
+        const [messagesResult, quizzesResult] = await Promise.all([
+          // Get recent direct messages
+          supabase
             .from('messages')
-            .select('id, message_text, sent_at, section_id, created_at')
-            .eq('message_type', 'announcement')
-            .is('recipient_id', null)
-            .in('section_id', this.enrolledSectionIds)
+            .select('id, message_text, message_type, sent_at, section_id')
+            .eq('recipient_id', this.studentRecordId)
+            .is('read_at', null)
             .order('sent_at', { ascending: false })
-            .limit(10);
-
-          if (broadcastError) {
-            console.error('Error loading broadcasts:', broadcastError);
-          } else if (broadcasts && broadcasts.length > 0) {
-            console.log('Found', broadcasts.length, 'broadcast announcements');
-            for (const msg of broadcasts) {
-              try {
-                const { data: section } = await supabase
-                  .from('sections')
-                  .select('name, subject_id')
-                  .eq('id', msg.section_id)
-                  .maybeSingle();
-
-                let subjectName = 'Unknown Subject';
-                if (section?.subject_id) {
-                  const { data: subject } = await supabase
-                    .from('subjects')
-                    .select('name')
-                    .eq('id', section.subject_id)
-                    .maybeSingle();
-                  subjectName = subject?.name || 'Unknown Subject';
-                }
-
-                const sectionName = section?.name || 'Unknown Section';
-                const messagePreview = msg.message_text?.substring(0, 100) || '';
-                const messageSuffix = msg.message_text?.length > 100 ? '...' : '';
-                
-                notifications.push({
-                  id: `broadcast-${msg.id}`,
-                  title: 'Class Announcement',
-                  body: `${subjectName} - ${sectionName}: ${messagePreview}${messageSuffix}`,
-                  date: new Date(msg.sent_at).toLocaleString(),
-                  type: 'announcement',
-                  rawDate: new Date(msg.sent_at)
-                });
-              } catch (err) {
-                console.error('Error processing broadcast:', err);
-              }
-            }
-          }
-        }
-
-        // 3. Get available quizzes (published and within date range)
-        const now = new Date().toISOString();
-        
-        if (this.enrolledSectionIds.length > 0) {
-          const { data: availableQuizzes, error: quizError } = await supabase
+            .limit(5),
+          
+          // Get urgent quizzes (due within 3 days)
+          supabase
             .from('quizzes')
-            .select('id, title, start_date, end_date, section_id, subject_id, created_at')
+            .select('id, title, end_date, section_id, subject_id')
             .eq('status', 'published')
             .in('section_id', this.enrolledSectionIds)
-            .lte('start_date', now)
-            .gte('end_date', now);
+            .gte('end_date', new Date().toISOString())
+            .lte('end_date', new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString())
+            .limit(5)
+        ]);
 
-          if (quizError) {
-            console.error('Error loading available quizzes:', quizError);
-          } else if (availableQuizzes && availableQuizzes.length > 0) {
-            console.log('Found', availableQuizzes.length, 'available quizzes');
-            
-            // Get all attempts for this student
-            const { data: allAttempts } = await supabase
-              .from('quiz_attempts')
-              .select('quiz_id, status')
-              .eq('student_id', this.studentRecordId)
-              .in('status', ['submitted', 'graded', 'reviewed']);
+        // Process messages quickly
+        if (messagesResult.data?.length > 0) {
+          for (const msg of messagesResult.data) {
+            notifications.push({
+              id: `msg-${msg.id}`,
+              title: msg.message_type === 'announcement' ? 'New Announcement' : 'New Message',
+              body: msg.message_text?.substring(0, 80) + '...',
+              date: new Date(msg.sent_at).toLocaleString(),
+              type: 'message',
+              rawDate: new Date(msg.sent_at)
+            });
+          }
+        }
 
-            const completedQuizIds = new Set(allAttempts?.map(a => a.quiz_id) || []);
+        // Process urgent quizzes
+        if (quizzesResult.data?.length > 0) {
+          const { data: attempts } = await supabase
+            .from('quiz_attempts')
+            .select('quiz_id')
+            .eq('student_id', this.studentRecordId)
+            .in('status', ['submitted', 'graded', 'reviewed']);
 
-            for (const quiz of availableQuizzes) {
-              if (!completedQuizIds.has(quiz.id)) {
-                try {
-                  const { data: section } = await supabase
-                    .from('sections')
-                    .select('name')
-                    .eq('id', quiz.section_id)
-                    .maybeSingle();
+          const completedQuizIds = new Set(attempts?.map(a => a.quiz_id) || []);
 
-                  const { data: subject } = await supabase
-                    .from('subjects')
-                    .select('name')
-                    .eq('id', quiz.subject_id)
-                    .maybeSingle();
-
-                  const sectionName = section?.name || 'Unknown Section';
-                  const subjectName = subject?.name || 'Unknown Subject';
-                  const dueDate = new Date(quiz.end_date).toLocaleDateString();
-                  
-                  notifications.push({
-                    id: `quiz-${quiz.id}`,
-                    title: 'Quiz Available',
-                    body: `${subjectName} - ${quiz.title} in ${sectionName}. Due: ${dueDate}`,
-                    date: new Date(quiz.start_date).toLocaleString(),
-                    type: 'quiz',
-                    rawDate: new Date(quiz.start_date)
-                  });
-                } catch (err) {
-                  console.error('Error processing quiz notification:', err);
-                }
-              }
+          for (const quiz of quizzesResult.data) {
+            if (!completedQuizIds.has(quiz.id)) {
+              notifications.push({
+                id: `quiz-${quiz.id}`,
+                title: 'Quiz Due Soon',
+                body: `${quiz.title} - Due: ${new Date(quiz.end_date).toLocaleDateString()}`,
+                date: new Date(quiz.end_date).toLocaleString(),
+                type: 'quiz',
+                rawDate: new Date(quiz.end_date)
+              });
             }
           }
         }
 
-        // Sort by date (most recent first) and limit
         this.notifications = notifications
           .sort((a, b) => b.rawDate.getTime() - a.rawDate.getTime())
-          .slice(0, 15);
-
-        console.log('Total notifications loaded:', this.notifications.length);
+          .slice(0, 10);
 
       } catch (error) {
         console.error('Error loading notifications:', error);
+        this.notifications = [];
+      } finally {
+        this._loading.notifications = false;
       }
     },
 
@@ -525,53 +426,13 @@ export default {
         return;
       }
 
-      console.log('Setting up real-time subscriptions for student:', this.studentRecordId);
+      console.log('Setting up minimal real-time subscriptions for student:', this.studentRecordId);
 
       // Unsubscribe from any existing subscriptions first
       this.cleanupSubscriptions();
 
-      // 1. Profile changes
-      const profileSub = supabase
-        .channel('student_home_profile')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'profiles',
-            filter: `auth_user_id=eq.${this.userId}`
-          },
-          (payload) => {
-            console.log('🔔 Profile changed:', payload);
-            this.loadStudentProfile();
-          }
-        )
-        .subscribe((status) => {
-          console.log('Profile subscription status:', status);
-        });
-
-      // 2. Student record changes
-      const studentSub = supabase
-        .channel('student_home_student')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'students',
-            filter: `id=eq.${this.studentRecordId}`
-          },
-          (payload) => {
-            console.log('🔔 Student record changed:', payload);
-            this.loadStudentProfile();
-          }
-        )
-        .subscribe((status) => {
-          console.log('Student subscription status:', status);
-        });
-
-      // 3. All messages (we'll filter in the handler)
-      const messageSub = supabase
+      // Only subscribe to essential changes - messages and quizzes
+      const messagesSub = supabase
         .channel('student_home_messages')
         .on(
           'postgres_changes',
@@ -581,24 +442,19 @@ export default {
             table: 'messages'
           },
           (payload) => {
-            console.log('🔔 Message event:', payload.eventType, payload);
             const msg = payload.new || payload.old;
-            
-            // Check if message is relevant to this student
+            // Only reload if message is relevant
             const isDirectMessage = msg.recipient_id === this.studentRecordId;
             const isBroadcast = !msg.recipient_id && this.enrolledSectionIds.includes(msg.section_id);
             
             if (isDirectMessage || isBroadcast) {
-              console.log('Message is relevant, reloading notifications');
               this.loadNotifications();
             }
           }
         )
-        .subscribe((status) => {
-          console.log('Messages subscription status:', status);
-        });
+        .subscribe();
 
-      // 4. All quizzes
+      // Quiz changes for enrolled sections
       const quizSub = supabase
         .channel('student_home_quizzes')
         .on(
@@ -609,118 +465,16 @@ export default {
             table: 'quizzes'
           },
           (payload) => {
-            console.log('🔔 Quiz event:', payload.eventType, payload);
             const quiz = payload.new || payload.old;
-            
-            // Check if quiz is in student's sections
             if (this.enrolledSectionIds.includes(quiz.section_id)) {
-              console.log('Quiz is relevant, reloading data');
               this.loadAvailableQuizzes();
-              this.loadNotifications();
             }
           }
         )
-        .subscribe((status) => {
-          console.log('Quizzes subscription status:', status);
-        });
+        .subscribe();
 
-      // 5. Quiz attempts for this student
-      const attemptSub = supabase
-        .channel('student_home_attempts')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'quiz_attempts',
-            filter: `student_id=eq.${this.studentRecordId}`
-          },
-          (payload) => {
-            console.log('🔔 Quiz attempt event:', payload.eventType, payload);
-            this.loadAvailableQuizzes();
-            this.loadNotifications();
-          }
-        )
-        .subscribe((status) => {
-          console.log('Quiz attempts subscription status:', status);
-        });
-
-      // 6. Enrollments for this student
-      const enrollmentSub = supabase
-        .channel('student_home_enrollments')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'enrollments',
-            filter: `student_id=eq.${this.studentRecordId}`
-          },
-          (payload) => {
-            console.log('🔔 Enrollment event:', payload.eventType, payload);
-            // Reload enrolled sections and then reload everything
-            this.loadEnrolledSections().then(() => {
-              this.loadDashboardStats();
-              this.loadNotifications();
-            });
-          }
-        )
-        .subscribe((status) => {
-          console.log('Enrollments subscription status:', status);
-        });
-
-      // 7. Subjects
-      const subjectSub = supabase
-        .channel('student_home_subjects')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'subjects'
-          },
-          (payload) => {
-            console.log('🔔 Subject event:', payload.eventType);
-            this.loadDashboardStats();
-            this.loadNotifications();
-          }
-        )
-        .subscribe((status) => {
-          console.log('Subjects subscription status:', status);
-        });
-
-      // 8. Sections
-      const sectionSub = supabase
-        .channel('student_home_sections')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'sections'
-          },
-          (payload) => {
-            console.log('🔔 Section event:', payload.eventType);
-            this.loadDashboardStats();
-            this.loadNotifications();
-          }
-        )
-        .subscribe((status) => {
-          console.log('Sections subscription status:', status);
-        });
-
-      this.subscriptions = [
-        profileSub,
-        studentSub,
-        messageSub,
-        quizSub,
-        attemptSub,
-        enrollmentSub,
-        subjectSub,
-        sectionSub
-      ];
-
-      console.log('✅ Real-time subscriptions established:', this.subscriptions.length);
+      this.subscriptions = [messagesSub, quizSub];
+      console.log('✅ Minimal real-time subscriptions established');
     },
 
     cleanupSubscriptions() {
@@ -812,24 +566,30 @@ export default {
           return;
         }
 
-        const { data: enrollments, error: enrollmentError } = await supabase
-          .from('enrollments')
-          .select('section_id, subject_id')
-          .eq('student_id', this.studentRecordId)
-          .eq('status', 'active');
+        // Use cached enrollments if available
+        if (this.enrolledSectionIds.length === 0) {
+          await this.loadEnrolledSections();
+        }
 
-        if (enrollmentError) {
-          console.error('Error loading enrollments:', enrollmentError);
-        } else {
-          const uniqueSubjects = new Set(enrollments?.map(e => e.subject_id) || []);
+        // Get unique subjects from enrolled sections
+        if (this.enrolledSectionIds.length > 0) {
+          const { data: sections } = await supabase
+            .from('sections')
+            .select('subject_id')
+            .in('id', this.enrolledSectionIds);
+
+          const uniqueSubjects = new Set(sections?.map(s => s.subject_id) || []);
           this.totalSubjects = uniqueSubjects.size;
-          console.log('Total subjects:', this.totalSubjects);
+        } else {
+          this.totalSubjects = 0;
         }
 
         await this.loadAvailableQuizzes();
 
       } catch (error) {
         console.error('Error loading dashboard stats:', error);
+        this.totalSubjects = 0;
+        this.pendingAssessments = 0;
       }
     },
 
@@ -837,24 +597,21 @@ export default {
       try {
         if (!this.studentRecordId) return;
 
-        const { data: enrollments, error: enrollError } = await supabase
-          .from('enrollments')
-          .select('section_id, subject_id')
-          .eq('student_id', this.studentRecordId)
-          .eq('status', 'active');
+        // Use cached enrolled sections instead of querying again
+        if (this.enrolledSectionIds.length === 0) {
+          await this.loadEnrolledSections();
+        }
 
-        if (enrollError || !enrollments || enrollments.length === 0) {
+        if (this.enrolledSectionIds.length === 0) {
           this.recentAssessments = [];
           this.pendingAssessments = 0;
           return;
         }
 
-        const sectionIds = enrollments.map(e => e.section_id);
-
         const { data: quizzes, error: quizError } = await supabase
           .from('quizzes')
           .select('id, title, description, start_date, end_date, section_id, subject_id, attempts_allowed')
-          .in('section_id', sectionIds)
+          .in('section_id', this.enrolledSectionIds)
           .eq('status', 'published')
           .order('end_date', { ascending: true });
 
@@ -894,19 +651,23 @@ export default {
         let pendingCount = 0;
         const processedQuizzes = [];
 
+        // Get all subjects and sections in bulk to reduce queries
+        const subjectIds = [...new Set(quizzes.map(q => q.subject_id))];
+        const { data: subjects } = await supabase
+          .from('subjects')
+          .select('id, name')
+          .in('id', subjectIds);
+
+        const { data: sections } = await supabase
+          .from('sections')
+          .select('id, name')
+          .in('id', this.enrolledSectionIds);
+
+        const subjectMap = new Map(subjects?.map(s => [s.id, s.name]) || []);
+        const sectionMap = new Map(sections?.map(s => [s.id, s.name]) || []);
+
         for (const quiz of quizzes) {
           try {
-            const { data: subject } = await supabase
-              .from('subjects')
-              .select('name')
-              .eq('id', quiz.subject_id)
-              .maybeSingle();
-
-            const { data: section } = await supabase
-              .from('sections')
-              .select('name')
-              .eq('id', quiz.section_id)
-              .maybeSingle();
 
             const startDate = quiz.start_date ? new Date(quiz.start_date) : null;
             const endDate = quiz.end_date ? new Date(quiz.end_date) : null;
@@ -947,8 +708,8 @@ export default {
             processedQuizzes.push({
               id: quiz.id,
               title: quiz.title || 'Untitled Quiz',
-              subject: subject?.name || 'Unknown Subject',
-              section: section?.name || 'Unknown Section',
+              subject: subjectMap.get(quiz.subject_id) || 'Unknown Subject',
+              section: sectionMap.get(quiz.section_id) || 'Unknown Section',
               startDate: startDate,
               dueDate: endDate,
               status: status,
@@ -1044,7 +805,7 @@ export default {
     },
 
     navigateToSubjects() {
-      const parent = this.$parent as any;
+      const parent = this.$parent;
       if (parent && typeof parent.navigateTo === 'function') {
         parent.navigateTo('subjects');
       } else {
@@ -1053,7 +814,7 @@ export default {
     },
 
     navigateToCalendar() {
-      const parent = this.$parent as any;
+      const parent = this.$parent;
       if (parent && typeof parent.navigateTo === 'function') {
         parent.navigateTo('calendar');
       } else {
@@ -1062,7 +823,7 @@ export default {
     },
 
     navigateToMessages() {
-      const parent = this.$parent as any;
+      const parent = this.$parent;
       if (parent && typeof parent.navigateTo === 'function') {
         parent.navigateTo('messages');
       } else {
@@ -1071,7 +832,7 @@ export default {
     },
 
     navigateToSettings() {
-      const parent = this.$parent as any;
+      const parent = this.$parent;
       if (parent && typeof parent.navigateTo === 'function') {
         parent.navigateTo('settings');
       } else {
@@ -1086,23 +847,38 @@ export default {
     // Add click outside listener for notifications
     document.addEventListener('click', this.handleClickOutside);
     
-    // Load initial data
-    await this.loadStudentProfile();
-    await this.loadNotifications();
-    
-    // Setup real-time subscriptions after profile is loaded
-    if (this.userId && this.studentRecordId) {
-      console.log('Setting up real-time subscriptions...');
-      this.setupRealtimeSubscriptions();
-    } else {
-      console.warn('Cannot setup subscriptions - missing user data');
+    // Load initial data in parallel for faster loading
+    try {
+      await this.loadStudentProfile();
+      
+      // Load other data in parallel after we have student info
+      if (this.studentRecordId) {
+        await Promise.all([
+          this.loadEnrolledSections(),
+          this.loadDashboardStats()
+        ]);
+        
+        // Load notifications in background (non-blocking)
+        this.loadNotifications();
+      }
+      
+      // Setup real-time subscriptions in background
+      if (this.userId && this.studentRecordId) {
+        setTimeout(() => {
+          this.setupRealtimeSubscriptions();
+        }, 100);
+      }
+      
+    } catch (error) {
+      console.error('Error loading home data:', error);
     }
     
-    // Backup polling (less frequent since we have real-time)
+    // Reduced polling frequency since we have real-time updates
     this.pollInterval = setInterval(() => {
-      console.log('🔄 Polling update...');
-      this.loadNotifications();
-    }, 120000); // Every 2 minutes
+      if (this.studentRecordId) {
+        this.loadNotifications();
+      }
+    }, 300000); // Every 5 minutes
   },
 
   watch: {
