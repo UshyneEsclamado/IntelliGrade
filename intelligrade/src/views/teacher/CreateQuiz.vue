@@ -574,7 +574,7 @@
                     Start Date & Time (PHT)
                   </label>
                   <input v-model="quiz.settings.startDate" type="datetime-local" class="form-input enhanced-input" />
-                  <small class="timezone-note">Philippines Time (UTC+8)</small>
+                  <small class="timezone-note">Philippines Time (UTC+8) - This will be saved as UTC in database</small>
                 </div>
                 <div class="form-group">
                   <label class="form-label-small">
@@ -587,7 +587,7 @@
                     End Date & Time (PHT)
                   </label>
                   <input v-model="quiz.settings.endDate" type="datetime-local" class="form-input enhanced-input" />
-                  <small class="timezone-note">Philippines Time (UTC+8)</small>
+                  <small class="timezone-note">Philippines Time (UTC+8) - This will be saved as UTC in database</small>
                 </div>
               </div>
             </div>
@@ -800,17 +800,100 @@ export default {
     // UTILITY FUNCTIONS
     // ===============================================
     
-    // Convert Philippines time to UTC for storage
+    // TIMEZONE UTILITY FUNCTIONS - Exactly matching TakeQuiz.vue
+    const formatPHTime = (utcDateString) => {
+      if (!utcDateString) return 'Not set';
+      try {
+        const utcDate = new Date(utcDateString);
+        const options = {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          timeZone: 'Asia/Manila',
+          hour12: true
+        };
+        return utcDate.toLocaleString('en-PH', options) + ' PHT';
+      } catch (error) {
+        console.error('Error formatting PH time:', error);
+        return 'Invalid date';
+      }
+    };
+
     const convertPHTimeToUTC = (phDateString) => {
       if (!phDateString) return null;
       try {
-        const phDate = new Date(phDateString);
-        const utcTime = new Date(phDate.getTime() - (8 * 60 * 60 * 1000));
+        // The datetime-local input gives us local time without timezone info
+        // We need to interpret this as Philippines time and convert to UTC
+        const localDate = new Date(phDateString);
+        
+        // Get the timezone offset for Philippines (should be -480 minutes for UTC+8)
+        const phOffset = -8 * 60; // UTC+8 = -480 minutes
+        const localOffset = localDate.getTimezoneOffset(); // Browser's timezone offset
+        
+        // Calculate the difference between local timezone and Philippines timezone
+        const offsetDiff = localOffset - phOffset;
+        
+        // Adjust the date to treat the input as Philippines time
+        const utcTime = new Date(localDate.getTime() + (offsetDiff * 60 * 1000));
+        
+        console.log('🕐 Converting PH to UTC:');
+        console.log('  Input PH time:', phDateString);
+        console.log('  Local offset:', localOffset);
+        console.log('  PH offset:', phOffset);
+        console.log('  Offset diff:', offsetDiff);
+        console.log('  Result UTC:', utcTime.toISOString());
+        
         return utcTime.toISOString();
       } catch (error) {
         console.error('Error converting PH time to UTC:', error);
         return null;
       }
+    };
+
+    const convertUTCtoPHForInput = (utcDateString) => {
+      if (!utcDateString) return '';
+      try {
+        const utcDate = new Date(utcDateString);
+        
+        // Convert UTC to Philippines time for the datetime-local input
+        const phTime = new Intl.DateTimeFormat('sv-SE', {
+          timeZone: 'Asia/Manila',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        }).format(utcDate).replace(' ', 'T');
+        
+        console.log('🕐 Converting UTC to PH input:');
+        console.log('  UTC input:', utcDateString);
+        console.log('  PH output:', phTime);
+        
+        return phTime;
+      } catch (error) {
+        console.error('Error converting UTC to PH for input:', error);
+        return '';
+      }
+    };
+
+    const debugTimeConversion = () => {
+      const now = new Date();
+      console.log('🕐 TIMEZONE DEBUG at component mount:');
+      console.log('Browser timezone offset (minutes):', now.getTimezoneOffset());
+      console.log('Current local time:', now.toString());
+      console.log('Current UTC time:', now.toISOString());
+      console.log('Formatted as PH time:', formatPHTime(now.toISOString()));
+      
+      // Test with the exact time mentioned in your issue: 10:35 PM
+      const testPHTime = '2024-11-15T22:35';  // 10:35 PM PH time
+      const convertedUTC = convertPHTimeToUTC(testPHTime);
+      console.log('\n🧪 Test conversion:');
+      console.log('Input PH time (10:35 PM):', testPHTime);
+      console.log('Converted to UTC:', convertedUTC);
+      console.log('Formatted back to PH display:', formatPHTime(convertedUTC));
+      console.log('Converted back to input format:', convertUTCtoPHForInput(convertedUTC));
     };
 
     const getStepIndex = (step) => {
@@ -1083,10 +1166,26 @@ export default {
       if (quiz.value.settings.startDate && quiz.value.settings.endDate) {
         const startDate = new Date(quiz.value.settings.startDate);
         const endDate = new Date(quiz.value.settings.endDate);
+        const now = new Date();
+        
         if (endDate <= startDate) {
           alert('End date must be after start date');
           currentStep.value = 'settings';
           return false;
+        }
+        
+        // Optional: Warn if start date is in the past
+        if (startDate < now) {
+          const proceed = confirm(
+            'The start date is in the past. Students will be able to take this quiz immediately.\n\n' +
+            `Start: ${new Date(quiz.value.settings.startDate).toLocaleString()}\n` +
+            `Now: ${now.toLocaleString()}\n\n` +
+            'Do you want to continue?'
+          );
+          if (!proceed) {
+            currentStep.value = 'settings';
+            return false;
+          }
         }
       }
 
@@ -1150,6 +1249,18 @@ export default {
         console.log('✅ Teacher verified:', teacherInfo.value.teacher_id);
 
         // === STEP 1: Create Quiz ===
+        const startDateUTC = convertPHTimeToUTC(quiz.value.settings.startDate);
+        const endDateUTC = convertPHTimeToUTC(quiz.value.settings.endDate);
+        
+        // Debug timezone conversion during publish
+        console.log('🕐 PUBLISHING TIMEZONE DEBUG:');
+        console.log('Original start date input:', quiz.value.settings.startDate);
+        console.log('Converted start date UTC:', startDateUTC);
+        console.log('Formatted back to PH:', formatPHTime(startDateUTC));
+        console.log('Original end date input:', quiz.value.settings.endDate);
+        console.log('Converted end date UTC:', endDateUTC);
+        console.log('Formatted back to PH:', formatPHTime(endDateUTC));
+
         const quizData = {
           subject_id: subject.value.id,
           section_id: section.value.id,
@@ -1162,8 +1273,8 @@ export default {
           attempts_allowed: parseInt(quiz.value.settings.attemptsAllowed),
           shuffle_questions: quiz.value.settings.shuffle,
           shuffle_options: quiz.value.settings.shuffle,
-          start_date: convertPHTimeToUTC(quiz.value.settings.startDate),
-          end_date: convertPHTimeToUTC(quiz.value.settings.endDate),
+          start_date: startDateUTC,
+          end_date: endDateUTC,
           status: 'published'
         };
 
@@ -1355,6 +1466,9 @@ export default {
 
     onMounted(async () => {
       console.log('🔧 Component mounted');
+      
+      // Debug timezone conversion
+      debugTimeConversion();
       
       const teacherLoaded = await loadTeacherInfo();
       if (!teacherLoaded) {

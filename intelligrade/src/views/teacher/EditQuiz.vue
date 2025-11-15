@@ -423,6 +423,93 @@ const isLoading = ref(false)
 const isSaving = ref(false)
 const error = ref(null)
 
+// TIMEZONE UTILITY FUNCTIONS - Matching CreateQuiz.vue exactly
+const formatPHTime = (utcDateString) => {
+  if (!utcDateString) return 'Not set';
+  try {
+    const utcDate = new Date(utcDateString);
+    const options = {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Asia/Manila',
+      hour12: true
+    };
+    return utcDate.toLocaleString('en-PH', options) + ' PHT';
+  } catch (error) {
+    console.error('Error formatting PH time:', error);
+    return 'Invalid date';
+  }
+};
+
+const convertPHTimeToUTC = (phDateString) => {
+  if (!phDateString) return null;
+  try {
+    // The datetime-local input gives us local time without timezone info
+    // We need to interpret this as Philippines time and convert to UTC
+    const localDate = new Date(phDateString);
+    
+    // Get the timezone offset for Philippines (should be -480 minutes for UTC+8)
+    const phOffset = -8 * 60; // UTC+8 = -480 minutes
+    const localOffset = localDate.getTimezoneOffset(); // Browser's timezone offset
+    
+    // Calculate the difference between local timezone and Philippines timezone
+    const offsetDiff = localOffset - phOffset;
+    
+    // Adjust the date to treat the input as Philippines time
+    const utcTime = new Date(localDate.getTime() + (offsetDiff * 60 * 1000));
+    
+    console.log('🕐 Converting PH to UTC:');
+    console.log('  Input PH time:', phDateString);
+    console.log('  Local offset:', localOffset);
+    console.log('  PH offset:', phOffset);
+    console.log('  Offset diff:', offsetDiff);
+    console.log('  Result UTC:', utcTime.toISOString());
+    
+    return utcTime.toISOString();
+  } catch (error) {
+    console.error('Error converting PH time to UTC:', error);
+    return null;
+  }
+};
+
+const convertUTCtoPHForInput = (utcDateString) => {
+  if (!utcDateString) return '';
+  try {
+    const utcDate = new Date(utcDateString);
+    
+    // Convert UTC to Philippines time for the datetime-local input
+    const phTime = new Intl.DateTimeFormat('sv-SE', {
+      timeZone: 'Asia/Manila',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(utcDate).replace(' ', 'T');
+    
+    console.log('🕐 Converting UTC to PH input:');
+    console.log('  UTC input:', utcDateString);
+    console.log('  PH output:', phTime);
+    
+    return phTime;
+  } catch (error) {
+    console.error('Error converting UTC to PH for input:', error);
+    return '';
+  }
+};
+
+const debugTimeConversion = () => {
+  const now = new Date();
+  console.log('🕐 EDITQUIZ TIMEZONE DEBUG:');
+  console.log('Browser timezone offset (minutes):', now.getTimezoneOffset());
+  console.log('Current local time:', now.toString());
+  console.log('Current UTC time:', now.toISOString());
+  console.log('Formatted as PH time:', formatPHTime(now.toISOString()));
+};
+
 // Load quiz data - REAL-TIME, NO TIMEOUTS
 const loadQuiz = async () => {
   isLoading.value = true
@@ -445,11 +532,11 @@ const loadQuiz = async () => {
 
   console.log('Quiz data loaded:', quizData)
     
-    // Format dates for datetime-local input
+    // FIXED: Use proper timezone conversion for datetime-local inputs
     quiz.value = {
       ...quizData,
-      start_date: quizData.start_date ? formatDateForInput(quizData.start_date) : null,
-      end_date: quizData.end_date ? formatDateForInput(quizData.end_date) : null
+      start_date: quizData.start_date ? convertUTCtoPHForInput(quizData.start_date) : null,
+      end_date: quizData.end_date ? convertUTCtoPHForInput(quizData.end_date) : null
     }
     
     // Fetch questions
@@ -517,12 +604,7 @@ const loadQuiz = async () => {
   }
 }
 
-// Format date for datetime-local input
-const formatDateForInput = (dateString) => {
-  if (!dateString) return null
-  const date = new Date(dateString)
-  return date.toISOString().slice(0, 16)
-}
+
 
 // Question management
 const addQuestion = () => {
@@ -646,6 +728,20 @@ const saveQuiz = async () => {
   try {
     // Step 1: Update quiz settings
   console.log('Updating quiz settings...')
+    
+    // Convert dates to UTC for storage
+    const startDateUTC = convertPHTimeToUTC(quiz.value.start_date);
+    const endDateUTC = convertPHTimeToUTC(quiz.value.end_date);
+    
+    // Debug timezone conversion during save
+    console.log('🕐 EDIT SAVE TIMEZONE DEBUG:');
+    console.log('Original start date input:', quiz.value.start_date);
+    console.log('Converted start date UTC:', startDateUTC);
+    console.log('Formatted back to PH:', formatPHTime(startDateUTC));
+    console.log('Original end date input:', quiz.value.end_date);
+    console.log('Converted end date UTC:', endDateUTC);
+    console.log('Formatted back to PH:', formatPHTime(endDateUTC));
+    
     const { error: quizError } = await supabase
       .from('quizzes')
       .update({
@@ -657,8 +753,8 @@ const saveQuiz = async () => {
         attempts_allowed: quiz.value.attempts_allowed,
         shuffle_questions: quiz.value.shuffle_questions,
         shuffle_options: quiz.value.shuffle_options,
-        start_date: quiz.value.start_date || null,
-        end_date: quiz.value.end_date || null,
+        start_date: startDateUTC,
+        end_date: endDateUTC,
         number_of_questions: questions.value.length,
         updated_at: new Date().toISOString()
       })
@@ -803,6 +899,9 @@ const goBack = () => {
 onMounted(async () => {
   console.log('EditQuiz component mounted')
   initDarkMode()
+  
+  // Debug timezone conversion
+  debugTimeConversion();
   
   if (!quizId.value) {
     console.error('❌ Quiz ID is missing')
