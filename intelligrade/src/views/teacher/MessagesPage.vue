@@ -1064,6 +1064,41 @@
               <!-- Display attachments if any -->
               <div v-if="message.attachments && message.attachments.length > 0" class="message-attachments">
                 <div v-for="(attachment, idx) in message.attachments" :key="idx" class="attachment-item">
+                  <!-- Image preview with better visibility -->
+                  <div v-if="attachment.type === 'image'" class="attachment-image-container" @click="viewAttachment(attachment)">
+                    <img :src="attachment.url" class="attachment-image" alt="Attachment" />
+                    <div class="image-overlay">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                      <span>Click to view</span>
+                    </div>
+                  </div>
+                  
+                  <!-- File download -->
+                  <div v-else class="attachment-file">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                      <polyline points="13 2 13 9 20 9"/>
+                    </svg>
+                    <span>{{ attachment.name }}</span>
+                    <div class="attachment-actions">
+                      <button @click="viewAttachment(attachment)" class="attachment-btn" title="View">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                          <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                      </button>
+                      <button @click="downloadAttachment(attachment)" class="attachment-btn" title="Download">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                          <polyline points="7 10 12 15 17 10"></polyline>
+                          <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -1072,6 +1107,21 @@
                 
                 <!-- Message Status for Sent Messages -->
                 <span v-if="message.sender_id === currentTeacherId" class="message-status">
+                  <span v-if="message.is_read" class="status-read">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left: -8px;">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span v-if="message.read_at" class="read-time">Read {{ formatTime(message.read_at) }}</span>
+                  </span>
+                  <span v-else class="status-sent">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Sent
+                  </span>
                 </span>
               </div>
             </div>
@@ -1087,8 +1137,17 @@
               <div v-for="(att, idx) in messageAttachments" :key="idx" class="attachment-preview-item">
                 <img v-if="att.type === 'image'" :src="att.url" class="attachment-preview-image" />
                 <div v-else class="attachment-preview-file">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                    <polyline points="13 2 13 9 20 9"/>
+                  </svg>
+                  <span>{{ att.name }}</span>
                 </div>
                 <button @click="messageAttachments.splice(idx, 1)" class="remove-attachment-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
                 </button>
               </div>
             </div>
@@ -1162,7 +1221,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase.js'
 import { useDarkMode } from '../../composables/useDarkMode.js'
@@ -1250,7 +1309,6 @@ const uploadFileToStorage = async (file, folder = 'message-attachments') => {
       throw error
     }
     
-    // Get public URL
     const { data: urlData } = supabase.storage
       .from('attachments')
       .getPublicUrl(filePath)
@@ -1469,7 +1527,6 @@ const loadContactsManually = async () => {
   try {
     console.log('Loading contacts manually for teacher:', currentTeacherId.value)
     
-    // @ts-expect-error - Supabase types need updating for complex joins
     const { data: contacts, error } = await supabase
       .from('enrollments')
       .select(`
@@ -1511,7 +1568,6 @@ const loadContactsManually = async () => {
     
     console.log('Manual query raw results:', contacts.length)
     
-    // Get auth_user_ids for students
     const studentProfileIds = contacts
       .filter(e => e.students && (e.students as any).profile_id)
       .map(e => (e.students as any).profile_id)
@@ -1676,7 +1732,6 @@ const updateStudentMessagingInfo = async (student) => {
   }
 }
 
-// Load Broadcast History
 const loadBroadcastHistory = async () => {
   try {
     if (!currentTeacherId.value) return
@@ -1707,7 +1762,6 @@ const loadBroadcastHistory = async () => {
       return
     }
     
-    // Load attachments for each broadcast
     const broadcastIds = broadcasts?.map(b => b.id) || []
     let attachmentsMap = {}
     
@@ -1779,7 +1833,6 @@ const groupedStudents = computed(() => {
   
   let filteredData = filteredStudents.value
   
-  // Filter by grade level if not 'all'
   if (selectedGradeFilter.value !== 'all') {
     filteredData = filteredData.filter(student => 
       student.grade_level === selectedGradeFilter.value
@@ -1861,6 +1914,39 @@ const uniqueSections = computed(() => {
 // CHAT METHODS
 // ================================
 
+const addScrollButtons = () => {
+  const container = messagesContainer.value
+  if (container && currentMessages.value.length > 5) {
+    if (!container.querySelector('.scroll-top-btn')) {
+      const scrollTopBtn = document.createElement('button')
+      scrollTopBtn.className = 'scroll-top-btn'
+      scrollTopBtn.title = 'Go to top'
+      scrollTopBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="17 11 12 6 7 11"></polyline>
+          <polyline points="17 18 12 13 7 18"></polyline>
+        </svg>
+      `
+      scrollTopBtn.onclick = scrollToTop
+      container.prepend(scrollTopBtn)
+    }
+    
+    if (!container.querySelector('.scroll-bottom-btn')) {
+      const scrollBottomBtn = document.createElement('button')
+      scrollBottomBtn.className = 'scroll-bottom-btn'
+      scrollBottomBtn.title = 'Go to latest'
+      scrollBottomBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="7 13 12 18 17 13"></polyline>
+          <polyline points="7 6 12 11 17 6"></polyline>
+        </svg>
+      `
+      scrollBottomBtn.onclick = scrollToBottom
+      container.append(scrollBottomBtn)
+    }
+  }
+}
+
 const startChatWithStudent = async (student) => {
   console.log('Starting chat with student:', student)
   
@@ -1877,6 +1963,8 @@ const startChatWithStudent = async (student) => {
   
   await nextTick()
   scrollToBottom()
+  
+  setTimeout(addScrollButtons, 100)
 }
 
 const loadConversationMessages = async (studentId, sectionId) => {
@@ -1891,55 +1979,53 @@ const loadConversationMessages = async (studentId, sectionId) => {
       sectionId 
     })
     
-    const { data: messages, error } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('section_id', sectionId)
-      .eq('message_type', 'direct')
-      .or(`and(sender_id.eq.${currentTeacherId.value},recipient_id.eq.${studentId}),and(sender_id.eq.${studentId},recipient_id.eq.${currentTeacherId.value})`)
-      .order('sent_at', { ascending: true })
+    const [messagesResult, attachmentsResult] = await Promise.all([
+      supabase
+        .from('messages')
+        .select('*')
+        .eq('section_id', sectionId)
+        .eq('message_type', 'direct')
+        .or(`and(sender_id.eq.${currentTeacherId.value},recipient_id.eq.${studentId}),and(sender_id.eq.${studentId},recipient_id.eq.${currentTeacherId.value})`)
+        .order('sent_at', { ascending: true }),
+      supabase
+        .from('message_attachments')
+        .select('*')
+    ])
     
-    if (error) {
-      console.error('Error loading messages:', error)
+    if (messagesResult.error) {
+      console.error('Error loading messages:', messagesResult.error)
       currentMessages.value = []
       return
     }
     
-    // Load attachments for all messages
-    if (messages && messages.length > 0) {
-      const messageIds = messages.map(m => m.id)
-      const { data: attachments } = await supabase
-        .from('message_attachments')
-        .select('*')
-        .in('message_id', messageIds)
-      
-      // Group attachments by message_id
-      const attachmentsMap = {}
-      if (attachments) {
-        attachments.forEach(att => {
-          if (!attachmentsMap[att.message_id]) {
-            attachmentsMap[att.message_id] = []
-          }
-          attachmentsMap[att.message_id].push({
-            name: att.file_name,
-            url: att.file_url,
-            type: att.file_type,
-            size: att.file_size,
-            path: att.file_path
-          })
-        })
+    const messages = messagesResult.data || []
+    const attachments = attachmentsResult.data || []
+    
+    const attachmentsMap = {}
+    attachments.forEach(att => {
+      if (!attachmentsMap[att.message_id]) {
+        attachmentsMap[att.message_id] = []
       }
-      
-      // Attach attachments to messages
-      messages.forEach(msg => {
-        msg.attachments = attachmentsMap[msg.id] || []
+      attachmentsMap[att.message_id].push({
+        name: att.file_name,
+        url: att.file_url,
+        type: att.file_type,
+        size: att.file_size || 'Unknown size',
+        path: att.file_path
       })
-    }
+    })
     
-    currentMessages.value = messages || []
-    console.log('Loaded messages:', messages?.length || 0)
+    messages.forEach(msg => {
+      msg.attachments = attachmentsMap[msg.id] || []
+    })
     
-    await markConversationAsRead(sectionId, studentId)
+    currentMessages.value = messages
+    console.log('Loaded messages:', messages.length)
+    
+    await nextTick()
+    forceScrollToBottom()
+    
+    markConversationAsRead(sectionId, studentId)
     
   } catch (error) {
     console.error('Error loading conversation messages:', error)
@@ -1955,7 +2041,6 @@ const handleSendMessage = async () => {
   const messageText = newMessage.value.trim()
   const attachmentsToSend = [...messageAttachments.value]
   
-  // Create temporary message for UI
   const tempMessage = {
     id: 'temp-' + Date.now(),
     sender_id: currentTeacherId.value,
@@ -1964,10 +2049,12 @@ const handleSendMessage = async () => {
     sent_at: new Date().toISOString(),
     is_read: false,
     message_type: 'direct',
+    sending: true,
     attachments: attachmentsToSend.map(att => ({
       name: att.name,
       url: att.url,
-      type: att.type
+      type: att.type,
+      size: att.size || 'Unknown size'
     }))
   }
   
@@ -1976,24 +2063,15 @@ const handleSendMessage = async () => {
   messageAttachments.value = []
   
   await nextTick()
-  scrollToBottom()
+  forceScrollToBottom()
   
   try {
-    isLoading.value = true
-    loadingMessage.value = 'Sending message...'
-    
-    // Upload files first
-    const uploadedAttachments = []
+    let uploadedAttachments = []
     if (attachmentsToSend.length > 0) {
-      loadingMessage.value = 'Uploading attachments...'
-      for (const attachment of attachmentsToSend) {
-        const uploaded = await uploadFileToStorage(attachment.file)
-        uploadedAttachments.push(uploaded)
-      }
+      const uploadPromises = attachmentsToSend.map(attachment => uploadFileToStorage(attachment.file))
+      uploadedAttachments = await Promise.all(uploadPromises)
     }
     
-    // Send message
-    loadingMessage.value = 'Saving message...'
     const { data: messageId, error: sendError } = await supabase
       .rpc('send_direct_message', {
         p_section_id: activeConversation.value.section_id,
@@ -2003,35 +2081,33 @@ const handleSendMessage = async () => {
       })
     
     if (sendError) {
-      console.log('Messaging function error:', sendError)
-      alert('Messaging system not fully configured. Please run the messaging SQL script.')
-      
-      const tempIndex = currentMessages.value.findIndex(m => m.id === tempMessage.id)
-      if (tempIndex !== -1) {
-        currentMessages.value.splice(tempIndex, 1)
-      }
-      messageAttachments.value = attachmentsToSend
-      return
+      throw new Error('Failed to send message')
     }
     
-    // Save attachments to database
     if (uploadedAttachments.length > 0) {
       await saveMessageAttachments(messageId, uploadedAttachments)
     }
     
-    console.log('Message sent successfully with ID:', messageId)
-    
-    // Update temp message with real ID and attachments
     const tempIndex = currentMessages.value.findIndex(m => m.id === tempMessage.id)
     if (tempIndex !== -1) {
-      currentMessages.value[tempIndex].id = messageId
-      currentMessages.value[tempIndex].attachments = uploadedAttachments.map(att => ({
-        name: att.name,
-        url: att.url,
-        type: att.type,
-        size: att.size
-      }))
+      currentMessages.value[tempIndex] = {
+        ...currentMessages.value[tempIndex],
+        id: messageId,
+        sending: false,
+        attachments: uploadedAttachments.map(att => ({
+          name: att.name,
+          url: att.url,
+          type: att.type,
+          size: att.size || 'Unknown size',
+          path: att.path
+        }))
+      }
     }
+    
+    await nextTick()
+    setTimeout(() => {
+      forceScrollToBottom()
+    }, 100)
     
     await loadTeacherContacts()
     
@@ -2042,10 +2118,10 @@ const handleSendMessage = async () => {
     if (tempIndex !== -1) {
       currentMessages.value.splice(tempIndex, 1)
     }
+    
+    newMessage.value = messageText
     messageAttachments.value = attachmentsToSend
     alert('Failed to send message. Please try again.')
-  } finally {
-    isLoading.value = false
   }
 }
 
@@ -2085,55 +2161,41 @@ const markConversationAsRead = async (sectionId, studentId) => {
 // ================================
 
 const handleMessageFileSelect = (event) => {
-  // @ts-ignore - File input event handling
   const files = Array.from(event.target.files)
   
   files.forEach(file => {
-    const reader = new FileReader()
-    // @ts-ignore - File type checking
     const fileType = file.type.startsWith('image/') ? 'image' : 'file'
+    const tempUrl = URL.createObjectURL(file)
     
-    reader.onload = (e) => {
-      messageAttachments.value.push({
-        type: fileType,
-        // @ts-ignore - File properties
-        name: file.name,
-        // @ts-ignore - File properties  
-        size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
-        url: e.target.result,
-        file: file
-      })
-    }
-    
-    // @ts-ignore - FileReader API
-    reader.readAsDataURL(file)
+    messageAttachments.value.push({
+      type: fileType,
+      name: file.name,
+      size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+      url: tempUrl,
+      file: file
+    })
   })
   
   event.target.value = ''
 }
 
 const handleBroadcastFileSelect = (event) => {
-  // @ts-ignore - File input event handling
   const files = Array.from(event.target.files)
   
   files.forEach(file => {
     const reader = new FileReader()
-    // @ts-ignore - File type checking
     const fileType = file.type.startsWith('image/') ? 'image' : 'file'
     
     reader.onload = (e) => {
       broadcastAttachments.value.push({
         type: fileType,
-        // @ts-ignore - File properties
         name: file.name,
-        // @ts-ignore - File properties
         size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
         url: e.target.result,
         file: file
       })
     }
     
-    // @ts-ignore - FileReader API
     reader.readAsDataURL(file)
   })
   
@@ -2247,7 +2309,6 @@ const sendBroadcastMessage = async () => {
     
     const attachmentsToSend = [...broadcastAttachments.value]
     
-    // Upload files first
     const uploadedAttachments = []
     if (attachmentsToSend.length > 0) {
       loadingMessage.value = 'Uploading attachments...'
@@ -2259,7 +2320,6 @@ const sendBroadcastMessage = async () => {
     
     loadingMessage.value = 'Sending to students...'
     
-    // Insert broadcast message directly into database
     const { data: messageData, error: insertError } = await supabase
       .from('messages')
       .insert({
@@ -2280,7 +2340,6 @@ const sendBroadcastMessage = async () => {
     
     const messageId = messageData.id
     
-    // Save attachments to database if broadcast was sent
     if (uploadedAttachments.length > 0 && messageId) {
       await saveMessageAttachments(messageId, uploadedAttachments)
     }
@@ -2333,7 +2392,6 @@ const archiveBroadcast = (broadcastId) => {
 const deleteBroadcast = async (broadcastId) => {
   if (confirm('Are you sure you want to delete this broadcast? This will also remove it from student message pages.')) {
     try {
-      // Delete attachments first
       const { error: attachError } = await supabase
         .from('message_attachments')
         .delete()
@@ -2343,7 +2401,6 @@ const deleteBroadcast = async (broadcastId) => {
         console.error('Error deleting attachments:', attachError)
       }
       
-      // Delete message
       const { error: msgError } = await supabase
         .from('messages')
         .delete()
@@ -2388,7 +2445,6 @@ const backToSections = () => {
   showStudentsInSection.value = false
 }
 
-// Section dropdown methods
 const toggleSectionOptions = (sectionId) => {
   openSectionDropdown.value = openSectionDropdown.value === sectionId ? null : sectionId
 }
@@ -2409,8 +2465,6 @@ const archiveSectionConfirm = (section) => {
 
 const deleteSection = async (section) => {
   try {
-    // For now, just remove from the local state
-    // In a real implementation, you'd delete from the database
     console.log('Deleting section:', section)
     alert('Section deleted successfully!')
   } catch (error) {
@@ -2421,8 +2475,6 @@ const deleteSection = async (section) => {
 
 const archiveSection = async (section) => {
   try {
-    // For now, just remove from the local state
-    // In a real implementation, you'd archive in the database
     console.log('Archiving section:', section)
     alert('Section archived successfully!')
   } catch (error) {
@@ -2461,7 +2513,40 @@ const markAllAsRead = async () => {
 
 const scrollToBottom = () => {
   if (messagesContainer.value) {
-    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+    messagesContainer.value.scrollTo({
+      top: messagesContainer.value.scrollHeight,
+      behavior: 'smooth'
+    })
+  }
+}
+
+const scrollToTop = () => {
+  if (messagesContainer.value) {
+    messagesContainer.value.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    })
+  }
+}
+
+const forceScrollToBottom = () => {
+  if (messagesContainer.value) {
+    const element = messagesContainer.value
+    element.scrollTop = element.scrollHeight
+    
+    requestAnimationFrame(() => {
+      if (element) {
+        element.scrollTop = element.scrollHeight
+        setTimeout(() => {
+          if (element) {
+            element.scrollTo({
+              top: element.scrollHeight,
+              behavior: 'smooth'
+            })
+          }
+        }, 10)
+      }
+    })
   }
 }
 
@@ -2470,7 +2555,6 @@ const formatTime = (dateString) => {
   
   const date = new Date(dateString)
   const now = new Date()
-  // @ts-expect-error - Date arithmetic
   const diffMs = now - date
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
   
@@ -2490,7 +2574,6 @@ const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString()
 }
 
-// Presence status methods
 const getPresenceStatus = (authUserId) => {
   const presence = studentPresence.value[authUserId]
   if (!presence || !presence.last_seen) return 'Offline'
@@ -2501,7 +2584,6 @@ const getPresenceStatus = (authUserId) => {
   
   const now = new Date()
   const lastSeen = new Date(presence.last_seen)
-  // @ts-expect-error - Date arithmetic
   const diffMs = now - lastSeen
   const diffMinutes = Math.floor(diffMs / (1000 * 60))
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
@@ -2525,7 +2607,6 @@ const getPresenceStatus = (authUserId) => {
 const setupPresenceTracking = async () => {
   if (!currentTeacherId.value) return
   
-  // Get all unique auth_user_ids from student contacts
   const studentAuthIds = [...new Set(
     studentContacts.value
       .map(s => s.auth_user_id)
@@ -2536,7 +2617,6 @@ const setupPresenceTracking = async () => {
   
   console.log('Setting up presence tracking for students:', studentAuthIds.length)
   
-  // Fetch initial presence status for all students
   const { data: presenceData, error } = await supabase
     .from('user_presence')
     .select('*')
@@ -2547,7 +2627,6 @@ const setupPresenceTracking = async () => {
     return
   }
   
-  // Initialize presence data
   if (presenceData) {
     presenceData.forEach(p => {
       studentPresence.value[p.user_id] = {
@@ -2557,7 +2636,6 @@ const setupPresenceTracking = async () => {
     })
   }
   
-  // Subscribe to presence changes
   const presenceChannel = supabase
     .channel('student-presence-tracking')
     .on(
@@ -2615,17 +2693,39 @@ const updateTeacherPresence = async (isOnline) => {
 // ================================
 
 const sectionIconColors = [
-  'linear-gradient(135deg, #20c997 0%, #20c997 100%)', // green
-  'linear-gradient(135deg, #6366f1 0%, #6366f1 100%)', // blue
-  'linear-gradient(135deg, #f59e0b 0%, #f59e0b 100%)', // yellow
-  'linear-gradient(135deg, #ef4444 0%, #ef4444 100%)', // red
-  'linear-gradient(135deg, #8b5cf6 0%, #8b5cf6 100%)', // purple
-  'linear-gradient(135deg, #10b981 0%, #10b981 100%)', // teal
+  'linear-gradient(135deg, #20c997 0%, #20c997 100%)',
+  'linear-gradient(135deg, #6366f1 0%, #6366f1 100%)',
+  'linear-gradient(135deg, #f59e0b 0%, #f59e0b 100%)',
+  'linear-gradient(135deg, #ef4444 0%, #ef4444 100%)',
+  'linear-gradient(135deg, #8b5cf6 0%, #8b5cf6 100%)',
+  'linear-gradient(135deg, #10b981 0%, #10b981 100%)',
 ]
 
 const getSectionIconColor = (idx) => {
   return sectionIconColors[idx % sectionIconColors.length]
 }
+
+// ================================
+// WATCHERS
+// ================================
+
+watch(currentMessages, (newMessages, oldMessages) => {
+  if (newMessages.length > (oldMessages?.length || 0) && isModalOpen.value) {
+    nextTick(() => {
+      forceScrollToBottom()
+    })
+  }
+}, { deep: true, immediate: false })
+
+watch(isModalOpen, (isOpen) => {
+  if (isOpen && currentMessages.value.length > 0) {
+    nextTick(() => {
+      setTimeout(() => {
+        forceScrollToBottom()
+      }, 100)
+    })
+  }
+})
 
 // ================================
 // LIFECYCLE METHODS
@@ -2659,13 +2759,11 @@ const setupAuthListener = () => {
 onMounted(async () => {
   console.log('Teacher messages component mounted')
   
-  // Initialize dark mode with proper defaults
   const { initDarkMode } = useDarkMode()
   initDarkMode()
   
   setupAuthListener()
   
-  // Add click outside handler for dropdowns
   document.addEventListener('click', () => {
     openSectionDropdown.value = null
   })
@@ -2908,20 +3006,20 @@ body, html {
   color: #64748b;
 }
 
-/* Loading Overlay */
+/* Loading Overlay - Green Theme */
 .loading-overlay {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(251, 255, 228, 0.95);
+  background: rgba(240, 253, 244, 0.95);
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 100;
-  animation: fadeIn 0.3s ease;
+  animation: fadeIn 0.2s ease;
 }
 
 @keyframes fadeIn {
@@ -2935,18 +3033,18 @@ body, html {
 
 .loading-content {
   background: white;
-  padding: 3rem 4rem;
-  border-radius: 20px;
+  padding: 2rem 3rem;
+  border-radius: 16px;
   text-align: center;
-  box-shadow: 0 20px 60px rgba(61, 141, 122, 0.15);
-  border: 2px solid #a3d1c6;
-  animation: slideUp 0.4s ease;
+  box-shadow: 0 10px 40px rgba(32, 201, 151, 0.15);
+  border: 2px solid #d1fae5;
+  animation: slideUp 0.3s ease;
 }
 
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(15px);
   }
   to {
     opacity: 1;
@@ -2956,24 +3054,24 @@ body, html {
 
 .loading-spinner-container {
   position: relative;
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 1.5rem;
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 1rem;
 }
 
 .loading-spinner {
-  width: 80px;
-  height: 80px;
-  border: 5px solid rgba(61, 141, 122, 0.1);
-  border-left: 5px solid #3d8d7a;
-  border-top: 5px solid #20c997;
+  width: 60px;
+  height: 60px;
+  border: 4px solid rgba(32, 201, 151, 0.2);
+  border-left: 4px solid #20c997;
+  border-top: 4px solid #18a577;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: fastSpin 0.8s linear infinite;
   margin: 0 auto;
-  box-shadow: 0 0 20px rgba(61, 141, 122, 0.1);
+  box-shadow: 0 0 20px rgba(32, 201, 151, 0.2);
 }
 
-@keyframes spin {
+@keyframes fastSpin {
   0% {
     transform: rotate(0deg);
   }
@@ -2983,9 +3081,9 @@ body, html {
 }
 
 .loading-text {
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 600;
-  color: #1f2937;
+  color: #20c997;
   margin: 0;
   letter-spacing: 0.025em;
 }
@@ -6702,10 +6800,17 @@ body, html {
   margin: 0;
   border: none;
   border-radius: 0;
+  position: relative;
+  min-height: 400px;
+  max-height: calc(100vh - 240px);
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+  /* Smooth Scrolling Enhancement */
+  scroll-padding-bottom: 20px;
 }
 
 .modal-body .messages-container::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 .modal-body .messages-container::-webkit-scrollbar-track {
@@ -6714,7 +6819,11 @@ body, html {
 
 .modal-body .messages-container::-webkit-scrollbar-thumb {
   background: #20c997;
-  border-radius: 3px;
+  border-radius: 4px;
+}
+
+.modal-body .messages-container::-webkit-scrollbar-thumb:hover {
+  background: #18a577;
 }
 
 .dark .modal-body .messages-container::-webkit-scrollbar-track {
@@ -6733,13 +6842,18 @@ body, html {
 }
 
 .messages-loading-spinner {
-  width: 24px;
-  height: 24px;
-  border: 2px solid #e5e7eb;
-  border-top: 2px solid #20c997;
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(32, 201, 151, 0.2);
+  border-top: 3px solid #20c997;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: fastSpin 0.6s linear infinite;
   margin-bottom: 1rem;
+}
+
+@keyframes fastSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .messages-loading p {
@@ -6758,9 +6872,14 @@ body, html {
 
 /* Simple Message Bubbles */
 .message-bubble {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   display: flex;
   flex-direction: column;
+  scroll-margin-bottom: 20px;
+}
+
+.message-bubble:last-child {
+  margin-bottom: 2rem;
 }
 
 .message-bubble.sent {
@@ -9668,14 +9787,18 @@ body, html {
 }
 
 .messages-loading-spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid rgba(61, 141, 122, 0.2);
-  border-left: 4px solid #3D8D7A;
-  border-top: 4px solid #20c997;
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(32, 201, 151, 0.2);
+  border-top: 3px solid #20c997;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: fastSpin 0.6s linear infinite;
   margin-bottom: 1rem;
+}
+
+@keyframes fastSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .dark .messages-loading-spinner {
@@ -9701,53 +9824,293 @@ body, html {
    ============================================ */
 
 .message-attachments {
-  margin-top: 0.75rem;
+  margin-top: 0.5rem;
   display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* ============================================
+   SCROLL BUTTONS AND FAST LOADING STYLES
+   ============================================ */
+
+/* Scroll Buttons */
+.scroll-top-btn, .scroll-bottom-btn {
+  position: absolute;
+  right: 1rem;
+  width: 44px;
+  height: 44px;
+  background: #20c997;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.3);
+  z-index: 10;
+  font-size: 0;
+}
+
+.scroll-top-btn {
+  top: 1rem;
+}
+
+.scroll-bottom-btn {
+  bottom: 1rem;
+}
+
+.scroll-top-btn:hover, .scroll-bottom-btn:hover {
+  background: #18a577;
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(32, 201, 151, 0.4);
+}
+
+.dark .scroll-top-btn, .dark .scroll-bottom-btn {
+  background: #20c997;
+  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.4);
+}
+
+/* Fast Sending Indicator */
+.sending-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(32, 201, 151, 0.3);
+  border-top: 2px solid #20c997;
+  border-radius: 50%;
+  animation: fastSpin 0.8s linear infinite;
+  margin-right: 0.25rem;
+}
+
+@keyframes fastSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.message-bubble.sending {
+  opacity: 0.8;
+  transform: scale(0.98);
+  transition: all 0.3s ease;
+}
+
+.status-sending {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #20c997;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Enhanced Message Bubbles with Green Theme */
+.message-bubble.sent .message-text {
+  background: linear-gradient(135deg, #20c997 0%, #18a577 100%);
+  color: white;
+  border-bottom-right-radius: 6px;
+  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.2);
+}
+
+.message-bubble.received .message-text {
+  background: #f8fffe;
+  color: #1f2937;
+  border: 1px solid #d1fae5;
+  border-bottom-left-radius: 6px;
+  box-shadow: 0 1px 4px rgba(16, 185, 129, 0.1);
+}
+
+.dark .message-bubble.received .message-text {
+  background: #064e3b;
+  color: #d1fae5;
+  border-color: #065f46;
+}
+
+/* Fast Loading Spinner */
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(32, 201, 151, 0.2);
+  border-top: 3px solid #20c997;
+  border-radius: 50%;
+  animation: fastSpin 0.6s linear infinite;
+}
+
+.dark .loading-spinner {
+  border: 3px solid rgba(32, 201, 151, 0.3);
+  border-top: 3px solid #20c997;
+}
+
+/* Enhanced Attachment Buttons */
+.attachment-btn {
+  background: #20c997;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.attachment-btn:hover {
+  background: #18a577;
+  transform: scale(1.05);
+}
+
+/* Fast Message Input */
+.message-input {
+  border-color: #d1fae5;
+  background: #f0fdf4;
+  transition: all 0.2s ease;
+}
+
+.message-input:focus {
+  border-color: #20c997;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.1);
+}
+
+.dark .message-input {
+  background: #064e3b;
+  border-color: #065f46;
+  color: #d1fae5;
+}
+
+.dark .message-input:focus {
+  background: #022c22;
+  border-color: #20c997;
+}
+
+/* Enhanced Send Button */
+.send-btn {
+  background: linear-gradient(135deg, #20c997 0%, #18a577 100%);
+  border-color: #20c997;
+  transition: all 0.2s ease;
+}
+
+.send-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #18a577 0%, #16a085 100%);
+  transform: scale(1.05);
+}
+
+/* Enhanced Attachment File Input */
+.attach-file-btn {
+  background: #ecfdf5;
+  color: #20c997;
+  border-color: #d1fae5;
+  transition: all 0.2s ease;
+}
+
+.attach-file-btn:hover {
+  background: #20c997;
+  color: white;
+  transform: scale(1.05);
+}
+
+.dark .attach-file-btn {
+  background: #064e3b;
+  border-color: #065f46;
+}
+
+.dark .attach-file-btn:hover {
+  background: #20c997;
+  color: #064e3b;
+}
+
+/* Fast Attachment Preview */
+.attachment-preview-item {
+  border-color: #d1fae5;
+  background: #f0fdf4;
+  transition: all 0.2s ease;
+}
+
+.attachment-preview-item:hover {
+  border-color: #20c997;
+  transform: translateY(-1px);
+}
+
+.dark .attachment-preview-item {
+  background: #064e3b;
+  border-color: #065f46;
+}
+
+/* Messages Container Enhancement */
+.modal-body .messages-container {
+  position: relative;
+  scroll-behavior: smooth;
+}
+
+.modal-body .messages-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #20c997 0%, #18a577 100%);
+  border-radius: 4px;
+}
+
+.modal-body .messages-container::-webkit-scrollbar-track {
+  background: #f0fdf4;
+}
+
+.dark .modal-body .messages-container::-webkit-scrollbar-track {
+  background: #064e3b;
+}
+
+/* Green Theme System Colors */
+:root {
+  --primary-green: #20c997;
+  --primary-green-hover: #18a577;
+  --primary-green-light: #d1fae5;
+  --primary-green-dark: #065f46;
+  --bg-green-light: #f0fdf4;
+  --bg-green-dark: #064e3b;
+}
+
+/* Status Indicators */
+.status-sent {
+  color: #20c997;
+  font-weight: 500;
+}
+
+.dark .status-sent {
+  color: #6ee7b7;
 }
 
 .attachment-item {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.25rem;
+  max-width: fit-content;
 }
 
-/* Image Container with Overlay */
+/* Image Container with Overlay - Compact Size */
 .attachment-image-container {
   position: relative;
-  border-radius: 12px;
+  border-radius: 8px;
   overflow: hidden;
   cursor: pointer;
-  max-width: 100%;
-  min-width: 250px;
+  max-width: 200px;
+  width: 100%;
   background: #f3f4f6;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .dark .attachment-image-container {
   background: #1f2937;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .attachment-image-container:hover {
-  transform: scale(1.02);
-  box-shadow: 0 8px 24px rgba(61, 141, 122, 0.25);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.15);
 }
 
 .dark .attachment-image-container:hover {
-  box-shadow: 0 8px 24px rgba(32, 201, 151, 0.25);
+  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.15);
 }
 
 .attachment-image {
   width: 100%;
-  height: auto;
-  max-height: 400px;
-  object-fit: contain;
+  height: 120px;
+  object-fit: cover;
   display: block;
   background: #ffffff;
-  padding: 0.5rem;
 }
 
 .dark .attachment-image {
