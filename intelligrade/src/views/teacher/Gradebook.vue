@@ -581,6 +581,19 @@
                   <div class="answer-key-label">
                     <strong>Answer Key:</strong> {{ getCorrectOptionLabel(question) }}
                   </div>
+                  <div class="answer-key-label">
+                    <strong>Student's Answer:</strong> 
+                    <span v-if="question.selected_option_id">{{ getStudentOptionLabel(question) }}</span>
+                    <span v-else-if="question.answer_text">{{ question.answer_text }}</span>
+                    <span v-else style="color: #ef4444;">
+                      No answer provided 
+                      <!-- Debug info: {{ JSON.stringify({
+                        selected_option_id: question.selected_option_id,
+                        answer_text: question.answer_text,
+                        student_answer_id: question.student_answer_id
+                      }) }} -->
+                    </span>
+                  </div>
                   <div class="options-grid">
                     <div 
                       v-for="option in question.options" 
@@ -592,7 +605,7 @@
                         'incorrect': question.selected_option_id === option.id && !option.is_correct
                       }"
                     >
-                      <div class="option-letter">{{ String.fromCharCode(65 + option.option_number - 1) }}</div>
+                      <div class="option-letter">{{ String.fromCharCode(65 + (option.option_number - 1)) }}</div>
                       <div class="option-content">
                         <div class="option-text">{{ option.option_text }}</div>
                         <div v-if="option.is_correct" class="correct-tag">✓ Correct Answer</div>
@@ -606,6 +619,13 @@
                 <div v-else-if="question.question_type === 'true_false'" class="answer-section">
                   <div class="answer-key-label">
                     <strong>Answer Key:</strong> {{ question.correct_answer }}
+                  </div>
+                  <div class="answer-key-label">
+                    <strong>Student's Answer:</strong> 
+                    <span v-if="question.answer_text" :class="question.is_correct ? 'text-green-600' : 'text-red-600'">
+                      {{ question.answer_text }}
+                    </span>
+                    <span v-else style="color: #ef4444;">No answer provided</span>
                   </div>
                   <div class="true-false-options">
                     <div class="tf-option" :class="{ 
@@ -957,11 +977,19 @@ const fetchSubjects = async () => {
         if (allQuizzes && allQuizzes.length > 0) {
           const quizIds = allQuizzes.map(q => q.id)
           
-          const { data: pendingSubmissions } = await supabase
+          console.log('🎯 Looking for pending submissions in quizzes:', quizIds)
+          
+          const { data: pendingSubmissions, error: pendingError } = await supabase
             .from('quiz_attempts')
-            .select('quiz_id')
+            .select('quiz_id, status')
             .in('quiz_id', quizIds)
             .eq('status', 'submitted')
+
+          console.log('📊 Pending submissions query result:', {
+            count: pendingSubmissions?.length || 0,
+            data: pendingSubmissions,
+            error: pendingError
+          })
 
           // Create lookup maps
           const quizzesBySection = {}
@@ -997,6 +1025,12 @@ const fetchSubjects = async () => {
             ...subject,
             pending_count: pendingBySubject[subject.id] || 0
           }))
+
+          console.log('✅ Final subjects with counts:', subjects.value.map(s => ({
+            name: s.name,
+            sections: s.section_count,
+            pending: s.pending_count
+          })))
         }
       }
 
@@ -1114,81 +1148,63 @@ const fetchSubmissions = async (sectionId) => {
 
     console.log('🔄 Fetching submissions for section:', sectionId)
 
-    // First get quizzes for this section
-    const { data: quizzes, error: quizzesError } = await supabase
-      .from('quizzes')
-      .select('id, title, quiz_code')
-      .eq('section_id', sectionId)
-
-    if (quizzesError) {
-      console.error('❌ Error fetching quizzes:', quizzesError)
-      throw quizzesError
-    }
-
-    console.log('📚 Found quizzes:', quizzes?.length || 0)
-
-    if (!quizzes || quizzes.length === 0) {
-      console.log('ℹ️ No quizzes found for this section')
-      submissions.value = []
-      loading.value = false
-      return
-    }
-
-    // Get quiz attempts for these quizzes
-    const quizIds = quizzes.map(q => q.id)
+    // Step 1: Get quiz attempts - simple query first
     const { data: attempts, error: attemptsError } = await supabase
       .from('quiz_attempts')
-      .select(`
-        id,
-        quiz_id,
-        student_id,
-        attempt_number,
-        total_score,
-        max_score,
-        percentage,
-        status,
-        submitted_at,
-        time_taken_minutes,
-        teacher_feedback
-      `)
-      .in('quiz_id', quizIds)
+      .select('*')
+      .eq('status', 'submitted')
       .order('submitted_at', { ascending: false })
 
-    if (attemptsError) {
-      console.error('❌ Error fetching attempts:', attemptsError)
-      throw attemptsError
-    }
-
-    console.log('📝 Found attempts:', attempts?.length || 0)
+    if (attemptsError) throw attemptsError
+    console.log('📝 Found quiz attempts:', attempts?.length || 0)
 
     if (!attempts || attempts.length === 0) {
-      console.log('ℹ️ No submissions found for this section')
       submissions.value = []
-      loading.value = false
       return
     }
 
-    // Get student data
-    const studentIds = [...new Set(attempts.map(a => a.student_id))]
-    const { data: students, error: studentsError } = await supabase
-      .from('students')
-      .select('id, full_name, email')
-      .in('id', studentIds)
+    // Step 2: Get quizzes for this section
+    const { data: quizzes, error: quizzesError } = await supabase
+      .from('quizzes')
+      .select('*')
+      .eq('section_id', sectionId)
 
-    if (studentsError) {
-      console.error('❌ Error fetching students:', studentsError)
-      throw studentsError
+    if (quizzesError) throw quizzesError
+    console.log('📚 Found quizzes for section:', quizzes?.length || 0)
+
+    if (!quizzes || quizzes.length === 0) {
+      submissions.value = []
+      return
     }
 
-    // Create lookup maps
+    // Step 3: Filter attempts for quizzes in this section
+    const quizIds = quizzes.map(q => q.id)
+    const filteredAttempts = attempts.filter(attempt => quizIds.includes(attempt.quiz_id))
+    console.log('🎯 Filtered attempts for this section:', filteredAttempts.length)
+
+    if (filteredAttempts.length === 0) {
+      submissions.value = []
+      return
+    }
+
+    // Step 4: Get students
+    const studentIds = [...new Set(filteredAttempts.map(a => a.student_id))]
+    const { data: students, error: studentsError } = await supabase
+      .from('students')
+      .select('*')
+      .in('id', studentIds)
+
+    if (studentsError) throw studentsError
+
+    // Step 5: Create lookup maps
     const quizMap = {}
     quizzes.forEach(q => { quizMap[q.id] = q })
 
     const studentMap = {}
     students?.forEach(s => { studentMap[s.id] = s })
 
-    // Process the data
-    submissions.value = attempts.map(attempt => ({
+    // Step 6: Process submissions
+    submissions.value = filteredAttempts.map(attempt => ({
       id: attempt.id,
       quiz_id: attempt.quiz_id,
       student_id: attempt.student_id,
@@ -1199,14 +1215,14 @@ const fetchSubmissions = async (sectionId) => {
       quiz_code: quizMap[attempt.quiz_id]?.quiz_code || '',
       total_score: attempt.total_score || 0,
       max_score: attempt.max_score || 0,
-      percentage: Math.round(attempt.percentage || 0),
+      percentage: attempt.max_score > 0 ? Math.round((attempt.total_score / attempt.max_score) * 100) : 0,
       status: attempt.status || 'submitted',
       submitted_at: attempt.submitted_at,
       time_taken_minutes: attempt.time_taken_minutes,
       teacher_feedback: attempt.teacher_feedback
     }))
 
-    console.log('✅ Submissions processed:', submissions.value.length)
+    console.log('✅ Processed submissions:', submissions.value.length)
   } catch (err) {
     console.error('❌ Error fetching submissions:', err)
     error.value = `Failed to load submissions: ${err.message}`
@@ -1259,6 +1275,12 @@ const loadQuestionsAndAnswers = async (submission) => {
     loadingQuestions.value = true
 
     console.log('🔍 Loading questions for submission:', submission.id)
+    console.log('📊 Submission details:', {
+      id: submission.id,
+      quiz_id: submission.quiz_id,
+      student_id: submission.student_id,
+      student_name: submission.student_name
+    })
 
     // Get questions first
     const { data: questions, error: questionsError } = await supabase
@@ -1272,7 +1294,7 @@ const loadQuestionsAndAnswers = async (submission) => {
       throw questionsError
     }
 
-    console.log('📝 Found questions:', questions?.length || 0)
+    console.log('📝 Found questions:', questions?.length || 0, questions)
 
     if (!questions || questions.length === 0) {
       reviewQuestions.value = []
@@ -1280,32 +1302,111 @@ const loadQuestionsAndAnswers = async (submission) => {
     }
 
     const questionIds = questions.map(q => q.id)
+    console.log('🔢 Question IDs:', questionIds)
 
-    // Get all related data separately for reliability
-    const [optionsRes, answersRes, studentAnswersRes] = await Promise.all([
-      supabase
-        .from('question_options')
-        .select('*')
-        .in('question_id', questionIds)
-        .order('option_number'),
-      
-      supabase
-        .from('question_answers')
-        .select('*')
-        .in('question_id', questionIds),
-      
-      supabase
-        .from('student_answers')
-        .select('*')
-        .eq('attempt_id', submission.id)
-        .in('question_id', questionIds)
-    ])
+    // Get question options first
+    console.log('📋 Getting options for questions:', questionIds)
+    const { data: optionsData, error: optionsError } = await supabase
+      .from('question_options')
+      .select('*')
+      .in('question_id', questionIds)
+      .order('option_number')
+
+    if (optionsError) {
+      console.error('❌ Options error:', optionsError)
+      throw optionsError
+    }
+
+    // Get correct answers
+    console.log('✅ Getting correct answers for questions')
+    const { data: answersData, error: answersError } = await supabase
+      .from('question_answers')
+      .select('*')
+      .in('question_id', questionIds)
+
+    if (answersError) {
+      console.error('❌ Answers error:', answersError)
+      throw answersError
+    }
+
+    // Get student answers - simplified query
+    console.log('👤 Getting student answers for attempt:', submission.id)
+    const { data: studentAnswersData, error: studentAnswersError } = await supabase
+      .from('student_answers')
+      .select('*')
+      .eq('attempt_id', submission.id)
+
+    if (studentAnswersError) {
+      console.error('❌ Student answers error:', studentAnswersError)
+      throw studentAnswersError
+    }
+
+    // Create response objects for compatibility
+    const optionsRes = { data: optionsData, error: optionsError }
+    const answersRes = { data: answersData, error: answersError }
+    const studentAnswersRes = { data: studentAnswersData, error: studentAnswersError }
+
+    console.log('📋 Options data:', optionsRes.data?.length || 0, optionsRes.data)
+    console.log('✅ Correct answers data:', answersRes.data?.length || 0, answersRes.data)
+    console.log('👤 Student answers data:', studentAnswersRes.data?.length || 0, studentAnswersRes.data)
 
     if (optionsRes.error) console.error('Options error:', optionsRes.error)
     if (answersRes.error) console.error('Answers error:', answersRes.error)
     if (studentAnswersRes.error) console.error('Student answers error:', studentAnswersRes.error)
 
-    // Create lookup maps
+    // Enhanced debugging for student answers
+    console.log('🔍 Student answers analysis:', {
+      found: studentAnswersRes.data?.length || 0,
+      attemptId: submission.id,
+      questionIds: questionIds,
+      studentAnswers: studentAnswersRes.data
+    })
+
+    // If no student answers found, try comprehensive search
+    if (!studentAnswersRes.data || studentAnswersRes.data.length === 0) {
+      console.log('🔍 No student answers found, trying multiple approaches...')
+      
+      // Try 1: Get all answers for this attempt (no filters)
+      const { data: allAnswers, error: allError } = await supabase
+        .from('student_answers')
+        .select('*')
+        .eq('attempt_id', submission.id)
+      
+      console.log('🔍 All answers for attempt:', allAnswers?.length || 0, allAnswers)
+      
+      // Try 2: Get answers by student and quiz combination
+      const { data: studentQuizAnswers, error: sqError } = await supabase
+        .from('student_answers')
+        .select(`
+          *,
+          quiz_attempts!inner(quiz_id, student_id)
+        `)
+        .eq('quiz_attempts.quiz_id', submission.quiz_id)
+        .eq('quiz_attempts.student_id', submission.student_id)
+      
+      console.log('🔍 Student-quiz answers:', studentQuizAnswers?.length || 0, studentQuizAnswers)
+      
+      // Use whichever approach found data
+      if (allAnswers && allAnswers.length > 0) {
+        studentAnswersRes.data = allAnswers
+        console.log('🔄 Using all answers approach')
+      } else if (studentQuizAnswers && studentQuizAnswers.length > 0) {
+        studentAnswersRes.data = studentQuizAnswers
+        console.log('🔄 Using student-quiz approach')
+      }
+    }
+
+    // Additional debug: Try a completely raw query to see what's in the database
+    console.log('� Raw debug query to check database...')
+    const { data: debugAnswers, error: debugError } = await supabase
+      .from('student_answers')
+      .select('*')
+      .eq('attempt_id', submission.id)
+    
+    console.log('🔍 Raw debug query result:', debugAnswers?.length || 0, debugAnswers)
+    if (debugError) console.error('Debug query error:', debugError)
+
+    // Create lookup maps with better validation
     const optionsMap = {}
     optionsRes.data?.forEach(opt => {
       if (!optionsMap[opt.question_id]) {
@@ -1321,13 +1422,141 @@ const loadQuestionsAndAnswers = async (submission) => {
 
     const studentAnswersMap = {}
     studentAnswersRes.data?.forEach(sa => {
+      console.log('📝 Mapping student answer:', {
+        id: sa.id,
+        question_id: sa.question_id,
+        selected_option_id: sa.selected_option_id,
+        answer_text: sa.answer_text,
+        attempt_id: sa.attempt_id
+      })
       studentAnswersMap[sa.question_id] = sa
     })
 
-    // Process the questions
+    console.log('🗺️ Maps created:', {
+      optionsMap: Object.keys(optionsMap).length,
+      answersMap: Object.keys(answersMap).length,
+      studentAnswersMap: Object.keys(studentAnswersMap).length,
+      studentAnswerDetails: Object.entries(studentAnswersMap).map(([qId, answer]) => ({
+        questionId: qId,
+        hasSelectedOption: !!answer.selected_option_id,
+        hasAnswerText: !!answer.answer_text,
+        selectedOptionId: answer.selected_option_id,
+        answerText: answer.answer_text
+      }))
+    })
+
+    // Process the questions with enhanced logic
     reviewQuestions.value = questions.map(q => {
       const studentAnswer = studentAnswersMap[q.id] || {}
       const correctAnswer = answersMap[q.id]
+      const questionOptions = optionsMap[q.id] || []
+
+      console.log(`Processing Question ${q.question_number} (ID: ${q.id}):`, {
+        studentAnswer: {
+          id: studentAnswer.id,
+          selected_option_id: studentAnswer.selected_option_id,
+          answer_text: studentAnswer.answer_text,
+          hasData: !!Object.keys(studentAnswer).length
+        },
+        correctAnswer,
+        questionOptions: questionOptions.length,
+        optionsList: questionOptions.map(opt => ({
+          id: opt.id,
+          number: opt.option_number,
+          text: opt.option_text,
+          correct: opt.is_correct
+        })),
+        type: q.question_type
+      })
+
+      // Determine if answer is correct based on question type
+      let isCorrect = false
+      let correctAnswerText = null
+
+      if (q.question_type === 'multiple_choice') {
+        // Find correct option
+        const correctOption = questionOptions.find(opt => opt.is_correct)
+        correctAnswerText = correctOption ? correctOption.option_text : 'No correct option found'
+        
+        console.log(`Multiple choice analysis:`, {
+          correctOption,
+          studentSelectedId: studentAnswer.selected_option_id,
+          studentAnswerText: studentAnswer.answer_text,
+          allOptions: questionOptions
+        })
+
+        // Check if student selected the correct option by ID
+        if (correctOption && studentAnswer.selected_option_id === correctOption.id) {
+          isCorrect = true
+        }
+        // Enhanced fallback logic for answer_text matching
+        else if (studentAnswer.answer_text && questionOptions.length > 0) {
+          const answerText = studentAnswer.answer_text.toString().toLowerCase().trim()
+          
+          console.log(`🔍 Trying to match answer_text: "${answerText}" for question ${q.id}`)
+          
+          // Method 1: Check if it's a number (like "1", "2", etc.)
+          if (/^\d+$/.test(answerText)) {
+            const optionNumber = parseInt(answerText)
+            const selectedOption = questionOptions.find(opt => opt.option_number === optionNumber)
+            if (selectedOption) {
+              console.log(`✅ Matched by option number: ${optionNumber}`)
+              if (selectedOption.is_correct) isCorrect = true
+              studentAnswer.selected_option_id = selectedOption.id
+            }
+          }
+          // Method 2: Check if it matches option text exactly
+          else {
+            const matchedOption = questionOptions.find(opt => 
+              opt.option_text.toLowerCase().trim() === answerText
+            )
+            if (matchedOption) {
+              console.log(`✅ Matched by option text: "${matchedOption.option_text}"`)
+              if (matchedOption.is_correct) isCorrect = true
+              studentAnswer.selected_option_id = matchedOption.id
+            }
+            // Method 3: Check if it matches option letter (A, B, C, etc.)
+            else if (/^[a-zA-Z]$/.test(answerText)) {
+              const letterIndex = answerText.toUpperCase().charCodeAt(0) - 65 + 1
+              const letterOption = questionOptions.find(opt => opt.option_number === letterIndex)
+              if (letterOption) {
+                console.log(`✅ Matched by letter: ${answerText.toUpperCase()}`)
+                if (letterOption.is_correct) isCorrect = true
+                studentAnswer.selected_option_id = letterOption.id
+              }
+            }
+          }
+        }
+        
+        // If we still don't have a selected_option_id but have answer_text, use it for display
+        if (!studentAnswer.selected_option_id && studentAnswer.answer_text) {
+          console.log(`⚠️ Could not match answer_text "${studentAnswer.answer_text}" to any option`)
+        }
+      } else if (q.question_type === 'true_false') {
+        correctAnswerText = correctAnswer?.correct_answer
+        if (correctAnswerText && studentAnswer.answer_text) {
+          isCorrect = studentAnswer.answer_text.toLowerCase() === correctAnswerText.toLowerCase()
+        }
+      } else if (q.question_type === 'fill_blank') {
+        correctAnswerText = correctAnswer?.correct_answer
+        if (correctAnswerText && studentAnswer.answer_text) {
+          // Case-insensitive comparison, trimmed
+          isCorrect = studentAnswer.answer_text.trim().toLowerCase() === correctAnswerText.trim().toLowerCase()
+        }
+      }
+
+      const pointsEarned = isCorrect ? (q.points || 1) : 0
+
+      console.log(`Question ${q.question_number} final result:`, {
+        type: q.question_type,
+        correct_answer: correctAnswerText,
+        student_answer: studentAnswer.answer_text || studentAnswer.selected_option_id,
+        selected_option_id: studentAnswer.selected_option_id,
+        answer_text: studentAnswer.answer_text,
+        is_correct: isCorrect,
+        points_earned: pointsEarned,
+        studentAnswerObject: studentAnswer
+      })
 
       return {
         id: q.id,
@@ -1335,20 +1564,21 @@ const loadQuestionsAndAnswers = async (submission) => {
         question_type: q.question_type,
         question_text: q.question_text,
         points: q.points || 1,
-        options: optionsMap[q.id] || [],
-        correct_answer: correctAnswer?.correct_answer || null,
+        options: questionOptions,
+        correct_answer: correctAnswerText,
         selected_option_id: studentAnswer.selected_option_id || null,
         answer_text: studentAnswer.answer_text || null,
-        is_correct: studentAnswer.is_correct || false,
-        points_earned: studentAnswer.points_earned || 0,
+        is_correct: isCorrect,
+        points_earned: pointsEarned,
         teacher_comment: studentAnswer.teacher_comment || '',
-        manualPoints: studentAnswer.points_earned || 0,
+        manualPoints: pointsEarned,
         teacherComment: studentAnswer.teacher_comment || '',
         student_answer_id: studentAnswer.id || null
       }
     })
 
     console.log('✅ Questions processed:', reviewQuestions.value.length)
+    console.log('📊 Review questions data:', reviewQuestions.value)
   } catch (err) {
     console.error('Error loading questions:', err)
     alert('Failed to load questions: ' + err.message)
@@ -1409,6 +1639,45 @@ const getCorrectOptionLabel = (question) => {
     return String.fromCharCode(65 + correctOption.option_number - 1)
   }
   return 'N/A'
+}
+
+const getStudentOptionLabel = (question) => {
+  const selectedOption = question.options.find(opt => opt.id === question.selected_option_id)
+  if (selectedOption) {
+    return String.fromCharCode(65 + (selectedOption.option_number - 1))
+  }
+  
+  // Enhanced fallback: if we have answer_text but no selected_option_id, try comprehensive matching
+  if (question.answer_text && question.options.length > 0) {
+    const answerText = question.answer_text.toString().toLowerCase().trim()
+    
+    // Method 1: Check if it's a number (like "1", "2", etc.)
+    if (/^\d+$/.test(answerText)) {
+      const optionNumber = parseInt(answerText)
+      const matchedOption = question.options.find(opt => opt.option_number === optionNumber)
+      if (matchedOption) {
+        return String.fromCharCode(65 + (matchedOption.option_number - 1))
+      }
+    }
+    
+    // Method 2: Check if it's already a letter (A, B, C, etc.)
+    if (/^[a-zA-Z]$/.test(answerText)) {
+      return answerText.toUpperCase()
+    }
+    
+    // Method 3: Try to match by option text
+    const textMatchedOption = question.options.find(opt => 
+      opt.option_text.toLowerCase().trim() === answerText
+    )
+    if (textMatchedOption) {
+      return String.fromCharCode(65 + (textMatchedOption.option_number - 1))
+    }
+    
+    // If no match found, show the raw answer with indication
+    return `"${question.answer_text}"`
+  }
+  
+  return 'No answer'
 }
 
 const saveGrade = async () => {
@@ -1634,11 +1903,7 @@ onMounted(async () => {
     console.log('🔴 Setting up real-time subscriptions...')
     
     const subscription = supabase
-      .channel('gradebook_realtime', {
-        config: {
-          broadcast: { self: true }
-        }
-      })
+      .channel('gradebook_realtime')
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
@@ -1694,23 +1959,10 @@ onMounted(async () => {
         }
       })
     
-    // Set up periodic refresh as fallback
-    const refreshInterval = setInterval(async () => {
-      console.log('⏰ Periodic refresh...')
-      if (selectedSection.value) {
-        await fetchSubmissions(selectedSection.value.id)
-      } else if (selectedSubject.value) {
-        await fetchSections(selectedSubject.value.id)
-      } else {
-        await fetchSubjects()
-      }
-    }, 30000) // Refresh every 30 seconds
-    
     // Cleanup on unmount
     return () => {
       console.log('🧹 Cleaning up subscriptions...')
       subscription.unsubscribe()
-      clearInterval(refreshInterval)
     }
   } else {
     loading.value = false
