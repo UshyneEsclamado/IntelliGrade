@@ -76,6 +76,7 @@
               <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
             </svg>
             <span>Refresh</span>
+            <span v-if="newSubmissionsCount > 0" class="notification-badge">{{ newSubmissionsCount }}</span>
           </button>
         </div>
       </div>
@@ -307,40 +308,67 @@
       <div v-else-if="selectedSection" class="submissions-view">
         <!-- Stats Cards -->
         <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon pending">
-              <i class="fas fa-clock"></i>
+          <div class="stat-card modern pending">
+            <div class="stat-icon-wrapper">
+              <div class="stat-icon pending">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
+                </svg>
+              </div>
+              <div class="stat-pulse pending"></div>
             </div>
-            <div class="stat-info">
-              <h3>{{ sectionStats.pendingReview }}</h3>
-              <p>Pending Review</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon graded">
-              <i class="fas fa-check-circle"></i>
-            </div>
-            <div class="stat-info">
-              <h3>{{ sectionStats.graded }}</h3>
-              <p>Graded</p>
+            <div class="stat-content">
+              <div class="stat-number">{{ sectionStats.pendingReview }}</div>
+              <div class="stat-label">Pending Review</div>
+              <div class="stat-description">Awaiting your feedback</div>
             </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon total">
-              <i class="fas fa-clipboard-list"></i>
+          
+          <div class="stat-card modern graded">
+            <div class="stat-icon-wrapper">
+              <div class="stat-icon graded">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,16.5L18,9.5L16.59,8.09L11,13.67L7.91,10.59L6.5,12L11,16.5Z" />
+                </svg>
+              </div>
+              <div class="stat-pulse graded"></div>
             </div>
-            <div class="stat-info">
-              <h3>{{ sectionStats.total }}</h3>
-              <p>Total Submissions</p>
+            <div class="stat-content">
+              <div class="stat-number">{{ sectionStats.graded }}</div>
+              <div class="stat-label">Graded</div>
+              <div class="stat-description">Completed reviews</div>
             </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon average">
-              <i class="fas fa-chart-line"></i>
+          
+          <div class="stat-card modern total">
+            <div class="stat-icon-wrapper">
+              <div class="stat-icon total">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19,3H14.82C14.4,1.84 13.3,1 12,1C10.7,1 9.6,1.84 9.18,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M12,3A1,1 0 0,1 13,4A1,1 0 0,1 12,5A1,1 0 0,1 11,4A1,1 0 0,1 12,3M7,9H17V7H7V9M7,11V13H17V11H7M7,15V17H17V15H7Z" />
+                </svg>
+              </div>
+              <div class="stat-pulse total"></div>
             </div>
-            <div class="stat-info">
-              <h3>{{ sectionStats.averageScore }}%</h3>
-              <p>Average Score</p>
+            <div class="stat-content">
+              <div class="stat-number">{{ sectionStats.total }}</div>
+              <div class="stat-label">Total Submissions</div>
+              <div class="stat-description">All quiz attempts</div>
+            </div>
+          </div>
+          
+          <div class="stat-card modern average">
+            <div class="stat-icon-wrapper">
+              <div class="stat-icon average">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M16,6L18.29,8.29L13.41,13.17L9.41,9.17L2,16.59L3.41,18L9.41,12L13.41,16L19.71,9.71L22,12V6H16Z" />
+                </svg>
+              </div>
+              <div class="stat-pulse average"></div>
+            </div>
+            <div class="stat-content">
+              <div class="stat-number">{{ sectionStats.averageScore }}%</div>
+              <div class="stat-label">Average Score</div>
+              <div class="stat-description">Class performance</div>
             </div>
           </div>
         </div>
@@ -433,17 +461,23 @@
                     <div class="action-buttons">
                       <button 
                         @click="reviewSubmission(submission)" 
-                        class="btn-action review"
+                        class="btn-action review modern"
                         title="Review & Grade"
                       >
-                        <i class="fas fa-edit"></i>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M14.06,9.02L14.98,9.94L5.92,19H5V18.08L14.06,9.02M17.66,3C17.41,3 17.15,3.1 16.96,3.29L15.13,5.12L18.88,8.87L20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18.17,3.09 17.92,3 17.66,3M14.06,6.19L3,17.25V21H6.75L17.81,9.94L14.06,6.19Z" />
+                        </svg>
+                        <span>Grade</span>
                       </button>
                       <button 
                         @click="viewSubmission(submission)" 
-                        class="btn-action view"
+                        class="btn-action view modern"
                         title="View Details"
                       >
-                        <i class="fas fa-eye"></i>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
+                        </svg>
+                        <span>View</span>
                       </button>
                     </div>
                   </td>
@@ -695,6 +729,8 @@ const reviewFeedback = ref('')
 const modalMode = ref('view')
 
 const selectedSubjectFilter = ref('')
+const lastRefresh = ref(new Date())
+const newSubmissionsCount = ref(0)
 
 const sectionStats = computed(() => {
   const pending = submissions.value.filter(s => s.status === 'submitted').length
@@ -805,23 +841,26 @@ const totalPages = computed(() => {
 
 const getTeacherInfo = async () => {
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-    if (sessionError || !session) {
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
       error.value = 'Authentication error'
       return false
     }
 
+    // Get profile first
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('id, role')
-      .eq('auth_user_id', session.user.id)
+      .eq('auth_user_id', user.id)
+      .eq('role', 'teacher')
       .single()
 
-    if (profileError || !profile || profile.role !== 'teacher') {
+    if (profileError || !profile) {
       error.value = 'Access denied - Teacher role required'
       return false
     }
 
+    // Get teacher data separately
     const { data: teacher, error: teacherError } = await supabase
       .from('teachers')
       .select('id')
@@ -847,6 +886,9 @@ const fetchSubjects = async () => {
     loading.value = true
     error.value = null
 
+    console.log('🔄 Fetching subjects for teacher:', teacherId.value)
+
+    // Get subjects first - FAST query, no complex joins
     const { data: subjectsData, error: subjectsError } = await supabase
       .from('subjects')
       .select('id, name, grade_level, description')
@@ -855,49 +897,117 @@ const fetchSubjects = async () => {
 
     if (subjectsError) throw subjectsError
 
-    const subjectsWithStats = await Promise.all(
-      (subjectsData || []).map(async (subject) => {
-        const { count: sectionCount } = await supabase
-          .from('sections')
-          .select('id', { count: 'exact', head: true })
-          .eq('subject_id', subject.id)
-          .eq('is_active', true)
+    console.log('📚 Found subjects:', subjectsData?.length || 0)
 
-        const { data: quizzes } = await supabase
-          .from('quizzes')
-          .select('id')
-          .eq('subject_id', subject.id)
+    if (!subjectsData || subjectsData.length === 0) {
+      subjects.value = []
+      loading.value = false
+      return
+    }
 
-        const quizIds = quizzes?.map(q => q.id) || []
+    // Show subjects immediately with default counts for fast display
+    const quickSubjects = subjectsData.map(subject => ({
+      id: subject.id,
+      name: subject.name,
+      grade_level: subject.grade_level,
+      description: subject.description || '',
+      section_count: 0, // Will be updated
+      pending_count: 0  // Will be updated
+    }))
+
+    subjects.value = quickSubjects
+    loading.value = false // Hide loading immediately
+
+    // Now load counts in background without blocking UI
+    console.log('📊 Loading counts in background...')
+    const subjectIds = subjectsData.map(s => s.id)
+
+    try {
+      // Batch query: Get all sections for all subjects at once
+      const { data: allSections } = await supabase
+        .from('sections')
+        .select('id, subject_id')
+        .in('subject_id', subjectIds)
+        .eq('is_active', true)
+
+      // Create lookup for quick count
+      const sectionsBySubject = {}
+      allSections?.forEach(section => {
+        if (!sectionsBySubject[section.subject_id]) {
+          sectionsBySubject[section.subject_id] = 0
+        }
+        sectionsBySubject[section.subject_id]++
+      })
+
+      // Update subjects with section counts
+      subjects.value = subjects.value.map(subject => ({
+        ...subject,
+        section_count: sectionsBySubject[subject.id] || 0
+      }))
+
+      // Only get pending counts if there are sections
+      if (allSections && allSections.length > 0) {
+        const sectionIds = allSections.map(s => s.id)
         
-        let pendingCount = 0
-        if (quizIds.length > 0) {
-          const { count } = await supabase
+        const { data: allQuizzes } = await supabase
+          .from('quizzes')
+          .select('id, section_id')
+          .in('section_id', sectionIds)
+
+        if (allQuizzes && allQuizzes.length > 0) {
+          const quizIds = allQuizzes.map(q => q.id)
+          
+          const { data: pendingSubmissions } = await supabase
             .from('quiz_attempts')
-            .select('id', { count: 'exact', head: true })
+            .select('quiz_id')
             .in('quiz_id', quizIds)
             .eq('status', 'submitted')
-            .not('submitted_at', 'is', null)
 
-          pendingCount = count || 0
+          // Create lookup maps
+          const quizzesBySection = {}
+          allQuizzes.forEach(quiz => {
+            if (!quizzesBySection[quiz.section_id]) {
+              quizzesBySection[quiz.section_id] = []
+            }
+            quizzesBySection[quiz.section_id].push(quiz)
+          })
+
+          const pendingByQuiz = {}
+          pendingSubmissions?.forEach(submission => {
+            pendingByQuiz[submission.quiz_id] = (pendingByQuiz[submission.quiz_id] || 0) + 1
+          })
+
+          // Create pending counts by subject
+          const pendingBySubject = {}
+          allSections.forEach(section => {
+            const sectionQuizzes = quizzesBySection[section.id] || []
+            let subjectPending = 0
+            sectionQuizzes.forEach(quiz => {
+              subjectPending += pendingByQuiz[quiz.id] || 0
+            })
+            
+            if (!pendingBySubject[section.subject_id]) {
+              pendingBySubject[section.subject_id] = 0
+            }
+            pendingBySubject[section.subject_id] += subjectPending
+          })
+
+          // Update subjects with pending counts
+          subjects.value = subjects.value.map(subject => ({
+            ...subject,
+            pending_count: pendingBySubject[subject.id] || 0
+          }))
         }
+      }
 
-        return {
-          id: subject.id,
-          name: subject.name,
-          grade_level: subject.grade_level,
-          description: subject.description || '',
-          section_count: sectionCount || 0,
-          pending_count: pendingCount
-        }
-      })
-    )
-
-    subjects.value = subjectsWithStats
+      console.log('✅ Background counts loaded')
+    } catch (bgError) {
+      console.error('⚠️ Error loading background counts:', bgError)
+      // Don't show error for background loading - subjects are already displayed
+    }
   } catch (err) {
-    console.error('Error fetching subjects:', err)
+    console.error('❌ Error fetching subjects:', err)
     error.value = `Failed to load subjects: ${err.message}`
-  } finally {
     loading.value = false
   }
 }
@@ -912,6 +1022,9 @@ const fetchSections = async (subjectId) => {
     loading.value = true
     error.value = null
 
+    console.log('🔄 Fetching sections for subject:', subjectId)
+
+    // Get sections first
     const { data: sectionsData, error: sectionsError } = await supabase
       .from('sections')
       .select('id, name, section_code, max_students')
@@ -920,42 +1033,69 @@ const fetchSections = async (subjectId) => {
 
     if (sectionsError) throw sectionsError
 
-    const sectionsWithStats = await Promise.all(
-      (sectionsData || []).map(async (section) => {
-        const { data: quizzes } = await supabase
-          .from('quizzes')
-          .select('id')
-          .eq('section_id', section.id)
+    console.log('📝 Found sections:', sectionsData?.length || 0)
 
-        const quizCount = quizzes?.length || 0
-        const quizIds = quizzes?.map(q => q.id) || []
-        
-        let pendingCount = 0
-        if (quizIds.length > 0) {
-          const { count } = await supabase
-            .from('quiz_attempts')
-            .select('id', { count: 'exact', head: true })
-            .in('quiz_id', quizIds)
-            .eq('status', 'submitted')
-            .not('submitted_at', 'is', null)
+    if (!sectionsData || sectionsData.length === 0) {
+      sections.value = []
+      loading.value = false
+      return
+    }
 
-          pendingCount = count || 0
-        }
+    const sectionIds = sectionsData.map(s => s.id)
 
-        return {
-          id: section.id,
-          name: section.name,
-          section_code: section.section_code,
-          max_students: section.max_students,
-          quiz_count: quizCount,
-          pending_count: pendingCount
-        }
+    // Batch query: Get all quizzes for all sections at once
+    const { data: allQuizzes } = await supabase
+      .from('quizzes')
+      .select('id, section_id')
+      .in('section_id', sectionIds)
+
+    // Batch query: Get all pending submissions at once
+    const quizIds = allQuizzes?.map(q => q.id) || []
+    const { data: pendingSubmissions } = await supabase
+      .from('quiz_attempts')
+      .select('quiz_id')
+      .in('quiz_id', quizIds)
+      .eq('status', 'submitted')
+
+    // Create lookup maps for fast counting
+    const quizzesBySection = {}
+    allQuizzes?.forEach(quiz => {
+      if (!quizzesBySection[quiz.section_id]) {
+        quizzesBySection[quiz.section_id] = []
+      }
+      quizzesBySection[quiz.section_id].push(quiz)
+    })
+
+    const pendingByQuiz = {}
+    pendingSubmissions?.forEach(submission => {
+      pendingByQuiz[submission.quiz_id] = (pendingByQuiz[submission.quiz_id] || 0) + 1
+    })
+
+    // Process sections with pre-calculated counts
+    const processedSections = sectionsData.map(section => {
+      const sectionQuizzes = quizzesBySection[section.id] || []
+      const quizCount = sectionQuizzes.length
+
+      // Count pending submissions for this section
+      let pendingCount = 0
+      sectionQuizzes.forEach(quiz => {
+        pendingCount += pendingByQuiz[quiz.id] || 0
       })
-    )
 
-    sections.value = sectionsWithStats
+      return {
+        id: section.id,
+        name: section.name,
+        section_code: section.section_code,
+        max_students: section.max_students,
+        quiz_count: quizCount,
+        pending_count: pendingCount
+      }
+    })
+
+    sections.value = processedSections
+    console.log('✅ Sections processed with counts:', processedSections.length)
   } catch (err) {
-    console.error('Error fetching sections:', err)
+    console.error('❌ Error fetching sections:', err)
     error.value = `Failed to load sections: ${err.message}`
   } finally {
     loading.value = false
@@ -972,53 +1112,89 @@ const fetchSubmissions = async (sectionId) => {
     loading.value = true
     error.value = null
 
+    console.log('🔄 Fetching submissions for section:', sectionId)
+
+    // First get quizzes for this section
     const { data: quizzes, error: quizzesError } = await supabase
       .from('quizzes')
       .select('id, title, quiz_code')
       .eq('section_id', sectionId)
 
-    if (quizzesError) throw quizzesError
+    if (quizzesError) {
+      console.error('❌ Error fetching quizzes:', quizzesError)
+      throw quizzesError
+    }
+
+    console.log('📚 Found quizzes:', quizzes?.length || 0)
 
     if (!quizzes || quizzes.length === 0) {
+      console.log('ℹ️ No quizzes found for this section')
       submissions.value = []
       loading.value = false
       return
     }
 
+    // Get quiz attempts for these quizzes
     const quizIds = quizzes.map(q => q.id)
-
     const { data: attempts, error: attemptsError } = await supabase
       .from('quiz_attempts')
-      .select('*')
+      .select(`
+        id,
+        quiz_id,
+        student_id,
+        attempt_number,
+        total_score,
+        max_score,
+        percentage,
+        status,
+        submitted_at,
+        time_taken_minutes,
+        teacher_feedback
+      `)
       .in('quiz_id', quizIds)
       .order('submitted_at', { ascending: false })
 
-    if (attemptsError) throw attemptsError
-
-    const studentIds = [...new Set(attempts?.map(a => a.student_id) || [])]
-    
-    let studentsMap = {}
-    if (studentIds.length > 0) {
-      const { data: students } = await supabase
-        .from('students')
-        .select('id, full_name, email')
-        .in('id', studentIds)
-
-      students?.forEach(s => {
-        studentsMap[s.id] = s
-      })
+    if (attemptsError) {
+      console.error('❌ Error fetching attempts:', attemptsError)
+      throw attemptsError
     }
 
+    console.log('📝 Found attempts:', attempts?.length || 0)
+
+    if (!attempts || attempts.length === 0) {
+      console.log('ℹ️ No submissions found for this section')
+      submissions.value = []
+      loading.value = false
+      return
+    }
+
+    // Get student data
+    const studentIds = [...new Set(attempts.map(a => a.student_id))]
+    const { data: students, error: studentsError } = await supabase
+      .from('students')
+      .select('id, full_name, email')
+      .in('id', studentIds)
+
+    if (studentsError) {
+      console.error('❌ Error fetching students:', studentsError)
+      throw studentsError
+    }
+
+    // Create lookup maps
     const quizMap = {}
     quizzes.forEach(q => { quizMap[q.id] = q })
 
-    submissions.value = (attempts || []).map(attempt => ({
+    const studentMap = {}
+    students?.forEach(s => { studentMap[s.id] = s })
+
+    // Process the data
+    submissions.value = attempts.map(attempt => ({
       id: attempt.id,
       quiz_id: attempt.quiz_id,
       student_id: attempt.student_id,
       attempt_number: attempt.attempt_number,
-      student_name: studentsMap[attempt.student_id]?.full_name || 'Unknown Student',
-      student_email: studentsMap[attempt.student_id]?.email || '',
+      student_name: studentMap[attempt.student_id]?.full_name || 'Unknown Student',
+      student_email: studentMap[attempt.student_id]?.email || '',
       quiz_title: quizMap[attempt.quiz_id]?.title || 'Unknown Quiz',
       quiz_code: quizMap[attempt.quiz_id]?.quiz_code || '',
       total_score: attempt.total_score || 0,
@@ -1030,9 +1206,9 @@ const fetchSubmissions = async (sectionId) => {
       teacher_feedback: attempt.teacher_feedback
     }))
 
-    console.log('Submissions loaded:', submissions.value.length)
+    console.log('✅ Submissions processed:', submissions.value.length)
   } catch (err) {
-    console.error('Error fetching submissions:', err)
+    console.error('❌ Error fetching submissions:', err)
     error.value = `Failed to load submissions: ${err.message}`
   } finally {
     loading.value = false
@@ -1054,12 +1230,27 @@ const resetToSections = () => {
 }
 
 const refreshData = async () => {
-  if (!selectedSubject.value && !selectedSection.value) {
+  console.log('🔄 Manual refresh triggered...')
+  loading.value = true
+  
+  try {
+    // Always refresh subjects to get updated counts
     await fetchSubjects()
-  } else if (selectedSubject.value && !selectedSection.value) {
-    await fetchSections(selectedSubject.value.id)
-  } else if (selectedSection.value) {
-    await fetchSubmissions(selectedSection.value.id)
+    
+    // Refresh current view
+    if (selectedSection.value) {
+      console.log('📝 Refreshing submissions for section:', selectedSection.value.id)
+      await fetchSubmissions(selectedSection.value.id)
+    } else if (selectedSubject.value) {
+      console.log('📚 Refreshing sections for subject:', selectedSubject.value.id)
+      await fetchSections(selectedSubject.value.id)
+    }
+    
+    console.log('✅ Manual refresh completed')
+  } catch (error) {
+    console.error('❌ Error during manual refresh:', error)
+  } finally {
+    loading.value = false
   }
 }
 
@@ -1067,13 +1258,21 @@ const loadQuestionsAndAnswers = async (submission) => {
   try {
     loadingQuestions.value = true
 
+    console.log('🔍 Loading questions for submission:', submission.id)
+
+    // Get questions first
     const { data: questions, error: questionsError } = await supabase
       .from('quiz_questions')
       .select('id, question_number, question_type, question_text, points')
       .eq('quiz_id', submission.quiz_id)
       .order('question_number')
 
-    if (questionsError) throw questionsError
+    if (questionsError) {
+      console.error('❌ Questions error:', questionsError)
+      throw questionsError
+    }
+
+    console.log('📝 Found questions:', questions?.length || 0)
 
     if (!questions || questions.length === 0) {
       reviewQuestions.value = []
@@ -1082,24 +1281,33 @@ const loadQuestionsAndAnswers = async (submission) => {
 
     const questionIds = questions.map(q => q.id)
 
-    const { data: options } = await supabase
-      .from('question_options')
-      .select('*')
-      .in('question_id', questionIds)
-      .order('option_number')
+    // Get all related data separately for reliability
+    const [optionsRes, answersRes, studentAnswersRes] = await Promise.all([
+      supabase
+        .from('question_options')
+        .select('*')
+        .in('question_id', questionIds)
+        .order('option_number'),
+      
+      supabase
+        .from('question_answers')
+        .select('*')
+        .in('question_id', questionIds),
+      
+      supabase
+        .from('student_answers')
+        .select('*')
+        .eq('attempt_id', submission.id)
+        .in('question_id', questionIds)
+    ])
 
-    const { data: answers } = await supabase
-      .from('question_answers')
-      .select('*')
-      .in('question_id', questionIds)
+    if (optionsRes.error) console.error('Options error:', optionsRes.error)
+    if (answersRes.error) console.error('Answers error:', answersRes.error)
+    if (studentAnswersRes.error) console.error('Student answers error:', studentAnswersRes.error)
 
-    const { data: studentAnswers } = await supabase
-      .from('student_answers')
-      .select('*')
-      .eq('attempt_id', submission.id)
-
+    // Create lookup maps
     const optionsMap = {}
-    options?.forEach(opt => {
+    optionsRes.data?.forEach(opt => {
       if (!optionsMap[opt.question_id]) {
         optionsMap[opt.question_id] = []
       }
@@ -1107,17 +1315,18 @@ const loadQuestionsAndAnswers = async (submission) => {
     })
 
     const answersMap = {}
-    answers?.forEach(ans => {
+    answersRes.data?.forEach(ans => {
       answersMap[ans.question_id] = ans
     })
 
     const studentAnswersMap = {}
-    studentAnswers?.forEach(sa => {
+    studentAnswersRes.data?.forEach(sa => {
       studentAnswersMap[sa.question_id] = sa
     })
 
+    // Process the questions
     reviewQuestions.value = questions.map(q => {
-      const studentAnswer = studentAnswersMap[q.id]
+      const studentAnswer = studentAnswersMap[q.id] || {}
       const correctAnswer = answersMap[q.id]
 
       return {
@@ -1128,16 +1337,18 @@ const loadQuestionsAndAnswers = async (submission) => {
         points: q.points || 1,
         options: optionsMap[q.id] || [],
         correct_answer: correctAnswer?.correct_answer || null,
-        selected_option_id: studentAnswer?.selected_option_id || null,
-        answer_text: studentAnswer?.answer_text || null,
-        is_correct: studentAnswer?.is_correct || false,
-        points_earned: studentAnswer?.points_earned || 0,
-        teacher_comment: studentAnswer?.teacher_comment || '',
-        manualPoints: studentAnswer?.points_earned || 0,
-        teacherComment: studentAnswer?.teacher_comment || '',
-        student_answer_id: studentAnswer?.id || null
+        selected_option_id: studentAnswer.selected_option_id || null,
+        answer_text: studentAnswer.answer_text || null,
+        is_correct: studentAnswer.is_correct || false,
+        points_earned: studentAnswer.points_earned || 0,
+        teacher_comment: studentAnswer.teacher_comment || '',
+        manualPoints: studentAnswer.points_earned || 0,
+        teacherComment: studentAnswer.teacher_comment || '',
+        student_answer_id: studentAnswer.id || null
       }
     })
+
+    console.log('✅ Questions processed:', reviewQuestions.value.length)
   } catch (err) {
     console.error('Error loading questions:', err)
     alert('Failed to load questions: ' + err.message)
@@ -1418,6 +1629,89 @@ onMounted(async () => {
   const success = await getTeacherInfo()
   if (success) {
     await fetchSubjects()
+    
+    // Set up real-time subscription for quiz submissions
+    console.log('🔴 Setting up real-time subscriptions...')
+    
+    const subscription = supabase
+      .channel('gradebook_realtime', {
+        config: {
+          broadcast: { self: true }
+        }
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'quiz_attempts'
+      }, async (payload) => {
+        console.log('� Quiz attempt change detected:', payload.eventType, payload.new || payload.old)
+        
+        // Always refresh data when submissions change
+        if (selectedSection.value) {
+          console.log('🔄 Refreshing submissions for section:', selectedSection.value.id)
+          await fetchSubmissions(selectedSection.value.id)
+        }
+        if (selectedSubject.value) {
+          console.log('🔄 Refreshing sections for subject:', selectedSubject.value.id)
+          await fetchSections(selectedSubject.value.id)
+        }
+        console.log('🔄 Refreshing subjects with updated counts')
+        await fetchSubjects()
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'quizzes'
+      }, async (payload) => {
+        console.log('� Quiz change detected:', payload.eventType, payload.new || payload.old)
+        
+        // Refresh relevant data
+        if (selectedSection.value) {
+          await fetchSubmissions(selectedSection.value.id)
+        }
+        if (selectedSubject.value) {
+          await fetchSections(selectedSubject.value.id)
+        }
+        await fetchSubjects()
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'sections'
+      }, async (payload) => {
+        console.log('🔔 Section change detected:', payload.eventType, payload.new || payload.old)
+        
+        // Refresh subjects when sections change
+        await fetchSubjects()
+        if (selectedSubject.value) {
+          await fetchSections(selectedSubject.value.id)
+        }
+      })
+      .subscribe((status) => {
+        console.log('📡 Subscription status:', status)
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Real-time subscriptions active!')
+        }
+      })
+    
+    // Set up periodic refresh as fallback
+    const refreshInterval = setInterval(async () => {
+      console.log('⏰ Periodic refresh...')
+      if (selectedSection.value) {
+        await fetchSubmissions(selectedSection.value.id)
+      } else if (selectedSubject.value) {
+        await fetchSections(selectedSubject.value.id)
+      } else {
+        await fetchSubjects()
+      }
+    }, 30000) // Refresh every 30 seconds
+    
+    // Cleanup on unmount
+    return () => {
+      console.log('🧹 Cleaning up subscriptions...')
+      subscription.unsubscribe()
+      clearInterval(refreshInterval)
+    }
   } else {
     loading.value = false
   }
@@ -1593,6 +1887,24 @@ body, html {
 
 .refresh-btn {
   min-width: auto;
+  position: relative;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pulse 2s infinite;
 }
 
 .spinning {
@@ -1602,6 +1914,11 @@ body, html {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
 
 /* Main Content */
@@ -1960,8 +2277,8 @@ body, html {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 0;
-  margin-bottom: 1rem;
+  padding: 0.5rem 0;
+  margin-bottom: 0.25rem;
 }
 
 .breadcrumb-btn {
@@ -1969,10 +2286,10 @@ body, html {
   border: none;
   color: #3D8D7A;
   cursor: pointer;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -1994,8 +2311,8 @@ body, html {
 .breadcrumb-current {
   color: #1f2937;
   font-weight: 600;
-  font-size: 0.875rem;
-  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  padding: 0.75rem 1rem;
 }
 .dark .breadcrumb-current {
   color: #A3D1C6;
@@ -2003,7 +2320,7 @@ body, html {
 
 .breadcrumb-separator {
   color: #6b7280;
-  font-size: 0.875rem;
+  font-size: 1rem;
 }
 .dark .breadcrumb-separator {
   color: #A3D1C6;
@@ -2151,64 +2468,285 @@ body, html {
   color: #9ca3af;
 }
 
-/* Stats Grid */
+/* Enhanced Stats Grid */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 1rem;
   margin-bottom: 1.5rem;
+  margin-top: 0.25rem;
 }
 
-.stat-card {
-  background: white;
-  border-radius: 12px;
-  padding: 1.25rem;
+/* Modern Stat Cards */
+.stat-card.modern {
+  background: linear-gradient(135deg, #ffffff 0%, #fefefe 100%);
+  border-radius: 16px;
+  padding: 1.5rem;
   display: flex;
   align-items: center;
   gap: 1rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(61, 141, 122, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
 }
-.dark .stat-card {
-  background: #23272b;
-  border: 1px solid #3D8D7A;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+
+.dark .stat-card.modern {
+  background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Hover Effects */
+.stat-card.modern:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.dark .stat-card.modern:hover {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+/* Card Type Specific Styling */
+.stat-card.modern.pending {
+  border-left: 4px solid #f59e0b;
+}
+
+.stat-card.modern.pending:hover {
+  box-shadow: 0 20px 60px rgba(245, 158, 11, 0.2);
+}
+
+.stat-card.modern.graded {
+  border-left: 4px solid #10b981;
+}
+
+.stat-card.modern.graded:hover {
+  box-shadow: 0 20px 60px rgba(16, 185, 129, 0.2);
+}
+
+.stat-card.modern.total {
+  border-left: 4px solid #3b82f6;
+}
+
+.stat-card.modern.total:hover {
+  box-shadow: 0 20px 60px rgba(59, 130, 246, 0.2);
+}
+
+.stat-card.modern.average {
+  border-left: 4px solid #8b5cf6;
+}
+
+.stat-card.modern.average:hover {
+  box-shadow: 0 20px 60px rgba(139, 92, 246, 0.2);
+}
+
+/* Icon Wrapper with Animation */
+.stat-icon-wrapper {
+  position: relative;
 }
 
 .stat-icon {
   width: 48px;
   height: 48px;
-  border-radius: 10px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s ease;
 }
 
-.stat-icon.pending { background: #A3D1C6; }
-.stat-icon.graded { background: #B3D8A8; }
-.stat-icon.total { background: #3D8D7A; }
-.stat-icon.average { background: linear-gradient(135deg, #3D8D7A, #A3D1C6); }
+.stat-icon.pending { 
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+}
+
+.stat-icon.graded { 
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+}
+
+.stat-icon.total { 
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+}
+
+.stat-icon.average { 
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+}
+
+/* Pulsing Animation Behind Icons */
+.stat-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  opacity: 0.3;
+  animation: pulse-animation 2s infinite;
+}
+
+.stat-pulse.pending {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.stat-pulse.graded {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.stat-pulse.total {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.stat-pulse.average {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+@keyframes pulse-animation {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0.1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.3;
+  }
+}
+
+/* Stat Content */
+.stat-content {
+  flex: 1;
+  min-width: 0;
+}
 
 .stat-number {
   font-size: 1.75rem;
   font-weight: 700;
   color: #1f2937;
   line-height: 1;
+  margin-bottom: 0.25rem;
+  background: linear-gradient(135deg, #1f2937, #374151);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
+
 .dark .stat-number {
-  color: #A3D1C6;
+  background: linear-gradient(135deg, #f9fafb, #e5e7eb);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .stat-label {
   font-size: 0.875rem;
-  color: #6b7280;
-  margin-top: 0.25rem;
-  font-weight: 500;
+  color: #374151;
+  font-weight: 600;
+  margin-bottom: 0.125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
+
 .dark .stat-label {
-  color: #A3D1C6;
+  color: #d1d5db;
+}
+
+.stat-description {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.dark .stat-description {
+  color: #9ca3af;
+}
+
+/* Card Background Patterns */
+.stat-card.modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border-radius: 50%;
+  transform: translate(30px, -30px);
+  transition: all 0.3s ease;
+}
+
+.dark .stat-card.modern::before {
+  background: linear-gradient(135deg, rgba(75, 85, 99, 0.2), rgba(55, 65, 81, 0.1));
+}
+
+.stat-card.modern:hover::before {
+  transform: translate(20px, -20px) scale(1.2);
+  opacity: 0.8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+  
+  .stat-card.modern {
+    padding: 1rem;
+    gap: 0.75rem;
+  }
+  
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .stat-pulse {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .stat-number {
+    font-size: 1.5rem;
+  }
+  
+  .stat-label {
+    font-size: 0.75rem;
+  }
+  
+  .stat-description {
+    font-size: 0.6875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .stat-card.modern {
+    flex-direction: row;
+    text-align: left;
+    padding: 1rem;
+  }
+  
+  .stat-content {
+    margin-top: 0;
+  }
 }
 
 /* Enhanced Subject and Section Cards */
@@ -2476,7 +3014,7 @@ body, html {
 
 .submissions-table th,
 .submissions-table td {
-  padding: 1rem;
+  padding: 1.25rem 1rem;
   text-align: left;
   border-bottom: 1px solid rgba(61, 141, 122, 0.1);
 }
@@ -2489,7 +3027,7 @@ body, html {
   background: #FBFFE4;
   font-weight: 600;
   color: #1f2937;
-  font-size: 0.875rem;
+  font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -2520,12 +3058,12 @@ body, html {
 .student-info {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
 .student-avatar {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: #3D8D7A;
   color: white;
@@ -2533,48 +3071,53 @@ body, html {
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 0.75rem;
+  font-size: 0.875rem;
+  flex-shrink: 0;
 }
 
 .student-name {
-  font-weight: 500;
+  font-weight: 600;
   color: #1f2937;
-  font-size: 0.875rem;
+  font-size: 1rem;
+  line-height: 1.3;
 }
 .dark .student-name {
   color: #A3D1C6;
 }
 
 .student-email {
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   color: #6b7280;
+  margin-top: 0.125rem;
 }
 .dark .student-email {
   color: #9ca3af;
 }
 
 .quiz-info {
-  max-width: 180px;
+  max-width: 200px;
 }
 
 .quiz-title {
-  font-weight: 500;
+  font-weight: 600;
   color: #1f2937;
   margin-bottom: 0.25rem;
-  font-size: 0.875rem;
+  font-size: 1rem;
+  line-height: 1.3;
 }
 .dark .quiz-title {
   color: #A3D1C6;
 }
 
 .quiz-code {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: #6b7280;
   font-family: 'Courier New', monospace;
   background: #B3D8A8;
-  padding: 0.125rem 0.375rem;
-  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
   display: inline-block;
+  font-weight: 500;
 }
 .dark .quiz-code {
   background: #3D8D7A;
@@ -2651,38 +3194,111 @@ body, html {
 .action-buttons {
   display: flex;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .btn-action {
-  width: 32px;
-  height: 32px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.btn-action.review {
+/* Old style for backward compatibility */
+.btn-action:not(.modern) {
+  width: 32px;
+  height: 32px;
+}
+
+.btn-action:not(.modern).review {
   background: #B3D8A8;
   color: #1f2937;
 }
 
-.btn-action.review:hover {
+.btn-action:not(.modern).review:hover {
   background: #3D8D7A;
   color: white;
 }
 
-.btn-action.view {
+.btn-action:not(.modern).view {
   background: rgba(163, 209, 198, 0.3);
   color: #3D8D7A;
 }
 
-.btn-action.view:hover {
+.btn-action:not(.modern).view:hover {
   background: #A3D1C6;
   color: #1f2937;
+}
+
+/* Modern style with text labels */
+.btn-action.modern {
+  padding: 0.5rem 0.75rem;
+  gap: 0.375rem;
+  min-width: auto;
+  white-space: nowrap;
+}
+
+.btn-action.modern svg {
+  flex-shrink: 0;
+}
+
+.btn-action.modern span {
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.btn-action.modern.review {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border: 1px solid transparent;
+}
+
+.btn-action.modern.review:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btn-action.modern.view {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border: 1px solid transparent;
+}
+
+.btn-action.modern.view:hover {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-action.modern:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark mode support */
+.dark .btn-action.modern.review {
+  background: linear-gradient(135deg, #059669, #047857);
+}
+
+.dark .btn-action.modern.review:hover {
+  background: linear-gradient(135deg, #047857, #065f46);
+}
+
+.dark .btn-action.modern.view {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+
+.dark .btn-action.modern.view:hover {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
 }
 
 /* Pagination */
