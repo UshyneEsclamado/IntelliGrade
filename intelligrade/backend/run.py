@@ -1,10 +1,10 @@
 """
 IntelliGrade Backend Server
 Run this file to start the FastAPI backend server
+FILE LOCATION: backend/run.py
 """
 
 import uvicorn
-from app.main import app
 
 if __name__ == "__main__":
     print("🚀 Starting IntelliGrade Backend Server...")
@@ -13,8 +13,9 @@ if __name__ == "__main__":
     print("🔄 Auto-reload enabled for development")
     print("-" * 50)
     
+    # FIXED: Changed from "app.main:app" to just "main:app"
     uvicorn.run(
-        "app.main:app",
+        "main:app",  # ← This is the fix!
         host="0.0.0.0",
         port=8000,
         reload=True,

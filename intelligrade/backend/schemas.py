@@ -2,70 +2,76 @@ from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
 
-# User schemas
-class UserBase(BaseModel):
-    username: str
-    email: str
-    full_name: str
-    role: str
+# AnswerKey schemas
+class AnswerKeyBase(BaseModel):
+    title: str
+    subject: str
+    assessment_type: str
+    num_questions: int
+    total_points: int
+    questions_data: dict  # Assuming this contains the answers
 
-class UserCreate(UserBase):
-    password: str
-
-class User(UserBase):
-    id: int
-    is_active: bool
-    created_at: datetime
-    
-    class Config:
-        from_attributes = True
-
-# Message schemas
-class MessageBase(BaseModel):
-    content: str
-
-class MessageCreate(MessageBase):
-    receiver_id: int
-
-class Message(MessageBase):
-    id: int
-    conversation_id: int
-    sender_id: int
-    receiver_id: int
-    is_read: bool
-    created_at: datetime
-    sender: User
-    receiver: User
-    
-    class Config:
-        from_attributes = True
-
-# Conversation schemas
-class ConversationBase(BaseModel):
+class AnswerKeyCreate(AnswerKeyBase):
     pass
 
-class Conversation(ConversationBase):
+class AnswerKey(AnswerKeyBase):
     id: int
-    user1_id: int
-    user2_id: int
-    last_message_id: Optional[int]
     created_at: datetime
     updated_at: datetime
-    user1: User
-    user2: User
-    last_message: Optional[Message]
-    messages: List[Message] = []
+    usage_count: int
     
     class Config:
         from_attributes = True
 
-# WebSocket message schemas
-class WSMessage(BaseModel):
-    type: str  # 'message', 'typing', 'read_receipt'
-    conversation_id: Optional[int] = None
-    content: Optional[str] = None
-    receiver_id: Optional[int] = None
+# UploadedAssessment schemas
+class UploadedAssessmentBase(BaseModel):
+    assessment_title: str
+    subject: str
+    assessment_data: dict  # Store the content (questions, answers, etc.)
 
-class WSResponse(BaseModel):
-    type: str
-    data: dict
+class UploadedAssessmentCreate(UploadedAssessmentBase):
+    pass
+
+class UploadedAssessment(UploadedAssessmentBase):
+    id: int
+    answer_key_id: int
+    original_filename: str
+    file_path: str
+    file_size: int
+    uploaded_at: datetime
+    processed_at: Optional[datetime]
+    
+    class Config:
+        from_attributes = True
+
+# GradingResult schemas
+class GradingResultBase(BaseModel):
+    student_name: str
+    assessment_title: str
+    subject: str
+    total_questions: int
+    correct_answers: int
+    incorrect_answers: int
+    score: float
+    max_score: float
+    percentage: float
+    letter_grade: str
+    question_breakdown: List[dict]  # Breakdown for each question (e.g., correct answer, points earned)
+    ai_used: bool
+    ai_model: Optional[str]
+    ai_confidence: Optional[float]
+    processing_time: Optional[float]
+
+class GradingResultCreate(GradingResultBase):
+    pass
+
+class GradingResult(GradingResultBase):
+    id: int
+    uploaded_assessment_id: int
+    graded_at: datetime
+    reviewed_by: Optional[int]
+    reviewed_at: Optional[datetime]
+    
+    class Config:
+        from_attributes = True
+

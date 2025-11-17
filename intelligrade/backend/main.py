@@ -1,55 +1,39 @@
-# Main FastAPI application - CLEAN VERSION
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
-import os
 from dotenv import load_dotenv
+import os
 
-# Load environment variables first
 load_dotenv()
 
 app = FastAPI(title="IntelliGrade API", version="1.0.0")
 
-# Add CORS middleware BEFORE importing routes
+# CORS Configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for development
+    allow_origins=["*"],
     allow_credentials=False,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Import routes AFTER CORS setup
-from routes.auth import router as auth_router
-from routes.assessments import router as assessments_router_old
-from app.api.endpoints.assessments import router as assessments_router_new
+# Import the upload_assessments router - FIXED IMPORT PATH
+from routes.upload_assessments import router as upload_assessments_router
 
-# Include routers
-app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
-app.include_router(assessments_router_old, tags=["assessments-v1"])
-app.include_router(assessments_router_new, prefix="/api/assessments", tags=["assessments-v2"])
+# Include the upload assessments router
+app.include_router(upload_assessments_router)
 
 @app.get("/")
 async def root():
-    return {"message": "IntelliGrade API is running", "status": "online"}
+    return {"message": "IntelliGrade API is running!"}
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "service": "IntelliGrade API"}
+    return {
+        "status": "healthy",
+        "openai_configured": bool(os.getenv("OPENAI_API_KEY")),
+        "database_configured": bool(os.getenv("DATABASE_URL"))
+    }
 
 if __name__ == "__main__":
-    port = int(os.getenv("API_PORT", 8000))
-    host = os.getenv("API_HOST", "0.0.0.0")
-    
-    print("🚀 IntelliGrade API Starting...")
-    print(f"📋 OpenAI API Key: {'✅ Configured' if os.getenv('OPENAI_API_KEY') else '❌ Missing'}")
-    print(f"🗄️ Supabase URL: {'✅ Configured' if os.getenv('SUPABASE_URL') else '❌ Missing'}")
-    print(f"🌐 Server will start on {host}:{port}")
-    
-    uvicorn.run(
-        "main:app",  # Changed from "backend.main:app"
-        host=host, 
-        port=port, 
-        reload=True,
-        log_level="info"
-    )
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

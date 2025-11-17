@@ -690,1042 +690,824 @@
   </div>
 </template>
 
-  <script>
-  import { ref, computed } from "vue";
-  import { useRouter } from "vue-router";
-  import { useDarkMode } from "../../composables/useDarkMode.js";
+<script>
+import { ref, computed, watch, nextTick } from "vue";
+import { useRouter } from "vue-router";
+import { useDarkMode } from "../../composables/useDarkMode.js";
 
-  export default {
-    name: "UploadAssessment",
-    setup() {
-      const router = useRouter();
-      const { isDarkMode } = useDarkMode();
-      const isLoading = ref(false);
-      const loadingMessage = ref("Processing...");
-      const isDragOver = ref(false);
-      const isAnswerKeyDragOver = ref(false);
-      
-      // Student and Assessment Info
-      const studentName = ref("");
-      const assessmentTitle = ref("");
-      const subject = ref("");
-      const numQuestions = ref(10);
-      const pointsPerQuestion = ref(5);
-      const scoringMethod = ref("uniform");
-      const totalPoints = ref(50);
-      const selectedTemplate = ref("");
-      const assessmentFile = ref(null);
-      
-      // Answer Key Management
-      const answerKeyMethod = ref("upload");
-      const answerKeyFile = ref(null);
-      const questionsList = ref([]);
-      const detectedQuestions = ref([]);
-      
-      // Manual Input Management
-      const manualInputMethod = ref("individual");
-      const bulkAnswerText = ref("");
-      const bulkParsedQuestions = ref([]);
-      const activeBulkExample = ref("tf_end");
-      
-      // Bulk Examples
-      const bulkExamples = ref({
-        tf_start: {
-          name: "T/F Start",
-          description: "True/False answers at the beginning of each line",
-          content: `T 1. The earth orbits the sun.
+export default {
+  name: "UploadAssessment",
+  setup() {
+    const router = useRouter();
+    const { isDarkMode } = useDarkMode();
+    const isLoading = ref(false);
+    const loadingMessage = ref("Processing...");
+    const isDragOver = ref(false);
+    const isAnswerKeyDragOver = ref(false);
+    
+    // Student and Assessment Info
+    const studentName = ref("");
+    const assessmentTitle = ref("");
+    const subject = ref("");
+    const numQuestions = ref(10);
+    const pointsPerQuestion = ref(5);
+    const scoringMethod = ref("uniform");
+    const totalPoints = ref(50);
+    const selectedTemplate = ref("");
+    const assessmentFile = ref(null);
+    
+    // Answer Key Management - FIXED: Use reactive array properly
+    const answerKeyMethod = ref("upload");
+    const answerKeyFile = ref(null);
+    const questionsList = ref([]);
+    const detectedQuestions = ref([]);
+    
+    // Manual Input Management
+    const manualInputMethod = ref("individual");
+    const bulkAnswerText = ref("");
+    const bulkParsedQuestions = ref([]);
+    const activeBulkExample = ref("tf_end");
+    
+    // Bulk Examples
+    const bulkExamples = ref({
+      tf_start: {
+        name: "T/F Start",
+        description: "True/False answers at the beginning of each line",
+        content: `T 1. The earth orbits the sun.
 F 2. Fish can live without water.
 T 3. Plants need sunlight to grow.`
-        },
-        tf_end: {
-          name: "T/F End", 
-          description: "True/False answers at the end of each line",
-          content: `1. The sky is blue. T
+      },
+      tf_end: {
+        name: "T/F End", 
+        description: "True/False answers at the end of each line",
+        content: `1. The sky is blue. T
 2. Humans can breathe underwater. F
 3. Fire is hot. T`
-        },
-        mc_start: {
-          name: "MC Start",
-          description: "Multiple choice answers at the beginning",
-          content: `B 1. What is the capital of Japan?
+      },
+      mc_start: {
+        name: "MC Start",
+        description: "Multiple choice answers at the beginning",
+        content: `B 1. What is the capital of Japan?
 A 2. Which is a fruit?
 C 3. What color is grass?`
-        },
-        mc_answer: {
-          name: "MC Answer",
-          description: "Multiple choice with Answer: keyword",
-          content: `1. What is the largest planet?
+      },
+      mc_answer: {
+        name: "MC Answer",
+        description: "Multiple choice with Answer: keyword",
+        content: `1. What is the largest planet?
 Answer: C
 
 2. What color is the sun?  
 Answer: C`
-        },
-        simple: {
-          name: "Simple",
-          description: "Just the answers in order",
-          content: `1. A
+      },
+      simple: {
+        name: "Simple",
+        description: "Just the answers in order",
+        content: `1. A
 2. B
 3. T
 4. F
 5. C`
-        },
-        mixed: {
-          name: "Mixed",
-          description: "Mixed format with sections",
-          content: `True or False
+      },
+      mixed: {
+        name: "Mixed",
+        description: "Mixed format with sections",
+        content: `True or False
 1. The Earth is round. T
 2. Water boils at 100°C. T
 
 Multiple Choice  
 1. What is 2+2? B
 2. What is 3+3? C`
-        }
+      }
+    });
+    
+    // AI Grading Settings
+    const aiAnalysisLevel = ref("standard");
+    const feedbackLevel = ref("detailed");
+    const detectWeaknesses = ref(true);
+    const enableRecommendations = ref(true);
+    const compareToStandards = ref(false);
+    
+    // Results and Processing
+    const gradingResults = ref(null);
+    const error = ref("");
+    const processingSteps = ref([]);
+
+    // FIXED: Computed Properties with proper reactivity
+    const hasAnswerKey = computed(() => {
+      if (answerKeyMethod.value === 'upload') {
+        const hasFile = !!answerKeyFile.value;
+        const hasQuestions = questionsList.value.length > 0;
+        const hasAnswers = questionsList.value.some(q => q.correctAnswer);
+        console.log('📊 hasAnswerKey (upload):', { hasFile, hasQuestions, hasAnswers });
+        return hasFile && hasQuestions && hasAnswers;
+      } else if (answerKeyMethod.value === 'manual') {
+        const hasQuestions = questionsList.value.length > 0;
+        const hasAnswers = questionsList.value.some(q => q.correctAnswer);
+        console.log('📊 hasAnswerKey (manual):', { hasQuestions, hasAnswers });
+        return hasQuestions && hasAnswers;
+      }
+      return false;
+    });
+
+    const answerKeyPreview = computed(() => {
+      console.log('🔍 Computing answer key preview...');
+      console.log('   questionsList.value:', questionsList.value);
+      
+      const preview = questionsList.value
+        .filter(q => q.correctAnswer)
+        .map((q, index) => {
+          const type = q.type || 'multiple-choice';
+          const answer = q.correctAnswer || '';
+          console.log(`   Q${index + 1}: type="${type}", answer="${answer}"`);
+          return {
+            answer: answer,
+            type: type
+          };
+        });
+      
+      console.log('   📋 Final preview:', preview);
+      return preview;
+    });
+
+    // Watch questionsList for changes - DEBUGGING
+    watch(questionsList, (newVal) => {
+      console.log('👀 questionsList CHANGED:', JSON.stringify(newVal, null, 2));
+    }, { deep: true });
+
+    const allQuestionsAnswered = computed(() => {
+      return detectedQuestions.value.length > 0 && 
+             detectedQuestions.value.every(q => q.correctAnswer);
+    });
+
+    const answeredQuestionsCount = computed(() => {
+      return detectedQuestions.value.filter(q => q.correctAnswer).length;
+    });
+
+    const pointDistribution = computed(() => {
+      const distribution = {};
+      questionsList.value.forEach(q => {
+        const points = parseInt(q.points) || 1;
+        distribution[points] = (distribution[points] || 0) + 1;
+      });
+      return distribution;
+    });
+
+    const canSubmit = computed(() => {
+      const hasBasicInfo = subject.value && 
+                          assessmentTitle.value &&
+                          numQuestions.value &&
+                          pointsPerQuestion.value &&
+                          selectedTemplate.value && 
+                          assessmentFile.value &&
+                          !isLoading.value;
+      
+      const hasAnswerKeySetup = hasAnswerKey.value;
+      
+      console.log('✅ Can submit:', { 
+        hasBasicInfo, 
+        hasAnswerKeySetup, 
+        questionsListLength: questionsList.value.length 
       });
       
-      // AI Grading Settings
-      const aiAnalysisLevel = ref("standard");
-      const feedbackLevel = ref("detailed");
-      const detectWeaknesses = ref(true);
-      const enableRecommendations = ref(true);
-      const compareToStandards = ref(false);
+      return hasBasicInfo && hasAnswerKeySetup;
+    });
+
+    // Question Management
+    const updateQuestionsList = () => {
+      const count = parseInt(numQuestions.value) || 0;
+      const newList = Array.from({ length: count }, (_, index) => ({
+        id: index + 1,
+        type: 'multiple-choice',
+        correctAnswer: '',
+        points: parseInt(pointsPerQuestion.value) || 1
+      }));
+      questionsList.value = newList;
+      calculateTotalPoints();
+      console.log('🔄 Updated questionsList:', questionsList.value);
+    };
+
+    const handleScoringMethodChange = () => {
+      if (scoringMethod.value === 'uniform') {
+        questionsList.value.forEach(q => {
+          q.points = parseInt(pointsPerQuestion.value) || 1;
+        });
+      }
+      calculateTotalPoints();
+    };
+
+    const calculateTotalPoints = () => {
+      if (scoringMethod.value === 'uniform') {
+        const questions = parseInt(numQuestions.value) || 0;
+        const points = parseInt(pointsPerQuestion.value) || 0;
+        totalPoints.value = questions * points;
+      } else {
+        totalPoints.value = questionsList.value.reduce((sum, q) => sum + (parseInt(q.points) || 0), 0);
+      }
+    };
+
+    const assignAllPoints = (points) => {
+      questionsList.value.forEach(q => {
+        q.points = points;
+      });
+      calculateTotalPoints();
+    };
+
+    const setCustomPattern = () => {
+      const pattern = prompt(`Set custom point pattern. Examples:
       
-      // Results and Processing
-      const gradingResults = ref(null);
-      const error = ref("");
-      const processingSteps = ref([]);
-
-      // Computed Properties
-      const hasAnswerKey = computed(() => {
-        // Check if we have any answer key setup
-        if (answerKeyMethod.value === 'upload') {
-          // For upload method, just check if file is uploaded (be lenient)
-          return !!answerKeyFile.value;
-        } else if (answerKeyMethod.value === 'manual') {
-          // For manual method, check if at least some questions have answers
-          return questionsList.value.length > 0 && 
-                 questionsList.value.some(q => q.correctAnswer);
-        }
-        return false;
-      });
-
-      const answerKeyPreview = computed(() => {
-        if (answerKeyMethod.value === 'manual') {
-          return questionsList.value
-            .filter(q => q.correctAnswer) // Only show questions with answers
-            .map(q => ({
-              answer: q.correctAnswer,
-              type: q.type
-            }));
-        } else if (answerKeyMethod.value === 'upload' && questionsList.value.length > 0) {
-          // Show preview for uploaded answer key too
-          return questionsList.value
-            .filter(q => q.correctAnswer) // Only show questions with answers
-            .map(q => ({
-              answer: q.correctAnswer,
-              type: q.type
-            }));
-        }
-        return [];
-      });
-
-      const allQuestionsAnswered = computed(() => {
-        return detectedQuestions.value.length > 0 && 
-               detectedQuestions.value.every(q => q.correctAnswer);
-      });
-
-      const answeredQuestionsCount = computed(() => {
-        return detectedQuestions.value.filter(q => q.correctAnswer).length;
-      });
-
-      // Computed for point distribution summary
-      const pointDistribution = computed(() => {
-        const distribution = {};
-        questionsList.value.forEach(q => {
-          const points = parseInt(q.points) || 1;
-          distribution[points] = (distribution[points] || 0) + 1;
-        });
-        return distribution;
-      });
-
-      // Question Management
-      const updateQuestionsList = () => {
-        const count = parseInt(numQuestions.value) || 0;
-        questionsList.value = Array.from({ length: count }, (_, index) => ({
-          id: index + 1,
-          type: 'multiple-choice',
-          correctAnswer: '',
-          points: parseInt(pointsPerQuestion.value) || 1
-        }));
-        calculateTotalPoints();
-      };
-
-      const handleScoringMethodChange = () => {
-        if (scoringMethod.value === 'uniform') {
-          // Reset all questions to uniform points
-          questionsList.value.forEach(q => {
-            q.points = parseInt(pointsPerQuestion.value) || 1;
-          });
-        }
-        calculateTotalPoints();
-      };
-
-      const calculateTotalPoints = () => {
-        if (scoringMethod.value === 'uniform') {
-          const questions = parseInt(numQuestions.value) || 0;
-          const points = parseInt(pointsPerQuestion.value) || 0;
-          totalPoints.value = questions * points;
-        } else {
-          // Individual points - sum all question points
-          totalPoints.value = questionsList.value.reduce((sum, q) => sum + (parseInt(q.points) || 0), 0);
-        }
-      };
-
-      // Quick point assignment functions
-      const assignAllPoints = (points) => {
-        questionsList.value.forEach(q => {
-          q.points = points;
-        });
-        calculateTotalPoints();
-      };
-
-      const setCustomPattern = () => {
-        // Example: Q1-Q9: 1 point, Q10: 5 points
-        const pattern = prompt(`Set custom point pattern. Examples:
-        
 1. "1-9:1,10:5" = Questions 1-9 get 1 point, Question 10 gets 5 points
 2. "1-5:2,6-10:3" = Questions 1-5 get 2 points, Questions 6-10 get 3 points
 3. "all:1,10:5" = All questions get 1 point except Question 10 gets 5 points
 
 Enter pattern:`);
-        
-        if (pattern) {
-          try {
-            applyCustomPattern(pattern);
-            calculateTotalPoints();
-          } catch (err) {
-            alert("Invalid pattern format. Please use format like '1-9:1,10:5'");
-          }
-        }
-      };
-
-      const applyCustomPattern = (pattern) => {
-        // Parse pattern like "1-9:1,10:5" or "all:1,10:5"
-        const parts = pattern.split(',');
-        
-        parts.forEach(part => {
-          const [range, points] = part.split(':');
-          const pointValue = parseInt(points);
-          
-          if (range.trim() === 'all') {
-            // Apply to all questions
-            questionsList.value.forEach(q => {
-              q.points = pointValue;
-            });
-          } else if (range.includes('-')) {
-            // Range like "1-9"
-            const [start, end] = range.split('-').map(n => parseInt(n.trim()));
-            for (let i = start - 1; i < end && i < questionsList.value.length; i++) {
-              questionsList.value[i].points = pointValue;
-            }
-          } else {
-            // Single question like "10"
-            const questionNum = parseInt(range.trim());
-            if (questionNum > 0 && questionNum <= questionsList.value.length) {
-              questionsList.value[questionNum - 1].points = pointValue;
-            }
-          }
-        });
-      };
-
-      // Answer Key File Handling
-      const handleAnswerKeyDragOver = () => {
-        isAnswerKeyDragOver.value = true;
-      };
-
-      const handleAnswerKeyDragLeave = () => {
-        isAnswerKeyDragOver.value = false;
-      };
-
-      const handleAnswerKeyDrop = (event) => {
-        const file = event.dataTransfer.files[0];
-        if (file) {
-          answerKeyFile.value = file;
-          processAnswerKeyFile(file);
-          error.value = "";
-        }
-        isAnswerKeyDragOver.value = false;
-      };
-
-      const handleAnswerKeyUpload = (event) => {
-        const file = event.target.files[0];
-        if (file) {
-          answerKeyFile.value = file;
-          processAnswerKeyFile(file);
-          error.value = "";
-        }
-      };
-
-      // Process Answer Key File
-      // Update the processAnswerKeyFile function around line 850-890
-const processAnswerKeyFile = async (file) => {
-  isLoading.value = true;
-  loadingMessage.value = "Processing answer key...";
-  
-  try {
-    const formData = new FormData();
-    formData.append('file', file);
-    
-    console.log('🔗 Attempting to connect to backend...');
-    
-    const response = await fetch('http://localhost:8000/api/assessments/process-answer-key', {
-      method: 'POST',
-      body: formData
-    });
-
-    console.log('📡 Response status:', response.status);
-
-    if (!response.ok) {
-      if (response.status === 0 || !response.status) {
-        throw new Error('Backend server is not running. Please start the backend server at http://localhost:8000');
-      }
-      const errorText = await response.text();
-      throw new Error(`Server error: ${response.status} - ${errorText}`);
-    }
-
-    const result = await response.json();
-    console.log('✅ Answer key processed:', result);
-    
-    if (result.questions && result.questions.length > 0) {
-      // IMPORTANT: Keep the file reference so canSubmit works
-      answerKeyFile.value = file;
       
-      // Update questions list with detected answers
-      questionsList.value = result.questions.map((q, index) => ({
-        id: q.id || index + 1,
-        type: q.type || 'multiple-choice',
-        correctAnswer: q.answer || q.correctAnswer || '',
-        points: q.points || parseInt(pointsPerQuestion.value) || 1
+      if (pattern) {
+        try {
+          applyCustomPattern(pattern);
+          calculateTotalPoints();
+        } catch (err) {
+          alert("Invalid pattern format. Please use format like '1-9:1,10:5'");
+        }
+      }
+    };
+
+    const applyCustomPattern = (pattern) => {
+      const parts = pattern.split(',');
+      
+      parts.forEach(part => {
+        const [range, points] = part.split(':');
+        const pointValue = parseInt(points);
+        
+        if (range.trim() === 'all') {
+          questionsList.value.forEach(q => {
+            q.points = pointValue;
+          });
+        } else if (range.includes('-')) {
+          const [start, end] = range.split('-').map(n => parseInt(n.trim()));
+          for (let i = start - 1; i < end && i < questionsList.value.length; i++) {
+            questionsList.value[i].points = pointValue;
+          }
+        } else {
+          const questionNum = parseInt(range.trim());
+          if (questionNum > 0 && questionNum <= questionsList.value.length) {
+            questionsList.value[questionNum - 1].points = pointValue;
+          }
+        }
+      });
+    };
+
+    // Answer Key File Handling
+    const handleAnswerKeyDragOver = () => {
+      isAnswerKeyDragOver.value = true;
+    };
+
+    const handleAnswerKeyDragLeave = () => {
+      isAnswerKeyDragOver.value = false;
+    };
+
+    const handleAnswerKeyDrop = (event) => {
+      const file = event.dataTransfer.files[0];
+      if (file) {
+        answerKeyFile.value = file;
+        processAnswerKeyFile(file);
+        error.value = "";
+      }
+      isAnswerKeyDragOver.value = false;
+    };
+
+    const handleAnswerKeyUpload = (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        answerKeyFile.value = file;
+        processAnswerKeyFile(file);
+        error.value = "";
+      }
+    };
+
+    // CRITICAL FIX: Process Answer Key with FORCED reactivity
+    const processAnswerKeyFile = async (file) => {
+      isLoading.value = true;
+      loadingMessage.value = "Processing answer key...";
+      
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        console.log('🔗 Processing answer key file:', file.name);
+        
+        const response = await fetch('http://localhost:8000/api/assessments/process-answer-key', {
+          method: 'POST',
+          body: formData
+        });
+
+        console.log('📡 Response status:', response.status);
+
+        if (!response.ok) {
+          if (response.status === 0 || !response.status) {
+            throw new Error('Backend server is not running. Please start the backend server at http://localhost:8000');
+          }
+          const errorText = await response.text();
+          throw new Error(`Server error: ${response.status} - ${errorText}`);
+        }
+
+        const result = await response.json();
+        console.log('✅ Answer key processed FULL RESULT:', JSON.stringify(result, null, 2));
+        
+        if (result.questions && result.questions.length > 0) {
+          // CRITICAL FIX: Create completely new array with proper structure
+          const newQuestions = result.questions.map((q) => ({
+            id: q.id,
+            type: q.type || 'multiple-choice',
+            correctAnswer: q.answer || q.correctAnswer || '',
+            points: q.points || parseInt(pointsPerQuestion.value) || 1
+          }));
+          
+          console.log('📦 NEW QUESTIONS ARRAY:', newQuestions);
+          
+          // FORCE Vue reactivity - clear first, then assign
+          questionsList.value = [];
+          await nextTick();
+          questionsList.value = newQuestions;
+          await nextTick();
+          
+          // Update other fields
+          numQuestions.value = result.questions.length;
+          calculateTotalPoints();
+          error.value = "";
+          
+          // Count question types
+          const mcqCount = newQuestions.filter(q => q.type === 'multiple-choice').length;
+          const tfCount = newQuestions.filter(q => q.type === 'true-false').length;
+          
+          console.log('📊 Final Question breakdown:', { 
+            mcqCount, 
+            tfCount, 
+            total: newQuestions.length,
+            questions: newQuestions 
+          });
+          
+          // Force another check after a short delay
+          setTimeout(() => {
+            console.log('🔄 QuestionsList after 500ms:', questionsList.value);
+            console.log('🔍 hasAnswerKey:', hasAnswerKey.value);
+            console.log('📋 answerKeyPreview:', answerKeyPreview.value);
+          }, 500);
+          
+          alert(`✅ Successfully processed ${result.questions.length} questions!\n\n📊 Breakdown:\n- Multiple Choice: ${mcqCount}\n- True/False: ${tfCount}\n\nFormat: ${result.format_detected || 'flexible'}\n\n✨ Answer key preview should now be visible!`);
+        } else {
+          throw new Error("No questions found in the uploaded answer key file");
+        }
+      } catch (err) {
+        console.error('❌ Error processing answer key:', err);
+        if (err.message.includes('Failed to fetch') || err.message.includes('Backend server')) {
+          error.value = "🚫 Backend server is not running!\n\nPlease start the backend server:\n1. Open terminal in backend folder\n2. Run: uvicorn main:app --reload\n3. Server should start at http://localhost:8000";
+        } else {
+          error.value = "Failed to process answer key: " + err.message;
+        }
+      } finally {
+        isLoading.value = false;
+      }
+    };
+
+    // Student Assessment File Handling
+    const handleFileUpload = (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        assessmentFile.value = file;
+        error.value = "";
+      }
+    };
+
+    const handleDragOver = () => {
+      isDragOver.value = true;
+    };
+
+    const handleDragLeave = () => {
+      isDragOver.value = false;
+    };
+
+    const handleDrop = (event) => {
+      const file = event.dataTransfer.files[0];
+      if (file) {
+        assessmentFile.value = file;
+        error.value = "";
+      }
+      isDragOver.value = false;
+    };
+
+    const autoGenerateAnswerKey = () => {
+      detectedQuestions.value.forEach(question => {
+        if (question.type === 'true-false') {
+          question.correctAnswer = Math.random() > 0.5 ? 'True' : 'False';
+        } else {
+          const options = ['A', 'B', 'C', 'D', 'E'];
+          const availableOptions = question.options?.map(opt => opt.letter) || options.slice(0, 4);
+          question.correctAnswer = availableOptions[Math.floor(Math.random() * availableOptions.length)];
+        }
+      });
+    };
+
+    const saveDetectedAnswerKey = () => {
+      if (!allQuestionsAnswered.value) {
+        error.value = "Please answer all questions before saving the answer key.";
+        return;
+      }
+      
+      questionsList.value = detectedQuestions.value.map((q, index) => ({
+        id: index + 1,
+        type: q.type,
+        correctAnswer: q.correctAnswer,
+        points: parseInt(pointsPerQuestion.value) || 1
       }));
       
-      // Update number of questions to match detected count
-      numQuestions.value = result.questions.length;
+      numQuestions.value = detectedQuestions.value.length;
       calculateTotalPoints();
+      detectedQuestions.value = [];
+      answerKeyMethod.value = 'manual';
       
-      // Clear any previous errors
+      alert("Answer key saved successfully! You can now proceed with grading.");
+    };
+
+    const formatFileSize = (size) => {
+      if (size < 1024) return size + " bytes";
+      else if (size < 1048576) return (size / 1024).toFixed(1) + " KB";
+      else return (size / 1048576).toFixed(1) + " MB";
+    };
+
+    const setupProcessingSteps = () => {
+      processingSteps.value = [
+        { text: "Uploading files to server", completed: false, active: true },
+        { text: "Parsing assessment content", completed: false, active: false },
+        { text: "Comparing with answer key", completed: false, active: false },
+        { text: "Generating AI feedback", completed: false, active: false },
+        { text: "Calculating final scores", completed: false, active: false },
+        { text: "Saving to database", completed: false, active: false }
+      ];
+    };
+
+    const updateProcessingStep = (stepIndex) => {
+      if (stepIndex > 0) {
+        processingSteps.value[stepIndex - 1].completed = true;
+        processingSteps.value[stepIndex - 1].active = false;
+      }
+      if (stepIndex < processingSteps.value.length) {
+        processingSteps.value[stepIndex].active = true;
+      }
+    };
+
+    // Main Submit Function
+    const submitAssessment = async () => {
+      if (!subject.value || !assessmentTitle.value || !numQuestions.value || !pointsPerQuestion.value || !selectedTemplate.value || !assessmentFile.value) {
+        error.value = "Please fill in all required fields and upload a file.";
+        return;
+      }
+
+      if (!hasAnswerKey.value) {
+        error.value = "Answer key is required! Please provide an answer key before proceeding.";
+        return;
+      }
+
+      console.log('🚀 Starting AI-powered assessment checking...');
+      console.log('📋 Submitting with questionsList:', questionsList.value);
+
+      isLoading.value = true;
       error.value = "";
-      
-      // Keep the upload method active so the button works
-      // answerKeyMethod.value stays as 'upload'
-      
-      console.log('📋 Questions list updated:', questionsList.value);
-      console.log('🔑 Answer key file reference maintained:', answerKeyFile.value?.name);
-      console.log('🎯 Can submit should now be TRUE!');
-      
-      alert(`✅ Successfully processed ${result.questions.length} questions!\n\nFormat detected: ${result.format_detected || result.format_type || 'flexible'}\n\n✨ You can now upload student assessment and start grading!`);
-    } else {
-      throw new Error("No questions found in the uploaded answer key file");
-    }
-  } catch (err) {
-    console.error('❌ Error processing answer key:', err);
-    if (err.message.includes('Failed to fetch') || err.message.includes('Backend server')) {
-      error.value = "🚫 Backend server is not running!\n\nPlease start the backend server:\n1. Open terminal in backend folder\n2. Run: python main.py\n3. Server should start at http://localhost:8000";
-    } else {
-      error.value = "Failed to process answer key: " + err.message;
-    }
-  } finally {
-    isLoading.value = false;
-  }
-};
+      gradingResults.value = null;
+      setupProcessingSteps();
 
-      // File Handling
-      const handleFileUpload = (event) => {
-        const file = event.target.files[0];
-        if (file) {
-          assessmentFile.value = file;
-          processAssessmentFile(file);
-          error.value = "";
-        }
-      };
+      try {
+        loadingMessage.value = "Uploading files to server...";
+        updateProcessingStep(0);
 
-      const handleDragOver = () => {
-        isDragOver.value = true;
-      };
-
-      const handleDragLeave = () => {
-        isDragOver.value = false;
-      };
-
-      const handleDrop = (event) => {
-        const file = event.dataTransfer.files[0];
-        if (file) {
-          assessmentFile.value = file;
-          processAssessmentFile(file);
-          error.value = "";
-        }
-        isDragOver.value = false;
-      };
-
-      // Process Assessment File (detect if it's just questions or includes answers)
-      const processAssessmentFile = async (file) => {
-        isLoading.value = true;
-        loadingMessage.value = "Analyzing uploaded file...";
+        const formData = new FormData();
+        formData.append('file', assessmentFile.value);
+        formData.append('student_name', studentName.value || 'Anonymous');
+        formData.append('assessment_title', assessmentTitle.value);
+        formData.append('subject', subject.value);
+        formData.append('num_questions', numQuestions.value.toString());
+        formData.append('total_points', totalPoints.value.toString());
+        formData.append('points_per_question', pointsPerQuestion.value.toString());
+        formData.append('assessment_type', selectedTemplate.value);
+        formData.append('use_ai_feedback', 'true');
         
-        try {
-          const formData = new FormData();
-          formData.append('file', file);
-          
-          const response = await fetch('http://localhost:8000/api/assessments/analyze-file', {
-            method: 'POST',
-            body: formData
-          });
-
-          if (!response.ok) {
-            console.warn('⚠️ Analysis returned non-OK status, but continuing anyway');
-          }
-
-          const result = await response.json();
-          
-          // ALWAYS assume the file is valid and has answers
-          console.log('✅ File accepted - ready for grading');
-          error.value = ""; // Clear any errors
-          
-        } catch (err) {
-          console.error('File analysis error (ignored):', err);
-          // Ignore all errors - just accept the file
-          error.value = "";
-        } finally {
-          isLoading.value = false;
-        }
-      };
-
-      // Auto-generate sample answers for detected questions
-      const autoGenerateAnswerKey = () => {
-        detectedQuestions.value.forEach(question => {
-          if (question.type === 'true-false') {
-            question.correctAnswer = Math.random() > 0.5 ? 'True' : 'False';
-          } else {
-            const options = ['A', 'B', 'C', 'D', 'E'];
-            const availableOptions = question.options?.map(opt => opt.letter) || options.slice(0, 4);
-            question.correctAnswer = availableOptions[Math.floor(Math.random() * availableOptions.length)];
-          }
-        });
-      };
-
-      // Save detected answer key
-      const saveDetectedAnswerKey = () => {
-        if (!allQuestionsAnswered.value) {
-          error.value = "Please answer all questions before saving the answer key.";
-          return;
-        }
-        
-        // Update the main questions list with detected answers
-        questionsList.value = detectedQuestions.value.map((q, index) => ({
+        const answerKeyData = questionsList.value.map((q, index) => ({
           id: index + 1,
           type: q.type,
-          correctAnswer: q.correctAnswer
+          correctAnswer: q.correctAnswer,
+          points: q.points || parseInt(pointsPerQuestion.value) || 1
         }));
         
-        numQuestions.value = detectedQuestions.value.length;
-        calculateTotalPoints();
-        
-        // Clear detected questions and switch to manual mode to show the saved answers
-        detectedQuestions.value = [];
-        answerKeyMethod.value = 'manual';
-        
-        alert("Answer key saved successfully! You can now proceed with grading.");
-      };
+        formData.append('answer_key_data', JSON.stringify(answerKeyData));
 
-      const formatFileSize = (size) => {
-        if (size < 1024) return size + " bytes";
-        else if (size < 1048576) return (size / 1024).toFixed(1) + " KB";
-        else return (size / 1048576).toFixed(1) + " MB";
-      };
+        console.log('📤 Sending answer key data:', answerKeyData);
 
-      // Template Helpers
-      const getTemplateTitle = (template) => {
-        const titles = {
-          "multiple-choice": "Multiple Choice (MCQ)",
-          "true-false": "True/False",
-          "short-answer": "Short Answer",
-          "essay": "Essay",
-          "mixed": "Mixed Format"
-        };
-        return titles[template] || "";
-      };
+        updateProcessingStep(1);
+        loadingMessage.value = "Parsing assessment content...";
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Processing Steps Setup
-      const setupProcessingSteps = () => {
-        processingSteps.value = [
-          { text: "Uploading file to server", completed: false, active: true },
-          { text: "Parsing assessment content", completed: false, active: false },
-          { text: "Running AI analysis", completed: false, active: false },
-          { text: "Calculating scores", completed: false, active: false },
-          { text: "Generating feedback", completed: false, active: false },
-          { text: "Finalizing results", completed: false, active: false }
-        ];
-      };
+        const response = await fetch('http://localhost:8000/api/assessments/check-with-answer-key', {
+          method: 'POST',
+          body: formData
+        });
 
-      const updateProcessingStep = (stepIndex) => {
-        if (stepIndex > 0) {
-          processingSteps.value[stepIndex - 1].completed = true;
-          processingSteps.value[stepIndex - 1].active = false;
-        }
-        if (stepIndex < processingSteps.value.length) {
-          processingSteps.value[stepIndex].active = true;
-        }
-      };
+        console.log('📥 Response status:', response.status);
 
-      // Main Submit Function - Rule-based checking
-      const submitAssessment = async () => {
-        // Validate all required fields including answer key
-        if (!subject.value || !assessmentTitle.value || !numQuestions.value || !pointsPerQuestion.value || !selectedTemplate.value || !assessmentFile.value) {
-          error.value = "Please fill in all required fields and upload a file.";
-          return;
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ Backend error:', errorText);
+          throw new Error(`Upload failed: ${response.status} - ${errorText}`);
         }
 
-        // Ensure answer key is provided
-        if (!hasAnswerKey.value) {
-          error.value = "Answer key is required! Please provide an answer key before proceeding.";
-          return;
-        }
+        const result = await response.json();
+        console.log('✅ Backend response:', result);
 
-        console.log('🚀 Starting rule-based assessment checking...');
-        console.log('📁 File:', assessmentFile.value);
-        console.log('📚 Subject:', subject.value);
-        console.log('🎯 Type:', selectedTemplate.value);
-        console.log('🔑 Answer Key Method:', answerKeyMethod.value);
+        updateProcessingStep(2);
+        loadingMessage.value = "Comparing answers with answer key...";
+        await new Promise(resolve => setTimeout(resolve, 800));
 
-        isLoading.value = true;
-        error.value = "";
-        gradingResults.value = null;
-        setupProcessingSteps();
+        updateProcessingStep(3);
+        loadingMessage.value = "Generating AI-powered feedback...";
+        await new Promise(resolve => setTimeout(resolve, 1500));
 
-        try {
-          // Step 1: Upload Files and Answer Key
-          loadingMessage.value = "Uploading assessment and answer key...";
-          updateProcessingStep(0);
+        updateProcessingStep(4);
+        loadingMessage.value = "Calculating final scores...";
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-          const formData = new FormData();
-          formData.append('file', assessmentFile.value);
-          formData.append('student_name', studentName.value || 'Auto-detected');
-          formData.append('assessment_title', assessmentTitle.value);
-          formData.append('subject', subject.value);
-          formData.append('num_questions', numQuestions.value);
-          formData.append('points_per_question', pointsPerQuestion.value);
-          formData.append('total_points', totalPoints.value);
-          formData.append('assessment_type', selectedTemplate.value);
+        updateProcessingStep(5);
+        loadingMessage.value = "Saving results to database...";
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        if (result.success && result.results) {
+          gradingResults.value = result.results;
           
-          // Include answer key data
-          if (answerKeyMethod.value === 'upload' && answerKeyFile.value) {
-            formData.append('answer_key_file', answerKeyFile.value);
-          } else if (answerKeyMethod.value === 'manual') {
-            formData.append('answer_key_data', JSON.stringify(questionsList.value));
-          }
-
-          console.log('📤 Sending to: http://localhost:8000/api/assessments/check-with-answer-key');
-
-          // Call backend API with rule-based checking
-          const response = await fetch('http://localhost:8000/api/assessments/check-with-answer-key', {
-            method: 'POST',
-            body: formData
-          });
-
-          console.log('📥 Response status:', response.status);
-
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error('❌ Backend error:', errorText);
-            
-          // Check for specific error about missing answers
-          if (response.status === 400 && errorText.includes('no answers found')) {
-            error.value = "⚠️ The uploaded file contains only questions without student answers.\n\n" +
-                         "📝 This appears to be a blank questionnaire or answer key file.\n\n" +
-                         "✅ To proceed:\n" +
-                         "1. Upload a file that contains student's answered responses, OR\n" +
-                         "2. If this file has questions only, first upload it as an Answer Key, then upload the student's completed responses";
-            return;
-          }            throw new Error(`Upload failed: ${response.status} ${response.statusText} - ${errorText}`);
-          }
-
-          const result = await response.json();
-          console.log('✅ Backend response:', result);
-
-          // Step 2: Parse Content
-          updateProcessingStep(1);
-          loadingMessage.value = "Extracting student answers...";
-          await new Promise(resolve => setTimeout(resolve, 1000));
-
-          // Step 3: Rule-based Comparison
-          updateProcessingStep(2);
-          loadingMessage.value = "Comparing answers with answer key...";
-          await new Promise(resolve => setTimeout(resolve, 1500));
-
-          // Step 4: Calculate Scores
-          updateProcessingStep(3);
-          loadingMessage.value = "Calculating scores...";
-          await new Promise(resolve => setTimeout(resolve, 800));
-
-          // Step 5: Generate Feedback
-          updateProcessingStep(4);
-          loadingMessage.value = "Generating feedback...";
-          await new Promise(resolve => setTimeout(resolve, 1200));
-
-          // Step 6: Finalize
-          updateProcessingStep(5);
-          loadingMessage.value = "Finalizing results...";
-          await new Promise(resolve => setTimeout(resolve, 500));
-
-          // Process backend response or simulate results
-          gradingResults.value = result.results || {
-            studentName: result.student_name || studentName.value || "John Smith",
-            assessmentTitle: assessmentTitle.value,
-            percentage: calculatePercentage(result.correct_answers || 8, numQuestions.value),
-            pointsEarned: (result.correct_answers || 8) * pointsPerQuestion.value,
-            totalPoints: totalPoints.value,
-            correctAnswers: result.correct_answers || 8,
-            totalQuestions: numQuestions.value,
-            processingTime: 2.3,
-            checkingMethod: "Rule-based Comparison",
-            feedback: {
-              strengths: generateStrengths(result.correct_answers || 8, numQuestions.value),
-              weaknesses: generateWeaknesses(result.incorrect_answers),
-              recommendations: generateRecommendations(result.missed_topics || []),
-              detailedAnalysis: `Rule-based checking completed. Student answered ${result.correct_answers || 8} out of ${numQuestions.value} questions correctly. ${getFeedbackMessage(result.correct_answers || 8, numQuestions.value)}`
-            },
-            questionBreakdown: generateQuestionBreakdown(result.question_results, pointsPerQuestion.value)
-          };
-
-          // Mark all steps complete
           processingSteps.value.forEach(step => {
             step.completed = true;
             step.active = false;
           });
 
-          // Show success message
           setTimeout(() => {
-            alert("✅ Assessment checked successfully using rule-based comparison!\n\nResults are ready for review.");
+            const aiUsed = result.results.aiUsed ? '✅ WITH AI-POWERED FEEDBACK' : '⚠️ WITHOUT AI';
+            const dbSaved = result.results.databaseSaved ? '✅ SAVED TO DATABASE' : '⚠️ NOT SAVED';
+            
+            alert(`✅ Assessment checked successfully!\n\n${aiUsed}\n${dbSaved}\n\nProcessing Time: ${result.processing_time}s`);
           }, 500);
-
-        } catch (err) {
-          console.error('Assessment processing error:', err);
-          error.value = "Failed to process assessment: " + err.message;
-        } finally {
-          isLoading.value = false;
+        } else {
+          throw new Error("Invalid response from server");
         }
-      };
 
-      // Helper functions for result generation
-      const calculatePercentage = (correct, total) => {
-        return Math.round((correct / total) * 100);
-      };
+      } catch (err) {
+        console.error('Assessment processing error:', err);
+        error.value = "Failed to process assessment: " + err.message;
+      } finally {
+        isLoading.value = false;
+      }
+    };
 
-      const generateStrengths = (correct, total) => {
-        const percentage = calculatePercentage(correct, total);
-        const strengths = [];
-        
-        if (percentage >= 80) {
-          strengths.push("Excellent overall performance on the assessment");
-          strengths.push("Strong understanding of the core concepts");
-        } else if (percentage >= 70) {
-          strengths.push("Good grasp of most concepts covered");
-          strengths.push("Consistent performance across question types");
-        } else if (percentage >= 60) {
-          strengths.push("Shows understanding of basic concepts");
-        }
-        
-        if (correct > 0) {
-          strengths.push(`Successfully answered ${correct} questions correctly`);
-        }
-        
-        return strengths.length > 0 ? strengths : ["Participation in the assessment shows engagement"];
-      };
+    const getScoreClass = (percentage) => {
+      if (percentage >= 90) return "excellent";
+      if (percentage >= 80) return "good";
+      if (percentage >= 70) return "average";
+      if (percentage >= 60) return "below-average";
+      return "poor";
+    };
 
-      const generateWeaknesses = (incorrectAnswers) => {
-        const weaknesses = [];
-        
-        if (incorrectAnswers && incorrectAnswers.length > 0) {
-          weaknesses.push(`Missed ${incorrectAnswers.length} questions - review these areas`);
-          if (incorrectAnswers.length > 3) {
-            weaknesses.push("Consider additional practice on fundamental concepts");
-          }
-        }
-        
-        return weaknesses.length > 0 ? weaknesses : ["Focus on careful reading of questions"];
-      };
+    const getLetterGrade = (percentage) => {
+      if (percentage >= 90) return "A";
+      if (percentage >= 80) return "B";
+      if (percentage >= 70) return "C";
+      if (percentage >= 60) return "D";
+      return "F";
+    };
 
-      const generateRecommendations = (missedTopics) => {
-        const recommendations = [];
-        
-        recommendations.push("Review the answer key to understand correct solutions");
-        recommendations.push("Practice similar questions to reinforce learning");
-        
-        if (missedTopics && missedTopics.length > 0) {
-          recommendations.push(`Focus on: ${missedTopics.join(", ")}`);
-        }
-        
-        recommendations.push("Ask teacher for clarification on challenging concepts");
-        
-        return recommendations;
-      };
+    const getGradeClass = (percentage) => {
+      if (percentage >= 80) return "grade-a";
+      if (percentage >= 70) return "grade-b";
+      if (percentage >= 60) return "grade-c";
+      return "grade-f";
+    };
 
-      const getFeedbackMessage = (correct, total) => {
-        const percentage = calculatePercentage(correct, total);
-        
-        if (percentage >= 90) return "Outstanding performance!";
-        if (percentage >= 80) return "Very good work!";
-        if (percentage >= 70) return "Good effort with room for improvement.";
-        if (percentage >= 60) return "Shows basic understanding but needs more practice.";
-        return "Requires additional study and practice.";
+    const downloadReport = () => {
+      const reportData = {
+        student: studentName.value,
+        assessment: assessmentTitle.value,
+        subject: subject.value,
+        score: gradingResults.value.percentage,
+        feedback: gradingResults.value.feedback,
+        aiPowered: gradingResults.value.aiUsed
       };
+      
+      const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${studentName.value}_${assessmentTitle.value}_AI_report.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
 
-      const generateQuestionBreakdown = (questionResults, pointsPerQuestion) => {
-        if (!questionResults) {
-          // Generate sample breakdown for demo
-          const breakdown = [];
-          for (let i = 0; i < numQuestions.value; i++) {
-            const isCorrect = Math.random() > 0.3; // 70% correct rate for demo
-            breakdown.push({
-              isCorrect: isCorrect,
-              pointsEarned: isCorrect ? pointsPerQuestion : 0,
-              pointsPossible: pointsPerQuestion,
-              feedback: isCorrect ? "Correct answer!" : "Incorrect. Review this concept."
-            });
-          }
-          return breakdown;
-        }
-        
-        return questionResults.map(result => ({
-          isCorrect: result.correct,
-          pointsEarned: result.correct ? pointsPerQuestion : 0,
-          pointsPossible: pointsPerQuestion,
-          feedback: result.feedback || (result.correct ? "Correct!" : "Incorrect.")
-        }));
-      };
+    const resetForm = () => {
+      studentName.value = "";
+      assessmentTitle.value = "";
+      subject.value = "";
+      numQuestions.value = 10;
+      pointsPerQuestion.value = 5;
+      totalPoints.value = 50;
+      selectedTemplate.value = "";
+      assessmentFile.value = null;
+      answerKeyFile.value = null;
+      questionsList.value = [];
+      gradingResults.value = null;
+      error.value = "";
+      processingSteps.value = [];
+    };
 
-      // Score and Grade Helpers
-      const getScoreClass = (percentage) => {
-        if (percentage >= 90) return "excellent";
-        if (percentage >= 80) return "good";
-        if (percentage >= 70) return "average";
-        if (percentage >= 60) return "below-average";
-        return "poor";
-      };
+    const clearForm = () => {
+      resetForm();
+    };
 
-      const getLetterGrade = (percentage) => {
-        if (percentage >= 90) return "A";
-        if (percentage >= 80) return "B";
-        if (percentage >= 70) return "C";
-        if (percentage >= 60) return "D";
-        return "F";
-      };
+    const viewAllAssessments = () => {
+      router.push('/teacher/assessment-history');
+    };
 
-      const getGradeClass = (percentage) => {
-        if (percentage >= 80) return "grade-a";
-        if (percentage >= 70) return "grade-b";
-        if (percentage >= 60) return "grade-c";
-        return "grade-f";
-      };
-
-      // Action Functions
-      const downloadReport = () => {
-        const reportData = {
-          student: studentName.value,
-          assessment: assessmentTitle.value,
-          subject: subject.value,
-          score: gradingResults.value.percentage,
-          feedback: gradingResults.value.feedback
-        };
-        
-        const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${studentName.value}_${assessmentTitle.value}_report.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-      };
-
-      const resetForm = () => {
-        studentName.value = "";
-        assessmentTitle.value = "";
-        subject.value = "";
-        totalPoints.value = 100;
-        selectedTemplate.value = "";
-        assessmentFile.value = null;
-        gradingResults.value = null;
-        error.value = "";
-        processingSteps.value = [];
-      };
-
-      const clearForm = () => {
-        resetForm();
-      };
-
-      const viewAllAssessments = () => {
-        // Navigate to Assessment History page
-        router.push('/teacher/assessment-history');
-      };
-
-      // Error suggestion helper functions
-      const moveFileToAnswerKey = () => {
-        if (assessmentFile.value) {
-          // Move current assessment file to answer key
-          answerKeyFile.value = assessmentFile.value;
-          answerKeyMethod.value = 'upload';
-          
-          // Process the file as answer key
-          processAnswerKeyFile(assessmentFile.value);
-          
-          // Clear the assessment file
-          assessmentFile.value = null;
-          
-          // Clear the error
-          error.value = "";
-          
-          alert("✅ File moved to Answer Key section!\n\nNow please upload the student's completed assessment with their answers.");
-        }
-      };
-
-      const clearFileAndShowExample = () => {
+    const moveFileToAnswerKey = () => {
+      if (assessmentFile.value) {
+        answerKeyFile.value = assessmentFile.value;
+        answerKeyMethod.value = 'upload';
+        processAnswerKeyFile(assessmentFile.value);
         assessmentFile.value = null;
         error.value = "";
-        
-        alert(`📝 Example Formats for Student Response Files:
+        alert("✅ File moved to Answer Key section!\n\nNow please upload the student's completed assessment.");
+      }
+    };
 
-FORMAT 1 - Complete Format:
-Student Name: John Smith
-Assessment: Math Quiz Chapter 5
-1. The Earth is round. A
-2. Water boils at 100°C. True
-3. What is 2+2? B
+    const clearFileAndShowExample = () => {
+      assessmentFile.value = null;
+      error.value = "";
+      
+      alert(`📝 Example Student Response Formats:
 
-FORMAT 2 - Simple Answer List:
-True or False
-1. True
-2. False
-3. True
-
-Multiple Choice
+FORMAT 1 - Complete:
+Student: John Smith
 1. A
-2. B
-3. C
+2. True
+3. B
 
-FORMAT 3 - Even Simpler:
-T or F
-T
-F
-T
-
-Multiple Choice
+FORMAT 2 - Simple:
 A
-B
-C
-
-FORMAT 4 - Just Answers:
 True
-False
-A
 B
-C
+False
 
-✅ ALL these formats work! The system is completely flexible.`);
-      };
+✅ Both formats work!`);
+    };
 
-      const clearErrorAndContinue = () => {
-        error.value = "";
-      };
+    const clearErrorAndContinue = () => {
+      error.value = "";
+    };
 
-      // Bulk Input Functions
-      const loadExample = (exampleKey) => {
-        bulkAnswerText.value = bulkExamples.value[exampleKey].content;
-        parseBulkInput();
-      };
+    const loadExample = (exampleKey) => {
+      bulkAnswerText.value = bulkExamples.value[exampleKey].content;
+      parseBulkInput();
+    };
 
-      const parseBulkInput = async () => {
-        if (!bulkAnswerText.value.trim()) {
-          bulkParsedQuestions.value = [];
-          return;
-        }
+    const parseBulkInput = async () => {
+      if (!bulkAnswerText.value.trim()) {
+        bulkParsedQuestions.value = [];
+        return;
+      }
 
-        try {
-          // Use the backend parsing API to parse the bulk input
-          const formData = new FormData();
-          const blob = new Blob([bulkAnswerText.value], { type: 'text/plain' });
-          formData.append('file', blob, 'bulk_answers.txt');
+      try {
+        const formData = new FormData();
+        const blob = new Blob([bulkAnswerText.value], { type: 'text/plain' });
+        formData.append('file', blob, 'bulk_answers.txt');
 
-          const response = await fetch('http://localhost:8000/api/assessments/process-answer-key', {
-            method: 'POST',
-            body: formData
-          });
+        const response = await fetch('http://localhost:8000/api/assessments/process-answer-key', {
+          method: 'POST',
+          body: formData
+        });
 
-          if (response.ok) {
-            const result = await response.json();
-            if (result.questions && result.questions.length > 0) {
-              bulkParsedQuestions.value = result.questions.map(q => ({
-                id: q.id,
-                answer: q.answer,
-                type: q.type,
-                text: q.text
-              }));
-              console.log('✅ Bulk parsing successful:', bulkParsedQuestions.value);
-            } else {
-              bulkParsedQuestions.value = [];
-            }
+        if (response.ok) {
+          const result = await response.json();
+          if (result.questions && result.questions.length > 0) {
+            bulkParsedQuestions.value = result.questions.map(q => ({
+              id: q.id,
+              answer: q.answer || q.correctAnswer,
+              type: q.type,
+              text: q.text
+            }));
           } else {
-            console.error('❌ Bulk parsing failed');
             bulkParsedQuestions.value = [];
           }
-        } catch (err) {
-          console.error('❌ Error parsing bulk input:', err);
-          bulkParsedQuestions.value = [];
         }
-      };
-
-      const applyBulkAnswers = () => {
-        if (bulkParsedQuestions.value.length === 0) {
-          alert("No questions to apply!");
-          return;
-        }
-
-        // Update the main questions list with bulk parsed answers
-        questionsList.value = bulkParsedQuestions.value.map((q, index) => ({
-          id: q.id,
-          type: q.type,
-          correctAnswer: q.answer,
-          points: parseInt(pointsPerQuestion.value) || 1
-        }));
-
-        // Update form fields
-        numQuestions.value = bulkParsedQuestions.value.length;
-        calculateTotalPoints();
-
-        // Switch back to individual view to show the results
-        manualInputMethod.value = 'individual';
-
-        // Clear bulk input
-        bulkAnswerText.value = "";
+      } catch (err) {
+        console.error('❌ Error parsing bulk input:', err);
         bulkParsedQuestions.value = [];
+      }
+    };
 
-        alert(`✅ Successfully applied ${questionsList.value.length} answers from bulk input!`);
-      };
+    const applyBulkAnswers = async () => {
+      if (bulkParsedQuestions.value.length === 0) {
+        alert("No questions to apply!");
+        return;
+      }
 
-      // Computed Properties
-      // Update the canSubmit computed property around line 1470
-const canSubmit = computed(() => {
-  const hasBasicInfo = subject.value && 
-                      assessmentTitle.value &&
-                      numQuestions.value &&
-                      pointsPerQuestion.value &&
-                      selectedTemplate.value && 
-                      assessmentFile.value &&
-                      !isLoading.value;
-  
-  // Check answer key setup
-  const hasAnswerKeyFile = answerKeyMethod.value === 'upload' && !!answerKeyFile.value;
-  const hasManualAnswers = answerKeyMethod.value === 'manual' && 
-                          questionsList.value.length > 0 &&
-                          questionsList.value.some(q => q.correctAnswer);
-  
-  const hasAnswerKeySetup = hasAnswerKeyFile || hasManualAnswers;
-  
-  // Debug logging
-  console.log('🔍 Can Submit Check:', {
-    subject: !!subject.value,
-    assessmentTitle: !!assessmentTitle.value,
-    numQuestions: !!numQuestions.value,
-    pointsPerQuestion: !!pointsPerQuestion.value,
-    selectedTemplate: !!selectedTemplate.value,
-    assessmentFile: !!assessmentFile.value,
-    isLoading: isLoading.value,
-    answerKeyMethod: answerKeyMethod.value,
-    answerKeyFile: !!answerKeyFile.value,
-    answerKeyFileName: answerKeyFile.value?.name,
-    questionsListLength: questionsList.value.length,
-    questionsWithAnswers: questionsList.value.filter(q => q.correctAnswer).length,
-    hasBasicInfo,
-    hasAnswerKeySetup,
-    FINAL_CAN_SUBMIT: hasBasicInfo && hasAnswerKeySetup
-  });
-  
-  return hasBasicInfo && hasAnswerKeySetup;
-});
+      const newList = bulkParsedQuestions.value.map((q) => ({
+        id: q.id,
+        type: q.type,
+        correctAnswer: q.answer,
+        points: parseInt(pointsPerQuestion.value) || 1
+      }));
 
-      return {
-        isDarkMode,
-        isLoading,
-        loadingMessage,
-        isDragOver,
-        isAnswerKeyDragOver,
-        studentName,
-        assessmentTitle,
-        subject,
-        numQuestions,
-        pointsPerQuestion,
-        scoringMethod,
-        totalPoints,
-        selectedTemplate,
-        assessmentFile,
-        answerKeyMethod,
-        answerKeyFile,
-        questionsList,
-        detectedQuestions,
-        aiAnalysisLevel,
-        feedbackLevel,
-        detectWeaknesses,
-        enableRecommendations,
-        compareToStandards,
-        gradingResults,
-        error,
-        processingSteps,
-        hasAnswerKey,
-        answerKeyPreview,
-        allQuestionsAnswered,
-        answeredQuestionsCount,
-        pointDistribution,
-        updateQuestionsList,
-        handleScoringMethodChange,
-        calculateTotalPoints,
-        assignAllPoints,
-        setCustomPattern,
-        handleAnswerKeyDragOver,
-        handleAnswerKeyDragLeave,
-        handleAnswerKeyDrop,
-        handleAnswerKeyUpload,
-        processAnswerKeyFile,
-        handleFileUpload,
-        handleDragOver,
-        handleDragLeave,
-        handleDrop,
-        processAssessmentFile,
-        autoGenerateAnswerKey,
-        saveDetectedAnswerKey,
-        formatFileSize,
-        getTemplateTitle,
-        submitAssessment,
-        getScoreClass,
-        getLetterGrade,
-        getGradeClass,
-        downloadReport,
-        viewAllAssessments,
-        resetForm,
-        clearForm,
-        moveFileToAnswerKey,
-        clearFileAndShowExample,
-        clearErrorAndContinue,
-        canSubmit,
-        // Bulk input functionality
-        manualInputMethod,
-        bulkAnswerText,
-        bulkParsedQuestions,
-        activeBulkExample,
-        bulkExamples,
-        loadExample,
-        parseBulkInput,
-        applyBulkAnswers
-      };
-    },
-  };
-  </script>
+      // FORCE reactivity
+      questionsList.value = [];
+      await nextTick();
+      questionsList.value = newList;
+      await nextTick();
+
+      numQuestions.value = bulkParsedQuestions.value.length;
+      calculateTotalPoints();
+      manualInputMethod.value = 'individual';
+      bulkAnswerText.value = "";
+      bulkParsedQuestions.value = [];
+
+      alert(`✅ Successfully applied ${questionsList.value.length} answers!`);
+    };
+
+    return {
+      isDarkMode,
+      isLoading,
+      loadingMessage,
+      isDragOver,
+      isAnswerKeyDragOver,
+      studentName,
+      assessmentTitle,
+      subject,
+      numQuestions,
+      pointsPerQuestion,
+      scoringMethod,
+      totalPoints,
+      selectedTemplate,
+      assessmentFile,
+      answerKeyMethod,
+      answerKeyFile,
+      questionsList,
+      detectedQuestions,
+      aiAnalysisLevel,
+      feedbackLevel,
+      detectWeaknesses,
+      enableRecommendations,
+      compareToStandards,
+      gradingResults,
+      error,
+      processingSteps,
+      hasAnswerKey,
+      answerKeyPreview,
+      allQuestionsAnswered,
+      answeredQuestionsCount,
+      pointDistribution,
+      updateQuestionsList,
+      handleScoringMethodChange,
+      calculateTotalPoints,
+      assignAllPoints,
+      setCustomPattern,
+      handleAnswerKeyDragOver,
+      handleAnswerKeyDragLeave,
+      handleAnswerKeyDrop,
+      handleAnswerKeyUpload,
+      processAnswerKeyFile,
+      handleFileUpload,
+      handleDragOver,
+      handleDragLeave,
+      handleDrop,
+      autoGenerateAnswerKey,
+      saveDetectedAnswerKey,
+      formatFileSize,
+      submitAssessment,
+      getScoreClass,
+      getLetterGrade,
+      getGradeClass,
+      downloadReport,
+      viewAllAssessments,
+      resetForm,
+      clearForm,
+      moveFileToAnswerKey,
+      clearFileAndShowExample,
+      clearErrorAndContinue,
+      canSubmit,
+      manualInputMethod,
+      bulkAnswerText,
+      bulkParsedQuestions,
+      activeBulkExample,
+      bulkExamples,
+      loadExample,
+      parseBulkInput,
+      applyBulkAnswers
+    };
+  },
+};
+</script>
 
   <style scoped>
 
