@@ -3283,6 +3283,16 @@ body, html {
   color: #dc2626 !important;
 }
 
+/* Rounded semi-transparent backgrounds for sidebar and navbar icons/buttons */
+.rounded-bg {
+  background: rgba(255,255,255,0.13);
+  border-radius: 16px;
+  transition: background 0.2s;
+}
+.rounded-bg:hover {
+  background: rgba(255,255,255,0.22);
+}
+
 /* Main Content */
 .main-content {
   margin-top: 64px;
