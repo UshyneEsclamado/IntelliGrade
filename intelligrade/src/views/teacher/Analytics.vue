@@ -17,6 +17,7 @@
         
         <!-- Right: User Profile and Notifications -->
         <div class="navbar-right">
+          
           <!-- Section Filter -->
           <select v-model="selectedSection" @change="filterBySection" class="section-filter rounded-bg">
             <option value="">All Sections</option>
@@ -33,22 +34,54 @@
             <span>Export</span>
           </button>
           
-          <!-- User Profile -->
-          <div class="user-profile-wrapper">
-            <div class="user-profile rounded-bg" @click="toggleProfileDropdown">
-              <div class="user-avatar">
+          <!-- Notifications and Profile Group -->
+          <div class="notifications-profile-group">
+            <!-- Notification Bell -->
+            <div class="notif-wrapper">
+              <button class="nav-icon-btn rounded-bg" @click="toggleNotifDropdown" aria-label="Notifications">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="12" cy="7" r="4"></circle>
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                 </svg>
+                <span v-if="notifications.length" class="notification-badge">{{ notifications.length }}</span>
+              </button>
+              
+              <!-- Notification Dropdown -->
+              <div v-if="showNotifDropdown" class="notification-dropdown">
+                <div class="dropdown-header">
+                  <h3>Notifications</h3>
+                </div>
+                <div class="notification-list">
+                  <div v-if="notifications.length === 0" class="no-notifications">
+                    No new notifications
+                  </div>
+                  <div v-for="notif in notifications" :key="notif.id" class="notification-item" @click="handleNotificationClick(notif)">
+                    <div class="notif-content">
+                      <h4>{{ notif.title }}</h4>
+                      <p>{{ notif.body }}</p>
+                      <span class="notif-time">{{ notif.date }}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <span class="user-name">{{ fullName }}</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="dropdown-arrow">
-                <path d="M7 10l5 5 5-5z"/>
-              </svg>
             </div>
             
-            <!-- Profile Dropdown -->
+            <!-- User Profile -->
+            <div class="user-profile-wrapper">
+              <div class="user-profile rounded-bg" @click="toggleProfileDropdown">
+                <div class="user-avatar">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                </div>
+                <span class="user-name">{{ fullName }}</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="dropdown-arrow">
+                  <path d="M7 10l5 5 5-5z"/>
+                </svg>
+              </div>
+              
+              <!-- Profile Dropdown -->
             <div v-if="showProfileDropdown" class="profile-dropdown">
               <div class="dropdown-header">
                 <div class="profile-info">
@@ -82,6 +115,7 @@
                   <span>Logout</span>
                 </button>
               </div>
+            </div>
             </div>
           </div>
         </div>
@@ -527,6 +561,10 @@ export default {
     const teacherId = ref<string>('')
     const showProfileDropdown = ref(false)
     const fullName = ref('Teacher')
+    
+    // Notification dropdown states
+    const showNotifDropdown = ref(false)
+    const notifications = ref([])
     
     // Scroll to top functionality
     const showScrollTop = ref(false)
@@ -1201,6 +1239,17 @@ export default {
       cleanupSubscriptions()
     })
 
+    // Notification dropdown functions
+    const toggleNotifDropdown = () => {
+      showNotifDropdown.value = !showNotifDropdown.value
+    }
+
+    const handleNotificationClick = (notification: any) => {
+      // Handle notification click
+      console.log('Notification clicked:', notification)
+      showNotifDropdown.value = false
+    }
+
     // Profile dropdown functions
     const toggleProfileDropdown = () => {
       showProfileDropdown.value = !showProfileDropdown.value
@@ -1211,6 +1260,9 @@ export default {
       const target = event.target as Element
       if (!target.closest('.user-profile-wrapper')) {
         showProfileDropdown.value = false
+      }
+      if (!target.closest('.notif-wrapper')) {
+        showNotifDropdown.value = false
       }
     }
 
@@ -1258,6 +1310,8 @@ export default {
       selectedStudent,
       studentQuizResults,
       showProfileDropdown,
+      showNotifDropdown,
+      notifications,
       fullName,
       overallStats,
       performanceDistribution,
@@ -1273,6 +1327,8 @@ export default {
       getStatusClass,
       formatDate,
       toggleProfileDropdown,
+      toggleNotifDropdown,
+      handleNotificationClick,
       logout
     }
   }
@@ -1501,6 +1557,125 @@ body, html {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+/* Notifications and Profile Group */
+.notifications-profile-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Notification Styles */
+.notif-wrapper {
+  position: relative;
+}
+
+.nav-icon-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: none;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.notification-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #3D8D7A;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  width: 320px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 1001;
+  border: 1px solid #e2e8f0;
+}
+
+.notification-dropdown .dropdown-header {
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  color: white;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.notification-dropdown .dropdown-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.notification-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.no-notifications {
+  padding: 2rem 1.5rem;
+  text-align: center;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.notification-item {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.notification-item:hover {
+  background: #f8fafc;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notif-content h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.notif-content p {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.813rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.notif-time {
+  font-size: 0.75rem;
+  color: #94a3b8;
 }
 
 .section-filter {
@@ -1857,10 +2032,11 @@ body, html {
 .content-card {
   background: white;
   border-radius: 12px;
-  padding: 1.5rem;
+  padding: 0.75rem 0.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
+  width: 100%;
 }
 .dark .content-card {
   background: #23272b;
@@ -2635,17 +2811,19 @@ body, html {
 .performance-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1.5rem;
+  width: 100%;
 }
 
 .performance-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
+  padding: 0.4rem 0.75rem;
   background: #FBFFE4;
-  border-radius: 8px;
-  border-left: 4px solid #3D8D7A;
+  border-radius: 6px;
+  border-left: 3px solid #3D8D7A;
+  width: 100%;
 }
 
 .dark .performance-item {
@@ -2655,6 +2833,7 @@ body, html {
 
 .quiz-info {
   flex: 1;
+  min-width: 0;
 }
 
 .quiz-title {
@@ -2678,21 +2857,24 @@ body, html {
 
 .quiz-score {
   margin-left: 1rem;
+  flex-shrink: 0;
 }
 
 /* Distribution list styles */
 .distribution-list {
   display: grid;
-  gap: 1rem;
+  gap: 0.15rem;
+  width: 100%;
 }
 
 .dist-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
+  padding: 0.4rem 0.75rem;
   background: #FBFFE4;
-  border-radius: 8px;
+  border-radius: 6px;
+  width: 100%;
 }
 
 .dark .dist-item {
