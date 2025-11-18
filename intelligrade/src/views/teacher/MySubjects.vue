@@ -3090,7 +3090,8 @@ onUnmounted(() => {
   background: white;
   border-radius: 16px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
+  overflow-y: auto;
+  max-height: 350px;
   z-index: 1001;
   border: 1px solid #e2e8f0;
 }
@@ -3318,6 +3319,8 @@ onUnmounted(() => {
   padding: 1.5rem;
   width: calc(100% - 80px);
   min-height: calc(100vh - 64px);
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
   position: relative;
   background: #f8fafc;
   padding-bottom: 2rem;

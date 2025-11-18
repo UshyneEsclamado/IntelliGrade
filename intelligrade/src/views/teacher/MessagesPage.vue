@@ -3300,6 +3300,8 @@ body, html {
   padding: 1.5rem;
   width: calc(100% - 80px);
   min-height: calc(100vh - 64px);
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
   position: relative;
   background: #f8fafc;
   padding-bottom: 2rem;

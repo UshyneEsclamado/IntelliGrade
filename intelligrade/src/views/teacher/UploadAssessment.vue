@@ -2109,29 +2109,18 @@ False
   display: flex;
   flex-direction: column;
   position: relative;
-  height: 100vh;
-  width: 100%;
+  width: calc(100% - 80px);
   margin-left: 80px;
   margin-top: 64px;
   padding: 32px 40px 40px 40px;
+  min-height: calc(100vh - 64px);
+  max-height: calc(100vh - 64px);
   overflow-y: auto;
   background: #f8fafc;
-  scrollbar-width: thin;
-  scrollbar-color: #3D8D7A #e0e7ef;
+  padding-bottom: 2rem;
 }
 
 /* Custom scrollbar for Webkit browsers */
-.main-content::-webkit-scrollbar {
-  width: 10px;
-}
-.main-content::-webkit-scrollbar-thumb {
-  background: #3D8D7A;
-  border-radius: 10px;
-}
-.main-content::-webkit-scrollbar-track {
-  background: #e0e7ef;
-  border-radius: 10px;
-}
 
   /* Page Header */
   .page-header {

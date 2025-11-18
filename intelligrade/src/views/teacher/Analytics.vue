@@ -423,6 +423,24 @@
         </div>
       </div>
     </div>
+    
+    <!-- Scroll to Top Button -->
+    <Transition name="fade" mode="out-in">
+      <button
+        v-show="showScrollTop"
+        @click="scrollToTop"
+        class="scroll-to-top"
+        aria-label="Scroll to top"
+      >
+        <svg width="32" height="32" viewBox="0 0 24 24" class="scroll-to-top-btn">
+          <path
+            fill="#ffffff"
+            stroke="none"
+            d="M12 2L3 11h3v8a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-8h3l-9-9z"
+          />
+        </svg>
+      </button>
+    </Transition>
   </div>
 </template>
 
@@ -509,6 +527,17 @@ export default {
     const teacherId = ref<string>('')
     const showProfileDropdown = ref(false)
     const fullName = ref('Teacher')
+    
+    // Scroll to top functionality
+    const showScrollTop = ref(false)
+
+    const scrollToTop = () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+
+    const handleScroll = () => {
+      showScrollTop.value = window.scrollY > 300
+    }
     
     // Real-time subscription channels
     let quizAttemptsSubscription: any = null
@@ -1668,11 +1697,13 @@ body, html {
 
 /* Main Content */
 .main-content {
-  margin-top: 64px;
   margin-left: 80px;
+  margin-top: 64px;
   padding: 1.5rem;
   width: calc(100% - 80px);
   min-height: calc(100vh - 64px);
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
   position: relative;
   background: #f8fafc;
   padding-bottom: 2rem;
