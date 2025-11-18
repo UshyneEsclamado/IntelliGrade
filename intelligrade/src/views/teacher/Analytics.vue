@@ -1,6 +1,6 @@
 <template>
-  <div class="analytics-container">
-    <!-- Top Navigation Bar (Same as Dashboard) -->
+  <div class="dashboard-container">
+    <!-- Top Navigation Bar (Clean) -->
     <nav class="top-navbar">
       <div class="navbar-content">
         <!-- Left: Logo and Brand -->
@@ -11,61 +11,142 @@
           </div>
         </div>
         
-        <!-- Center: Navigation Links -->
+        <!-- Center: Empty space for clean look -->
         <div class="navbar-center">
-          <router-link to="/teacher/dashboard" class="nav-item">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" />
-            </svg>
-            <span>Dashboard</span>
-          </router-link>
-          
-          <router-link to="/teacher/subjects" class="nav-item">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"/>
-            </svg>
-            <span>Classes</span>
-          </router-link>
-          
-          <router-link to="/teacher/gradebook" class="nav-item">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19,3H14.82C14.4,1.84 13.3,1 12,1C10.7,1 9.6,1.84 9.18,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M12,3A1,1 0 0,1 13,4A1,1 0 0,1 12,5A1,1 0 0,1 11,4A1,1 0 0,1 12,3Z" />
-            </svg>
-            <span>Gradebook</span>
-          </router-link>
-          
-          <router-link to="/teacher/analytics" class="nav-item active">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z" />
-            </svg>
-            <span>Analytics</span>
-          </router-link>
-          
-          <router-link to="/teacher/upload-assessment" class="nav-item">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M9,16V10H5L12,3L19,10H15V16H9M5,20V18H19V20H5Z" />
-            </svg>
-            <span>Upload</span>
-          </router-link>
         </div>
         
-        <!-- Right: User Profile and Actions -->
+        <!-- Right: User Profile and Notifications -->
         <div class="navbar-right">
-          <select v-model="selectedSection" @change="filterBySection" class="section-filter">
+          <!-- Section Filter -->
+          <select v-model="selectedSection" @change="filterBySection" class="section-filter rounded-bg">
             <option value="">All Sections</option>
             <option v-for="section in sections" :key="section.id" :value="section.id">
               {{ section.name }} - {{ section.subject_name }}
             </option>
           </select>
-          <button @click="exportData" class="export-btn">
+          
+          <!-- Export Button -->
+          <button @click="exportData" class="export-btn rounded-bg">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
               <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
             </svg>
             <span>Export</span>
           </button>
+          
+          <!-- User Profile -->
+          <div class="user-profile-wrapper">
+            <div class="user-profile rounded-bg" @click="toggleProfileDropdown">
+              <div class="user-avatar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
+              <span class="user-name">{{ fullName }}</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="dropdown-arrow">
+                <path d="M7 10l5 5 5-5z"/>
+              </svg>
+            </div>
+            
+            <!-- Profile Dropdown -->
+            <div v-if="showProfileDropdown" class="profile-dropdown">
+              <div class="dropdown-header">
+                <div class="profile-info">
+                  <div class="profile-avatar">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                  </div>
+                  <div class="profile-details">
+                    <h4>{{ fullName }}</h4>
+                    <p>Teacher</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="dropdown-menu">
+                <router-link to="/teacher/settings" class="dropdown-item">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1V3H9V1L3 7V9H5V20A2 2 0 0 0 7 22H17A2 2 0 0 0 19 20V9H21M17 20H7V9H10V12H14V9H17V20Z"/>
+                  </svg>
+                  <span>Profile & Settings</span>
+                </router-link>
+                
+                <div class="dropdown-divider"></div>
+                
+                <button @click="logout" class="dropdown-item logout-btn">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16 17V14H9V10H16V7L21 12L16 17M14 2A2 2 0 0 1 16 4V6H14V4H5V20H14V18H16V20A2 2 0 0 1 14 22H5A2 2 0 0 1 3 20V4A2 2 0 0 1 5 2H14Z"/>
+                  </svg>
+                  <span>Logout</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </nav>
+
+    <!-- Sidebar Navigation - Custom Tooltip Labels on Hover -->
+    <aside class="sidebar" style="background:#3D8D7A; border-right:none;">
+      <nav class="sidebar-nav">
+        <router-link to="/teacher/dashboard" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/dashboard' }">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 20v-6h4v6m5-8h3L12 3 2 12h3v8h5v-6h4v6h5v-8z" />
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Dashboard</span>
+        </router-link>
+        <router-link to="/teacher/subjects" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/subjects' }">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="7" width="18" height="13" rx="2" />
+              <path d="M3 7l9-4 9 4" />
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Classes</span>
+        </router-link>
+        <router-link to="/teacher/gradebook" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/gradebook' }">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="4" width="16" height="16" rx="2" />
+              <path d="M8 2v4M16 2v4" />
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Gradebook</span>
+        </router-link>
+        <router-link to="/teacher/upload-assessment" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/upload-assessment' }">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 19V6M5 12l7-7 7 7" />
+              <rect x="5" y="19" width="14" height="2" rx="1" />
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Upload Assessment</span>
+        </router-link>
+        <router-link to="/teacher/analytics" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/analytics' }">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="12" width="4" height="8" />
+              <rect x="10" y="8" width="4" height="12" />
+              <rect x="17" y="4" width="4" height="16" />
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Analytics</span>
+        </router-link>
+        <router-link to="/teacher/messages" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/messages' }">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="5" width="18" height="14" rx="2" />
+              <path d="M3 5l9 7 9-7" />
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Messages</span>
+        </router-link>
+      </nav>
+    </aside>
 
     <!-- Main Content Area -->
     <main class="main-content">
@@ -184,7 +265,7 @@
                 <span class="dist-count">{{ performanceDistribution.satisfactory }}</span>
               </div>
               <div class="dist-item">
-                <span class="dist-label warning">Needs Help (<75)</span>
+                <span class="dist-label warning">Needs Help (&lt;75)</span>
                 <span class="dist-count">{{ performanceDistribution.needsHelp }}</span>
               </div>
             </div>
@@ -426,6 +507,8 @@ export default {
     const selectedStudent = ref<StudentData | null>(null)
     const studentQuizResults = ref<QuizResult[]>([])
     const teacherId = ref<string>('')
+    const showProfileDropdown = ref(false)
+    const fullName = ref('Teacher')
     
     // Real-time subscription channels
     let quizAttemptsSubscription: any = null
@@ -543,7 +626,7 @@ export default {
 
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('id, role')
+          .select('id, role, full_name')
           .eq('auth_user_id', session.user.id)
           .single()
 
@@ -554,7 +637,7 @@ export default {
 
         const { data: teacher, error: teacherError } = await supabase
           .from('teachers')
-          .select('id')
+          .select('id, full_name')
           .eq('profile_id', profile.id)
           .single()
 
@@ -562,6 +645,9 @@ export default {
           console.error('Teacher not found')
           return null
         }
+
+        // Set the full name for the profile dropdown
+        fullName.value = teacher.full_name || profile.full_name || 'Teacher'
 
         return teacher.id
       } catch (error) {
@@ -1086,6 +1172,49 @@ export default {
       cleanupSubscriptions()
     })
 
+    // Profile dropdown functions
+    const toggleProfileDropdown = () => {
+      showProfileDropdown.value = !showProfileDropdown.value
+    }
+
+    // Close dropdown when clicking outside
+    const handleClickOutside = (event: Event) => {
+      const target = event.target as Element
+      if (!target.closest('.user-profile-wrapper')) {
+        showProfileDropdown.value = false
+      }
+    }
+
+    onMounted(() => {
+      document.addEventListener('click', handleClickOutside)
+    })
+
+    onUnmounted(() => {
+      document.removeEventListener('click', handleClickOutside)
+    })
+
+    const logout = async () => {
+      try {
+        console.log('🚪 Logging out...')
+        
+        // Clear storage
+        localStorage.clear()
+        sessionStorage.clear()
+        
+        // Sign out from Supabase
+        await supabase.auth.signOut({ scope: 'local' })
+        
+        console.log('✅ Logout successful')
+        
+        // Force immediate redirect
+        window.location.replace('/login')
+      } catch (error) {
+        console.error('❌ Error during logout:', error)
+        // Force redirect even on error
+        window.location.replace('/login')
+      }
+    }
+
     return {
       isDarkMode,
       sections,
@@ -1099,6 +1228,8 @@ export default {
       loading,
       selectedStudent,
       studentQuizResults,
+      showProfileDropdown,
+      fullName,
       overallStats,
       performanceDistribution,
       filteredStudents,
@@ -1111,7 +1242,9 @@ export default {
       getInitials,
       getScoreClass,
       getStatusClass,
-      formatDate
+      formatDate,
+      toggleProfileDropdown,
+      logout
     }
   }
 }
@@ -1192,30 +1325,88 @@ body, html {
   scrollbar-color: #20c997 #1a1d21;
 }
 
-/* Force hide any sidebar or layout from parent components */
-.sidebar,
-.dashboard-sidebar,
-.navigation-sidebar,
-.teacher-layout,
-.dashboard-layout {
-  display: none !important;
+/* Dashboard Container Layout */
+.dashboard-container {
+  display: flex;
+  min-height: 100vh;
+  background: #f8fafc;
 }
 
-/* Ensure our container is on top */
-.analytics-container {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  z-index: 999999 !important;
-  background: #f8fafc !important;
-  overflow-y: auto !important;
+.dark .dashboard-container {
+  background: #0f172a;
 }
 
+/* Sidebar Navigation - Simple Outlined Icons Only, Single Color, Active Highlight */
+.sidebar {
+  position: fixed;
+  top: 64px;
+  left: 0;
+  width: 80px;
+  height: calc(100vh - 64px);
+  background: #3D8D7A;
+  border-right: none;
+  z-index: 900;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+  overflow: visible;
+}
 
+.sidebar-nav {
+  padding: 2rem 0.5rem 1rem 0.5rem;
+}
 
-/* Top Navigation Bar (Same as Dashboard) */
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 56px;
+  width: 56px;
+  margin: 8px 0;
+  border-radius: 12px;
+  transition: background 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  position: relative;
+  text-decoration: none;
+}
+
+.sidebar-item.active {
+  background: rgba(255,255,255,0.15);
+  border: 2px solid #fff;
+}
+
+.sidebar-item:hover {
+  background: rgba(255,255,255,0.22);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.sidebar-icon svg {
+  display: block;
+}
+
+.sidebar-tooltip {
+  position: absolute;
+  left: 60px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #fff;
+  color: #3D8D7A;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: Inter, sans-serif;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 10;
+}
+
+.sidebar-item:hover .sidebar-tooltip {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Top Navigation Bar (Greenish Theme) */
 .top-navbar {
   position: fixed;
   top: 0;
@@ -1277,54 +1468,210 @@ body, html {
   max-width: 600px;
 }
 
-.nav-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
-  text-decoration: none;
-  color: rgba(255, 255, 255, 0.8);
-  transition: all 0.2s ease;
-  position: relative;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.nav-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-}
-
-.nav-item.active {
-  color: white;
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.nav-item.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60%;
-  height: 3px;
-  background: white;
-  border-radius: 2px 2px 0 0;
-}
-
 .navbar-right {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
+.section-filter {
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.section-filter option {
+  background: #3D8D7A;
+  color: white;
+}
+
+.export-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.export-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.user-profile-wrapper {
+  position: relative;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 12px;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.user-profile:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.user-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: white;
+}
+
+.dropdown-arrow {
+  color: rgba(255, 255, 255, 0.8);
+  transition: transform 0.2s;
+}
+
+.user-profile:hover .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.profile-dropdown {
+  position: absolute;
+  top: 55px;
+  right: 0;
+  width: 280px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 1001;
+  border: 1px solid #e2e8f0;
+}
+
+.dropdown-header {
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  color: white;
+}
+
+.profile-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.profile-avatar {
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.profile-details h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.profile-details p {
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+.dropdown-menu {
+  padding: 0.5rem;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #1e293b;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+}
+
+.dropdown-item:hover {
+  background: #f1f5f9;
+  color: #3D8D7A;
+}
+
+.dropdown-item svg {
+  color: #64748b;
+  transition: color 0.2s;
+}
+
+.dropdown-item:hover svg {
+  color: #3D8D7A;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 0.5rem 0;
+}
+
+.logout-btn {
+  color: #ef4444 !important;
+}
+
+.logout-btn:hover {
+  background: #fef2f2 !important;
+  color: #dc2626 !important;
+}
+
+.logout-btn svg {
+  color: #ef4444 !important;
+}
+
+.logout-btn:hover svg {
+  color: #dc2626 !important;
+}
+
+/* Rounded semi-transparent backgrounds for sidebar and navbar icons/buttons */
+.rounded-bg {
+  background: rgba(255,255,255,0.13);
+  border-radius: 16px;
+  transition: background 0.2s;
+}
+.rounded-bg:hover {
+  background: rgba(255,255,255,0.22);
+}
+
 /* Main Content */
 .main-content {
   margin-top: 64px;
+  margin-left: 80px;
   padding: 1.5rem;
-  width: 100%;
+  width: calc(100% - 80px);
   min-height: calc(100vh - 64px);
   position: relative;
   background: #f8fafc;
