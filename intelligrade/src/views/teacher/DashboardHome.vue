@@ -19,7 +19,7 @@
         <div class="navbar-right">
           <!-- Notification Bell -->
           <div class="notif-wrapper">
-            <button class="nav-icon-btn" @click="toggleNotifDropdown" aria-label="Notifications">
+            <button class="nav-icon-btn rounded-bg" @click="toggleNotifDropdown" aria-label="Notifications">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                 <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
@@ -49,7 +49,7 @@
           
           <!-- User Profile -->
           <div class="user-profile-wrapper">
-            <div class="user-profile" @click="toggleProfileDropdown">
+            <div class="user-profile rounded-bg" @click="toggleProfileDropdown">
               <div class="user-avatar">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -105,7 +105,7 @@
     <!-- Sidebar Navigation - Custom Tooltip Labels on Hover -->
     <aside class="sidebar" style="background:#3D8D7A; border-right:none;">
       <nav class="sidebar-nav">
-        <router-link to="/teacher/dashboard" class="sidebar-item" :class="{ 'active': $route.path === '/teacher/dashboard' }">
+        <router-link to="/teacher/dashboard" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/dashboard' }">
           <div class="sidebar-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M10 20v-6h4v6m5-8h3L12 3 2 12h3v8h5v-6h4v6h5v-8z" />
@@ -113,7 +113,7 @@
           </div>
           <span class="sidebar-tooltip">Dashboard</span>
         </router-link>
-        <router-link to="/teacher/subjects" class="sidebar-item" :class="{ 'active': $route.path === '/teacher/subjects' }">
+        <router-link to="/teacher/subjects" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/subjects' }">
           <div class="sidebar-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="7" width="18" height="13" rx="2" />
@@ -122,7 +122,7 @@
           </div>
           <span class="sidebar-tooltip">Classes</span>
         </router-link>
-        <router-link to="/teacher/gradebook" class="sidebar-item" :class="{ 'active': $route.path === '/teacher/gradebook' }">
+        <router-link to="/teacher/gradebook" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/gradebook' }">
           <div class="sidebar-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="4" y="4" width="16" height="16" rx="2" />
@@ -131,7 +131,7 @@
           </div>
           <span class="sidebar-tooltip">Gradebook</span>
         </router-link>
-        <router-link to="/teacher/upload-assessment" class="sidebar-item" :class="{ 'active': $route.path === '/teacher/upload-assessment' }">
+        <router-link to="/teacher/upload-assessment" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/upload-assessment' }">
           <div class="sidebar-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 19V6M5 12l7-7 7 7" />
@@ -140,7 +140,7 @@
           </div>
           <span class="sidebar-tooltip">Upload Assessment</span>
         </router-link>
-        <router-link to="/teacher/analytics" class="sidebar-item" :class="{ 'active': $route.path === '/teacher/analytics' }">
+        <router-link to="/teacher/analytics" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/analytics' }">
           <div class="sidebar-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="12" width="4" height="8" />
@@ -150,7 +150,7 @@
           </div>
           <span class="sidebar-tooltip">Analytics</span>
         </router-link>
-        <router-link to="/teacher/messages" class="sidebar-item" :class="{ 'active': $route.path === '/teacher/messages' }">
+        <router-link to="/teacher/messages" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/messages' }">
           <div class="sidebar-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="5" width="18" height="14" rx="2" />
@@ -1294,6 +1294,16 @@ const handleNotificationClick = async (notification) => {
 
 .logout-btn:hover svg {
   color: #dc2626 !important;
+}
+
+/* Rounded semi-transparent backgrounds for sidebar and navbar icons/buttons */
+.rounded-bg {
+  background: rgba(255,255,255,0.13);
+  border-radius: 16px;
+  transition: background 0.2s;
+}
+.rounded-bg:hover {
+  background: rgba(255,255,255,0.22);
 }
 
 /* Main Content - Better Spacing */
