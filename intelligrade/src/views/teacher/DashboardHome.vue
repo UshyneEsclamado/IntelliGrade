@@ -102,56 +102,62 @@
       </div>
     </nav>
 
-    <!-- Sidebar Navigation -->
-    <aside class="sidebar">
-      
+    <!-- Sidebar Navigation - Custom Tooltip Labels on Hover -->
+    <aside class="sidebar" style="background:#3D8D7A; border-right:none;">
       <nav class="sidebar-nav">
-        <router-link to="/teacher/dashboard" class="sidebar-item active" title="Dashboard">
+        <router-link to="/teacher/dashboard" class="sidebar-item" :class="{ 'active': $route.path === '/teacher/dashboard' }">
           <div class="sidebar-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" />
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 20v-6h4v6m5-8h3L12 3 2 12h3v8h5v-6h4v6h5v-8z" />
             </svg>
           </div>
+          <span class="sidebar-tooltip">Dashboard</span>
         </router-link>
-        
-        <router-link to="/teacher/subjects" class="sidebar-item" title="Classes">
+        <router-link to="/teacher/subjects" class="sidebar-item" :class="{ 'active': $route.path === '/teacher/subjects' }">
           <div class="sidebar-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"/>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="7" width="18" height="13" rx="2" />
+              <path d="M3 7l9-4 9 4" />
             </svg>
           </div>
+          <span class="sidebar-tooltip">Classes</span>
         </router-link>
-        
-        <router-link to="/teacher/gradebook" class="sidebar-item" title="Gradebook">
+        <router-link to="/teacher/gradebook" class="sidebar-item" :class="{ 'active': $route.path === '/teacher/gradebook' }">
           <div class="sidebar-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19,3H14.82C14.4,1.84 13.3,1 12,1C10.7,1 9.6,1.84 9.18,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M12,3A1,1 0 0,1 13,4A1,1 0 0,1 12,5A1,1 0 0,1 11,4A1,1 0 0,1 12,3Z" />
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="4" width="16" height="16" rx="2" />
+              <path d="M8 2v4M16 2v4" />
             </svg>
           </div>
+          <span class="sidebar-tooltip">Gradebook</span>
         </router-link>
-        
-        <router-link to="/teacher/upload-assessment" class="sidebar-item" title="Upload Assessment">
+        <router-link to="/teacher/upload-assessment" class="sidebar-item" :class="{ 'active': $route.path === '/teacher/upload-assessment' }">
           <div class="sidebar-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M9,16V10H5L12,3L19,10H15V16H9M5,20V18H19V20H5Z" />
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 19V6M5 12l7-7 7 7" />
+              <rect x="5" y="19" width="14" height="2" rx="1" />
             </svg>
           </div>
+          <span class="sidebar-tooltip">Upload Assessment</span>
         </router-link>
-
-        <router-link to="/teacher/analytics" class="sidebar-item" title="Analytics">
+        <router-link to="/teacher/analytics" class="sidebar-item" :class="{ 'active': $route.path === '/teacher/analytics' }">
           <div class="sidebar-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z"/>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="12" width="4" height="8" />
+              <rect x="10" y="8" width="4" height="12" />
+              <rect x="17" y="4" width="4" height="16" />
             </svg>
           </div>
+          <span class="sidebar-tooltip">Analytics</span>
         </router-link>
-
-        <router-link to="/teacher/messages" class="sidebar-item" title="Messages">
+        <router-link to="/teacher/messages" class="sidebar-item" :class="{ 'active': $route.path === '/teacher/messages' }">
           <div class="sidebar-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M20,2H4A2,2 0 0,0 2,4V22L6,18H20A2,2 0 0,0 22,16V4A2,2 0 0,0 20,2M6,9H18V11H6M6,5H18V7H6M6,13H15V15H6"/>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="5" width="18" height="14" rx="2" />
+              <path d="M3 5l9 7 9-7" />
             </svg>
           </div>
+          <span class="sidebar-tooltip">Messages</span>
         </router-link>
       </nav>
     </aside>
@@ -895,15 +901,15 @@ const handleNotificationClick = async (notification) => {
   overflow-x: hidden;
 }
 
-/* Sidebar Navigation - Icons Only */
+/* Sidebar Navigation - Simple Outlined Icons Only, Single Color, Active Highlight */
 .sidebar {
   position: fixed;
   top: 64px;
   left: 0;
   width: 80px;
   height: calc(100vh - 64px);
-  background: #ffffff;
-  border-right: 1px solid #e2e8f0;
+  background: #3D8D7A;
+  border-right: none;
   z-index: 900;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
   overflow: visible;
@@ -917,149 +923,51 @@ const handleNotificationClick = async (notification) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.75rem;
-  margin: 0.25rem;
-  border-radius: 8px;
-  color: white;
-  text-decoration: none;
-  transition: all 0.2s ease;
-  border-right: 3px solid transparent;
+  height: 56px;
+  width: 56px;
+  margin: 8px 0;
+  border-radius: 12px;
+  transition: background 0.2s, box-shadow 0.2s;
+  cursor: pointer;
   position: relative;
 }
 
-.sidebar-item:hover {
-  background: #f1f5f9;
-  color: #3D8D7A;
-}
-
 .sidebar-item.active {
-  background: linear-gradient(90deg, rgba(61, 141, 122, 0.15), rgba(61, 141, 122, 0.1));
+  background: rgba(255,255,255,0.15);
+  border: 2px solid #fff;
+}
+
+.sidebar-item:hover {
+  background: rgba(255,255,255,0.22);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.sidebar-icon svg {
+  display: block;
+}
+
+.sidebar-tooltip {
+  position: absolute;
+  left: 60px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #fff;
   color: #3D8D7A;
-  border-right-color: #3D8D7A;
-  font-weight: 600;
-}
-
-.sidebar-icon {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  border-radius: 10px;
-  transition: all 0.2s ease;
-  color: white;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-}
-
-/* Default icon background for visibility */
-.sidebar-icon {
-  background: linear-gradient(135deg, #6B7280, #4B5563) !important;
-}
-
-/* Individual icon colors - ALWAYS VISIBLE */
-.sidebar-item[title="Dashboard"] .sidebar-icon {
-  background: linear-gradient(135deg, #3B82F6, #1D4ED8) !important;
-  color: white;
-}
-
-.sidebar-item[title="Dashboard"]:hover .sidebar-icon {
-  background: linear-gradient(135deg, #2563EB, #1E40AF) !important;
-  transform: scale(1.1);
-}
-
-.sidebar-item[title="Classes"] .sidebar-icon {
-  background: linear-gradient(135deg, #10B981, #059669) !important;
-  color: white;
-}
-
-.sidebar-item[title="Classes"]:hover .sidebar-icon {
-  background: linear-gradient(135deg, #059669, #047857) !important;
-  transform: scale(1.1);
-}
-
-.sidebar-item[title="Gradebook"] .sidebar-icon {
-  background: linear-gradient(135deg, #F59E0B, #D97706) !important;
-  color: white;
-}
-
-.sidebar-item[title="Gradebook"]:hover .sidebar-icon {
-  background: linear-gradient(135deg, #D97706, #B45309) !important;
-  transform: scale(1.1);
-}
-
-.sidebar-item[title="Upload Assessment"] .sidebar-icon {
-  background: linear-gradient(135deg, #8B5CF6, #7C3AED) !important;
-  color: white;
-}
-
-.sidebar-item[title="Upload Assessment"]:hover .sidebar-icon {
-  background: linear-gradient(135deg, #7C3AED, #6D28D9) !important;
-  transform: scale(1.1);
-}
-
-.sidebar-item[title="Analytics"] .sidebar-icon {
-  background: linear-gradient(135deg, #EF4444, #DC2626) !important;
-  color: white;
-}
-
-.sidebar-item[title="Analytics"]:hover .sidebar-icon {
-  background: linear-gradient(135deg, #DC2626, #B91C1C) !important;
-  transform: scale(1.1);
-}
-
-.sidebar-item[title="Messages"] .sidebar-icon {
-  background: linear-gradient(135deg, #06B6D4, #0891B2) !important;
-  color: white;
-}
-
-.sidebar-item[title="Messages"]:hover .sidebar-icon {
-  background: linear-gradient(135deg, #0891B2, #0E7490) !important;
-  transform: scale(1.1);
-}
-
-/* Tooltip for sidebar icons */
-.sidebar-item::after {
-  content: attr(title);
-  position: absolute;
-  left: 85px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: #1e293b;
-  color: white;
-  padding: 0.5rem 0.75rem;
+  padding: 4px 12px;
   border-radius: 6px;
-  font-size: 0.8rem;
+  font-size: 14px;
+  font-family: Inter, sans-serif;
   white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   opacity: 0;
-  visibility: hidden;
   pointer-events: none;
-  transition: all 0.2s ease;
-  z-index: 1002;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: opacity 0.2s;
+  z-index: 10;
 }
 
-.sidebar-item::before {
-  content: '';
-  position: absolute;
-  left: 75px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 0;
-  height: 0;
-  border-top: 6px solid transparent;
-  border-bottom: 6px solid transparent;
-  border-right: 6px solid #1e293b;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.2s ease;
-  z-index: 1002;
-}
-
-.sidebar-item:hover::after,
-.sidebar-item:hover::before {
+.sidebar-item:hover .sidebar-tooltip {
   opacity: 1;
-  visibility: visible;
+  pointer-events: auto;
 }
 
 /* Top Navigation Bar (Greenish Theme) */
