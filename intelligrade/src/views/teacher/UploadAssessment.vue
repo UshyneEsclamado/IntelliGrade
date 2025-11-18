@@ -1,6 +1,6 @@
 <template>
-  <div class="analytics-container" :class="{ 'dark': isDarkMode }">
-    <!-- Top Navigation Bar (Same as Dashboard) -->
+  <div class="dashboard-container" :class="{ 'dark': isDarkMode }">
+    <!-- Top Navigation Bar (Clean) -->
     <nav class="top-navbar">
       <div class="navbar-content">
         <!-- Left: Logo and Brand -->
@@ -11,67 +11,167 @@
           </div>
         </div>
         
-        <!-- Center: Navigation Links -->
+ <!-- Center: Empty space for clean look -->
         <div class="navbar-center">
-          <router-link to="/teacher/dashboard" class="nav-item">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" />
-            </svg>
-            <span>Dashboard</span>
-          </router-link>
-          
-          <router-link to="/teacher/subjects" class="nav-item">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"/>
-            </svg>
-            <span>Classes</span>
-          </router-link>
-          
-          <router-link to="/teacher/gradebook" class="nav-item">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19,3H14.82C14.4,1.84 13.3,1 12,1C10.7,1 9.6,1.84 9.18,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M12,3A1,1 0 0,1 13,4A1,1 0 0,1 12,5A1,1 0 0,1 11,4A1,1 0 0,1 12,3Z" />
-            </svg>
-            <span>Gradebook</span>
-          </router-link>
-          
-          <router-link to="/teacher/analytics" class="nav-item">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z" />
-            </svg>
-            <span>Analytics</span>
-          </router-link>
-          
-          <router-link to="/teacher/messages" class="nav-item">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            </svg>
-            <span>Messages</span>
-          </router-link>
-          
-          <router-link to="/teacher/upload-assessment" class="nav-item active">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M9,16V10H5L12,3L19,10H15V16H9M5,20V18H19V20H5Z" />
-            </svg>
-            <span>Upload</span>
-          </router-link>
         </div>
         
-        <!-- Right: Actions -->
+        <!-- Right: User Profile and Notifications -->
         <div class="navbar-right">
-          <button @click="clearForm" class="export-btn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M3 6h18"></path>
-              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-            </svg>
-            <span>Clear Form</span>
-          </button>
+          <!-- Notification Bell -->
+          <div class="notif-wrapper">
+            <button class="nav-icon-btn rounded-bg" @click="toggleNotifDropdown" aria-label="Notifications">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+              <span v-if="notifications.length" class="notification-badge">{{ notifications.length }}</span>
+            </button>
+            
+            <!-- Notification Dropdown -->
+            <div v-if="showNotifDropdown" class="notification-dropdown">
+              <div class="dropdown-header">
+                <h3>Notifications</h3>
+              </div>
+              <div class="notification-list">
+                <div v-if="notifications.length === 0" class="no-notifications">
+                  No new notifications
+                </div>
+                <div v-for="notif in notifications" :key="notif.id" class="notification-item" @click="handleNotificationClick(notif)">
+                  <div class="notif-content">
+                    <h4>{{ notif.title }}</h4>
+                    <p>{{ notif.body }}</p>
+                    <span class="notif-time">{{ notif.date }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- User Profile -->
+          <div class="user-profile-wrapper">
+            <div class="user-profile rounded-bg" @click="toggleProfileDropdown">
+              <div class="user-avatar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
+              <span class="user-name">{{ fullName }}</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="dropdown-arrow">
+                <path d="M7 10l5 5 5-5z"/>
+              </svg>
+            </div>
+            
+            <!-- Profile Dropdown -->
+            <div v-if="showProfileDropdown" class="profile-dropdown">
+              <div class="dropdown-header">
+                <div class="profile-info">
+                  <div class="profile-avatar">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                  </div>
+                  <div class="profile-details">
+                    <h4>{{ fullName }}</h4>
+                    <p>Teacher</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="dropdown-menu">
+                <router-link to="/teacher/settings" class="dropdown-item">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1V3H9V1L3 7V9H5V20A2 2 0 0 0 7 22H17A2 2 0 0 0 19 20V9H21M17 20H7V9H10V12H14V9H17V20Z"/>
+                  </svg>
+                  <span>Profile & Settings</span>
+                </router-link>
+                
+                <div class="dropdown-divider"></div>
+                
+                <button @click="logout" class="dropdown-item logout-btn">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16 17V14H9V10H16V7L21 12L16 17M14 2A2 2 0 0 1 16 4V6H14V4H5V20H14V18H16V20A2 2 0 0 1 14 22H5A2 2 0 0 1 3 20V4A2 2 0 0 1 5 2H14Z"/>
+                  </svg>
+                  <span>Logout</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </nav>
 
+    <!-- Sidebar Navigation - Custom Tooltip Labels on Hover -->
+    <aside class="sidebar" style="background:#3D8D7A; border-right:none;">
+      <nav class="sidebar-nav">
+        <router-link to="/teacher/dashboard" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/dashboard' }">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 20v-6h4v6m5-8h3L12 3 2 12h3v8h5v-6h4v6h5v-8z" />
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Dashboard</span>
+        </router-link>
+        <router-link to="/teacher/subjects" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/subjects' }">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="7" width="18" height="13" rx="2" />
+              <path d="M3 7l9-4 9 4" />
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Classes</span>
+        </router-link>
+        <router-link to="/teacher/gradebook" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/gradebook' }">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="4" width="16" height="16" rx="2" />
+              <path d="M8 2v4M16 2v4" />
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Gradebook</span>
+        </router-link>
+        <router-link to="/teacher/upload-assessment" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/upload-assessment' }">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 19V6M5 12l7-7 7 7" />
+              <rect x="5" y="19" width="14" height="2" rx="1" />
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Upload Assessment</span>
+        </router-link>
+        <router-link to="/teacher/analytics" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/analytics' }">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="12" width="4" height="8" />
+              <rect x="10" y="8" width="4" height="12" />
+              <rect x="17" y="4" width="4" height="16" />
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Analytics</span>
+        </router-link>
+        <router-link to="/teacher/messages" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/messages' }">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="5" width="18" height="14" rx="2" />
+              <path d="M3 5l9 7 9-7" />
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Messages</span>
+        </router-link>
+      </nav>
+    </aside>
+
     <!-- Main Content Area -->
     <main class="main-content">
+      <!-- Scroll to Top Button -->
+      <button v-if="showScrollTop" @click="scrollToTop" class="scroll-to-top-btn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3D8D7A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10" fill="#fff"/>
+          <path d="M12 16V8" stroke="#3D8D7A" stroke-width="2"/>
+          <path d="M8 12l4-4 4 4" stroke="#3D8D7A" stroke-width="2"/>
+        </svg>
+      </button>
       <!-- Page Header -->
       <div class="page-header">
         <div class="header-content">
@@ -241,7 +341,7 @@
           <div v-if="answerKeyMethod === 'upload'" class="answer-key-section">
             <div class="file-upload-area" :class="{ 'drag-over': isAnswerKeyDragOver }" 
                  @dragover.prevent="handleAnswerKeyDragOver" @dragleave.prevent="handleAnswerKeyDragLeave" 
-                 @drop.prevent="handleAnswerKeyDrop" @click="$refs.answerKeyInput.click()">
+                 @drop.prevent="handleAnswerKeyDrop" @click="($refs.answerKeyInput as HTMLInputElement)?.click()">
               <input type="file" @change="handleAnswerKeyUpload" class="file-input"
                 accept=".txt,.docx,.pdf,.jpg,.jpeg,.png" ref="answerKeyInput" />
               <div class="upload-content">
@@ -413,7 +513,7 @@
 
           <!-- Upload File Section -->
           <div class="file-upload-area" :class="{ 'drag-over': isDragOver }" @dragover.prevent="handleDragOver"
-            @dragleave.prevent="handleDragLeave" @drop.prevent="handleDrop" @click="$refs.fileInput.click()">
+            @dragleave.prevent="handleDragLeave" @drop.prevent="handleDrop" @click="($refs.fileInput as HTMLInputElement)?.click()">
             <input type="file" id="file-upload" @change="handleFileUpload" class="file-input"
               accept=".txt,.docx,.pdf,.jpg,.jpeg,.png" ref="fileInput" />
             <div class="upload-content">
@@ -690,20 +790,31 @@
   </div>
 </template>
 
-<script>
-import { ref, computed, watch, nextTick } from "vue";
+<script setup lang="ts">
+import { ref, computed, watch, nextTick, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { supabase } from '@/supabase.js';
 import { useDarkMode } from "../../composables/useDarkMode.js";
+import { useTeacherAuth } from "../../composables/useTeacherAuth.js";
 
-export default {
-  name: "UploadAssessment",
-  setup() {
-    const router = useRouter();
-    const { isDarkMode } = useDarkMode();
-    const isLoading = ref(false);
-    const loadingMessage = ref("Processing...");
-    const isDragOver = ref(false);
-    const isAnswerKeyDragOver = ref(false);
+const router = useRouter();
+const { isDarkMode } = useDarkMode();
+const { teacherInfo, isAuthenticated } = useTeacherAuth();
+
+// Navbar dropdown states
+const showNotifDropdown = ref(false);
+const showProfileDropdown = ref(false);
+const notifications = ref([]);
+const fullName = ref('');
+const nameLoading = ref(true);
+const showScrollTop = ref(false);
+const teacherId = ref(null);
+
+// Existing reactive variables
+const isLoading = ref(false);
+const loadingMessage = ref("Processing...");
+const isDragOver = ref(false);
+const isAnswerKeyDragOver = ref(false);
     
     // Student and Assessment Info
     const studentName = ref("");
@@ -876,12 +987,12 @@ Multiple Choice
 
     // Question Management
     const updateQuestionsList = () => {
-      const count = parseInt(numQuestions.value) || 0;
+      const count = parseInt(String(numQuestions.value)) || 0;
       const newList = Array.from({ length: count }, (_, index) => ({
         id: index + 1,
         type: 'multiple-choice',
         correctAnswer: '',
-        points: parseInt(pointsPerQuestion.value) || 1
+        points: parseInt(String(pointsPerQuestion.value)) || 1
       }));
       questionsList.value = newList;
       calculateTotalPoints();
@@ -891,7 +1002,7 @@ Multiple Choice
     const handleScoringMethodChange = () => {
       if (scoringMethod.value === 'uniform') {
         questionsList.value.forEach(q => {
-          q.points = parseInt(pointsPerQuestion.value) || 1;
+          q.points = parseInt(String(pointsPerQuestion.value)) || 1;
         });
       }
       calculateTotalPoints();
@@ -899,8 +1010,8 @@ Multiple Choice
 
     const calculateTotalPoints = () => {
       if (scoringMethod.value === 'uniform') {
-        const questions = parseInt(numQuestions.value) || 0;
-        const points = parseInt(pointsPerQuestion.value) || 0;
+        const questions = parseInt(String(numQuestions.value)) || 0;
+        const points = parseInt(String(pointsPerQuestion.value)) || 0;
         totalPoints.value = questions * points;
       } else {
         totalPoints.value = questionsList.value.reduce((sum, q) => sum + (parseInt(q.points) || 0), 0);
@@ -928,6 +1039,7 @@ Enter pattern:`);
           applyCustomPattern(pattern);
           calculateTotalPoints();
         } catch (err) {
+          console.error('Error applying pattern:', err);
           alert("Invalid pattern format. Please use format like '1-9:1,10:5'");
         }
       }
@@ -1021,7 +1133,7 @@ Enter pattern:`);
             id: q.id,
             type: q.type || 'multiple-choice',
             correctAnswer: q.answer || q.correctAnswer || '',
-            points: q.points || parseInt(pointsPerQuestion.value) || 1
+            points: q.points || parseInt(String(pointsPerQuestion.value)) || 1
           }));
           
           console.log('📦 NEW QUESTIONS ARRAY:', newQuestions);
@@ -1119,7 +1231,7 @@ Enter pattern:`);
         id: index + 1,
         type: q.type,
         correctAnswer: q.correctAnswer,
-        points: parseInt(pointsPerQuestion.value) || 1
+        points: parseInt(String(pointsPerQuestion.value)) || 1
       }));
       
       numQuestions.value = detectedQuestions.value.length;
@@ -1196,7 +1308,7 @@ Enter pattern:`);
           id: index + 1,
           type: q.type,
           correctAnswer: q.correctAnswer,
-          points: q.points || parseInt(pointsPerQuestion.value) || 1
+          points: q.points || parseInt(String(pointsPerQuestion.value)) || 1
         }));
         
         formData.append('answer_key_data', JSON.stringify(answerKeyData));
@@ -1417,7 +1529,7 @@ False
         id: q.id,
         type: q.type,
         correctAnswer: q.answer,
-        points: parseInt(pointsPerQuestion.value) || 1
+        points: parseInt(String(pointsPerQuestion.value)) || 1
       }));
 
       // FORCE reactivity
@@ -1435,81 +1547,106 @@ False
       alert(`✅ Successfully applied ${questionsList.value.length} answers!`);
     };
 
-    return {
-      isDarkMode,
-      isLoading,
-      loadingMessage,
-      isDragOver,
-      isAnswerKeyDragOver,
-      studentName,
-      assessmentTitle,
-      subject,
-      numQuestions,
-      pointsPerQuestion,
-      scoringMethod,
-      totalPoints,
-      selectedTemplate,
-      assessmentFile,
-      answerKeyMethod,
-      answerKeyFile,
-      questionsList,
-      detectedQuestions,
-      aiAnalysisLevel,
-      feedbackLevel,
-      detectWeaknesses,
-      enableRecommendations,
-      compareToStandards,
-      gradingResults,
-      error,
-      processingSteps,
-      hasAnswerKey,
-      answerKeyPreview,
-      allQuestionsAnswered,
-      answeredQuestionsCount,
-      pointDistribution,
-      updateQuestionsList,
-      handleScoringMethodChange,
-      calculateTotalPoints,
-      assignAllPoints,
-      setCustomPattern,
-      handleAnswerKeyDragOver,
-      handleAnswerKeyDragLeave,
-      handleAnswerKeyDrop,
-      handleAnswerKeyUpload,
-      processAnswerKeyFile,
-      handleFileUpload,
-      handleDragOver,
-      handleDragLeave,
-      handleDrop,
-      autoGenerateAnswerKey,
-      saveDetectedAnswerKey,
-      formatFileSize,
-      submitAssessment,
-      getScoreClass,
-      getLetterGrade,
-      getGradeClass,
-      downloadReport,
-      viewAllAssessments,
-      resetForm,
-      clearForm,
-      moveFileToAnswerKey,
-      clearFileAndShowExample,
-      clearErrorAndContinue,
-      canSubmit,
-      manualInputMethod,
-      bulkAnswerText,
-      bulkParsedQuestions,
-      activeBulkExample,
-      bulkExamples,
-      loadExample,
-      parseBulkInput,
-      applyBulkAnswers
+    // Navbar dropdown methods
+    const toggleNotifDropdown = () => {
+      showNotifDropdown.value = !showNotifDropdown.value;
+      showProfileDropdown.value = false;
     };
-  },
-};
+
+    const toggleProfileDropdown = () => {
+      showProfileDropdown.value = !showProfileDropdown.value;
+      showNotifDropdown.value = false;
+    };
+
+    const handleNotificationClick = (notif) => {
+      console.log('Notification clicked:', notif);
+    };
+
+    const logout = async () => {
+      try {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+          console.error('Logout error:', error);
+          return;
+        }
+        router.push('/');
+      } catch (err) {
+        console.error('Unexpected logout error:', err);
+      }
+    };
+
+    const scrollToTop = () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const getTeacherInfo = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          teacherId.value = user.id;
+          return true;
+        }
+        return false;
+      } catch (err) {
+        console.error('Failed to get teacher info:', err);
+        return false;
+      }
+    };
+
+    // Load teacher name on component mount
+    onMounted(async () => {
+      if (teacherInfo.value?.id) {
+        try {
+          const { data: teacher, error } = await supabase
+            .from('teachers')
+            .select('full_name')
+            .eq('id', teacherInfo.value.id)
+            .single();
+            
+          if (!error && teacher) {
+            fullName.value = teacher.full_name || 'Teacher'
+            console.log('✅ Teacher loaded:', { id: teacherInfo.value.id, name: fullName.value })
+          }
+        } catch (err) {
+          console.warn('Failed to load teacher name:', err)
+          fullName.value = 'Teacher';
+        }
+      } else {
+        fullName.value = 'Teacher';
+      }
+      nameLoading.value = false;
+
+      // Add scroll event listener for scroll-to-top button
+      const handleScroll = () => {
+        showScrollTop.value = window.scrollY > 300;
+      };
+      window.addEventListener('scroll', handleScroll);
+
+      // Cleanup scroll listener on unmount
+      return () => {
+        window.removeEventListener('scroll', handleScroll);
+      };
+    });
 </script>
 
   <style scoped>
+/* Scroll-to-top floating button */
+.scroll-to-top-btn {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  z-index: 1000;
+  background: none;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.12);
+  border-radius: 50%;
+  transition: box-shadow 0.2s;
+}
+.scroll-to-top-btn:hover {
+  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.18);
+}
 
   /* Base Styles */
   * {
@@ -1518,136 +1655,426 @@ False
     box-sizing: border-box;
   }
 
-  /* Reset and Hide Parent Layouts */
-  body, html {
-    overflow-x: hidden !important;
+  /* Dashboard container setup */
+  .dashboard-container {
+    display: flex;
+    flex-direction: row;
+    width: 100vw;
+    height: 100vh;
+    min-height: 100vh;
+    background: #f8fafc;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+  }
+  .dark .dashboard-container {
+    background: #0f172a;
   }
 
-  /* Force hide any sidebar or layout from parent components */
-  .sidebar,
-  .dashboard-sidebar,
-  .navigation-sidebar,
-  .teacher-layout,
-  .dashboard-layout {
-    display: none !important;
-  }
-
-  /* Ensure our container is on top */
-  .analytics-container {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    z-index: 999999 !important;
-    background: #f8fafc !important;
-    overflow-y: auto !important;
-  }
-
-  /* Top Navigation Bar (Same as Dashboard) */
-  .top-navbar {
+  /* Sidebar Navigation */
+  .sidebar {
     position: fixed;
-    top: 0;
+    top: 64px;
     left: 0;
-    right: 0;
-    height: 64px;
-    background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    z-index: 1000;
-    box-shadow: 0 4px 20px rgba(61, 141, 122, 0.3);
+    width: 80px;
+    height: calc(100vh - 64px);
+    background: #3D8D7A;
+    border-right: none;
+    z-index: 900;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+    overflow: visible;
   }
 
-  .navbar-content {
+  .sidebar-nav {
+    padding: 2rem 0.5rem 1rem 0.5rem;
+  }
+
+  .sidebar-item {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    height: 100%;
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 0 1.5rem;
-  }
-
-  .navbar-left {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-
-  .brand-logo {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: white;
-    font-weight: 700;
-    text-decoration: none;
-  }
-
-  .logo-img {
-    width: 36px;
-    height: 36px;
-    object-fit: contain;
-    filter: brightness(0) invert(1);
-  }
-
-  .brand-name {
-    font-size: 1.4rem;
-    font-weight: 800;
-    color: white;
-    letter-spacing: -0.5px;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  }
-
-  .navbar-center {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex: 1;
     justify-content: center;
-    max-width: 600px;
-  }
-
-  .nav-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.75rem 1.5rem;
+    height: 56px;
+    width: 56px;
+    margin: 8px 0;
     border-radius: 12px;
-    text-decoration: none;
-    color: rgba(255, 255, 255, 0.8);
-    transition: all 0.2s ease;
+    transition: background 0.2s, box-shadow 0.2s;
+    cursor: pointer;
     position: relative;
-    font-size: 0.75rem;
-    font-weight: 500;
+    text-decoration: none;
   }
 
-  .nav-item:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
+  .sidebar-item:hover {
+    background: rgba(255,255,255,0.22);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   }
 
-  .nav-item.active {
-    color: white;
-    background: rgba(255, 255, 255, 0.15);
+  .sidebar-item.active {
+    border: 2px solid #fff;
+    background: rgba(255, 255, 255, 0.13);
+    box-sizing: border-box;
   }
 
-  .nav-item.active::after {
-    content: '';
+  .rounded-bg {
+    background: rgba(255,255,255,0.13);
+    border-radius: 16px;
+    transition: background 0.2s;
+  }
+  .rounded-bg:hover {
+    background: rgba(255,255,255,0.22);
+  }
+
+  .sidebar-icon svg {
+    display: block;
+  }
+
+  .sidebar-tooltip {
     position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 60%;
-    height: 3px;
-    background: white;
-    border-radius: 2px 2px 0 0;
+    left: 60px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #fff;
+    color: #3D8D7A;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: Inter, sans-serif;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 10;
   }
 
-  .navbar-right {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
+  .sidebar-item:hover .sidebar-tooltip {
+    opacity: 1;
+    pointer-events: auto;
   }
+
+/* Top Navigation Bar (Greenish Theme) */
+.top-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(61, 141, 122, 0.3);
+}
+
+.navbar-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.logo-img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.brand-name {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: white;
+  letter-spacing: -0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-center {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  justify-content: center;
+  max-width: 600px;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-icon-btn {
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: rgba(255, 255, 255, 0.9);
+  position: relative;
+}
+
+.nav-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+}
+
+.notification-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: #ef4444;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.125rem 0.375rem;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+  line-height: 1;
+}
+
+.notif-wrapper {
+  position: relative;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: 55px;
+  right: 0;
+  width: 360px;
+  max-height: 480px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 1001;
+  border: 1px solid #e2e8f0;
+}
+
+.dropdown-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fafafa;
+}
+
+.dropdown-header h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.notification-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.no-notifications {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.notification-item {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.2s;
+}
+
+.notification-item:hover {
+  background: #f8fafc;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notif-content h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.notif-content p {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
+
+.notif-time {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.user-profile-wrapper {
+  position: relative;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 12px;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.user-profile:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.user-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: white;
+}
+
+.dropdown-arrow {
+  color: rgba(255, 255, 255, 0.8);
+  transition: transform 0.2s;
+}
+
+.user-profile:hover .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.profile-dropdown {
+  position: absolute;
+  top: 55px;
+  right: 0;
+  width: 280px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 1001;
+  border: 1px solid #e2e8f0;
+}
+
+.dropdown-header {
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  color: white;
+}
+
+.profile-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.profile-avatar {
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.profile-details h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.profile-details p {
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+.dropdown-menu {
+  padding: 0.5rem;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #1e293b;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+}
+
+.dropdown-item:hover {
+  background: #f1f5f9;
+  color: #3D8D7A;
+}
+
+.dropdown-item svg {
+  color: #64748b;
+  transition: color 0.2s;
+}
+
+.dropdown-item:hover svg {
+  color: #3D8D7A;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 0.5rem 0;
+}
+
+.logout-btn {
+  color: #ef4444 !important;
+}
+
+.logout-btn:hover {
+  background: #fef2f2 !important;
+  color: #dc2626 !important;
+}
+
+.logout-btn svg {
+  color: #ef4444 !important;
+}
+
+.logout-btn:hover svg {
+  color: #dc2626 !important;
+}
 
   .export-btn {
     display: flex;
@@ -1678,17 +2105,33 @@ False
 
   /* Main Content */
   .main-content {
-    margin-top: 64px;
-    padding: 1.5rem;
-    width: 100%;
-    min-height: calc(100vh - 64px);
-    position: relative;
-    background: #f8fafc;
-    padding-bottom: 2rem;
-    max-width: 1200px;
-    margin-left: auto;
-    margin-right: auto;
-  }
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  height: 100vh;
+  width: 100%;
+  margin-left: 80px;
+  margin-top: 64px;
+  padding: 32px 40px 40px 40px;
+  overflow-y: auto;
+  background: #f8fafc;
+  scrollbar-width: thin;
+  scrollbar-color: #3D8D7A #e0e7ef;
+}
+
+/* Custom scrollbar for Webkit browsers */
+.main-content::-webkit-scrollbar {
+  width: 10px;
+}
+.main-content::-webkit-scrollbar-thumb {
+  background: #3D8D7A;
+  border-radius: 10px;
+}
+.main-content::-webkit-scrollbar-track {
+  background: #e0e7ef;
+  border-radius: 10px;
+}
 
   /* Page Header */
   .page-header {
@@ -1829,7 +2272,7 @@ False
     box-shadow: 0 4px 20px rgba(32, 201, 151, 0.08);
     border: 2px solid rgba(163, 209, 198, 0.3);
     transition: all 0.3s ease;
-    margin-bottom: 1.25rem;
+    margin-bottom: 32px;
     overflow: hidden;
   }
 
