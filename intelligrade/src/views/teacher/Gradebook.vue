@@ -11,93 +11,8 @@
           </div>
         </div>
         
-        <!-- Center: Empty space for clean look -->
+        <!-- Center: Search and Refresh -->
         <div class="navbar-center">
-        </div>
-        
-        <!-- Right: User Profile and Notifications -->
-        <div class="navbar-right">
-          <!-- Notification Bell -->
-          <div class="notif-wrapper">
-            <button class="nav-icon-btn rounded-bg" @click="toggleNotifDropdown" aria-label="Notifications">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-              </svg>
-              <span v-if="notifications.length" class="notification-badge">{{ notifications.length }}</span>
-            </button>
-            
-            <!-- Notification Dropdown -->
-            <div v-if="showNotifDropdown" class="notification-dropdown">
-              <div class="dropdown-header">
-                <h3>Notifications</h3>
-              </div>
-              <div class="notification-list">
-                <div v-if="notifications.length === 0" class="no-notifications">
-                  No new notifications
-                </div>
-                <div v-for="notif in notifications" :key="notif.id" class="notification-item" @click="handleNotificationClick(notif)">
-                  <div class="notif-content">
-                    <h4>{{ notif.title }}</h4>
-                    <p>{{ notif.body }}</p>
-                    <span class="notif-time">{{ notif.date }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- User Profile -->
-          <div class="user-profile-wrapper">
-            <div class="user-profile rounded-bg" @click="toggleProfileDropdown">
-              <div class="user-avatar">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="12" cy="7" r="4"></circle>
-                </svg>
-              </div>
-              <span class="user-name">{{ fullName }}</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="dropdown-arrow">
-                <path d="M7 10l5 5 5-5z"/>
-              </svg>
-            </div>
-            
-            <!-- Profile Dropdown -->
-            <div v-if="showProfileDropdown" class="profile-dropdown">
-              <div class="dropdown-header">
-                <div class="profile-info">
-                  <div class="profile-avatar">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                  </div>
-                  <div class="profile-details">
-                    <h4>{{ fullName }}</h4>
-                    <p>Teacher</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="dropdown-menu">
-                <router-link to="/teacher/settings" class="dropdown-item">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1V3H9V1L3 7V9H5V20A2 2 0 0 0 7 22H17A2 2 0 0 0 19 20V9H21M17 20H7V9H10V12H14V9H17V20Z"/>
-                  </svg>
-                  <span>Profile & Settings</span>
-                </router-link>
-                
-                <div class="dropdown-divider"></div>
-                
-                <button @click="logout" class="dropdown-item logout-btn">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M16 17V14H9V10H16V7L21 12L16 17M14 2A2 2 0 0 1 16 4V6H14V4H5V20H14V18H16V20A2 2 0 0 1 14 22H5A2 2 0 0 1 3 20V4A2 2 0 0 1 5 2H14Z"/>
-                  </svg>
-                  <span>Logout</span>
-                </button>
-              </div>
-            </div>
-          </div>
           <div class="search-box">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="8"></circle>
@@ -118,6 +33,80 @@
             <span>Refresh</span>
             <span v-if="newSubmissionsCount > 0" class="notification-badge">{{ newSubmissionsCount }}</span>
           </button>
+        </div>
+        <!-- Right: Notifications and Profile -->
+        <div class="navbar-right">
+          <div class="notif-wrapper">
+            <button class="nav-icon-btn rounded-bg" @click="toggleNotifDropdown" aria-label="Notifications">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+              <span v-if="notifications.length" class="notification-badge">{{ notifications.length }}</span>
+            </button>
+            <div v-if="showNotifDropdown" class="notification-dropdown">
+              <div class="dropdown-header">
+                <h3>Notifications</h3>
+              </div>
+              <div class="notification-list">
+                <div v-if="notifications.length === 0" class="no-notifications">
+                  No new notifications
+                </div>
+                <div v-for="notif in notifications" :key="notif.id" class="notification-item" @click="handleNotificationClick(notif)">
+                  <div class="notif-content">
+                    <h4>{{ notif.title }}</h4>
+                    <p>{{ notif.body }}</p>
+                    <span class="notif-time">{{ notif.date }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="user-profile-wrapper">
+            <div class="user-profile rounded-bg" @click="toggleProfileDropdown">
+              <div class="user-avatar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
+              <span class="user-name">{{ fullName }}</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="dropdown-arrow">
+                <path d="M7 10l5 5 5-5z"/>
+              </svg>
+            </div>
+            <div v-if="showProfileDropdown" class="profile-dropdown">
+              <div class="dropdown-header">
+                <div class="profile-info">
+                  <div class="profile-avatar">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                  </div>
+                  <div class="profile-details">
+                    <h4>{{ fullName }}</h4>
+                    <p>Teacher</p>
+                  </div>
+                </div>
+              </div>
+              <div class="dropdown-menu">
+                <router-link to="/teacher/settings" class="dropdown-item">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1V3H9V1L3 7V9H5V20A2 2 0 0 0 7 22H17A2 2 0 0 0 19 20V9H21M17 20H7V9H10V12H14V9H17V20Z"/>
+                  </svg>
+                  <span>Profile & Settings</span>
+                </router-link>
+                <div class="dropdown-divider"></div>
+                <button @click="logout" class="dropdown-item logout-btn">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16 17V14H9V10H16V7L21 12L16 17M14 2A2 2 0 0 1 16 4V6H14V4H5V20H14V18H16V20A2 2 0 0 1 14 22H5A2 2 0 0 1 3 20V4A2 2 0 0 1 5 2H14Z"/>
+                  </svg>
+                  <span>Logout</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </nav>
@@ -2687,7 +2676,9 @@ body, html {
 
 .refresh-btn {
   min-width: auto;
+  margin-left: 0.75rem;
   position: relative;
+  margin-left: 0.75rem;
 }
 
 .notification-badge {
