@@ -1,8 +1,8 @@
-# routes/upload_assessments.py
+# routes/upload_assessments.py - COMPLETE WORKING VERSION WITH AI
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Optional, List
 import json
 import time
 import re
@@ -11,25 +11,39 @@ import logging
 import os
 from dotenv import load_dotenv
 
-# Import OpenAI properly
+# ⭐ CRITICAL: Load .env FIRST
+load_dotenv()
+
+# Import OpenAI AFTER loading .env
 try:
     from openai import OpenAI
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-    AI_ENABLED = bool(os.getenv("OPENAI_API_KEY"))
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+    
+    if OPENAI_API_KEY and OPENAI_API_KEY.strip():
+        client = OpenAI(api_key=OPENAI_API_KEY)
+        AI_ENABLED = True
+        print(f"✅ OpenAI initialized successfully with key: {OPENAI_API_KEY[:20]}...")
+    else:
+        client = None
+        AI_ENABLED = False
+        print("⚠️ WARNING: OPENAI_API_KEY not found in .env file!")
 except ImportError:
     AI_ENABLED = False
     client = None
+    print("⚠️ WARNING: OpenAI package not installed!")
+except Exception as e:
+    AI_ENABLED = False
+    client = None
+    print(f"⚠️ OpenAI initialization error: {e}")
 
 # Import database and models
 from database import get_db
 from models import AnswerKey, UploadedAssessment, GradingResult
 from services.file_processing import extract_text_from_pdf, extract_text_from_docx, extract_text_from_txt
 
-load_dotenv()
-
 router = APIRouter()
 
-# OpenAI configuration
+# Configuration
 OPENAI_MODEL = os.getenv("AI_MODEL", "gpt-4o-mini")
 
 # Set up logging
@@ -42,22 +56,16 @@ if AI_ENABLED:
 
 
 def parse_answer_from_line(line: str, line_num: int) -> dict:
-    """
-    Parse answer from a single line - SUPPORTS ALL FORMATS
-    Returns dict with: {'answer': str, 'question_type': str, 'found': bool}
-    """
+    """⭐ Parse answer with PRIORITY ORDER to avoid duplicates"""
     line_original = line.strip()
     line_upper = line.upper().strip()
     
-    # Skip empty lines
     if not line_original:
         return {'answer': None, 'question_type': None, 'found': False}
     
-    # SKIP PATTERNS - Lines that should be ignored
+    # SKIP PATTERNS - Lines to ignore
     skip_patterns = [
         r'^ANSWER[\s]*KEY',
-        r'^ANSWERS?[\s]*:?',
-        r'^QUESTION[\s]*\d*',
         r'^NAME[\s]*:',
         r'^DATE[\s]*:',
         r'^SUBJECT[\s]*:',
@@ -71,39 +79,15 @@ def parse_answer_from_line(line: str, line_num: int) -> dict:
         r'^MULTIPLE[\s]*CHOICE',
         r'^CHOOSE[\s]*THE',
         r'^SELECT[\s]*THE',
+        r'^\d+[\.\)]\s+\w{3,}',  # Skip "1. Which of..." question lines
+        r'^[A-E]\)\s+\w{3,}',     # Skip "a) Burning wood" option lines
     ]
     
     for pattern in skip_patterns:
         if re.match(pattern, line_upper):
             return {'answer': None, 'question_type': None, 'found': False}
     
-    # === PATTERN 1: Answer at START with optional question number ===
-    # Matches: "A", "A)", "A.", "A 1.", "T 8.", "F 9.", "True 5."
-    match = re.match(r'^([A-E]|T|F|TRUE|FALSE)[\.\)\s]*(\d+)?', line_upper)
-    if match:
-        answer = match.group(1)
-        # Normalize
-        if answer in ['T', 'TRUE']:
-            return {'answer': 'True', 'question_type': 'true-false', 'found': True}
-        elif answer in ['F', 'FALSE']:
-            return {'answer': 'False', 'question_type': 'true-false', 'found': True}
-        else:
-            return {'answer': answer, 'question_type': 'multiple-choice', 'found': True}
-    
-    # === PATTERN 2: Number THEN answer ===
-    # Matches: "1. A", "1) B", "1: True", "1 - False"
-    match = re.match(r'^\d+[\.\)\:\-\s]+([A-E]|T|F|TRUE|FALSE)[\.\)\s]*$', line_upper)
-    if match:
-        answer = match.group(1)
-        if answer in ['T', 'TRUE']:
-            return {'answer': 'True', 'question_type': 'true-false', 'found': True}
-        elif answer in ['F', 'FALSE']:
-            return {'answer': 'False', 'question_type': 'true-false', 'found': True}
-        else:
-            return {'answer': answer, 'question_type': 'multiple-choice', 'found': True}
-    
-    # === PATTERN 3: Answer: or Ans: format ===
-    # Matches: "Answer: A", "Ans: True", "Answer : B"
+    # ⭐ PRIORITY 1: "Answer:" format (HIGHEST PRIORITY)
     match = re.match(r'^(ANSWER|ANS)[\s]*:[\s]*([A-E]|T|F|TRUE|FALSE)', line_upper)
     if match:
         answer = match.group(2)
@@ -114,8 +98,40 @@ def parse_answer_from_line(line: str, line_num: int) -> dict:
         else:
             return {'answer': answer, 'question_type': 'multiple-choice', 'found': True}
     
-    # === PATTERN 4: Q prefix format ===
-    # Matches: "Q1: A", "Q1. True", "Question 1: B"
+    # ⭐ PRIORITY 2: **T 5.** or **F 6.** format (answer key format)
+    match = re.match(r'^\*?\*?([TF]|TRUE|FALSE)[\s]+\d+\.', line_upper)
+    if match:
+        answer = match.group(1)
+        if answer in ['T', 'TRUE']:
+            return {'answer': 'True', 'question_type': 'true-false', 'found': True}
+        elif answer in ['F', 'FALSE']:
+            return {'answer': 'False', 'question_type': 'true-false', 'found': True}
+    
+    # ⭐ PRIORITY 3: Single T/F at line start with optional question number
+    match = re.match(r'^([TF]|TRUE|FALSE)[\s\.\)]*(\d+)?[\.\s]*$', line_upper)
+    if match:
+        answer = match.group(1)
+        if answer in ['T', 'TRUE']:
+            return {'answer': 'True', 'question_type': 'true-false', 'found': True}
+        elif answer in ['F', 'FALSE']:
+            return {'answer': 'False', 'question_type': 'true-false', 'found': True}
+    
+    # ⭐ PRIORITY 4: "B 1." format (answer key with question number)
+    match = re.match(r'^([A-E])[\s]+\d+\.', line_upper)
+    if match:
+        answer = match.group(1)
+        return {'answer': answer, 'question_type': 'multiple-choice', 'found': True}
+    
+    # ⭐ PRIORITY 5: Number THEN answer (e.g., "1. A", "2. B")
+    match = re.match(r'^\d+[\.\)\:\-\s]+([A-E]|T|F)[\.\)\s]*$', line_upper)
+    if match:
+        answer = match.group(1)
+        if answer in ['T', 'F']:
+            return {'answer': 'True' if answer == 'T' else 'False', 'question_type': 'true-false', 'found': True}
+        else:
+            return {'answer': answer, 'question_type': 'multiple-choice', 'found': True}
+    
+    # PRIORITY 6: Q prefix format
     match = re.match(r'^Q(UESTION)?[\s]*\d+[\.\:\s]+([A-E]|T|F|TRUE|FALSE)', line_upper)
     if match:
         answer = match.group(2)
@@ -126,64 +142,118 @@ def parse_answer_from_line(line: str, line_num: int) -> dict:
         else:
             return {'answer': answer, 'question_type': 'multiple-choice', 'found': True}
     
-    # === PATTERN 5: Question number at END ===
-    # Matches: "A (1)", "True - 5", "B #8"
-    match = re.search(r'^([A-E]|T|F|TRUE|FALSE)[\s\.\)\-]*[\(\#\-\s]*\d+', line_upper)
-    if match:
-        answer = match.group(1)
-        if answer in ['T', 'TRUE']:
-            return {'answer': 'True', 'question_type': 'true-false', 'found': True}
-        elif answer in ['F', 'FALSE']:
-            return {'answer': 'False', 'question_type': 'true-false', 'found': True}
-        else:
-            return {'answer': answer, 'question_type': 'multiple-choice', 'found': True}
-    
-    # No answer found
     return {'answer': None, 'question_type': None, 'found': False}
 
 
 def normalize_answer(answer: str, question_type: str) -> str:
-    """
-    Normalize answers for comparison - CRITICAL FIX FOR SCORING
-    Handles all variations of True/False and Multiple Choice answers
-    """
+    """⭐ Normalize answers for comparison"""
     if not answer:
         return ''
     
-    # Remove all whitespace and convert to uppercase
     answer = str(answer).strip().upper()
+    answer = answer.replace('.', '').replace(')', '').replace(':', '').strip()
     
-    # Handle True/False normalization
     if question_type == 'true-false':
-        # All variations of TRUE
-        if answer in ['T', 'TRUE', '1', 'YES', 'Y']:
+        if answer in ['T', 'TRUE', '1', 'YES', 'Y', 'CORRECT']:
             return 'TRUE'
-        # All variations of FALSE
-        elif answer in ['F', 'FALSE', '0', 'NO', 'N']:
+        elif answer in ['F', 'FALSE', '0', 'NO', 'N', 'WRONG']:
             return 'FALSE'
+        elif answer == 'A':
+            logger.warning(f"⚠️ Student used 'A' for T/F → TRUE")
+            return 'TRUE'
+        elif answer == 'B':
+            logger.warning(f"⚠️ Student used 'B' for T/F → FALSE")
+            return 'FALSE'
+        elif answer == 'C':
+            logger.warning(f"⚠️ Student used 'C' for T/F → TRUE")
+            return 'TRUE'
+        elif answer == 'D':
+            logger.warning(f"⚠️ Student used 'D' for T/F → FALSE")
+            return 'FALSE'
+        else:
+            logger.error(f"❌ INVALID T/F: '{answer}' → BLANK")
+            return ''
     
-    # Handle Multiple Choice - just return uppercase letter
     elif question_type == 'multiple-choice':
-        # Extract just the letter (A, B, C, D, E)
-        match = re.match(r'^([A-E])', answer)
+        match = re.match(r'^([A-E])$', answer)
         if match:
             return match.group(1)
+        elif answer in ['T', 'TRUE']:
+            logger.warning(f"⚠️ Student used 'TRUE' for MCQ → 'A'")
+            return 'A'
+        elif answer in ['F', 'FALSE']:
+            logger.warning(f"⚠️ Student used 'FALSE' for MCQ → 'B'")
+            return 'B'
+        else:
+            first_char = answer[0] if answer and answer[0] in 'ABCDE' else ''
+            if first_char:
+                logger.warning(f"⚠️ Extracted '{first_char}' from '{answer}'")
+                return first_char
+            else:
+                logger.error(f"❌ INVALID MCQ: '{answer}' → BLANK")
+                return ''
     
     return answer
 
 
+def extract_student_answers_contextual(text_content: str, answer_key: List[dict], num_questions: int) -> List[str]:
+    """⭐ Extract student answers with context"""
+    lines = [line.strip() for line in text_content.split("\n") if line.strip()]
+    parsed_answers = []
+    
+    logger.info(f"📋 Processing {len(lines)} lines...")
+    logger.info("=" * 80)
+    
+    for line_num, line in enumerate(lines):
+        result = parse_answer_from_line(line, line_num + 1)
+        
+        if result['found']:
+            parsed_answers.append({
+                'answer': result['answer'],
+                'detected_type': result['question_type'],
+                'line': line,
+                'line_number': line_num + 1
+            })
+            logger.info(f"✅ Line {line_num+1}: '{result['answer']}' ({result['question_type']})")
+            logger.info(f"   Text: {line[:80]}...")
+    
+    logger.info("=" * 80)
+    logger.info(f"📊 FOUND: {len(parsed_answers)} answers (Expected: {num_questions})")
+    
+    if len(parsed_answers) > num_questions:
+        logger.warning(f"⚠️ Found {len(parsed_answers)} but need {num_questions}!")
+        logger.warning(f"⚠️ Using first {num_questions} answers")
+    
+    logger.info("=" * 80)
+    
+    student_answers = []
+    
+    for i in range(num_questions):
+        if i < len(answer_key) and i < len(parsed_answers):
+            expected_type = answer_key[i].get('type', 'multiple-choice')
+            student_ans = parsed_answers[i]['answer']
+            detected_type = parsed_answers[i]['detected_type']
+            
+            if expected_type != detected_type:
+                logger.warning(f"⚠️ Q{i+1}: Expected {expected_type}, got {detected_type}")
+            
+            student_answers.append(student_ans)
+        else:
+            logger.warning(f"❌ Q{i+1}: NO ANSWER")
+            student_answers.append('')
+    
+    return student_answers
+
+
 @router.post("/api/assessments/process-answer-key")
 async def process_answer_key(file: UploadFile = File(...)):
-    """Process uploaded answer key file and extract questions - SUPPORTS ALL FORMATS"""
-    
+    """Process answer key file"""
     logger.info(f"📤 Processing answer key: {file.filename}")
     
     try:
-        # Read file content
         file_content = await file.read()
         file_name = file.filename.lower()
 
-        # Extract text based on file type
         if file_name.endswith(".pdf"):
             text_content = extract_text_from_pdf(file_content)
         elif file_name.endswith(".docx"):
@@ -191,55 +261,34 @@ async def process_answer_key(file: UploadFile = File(...)):
         elif file_name.endswith(".txt"):
             text_content = extract_text_from_txt(file_content)
         else:
-            raise HTTPException(status_code=400, detail="Invalid file format. Only PDF, DOCX, and TXT are allowed.")
+            raise HTTPException(status_code=400, detail="Invalid file format")
         
-        logger.info(f"📄 Extracted text length: {len(text_content)} characters")
-        logger.info(f"📝 First 300 chars: {text_content[:300]}...")
+        logger.info(f"📄 Extracted {len(text_content)} characters")
         
-        # Split into lines and process
         lines = [line.strip() for line in text_content.split("\n") if line.strip()]
         questions = []
         question_counter = 1
         
-        logger.info(f"📋 Processing {len(lines)} lines...")
-        
         for line_num, line in enumerate(lines):
-            # Parse the line
             result = parse_answer_from_line(line, line_num + 1)
             
             if result['found']:
-                # Create question data
-                question_data = {
+                questions.append({
                     "id": question_counter,
                     "type": result['question_type'],
                     "answer": result['answer'],
                     "correctAnswer": result['answer'],
                     "text": line,
                     "points": 1
-                }
-                
-                questions.append(question_data)
-                logger.info(f"✅ Q{question_counter}: {result['question_type']} = {result['answer']} (from: {line[:50]}...)")
+                })
+                logger.info(f"✅ Q{question_counter}: {result['question_type']} = {result['answer']}")
                 question_counter += 1
-            else:
-                logger.debug(f"⏭️  Skipped line {line_num+1}: {line[:50]}...")
-        
-        # Count question types
-        mcq_count = sum(1 for q in questions if q["type"] == "multiple-choice")
-        tf_count = sum(1 for q in questions if q["type"] == "true-false")
-        
-        logger.info(f"✅ FINAL RESULT: Parsed {len(questions)} questions total")
-        logger.info(f"📊 Breakdown: {mcq_count} MCQ, {tf_count} T/F")
-        
-        # Show first 5 questions for verification
-        for i, q in enumerate(questions[:5]):
-            logger.info(f"   Q{q['id']}: {q['type']} = {q['answer']}")
         
         if not questions:
-            raise HTTPException(
-                status_code=400, 
-                detail=f"No valid answers found in the file. Please check the format.\n\nSupported formats:\n• 1. A\n• 1) True\n• A\n• True\n• Answer: B\n• F 8. Question text\n• T 9. Question text\n\nYour file had {len(lines)} lines but no valid answers were detected."
-            )
+            raise HTTPException(status_code=400, detail="No valid answers found")
+        
+        mcq_count = sum(1 for q in questions if q["type"] == "multiple-choice")
+        tf_count = sum(1 for q in questions if q["type"] == "true-false")
         
         return JSONResponse(content={
             "success": True,
@@ -247,20 +296,11 @@ async def process_answer_key(file: UploadFile = File(...)):
             "format_detected": "mixed" if mcq_count > 0 and tf_count > 0 else ("multiple-choice" if mcq_count > 0 else "true-false"),
             "total_questions": len(questions),
             "mcq_count": mcq_count,
-            "tf_count": tf_count,
-            "debug_info": {
-                "lines_processed": len(lines),
-                "questions_found": len(questions),
-                "first_3_lines": lines[:3] if len(lines) >= 3 else lines
-            }
+            "tf_count": tf_count
         })
         
-    except HTTPException:
-        raise
     except Exception as e:
-        logger.error(f"❌ Error processing answer key: {e}")
-        import traceback
-        logger.error(traceback.format_exc())
+        logger.error(f"❌ Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -278,26 +318,17 @@ async def check_assessment_with_answer_key(
     use_ai_feedback: bool = Form(True),
     db: Session = Depends(get_db)
 ):
-    """Process uploaded assessment with AI-powered feedback AND database storage - FIXED SCORING"""
+    """Process assessment with AI feedback"""
     
     start_time = time.time()
-    logger.info(f"🎯 Processing assessment for {student_name} - {assessment_title}")
-    logger.info(f"🤖 AI Requested: {use_ai_feedback}, AI Available: {AI_ENABLED}")
+    logger.info(f"🎯 Processing: {student_name} - {assessment_title}")
     
     try:
-        # Parse the answer key from the form data
         answer_key = json.loads(answer_key_data)
-        logger.info(f"📝 Answer key has {len(answer_key)} questions")
         
-        # Log answer key structure for debugging
-        for i, q in enumerate(answer_key[:3]):
-            logger.info(f"   Q{i+1}: type={q.get('type')}, answer={q.get('correctAnswer')}")
-        
-        # Read the file content based on its type
         file_content = await file.read()
         file_name = file.filename.lower()
 
-        # Extract text from file
         if file_name.endswith(".pdf"):
             text_content = extract_text_from_pdf(file_content)
         elif file_name.endswith(".docx"):
@@ -305,34 +336,19 @@ async def check_assessment_with_answer_key(
         elif file_name.endswith(".txt"):
             text_content = extract_text_from_txt(file_content)
         else:
-            raise HTTPException(status_code=400, detail="Invalid file format. Only PDF, DOCX, and TXT are allowed.")
+            raise HTTPException(status_code=400, detail="Invalid file format")
         
-        logger.info(f"📄 Extracted {len(text_content)} characters from student file")
+        student_answers = extract_student_answers_contextual(text_content, answer_key, num_questions)
         
-        # Parse student answers from the text content
-        student_answers_raw = [line.strip() for line in text_content.split("\n") if line.strip()]
-        student_answers = []
-        
-        for line in student_answers_raw:
-            result = parse_answer_from_line(line, 0)
-            if result['found']:
-                student_answers.append(result['answer'])
-        
-        # Pad with empty strings if needed
-        if len(student_answers) < num_questions:
-            student_answers.extend([''] * (num_questions - len(student_answers)))
-        
-        student_answers = student_answers[:num_questions]
-        
-        logger.info(f"📊 Parsed {len([a for a in student_answers if a])} student answers")
-        
-        # === CRITICAL FIX: Grade the assessment with PROPER normalization ===
+        # GRADING
         correct_count = 0
         incorrect_count = 0
         total_score = 0
         question_breakdown = []
         
-        logger.info("🔍 Starting answer comparison...")
+        logger.info("=" * 80)
+        logger.info("🔍 GRADING RESULTS")
+        logger.info("=" * 80)
         
         for i, answer_key_item in enumerate(answer_key):
             student_answer = student_answers[i] if i < len(student_answers) else ''
@@ -340,15 +356,17 @@ async def check_assessment_with_answer_key(
             question_points = int(answer_key_item.get('points', points_per_question))
             question_type = answer_key_item.get('type', 'multiple-choice')
             
-            # ⭐ CRITICAL FIX: Use normalize_answer function
-            student_answer_normalized = normalize_answer(student_answer, question_type)
-            correct_answer_normalized = normalize_answer(correct_answer, question_type)
+            student_normalized = normalize_answer(student_answer, question_type)
+            correct_normalized = normalize_answer(correct_answer, question_type)
             
-            is_correct = student_answer_normalized == correct_answer_normalized
+            is_correct = (student_normalized == correct_normalized) and student_normalized != ''
             points_earned = question_points if is_correct else 0
             
-            # Detailed logging for debugging
-            logger.info(f"Q{i+1}: Student='{student_answer}' ({student_answer_normalized}) | Correct='{correct_answer}' ({correct_answer_normalized}) | Match={is_correct}")
+            status = "✅" if is_correct else "❌"
+            logger.info(f"\nQ{i+1} ({question_type}):")
+            logger.info(f"  Student: '{student_answer}' → '{student_normalized}'")
+            logger.info(f"  Correct: '{correct_answer}' → '{correct_normalized}'")
+            logger.info(f"  {status} {points_earned}/{question_points}")
             
             if is_correct:
                 correct_count += 1
@@ -367,12 +385,16 @@ async def check_assessment_with_answer_key(
                 'pointsPossible': question_points
             })
         
+        logger.info("=" * 80)
         percentage = (total_score / total_points * 100) if total_points > 0 else 0
         letter_grade = 'A' if percentage >= 90 else 'B' if percentage >= 80 else 'C' if percentage >= 70 else 'D' if percentage >= 60 else 'F'
         
-        logger.info(f"📈 FINAL Score: {total_score}/{total_points} ({percentage:.1f}%) - {correct_count} correct, {incorrect_count} incorrect")
+        logger.info(f"📈 FINAL: {total_score}/{total_points} ({percentage:.1f}%)")
+        logger.info(f"📊 {correct_count} ✅ | {incorrect_count} ❌")
+        logger.info(f"🎓 Grade: {letter_grade}")
+        logger.info("=" * 80)
         
-        # AI feedback generation (OPTIONAL - works even if OpenAI quota exceeded)
+        # AI FEEDBACK
         ai_feedback_text = None
         strengths = []
         weaknesses = []
@@ -382,158 +404,123 @@ async def check_assessment_with_answer_key(
         if use_ai_feedback and AI_ENABLED and client:
             try:
                 logger.info("🤖 Generating AI feedback...")
+                
                 response = client.chat.completions.create(
                     model=OPENAI_MODEL,
-                    messages=[{
-                        "role": "system",
-                        "content": "You are an educational assessment expert. Provide constructive feedback in a structured format."
-                    }, {
-                        "role": "user", 
-                        "content": f"""Analyze this assessment:
-                        Subject: {subject}
-                        Score: {percentage:.1f}% ({correct_count}/{num_questions} correct)
-                        
-                        Provide feedback in this exact format:
-                        
-                        STRENGTHS:
-                        1. [First strength]
-                        2. [Second strength]
-                        
-                        WEAKNESSES:
-                        1. [First weakness]
-                        2. [Second weakness]
-                        
-                        RECOMMENDATIONS:
-                        1. [First recommendation]
-                        2. [Second recommendation]
-                        
-                        Keep each point concise (1-2 sentences)."""
-                    }],
-                    max_tokens=400
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "You are an educational assessment expert. Provide concise, constructive feedback."
+                        },
+                        {
+                            "role": "user", 
+                            "content": f"""Analyze this {subject} assessment:
+
+Score: {percentage:.1f}% ({correct_count}/{num_questions} correct)
+Letter Grade: {letter_grade}
+
+Provide feedback in this format:
+
+STRENGTHS:
+1. [One specific strength]
+2. [Another strength]
+
+WEAKNESSES:
+1. [One area to improve]
+2. [Another area]
+
+RECOMMENDATIONS:
+1. [Specific study tip]
+2. [Another recommendation]
+
+Keep each point to 1 sentence max."""
+                        }
+                    ],
+                    max_tokens=500,
+                    temperature=0.7
                 )
+                
                 ai_feedback_text = response.choices[0].message.content
                 ai_used = True
                 
-                # Parse AI response into categories
+                # Parse response
                 sections = ai_feedback_text.split('\n\n')
-                
                 for section in sections:
                     if 'STRENGTHS:' in section.upper():
-                        lines = [l.strip() for l in section.split('\n') if l.strip() and not 'STRENGTHS:' in l.upper()]
-                        strengths = [l.lstrip('1234567890. ') for l in lines[:2]]
+                        lines = [l.strip() for l in section.split('\n') if l.strip() and 'STRENGTHS:' not in l.upper()]
+                        strengths = [l.lstrip('1234567890. -•') for l in lines if l][:3]
                     elif 'WEAKNESSES:' in section.upper():
-                        lines = [l.strip() for l in section.split('\n') if l.strip() and not 'WEAKNESSES:' in l.upper()]
-                        weaknesses = [l.lstrip('1234567890. ') for l in lines[:2]]
+                        lines = [l.strip() for l in section.split('\n') if l.strip() and 'WEAKNESSES:' not in l.upper()]
+                        weaknesses = [l.lstrip('1234567890. -•') for l in lines if l][:3]
                     elif 'RECOMMENDATIONS:' in section.upper():
-                        lines = [l.strip() for l in section.split('\n') if l.strip() and not 'RECOMMENDATIONS:' in l.upper()]
-                        recommendations = [l.lstrip('1234567890. ') for l in lines[:2]]
+                        lines = [l.strip() for l in section.split('\n') if l.strip() and 'RECOMMENDATIONS:' not in l.upper()]
+                        recommendations = [l.lstrip('1234567890. -•') for l in lines if l][:3]
                 
-                # Fallback if parsing failed
+                # Fallbacks
                 if not strengths:
-                    strengths = ["Completed the assessment", "Demonstrated effort in answering"]
+                    strengths = [f"Completed assessment with {correct_count} correct answers", "Demonstrated effort"]
                 if not weaknesses:
-                    weaknesses = [f"Missed {incorrect_count} questions", "Room for improvement in understanding"]
+                    weaknesses = [f"Missed {incorrect_count} questions", "Room for improvement"]
                 if not recommendations:
-                    recommendations = ["Review incorrect answers carefully", "Practice similar problems"]
+                    recommendations = ["Review incorrect answers", "Practice similar problems"]
                 
-                logger.info("✅ AI feedback generated successfully!")
+                logger.info("✅ AI feedback generated!")
+                
             except Exception as e:
-                logger.error(f"❌ AI Error (Non-critical): {e}")
-                ai_feedback_text = f"Assessment completed! Score: {percentage:.1f}%"
-                strengths = [f"Answered {correct_count} questions correctly"]
-                weaknesses = [f"Missed {incorrect_count} questions"] if incorrect_count > 0 else ["Keep up the good work"]
-                recommendations = ["Review incorrect answers"] if incorrect_count > 0 else ["Continue practicing"]
+                logger.error(f"❌ AI Error: {e}")
+                ai_used = False
+                strengths = [f"Answered {correct_count} correctly"]
+                weaknesses = [f"Missed {incorrect_count} questions"]
+                recommendations = ["Review material and practice"]
         else:
-            logger.warning(f"⚠️ AI not used (scores still accurate): use_ai={use_ai_feedback}, enabled={AI_ENABLED}")
-            ai_feedback_text = f"Assessment scored! {correct_count}/{num_questions} correct ({percentage:.1f}%)"
-            strengths = [f"Answered {correct_count} questions correctly"]
-            weaknesses = [f"Missed {incorrect_count} questions"] if incorrect_count > 0 else ["Keep practicing"]
-            recommendations = ["Review incorrect answers and study the material"] if incorrect_count > 0 else ["Great work!"]
+            logger.info("⚠️ AI not used - using rule-based feedback")
+            strengths = [f"Answered {correct_count} correctly"]
+            weaknesses = [f"Missed {incorrect_count} questions"]
+            recommendations = ["Review material"]
         
-        # Save to database
+        # DATABASE SAVE
         database_saved = False
-        uploaded_assessment_id = None
-        answer_key_id = None
-        
         try:
-            logger.info("💾 Saving to database...")
-            
-            # 1. Create Answer Key
             answer_key_obj = AnswerKey(
-                title=assessment_title,
-                subject=subject,
-                assessment_type=assessment_type,
-                num_questions=num_questions,
-                questions_data=answer_key,
-                total_points=total_points,
-                original_filename=f"answer_key_{file.filename}",
-                file_size=len(file_content)
+                title=assessment_title, subject=subject, assessment_type=assessment_type,
+                num_questions=num_questions, questions_data=answer_key, total_points=total_points,
+                original_filename=f"key_{file.filename}", file_size=len(file_content)
             )
             db.add(answer_key_obj)
             db.flush()
-            answer_key_id = answer_key_obj.id
-            logger.info(f"✅ Answer key saved with ID: {answer_key_id}")
             
-            # 2. Create Uploaded Assessment
-            uploaded_assessment_obj = UploadedAssessment(
-                answer_key_id=answer_key_id,
-                original_filename=file.filename,
-                file_size=len(file_content),
-                assessment_title=assessment_title,
-                subject=subject,
-                assessment_data={"student_answers": student_answers},
+            uploaded_obj = UploadedAssessment(
+                answer_key_id=answer_key_obj.id, original_filename=file.filename,
+                file_size=len(file_content), assessment_title=assessment_title,
+                subject=subject, assessment_data={"student_answers": student_answers},
                 processed_at=datetime.utcnow()
             )
-            db.add(uploaded_assessment_obj)
+            db.add(uploaded_obj)
             db.flush()
-            uploaded_assessment_id = uploaded_assessment_obj.id
-            logger.info(f"✅ Uploaded assessment saved with ID: {uploaded_assessment_id}")
             
-            # 3. Create Grading Result
-            grading_result_obj = GradingResult(
-                uploaded_assessment_id=uploaded_assessment_id,
-                answer_key_id=answer_key_id,
-                student_name=student_name,
-                assessment_title=assessment_title,
-                subject=subject,
-                total_questions=num_questions,
-                correct_answers=correct_count,
-                incorrect_answers=incorrect_count,
-                score=float(total_score),
-                max_score=float(total_points),
-                percentage=float(percentage),
-                letter_grade=letter_grade,
-                question_breakdown=question_breakdown,
-                strengths=strengths,
-                weaknesses=weaknesses,
-                recommendations=recommendations,
-                detailed_analysis=ai_feedback_text,
-                ai_used=ai_used,
+            grading_obj = GradingResult(
+                uploaded_assessment_id=uploaded_obj.id, answer_key_id=answer_key_obj.id,
+                student_name=student_name, assessment_title=assessment_title, subject=subject,
+                total_questions=num_questions, correct_answers=correct_count,
+                incorrect_answers=incorrect_count, score=float(total_score),
+                max_score=float(total_points), percentage=float(percentage),
+                letter_grade=letter_grade, question_breakdown=question_breakdown,
+                strengths=strengths, weaknesses=weaknesses, recommendations=recommendations,
+                detailed_analysis=ai_feedback_text, ai_used=ai_used,
                 ai_model=OPENAI_MODEL if ai_used else None,
                 processing_time=float(time.time() - start_time)
             )
-            db.add(grading_result_obj)
-            
-            # Commit all changes
+            db.add(grading_obj)
             db.commit()
             database_saved = True
-            logger.info(f"✅ ALL DATA SAVED TO DATABASE!")
-            
-        except Exception as db_error:
-            logger.error(f"❌ Database error: {db_error}")
-            import traceback
-            logger.error(traceback.format_exc())
+            logger.info("✅ Saved to database!")
+        except Exception as e:
+            logger.error(f"❌ DB Error: {e}")
             db.rollback()
-            database_saved = False
-        
-        processing_time = time.time() - start_time
         
         return JSONResponse(content={
             'success': True,
-            'message': 'Assessment processed successfully with accurate scoring!',
-            'ai_enabled': ai_used,
-            'saved': database_saved,
-            'processing_time': round(processing_time, 2),
+            'message': 'Assessment processed successfully!',
             'results': {
                 'studentName': student_name,
                 'assessmentTitle': assessment_title,
@@ -553,16 +540,12 @@ async def check_assessment_with_answer_key(
                     'detailedAnalysis': ai_feedback_text
                 },
                 'aiUsed': ai_used,
-                'databaseSaved': database_saved,
-                'uploadedAssessmentId': uploaded_assessment_id,
-                'answerKeyId': answer_key_id
+                'databaseSaved': database_saved
             }
         })
         
-    except HTTPException:
-        raise
     except Exception as e:
-        logger.error(f"❌ Processing error: {e}")
+        logger.error(f"❌ Error: {e}")
         import traceback
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
