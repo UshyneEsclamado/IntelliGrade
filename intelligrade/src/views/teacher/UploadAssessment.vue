@@ -2224,23 +2224,20 @@ False
     flex-shrink: 0;
   }
 
-  .header-title {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: #2d3748;
-    margin: 0;
-    line-height: 1.2;
-  }
+.header-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
 
   .dark .header-title {
     color: #e2e8f0;
   }
 
   .header-subtitle {
-    font-size: 0.95rem;
-    color: #718096;
-    margin: 0;
-    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: #6b7280;
   }
 
   .dark .header-subtitle {
