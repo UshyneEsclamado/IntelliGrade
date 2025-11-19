@@ -15,22 +15,37 @@
         <div class="navbar-center">
         </div>
         
-        <!-- Right: User Profile and Actions -->
+        <!-- Right: User Profile and Notifications -->
         <div class="navbar-right">
-          <button @click="exportStudents" class="nav-icon-btn rounded-bg" :disabled="isExporting">
-            <svg v-if="isExporting" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="spinner">
-              <path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z" />
-            </svg>
-            <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-            </svg>
-          </button>
-          
-          <button @click="goBack" class="nav-icon-btn rounded-bg">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
-            </svg>
-          </button>
+          <!-- Notification Bell -->
+          <div class="notif-wrapper">
+            <button class="nav-icon-btn rounded-bg" @click="toggleNotifDropdown" aria-label="Notifications">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+              <span v-if="notifications.length" class="notification-badge">{{ notifications.length }}</span>
+            </button>
+            
+            <!-- Notification Dropdown -->
+            <div v-if="showNotifDropdown" class="notification-dropdown">
+              <div class="dropdown-header">
+                <h3>Notifications</h3>
+              </div>
+              <div class="notification-list">
+                <div v-if="notifications.length === 0" class="no-notifications">
+                  No new notifications
+                </div>
+                <div v-for="notif in notifications" :key="notif.id" class="notification-item" @click="handleNotificationClick(notif)">
+                  <div class="notif-content">
+                    <h4>{{ notif.title }}</h4>
+                    <p>{{ notif.body }}</p>
+                    <span class="notif-time">{{ notif.date }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           
           <!-- User Profile -->
           <div class="user-profile-wrapper">
@@ -41,10 +56,46 @@
                   <circle cx="12" cy="7" r="4"></circle>
                 </svg>
               </div>
-              <span class="user-name">Teacher</span>
+              <span class="user-name">{{ fullName }}</span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="dropdown-arrow">
                 <path d="M7 10l5 5 5-5z"/>
               </svg>
+            </div>
+            
+            <!-- Profile Dropdown -->
+            <div v-if="showProfileDropdown" class="profile-dropdown">
+              <div class="dropdown-header">
+                <div class="profile-info">
+                  <div class="profile-avatar">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                  </div>
+                  <div class="profile-details">
+                    <h4>{{ fullName }}</h4>
+                    <p>Teacher</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="dropdown-menu">
+                <router-link to="/teacher/settings" class="dropdown-item">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1V3H9V1L3 7V9H5V20A2 2 0 0 0 7 22H17A2 2 0 0 0 19 20V9H21M17 20H7V9H10V12H14V9H17V20Z"/>
+                  </svg>
+                  <span>Profile & Settings</span>
+                </router-link>
+                
+                <div class="dropdown-divider"></div>
+                
+                <button @click="logout" class="dropdown-item logout-btn">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16 17V14H9V10H16V7L21 12L16 17M14 2A2 2 0 0 1 16 4V6H14V4H5V20H14V18H16V20A2 2 0 0 1 14 22H5A2 2 0 0 1 3 20V4A2 2 0 0 1 5 2H14Z"/>
+                  </svg>
+                  <span>Logout</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -102,7 +153,8 @@
         <router-link to="/teacher/messages" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/messages' }">
           <div class="sidebar-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+              <rect x="3" y="5" width="18" height="14" rx="2" />
+              <path d="M3 5l9 7 9-7" />
             </svg>
           </div>
           <span class="sidebar-tooltip">Messages</span>
@@ -133,6 +185,11 @@
 
     <!-- Main Content -->
     <div class="main-content-wrapper">
+      <button v-if="showScrollTop" @click="scrollToTop" class="scroll-to-top">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M7 14l5-5 5 5z"/>
+        </svg>
+      </button>
       <div v-if="isLoading" class="loading-state">
         <div class="loading-spinner"></div>
         <p>{{ loadingMessage }}</p>
@@ -210,13 +267,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { supabase } from '../../supabase.js'
 import { useDarkMode } from '../../composables/useDarkMode.js'
+import { useTeacherAuth } from '../../composables/useTeacherAuth.js'
 
 // Dark mode
-const { isDarkMode, initDarkMode } = useDarkMode()
+const { isDarkMode } = useDarkMode()
+
+// Teacher authentication
+const { teacherProfile } = useTeacherAuth()
+const fullName = computed(() => teacherProfile.value?.full_name || 'Teacher')
 
 const router = useRouter()
 const route = useRoute()
@@ -227,21 +289,80 @@ const sectionId = ref(route.params.sectionId)
 const subjectName = ref(route.query.subjectName || '')
 const sectionName = ref(route.query.sectionName || '')
 const gradeLevel = ref(route.query.gradeLevel || '')
-const classCode = ref(route.query.classCode || '')
 const sectionCode = ref(route.query.sectionCode || '')
 
 // State
-const students = ref<any[]>([])
+interface Student {
+  id: string;
+  full_name: string;
+  email: string;
+  enrolled_at: string;
+  status: string;
+  enrollment_id: string;
+  grade_level: string;
+  last_activity?: string;
+  quiz_count?: number;
+  average_grade?: number;
+}
+const students = ref<Student[]>([])
 const searchQuery = ref('')
 const filterStatus = ref('all')
 const isLoading = ref(false)
 const isExporting = ref(false)
 const loadingMessage = ref('')
 const showProfileDropdown = ref(false)
+const showNotifDropdown = ref(false)
+interface Notification {
+  id: string;
+  title: string;
+  body: string;
+  date: string;
+}
+const notifications = ref<Notification[]>([])
+
+// Scroll to Top Button State
+const showScrollTop = ref(false)
+const handleScroll = () => {
+  showScrollTop.value = window.scrollY > 200
+}
+const scrollToTop = () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
 
 // Profile dropdown functions
 const toggleProfileDropdown = () => {
   showProfileDropdown.value = !showProfileDropdown.value
+  if (showProfileDropdown.value) {
+    showNotifDropdown.value = false
+  }
+}
+
+const toggleNotifDropdown = () => {
+  showNotifDropdown.value = !showNotifDropdown.value
+  if (showNotifDropdown.value) {
+    showProfileDropdown.value = false
+  }
+}
+
+const handleNotificationClick = (notification: Notification) => {
+  console.log('Notification clicked:', notification)
+  // Handle notification click logic here
+}
+
+const logout = () => {
+  console.log('🚪 Logging out...')
+  
+  // Clear storage immediately
+  localStorage.clear()
+  sessionStorage.clear()
+  
+  // Sign out from Supabase
+  supabase.auth.signOut({ scope: 'local' })
+  
+  console.log('✅ Logout successful')
+  
+  // Force immediate redirect
+  window.location.replace('/login')
 }
 
 // Computed
@@ -251,7 +372,7 @@ const filteredStudents = computed(() => {
   // Filter by search query
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter((student: any) => 
+    filtered = filtered.filter((student: Student) => 
       student.full_name.toLowerCase().includes(query) ||
       student.email.toLowerCase().includes(query)
     )
@@ -259,14 +380,14 @@ const filteredStudents = computed(() => {
 
   // Filter by status
   if (filterStatus.value !== 'all') {
-    filtered = filtered.filter((student: any) => student.status === filterStatus.value)
+    filtered = filtered.filter((student: Student) => student.status === filterStatus.value)
   }
 
   return filtered
 })
 
 const activeStudents = computed(() => {
-  return students.value.filter((student: any) => student.status === 'active').length
+  return students.value.filter((student: Student) => student.status === 'active').length
 })
 
 // Methods
@@ -315,7 +436,7 @@ const fetchStudents = async () => {
 
     // Combine enrollment and student data
     students.value = enrollmentsData.map((enrollment: any) => {
-      const studentData = studentsData?.find(s => s.id === enrollment.student_id)
+      const studentData = studentsData?.find((s: any) => s.id === enrollment.student_id)
       
       return {
         id: enrollment.student_id,
@@ -325,27 +446,18 @@ const fetchStudents = async () => {
         status: enrollment.status || 'active',
         enrollment_id: enrollment.id,
         grade_level: studentData?.grade_level || 'N/A'
-      }
+      } as Student
     })
 
     console.log('✅ Final students data:', students.value)
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching students:', error)
-    alert(`Error loading students: ${error?.message || 'Unknown error'}`)
+    alert(`Error loading students: ${error instanceof Error ? error.message : 'Unknown error'}`)
     students.value = []
   } finally {
     isLoading.value = false
   }
-}
-
-const getInitials = (name: string) => {
-  if (!name) return 'NS'
-  return name.split(' ')
-    .map((word: string) => word.charAt(0))
-    .join('')
-    .substring(0, 2)
-    .toUpperCase()
 }
 
 const formatDate = (dateString: string) => {
@@ -377,34 +489,6 @@ const goBack = async () => {
   });
 }
 
-const removeStudent = async (student: any) => {
-  if (!confirm(`Are you sure you want to remove ${student.full_name} from this section?`)) {
-    return
-  }
-
-  isLoading.value = true
-  loadingMessage.value = 'Removing student...'
-
-  try {
-    const { error } = await supabase
-      .from('enrollments')
-      .delete()
-      .eq('section_id', sectionId.value)
-      .eq('student_id', student.id)
-
-    if (error) throw error
-
-    alert(`${student.full_name} removed from section successfully!`)
-    await fetchStudents()
-
-  } catch (error: any) {
-    console.error('Error removing student:', error)
-    alert(`Error removing student: ${error?.message || 'Unknown error'}`)
-  } finally {
-    isLoading.value = false
-  }
-}
-
 const exportStudents = async () => {
   isExporting.value = true
   
@@ -414,7 +498,7 @@ const exportStudents = async () => {
     csvContent += `Total Students: ${students.value.length}\n\n`
     csvContent += `Student ID,Full Name,Email,Status,Enrollment Date,Last Activity,Quiz Count,Average Grade\n`
     
-    students.value.forEach((student: any) => {
+    students.value.forEach((student: Student) => {
       csvContent += `"${student.id}","${student.full_name}","${student.email}","${student.status}","${formatDate(student.enrolled_at)}","${formatDate(student.last_activity)}","${student.quiz_count || 0}","${student.average_grade || 'N/A'}%"\n`
     })
     
@@ -429,7 +513,7 @@ const exportStudents = async () => {
     window.URL.revokeObjectURL(url)
     
     console.log('Exported students list successfully')
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error exporting students:', error)
     alert('Error exporting students list. Please try again.')
   } finally {
@@ -439,6 +523,11 @@ const exportStudents = async () => {
 
 onMounted(() => {
   fetchStudents()
+  window.addEventListener('scroll', handleScroll)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
 })
 </script>
 
@@ -668,6 +757,203 @@ onMounted(() => {
 }
 .rounded-bg:hover {
   background: rgba(255,255,255,0.22);
+}
+
+/* Notification dropdown styles */
+.notif-wrapper {
+  position: relative;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #3D8D7A;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: 55px;
+  right: 0;
+  width: 360px;
+  max-height: 480px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 1001;
+  border: 1px solid #e2e8f0;
+}
+
+.dropdown-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fafafa;
+}
+
+.dropdown-header h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.notification-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.no-notifications {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.notification-item {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.notification-item:hover {
+  background: #f8fafc;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notif-content h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.notif-content p {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
+
+.notif-time {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.profile-dropdown {
+  position: absolute;
+  top: 55px;
+  right: 0;
+  width: 280px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 1001;
+  border: 1px solid #e2e8f0;
+}
+
+.profile-dropdown .dropdown-header {
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  color: white;
+}
+
+.profile-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.profile-avatar {
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.profile-details h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.profile-details p {
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+.dropdown-menu {
+  padding: 0.5rem;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #1e293b;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+}
+
+.dropdown-item:hover {
+  background: #f1f5f9;
+  color: #3D8D7A;
+}
+
+.dropdown-item svg {
+  color: #64748b;
+  transition: color 0.2s;
+}
+
+.dropdown-item:hover svg {
+  color: #3D8D7A;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 0.5rem 0;
+}
+
+.logout-btn {
+  color: #ef4444 !important;
+}
+
+.logout-btn:hover {
+  background: #fef2f2 !important;
+  color: #dc2626 !important;
+}
+
+.logout-btn svg {
+  color: #ef4444 !important;
+}
+
+.logout-btn:hover svg {
+  color: #dc2626 !important;
 }
 
 /* Main Content - Better Spacing */

@@ -24,6 +24,35 @@
             </svg>
             <span>Mark All Read</span>
           </button>
+
+        <div class="notif-wrapper">
+            <button class="nav-icon-btn rounded-bg" @click="toggleNotifDropdown" aria-label="Notifications">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+              <span v-if="notifications.length" class="notification-badge">{{ notifications.length }}</span>
+            </button>
+            
+            <!-- Notification Dropdown -->
+            <div v-if="showNotifDropdown" class="notification-dropdown">
+              <div class="dropdown-header">
+                <h3>Notifications</h3>
+              </div>
+              <div class="notification-list">
+                <div v-if="notifications.length === 0" class="no-notifications">
+                  No new notifications
+                </div>
+                <div v-for="notif in notifications" :key="notif.id" class="notification-item" @click="handleNotificationClick(notif)">
+                  <div class="notif-content">
+                    <h4>{{ notif.title }}</h4>
+                    <p>{{ notif.body }}</p>
+                    <span class="notif-time">{{ notif.date }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           
           <!-- User Profile -->
           <div class="user-profile-wrapper">
@@ -564,22 +593,22 @@
                   <!-- Action Buttons -->
                   <div class="action-buttons-fullwidth">
                     <button class="btn-cancel-full" @click="cancelBroadcast()">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                       </svg>
-                      Cancel
+                      <span>Cancel</span>
                     </button>
                     <button 
                       class="btn-send-full"
                       @click="sendBroadcastMessage"
                       :disabled="!broadcastMessage.trim() || !broadcastSection"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="22" y1="2" x2="11" y2="13"></line>
                         <polygon points="22 2 15.46 22 11 13 2 9.54 22 2"></polygon>
                       </svg>
-                      Send Broadcast
+                      <span>Send Broadcast</span>
                     </button>
                   </div>
                 </div>
@@ -1293,6 +1322,17 @@
 </template>
 
 <script setup lang="ts">
+// Notification Bell State and Methods
+import { ref } from 'vue'
+const showNotifDropdown = ref(false)
+const notifications = ref([]) // Should be populated from API or props
+
+function toggleNotifDropdown() {
+  showNotifDropdown.value = !showNotifDropdown.value
+}
+function handleNotificationClick(notif: any) {
+  // Implement notification click logic (e.g., mark as read, navigate, etc.)
+}
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase.js'
@@ -3134,6 +3174,115 @@ body, html {
   transform: translateY(-1px);
 }
 
+.nav-icon-btn {
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: rgba(255, 255, 255, 0.9);
+  position: relative;
+}
+
+.nav-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+}
+
+.notification-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: #ef4444;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.125rem 0.375rem;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+  line-height: 1;
+}
+
+.notif-wrapper {
+  position: relative;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: 55px;
+  right: 0;
+  width: 360px;
+  max-height: 480px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 1001;
+  border: 1px solid #e2e8f0;
+}
+
+.dropdown-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fafafa;
+}
+
+.dropdown-header h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.notification-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.no-notifications {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.notification-item {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.2s;
+}
+
+.notification-item:hover {
+  background: #f8fafc;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notif-content h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.notif-content p {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
+
+.notif-time {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
 .user-profile-wrapper {
   position: relative;
 }
@@ -3675,12 +3824,11 @@ body, html {
 }
 
 .action-buttons-fullwidth {
-  grid-column: 1 / -1;
   display: flex;
   gap: 16px;
-  padding-top: 24px;
-  border-top: 1px solid #f1f5f9;
-  margin-top: auto;
+  margin-top: 24px;
+  width: 100%;
+  justify-content: flex-end;
 }
 
 .btn-cancel-full, .btn-send-full {
@@ -3694,10 +3842,13 @@ body, html {
   align-items: center;
   gap: 8px;
   border: none;
+  min-width: 160px;
+  height: 48px;
+  box-sizing: border-box;
+  justify-content: center;
 }
 
 .btn-cancel-full {
-  flex: 1;
   background: #f8fafc;
   color: #475569;
   border: 1px solid #e2e8f0;
@@ -3709,7 +3860,6 @@ body, html {
 }
 
 .btn-send-full {
-  flex: 2;
   background: #3b82f6;
   color: white;
 }

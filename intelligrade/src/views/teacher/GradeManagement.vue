@@ -1,6 +1,6 @@
 <template>
-  <div class="analytics-container" :class="{ 'dark': isDarkMode }">
-    <!-- Top Navigation Bar (Same as Dashboard) -->
+  <div class="dashboard-container">
+    <!-- Top Navigation Bar (Clean) -->
     <nav class="top-navbar">
       <div class="navbar-content">
         <!-- Left: Logo and Brand -->
@@ -11,92 +11,202 @@
           </div>
         </div>
         
-        <!-- Center: Navigation Links -->
+        <!-- Center: Empty space for clean look -->
         <div class="navbar-center">
-          <router-link to="/teacher/dashboard" class="nav-item">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" />
-            </svg>
-            <span>Dashboard</span>
-          </router-link>
-          
-          <router-link to="/teacher/subjects" class="nav-item active">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"/>
-            </svg>
-            <span>Classes</span>
-          </router-link>
-          
-          <router-link to="/teacher/gradebook" class="nav-item">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19,3H14.82C14.4,1.84 13.3,1 12,1C10.7,1 9.6,1.84 9.18,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M12,3A1,1 0 0,1 13,4A1,1 0 0,1 12,5A1,1 0 0,1 11,4A1,1 0 0,1 12,3Z" />
-            </svg>
-            <span>Gradebook</span>
-          </router-link>
-          
-          <router-link to="/teacher/analytics" class="nav-item">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z" />
-            </svg>
-            <span>Analytics</span>
-          </router-link>
-          
-          <router-link to="/teacher/messages" class="nav-item">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            </svg>
-            <span>Messages</span>
-          </router-link>
-          
-          <router-link to="/teacher/upload-assessment" class="nav-item">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M9,16V10H5L12,3L19,10H15V16H9M5,20V18H19V20H5Z" />
-            </svg>
-            <span>Upload</span>
-          </router-link>
         </div>
         
-        <!-- Right: Actions -->
+        <!-- Right: User Profile and Notifications -->
         <div class="navbar-right">
-          <button @click="exportGrades" class="export-btn" :disabled="students.length === 0">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-            </svg>
-            <span>Export Grades</span>
-          </button>
-          <button @click="goBack" class="export-btn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
-            </svg>
-            <span>Back to Section</span>
-          </button>
-        </div>
-      </div>
-    </nav>
-
-    <!-- Main Content Area -->
-    <main class="main-content">
-      <!-- Page Header -->
-      <div class="page-header">
-        <div class="header-content">
-          <div class="header-left">
-            <div class="header-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+          <!-- Notification Bell -->
+          <div class="notif-wrapper">
+            <button class="nav-icon-btn rounded-bg" @click="toggleNotifDropdown" aria-label="Notifications">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+              <span v-if="notifications.length" class="notification-badge">{{ notifications.length }}</span>
+            </button>
+            
+            <!-- Notification Dropdown -->
+            <div v-if="showNotifDropdown" class="notification-dropdown">
+              <div class="dropdown-header">
+                <h3>Notifications</h3>
+              </div>
+              <div class="notification-list">
+                <div v-if="notifications.length === 0" class="no-notifications">
+                  No new notifications
+                </div>
+                <div v-for="notif in notifications" :key="notif.id" class="notification-item" @click="handleNotificationClick(notif)">
+                  <div class="notif-content">
+                    <h4>{{ notif.title }}</h4>
+                    <p>{{ notif.body }}</p>
+                    <span class="notif-time">{{ notif.date }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- User Profile -->
+          <div class="user-profile-wrapper">
+            <div class="user-profile rounded-bg" @click="toggleProfileDropdown">
+              <div class="user-avatar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
+              <span class="user-name">{{ fullName }}</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" class="dropdown-arrow">
+                <path d="M7 10l5 5 5-5z"/>
               </svg>
             </div>
-            <div class="header-info">
-              <h1 class="header-title">Grade Management</h1>
-              <p class="header-subtitle">{{ subject?.name }} - {{ section?.name }}</p>
+            
+            <!-- Profile Dropdown -->
+            <div v-if="showProfileDropdown" class="profile-dropdown">
+              <div class="dropdown-header">
+                <div class="profile-info">
+                  <div class="profile-avatar">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                  </div>
+                  <div class="profile-details">
+                    <h4>{{ fullName }}</h4>
+                    <p>Teacher</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="dropdown-menu">
+                <router-link to="/teacher/settings" class="dropdown-item">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1V3H9V1L3 7V9H5V20A2 2 0 0 0 7 22H17A2 2 0 0 0 19 20V9H21M17 20H7V9H10V12H14V9H17V20Z"/>
+                  </svg>
+                  <span>Profile & Settings</span>
+                </router-link>
+                
+                <div class="dropdown-divider"></div>
+                
+                <button @click="logout" class="dropdown-item logout-btn">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16 17V14H9V10H16V7L21 12L16 17M14 2A2 2 0 0 1 16 4V6H14V4H5V20H14V18H16V20A2 2 0 0 1 14 22H5A2 2 0 0 1 3 20V4A2 2 0 0 1 5 2H14Z"/>
+                  </svg>
+                  <span>Logout</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
+    </nav>
 
-      <!-- Content Area -->
+    <!-- Sidebar Navigation - Custom Tooltip Labels on Hover -->
+    <aside class="sidebar" style="background:#3D8D7A; border-right:none;">
+      <nav class="sidebar-nav">
+        <router-link to="/teacher/dashboard" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/dashboard' }">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 20v-6h4v6m5-8h3L12 3 2 12h3v8h5v-6h4v6h5v-8z" />
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Dashboard</span>
+        </router-link>
+        <router-link to="/teacher/subjects" class="sidebar-item rounded-bg" :class="{ 'active': $route.path.includes('/subjects') }">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="7" width="18" height="13" rx="2" />
+              <path d="M3 7l9-4 9 4" />
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Classes</span>
+        </router-link>
+        <router-link to="/teacher/gradebook" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/gradebook' }">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="4" width="16" height="16" rx="2" />
+              <path d="M8 2v4M16 2v4" />
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Gradebook</span>
+        </router-link>
+        <router-link to="/teacher/upload-assessment" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/upload-assessment' }">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 19V6M5 12l7-7 7 7" />
+              <rect x="5" y="19" width="14" height="2" rx="1" />
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Upload Assessment</span>
+        </router-link>
+        <router-link to="/teacher/analytics" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/analytics' }">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="12" width="4" height="8" />
+              <rect x="10" y="8" width="4" height="12" />
+              <rect x="17" y="4" width="4" height="16" />
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Analytics</span>
+        </router-link>
+        <router-link to="/teacher/messages" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/messages' }">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="5" width="18" height="14" rx="2" />
+              <path d="M3 5l9 7 9-7" />
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Messages</span>
+        </router-link>
+      </nav>
+    </aside>
 
-    <!-- Controls -->
-    <div class="controls-card">
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Scroll to Top Button -->
+      <button v-if="showScrollTop" @click="scrollToTop" class="scroll-to-top">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M7 14l5-5 5 5z"/>
+        </svg>
+      </button>
+      
+      <!-- Main Content Container -->
+      <div class="main-container">
+        <!-- Grade Management Header -->
+        <div class="section-header">
+          <div class="header-content">
+            <div class="header-left">
+              <div class="header-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                </svg>
+              </div>
+              <div class="header-info">
+                <h1 class="section-title">Grade Management</h1>
+                <p class="section-subtitle">{{ subject?.name }}<span v-if="section?.name"> - {{ section?.name }}</span></p>
+              </div>
+            </div>
+            
+            <div class="header-actions">
+              <button @click="exportGrades" class="action-btn secondary" :disabled="students.length === 0">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                </svg>
+                Export Grades
+              </button>
+              <button @click="goBack" class="action-btn primary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
+                </svg>
+                Back to Section
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Controls -->
+      <div class="controls-card">
       <div class="controls-header">
         <h2 class="controls-title">Grade Controls</h2>
       </div>
@@ -317,7 +427,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { supabase } from '../../supabase'
 import { useDarkMode } from '../../composables/useDarkMode.js'
@@ -346,10 +456,25 @@ interface QuizResult {
   best_percentage: number
 }
 
-const { isDarkMode, initDarkMode } = useDarkMode()
+// Initialize composables
+const { initDarkMode } = useDarkMode()
 const router = useRouter()
 const route = useRoute()
 
+// User and authentication state
+const fullName = ref('Teacher')
+const isLoadingName = ref(false)
+const userId = ref(null)
+const teacherId = ref(null)
+
+// UI state
+const notifications = ref([])
+const showNotifDropdown = ref(false)
+const showProfileDropdown = ref(false)
+const showScrollTop = ref(false)
+const isLoggingOut = ref(false)
+
+// Grade management state
 const students = ref<Student[]>([])
 const quizzes = ref<Quiz[]>([])
 const grades = ref<Record<string, Record<string, number>>>({})
@@ -373,6 +498,162 @@ const displayOptions = ref({ showPercentages: true, showLetterGrades: false, rou
 
 const filteredStudents = computed(() => [...students.value])
 const displayedQuizzes = computed(() => selectedQuiz.value ? quizzes.value.filter(q => q.id === selectedQuiz.value) : quizzes.value)
+
+// Methods for UI interactions
+const toggleNotifDropdown = () => {
+  showNotifDropdown.value = !showNotifDropdown.value
+  if (showNotifDropdown.value) {
+    showProfileDropdown.value = false
+  }
+}
+
+const toggleProfileDropdown = () => {
+  showProfileDropdown.value = !showProfileDropdown.value
+  if (showProfileDropdown.value) {
+    showNotifDropdown.value = false
+  }
+}
+
+const scrollToTop = () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+// Handle scroll to show/hide scroll-to-top button
+const handleScroll = () => {
+  showScrollTop.value = window.pageYOffset > 300
+}
+
+// Load teacher profile
+const loadTeacherProfile = async () => {
+  try {
+    isLoadingName.value = true
+    console.log('🔍 Loading teacher profile...')
+    
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      console.error('❌ No user found:', userError)
+      return false
+    }
+    
+    userId.value = user.id
+    console.log('✅ User ID:', user.id)
+    
+    // Get profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, full_name, role')
+      .eq('auth_user_id', user.id)
+      .single()
+    
+    if (profileError || !profile) {
+      console.error('❌ Profile error:', profileError)
+      return false
+    }
+    
+    console.log('✅ Profile found:', profile)
+    
+    // Get teacher data
+    const { data: teacher, error: teacherError } = await supabase
+      .from('teachers')
+      .select('id, full_name')
+      .eq('profile_id', profile.id)
+      .single()
+    
+    if (teacherError || !teacher) {
+      console.error('❌ Teacher error:', teacherError)
+      return false
+    }
+    
+    teacherId.value = teacher.id
+    fullName.value = teacher.full_name || profile.full_name || 'Teacher'
+    
+    console.log('✅ Teacher loaded:', { id: teacher.id, name: fullName.value })
+    return true
+    
+  } catch (err) {
+    console.error('❌ Error loading profile:', err)
+    return false
+  } finally {
+    isLoadingName.value = false
+  }
+}
+
+// Load notifications
+const loadNotifications = async () => {
+  if (!teacherId.value) {
+    console.warn('⚠️ No teacher ID, cannot load notifications')
+    return
+  }
+  
+  try {
+    console.log('🔔 Loading notifications for teacher:', teacherId.value)
+    
+    // Get recent quiz submissions (last 24 hours)
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+    const yesterdayISO = yesterday.toISOString()
+    
+    const { data: recentSubmissions, error: submissionsError } = await supabase
+      .from('quiz_attempts')
+      .select(`
+        id,
+        submitted_at,
+        student_id,
+        quiz_id,
+        quizzes!inner(title, teacher_id),
+        students!inner(full_name)
+      `)
+      .eq('quizzes.teacher_id', teacherId.value)
+      .eq('status', 'submitted')
+      .gte('submitted_at', yesterdayISO)
+      .order('submitted_at', { ascending: false })
+    
+    if (submissionsError) {
+      console.error('❌ Error loading submissions:', submissionsError)
+      return
+    }
+    
+    // Convert submissions to notifications
+    const submissionNotifications = (recentSubmissions || []).map(submission => ({
+      id: `submission-${submission.id}`,
+      title: `New Quiz Submission`,
+      body: `${submission.students.full_name} submitted "${submission.quizzes.title}"`,
+      date: new Date(submission.submitted_at).toLocaleDateString(),
+      type: 'submission'
+    }))
+    
+    notifications.value = submissionNotifications
+    
+    console.log('✅ Loaded', notifications.value.length, 'notifications')
+    
+  } catch (err) {
+    console.error('❌ Error loading notifications:', err)
+  }
+}
+
+const handleNotificationClick = (notif) => {
+  console.log('Notification clicked:', notif)
+  // Handle notification click if needed
+}
+
+// Logout functionality
+const logout = () => {
+  isLoggingOut.value = true
+  
+  console.log('🚪 Logging out...')
+  
+  // Clear storage immediately
+  localStorage.clear()
+  sessionStorage.clear()
+  
+  // Sign out from Supabase (don't wait for response)
+  supabase.auth.signOut({ scope: 'local' })
+  
+  console.log('✅ Logout successful')
+  
+  // Force immediate redirect - most reliable method
+  window.location.replace('/login')
+}
 
 const getInitials = (firstName: string, lastName: string): string => {
   const first = firstName?.charAt(0)?.toUpperCase() || 'S'
@@ -625,39 +906,585 @@ watch(() => grades.value, () => {
 
 onMounted(async () => {
   initDarkMode()
+  
+  // Add scroll event listener
+  window.addEventListener('scroll', handleScroll)
+  
+  // Load teacher profile first
+  await loadTeacherProfile()
+  
+  // Load notifications
+  await loadNotifications()
+  
   await fetchData()
+})
+
+onUnmounted(() => {
+  // Remove scroll event listener
+  window.removeEventListener('scroll', handleScroll)
 })
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
-
-/* Reset and Hide Parent Layouts */
-body, html {
-  overflow-x: hidden !important;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-/* Force hide any sidebar or layout from parent components */
-.sidebar,
-.dashboard-sidebar,
-.navigation-sidebar,
-.teacher-layout,
-.dashboard-layout {
-  display: none !important;
+.dashboard-container {
+  min-height: 100vh;
+  width: 100vw;
+  background: #f8fafc;
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
 }
 
-/* Ensure our container is on top */
-.analytics-container {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  z-index: 999999 !important;
-  background: #f8fafc !important;
-  overflow-y: auto !important;
+/* Sidebar Navigation - Simple Outlined Icons Only, Single Color, Active Highlight */
+.sidebar {
+  position: fixed;
+  top: 64px;
+  left: 0;
+  width: 80px;
+  height: calc(100vh - 64px);
+  background: #3D8D7A;
+  border-right: none;
+  z-index: 900;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+  overflow: visible;
+}
+
+.sidebar-nav {
+  padding: 2rem 0.5rem 1rem 0.5rem;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 56px;
+  width: 56px;
+  margin: 8px 0;
+  border-radius: 12px;
+  transition: background 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  position: relative;
+  text-decoration: none;
+}
+
+.sidebar-item.rounded-bg {
+  background: rgba(255,255,255,0.1);
+}
+
+.sidebar-item.active {
+  background: rgba(255,255,255,0.15);
+  border: 2px solid #fff;
+}
+
+.sidebar-item:hover {
+  background: rgba(255,255,255,0.22);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.sidebar-icon svg {
+  display: block;
+}
+
+.sidebar-tooltip {
+  position: absolute;
+  left: 60px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #fff;
+  color: #3D8D7A;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: Inter, sans-serif;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 10;
+}
+
+.sidebar-item:hover .sidebar-tooltip {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Top Navigation Bar (Greenish Theme) */
+.top-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(61, 141, 122, 0.3);
+}
+
+.navbar-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: white;
+  font-weight: 700;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.brand-logo:hover {
+  opacity: 0.9;
+}
+
+.logo-img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.brand-name {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: white;
+  letter-spacing: -0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-center {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  justify-content: center;
+  max-width: 600px;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* User Profile and Notifications */
+.nav-icon-btn {
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: rgba(255, 255, 255, 0.9);
+  position: relative;
+}
+
+.nav-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+}
+
+.notification-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: #ef4444;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.125rem 0.375rem;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+  line-height: 1;
+}
+
+.notif-wrapper {
+  position: relative;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: 55px;
+  right: 0;
+  width: 360px;
+  max-height: 480px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 1001;
+  border: 1px solid #e2e8f0;
+}
+
+.dropdown-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fafafa;
+}
+
+.dropdown-header h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.notification-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.no-notifications {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.notification-item {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.2s;
+}
+
+.notification-item:hover {
+  background: #f8fafc;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notif-content h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.notif-content p {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
+
+.notif-time {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.user-profile-wrapper {
+  position: relative;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 12px;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.user-profile:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.user-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: white;
+}
+
+.dropdown-arrow {
+  color: rgba(255, 255, 255, 0.8);
+  transition: transform 0.2s;
+}
+
+.user-profile:hover .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.profile-dropdown {
+  position: absolute;
+  top: 55px;
+  right: 0;
+  width: 280px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 1001;
+  border: 1px solid #e2e8f0;
+}
+
+.dropdown-header {
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  color: white;
+}
+
+.profile-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.profile-avatar {
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.profile-details h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.profile-details p {
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+.dropdown-menu {
+  padding: 0.5rem;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #1e293b;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+}
+
+.dropdown-item:hover {
+  background: #f1f5f9;
+  color: #3D8D7A;
+}
+
+.dropdown-item svg {
+  color: #64748b;
+  transition: color 0.2s;
+}
+
+.dropdown-item:hover svg {
+  color: #3D8D7A;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 0.5rem 0;
+}
+
+.logout-btn {
+  color: #ef4444 !important;
+}
+
+.logout-btn:hover {
+  background: #fef2f2 !important;
+  color: #dc2626 !important;
+}
+
+.logout-btn svg {
+  color: #ef4444 !important;
+}
+
+.logout-btn:hover svg {
+  color: #dc2626 !important;
+}
+
+/* Rounded semi-transparent backgrounds for sidebar and navbar icons/buttons */
+.rounded-bg {
+  background: rgba(255,255,255,0.13);
+  border-radius: 16px;
+  transition: background 0.2s;
+}
+.rounded-bg:hover {
+  background: rgba(255,255,255,0.22);
+}
+/* Main Content */
+.main-content {
+  margin-left: 80px;
+  margin-top: 64px;
+  padding: 2rem;
+  min-height: calc(100vh - 64px);
+  width: calc(100vw - 80px);
+  position: relative;
+}
+
+/* Scroll to Top Button */
+.scroll-to-top {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 48px;
+  height: 48px;
+  background: #3D8D7A;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
+  transition: all 0.2s;
+  z-index: 900;
+}
+
+.scroll-to-top:hover {
+  background: #2d6a5a;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(61, 141, 122, 0.4);
+}
+
+/* Page Header */
+.page-header {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.header-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+  letter-spacing: -0.025em;
+}
+
+.header-subtitle {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.action-btn.primary {
+  background: #10b981;
+  color: white;
+  border: 1px solid #10b981;
+}
+
+.action-btn.primary:hover {
+  background: #059669;
+  border-color: #047857;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+.action-btn.secondary {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.action-btn.secondary:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+  transform: translateY(-1px);
 }
 
 /* Top Navigation Bar (Same as Dashboard) */
@@ -906,6 +1733,97 @@ body, html {
   background: #A3D1C6;
   color: #23272b;
   border-color: #20c997;
+}
+
+/* Section Header Styles - Match DashboardHome */
+.section-header {
+  margin-bottom: 1.5rem;
+}
+
+.section-header .header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 1.5rem 2rem;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.section-header .header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.section-header .header-icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.section-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+  letter-spacing: -0.025em;
+}
+
+.section-subtitle {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.action-btn.primary {
+  background: #3D8D7A;
+  color: white;
+}
+
+.action-btn.primary:hover {
+  background: #2d6a5a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
+}
+
+.action-btn.secondary {
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.action-btn.secondary:hover {
+  background: white;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .controls-card { 
