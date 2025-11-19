@@ -422,6 +422,36 @@
         {{ toastMessage }}
       </div>
       </transition>
+
+    <!-- Logout Confirmation Modal -->
+    <div v-if="showLogoutModal" class="modal-overlay" @click="closeLogoutModal">
+      <div class="modal-content logout-modal" @click.stop>
+        <div class="modal-header logout-header">
+          <h3>Confirm Logout</h3>
+        </div>
+        <div class="modal-body">
+          <div class="logout-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </div>
+          <p class="logout-message">Are you sure you want to logout?</p>
+          <p class="logout-submessage">You will be redirected to the login page.</p>
+        </div>
+        <div class="modal-footer logout-footer">
+          <button @click="closeLogoutModal" class="btn-cancel" :disabled="isLoggingOut">Cancel</button>
+          <button @click="confirmLogout" class="btn-logout" :disabled="isLoggingOut">
+            <span v-if="!isLoggingOut">Logout</span>
+            <span v-else class="loading-text">
+              <div class="logout-spinner"></div>
+              Redirecting...
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
     </main>
   </div>
 </template>
@@ -472,6 +502,7 @@ const notifications = ref([])
 const showNotifDropdown = ref(false)
 const showProfileDropdown = ref(false)
 const showScrollTop = ref(false)
+const showLogoutModal = ref(false)
 const isLoggingOut = ref(false)
 
 // Grade management state
@@ -637,7 +668,16 @@ const handleNotificationClick = (notif) => {
 }
 
 // Logout functionality
-const logout = () => {
+// Logout confirmation modal functions
+const openLogoutModal = () => {
+  showLogoutModal.value = true
+}
+
+const closeLogoutModal = () => {
+  showLogoutModal.value = false
+}
+
+const confirmLogout = () => {
   isLoggingOut.value = true
   
   console.log('🚪 Logging out...')
@@ -653,6 +693,10 @@ const logout = () => {
   
   // Force immediate redirect - most reliable method
   window.location.replace('/login')
+}
+
+const logout = () => {
+  openLogoutModal()
 }
 
 const getInitials = (firstName: string, lastName: string): string => {
@@ -2739,6 +2783,166 @@ onUnmounted(() => {
     min-width: auto;
     margin-bottom: 0.25rem;
   }
+}
+
+/* Logout Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.logout-modal {
+  max-width: 400px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: white;
+  border: 2px solid #3D8D7A;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.logout-header {
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  color: white;
+  padding: 1.5rem;
+}
+
+.logout-header h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.modal-body {
+  padding: 2rem;
+  text-align: center;
+}
+
+.logout-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.logout-icon svg {
+  color: #3D8D7A;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.logout-message {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.logout-submessage {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 0;
+}
+
+.logout-footer {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1.5rem 2rem;
+  background: #f8fafc;
+}
+
+.btn-cancel {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancel:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.btn-logout {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-logout:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+.btn-logout:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.logout-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.btn-logout .loading-text {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 </style>
