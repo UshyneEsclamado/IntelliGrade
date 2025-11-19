@@ -800,7 +800,7 @@ export default {
     // UTILITY FUNCTIONS
     // ===============================================
     
-    // TIMEZONE UTILITY FUNCTIONS - Exactly matching TakeQuiz.vue
+    // TIMEZONE UTILITY FUNCTIONS
     const formatPHTime = (utcDateString) => {
       if (!utcDateString) return 'Not set';
       try {
@@ -824,26 +824,16 @@ export default {
     const convertPHTimeToUTC = (phDateString) => {
       if (!phDateString) return null;
       try {
-        // The datetime-local input gives us local time without timezone info
-        // We need to interpret this as Philippines time and convert to UTC
         const localDate = new Date(phDateString);
-        
-        // Get the timezone offset for Philippines (should be -480 minutes for UTC+8)
-        const phOffset = -8 * 60; // UTC+8 = -480 minutes
-        const localOffset = localDate.getTimezoneOffset(); // Browser's timezone offset
-        
-        // Calculate the difference between local timezone and Philippines timezone
+        const phOffset = -8 * 60;
+        const localOffset = localDate.getTimezoneOffset();
         const offsetDiff = localOffset - phOffset;
-        
-        // Adjust the date to treat the input as Philippines time
         const utcTime = new Date(localDate.getTime() + (offsetDiff * 60 * 1000));
         
-        console.log('🕐 Converting PH to UTC:');
-        console.log('  Input PH time:', phDateString);
-        console.log('  Local offset:', localOffset);
-        console.log('  PH offset:', phOffset);
-        console.log('  Offset diff:', offsetDiff);
-        console.log('  Result UTC:', utcTime.toISOString());
+        console.log('🕐 Converting PH to UTC:', {
+          input: phDateString,
+          output: utcTime.toISOString()
+        });
         
         return utcTime.toISOString();
       } catch (error) {
@@ -856,8 +846,6 @@ export default {
       if (!utcDateString) return '';
       try {
         const utcDate = new Date(utcDateString);
-        
-        // Convert UTC to Philippines time for the datetime-local input
         const phTime = new Intl.DateTimeFormat('sv-SE', {
           timeZone: 'Asia/Manila',
           year: 'numeric',
@@ -867,33 +855,11 @@ export default {
           minute: '2-digit'
         }).format(utcDate).replace(' ', 'T');
         
-        console.log('🕐 Converting UTC to PH input:');
-        console.log('  UTC input:', utcDateString);
-        console.log('  PH output:', phTime);
-        
         return phTime;
       } catch (error) {
         console.error('Error converting UTC to PH for input:', error);
         return '';
       }
-    };
-
-    const debugTimeConversion = () => {
-      const now = new Date();
-      console.log('🕐 TIMEZONE DEBUG at component mount:');
-      console.log('Browser timezone offset (minutes):', now.getTimezoneOffset());
-      console.log('Current local time:', now.toString());
-      console.log('Current UTC time:', now.toISOString());
-      console.log('Formatted as PH time:', formatPHTime(now.toISOString()));
-      
-      // Test with the exact time mentioned in your issue: 10:35 PM
-      const testPHTime = '2024-11-15T22:35';  // 10:35 PM PH time
-      const convertedUTC = convertPHTimeToUTC(testPHTime);
-      console.log('\n🧪 Test conversion:');
-      console.log('Input PH time (10:35 PM):', testPHTime);
-      console.log('Converted to UTC:', convertedUTC);
-      console.log('Formatted back to PH display:', formatPHTime(convertedUTC));
-      console.log('Converted back to input format:', convertUTCtoPHForInput(convertedUTC));
     };
 
     const getStepIndex = (step) => {
@@ -1174,7 +1140,6 @@ export default {
           return false;
         }
         
-        // Optional: Warn if start date is in the past
         if (startDate < now) {
           const proceed = confirm(
             'The start date is in the past. Students will be able to take this quiz immediately.\n\n' +
@@ -1225,10 +1190,11 @@ export default {
     };
 
     // ===============================================
-    // QUIZ PUBLISHING FUNCTION (FIXED WITH ONE-BY-ONE INSERTION)
+    // FIXED QUIZ PUBLISHING FUNCTION
     // ===============================================
     
     const publishQuiz = async () => {
+      // Validation first
       if (!validateQuiz()) {
         console.log('❌ Validation failed');
         return;
@@ -1242,6 +1208,7 @@ export default {
       console.log('🚀 Starting quiz publication...');
 
       try {
+        // Verify teacher ID
         if (!teacherInfo.value.teacher_id) {
           throw new Error('Teacher ID not found. Please refresh and try again.');
         }
@@ -1252,14 +1219,12 @@ export default {
         const startDateUTC = convertPHTimeToUTC(quiz.value.settings.startDate);
         const endDateUTC = convertPHTimeToUTC(quiz.value.settings.endDate);
         
-        // Debug timezone conversion during publish
-        console.log('🕐 PUBLISHING TIMEZONE DEBUG:');
-        console.log('Original start date input:', quiz.value.settings.startDate);
-        console.log('Converted start date UTC:', startDateUTC);
-        console.log('Formatted back to PH:', formatPHTime(startDateUTC));
-        console.log('Original end date input:', quiz.value.settings.endDate);
-        console.log('Converted end date UTC:', endDateUTC);
-        console.log('Formatted back to PH:', formatPHTime(endDateUTC));
+        console.log('🕐 Timezone conversion:', {
+          startInput: quiz.value.settings.startDate,
+          startUTC: startDateUTC,
+          endInput: quiz.value.settings.endDate,
+          endUTC: endDateUTC
+        });
 
         const quizData = {
           subject_id: subject.value.id,
@@ -1298,7 +1263,7 @@ export default {
 
         console.log('✅ Step 1 complete: Quiz created with ID:', newQuiz.id);
 
-        // === STEP 2: Insert Questions and Get IDs ===
+        // === STEP 2: Insert Questions ===
         console.log('📝 Step 2: Preparing questions...');
         
         const questionsData = quiz.value.questions.map((q, index) => ({
@@ -1328,7 +1293,7 @@ export default {
 
         console.log(`✅ Step 2 complete: ${insertedQuestions.length} questions inserted`);
 
-        // === STEP 3 & 4: Insert Options and Answers ONE BY ONE ===
+        // === STEP 3: Insert Options and Answers ONE BY ONE ===
         console.log('📝 Step 3: Inserting options and answers one by one...');
         
         let totalOptionsInserted = 0;
@@ -1407,12 +1372,10 @@ export default {
           answers: totalAnswersInserted
         });
 
-        // Reset publishing state first
-        isPublishing.value = false;
-
+        // Show success message
         alert(`✅ Quiz Published Successfully!\n\n📝 ${newQuiz.title}\n🔑 Quiz Code: ${newQuiz.quiz_code}\n📊 ${insertedQuestions.length} questions\n\n✨ Students can now take this quiz!`);
 
-        // Redirect immediately after user closes alert
+        // Redirect to view quizzes
         router.push({
           name: 'ViewQuizzes',
           params: {
@@ -1430,32 +1393,26 @@ export default {
       } catch (error) {
         console.error('❌ Publication error:', error);
 
-        // Only show error if we're still in publishing state
-        if (isPublishing.value) {
-          let errorMessage = '❌ Failed to Publish Quiz\n\n';
+        let errorMessage = '❌ Failed to Publish Quiz\n\n';
 
-          if (error.code === '23505') {
-            errorMessage += '⚠️ A quiz with this title already exists in this section.\nPlease use a different title.';
-          } else if (error.code === '23503') {
-            errorMessage += '⚠️ Invalid reference detected.\nPlease refresh the page and try again.';
-          } else if (error.code === 'PGRST116') {
-            errorMessage += '⚠️ Database connection issue.\nPlease check your internet connection and try again.';
-          } else if (error.code === '42501' || error.message.includes('row-level security')) {
-            errorMessage += '⚠️ Permission error while saving quiz data.\n\nThis usually means there\'s an issue with database permissions.\nPlease contact your system administrator or try logging out and back in.';
-          } else if (error.message) {
-            errorMessage += `Error: ${error.message}`;
-          } else {
-            errorMessage += '⚠️ An unexpected error occurred.\nPlease try again or contact support if the problem persists.';
-          }
-
-          alert(errorMessage);
+        if (error.code === '23505') {
+          errorMessage += '⚠️ A quiz with this title already exists in this section.\nPlease use a different title.';
+        } else if (error.code === '23503') {
+          errorMessage += '⚠️ Invalid reference detected.\nPlease refresh the page and try again.';
+        } else if (error.code === 'PGRST116') {
+          errorMessage += '⚠️ Database connection issue.\nPlease check your internet connection and try again.';
+        } else if (error.code === '42501' || error.message.includes('row-level security')) {
+          errorMessage += '⚠️ Permission error while saving quiz data.\n\nThis usually means there\'s an issue with database permissions.\nPlease contact your system administrator or try logging out and back in.';
+        } else if (error.message) {
+          errorMessage += `Error: ${error.message}`;
+        } else {
+          errorMessage += '⚠️ An unexpected error occurred.\nPlease try again or contact support if the problem persists.';
         }
+
+        alert(errorMessage);
 
       } finally {
-        // Only set to false if still true (not already set in success)
-        if (isPublishing.value) {
-          isPublishing.value = false;
-        }
+        isPublishing.value = false;
         console.log('🏁 Publishing process completed');
       }
     };
@@ -1466,9 +1423,6 @@ export default {
 
     onMounted(async () => {
       console.log('🔧 Component mounted');
-      
-      // Debug timezone conversion
-      debugTimeConversion();
       
       const teacherLoaded = await loadTeacherInfo();
       if (!teacherLoaded) {
@@ -1525,7 +1479,6 @@ export default {
   }
 };
 </script>
-
 <style scoped>
 /* =============================================== */
 /* MAIN PAGE STYLES - Matching MySubjects.vue */
