@@ -1058,95 +1058,6 @@ const handleNotificationClick = async (notification) => {
   color: white;
 }
 
-.notification-badge {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  background: #ef4444;
-  color: white;
-  font-size: 0.7rem;
-  font-weight: 600;
-  padding: 0.125rem 0.375rem;
-  border-radius: 10px;
-  min-width: 18px;
-  text-align: center;
-  line-height: 1;
-}
-
-.notif-wrapper {
-  position: relative;
-}
-
-.notification-dropdown {
-  position: absolute;
-  top: 55px;
-  right: 0;
-  width: 360px;
-  max-height: 480px;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
-  z-index: 1001;
-  border: 1px solid #e2e8f0;
-}
-
-.dropdown-header {
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
-  background: #fafafa;
-}
-
-.dropdown-header h3 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.notification-list {
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.no-notifications {
-  padding: 3rem 1.5rem;
-  text-align: center;
-  color: #94a3b8;
-  font-size: 0.9rem;
-}
-
-.notification-item {
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #f1f5f9;
-  transition: background 0.2s;
-}
-
-.notification-item:hover {
-  background: #f8fafc;
-}
-
-.notification-item:last-child {
-  border-bottom: none;
-}
-
-.notif-content h4 {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 0.25rem;
-}
-
-.notif-content p {
-  font-size: 0.8rem;
-  color: #64748b;
-  margin-bottom: 0.5rem;
-}
-
-.notif-time {
-  font-size: 0.75rem;
-  color: #94a3b8;
-}
-
 .user-profile-wrapper {
   position: relative;
 }
@@ -1191,6 +1102,108 @@ const handleNotificationClick = async (notification) => {
   transform: rotate(180deg);
 }
 
+/* Rounded semi-transparent backgrounds for sidebar and navbar icons/buttons */
+.rounded-bg {
+  background: rgba(255,255,255,0.13);
+  border-radius: 16px;
+  transition: background 0.2s;
+}
+.rounded-bg:hover {
+  background: rgba(255,255,255,0.22);
+}
+
+/* Notification dropdown styles */
+.notif-wrapper {
+  position: relative;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #3D8D7A;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: 55px;
+  right: 0;
+  width: 360px;
+  max-height: 480px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 1001;
+  border: 1px solid #e2e8f0;
+}
+
+.dropdown-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fafafa;
+}
+
+.dropdown-header h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.notification-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.no-notifications {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.notification-item {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.notification-item:hover {
+  background: #f8fafc;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notif-content h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.notif-content p {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
+
+.notif-time {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
 .profile-dropdown {
   position: absolute;
   top: 55px;
@@ -1204,7 +1217,7 @@ const handleNotificationClick = async (notification) => {
   border: 1px solid #e2e8f0;
 }
 
-.dropdown-header {
+.profile-dropdown .dropdown-header {
   padding: 1.5rem;
   background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
   color: white;
@@ -1295,17 +1308,6 @@ const handleNotificationClick = async (notification) => {
 .logout-btn:hover svg {
   color: #dc2626 !important;
 }
-
-/* Rounded semi-transparent backgrounds for sidebar and navbar icons/buttons */
-.rounded-bg {
-  background: rgba(255,255,255,0.13);
-  border-radius: 16px;
-  transition: background 0.2s;
-}
-.rounded-bg:hover {
-  background: rgba(255,255,255,0.22);
-}
-
 /* Main Content - Better Spacing */
 .main-content {
   margin-top: 64px;

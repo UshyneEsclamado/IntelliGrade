@@ -3009,28 +3009,83 @@ onUnmounted(() => {
 }
 
 /* Notification and Profile Dropdowns */
-.notif-wrapper,
+.nav-icon-btn {
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: rgba(255, 255, 255, 0.9);
+  position: relative;
+}
+
+.nav-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+}
+
 .user-profile-wrapper {
   position: relative;
 }
 
-.nav-icon-btn,
 .user-profile {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: white;
-  padding: 0.5rem;
-  border-radius: 8px;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 12px;
+  transition: background 0.2s;
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
-.nav-icon-btn:hover,
 .user-profile:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
   background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.user-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: white;
+}
+
+.dropdown-arrow {
+  color: rgba(255, 255, 255, 0.8);
+  transition: transform 0.2s;
+}
+
+.user-profile:hover .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+/* Rounded semi-transparent backgrounds for sidebar and navbar icons/buttons */
+.rounded-bg {
+  background: rgba(255,255,255,0.13);
+  border-radius: 16px;
+  transition: background 0.2s;
+}
+.rounded-bg:hover {
+  background: rgba(255,255,255,0.22);
+}
+
+/* Notification dropdown styles */
+.notif-wrapper {
+  position: relative;
 }
 
 .notification-badge {
@@ -3042,44 +3097,82 @@ onUnmounted(() => {
   border-radius: 50%;
   width: 18px;
   height: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.user-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 2px solid #3D8D7A;
 }
 
-.user-name {
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.dropdown-arrow {
-  transition: transform 0.2s ease;
-}
-
-/* Dropdown Menus */
 .notification-dropdown {
   position: absolute;
-  top: 100%;
+  top: 55px;
   right: 0;
-  margin-top: 0.5rem;
+  width: 360px;
+  max-height: 480px;
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-  border: 1px solid #e5e7eb;
-  min-width: 280px;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
   z-index: 1001;
+  border: 1px solid #e2e8f0;
+}
+
+.dropdown-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fafafa;
+}
+
+.dropdown-header h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.notification-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.no-notifications {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.notification-item {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.notification-item:hover {
+  background: #f8fafc;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notif-content h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.notif-content p {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
+
+.notif-time {
+  font-size: 0.75rem;
+  color: #94a3b8;
 }
 
 .profile-dropdown {
@@ -3090,64 +3183,15 @@ onUnmounted(() => {
   background: white;
   border-radius: 16px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-  overflow-y: auto;
-  max-height: 350px;
+  overflow: hidden;
   z-index: 1001;
   border: 1px solid #e2e8f0;
 }
 
-.dropdown-header {
+.profile-dropdown .dropdown-header {
   padding: 1.5rem;
   background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
   color: white;
-}
-
-.dropdown-header h3 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0;
-}
-
-.notification-list {
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.no-notifications {
-  padding: 2rem;
-  text-align: center;
-  color: #6b7280;
-  font-size: 0.875rem;
-}
-
-.notification-item {
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #f3f4f6;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.notification-item:hover {
-  background: #f9fafb;
-}
-
-.notif-content h4 {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 0.25rem;
-}
-
-.notif-content p {
-  font-size: 0.8rem;
-  color: #6b7280;
-  margin: 0 0 0.25rem;
-}
-
-.notif-time {
-  font-size: 0.75rem;
-  color: #9ca3af;
 }
 
 .profile-info {
@@ -3213,6 +3257,12 @@ onUnmounted(() => {
   color: #3D8D7A;
 }
 
+.dropdown-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 0.5rem 0;
+}
+
 .logout-btn {
   color: #ef4444 !important;
 }
@@ -3228,12 +3278,6 @@ onUnmounted(() => {
 
 .logout-btn:hover svg {
   color: #dc2626 !important;
-}
-
-.dropdown-divider {
-  height: 1px;
-  background: #e2e8f0;
-  margin: 0.5rem 0;
 }
 
 /* Sidebar Navigation */
