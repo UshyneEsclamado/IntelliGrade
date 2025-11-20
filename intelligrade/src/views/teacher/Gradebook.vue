@@ -184,7 +184,7 @@
         <div class="header-content">
           <div class="header-left">
             <div class="header-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+              <svg width="25" height="25" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
               </svg>
             </div>
@@ -200,7 +200,7 @@
 
     <!-- Subject Filter Buttons -->
     <div v-if="!selectedSubject && !selectedSection" class="subject-filters">
-      <div class="filter-header">
+      <div class="filter-header" style="border-bottom: none;">
         <h3 class="filter-title">Filter by Subject</h3>
         <span class="filter-subtitle">Choose a subject type to filter courses</span>
       </div>
@@ -270,16 +270,6 @@
       <!-- LEVEL 1: Subject Selection -->
       <div v-if="!selectedSubject" class="content-card modern">
         <div class="card-header enhanced">
-          <div class="card-title-section">
-            <h3>My Subjects</h3>
-            <p class="card-desc">Choose a subject to view sections and manage submissions</p>
-          </div>
-          <div class="card-stats">
-            <div class="stat-item">
-              <span class="stat-number">{{ filteredSubjects.length }}</span>
-              <span class="stat-label">Subjects</span>
-            </div>
-          </div>
         </div>
         
         <div class="subjects-grid modern">
@@ -2612,8 +2602,9 @@ body, html {
   align-items: center;
   justify-content: space-between;
   height: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto 0 auto;
   padding: 0 1.5rem;
 }
 
@@ -2806,6 +2797,13 @@ body, html {
 
 /* Page Header */
 .page-header {
+    margin-top: 2rem;
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   background: white;
   border-radius: 16px;
   padding: 1.5rem 2rem;
@@ -2820,15 +2818,31 @@ body, html {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .header-left {
   display: flex;
   align-items: center;
   gap: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .header-icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
   width: 56px;
   height: 56px;
   background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
@@ -2844,9 +2858,15 @@ body, html {
   font-weight: 700;
   color: #1e293b;
   margin-bottom: 0.25rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
 }
 
 .header-subtitle {
+  font-size: 0.95rem;
+  color: #64748b;
   font-size: 0.95rem;
   color: #64748b;
 }
@@ -3039,12 +3059,12 @@ body, html {
 
 /* Enhanced Subject Filter Buttons */
 .subject-filters {
-  margin-bottom: 2rem;
   background: white;
   border-radius: 16px;
   padding: 1.5rem;
   border: 1px solid rgba(61, 141, 122, 0.1);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  margin-bottom: 0;
 }
 .dark .subject-filters {
   background: #23272b;
@@ -3052,7 +3072,6 @@ body, html {
 }
 
 .filter-header {
-  margin-bottom: 1.25rem;
   border-bottom: 1px solid rgba(61, 141, 122, 0.1);
   padding-bottom: 1rem;
 }
@@ -3219,7 +3238,7 @@ body, html {
 
 .error-container svg {
   margin-bottom: 1rem;
-  color: #fca5a5;
+    margin-bottom: -20rem; 
 }
 
 .error-container h3 {
@@ -3242,16 +3261,24 @@ body, html {
 .main-content {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 0;
+  padding-top: 0;
 }
 
 .content-card.modern {
+    margin-top: 0;
   background: white;
   border-radius: 16px;
-  padding: 0;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(61, 141, 122, 0.08);
-  overflow: hidden;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(61, 141, 122, 0.1);
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+  /* Removed negative top offset to avoid cutting off */
+  box-sizing: border-box;
+  min-height: 110px;
 }
 .dark .content-card.modern {
   background: #23272b;
@@ -3260,28 +3287,12 @@ body, html {
 }
 
 .card-header.enhanced {
-  padding: 2rem 2rem 1.5rem 2rem;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-bottom: 1px solid rgba(61, 141, 122, 0.1);
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  padding: 0;
+  background: transparent;
+  border-bottom: none;
+  display: none;
 }
-.dark .card-header.enhanced {
-  background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
-  border-bottom-color: rgba(163, 209, 198, 0.2);
-}
-
-.card-title-section h3 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0 0 0.5rem 0;
-  background: linear-gradient(135deg, #3D8D7A, #059669);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
+/* Removed duplicated and misplaced CSS block causing errors */
 .dark .card-title-section h3 {
   background: linear-gradient(135deg, #A3D1C6, #34d399);
   -webkit-background-clip: text;
@@ -3290,6 +3301,10 @@ body, html {
 }
 
 .card-title-section .card-desc {
+  /* Add space above Gradebook header */
+  .card-title-section {
+    margin-top: 2rem;
+  }
   font-size: 0.875rem;
   color: #6b7280;
   margin: 0;
@@ -3624,9 +3639,11 @@ body, html {
 /* Enhanced Subject and Section Cards */
 .subjects-grid.modern {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  gap: 1.5rem;
-  padding: 2rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem 1.5rem;
+  padding: 0;
+  max-width: 1100px;
+  margin: 0 auto;
 }
 
 .subjects-grid, .sections-grid {
@@ -3648,6 +3665,8 @@ body, html {
   align-items: center;
   gap: 1rem;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  width: 100%;
+  box-sizing: border-box;
 }
 .dark .subject-card.modern {
   background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
