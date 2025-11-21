@@ -524,9 +524,36 @@ const loadTeacherProfile = async () => {
   try {
     console.log('🔍 Loading teacher profile...')
     
+    // First check if we have user info in localStorage
+    const storedUserInfo = localStorage.getItem('userInfo')
+    if (storedUserInfo) {
+      const userInfo = JSON.parse(storedUserInfo)
+      if (userInfo.role === 'teacher') {
+        console.log('✅ Found stored teacher info:', userInfo.full_name)
+        fullName.value = userInfo.full_name
+        userId.value = userInfo.id
+        
+        // Get teacher ID from database
+        const { data: teacher } = await supabase
+          .from('teachers')
+          .select('id')
+          .eq('profile_id', userInfo.profile_id)
+          .single()
+        
+        if (teacher) {
+          teacherId.value = teacher.id
+          return true
+        }
+      }
+    }
+    
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError || !user) {
       console.error('❌ No user found:', userError)
+      // Don't redirect immediately, give a chance for auth to settle
+      setTimeout(() => {
+        window.location.href = '/login'
+      }, 2000)
       return false
     }
     
@@ -704,7 +731,7 @@ const loadDashboardStats = async () => {
         const uniqueStudents = new Set(enrollments.map(e => e.student_id))
         totalStudents.value = uniqueStudents.size
         console.log('👥 Total unique students:', uniqueStudents.size)
-        console.log('� Total enrollments:', enrollments.length)
+        console.log('  Total enrollments:', enrollments.length)
       } else {
         console.error('❌ Enrollment error:', enrollError)
       }
@@ -1058,79 +1085,23 @@ const handleNotificationClick = async (notification) => {
   color: white;
 }
 
-.user-profile-wrapper {
-  position: relative;
-}
-
-.user-profile {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 12px;
-  transition: background 0.2s;
-  cursor: pointer;
-}
-
-.user-profile:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.user-avatar {
-  width: 36px;
-  height: 36px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
-
-.user-name {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: white;
-}
-
-.dropdown-arrow {
-  color: rgba(255, 255, 255, 0.8);
-  transition: transform 0.2s;
-}
-
-.user-profile:hover .dropdown-arrow {
-  transform: rotate(180deg);
-}
-
-/* Rounded semi-transparent backgrounds for sidebar and navbar icons/buttons */
-.rounded-bg {
-  background: rgba(255,255,255,0.13);
-  border-radius: 16px;
-  transition: background 0.2s;
-}
-.rounded-bg:hover {
-  background: rgba(255,255,255,0.22);
-}
-
-/* Notification dropdown styles */
-.notif-wrapper {
-  position: relative;
-}
-
 .notification-badge {
   position: absolute;
-  top: -2px;
-  right: -2px;
+  top: 6px;
+  right: 6px;
   background: #ef4444;
   color: white;
-  border-radius: 50%;
-  width: 18px;
-  height: 18px;
-  font-size: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid #3D8D7A;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.125rem 0.375rem;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+  line-height: 1;
+}
+
+.notif-wrapper {
+  position: relative;
 }
 
 .notification-dropdown {
@@ -1175,7 +1146,6 @@ const handleNotificationClick = async (notification) => {
   padding: 1rem 1.5rem;
   border-bottom: 1px solid #f1f5f9;
   transition: background 0.2s;
-  cursor: pointer;
 }
 
 .notification-item:hover {
@@ -1204,6 +1174,50 @@ const handleNotificationClick = async (notification) => {
   color: #94a3b8;
 }
 
+.user-profile-wrapper {
+  position: relative;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 12px;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.user-profile:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.user-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: white;
+}
+
+.dropdown-arrow {
+  color: rgba(255, 255, 255, 0.8);
+  transition: transform 0.2s;
+}
+
+.user-profile:hover .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
 .profile-dropdown {
   position: absolute;
   top: 55px;
@@ -1217,7 +1231,7 @@ const handleNotificationClick = async (notification) => {
   border: 1px solid #e2e8f0;
 }
 
-.profile-dropdown .dropdown-header {
+.dropdown-header {
   padding: 1.5rem;
   background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
   color: white;
@@ -1308,6 +1322,17 @@ const handleNotificationClick = async (notification) => {
 .logout-btn:hover svg {
   color: #dc2626 !important;
 }
+
+/* Rounded semi-transparent backgrounds for sidebar and navbar icons/buttons */
+.rounded-bg {
+  background: rgba(255,255,255,0.13);
+  border-radius: 16px;
+  transition: background 0.2s;
+}
+.rounded-bg:hover {
+  background: rgba(255,255,255,0.22);
+}
+
 /* Main Content - Better Spacing */
 .main-content {
   margin-top: 64px;

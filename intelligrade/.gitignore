@@ -32,3 +32,6 @@ coverage
 __pycache__/
 *.pyc
 
+.env
+.env.local
+.env.*.local

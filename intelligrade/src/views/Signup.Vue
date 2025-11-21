@@ -336,7 +336,18 @@ export default {
         console.log('Email:', this.email);
         console.log('Role:', this.role);
 
-        // Step 3: Create Supabase Auth user first
+        // Step 3: Check if email is already registered
+        const { data: existingUser, error: emailCheckError } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('email', this.email)
+          .single();
+
+        if (!emailCheckError && existingUser) {
+          throw new Error('An account with this email already exists. Please use a different email or try logging in.');
+        }
+
+        // Step 4: Create Supabase Auth user first
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: this.email,
           password: this.password,
@@ -360,33 +371,11 @@ export default {
         }
 
         console.log('✅ Supabase auth user created:', authData.user.id);
-
-        // Step 4: Use the database function to complete signup
-        // This will create both profile and teacher records automatically
-        const { data: completionResult, error: completionError } = await supabase.rpc('complete_user_signup', {
-          p_auth_user_id: authData.user.id,
-          p_full_name: this.fullName,
-          p_email: this.email,
-          p_role: this.role,
-          p_grade_level: null // Teachers don't need grade level
-        });
-
-        if (completionError) {
-          console.error('❌ Signup completion error:', completionError);
-          // Clean up auth user if database setup fails
-          await supabase.auth.signOut();
-          throw new Error(`Failed to complete signup: ${completionError.message}`);
+        
+        // Check if email confirmation is required
+        if (!authData.session) {
+          console.log('📧 Email confirmation required - database records will be created after email verification');
         }
-
-        // Check if the function returned an error
-        if (!completionResult.success) {
-          console.error('❌ Signup function error:', completionResult.error);
-          // Clean up auth user if database setup fails
-          await supabase.auth.signOut();
-          throw new Error(completionResult.error);
-        }
-
-        console.log('✅ Teacher signup completed successfully:', completionResult.user_info);
 
         // Step 5: Show success message
         this.signupSuccess = true;

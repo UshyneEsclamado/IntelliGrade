@@ -768,33 +768,43 @@ const groupedBroadcasts = computed(() => {
 })
 
 // ================================
-// FILE UPLOAD FUNCTIONS
+// FILE UPLOAD FUNCTIONS (FIXED)
 // ================================
 
 const uploadFileToStorage = async (file, folder = 'message-attachments') => {
   try {
+    // Validate file
+    if (!file) {
+      throw new Error('No file provided')
+    }
+
     const fileExt = file.name.split('.').pop()
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
     const filePath = `${folder}/${fileName}`
     
-    const { error } = await supabase.storage
+    console.log('Uploading file:', filePath)
+    
+    // Upload to storage
+    const { error: uploadError, data: uploadData } = await supabase.storage
       .from('attachments')
       .upload(filePath, file, {
         cacheControl: '3600',
         upsert: false
       })
     
-    if (error) {
-      console.error('Upload error:', error)
-      throw error
+    if (uploadError) {
+      console.error('Upload error:', uploadError)
+      throw uploadError
     }
+    
+    console.log('Upload successful:', uploadData)
     
     // Get public URL
     const { data: urlData } = supabase.storage
       .from('attachments')
       .getPublicUrl(filePath)
     
-    return {
+    const attachmentData = {
       path: filePath,
       url: urlData.publicUrl,
       name: file.name,
@@ -802,6 +812,10 @@ const uploadFileToStorage = async (file, folder = 'message-attachments') => {
       size: file.size,
       mimeType: file.type
     }
+    
+    console.log('Attachment data:', attachmentData)
+    return attachmentData
+    
   } catch (error) {
     console.error('Error uploading file:', error)
     throw error
@@ -810,6 +824,10 @@ const uploadFileToStorage = async (file, folder = 'message-attachments') => {
 
 const saveMessageAttachments = async (messageId, attachments) => {
   try {
+    if (!attachments || attachments.length === 0) {
+      return []
+    }
+
     const attachmentRecords = attachments.map(att => ({
       message_id: messageId,
       file_name: att.name,
@@ -819,6 +837,8 @@ const saveMessageAttachments = async (messageId, attachments) => {
       file_size: att.size,
       mime_type: att.mimeType
     }))
+    
+    console.log('Saving attachments to DB:', attachmentRecords)
     
     const { data, error } = await supabase
       .from('message_attachments')
@@ -830,6 +850,7 @@ const saveMessageAttachments = async (messageId, attachments) => {
       throw error
     }
     
+    console.log('Attachments saved successfully:', data)
     return data
   } catch (error) {
     console.error('Error saving message attachments:', error)
@@ -1494,43 +1515,74 @@ const loadConversationMessages = async (teacherId, sectionId) => {
   }
 }
 
+// ================================
+// SEND MESSAGE FUNCTION (FIXED)
+// ================================
+
 const sendMessage = async () => {
-  if ((!newMessage.value.trim() && !selectedFile.value) || !activeTeacher.value || !currentStudentId.value || isSendingMessage.value) return
-  
-  const messageText = newMessage.value.trim()
-  const fileToUpload = selectedFile.value
-  
-  const tempMessage = {
-    id: 'temp-' + Date.now(),
-    sender_id: currentStudentId.value,
-    recipient_id: activeTeacher.value.id,
-    content: messageText || '📎 Attachment',
-    sent_at: new Date().toISOString(),
-    is_read: false,
-    read_at: null,
-    message_type: 'direct',
-    attachments: fileToUpload ? [{
-      name: fileToUpload.name,
-      url: previewFile.value,
-      type: fileToUpload.type.startsWith('image/') ? 'image' : 'file'
-    }] : []
+  // Validate input
+  if ((!newMessage.value.trim() && !selectedFile.value) || !activeTeacher.value || !currentStudentId.value) {
+    return
   }
   
-  currentMessages.value.push(tempMessage)
-  newMessage.value = ''
-  removeFile()
-  
-  await nextTick()
-  scrollToBottom()
-  
+  if (isSendingMessage.value) {
+    console.warn('Already sending message, please wait...')
+    return
+  }
+
+  const messageText = newMessage.value.trim()
+  const fileToUpload = selectedFile.value
+
   try {
     isSendingMessage.value = true
     
-    let uploadedAttachment = null
-    if (fileToUpload) {
-      uploadedAttachment = await uploadFileToStorage(fileToUpload)
+    // Create temporary UI message
+    const tempMessage = {
+      id: 'temp-' + Date.now(),
+      sender_id: currentStudentId.value,
+      recipient_id: activeTeacher.value.id,
+      content: messageText || '📎 Attachment',
+      sent_at: new Date().toISOString(),
+      is_read: false,
+      read_at: null,
+      message_type: 'direct',
+      attachments: []
     }
     
+    currentMessages.value.push(tempMessage)
+    newMessage.value = ''
+    
+    // Clear file input immediately
+    const fileInputEl = fileInput.value as HTMLInputElement
+    if (fileInputEl) {
+      fileInputEl.value = ''
+    }
+    removeFile()
+    
+    await nextTick()
+    scrollToBottom()
+
+    let uploadedAttachment = null
+    
+    // Step 1: Upload file if present
+    if (fileToUpload) {
+      try {
+        console.log('Starting file upload...')
+        uploadedAttachment = await uploadFileToStorage(fileToUpload)
+        console.log('File uploaded successfully')
+      } catch (uploadError) {
+        console.error('File upload failed:', uploadError)
+        // Remove temp message on upload failure
+        const tempIndex = currentMessages.value.findIndex(m => m.id === tempMessage.id)
+        if (tempIndex !== -1) {
+          currentMessages.value.splice(tempIndex, 1)
+        }
+        throw new Error(`Failed to upload file: ${uploadError.message}`)
+      }
+    }
+
+    // Step 2: Save message to database
+    console.log('Saving message to database...')
     const { data: newMsg, error: sendError } = await supabase
       .from('messages')
       .insert({
@@ -1543,15 +1595,26 @@ const sendMessage = async () => {
       })
       .select()
       .single()
-    
-    if (sendError) throw sendError
-    
-    console.log('Message sent successfully:', newMsg)
-    
-    if (uploadedAttachment) {
-      await saveMessageAttachments(newMsg.id, [uploadedAttachment])
+
+    if (sendError) {
+      throw sendError
     }
-    
+
+    console.log('Message saved:', newMsg)
+
+    // Step 3: Save attachments to database if file was uploaded
+    if (uploadedAttachment) {
+      try {
+        console.log('Saving attachment to database...')
+        await saveMessageAttachments(newMsg.id, [uploadedAttachment])
+      } catch (attachError) {
+        console.error('Warning: Attachment data not saved:', attachError)
+        // Message was sent, but attachment record failed
+        // This is acceptable - the file is still accessible via URL
+      }
+    }
+
+    // Step 4: Update UI with real message
     const tempIndex = currentMessages.value.findIndex(m => m.id === tempMessage.id)
     if (tempIndex !== -1) {
       currentMessages.value[tempIndex] = {
@@ -1571,20 +1634,27 @@ const sendMessage = async () => {
         }] : []
       }
     }
+
+    console.log('Message sent successfully!')
     
+    // Refresh teacher list
     await loadEnrolledSubjectsAndTeachers()
-    
+
   } catch (error) {
     console.error('Failed to send message:', error)
     
-    const tempIndex = currentMessages.value.findIndex(m => m.id === tempMessage.id)
+    // Remove temp message on error
+    const tempIndex = currentMessages.value.findIndex(m => m.id === 'temp-' + Date.now())
     if (tempIndex !== -1) {
       currentMessages.value.splice(tempIndex, 1)
     }
     
-    alert('Failed to send message. Please try again.')
+    // Show user-friendly error
+    const errorMsg = error instanceof Error ? error.message : 'Failed to send message'
+    alert(`Error: ${errorMsg}\n\nPlease try again.`)
   } finally {
     isSendingMessage.value = false
+    console.log('Send message completed, isSendingMessage set to false')
   }
 }
 
@@ -1987,7 +2057,6 @@ onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
 })
 </script>
-
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');

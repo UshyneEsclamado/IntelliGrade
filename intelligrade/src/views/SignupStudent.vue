@@ -117,7 +117,12 @@
           <p class="subtitle">Join your class and start learning with IntelliGrade</p>
         </div>
 
-        <form @submit.prevent="handleSignup" class="signup-form">
+        <div v-if="signupSuccess" class="success-display">
+          <div class="success-icon">✅</div>
+          <p>{{ successMessage }}</p>
+        </div>
+
+        <form @submit.prevent="handleSignup" class="signup-form" v-if="!signupSuccess">
           <div v-if="error" class="error-display">
             <div class="error-icon">⚠️</div>
             <p>{{ error }}</p>
@@ -270,7 +275,7 @@ export default {
       email: "",
       password: "",
       studentId: "",
-      gradeLevel: "",
+      gradeLevel: "7",
       error: "",
       isLoading: false,
       showPassword: false,
@@ -322,25 +327,29 @@ export default {
     },
 
     async handleSignup() {
-      // Clear previous errors
       this.error = "";
 
-      // Step 1: Basic validation
+      console.log('=== STUDENT SIGNUP STARTED ===');
+
       if (!this.fullName || !this.email || !this.password || !this.studentId || !this.gradeLevel) {
         this.error = "Please fill in all fields.";
         return;
       }
 
-      // Step 2: Check for password policy errors
       if (this.passwordErrors.length > 0) {
         this.error = 'Your password does not meet the security policy. Please fix the issues listed below the password field.';
         return;
       }
 
-      // Step 3: Validate grade level
       const gradeNum = parseInt(this.gradeLevel);
       if (gradeNum < 7 || gradeNum > 12) {
         this.error = "Grade level must be between 7 and 12.";
+        return;
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(this.email)) {
+        this.error = "Please enter a valid email address.";
         return;
       }
 
@@ -353,124 +362,101 @@ export default {
         console.log('Student ID:', this.studentId);
         console.log('Grade Level:', gradeNum);
 
-        // Step 4: Check if student ID is already taken (separate check before auth)
-        const { data: existingStudent, error: checkError } = await supabase
-          .from('students')
-          .select('student_id')
-          .eq('student_id', this.studentId)
-          .single();
-
-        if (!checkError && existingStudent) {
-          throw new Error('Student ID already exists. Please use a different Student ID.');
-        }
-
-        // Step 5: Create Supabase Auth user first
+        // REMOVED THE STUDENT ID CHECK - Let the database handle it
+        // The trigger will fail if student_id is duplicate due to UNIQUE constraint
+        
+        console.log('Creating Supabase auth user...');
+        
         const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: this.email,
+          email: this.email.toLowerCase().trim(),
           password: this.password,
           options: {
             emailRedirectTo: `${window.location.origin}/email-verified`,
             data: {
-              full_name: this.fullName,
-              role: 'student'
+              full_name: this.fullName.trim(),
+              role: 'student',
+              student_id: this.studentId.trim(),
+              grade_level: gradeNum
             }
           }
         });
 
         if (authError) {
           console.error('❌ Auth signup error:', authError);
-          throw authError;
+          
+          if (authError.message?.includes('User already registered')) {
+            throw new Error('An account with this email already exists. Please try logging in instead.');
+          } else if (authError.message?.includes('Email rate limit exceeded')) {
+            throw new Error('Too many signup attempts. Please wait a few minutes and try again.');
+          } else if (authError.message?.includes('Invalid email')) {
+            throw new Error('Please enter a valid email address.');
+          } else if (authError.message?.includes('Password')) {
+            throw new Error('Password must be at least 6 characters long.');
+          } else {
+            throw new Error(authError.message || 'Failed to create account. Please try again.');
+          }
         }
 
-        // Check if a user object was returned
         if (!authData.user) {
-          throw new Error("Signup was not successful, please try again.");
+          console.error('No user data returned from signup');
+          throw new Error("Signup failed. Please try again.");
         }
 
         console.log('✅ Supabase auth user created:', authData.user.id);
+        console.log('User metadata:', authData.user.user_metadata);
 
-        // Step 6: Use the database function to complete signup
-        // This will create both profile and student records automatically
-        const { data: completionResult, error: completionError } = await supabase.rpc('complete_user_signup', {
-          p_auth_user_id: authData.user.id,
-          p_full_name: this.fullName,
-          p_email: this.email,
-          p_role: 'student',
-          p_grade_level: gradeNum
-        });
+        console.log('✅ Account creation successful!');
+        console.log('⏳ Database trigger will create profile and student records');
+        console.log('📧 Email verification required');
 
-        if (completionError) {
-          console.error('❌ Signup completion error:', completionError);
-          // Clean up auth user if database setup fails
-          await supabase.auth.signOut();
-          throw new Error(`Failed to complete signup: ${completionError.message}`);
-        }
-
-        // Check if the function returned an error
-        if (!completionResult.success) {
-          console.error('❌ Signup function error:', completionResult.error);
-          // Clean up auth user if database setup fails
-          await supabase.auth.signOut();
-          throw new Error(completionResult.error);
-        }
-
-        console.log('✅ Student signup completed successfully:', completionResult.user_info);
-
-        // Step 7: Update the student record with custom student_id
-        // Since the trigger created a default student_id, we need to update it
-        const studentId = completionResult.user_info.user_id;
-        const { error: updateError } = await supabase
-          .from('students')
-          .update({ student_id: this.studentId })
-          .eq('id', studentId);
-
-        if (updateError) {
-          console.error('❌ Student ID update error:', updateError);
-          // This is not critical enough to fail the entire signup
-          console.warn('Student account created but custom student ID may not have been set properly');
-        }
-
-        // Step 8: Show success message
         this.signupSuccess = true;
-        this.successMessage = `🎉 Student account created successfully! Please check your email (${this.email}) and click the confirmation link to verify your account before signing in.`;
+        
+        if (!authData.session) {
+          console.log('📧 Email confirmation required');
+          this.successMessage = `🎉 Student account created successfully! 
 
-        // Clear form fields for security
-        this.fullName = '';
-        this.email = '';
+Please check your email (${this.email}) and click the confirmation link to verify your account. 
+
+After verification, you'll be able to log in with your credentials.
+
+Note: The email might take a few minutes to arrive. Don't forget to check your spam folder!`;
+        } else {
+          console.log('✅ Account created and automatically verified');
+          this.successMessage = `🎉 Student account created successfully! 
+
+Your account has been verified and you can now log in.`;
+        }
+
         this.password = '';
-        this.studentId = '';
-        this.gradeLevel = '';
         this.passwordStrength = 0;
         this.passwordErrors = [];
         
-        // Auto-redirect to login after 8 seconds
         setTimeout(() => {
           this.$router.push('/login');
-        }, 8000);
+        }, 6000);
         
       } catch (err) {
         console.error("❌ Student Signup error:", err);
         
-        // Handle specific error cases
-        if (err.message?.includes('already registered') || err.message?.includes('User already registered')) {
+        if (err.message?.includes('already registered') || 
+            err.message?.includes('User already registered') ||
+            err.message?.includes('already exists')) {
           this.error = 'An account with this email already exists. Please try logging in instead.';
-        } else if (err.message?.includes('Email already exists')) {
-          this.error = 'An account with this email already exists. Please use a different email or try logging in.';
-        } else if (err.message?.includes('Student ID already exists')) {
-          this.error = 'Student ID already exists. Please use a different Student ID.';
-        } else if (err.message?.includes('Password should be at least')) {
-          this.error = 'Password must be at least 6 characters long.';
+        } else if (err.message?.includes('duplicate key') || 
+                   err.message?.includes('unique constraint')) {
+          this.error = 'This Student ID is already registered. Please use a different Student ID.';
+        } else if (err.message?.includes('Email rate limit')) {
+          this.error = 'Too many signup attempts. Please wait a few minutes and try again.';
         } else if (err.message?.includes('Invalid email')) {
           this.error = 'Please enter a valid email address.';
-        } else if (err.message?.includes('Email rate limit exceeded')) {
-          this.error = 'Too many signup attempts. Please wait a few minutes and try again.';
-        } else if (err.message?.includes('Failed to')) {
-          this.error = err.message;
+        } else if (err.message?.includes('Password')) {
+          this.error = 'Password must be at least 6 characters long and meet security requirements.';
         } else {
-          this.error = err.message || "An unexpected error occurred during signup.";
+          this.error = err.message || "An unexpected error occurred during signup. Please try again.";
         }
       } finally {
         this.isLoading = false;
+        console.log('=== Signup process completed ===');
       }
     }
   }
@@ -807,6 +793,31 @@ input::placeholder {
   font-size: 0.75rem;
   margin: 0;
   font-weight: 500;
+}
+
+.success-display {
+  background: rgba(34, 197, 94, 0.1);
+  border: 2px solid rgba(34, 197, 94, 0.2);
+  border-radius: 9px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.success-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.success-display p {
+  color: #16a34a;
+  font-size: 0.85rem;
+  margin: 0;
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .signup-btn {

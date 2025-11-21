@@ -1,4 +1,3 @@
-
 <!-- TEMPLATE SECTION -->
 <template>
   <div class="dashboard-container">
@@ -326,12 +325,12 @@
 
 
 <!-- SCRIPT SECTION -->
+<!-- FIXED SCRIPT - NO PROFILE PHOTO -->
 <script>
 import { supabase } from '../supabase.js';
 
 export default {
   name: 'StudentDashboard',
-  // REMOVED: components object - not needed with router-view
   data() {
     return {
       userProfile: {
@@ -339,47 +338,25 @@ export default {
         studentId: null,
         grade: null,
         email: null,
-        role: null,
-        profilePhoto: null
+        role: null
       },
-      avatarOptions: [
-        { id: '1', emoji: '😊', color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
-        { id: '2', emoji: '🎓', color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
-        { id: '3', emoji: '📚', color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' },
-        { id: '4', emoji: '✨', color: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)' },
-        { id: '5', emoji: '🚀', color: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)' },
-        { id: '6', emoji: '🎨', color: 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)' },
-        { id: '7', emoji: '🌟', color: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)' },
-        { id: '8', emoji: '💡', color: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)' },
-        { id: '9', emoji: '🎯', color: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)' },
-        { id: '10', emoji: '🏆', color: 'linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)' },
-        { id: '11', emoji: '🎵', color: 'linear-gradient(135deg, #fdcbf1 0%, #e6dee9 100%)' },
-        { id: '12', emoji: '🌈', color: 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)' }
-      ],
       isLogoutModalVisible: false,
       isProfileMenuOpen: false,
       profileSubscription: null,
       studentSubscription: null,
       currentProfileId: null,
       isHelpMenuOpen: false,
-      isLoggingOut: false
+      isLoggingOut: false,
+      isLoadingProfile: true
     };
   },
-  computed: {
-    currentAvatar() {
-      const avatar = this.avatarOptions.find(a => a.id === this.userProfile.avatar);
-      return avatar || this.avatarOptions[0];
-    }
-  },
   async mounted() {
+    console.log('StudentDashboard mounted');
     await this.loadUserProfile();
     this.setupRealtimeSubscription();
     this.initializeDarkMode();
     
-    // Listen for profile updates from Settings component
     window.addEventListener('studentProfileUpdated', this.handleProfileUpdate);
-    
-    // Add click outside listener for mobile profile menu
     document.addEventListener('click', this.handleClickOutside);
   },
   beforeUnmount() {
@@ -395,94 +372,110 @@ export default {
   methods: {
     async loadUserProfile() {
       try {
-        // Get the current authenticated user
+        this.isLoadingProfile = true;
+        console.log('📋 Loading user profile...');
+        
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         
         if (authError || !user) {
-          console.error('Auth error:', authError);
+          console.error('❌ Auth error:', authError);
           this.$router.push('/login');
           return;
         }
 
-        // Fetch profile and student data
+        console.log('✅ Auth user found:', user.id);
         await this.fetchStudentProfile(user.id);
+        this.isLoadingProfile = false;
 
       } catch (error) {
-        console.error('Error loading user profile:', error);
+        console.error('❌ Error loading user profile:', error);
+        this.isLoadingProfile = false;
         this.handleProfileError();
       }
     },
 
     async fetchStudentProfile(userId) {
       try {
-        // Get profile data with profile_photo
-        const { data: profile, error: profileError } = await supabase
+        console.log('📋 Step 1: Fetching profile for user:', userId);
+        
+        // Get profile data
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('id, full_name, email, role, profile_photo')
+          .select('id, full_name, email, role')
           .eq('auth_user_id', userId)
           .single();
 
         if (profileError) {
-          console.error('Profile error:', profileError);
+          console.error('❌ Profile error:', profileError);
+          throw profileError;
+        }
+
+        if (!profileData) {
+          console.error('❌ No profile found');
+          throw new Error('Profile not found');
+        }
+
+        console.log('✅ Profile found:', profileData);
+
+        if (profileData.role !== 'student') {
+          console.warn('❌ Access denied: User is not a student');
           this.$router.push('/login');
           return;
         }
 
-        // Verify user is a student
-        if (profile.role !== 'student') {
-          console.warn('Access denied: User is not a student');
-          this.$router.push('/login');
-          return;
-        }
+        this.currentProfileId = profileData.id;
 
-        this.currentProfileId = profile.id;
-
-        // Get student-specific data
+        // Get student data
+        console.log('📋 Step 2: Fetching student record...');
+        
         const { data: studentData, error: studentError } = await supabase
           .from('students')
-          .select('student_id, grade_level, full_name, email')
-          .eq('profile_id', profile.id)
+          .select('id, profile_id, student_id, full_name, email, grade_level')
+          .eq('profile_id', profileData.id)
           .single();
 
-        if (studentError && studentError.code === 'PGRST116') {
-          // Create missing student record
-          await this.createMissingStudentRecord(profile);
-          return;
+        if (studentError) {
+          if (studentError.code === 'PGRST116') {
+            console.log('⚠️ No student record found');
+            await this.createMissingStudentRecord(profileData);
+            return;
+          }
+          console.error('❌ Student fetch error:', studentError);
+          throw studentError;
         }
 
-        // Check if student_id is missing and generate one if needed
-        let finalStudentId = studentData?.student_id;
-        if (!finalStudentId) {
-          finalStudentId = await this.generateStudentId(profile.id);
-          await this.updateStudentId(profile.id, finalStudentId);
-        }
+        console.log('✅ Student record found:', studentData);
 
-        // Set user profile with smooth update
+        // ✅ SET PROFILE DATA
         this.userProfile = {
-          fullName: studentData?.full_name || profile.full_name || 'Student',
-          email: studentData?.email || profile.email || '',
-          studentId: finalStudentId,
-          grade: studentData?.grade_level || null,
-          role: profile.role,
-          profilePhoto: profile.profile_photo || null
+          fullName: studentData.full_name || profileData.full_name || 'Student',
+          email: studentData.email || profileData.email || '',
+          studentId: studentData.student_id || 'NOT SET',
+          grade: studentData.grade_level || null,
+          role: profileData.role
         };
 
-        console.log('Profile loaded successfully:', this.userProfile);
+        console.log('✅ PROFILE LOADED SUCCESSFULLY:', this.userProfile);
+        console.log('Full Name:', this.userProfile.fullName);
+        console.log('Student ID:', this.userProfile.studentId);
+        console.log('Grade:', this.userProfile.grade);
 
       } catch (error) {
-        console.error('Error fetching student profile:', error);
+        console.error('❌ Error in fetchStudentProfile:', error);
         throw error;
       }
     },
 
     setupRealtimeSubscription() {
-      if (!this.currentProfileId) return;
+      if (!this.currentProfileId) {
+        console.log('⚠️ No profile ID, skipping subscriptions');
+        return;
+      }
 
-      console.log('Setting up real-time subscriptions for profile:', this.currentProfileId);
+      console.log('🔔 Setting up real-time subscriptions');
 
-      // Subscribe to profiles table changes
       this.profileSubscription = supabase
-        .channel('profile_changes')
+        .channel(`profile_${this.currentProfileId}`)
         .on(
           'postgres_changes',
           {
@@ -491,24 +484,21 @@ export default {
             table: 'profiles',
             filter: `id=eq.${this.currentProfileId}`
           },
-          async (payload) => {
-            console.log('🔔 Profile updated via real-time:', payload);
-            
-            // Smoothly update profile data
+          (payload) => {
+            console.log('Profile updated:', payload);
             if (payload.new) {
-              this.userProfile.fullName = payload.new.full_name || this.userProfile.fullName;
-              this.userProfile.email = payload.new.email || this.userProfile.email;
-              this.userProfile.profilePhoto = payload.new.profile_photo || null;
-              
-              console.log('✅ Profile updated in UI:', this.userProfile);
+              this.userProfile = {
+                ...this.userProfile,
+                fullName: payload.new.full_name || this.userProfile.fullName,
+                email: payload.new.email || this.userProfile.email
+              };
             }
           }
         )
         .subscribe();
 
-      // Subscribe to students table changes
       this.studentSubscription = supabase
-        .channel('student_changes')
+        .channel(`student_${this.currentProfileId}`)
         .on(
           'postgres_changes',
           {
@@ -517,81 +507,28 @@ export default {
             table: 'students',
             filter: `profile_id=eq.${this.currentProfileId}`
           },
-          async (payload) => {
-            console.log('🔔 Student data updated via real-time:', payload);
-            
-            // Smoothly update student data
+          (payload) => {
+            console.log('Student data updated:', payload);
             if (payload.new) {
-              const oldGrade = this.userProfile.grade;
-              const newGrade = payload.new.grade_level;
-              
-              this.userProfile.fullName = payload.new.full_name || this.userProfile.fullName;
-              this.userProfile.email = payload.new.email || this.userProfile.email;
-              this.userProfile.studentId = payload.new.student_id || this.userProfile.studentId;
-              this.userProfile.grade = newGrade || this.userProfile.grade;
-              
-              if (oldGrade !== newGrade) {
-                console.log(`🎓 Grade level changed in UI: ${oldGrade} → ${newGrade}`);
-              }
-              
-              console.log('✅ Student data updated in UI:', this.userProfile);
+              this.userProfile = {
+                ...this.userProfile,
+                fullName: payload.new.full_name || this.userProfile.fullName,
+                email: payload.new.email || this.userProfile.email,
+                studentId: payload.new.student_id || this.userProfile.studentId,
+                grade: payload.new.grade_level || this.userProfile.grade
+              };
             }
           }
         )
         .subscribe();
     },
 
-    async generateStudentId(profileId) {
-      try {
-        const year = new Date().getFullYear();
-        const shortId = profileId.slice(-6).toUpperCase();
-        const random = Math.floor(Math.random() * 99).toString().padStart(2, '0');
-        const studentId = `${year}${shortId}${random}`;
-        
-        // Check if this ID already exists
-        const { data: existingStudent } = await supabase
-          .from('students')
-          .select('student_id')
-          .eq('student_id', studentId)
-          .single();
-        
-        if (existingStudent) {
-          // If ID exists, recursively generate a new one
-          return await this.generateStudentId(profileId);
-        }
-        
-        console.log('Generated student ID:', studentId);
-        return studentId;
-      } catch (error) {
-        console.error('Error generating student ID:', error);
-        // Fallback to a simpler format if there's an error
-        return `ST${Date.now().toString().slice(-8)}`;
-      }
-    },
-
-    async updateStudentId(profileId, studentId) {
-      try {
-        const { error } = await supabase
-          .from('students')
-          .update({ student_id: studentId })
-          .eq('profile_id', profileId);
-
-        if (error) {
-          console.error('Error updating student ID:', error);
-        } else {
-          console.log('Student ID updated successfully:', studentId);
-        }
-      } catch (error) {
-        console.error('Error in updateStudentId:', error);
-      }
-    },
-
     async createMissingStudentRecord(profile) {
       try {
-        console.log('Creating missing student record for profile:', profile.id);
+        const newStudentId = `ST${Date.now().toString().slice(-8)}`;
+        const defaultGrade = 7;
         
-        const newStudentId = await this.generateStudentId(profile.id);
-        const defaultGrade = 7; // Default to grade 7, user can update later
+        console.log('Creating student record with ID:', newStudentId);
         
         const { data, error } = await supabase
           .from('students')
@@ -603,94 +540,44 @@ export default {
             grade_level: defaultGrade,
             is_active: true
           }])
-          .select()
+          .select('id, profile_id, student_id, full_name, email, grade_level')
           .single();
 
         if (error) {
           console.error('Error creating student record:', error);
-          // Use fallback data even if creation fails
-          this.userProfile = {
-            fullName: profile.full_name || 'Student',
-            email: profile.email || '',
-            studentId: newStudentId,
-            grade: defaultGrade,
-            role: profile.role,
-            profilePhoto: profile.profile_photo || null
-          };
           return;
         }
 
-        console.log('Created student record:', data);
-        
-        // Update the user profile with the new data
+        console.log('✅ Student record created:', data);
+
         this.userProfile = {
           fullName: data.full_name,
           email: data.email,
           studentId: data.student_id,
           grade: data.grade_level,
-          role: profile.role,
-          profilePhoto: profile.profile_photo || null
+          role: profile.role
         };
         
+        console.log('✅ Profile updated with new student record:', this.userProfile);
       } catch (error) {
         console.error('Error in createMissingStudentRecord:', error);
-        // Ensure we still set a profile even if record creation fails
-        const tempStudentId = await this.generateStudentId(profile.id);
-        this.userProfile = {
-          fullName: profile.full_name || 'Student',
-          email: profile.email || '',
-          studentId: tempStudentId,
-          grade: 7,
-          role: profile.role,
-          profilePhoto: profile.profile_photo || null
-        };
       }
     },
 
     handleProfileError() {
       this.userProfile = {
-        fullName: 'Profile Load Error',
-        email: 'Error loading data',
-        studentId: 'ERROR_LOADING',
+        fullName: 'Error Loading',
+        email: 'Check Console',
+        studentId: 'ERROR',
         grade: null,
-        role: null,
-        profilePhoto: null
+        role: null
       };
-    },
-
-    handleProfileUpdate(event) {
-      console.log('📢 Received profile update event in StudentDashboard:', event.detail);
-      const { gradeChanged, nameChanged, oldGrade, newGrade, newName } = event.detail || {};
-      
-      if (gradeChanged) {
-        console.log(`🎓 Grade changed: ${oldGrade} → ${newGrade}`);
-        // Update grade immediately with Vue.set to ensure reactivity
-        this.$set(this.userProfile, 'grade', newGrade);
-      }
-      
-      if (nameChanged) {
-        console.log(`✏️ Name changed to: ${newName}`);
-        // Update name immediately with Vue.set to ensure reactivity
-        this.$set(this.userProfile, 'fullName', newName);
-      }
-      
-      // Force Vue to re-render by updating the entire object
-      this.userProfile = { ...this.userProfile };
-      
-      // Also reload full profile as backup
-      setTimeout(() => {
-        this.loadUserProfile();
-      }, 100);
-      
-      console.log('✅ StudentDashboard profile updated:', this.userProfile);
     },
 
     initializeDarkMode() {
       const savedTheme = localStorage.getItem('darkMode');
       if (savedTheme === 'true') {
         document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
       }
     },
 
@@ -706,16 +593,7 @@ export default {
       this.isLogoutModalVisible = false;
       this.isLoggingOut = true;
       
-      // Set a timeout to force redirect after 2 seconds max
-      const redirectTimeout = setTimeout(() => {
-        localStorage.clear();
-        window.location.replace('/login');
-      }, 2000);
-      
       try {
-        console.log('Starting logout process...');
-        
-        // Clean up subscriptions
         if (this.profileSubscription) {
           supabase.removeChannel(this.profileSubscription);
         }
@@ -723,30 +601,13 @@ export default {
           supabase.removeChannel(this.studentSubscription);
         }
         
-        // Sign out from Supabase
         await supabase.auth.signOut();
-        
-        // Clear local storage
         localStorage.clear();
-        
-        console.log('User logged out successfully, redirecting...');
-        
-        // Clear the timeout since we're done
-        clearTimeout(redirectTimeout);
-        
-        // Small delay before redirect for smooth UX
-        setTimeout(() => {
-          window.location.replace('/login');
-        }, 500);
-        
+        window.location.replace('/login');
       } catch (error) {
-        console.error('Error during logout:', error);
-        // Clear timeout and force logout anyway
-        clearTimeout(redirectTimeout);
+        console.error('Logout error:', error);
         localStorage.clear();
-        setTimeout(() => {
-          window.location.replace('/login');
-        }, 500);
+        window.location.replace('/login');
       }
     },
 
@@ -767,8 +628,7 @@ export default {
       const profileDropdown = document.querySelector('.profile-dropdown');
       const profileMenuBtn = document.querySelector('.profile-menu-btn');
       
-      if (this.isProfileMenuOpen && 
-          profileDropdown && 
+      if (this.isProfileMenuOpen && profileDropdown && 
           !profileDropdown.contains(event.target) && 
           !profileMenuBtn.contains(event.target)) {
         this.closeProfileMenu();
@@ -780,28 +640,29 @@ export default {
     },
 
     openGuide() {
-      alert('Student\'s Guide: Opening documentation...');
       this.isHelpMenuOpen = false;
     },
 
     openFAQ() {
-      alert('FAQ: Opening frequently asked questions...');
       this.isHelpMenuOpen = false;
     },
 
     contactSupport() {
-      alert('Contact Support: Opening support form...');
       this.isHelpMenuOpen = false;
     },
 
     reportIssue() {
-      alert('Report Issue: Opening issue report form...');
       this.isHelpMenuOpen = false;
+    },
+
+    handleProfileUpdate(event) {
+      const { gradeChanged, nameChanged, newGrade, newName } = event.detail || {};
+      if (gradeChanged) this.userProfile.grade = newGrade;
+      if (nameChanged) this.userProfile.fullName = newName;
     }
   }
 };
 </script>
-
 
 <style scoped>
 /*

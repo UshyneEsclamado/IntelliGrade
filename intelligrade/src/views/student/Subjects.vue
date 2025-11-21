@@ -59,6 +59,7 @@
     margin-left: 0.25rem;
   }
 }
+
 <template>
   <div class="subjects-container">
     <!-- Header Section (Uniform Card Style) -->
@@ -427,6 +428,7 @@ export default {
       validationTimeout: null,
       currentUser: null,
       studentInfo: null,
+      profile: null,
       favoriteSubjects: new Set(),
       archivedSubjects: new Set(),
     };
@@ -504,18 +506,46 @@ export default {
         console.log('Session found for user:', session.user.id)
         this.currentUser = session.user
         
-        const { data: profile, error: profileError } = await supabase
+        // Get or create profile
+        let { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('id, role, full_name, email')
           .eq('auth_user_id', session.user.id)
-          .single()
+          .maybeSingle()
         
-        if (profileError || !profile) {
+        if (profileError) {
           console.error('Error getting profile:', profileError)
-          alert('User profile not found. Please contact support.')
+          alert('Error loading profile. Please contact support.')
           await this.$router.push('/login')
           return false
         }
+
+        if (!profile) {
+          console.log('Profile not found, creating new profile...')
+          const { data: newProfile, error: createProfileError } = await supabase
+            .from('profiles')
+            .insert([{
+              auth_user_id: session.user.id,
+              full_name: session.user.user_metadata?.full_name || session.user.email,
+              email: session.user.email,
+              role: 'student'
+            }])
+            .select()
+            .single()
+
+          if (createProfileError || !newProfile) {
+            console.error('Error creating profile:', createProfileError)
+            alert('Failed to create profile. Please contact support.')
+            await this.$router.push('/login')
+            return false
+          }
+
+          console.log('Profile created successfully')
+          profile = newProfile
+        }
+
+        this.profile = profile
+        console.log('Profile loaded:', profile)
 
         if (profile.role !== 'student') {
           console.log('User is not a student:', profile.role)
@@ -524,22 +554,54 @@ export default {
           return false
         }
 
-        const { data: student, error: studentError } = await supabase
+        // Get or create student record
+        let { data: student, error: studentError } = await supabase
           .from('students')
           .select('*')
           .eq('profile_id', profile.id)
-          .eq('is_active', true)
-          .single()
+          .maybeSingle()
 
-        if (studentError || !student) {
+        if (studentError) {
           console.error('Error getting student info:', studentError)
-          alert('Student record not found. Please contact support.')
+        }
+
+        if (!student) {
+          console.log('Student record not found, creating...')
+          
+          const gradeLevel = session.user.user_metadata?.grade_level || 9
+          
+          const { data: newStudent, error: createStudentError } = await supabase
+            .from('students')
+            .insert([{
+              profile_id: profile.id,
+              full_name: session.user.user_metadata?.full_name || session.user.email,
+              email: session.user.email,
+              grade_level: gradeLevel,
+              is_active: true
+            }])
+            .select()
+            .single()
+
+          if (createStudentError || !newStudent) {
+            console.error('Error creating student record:', createStudentError)
+            alert('Failed to create student record. Please contact support.')
+            await this.$router.push('/login')
+            return false
+          }
+
+          console.log('Student record created successfully')
+          student = newStudent
+        }
+
+        if (!student.is_active) {
+          console.log('Student account is inactive')
+          alert('Your account is currently inactive. Please contact support.')
           await this.$router.push('/login')
           return false
         }
 
         this.studentInfo = student
-        console.log('Student info loaded:', this.studentInfo.id)
+        console.log('Student info loaded:', student.id)
         return true
 
       } catch (error) {
@@ -583,6 +645,7 @@ export default {
         }
 
         if (!enrollments || enrollments.length === 0) {
+          console.log('No enrollments found')
           this.subjects = []
           this.isLoading = false
           return
@@ -696,14 +759,16 @@ export default {
     },
 
     async validateSectionCode() {
-      if (!this.joinForm.sectionCode || this.joinForm.sectionCode.length < 8) {
+      const code = this.joinForm.sectionCode?.trim()
+      
+      if (!code || code.length < 8) {
         this.previewSubject = null
         this.joinError = ''
         return
       }
 
       try {
-        const searchCode = this.joinForm.sectionCode.trim().toUpperCase()
+        const searchCode = code.toUpperCase()
         console.log('🔍 Validating section code:', searchCode)
 
         const { data: sectionData, error: sectionError } = await supabase
@@ -711,11 +776,18 @@ export default {
           .select('id, name, section_code, max_students, is_active, subject_id')
           .eq('section_code', searchCode)
           .eq('is_active', true)
-          .single()
+          .maybeSingle()
 
-        if (sectionError || !sectionData) {
+        if (sectionError) {
           console.error('❌ Section lookup error:', sectionError)
-          this.joinError = 'Section not found or inactive. Please check the code with your teacher.'
+          this.joinError = 'Error looking up section. Please try again.'
+          this.previewSubject = null
+          return
+        }
+
+        if (!sectionData) {
+          console.log('❌ Section not found')
+          this.joinError = 'Section not found. Please check the code with your teacher.'
           this.previewSubject = null
           return
         }
@@ -727,7 +799,7 @@ export default {
           .select('id, name, grade_level, is_active, teacher_id')
           .eq('id', sectionData.subject_id)
           .eq('is_active', true)
-          .single()
+          .maybeSingle()
 
         if (subjectError || !subjectData) {
           console.error('❌ Subject lookup error:', subjectError)
@@ -743,7 +815,7 @@ export default {
           .select('id, full_name, is_active')
           .eq('id', subjectData.teacher_id)
           .eq('is_active', true)
-          .single()
+          .maybeSingle()
 
         if (teacherError || !teacherData) {
           console.error('❌ Teacher lookup error:', teacherError)
@@ -760,57 +832,44 @@ export default {
           return
         }
 
-        const { data: existingEnrollment, error: existingError } = await supabase
+        const { data: existingEnrollment } = await supabase
           .from('enrollments')
-          .select('id')
+          .select('id, status')
           .eq('student_id', this.studentInfo.id)
           .eq('section_id', sectionData.id)
-          .eq('status', 'active')
-          .maybeSingle()
 
-        if (existingError && existingError.code !== 'PGRST116') {
-          console.error('❌ Error checking existing enrollment:', existingError)
+        if (existingEnrollment && existingEnrollment.length > 0) {
+          const activeEnrollment = existingEnrollment.find(e => e.status === 'active')
+          if (activeEnrollment) {
+            this.joinError = 'You are already enrolled in this section.'
+            this.previewSubject = null
+            return
+          }
         }
 
-        if (existingEnrollment) {
-          this.joinError = 'You are already enrolled in this section.'
-          this.previewSubject = null
-          return
-        }
-
-        const { data: sameSubjectEnrollment, error: sameSubjectError } = await supabase
+        const { data: sameSubjectEnrollment } = await supabase
           .from('enrollments')
           .select('id, section_id')
           .eq('student_id', this.studentInfo.id)
           .eq('subject_id', sectionData.subject_id)
           .eq('status', 'active')
-          .maybeSingle()
 
-        if (sameSubjectError && sameSubjectError.code !== 'PGRST116') {
-          console.error('❌ Error checking same subject enrollment:', sameSubjectError)
-        }
-
-        if (sameSubjectEnrollment) {
-          this.joinError = 'You are already enrolled in another section of this subject. Students can only join one section per subject.'
+        if (sameSubjectEnrollment && sameSubjectEnrollment.length > 0) {
+          this.joinError = 'You are already enrolled in another section of this subject.'
           this.previewSubject = null
           return
         }
 
-        const { count: enrollmentCount, error: countError } = await supabase
+        const { count: enrollmentCount } = await supabase
           .from('enrollments')
           .select('id', { count: 'exact', head: true })
           .eq('section_id', sectionData.id)
           .eq('status', 'active')
 
-        if (countError) {
-          console.error('❌ Error counting enrollments:', countError)
-        }
-
         const currentEnrollments = enrollmentCount || 0
-        const hasSpace = currentEnrollments < sectionData.max_students
 
-        if (!hasSpace) {
-          this.joinError = `This section is full (${currentEnrollments}/${sectionData.max_students} students). Please contact your teacher for another section.`
+        if (currentEnrollments >= sectionData.max_students) {
+          this.joinError = `This section is full (${currentEnrollments}/${sectionData.max_students} students).`
           this.previewSubject = null
           return
         }
@@ -829,12 +888,12 @@ export default {
         }
         this.joinError = ''
 
-        console.log('✅ Preview subject validated successfully!')
-        console.log('📊 Available spots:', sectionData.max_students - currentEnrollments, 'of', sectionData.max_students)
+        console.log('✅ Preview ready!')
+        console.log('📊 Spots available:', sectionData.max_students - currentEnrollments, '/', sectionData.max_students)
 
       } catch (error) {
-        console.error('❌ Error validating section code:', error)
-        this.joinError = `Error validating section code: ${error.message}. Please try again.`
+        console.error('❌ Validation error:', error)
+        this.joinError = `Error: ${error.message}`
         this.previewSubject = null
       }
     },
@@ -854,32 +913,29 @@ export default {
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
         console.log('🎓 STARTING CLASS ENROLLMENT')
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-        console.log('👤 Student:', this.studentInfo.full_name)
-        console.log('🎯 Subject:', this.previewSubject.name)
-        console.log('📚 Section:', this.previewSubject.section)
-        console.log('👨‍🏫 Teacher:', this.previewSubject.instructor)
+        console.log('👤 Student ID:', this.studentInfo.id)
+        console.log('📚 Section ID:', this.previewSubject.sectionId)
+        console.log('🎯 Subject ID:', this.previewSubject.id)
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 
-        console.log('Step 1: Running final validation...')
-        const { data: validation, error: validationError } = await supabase
-          .rpc('validate_enrollment', {
-            p_student_id: this.studentInfo.id,
-            p_section_id: this.previewSubject.sectionId
-          })
-
-        if (validationError) {
-          console.error('❌ Validation RPC error:', validationError)
-          throw new Error('Validation failed: ' + validationError.message)
+        const { data: existingCheck, error: checkError } = await supabase
+          .from('enrollments')
+          .select('id, status')
+          .eq('student_id', this.studentInfo.id)
+          .eq('section_id', this.previewSubject.sectionId)
+        
+        if (checkError) {
+          console.error('❌ Error checking existing enrollment:', checkError)
+        }
+        
+        if (existingCheck && existingCheck.length > 0) {
+          const existing = existingCheck[0]
+          if (existing.status === 'active') {
+            throw new Error('You are already enrolled in this section')
+          }
         }
 
-        console.log('Validation result:', validation)
-
-        if (!validation || validation.length === 0 || !validation[0]?.is_valid) {
-          const errorMsg = validation?.[0]?.error_message || 'Enrollment validation failed'
-          throw new Error(errorMsg)
-        }
-
-        console.log('✓ Validation passed')
+        console.log('✓ No existing active enrollment found')
 
         console.log('Step 2: Creating enrollment record...')
         const { data: newEnrollment, error: enrollmentError } = await supabase
@@ -904,24 +960,21 @@ export default {
         this.joinSuccess = `Successfully joined ${this.previewSubject.name}!`
         this.joinError = ''
 
+        this.showJoinModal = false
+        this.joinForm.sectionCode = ''
+        const savedPreview = this.previewSubject
+        this.previewSubject = null
+
+        alert(
+          `🎉 Welcome to ${savedPreview.name}!\n\n` +
+          `📚 Section: ${savedPreview.section}\n` +
+          `👨‍🏫 Teacher: ${savedPreview.instructor}\n` +
+          `📊 Grade Level: ${savedPreview.grade_level}\n\n` +
+          `The subject has been added to your dashboard.`
+        )
+
         console.log('Step 3: Refreshing subject list...')
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
         await this.fetchSubjects()
-        
-        await new Promise(resolve => setTimeout(resolve, 300))
-
-        this.closeJoinModal()
-
-        setTimeout(() => {
-          alert(
-            `🎉 Welcome to ${this.previewSubject.name}!\n\n` +
-            `📚 Section: ${this.previewSubject.section}\n` +
-            `👨‍🏫 Teacher: ${this.previewSubject.instructor}\n` +
-            `📊 Grade Level: ${this.previewSubject.grade_level}\n\n` +
-            `The subject has been added to your dashboard.`
-          )
-        }, 200)
 
         console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
         console.log('✅ ENROLLMENT COMPLETED SUCCESSFULLY')
@@ -943,14 +996,18 @@ export default {
       this.joinError = ''
       this.joinSuccess = ''
       
-      clearTimeout(this.validationTimeout)
+      if (this.validationTimeout) {
+        clearTimeout(this.validationTimeout)
+      }
+      
+      if (this.joinForm.sectionCode.length < 8) {
+        this.previewSubject = null
+        return
+      }
+      
       this.validationTimeout = setTimeout(() => {
-        if (this.joinForm.sectionCode.length >= 8) {
-          this.validateSectionCode()
-        } else {
-          this.previewSubject = null
-        }
-      }, 800)
+        this.validateSectionCode()
+      }, 500)
     },
 
     closeJoinModal() {
@@ -1236,11 +1293,6 @@ export default {
       await this.fetchSubjects()
       console.log('✓ Subjects loaded')
       
-      this.pollingInterval = setInterval(() => {
-        this.fetchSubjects()
-      }, 30000)
-      
-      console.log('✓ Polling interval set (30s)')
       
       document.addEventListener('click', this.closeAllOptionsMenus)
       
@@ -1299,6 +1351,7 @@ export default {
   }
 }
 </script>
+
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');

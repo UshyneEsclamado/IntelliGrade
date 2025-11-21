@@ -1351,18 +1351,10 @@
   </div>
 </template>
 
+
+jhsckskfdvdsdokdkfmv
 <script setup lang="ts">
 // Notification Bell State and Methods
-import { ref } from 'vue'
-const showNotifDropdown = ref(false)
-const notifications = ref([]) // Should be populated from API or props
-
-function toggleNotifDropdown() {
-  showNotifDropdown.value = !showNotifDropdown.value
-}
-function handleNotificationClick(notif: any) {
-  // Implement notification click logic (e.g., mark as read, navigate, etc.)
-}
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase.js'
@@ -1377,10 +1369,14 @@ const router = useRouter()
 // STATE MANAGEMENT
 // ================================
 
+// Notification state
+const showNotifDropdown = ref(false)
+const notifications = ref([])
+
 // User authentication
-const currentUser = ref(null)
-const currentTeacherId = ref(null)
-const teacherProfile = ref(null)
+const currentUser = ref<any>(null)
+const currentTeacherId = ref<string | null>(null)
+const teacherProfile = ref<any>(null)
 const debugMode = ref(false)
 const showProfileDropdown = ref(false)
 const fullName = ref('Teacher')
@@ -1399,12 +1395,12 @@ const loadingMessages = ref(false)
 const showArchive = ref(false)
 const showBroadcastHistory = ref(false)
 const showChatOptions = ref(false)
-const showBroadcastOptionsMenu = ref(null)
-const viewingAttachment = ref(null)
+const showBroadcastOptionsMenu = ref<string | null>(null)
+const viewingAttachment = ref<any>(null)
 const expandedSections = ref(new Set())
-const selectedSectionView = ref(null)
+const selectedSectionView = ref<any>(null)
 const showStudentsInSection = ref(false)
-const openSectionDropdown = ref(null)
+const openSectionDropdown = ref<string | null>(null)
 
 // Search and Filter
 const searchQuery = ref('')
@@ -1412,38 +1408,53 @@ const selectedSection = ref('')
 const selectedGradeFilter = ref('all')
 
 // Chat State
-const selectedChat = ref(null)
-const activeConversation = ref(null)
+const selectedChat = ref<any>(null)
+const activeConversation = ref<any>(null)
 const newMessage = ref('')
-const messagesContainer = ref(null)
-const messageFileInput = ref(null)
-const messageAttachments = ref([])
+const messagesContainer = ref<HTMLElement | null>(null)
+const messageFileInput = ref<HTMLInputElement | null>(null)
+const messageAttachments = ref<any[]>([])
 
 // Broadcast State
 const broadcastMessage = ref('')
 const broadcastSection = ref('')
-const broadcastFileInput = ref(null)
-const broadcastAttachments = ref([])
-const broadcastHistory = ref([])
-const archivedBroadcasts = ref([])
-const selectedBroadcastSection = ref(null)
+const broadcastFileInput = ref<HTMLInputElement | null>(null)
+const broadcastAttachments = ref<any[]>([])
+const broadcastHistory = ref<any[]>([])
+const archivedBroadcasts = ref<any[]>([])
+const selectedBroadcastSection = ref<any>(null)
 const showBroadcastMessages = ref(false)
 
 // Data
-const studentContacts = ref([])
-const currentMessages = ref([])
-const archivedChats = ref([])
-const studentPresence = ref({})
+const studentContacts = ref<any[]>([])
+const currentMessages = ref<any[]>([])
+const archivedChats = ref<any[]>([])
+const studentPresence = ref<Record<string, any>>({})
+
+// ================================
+// NOTIFICATION FUNCTIONS
+// ================================
+
+function toggleNotifDropdown() {
+  showNotifDropdown.value = !showNotifDropdown.value
+}
+
+function handleNotificationClick(notif: any) {
+  // Mark as read and navigate if needed
+  notifications.value = notifications.value.filter((n: any) => n.id !== notif.id)
+}
 
 // ================================
 // FILE UPLOAD FUNCTIONS
 // ================================
 
-const uploadFileToStorage = async (file, folder = 'message-attachments') => {
+const uploadFileToStorage = async (file: File, folder = 'message-attachments') => {
   try {
     const fileExt = file.name.split('.').pop()
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
     const filePath = `${folder}/${fileName}`
+    
+    console.log('Uploading file:', filePath)
     
     const { data, error } = await supabase.storage
       .from('attachments')
@@ -1461,6 +1472,8 @@ const uploadFileToStorage = async (file, folder = 'message-attachments') => {
       .from('attachments')
       .getPublicUrl(filePath)
     
+    console.log('File uploaded successfully:', urlData.publicUrl)
+    
     return {
       path: filePath,
       url: urlData.publicUrl,
@@ -1475,8 +1488,9 @@ const uploadFileToStorage = async (file, folder = 'message-attachments') => {
   }
 }
 
-const saveMessageAttachments = async (messageId, attachments) => {
+const saveMessageAttachments = async (messageId: string, attachments: any[]) => {
   try {
+    // Check if message_attachments table exists
     const attachmentRecords = attachments.map(att => ({
       message_id: messageId,
       file_name: att.name,
@@ -1494,13 +1508,19 @@ const saveMessageAttachments = async (messageId, attachments) => {
     
     if (error) {
       console.error('Error saving attachments:', error)
+      // If table doesn't exist, just log and continue
+      if (error.code === '42P01') {
+        console.warn('message_attachments table does not exist, skipping attachment save')
+        return []
+      }
       throw error
     }
     
     return data
   } catch (error) {
     console.error('Error saving message attachments:', error)
-    throw error
+    // Don't throw, just return empty array
+    return []
   }
 }
 
@@ -1575,7 +1595,7 @@ const getCurrentUser = async () => {
       profile: teacher
     }
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error getting current user:', error)
     alert(`Authentication error: ${error.message}`)
     await router.push('/login')
@@ -1587,7 +1607,7 @@ const getCurrentUser = async () => {
 // UTILITY METHODS
 // ================================
 
-const copyToClipboard = async (text) => {
+const copyToClipboard = async (text: string) => {
   try {
     await navigator.clipboard.writeText(text)
     console.log('Section code copied to clipboard:', text)
@@ -1610,7 +1630,6 @@ const toggleProfileDropdown = () => {
   showProfileDropdown.value = !showProfileDropdown.value
 }
 
-// Logout confirmation modal functions
 const openLogoutModal = () => {
   showLogoutModal.value = true
 }
@@ -1621,19 +1640,9 @@ const closeLogoutModal = () => {
 
 const confirmLogout = () => {
   isLoggingOut.value = true
-  
-  console.log('🚪 Logging out...')
-  
-  // Clear storage immediately
   localStorage.clear()
   sessionStorage.clear()
-  
-  // Sign out from Supabase (don't wait for response)
   supabase.auth.signOut({ scope: 'local' })
-  
-  console.log('✅ Logout successful')
-  
-  // Force immediate redirect - most reliable method
   window.location.replace('/login')
 }
 
@@ -1641,9 +1650,8 @@ const logout = () => {
   openLogoutModal()
 }
 
-// Close dropdown when clicking outside
-const handleClickOutside = (event) => {
-  const target = event.target
+const handleClickOutside = (event: MouseEvent) => {
+  const target = event.target as HTMLElement
   if (!target.closest('.user-profile-wrapper')) {
     showProfileDropdown.value = false
   }
@@ -1665,6 +1673,7 @@ const loadTeacherContacts = async () => {
     
     console.log('Loading contacts for teacher:', currentTeacherId.value)
     
+    // Try to use the view first
     const { data: contacts, error: contactsError } = await supabase
       .from('teacher_contacts')
       .select('*')
@@ -1686,8 +1695,42 @@ const loadTeacherContacts = async () => {
     if (!contacts || contacts.length === 0) {
       console.log('No students found for this teacher')
       studentContacts.value = []
-      await debugTeacherData()
       return
+    }
+    
+    // Get auth_user_ids for presence tracking
+    const studentIds = contacts.map(c => c.student_id).filter(Boolean)
+    let authUserMap: Record<string, string> = {}
+    
+    if (studentIds.length > 0) {
+      const { data: students } = await supabase
+        .from('students')
+        .select('id, profile_id')
+        .in('id', studentIds)
+      
+      if (students) {
+        const profileIds = students.map(s => s.profile_id).filter(Boolean)
+        
+        if (profileIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, auth_user_id')
+            .in('id', profileIds)
+          
+          if (profiles) {
+            const profileToAuth: Record<string, string> = {}
+            profiles.forEach(p => {
+              profileToAuth[p.id] = p.auth_user_id
+            })
+            
+            students.forEach(s => {
+              if (s.profile_id && profileToAuth[s.profile_id]) {
+                authUserMap[s.id] = profileToAuth[s.profile_id]
+              }
+            })
+          }
+        }
+      }
     }
     
     const mappedContacts = contacts.map(contact => ({
@@ -1705,13 +1748,13 @@ const loadTeacherContacts = async () => {
       last_message_date: contact.last_message_date,
       last_message: contact.last_message || `Enrolled ${formatDate(contact.enrolled_date)}`,
       unread_count: contact.unread_count || 0,
-      auth_user_id: contact.auth_user_id
+      auth_user_id: authUserMap[contact.student_id] || null
     }))
     
     studentContacts.value = mappedContacts
     console.log('Mapped contacts:', mappedContacts.length)
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error loading teacher contacts:', error)
     alert(`Error loading students: ${error.message}`)
   } finally {
@@ -1723,208 +1766,115 @@ const loadContactsManually = async () => {
   try {
     console.log('Loading contacts manually for teacher:', currentTeacherId.value)
     
-    const { data: contacts, error } = await supabase
+    // Get teacher's subjects
+    const { data: subjects, error: subjectsError } = await supabase
+      .from('subjects')
+      .select('id, name, grade_level')
+      .eq('teacher_id', currentTeacherId.value)
+      .eq('is_active', true)
+    
+    if (subjectsError || !subjects || subjects.length === 0) {
+      console.log('No subjects found for teacher')
+      return []
+    }
+    
+    const subjectIds = subjects.map(s => s.id)
+    
+    // Get sections for these subjects
+    const { data: sections, error: sectionsError } = await supabase
+      .from('sections')
+      .select('id, name, section_code, subject_id')
+      .in('subject_id', subjectIds)
+      .eq('is_active', true)
+    
+    if (sectionsError || !sections || sections.length === 0) {
+      console.log('No sections found')
+      return []
+    }
+    
+    const sectionIds = sections.map(s => s.id)
+    
+    // Get enrollments
+    const { data: enrollments, error: enrollmentsError } = await supabase
       .from('enrollments')
-      .select(`
-        enrolled_at,
-        section_id,
-        students:student_id (
-          id,
-          full_name,
-          email,
-          student_id,
-          grade_level,
-          profile_id
-        ),
-        sections:section_id (
-          id,
-          name,
-          section_code,
-          subjects:subject_id (
-            id,
-            name,
-            teacher_id
-          )
-        )
-      `)
+      .select('id, student_id, section_id, subject_id, enrolled_at')
+      .in('section_id', sectionIds)
       .eq('status', 'active')
-      .eq('sections.subjects.teacher_id', currentTeacherId.value)
-      .eq('sections.is_active', true)
-      .eq('students.is_active', true)
     
-    if (error) {
-      console.error('Manual query error:', error)
+    if (enrollmentsError || !enrollments || enrollments.length === 0) {
+      console.log('No enrollments found')
       return []
     }
     
-    if (!contacts || contacts.length === 0) {
-      console.log('No enrollments found in manual query')
+    const studentIds = [...new Set(enrollments.map(e => e.student_id))]
+    
+    // Get students
+    const { data: students, error: studentsError } = await supabase
+      .from('students')
+      .select('id, full_name, email, student_id, grade_level, profile_id')
+      .in('id', studentIds)
+      .eq('is_active', true)
+    
+    if (studentsError || !students) {
+      console.log('No students found')
       return []
     }
     
-    console.log('Manual query raw results:', contacts.length)
+    // Get auth_user_ids
+    const profileIds = students.map(s => s.profile_id).filter(Boolean)
+    let authUserMap: Record<string, string> = {}
     
-    const studentProfileIds = contacts
-      .filter(e => e.students && (e.students as any).profile_id)
-      .map(e => (e.students as any).profile_id)
-    
-    let authUserMap = {}
-    if (studentProfileIds.length > 0) {
+    if (profileIds.length > 0) {
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, auth_user_id')
-        .in('id', studentProfileIds)
+        .in('id', profileIds)
       
       if (profiles) {
-        authUserMap = profiles.reduce((acc, p) => {
-          acc[p.id] = p.auth_user_id
-          return acc
-        }, {})
+        profiles.forEach(p => {
+          const student = students.find(s => s.profile_id === p.id)
+          if (student) {
+            authUserMap[student.id] = p.auth_user_id
+          }
+        })
       }
     }
     
-    const transformedContacts = contacts
-      .filter(enrollment => {
-        return enrollment.students && 
-               enrollment.sections && 
-               (enrollment.sections as any).subjects &&
-               (enrollment.sections as any).subjects.teacher_id === currentTeacherId.value
-      })
-      .map(enrollment => ({
-        student_id: (enrollment.students as any).id,
-        student_name: (enrollment.students as any).full_name,
-        student_email: (enrollment.students as any).email,
-        student_number: (enrollment.students as any).student_id,
-        grade_level: (enrollment.students as any).grade_level,
-        subject_id: (enrollment.sections as any).subjects.id,
-        subject_name: (enrollment.sections as any).subjects.name,
-        section_id: (enrollment.sections as any).id,
-        section_name: (enrollment.sections as any).name,
-        section_code: (enrollment.sections as any).section_code,
-        enrolled_date: enrollment.enrolled_at,
-        last_message_date: null,
-        last_message: `Enrolled ${formatDate(enrollment.enrolled_at)}`,
-        unread_count: 0,
-        auth_user_id: authUserMap[(enrollment.students as any).profile_id] || null
-      }))
+    // Build contacts
+    const contacts: any[] = []
     
-    console.log('Transformed contacts:', transformedContacts.length)
+    enrollments.forEach(enrollment => {
+      const student = students.find(s => s.id === enrollment.student_id)
+      const section = sections.find(s => s.id === enrollment.section_id)
+      const subject = subjects.find(s => s.id === section?.subject_id)
+      
+      if (student && section && subject) {
+        contacts.push({
+          student_id: student.id,
+          student_name: student.full_name,
+          student_email: student.email,
+          student_number: student.student_id,
+          grade_level: student.grade_level,
+          subject_id: subject.id,
+          subject_name: subject.name,
+          section_id: section.id,
+          section_name: section.name,
+          section_code: section.section_code,
+          enrolled_date: enrollment.enrolled_at,
+          last_message_date: null,
+          last_message: `Enrolled ${formatDate(enrollment.enrolled_at)}`,
+          unread_count: 0,
+          auth_user_id: authUserMap[student.id] || null
+        })
+      }
+    })
     
-    for (const contact of transformedContacts) {
-      await updateStudentMessagingInfo(contact)
-    }
-    
-    return transformedContacts
+    console.log('Manual contacts loaded:', contacts.length)
+    return contacts
     
   } catch (error) {
     console.error('Error in manual contact loading:', error)
     return []
-  }
-}
-
-const debugTeacherData = async () => {
-  try {
-    const { data: subjects } = await supabase
-      .from('subjects')
-      .select('id, name, is_active')
-      .eq('teacher_id', currentTeacherId.value)
-    
-    console.log('Teacher subjects:', subjects)
-    
-    if (!subjects || subjects.length === 0) {
-      console.log('❌ Teacher has no subjects. Create subjects first!')
-      return
-    }
-    
-    const subjectIds = subjects.map(s => s.id)
-    const { data: sections } = await supabase
-      .from('sections')
-      .select('id, name, subject_id, is_active')
-      .in('subject_id', subjectIds)
-    
-    console.log('Sections for teacher subjects:', sections)
-    
-    if (!sections || sections.length === 0) {
-      console.log('❌ Subjects have no sections. Create sections for your subjects!')
-      return
-    }
-    
-    const sectionIds = sections.map(s => s.id)
-    const { data: enrollments } = await supabase
-      .from('enrollments')
-      .select('id, student_id, section_id, status')
-      .in('section_id', sectionIds)
-    
-    console.log('Enrollments in sections:', enrollments)
-    
-    if (!enrollments || enrollments.length === 0) {
-      console.log('❌ No students enrolled in your sections yet!')
-      return
-    }
-    
-    const studentIds = [...new Set(enrollments.map(e => e.student_id))]
-    const { data: students } = await supabase
-      .from('students')
-      .select('id, full_name, is_active')
-      .in('id', studentIds)
-    
-    console.log('Enrolled students:', students)
-    
-    const activeStudents = students?.filter(s => s.is_active)
-    console.log('Active enrolled students:', activeStudents?.length || 0)
-    
-    if (!activeStudents || activeStudents.length === 0) {
-      console.log('❌ Enrolled students are not active!')
-    }
-    
-  } catch (error) {
-    console.error('Error in debug:', error)
-  }
-}
-
-const updateStudentMessagingInfo = async (student) => {
-  try {
-    const { data: unreadMessages } = await supabase
-      .from('messages')
-      .select('id')
-      .eq('section_id', student.section_id)
-      .eq('sender_id', student.student_id)
-      .eq('recipient_id', currentTeacherId.value)
-      .is('recipient_id', currentTeacherId.value)
-    
-    if (unreadMessages) {
-      const messageIds = unreadMessages.map(m => m.id)
-      
-      if (messageIds.length > 0) {
-        const { data: readRecords } = await supabase
-          .from('message_reads')
-          .select('message_id')
-          .in('message_id', messageIds)
-          .eq('reader_id', currentTeacherId.value)
-        
-        const readMessageIds = new Set(readRecords?.map(r => r.message_id) || [])
-        student.unread_count = messageIds.filter(id => !readMessageIds.has(id)).length
-      } else {
-        student.unread_count = 0
-      }
-    }
-    
-    const { data: lastMessage } = await supabase
-      .from('messages')
-      .select('message_text, sent_at')
-      .eq('section_id', student.section_id)
-      .or(`and(sender_id.eq.${student.student_id},recipient_id.eq.${currentTeacherId.value}),and(sender_id.eq.${currentTeacherId.value},recipient_id.eq.${student.student_id})`)
-      .order('sent_at', { ascending: false })
-      .limit(1)
-      .single()
-    
-    if (lastMessage) {
-      student.last_message = lastMessage.message_text
-      student.last_message_date = lastMessage.sent_at
-    }
-    
-  } catch (error) {
-    console.log('Could not load messaging info for student:', student.student_id)
   }
 }
 
@@ -1939,18 +1889,11 @@ const loadBroadcastHistory = async () => {
         message_text,
         sent_at,
         message_type,
-        sections:section_id (
-          id,
-          name,
-          section_code,
-          subjects:subject_id (
-            name,
-            grade_level
-          )
-        )
+        section_id
       `)
       .eq('sender_id', currentTeacherId.value)
       .eq('message_type', 'announcement')
+      .is('recipient_id', null)
       .order('sent_at', { ascending: false })
     
     if (error) {
@@ -1958,17 +1901,42 @@ const loadBroadcastHistory = async () => {
       return
     }
     
-    const broadcastIds = broadcasts?.map(b => b.id) || []
-    let attachmentsMap = {}
+    if (!broadcasts || broadcasts.length === 0) {
+      broadcastHistory.value = []
+      return
+    }
     
-    if (broadcastIds.length > 0) {
+    // Get section details
+    const sectionIds = [...new Set(broadcasts.map(b => b.section_id))]
+    const { data: sections } = await supabase
+      .from('sections')
+      .select(`
+        id,
+        name,
+        section_code,
+        subject_id
+      `)
+      .in('id', sectionIds)
+    
+    // Get subject details
+    const subjectIds = sections?.map(s => s.subject_id).filter(Boolean) || []
+    const { data: subjects } = await supabase
+      .from('subjects')
+      .select('id, name, grade_level')
+      .in('id', subjectIds)
+    
+    // Try to get attachments (may not exist)
+    const broadcastIds = broadcasts.map(b => b.id)
+    let attachmentsMap: Record<string, any[]> = {}
+    
+    try {
       const { data: attachments } = await supabase
         .from('message_attachments')
         .select('*')
         .in('message_id', broadcastIds)
       
       if (attachments) {
-        attachmentsMap = attachments.reduce((acc, att) => {
+        attachmentsMap = attachments.reduce((acc: Record<string, any[]>, att) => {
           if (!acc[att.message_id]) acc[att.message_id] = []
           acc[att.message_id].push({
             name: att.file_name,
@@ -1979,20 +1947,27 @@ const loadBroadcastHistory = async () => {
           return acc
         }, {})
       }
+    } catch (e) {
+      console.log('No attachments table or error fetching attachments')
     }
     
-    const transformedBroadcasts = broadcasts?.map(b => ({
-      id: b.id,
-      message: b.message_text,
-      sent_at: b.sent_at,
-      section_id: b.sections?.id,
-      section_name: b.sections?.name,
-      section_code: b.sections?.section_code,
-      subject_name: b.sections?.subjects?.name,
-      grade_level: b.sections?.subjects?.grade_level,
-      attachments: attachmentsMap[b.id] || [],
-      recipient_count: 0
-    })) || []
+    const transformedBroadcasts = broadcasts.map(b => {
+      const section = sections?.find(s => s.id === b.section_id)
+      const subject = subjects?.find(s => s.id === section?.subject_id)
+      
+      return {
+        id: b.id,
+        message: b.message_text,
+        sent_at: b.sent_at,
+        section_id: b.section_id,
+        section_name: section?.name || 'Unknown',
+        section_code: section?.section_code || '',
+        subject_name: subject?.name || 'Unknown',
+        grade_level: subject?.grade_level || 0,
+        attachments: attachmentsMap[b.id] || [],
+        recipient_count: 0
+      }
+    })
     
     broadcastHistory.value = transformedBroadcasts
     
@@ -2025,13 +2000,13 @@ const filteredStudents = computed(() => {
 })
 
 const groupedStudents = computed(() => {
-  const sections = {}
+  const sections: Record<string, any> = {}
   
   let filteredData = filteredStudents.value
   
   if (selectedGradeFilter.value !== 'all') {
     filteredData = filteredData.filter(student => 
-      student.grade_level === selectedGradeFilter.value
+      student.grade_level === parseInt(selectedGradeFilter.value)
     )
   }
   
@@ -2057,17 +2032,17 @@ const groupedStudents = computed(() => {
 })
 
 const availableGrades = computed(() => {
-  const grades = new Set()
+  const grades = new Set<number>()
   studentContacts.value.forEach(student => {
     if (student.grade_level) {
       grades.add(student.grade_level)
     }
   })
-  return Array.from(grades).sort()
+  return Array.from(grades).sort((a, b) => a - b)
 })
 
 const groupedBroadcasts = computed(() => {
-  const sections = {}
+  const sections: Record<string, any> = {}
   
   broadcastHistory.value.forEach(broadcast => {
     const sectionKey = broadcast.section_id
@@ -2110,40 +2085,7 @@ const uniqueSections = computed(() => {
 // CHAT METHODS
 // ================================
 
-const addScrollButtons = () => {
-  const container = messagesContainer.value
-  if (container && currentMessages.value.length > 5) {
-    if (!container.querySelector('.scroll-top-btn')) {
-      const scrollTopBtn = document.createElement('button')
-      scrollTopBtn.className = 'scroll-top-btn'
-      scrollTopBtn.title = 'Go to top'
-      scrollTopBtn.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="17 11 12 6 7 11"></polyline>
-          <polyline points="17 18 12 13 7 18"></polyline>
-        </svg>
-      `
-      scrollTopBtn.onclick = scrollToTop
-      container.prepend(scrollTopBtn)
-    }
-    
-    if (!container.querySelector('.scroll-bottom-btn')) {
-      const scrollBottomBtn = document.createElement('button')
-      scrollBottomBtn.className = 'scroll-bottom-btn'
-      scrollBottomBtn.title = 'Go to latest'
-      scrollBottomBtn.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="7 13 12 18 17 13"></polyline>
-          <polyline points="7 6 12 11 17 6"></polyline>
-        </svg>
-      `
-      scrollBottomBtn.onclick = scrollToBottom
-      container.append(scrollBottomBtn)
-    }
-  }
-}
-
-const startChatWithStudent = async (student) => {
+const startChatWithStudent = async (student: any) => {
   console.log('Starting chat with student:', student)
   
   activeConversation.value = {
@@ -2159,11 +2101,9 @@ const startChatWithStudent = async (student) => {
   
   await nextTick()
   scrollToBottom()
-  
-  setTimeout(addScrollButtons, 100)
 }
 
-const loadConversationMessages = async (studentId, sectionId) => {
+const loadConversationMessages = async (studentId: string, sectionId: string) => {
   try {
     if (!currentTeacherId.value) return
     
@@ -2175,52 +2115,64 @@ const loadConversationMessages = async (studentId, sectionId) => {
       sectionId 
     })
     
-    const [messagesResult, attachmentsResult] = await Promise.all([
-      supabase
-        .from('messages')
-        .select('*')
-        .eq('section_id', sectionId)
-        .eq('message_type', 'direct')
-        .or(`and(sender_id.eq.${currentTeacherId.value},recipient_id.eq.${studentId}),and(sender_id.eq.${studentId},recipient_id.eq.${currentTeacherId.value})`)
-        .order('sent_at', { ascending: true }),
-      supabase
-        .from('message_attachments')
-        .select('*')
-    ])
+    // Load messages
+    const { data: messages, error: messagesError } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('section_id', sectionId)
+      .eq('message_type', 'direct')
+      .or(`and(sender_id.eq.${currentTeacherId.value},recipient_id.eq.${studentId}),and(sender_id.eq.${studentId},recipient_id.eq.${currentTeacherId.value})`)
+      .order('sent_at', { ascending: true })
     
-    if (messagesResult.error) {
-      console.error('Error loading messages:', messagesResult.error)
+    if (messagesError) {
+      console.error('Error loading messages:', messagesError)
       currentMessages.value = []
       return
     }
     
-    const messages = messagesResult.data || []
-    const attachments = attachmentsResult.data || []
-    
-    const attachmentsMap = {}
-    attachments.forEach(att => {
-      if (!attachmentsMap[att.message_id]) {
-        attachmentsMap[att.message_id] = []
+    // Try to load attachments
+    let attachmentsMap: Record<string, any[]> = {}
+    if (messages && messages.length > 0) {
+      const messageIds = messages.map(m => m.id)
+      
+      try {
+        const { data: attachments } = await supabase
+          .from('message_attachments')
+          .select('*')
+          .in('message_id', messageIds)
+        
+        if (attachments) {
+          attachments.forEach(att => {
+            if (!attachmentsMap[att.message_id]) {
+              attachmentsMap[att.message_id] = []
+            }
+            attachmentsMap[att.message_id].push({
+              name: att.file_name,
+              url: att.file_url,
+              type: att.file_type,
+              size: att.file_size || 'Unknown size',
+              path: att.file_path
+            })
+          })
+        }
+      } catch (e) {
+        console.log('No attachments table or error fetching')
       }
-      attachmentsMap[att.message_id].push({
-        name: att.file_name,
-        url: att.file_url,
-        type: att.file_type,
-        size: att.file_size || 'Unknown size',
-        path: att.file_path
-      })
-    })
+    }
     
-    messages.forEach(msg => {
-      msg.attachments = attachmentsMap[msg.id] || []
-    })
+    // Add attachments to messages
+    const messagesWithAttachments = (messages || []).map(msg => ({
+      ...msg,
+      attachments: attachmentsMap[msg.id] || []
+    }))
     
-    currentMessages.value = messages
-    console.log('Loaded messages:', messages.length)
+    currentMessages.value = messagesWithAttachments
+    console.log('Loaded messages:', messagesWithAttachments.length)
     
     await nextTick()
     forceScrollToBottom()
     
+    // Mark as read
     markConversationAsRead(sectionId, studentId)
     
   } catch (error) {
@@ -2232,16 +2184,28 @@ const loadConversationMessages = async (studentId, sectionId) => {
 }
 
 const handleSendMessage = async () => {
-  if ((!newMessage.value.trim() && messageAttachments.value.length === 0) || !activeConversation.value || !currentTeacherId.value) return
+  if ((!newMessage.value.trim() && messageAttachments.value.length === 0) || !activeConversation.value || !currentTeacherId.value) {
+    console.log('Cannot send: missing required data')
+    return
+  }
   
-  const messageText = newMessage.value.trim()
+  const messageText = newMessage.value.trim() || '📎 Attachment'
   const attachmentsToSend = [...messageAttachments.value]
   
+  console.log('Sending message:', {
+    text: messageText,
+    sectionId: activeConversation.value.section_id,
+    senderId: currentTeacherId.value,
+    recipientId: activeConversation.value.student_id,
+    attachments: attachmentsToSend.length
+  })
+  
+  // Create temp message for optimistic UI
   const tempMessage = {
     id: 'temp-' + Date.now(),
     sender_id: currentTeacherId.value,
     recipient_id: activeConversation.value.student_id,
-    message_text: messageText || '📎 Attachment',
+    message_text: messageText,
     sent_at: new Date().toISOString(),
     is_read: false,
     message_type: 'direct',
@@ -2262,28 +2226,66 @@ const handleSendMessage = async () => {
   forceScrollToBottom()
   
   try {
-    let uploadedAttachments = []
+    // Upload attachments first
+    let uploadedAttachments: any[] = []
     if (attachmentsToSend.length > 0) {
-      const uploadPromises = attachmentsToSend.map(attachment => uploadFileToStorage(attachment.file))
-      uploadedAttachments = await Promise.all(uploadPromises)
+      console.log('Uploading attachments...')
+      for (const attachment of attachmentsToSend) {
+        if (attachment.file) {
+          const uploaded = await uploadFileToStorage(attachment.file)
+          uploadedAttachments.push(uploaded)
+        }
+      }
+      console.log('Attachments uploaded:', uploadedAttachments.length)
     }
     
-    const { data: messageId, error: sendError } = await supabase
+    // Try using the RPC function first
+    let messageId: string | null = null
+    
+    const { data: rpcResult, error: rpcError } = await supabase
       .rpc('send_direct_message', {
         p_section_id: activeConversation.value.section_id,
         p_sender_id: currentTeacherId.value,
         p_recipient_id: activeConversation.value.student_id,
-        p_message_text: messageText || '📎 Attachment'
+        p_message_text: messageText
       })
     
-    if (sendError) {
-      throw new Error('Failed to send message')
+    if (rpcError) {
+      console.error('RPC error:', rpcError)
+      // Fallback to direct insert
+      console.log('Falling back to direct insert...')
+      
+      const { data: insertData, error: insertError } = await supabase
+        .from('messages')
+        .insert({
+          section_id: activeConversation.value.section_id,
+          sender_id: currentTeacherId.value,
+          recipient_id: activeConversation.value.student_id,
+          message_text: messageText,
+          message_type: 'direct',
+          is_read: false
+        })
+        .select('id')
+        .single()
+      
+      if (insertError) {
+        console.error('Insert error:', insertError)
+        throw new Error(`Failed to send message: ${insertError.message}`)
+      }
+      
+      messageId = insertData?.id
+    } else {
+      messageId = rpcResult
     }
     
-    if (uploadedAttachments.length > 0) {
+    console.log('Message sent with ID:', messageId)
+    
+    // Save attachments if any
+    if (uploadedAttachments.length > 0 && messageId) {
       await saveMessageAttachments(messageId, uploadedAttachments)
     }
     
+    // Update temp message with real data
     const tempIndex = currentMessages.value.findIndex(m => m.id === tempMessage.id)
     if (tempIndex !== -1) {
       currentMessages.value[tempIndex] = {
@@ -2305,19 +2307,22 @@ const handleSendMessage = async () => {
       forceScrollToBottom()
     }, 100)
     
+    // Refresh contacts to update last message
     await loadTeacherContacts()
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to send message:', error)
     
+    // Remove temp message
     const tempIndex = currentMessages.value.findIndex(m => m.id === tempMessage.id)
     if (tempIndex !== -1) {
       currentMessages.value.splice(tempIndex, 1)
     }
     
+    // Restore input
     newMessage.value = messageText
     messageAttachments.value = attachmentsToSend
-    alert('Failed to send message. Please try again.')
+    alert(`Failed to send message: ${error.message}`)
   }
 }
 
@@ -2331,8 +2336,9 @@ const closeModal = () => {
   loadingMessages.value = false
 }
 
-const markConversationAsRead = async (sectionId, studentId) => {
+const markConversationAsRead = async (sectionId: string, studentId: string) => {
   try {
+    // Try RPC first
     const { error } = await supabase.rpc('mark_conversation_read', {
       p_section_id: sectionId,
       p_other_user_id: studentId,
@@ -2347,7 +2353,7 @@ const markConversationAsRead = async (sectionId, studentId) => {
         student.unread_count = 0
       }
     }
-  } catch (error) {
+  } catch (error: any) {
     console.log('Could not mark conversation as read:', error.message)
   }
 }
@@ -2356,8 +2362,9 @@ const markConversationAsRead = async (sectionId, studentId) => {
 // ATTACHMENT METHODS
 // ================================
 
-const handleMessageFileSelect = (event) => {
-  const files = Array.from(event.target.files)
+const handleMessageFileSelect = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const files = Array.from(target.files || [])
   
   files.forEach(file => {
     const fileType = file.type.startsWith('image/') ? 'image' : 'file'
@@ -2372,11 +2379,12 @@ const handleMessageFileSelect = (event) => {
     })
   })
   
-  event.target.value = ''
+  target.value = ''
 }
 
-const handleBroadcastFileSelect = (event) => {
-  const files = Array.from(event.target.files)
+const handleBroadcastFileSelect = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const files = Array.from(target.files || [])
   
   files.forEach(file => {
     const reader = new FileReader()
@@ -2387,7 +2395,7 @@ const handleBroadcastFileSelect = (event) => {
         type: fileType,
         name: file.name,
         size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
-        url: e.target.result,
+        url: e.target?.result as string,
         file: file
       })
     }
@@ -2395,10 +2403,10 @@ const handleBroadcastFileSelect = (event) => {
     reader.readAsDataURL(file)
   })
   
-  event.target.value = ''
+  target.value = ''
 }
 
-const viewAttachment = (attachment) => {
+const viewAttachment = (attachment: any) => {
   viewingAttachment.value = attachment
 }
 
@@ -2406,7 +2414,7 @@ const closeAttachmentViewer = () => {
   viewingAttachment.value = null
 }
 
-const downloadAttachment = (attachment) => {
+const downloadAttachment = (attachment: any) => {
   const link = document.createElement('a')
   link.href = attachment.url
   link.download = attachment.name
@@ -2420,7 +2428,7 @@ const downloadAttachment = (attachment) => {
 // ARCHIVE & DELETE METHODS
 // ================================
 
-const handleArchiveChat = (studentId) => {
+const handleArchiveChat = (studentId: string) => {
   const student = studentContacts.value.find(s => s.student_id === studentId)
   if (student) {
     archivedChats.value.push(student)
@@ -2430,7 +2438,7 @@ const handleArchiveChat = (studentId) => {
   }
 }
 
-const handleDeleteChat = (studentId) => {
+const handleDeleteChat = (studentId: string) => {
   if (confirm('Are you sure you want to delete this conversation? This action cannot be undone.')) {
     const student = studentContacts.value.find(s => s.student_id === studentId)
     studentContacts.value = studentContacts.value.filter(s => s.student_id !== studentId)
@@ -2442,7 +2450,7 @@ const handleDeleteChat = (studentId) => {
   }
 }
 
-const restoreChat = (studentId) => {
+const restoreChat = (studentId: string) => {
   const student = archivedChats.value.find(s => s.student_id === studentId)
   if (student) {
     studentContacts.value.push(student)
@@ -2483,7 +2491,7 @@ const cancelBroadcast = () => {
   }
 }
 
-const viewBroadcastSection = (section) => {
+const viewBroadcastSection = (section: any) => {
   selectedBroadcastSection.value = section
   showBroadcastMessages.value = true
 }
@@ -2505,42 +2513,62 @@ const sendBroadcastMessage = async () => {
     
     const attachmentsToSend = [...broadcastAttachments.value]
     
-    const uploadedAttachments = []
+    // Upload attachments
+    const uploadedAttachments: any[] = []
     if (attachmentsToSend.length > 0) {
       loadingMessage.value = 'Uploading attachments...'
       for (const attachment of attachmentsToSend) {
-        const uploaded = await uploadFileToStorage(attachment.file, 'broadcast-attachments')
-        uploadedAttachments.push(uploaded)
+        if (attachment.file) {
+          const uploaded = await uploadFileToStorage(attachment.file, 'broadcast-attachments')
+          uploadedAttachments.push(uploaded)
+        }
       }
     }
     
     loadingMessage.value = 'Sending to students...'
     
-    const { data: messageData, error: insertError } = await supabase
-      .from('messages')
-      .insert({
-        section_id: broadcastSection.value,
-        sender_id: currentTeacherId.value,
-        recipient_id: null,
-        message_text: broadcastMessage.value.trim(),
-        message_type: 'announcement',
-        is_read: false
-      })
-      .select()
-      .single()
+    // Try RPC first
+    let messageId: string | null = null
     
-    if (insertError) {
-      console.error('Error inserting broadcast message:', insertError)
-      throw insertError
+    const { data: rpcResult, error: rpcError } = await supabase
+      .rpc('send_section_announcement', {
+        p_section_id: broadcastSection.value,
+        p_teacher_id: currentTeacherId.value,
+        p_message_text: broadcastMessage.value.trim()
+      })
+    
+    if (rpcError) {
+      console.error('RPC error for announcement:', rpcError)
+      // Fallback to direct insert
+      const { data: insertData, error: insertError } = await supabase
+        .from('messages')
+        .insert({
+          section_id: broadcastSection.value,
+          sender_id: currentTeacherId.value,
+          recipient_id: null,
+          message_text: broadcastMessage.value.trim(),
+          message_type: 'announcement',
+          is_read: false
+        })
+        .select('id')
+        .single()
+      
+      if (insertError) {
+        console.error('Insert error:', insertError)
+        throw new Error(`Failed to send broadcast: ${insertError.message}`)
+      }
+      
+      messageId = insertData?.id
+    } else {
+      messageId = rpcResult
     }
     
-    const messageId = messageData.id
+    console.log('Broadcast message sent with ID:', messageId)
     
+    // Save attachments
     if (uploadedAttachments.length > 0 && messageId) {
       await saveMessageAttachments(messageId, uploadedAttachments)
     }
-    
-    console.log('Broadcast message sent successfully with ID:', messageId)
     
     const selectedSectionInfo = uniqueSections.value.find(s => s.section_id === broadcastSection.value)
     const sectionName = selectedSectionInfo ? selectedSectionInfo.section_name : 'Selected Section'
@@ -2553,19 +2581,19 @@ const sendBroadcastMessage = async () => {
     await loadTeacherContacts()
     await loadBroadcastHistory()
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error sending broadcast message:', error)
-    alert('Failed to send broadcast message. Please try again.')
+    alert(`Failed to send broadcast message: ${error.message}`)
   } finally {
     isLoading.value = false
   }
 }
 
-const toggleBroadcastOptions = (broadcastId) => {
+const toggleBroadcastOptions = (broadcastId: string) => {
   showBroadcastOptionsMenu.value = showBroadcastOptionsMenu.value === broadcastId ? null : broadcastId
 }
 
-const editBroadcast = (broadcast) => {
+const editBroadcast = (broadcast: any) => {
   broadcastMessage.value = broadcast.message
   broadcastSection.value = broadcast.section_id
   broadcastAttachments.value = [...(broadcast.attachments || [])]
@@ -2575,7 +2603,7 @@ const editBroadcast = (broadcast) => {
   alert('Edit mode: Update your message and click Send to save changes.')
 }
 
-const archiveBroadcast = (broadcastId) => {
+const archiveBroadcast = (broadcastId: string) => {
   const broadcast = broadcastHistory.value.find(b => b.id === broadcastId)
   if (broadcast) {
     archivedBroadcasts.value.push(broadcast)
@@ -2585,16 +2613,17 @@ const archiveBroadcast = (broadcastId) => {
   }
 }
 
-const deleteBroadcast = async (broadcastId) => {
+const deleteBroadcast = async (broadcastId: string) => {
   if (confirm('Are you sure you want to delete this broadcast? This will also remove it from student message pages.')) {
     try {
-      const { error: attachError } = await supabase
-        .from('message_attachments')
-        .delete()
-        .eq('message_id', broadcastId)
-      
-      if (attachError) {
-        console.error('Error deleting attachments:', attachError)
+      // Delete attachments first
+      try {
+        await supabase
+          .from('message_attachments')
+          .delete()
+          .eq('message_id', broadcastId)
+      } catch (e) {
+        console.log('No attachments to delete or table not found')
       }
       
       const { error: msgError } = await supabase
@@ -2623,7 +2652,7 @@ const deleteBroadcast = async (broadcastId) => {
 // UTILITY METHODS
 // ================================
 
-const toggleSection = (sectionId) => {
+const toggleSection = (sectionId: string) => {
   if (expandedSections.value.has(sectionId)) {
     expandedSections.value.delete(sectionId)
   } else {
@@ -2631,7 +2660,7 @@ const toggleSection = (sectionId) => {
   }
 }
 
-const viewSectionStudents = (section) => {
+const viewSectionStudents = (section: any) => {
   selectedSectionView.value = section
   showStudentsInSection.value = true
 }
@@ -2641,25 +2670,25 @@ const backToSections = () => {
   showStudentsInSection.value = false
 }
 
-const toggleSectionOptions = (sectionId) => {
+const toggleSectionOptions = (sectionId: string) => {
   openSectionDropdown.value = openSectionDropdown.value === sectionId ? null : sectionId
 }
 
-const deleteSectionConfirm = (section) => {
+const deleteSectionConfirm = (section: any) => {
   if (confirm(`Are you sure you want to delete the section "${section.subject_name} - Grade ${section.grade_level}"? This action cannot be undone.`)) {
     deleteSection(section)
   }
   openSectionDropdown.value = null
 }
 
-const archiveSectionConfirm = (section) => {
+const archiveSectionConfirm = (section: any) => {
   if (confirm(`Archive the section "${section.subject_name} - Grade ${section.grade_level}"?`)) {
     archiveSection(section)
   }
   openSectionDropdown.value = null
 }
 
-const deleteSection = async (section) => {
+const deleteSection = async (section: any) => {
   try {
     console.log('Deleting section:', section)
     alert('Section deleted successfully!')
@@ -2669,7 +2698,7 @@ const deleteSection = async (section) => {
   }
 }
 
-const archiveSection = async (section) => {
+const archiveSection = async (section: any) => {
   try {
     console.log('Archiving section:', section)
     alert('Section archived successfully!')
@@ -2746,12 +2775,12 @@ const forceScrollToBottom = () => {
   }
 }
 
-const formatTime = (dateString) => {
+const formatTime = (dateString: string) => {
   if (!dateString) return ''
   
   const date = new Date(dateString)
   const now = new Date()
-  const diffMs = now - date
+  const diffMs = now.getTime() - date.getTime()
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
   
   if (diffDays === 0) {
@@ -2765,12 +2794,12 @@ const formatTime = (dateString) => {
   }
 }
 
-const formatDate = (dateString) => {
+const formatDate = (dateString: string) => {
   if (!dateString) return ''
   return new Date(dateString).toLocaleDateString()
 }
 
-const getPresenceStatus = (authUserId) => {
+const getPresenceStatus = (authUserId: string) => {
   const presence = studentPresence.value[authUserId]
   if (!presence || !presence.last_seen) return 'Offline'
   
@@ -2780,7 +2809,7 @@ const getPresenceStatus = (authUserId) => {
   
   const now = new Date()
   const lastSeen = new Date(presence.last_seen)
-  const diffMs = now - lastSeen
+  const diffMs = now.getTime() - lastSeen.getTime()
   const diffMinutes = Math.floor(diffMs / (1000 * 60))
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
@@ -2813,62 +2842,35 @@ const setupPresenceTracking = async () => {
   
   console.log('Setting up presence tracking for students:', studentAuthIds.length)
   
-  const { data: presenceData, error } = await supabase
-    .from('user_presence')
-    .select('*')
-    .in('user_id', studentAuthIds)
-  
-  if (error) {
-    console.error('Error fetching student presence:', error)
-    return
-  }
-  
-  if (presenceData) {
-    presenceData.forEach(p => {
-      studentPresence.value[p.user_id] = {
-        is_online: p.is_online,
-        last_seen: p.last_seen
-      }
-    })
-  }
-  
-  const presenceChannel = supabase
-    .channel('student-presence-tracking')
-    .on(
-      'postgres_changes',
-      {
-        event: '*',
-        schema: 'public',
-        table: 'user_presence',
-        filter: `user_id=in.(${studentAuthIds.join(',')})`
-      },
-      (payload) => {
-        console.log('Student presence update received:', payload)
-        
-        const userId = payload.new?.user_id || payload.old?.user_id
-        
-        if (payload.eventType === 'DELETE') {
-          if (studentPresence.value[userId]) {
-            studentPresence.value[userId].is_online = false
-          }
-        } else if (payload.new) {
-          studentPresence.value[userId] = {
-            is_online: payload.new.is_online,
-            last_seen: payload.new.last_seen
-          }
+  try {
+    const { data: presenceData, error } = await supabase
+      .from('user_presence')
+      .select('*')
+      .in('user_id', studentAuthIds)
+    
+    if (error) {
+      console.error('Error fetching student presence:', error)
+      return
+    }
+    
+    if (presenceData) {
+      presenceData.forEach(p => {
+        studentPresence.value[p.user_id] = {
+          is_online: p.is_online,
+          last_seen: p.last_seen
         }
-      }
-    )
-    .subscribe()
-  
-  console.log('Presence tracking setup complete for', studentAuthIds.length, 'students')
+      })
+    }
+  } catch (e) {
+    console.log('Presence tracking not available')
+  }
 }
 
-const updateTeacherPresence = async (isOnline) => {
+const updateTeacherPresence = async (isOnline: boolean) => {
   if (!currentUser.value) return
   
   try {
-    const { error } = await supabase
+    await supabase
       .from('user_presence')
       .upsert({
         user_id: currentUser.value.id,
@@ -2877,10 +2879,8 @@ const updateTeacherPresence = async (isOnline) => {
       }, {
         onConflict: 'user_id'
       })
-    
-    if (error) throw error
   } catch (error) {
-    console.error('Error updating teacher presence:', error)
+    console.log('Could not update presence')
   }
 }
 
@@ -2897,7 +2897,7 @@ const sectionIconColors = [
   'linear-gradient(135deg, #10b981 0%, #10b981 100%)',
 ]
 
-const getSectionIconColor = (idx) => {
+const getSectionIconColor = (idx: number) => {
   return sectionIconColors[idx % sectionIconColors.length]
 }
 
@@ -2955,9 +2955,7 @@ const setupAuthListener = () => {
 onMounted(async () => {
   console.log('Teacher messages component mounted')
   
-  const { initDarkMode } = useDarkMode()
   initDarkMode()
-  
   setupAuthListener()
   
   document.addEventListener('click', () => {
@@ -2982,6 +2980,7 @@ onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
 })
 </script>
+        
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');

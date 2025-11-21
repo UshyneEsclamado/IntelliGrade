@@ -521,6 +521,7 @@ export default {
     const isStarting = ref(false);
     const showSubmitModal = ref(false);
     const isSubmitting = ref(false);
+    let saveTimeout = null;
 
     let quizSubscription = null;
 
@@ -935,12 +936,6 @@ export default {
           questions.value = questionsWithOptions;
         }
 
-        const mcQuestions = questions.value.filter(q => q.question_type === 'multiple_choice');
-        console.log(`📊 Multiple choice questions: ${mcQuestions.length}`);
-        mcQuestions.forEach((q, idx) => {
-          console.log(`   Q${idx + 1}: ${q.options?.length || 0} options`);
-        });
-
         if (questions.value.length === 0) {
           throw new Error('No questions loaded');
         }
@@ -981,6 +976,7 @@ export default {
         currentAttempt.value = attempt;
         console.log('✅ Attempt created:', attempt.id);
 
+        // Initialize student answers
         studentAnswers.value = {};
         questions.value.forEach(q => {
           studentAnswers.value[q.id] = {
@@ -1002,7 +998,6 @@ export default {
         takingQuiz.value = true;
 
         console.log('🎉 Quiz started successfully!');
-        console.log('Current question:', questions.value[0]);
 
       } catch (error) {
         console.error('❌ Error starting quiz:', error);
@@ -1025,6 +1020,60 @@ export default {
       }, 1000);
     };
 
+    const saveAnswer = async (questionId) => {
+      try {
+        if (!currentAttempt.value || !currentAttempt.value.id) {
+          console.error('❌ No active attempt - cannot save answer');
+          return false;
+        }
+
+        const question = questions.value.find(q => q.id === questionId);
+        if (!question) {
+          console.error('❌ Question not found:', questionId);
+          return false;
+        }
+
+        const answer = studentAnswers.value[questionId];
+        if (!answer) {
+          console.error('❌ No answer data for question:', questionId);
+          return false;
+        }
+
+        console.log('💾 Saving answer for Q' + question.question_number);
+
+        // Build the answer object
+        const answerData = {
+          attempt_id: currentAttempt.value.id,
+          question_id: questionId,
+          selected_option_id: answer.selected_option_id || null,
+          answer_text: answer.answer_text && answer.answer_text.trim() ? answer.answer_text.trim() : null,
+          points_possible: parseFloat(question.points) || 1.00,
+          is_correct: false, // Will be graded on submission
+          points_earned: 0
+        };
+
+        // Save to database using upsert
+        const { data, error } = await supabase
+          .from('student_answers')
+          .upsert(answerData, { 
+            onConflict: 'attempt_id,question_id'
+          })
+          .select();
+
+        if (error) {
+          console.error('❌ Error saving answer:', error.message);
+          return false;
+        }
+
+        console.log('✅ Answer saved to student_answers table');
+        return true;
+
+      } catch (error) {
+        console.error('❌ Exception saving answer:', error);
+        return false;
+      }
+    };
+
     const selectOption = async (questionId, optionId) => {
       console.log('✅ Selected option:', { questionId, optionId });
       studentAnswers.value[questionId].selected_option_id = optionId;
@@ -1040,27 +1089,11 @@ export default {
     };
 
     const autoSaveAnswer = (questionId) => {
-      saveAnswer(questionId);
-    };
-
-    const saveAnswer = async (questionId) => {
-      try {
-        const question = questions.value.find(q => q.id === questionId);
-        const answer = studentAnswers.value[questionId];
-
-        await supabase.from('student_answers').upsert({
-          attempt_id: currentAttempt.value.id,
-          question_id: questionId,
-          selected_option_id: answer.selected_option_id || null,
-          answer_text: answer.answer_text ? answer.answer_text.trim() : null,
-          points_possible: question?.points || 1.00,
-          is_correct: false,
-          points_earned: 0
-        }, { onConflict: 'attempt_id,question_id' });
-
-      } catch (error) {
-        console.error('Error saving answer:', error);
-      }
+      if (saveTimeout) clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(() => {
+        console.log('⏱️ Auto-saving answer for Q' + questionId);
+        saveAnswer(questionId);
+      }, 500);
     };
 
     const previousQuestion = () => {
@@ -1080,60 +1113,106 @@ export default {
     };
 
     const showSubmitConfirmation = () => {
+      console.log('📋 Showing submit confirmation...');
       showSubmitModal.value = true;
     };
 
-    // ============================================
-    // FIXED: Use database function to avoid timeout
-    // ============================================
     const submitQuiz = async () => {
-      if (isSubmitting.value) return;
+      if (isSubmitting.value) {
+        console.log('⚠️ Already submitting, ignoring duplicate request');
+        return;
+      }
       
       isSubmitting.value = true;
       showSubmitModal.value = false;
 
-      console.log('📤 Submitting quiz...');
+      console.log('📤 Starting quiz submission...');
 
       try {
-        if (timerInterval.value) clearInterval(timerInterval.value);
+        // Stop timer
+        if (timerInterval.value) {
+          clearInterval(timerInterval.value);
+          timerInterval.value = null;
+          console.log('⏹️ Timer stopped');
+        }
 
+        // Calculate time taken
         const timeTaken = Math.floor((Date.now() - startTime.value) / 1000);
+        const timeTakenMinutes = Math.ceil(timeTaken / 60);
+        console.log(`⏱️ Time taken: ${timeTakenMinutes} minutes`);
 
-        console.log('💾 Calling database function to submit...');
+        // Verify attempt exists
+        if (!currentAttempt.value || !currentAttempt.value.id) {
+          throw new Error('No active quiz attempt found');
+        }
+
+        console.log('🔍 Attempt ID:', currentAttempt.value.id);
+        console.log('📊 Answers submitted:', answeredCount.value, 'out of', questions.value.length);
+        console.log('💾 Calling submit_quiz_attempt function...');
         
-        // Use database function instead of direct update
+        // Call the database function to submit and grade
         const { data, error: rpcError } = await supabase.rpc('submit_quiz_attempt', {
           p_attempt_id: currentAttempt.value.id,
-          p_time_taken_minutes: Math.ceil(timeTaken / 60)
+          p_time_taken_minutes: timeTakenMinutes
         });
 
         if (rpcError) {
-          console.error('❌ RPC error:', rpcError);
-          throw new Error('Failed to submit quiz: ' + rpcError.message);
+          console.error('❌ RPC Error:', rpcError);
+          console.error('Full error:', JSON.stringify(rpcError, null, 2));
+          throw new Error(rpcError.message || 'RPC function failed');
         }
 
-        if (!data) {
-          throw new Error('Failed to submit quiz: Database function returned false');
+        console.log('✅ Function response:', data);
+
+        if (data === false || data === null || data === undefined) {
+          console.error('❌ Function returned false or null');
+          throw new Error('Submission failed - database function error');
         }
 
-        console.log('✅ Quiz submitted successfully!');
-        alert('Quiz submitted successfully!');
+        console.log('✅ Quiz submitted and graded successfully!');
+        console.log('📋 Final score saved to database');
 
+        // Show success message
+        alert('🎉 Quiz submitted successfully!\n\nYour responses have been graded and saved.');
+
+        // Clean up state
         takingQuiz.value = false;
         currentAttempt.value = null;
         questions.value = [];
         studentAnswers.value = {};
         currentQuestionIndex.value = 0;
+        startTime.value = null;
 
+        // Reload quizzes
         console.log('🔄 Reloading quizzes...');
         await loadQuizzes();
-        
         selectedQuiz.value = null;
-        console.log('✅ Redirected to quiz list');
+        
+        console.log('✅ Submission complete - returned to quiz list');
 
       } catch (error) {
-        console.error('❌ Error submitting quiz:', error);
-        alert(`Failed to submit: ${error.message}\n\nPlease try again or contact your teacher if the problem persists.`);
+        console.error('❌ Submission error:', error);
+        console.error('Error message:', error.message);
+        
+        let errorMessage = 'Failed to submit quiz.\n\n';
+        if (error.message.includes('not found')) {
+          errorMessage += 'Your quiz attempt could not be found. Please try again.';
+        } else if (error.message.includes('connection')) {
+          errorMessage += 'Network error. Please check your internet connection.';
+        } else if (error.message.includes('database')) {
+          errorMessage += 'Database error. Please contact your teacher.';
+        } else {
+          errorMessage += error.message;
+        }
+
+        alert(errorMessage);
+        
+        // Restart timer if needed
+        if (selectedQuiz.value?.has_time_limit && takingQuiz.value) {
+          console.log('🔄 Restarting timer...');
+          startTimer();
+        }
+
       } finally {
         isSubmitting.value = false;
       }

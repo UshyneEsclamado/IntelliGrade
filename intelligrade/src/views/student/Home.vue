@@ -262,7 +262,6 @@
     </div>
   </div>
 </template>
-
 <script>
 import { supabase } from '../../supabase.js';
 
@@ -270,35 +269,42 @@ export default {
   name: 'StudentHome',
   data() {
     return {
+      // UI States
       showHelpModal: false,
+      showNotifDropdown: false,
+      
+      // User Data
       studentName: 'Student',
+      userId: null,
+      profileId: null,
+      studentRecordId: null,
+      
+      // Loading States
+      isLoadingName: true,
+      isLoadingStats: false,
+      isLoadingAssessments: false,
+      isLoadingNotifications: false,
+      
+      // Dashboard Data
       totalSubjects: 0,
       pendingAssessments: 0,
       recentAssessments: [],
       notifications: [],
-      pollInterval: null,
-      isLoadingName: true,
-      userId: null,
-      profileId: null,
-      studentRecordId: null,
-      showNotifDropdown: false,
+      
+      // Real-time
       subscriptions: [],
-      isActive: false,
+      pollInterval: null,
       enrolledSectionIds: [],
-      // Add caching
-      _cache: {
-        subjects: new Map(),
-        sections: new Map(),
-        lastUpdated: null
-      },
-      _loading: {
-        profile: false,
-        stats: false,
-        notifications: false
-      }
+      
+      // Cache
+      assessmentCache: new Map(),
+      subjectMap: new Map(),
+      sectionMap: new Map()
     };
   },
+  
   methods: {
+    // ==================== UI Methods ====================
     toggleNotifDropdown() {
       this.showNotifDropdown = !this.showNotifDropdown;
     },
@@ -322,187 +328,62 @@ export default {
       this.showHelpModal = false;
     },
 
-    async loadEnrolledSections() {
-      if (!this.studentRecordId) return [];
-      
-      try {
-        const { data: enrollments } = await supabase
-          .from('enrollments')
-          .select('section_id')
-          .eq('student_id', this.studentRecordId)
-          .eq('status', 'active');
-
-        this.enrolledSectionIds = enrollments?.map(e => e.section_id) || [];
-        console.log('Enrolled section IDs:', this.enrolledSectionIds);
-        return this.enrolledSectionIds;
-      } catch (error) {
-        console.error('Error loading enrolled sections:', error);
-        return [];
+    // ==================== Navigation Methods ====================
+    navigateToSubjects() {
+      const parent = this.$parent;
+      if (parent && typeof parent.navigateTo === 'function') {
+        parent.navigateTo('subjects');
+      } else {
+        this.$emit('navigate', 'subjects');
       }
     },
 
-    async loadNotifications() {
-      if (!this.studentRecordId || this._loading.notifications) return;
-      this._loading.notifications = true;
-      
-      try {
-        const notifications = [];
-        
-        // Load only critical notifications - messages and urgent quizzes
-        const [messagesResult, quizzesResult] = await Promise.all([
-          // Get recent direct messages
-          supabase
-            .from('messages')
-            .select('id, message_text, message_type, sent_at, section_id')
-            .eq('recipient_id', this.studentRecordId)
-            .is('read_at', null)
-            .order('sent_at', { ascending: false })
-            .limit(5),
-          
-          // Get urgent quizzes (due within 3 days)
-          supabase
-            .from('quizzes')
-            .select('id, title, end_date, section_id, subject_id')
-            .eq('status', 'published')
-            .in('section_id', this.enrolledSectionIds)
-            .gte('end_date', new Date().toISOString())
-            .lte('end_date', new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString())
-            .limit(5)
-        ]);
-
-        // Process messages quickly
-        if (messagesResult.data?.length > 0) {
-          for (const msg of messagesResult.data) {
-            notifications.push({
-              id: `msg-${msg.id}`,
-              title: msg.message_type === 'announcement' ? 'New Announcement' : 'New Message',
-              body: msg.message_text?.substring(0, 80) + '...',
-              date: new Date(msg.sent_at).toLocaleString(),
-              type: 'message',
-              rawDate: new Date(msg.sent_at)
-            });
-          }
-        }
-
-        // Process urgent quizzes
-        if (quizzesResult.data?.length > 0) {
-          const { data: attempts } = await supabase
-            .from('quiz_attempts')
-            .select('quiz_id')
-            .eq('student_id', this.studentRecordId)
-            .in('status', ['submitted', 'graded', 'reviewed']);
-
-          const completedQuizIds = new Set(attempts?.map(a => a.quiz_id) || []);
-
-          for (const quiz of quizzesResult.data) {
-            if (!completedQuizIds.has(quiz.id)) {
-              notifications.push({
-                id: `quiz-${quiz.id}`,
-                title: 'Quiz Due Soon',
-                body: `${quiz.title} - Due: ${new Date(quiz.end_date).toLocaleDateString()}`,
-                date: new Date(quiz.end_date).toLocaleString(),
-                type: 'quiz',
-                rawDate: new Date(quiz.end_date)
-              });
-            }
-          }
-        }
-
-        this.notifications = notifications
-          .sort((a, b) => b.rawDate.getTime() - a.rawDate.getTime())
-          .slice(0, 10);
-
-      } catch (error) {
-        console.error('Error loading notifications:', error);
-        this.notifications = [];
-      } finally {
-        this._loading.notifications = false;
+    navigateToCalendar() {
+      const parent = this.$parent;
+      if (parent && typeof parent.navigateTo === 'function') {
+        parent.navigateTo('calendar');
+      } else {
+        this.$emit('navigate', 'calendar');
       }
     },
 
-    setupRealtimeSubscriptions() {
-      if (!this.userId || !this.studentRecordId) {
-        console.warn('Cannot setup subscriptions: missing userId or studentRecordId');
-        return;
-      }
-
-      console.log('Setting up minimal real-time subscriptions for student:', this.studentRecordId);
-
-      // Unsubscribe from any existing subscriptions first
-      this.cleanupSubscriptions();
-
-      // Only subscribe to essential changes - messages and quizzes
-      const messagesSub = supabase
-        .channel('student_home_messages')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'messages'
-          },
-          (payload) => {
-            const msg = payload.new || payload.old;
-            // Only reload if message is relevant
-            const isDirectMessage = msg.recipient_id === this.studentRecordId;
-            const isBroadcast = !msg.recipient_id && this.enrolledSectionIds.includes(msg.section_id);
-            
-            if (isDirectMessage || isBroadcast) {
-              this.loadNotifications();
-            }
-          }
-        )
-        .subscribe();
-
-      // Quiz changes for enrolled sections
-      const quizSub = supabase
-        .channel('student_home_quizzes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'quizzes'
-          },
-          (payload) => {
-            const quiz = payload.new || payload.old;
-            if (this.enrolledSectionIds.includes(quiz.section_id)) {
-              this.loadAvailableQuizzes();
-            }
-          }
-        )
-        .subscribe();
-
-      this.subscriptions = [messagesSub, quizSub];
-      console.log('✅ Minimal real-time subscriptions established');
-    },
-
-    cleanupSubscriptions() {
-      if (this.subscriptions && this.subscriptions.length > 0) {
-        console.log('Cleaning up', this.subscriptions.length, 'subscriptions');
-        this.subscriptions.forEach(sub => {
-          if (sub && typeof sub.unsubscribe === 'function') {
-            sub.unsubscribe();
-          }
-        });
-        this.subscriptions = [];
+    navigateToMessages() {
+      const parent = this.$parent;
+      if (parent && typeof parent.navigateTo === 'function') {
+        parent.navigateTo('messages');
+      } else {
+        this.$emit('navigate', 'messages');
       }
     },
 
+    navigateToSettings() {
+      const parent = this.$parent;
+      if (parent && typeof parent.navigateTo === 'function') {
+        parent.navigateTo('settings');
+      } else {
+        this.$emit('navigate', 'settings');
+      }
+    },
+
+    // ==================== Data Loading Methods ====================
+    
     async loadStudentProfile() {
       try {
         this.isLoadingName = true;
+        console.log('📝 Loading student profile...');
         
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         
         if (authError || !user) {
-          console.error('Auth error:', authError);
+          console.error('❌ Auth error:', authError);
           this.studentName = 'Student';
-          return;
+          return false;
         }
 
         this.userId = user.id;
+        console.log('✅ Auth user found:', user.id);
 
+        // Get profile
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('id, full_name, email, role')
@@ -510,19 +391,20 @@ export default {
           .maybeSingle();
 
         if (profileError || !profile) {
-          console.error('Profile error:', profileError);
+          console.error('❌ Profile error:', profileError);
           this.studentName = user.email?.split('@')[0] || 'Student';
-          return;
+          return false;
         }
 
         this.profileId = profile.id;
 
         if (profile.role !== 'student') {
-          console.warn('User is not a student');
+          console.warn('⚠️ User is not a student');
           this.studentName = profile.full_name || 'User';
-          return;
+          return false;
         }
 
+        // Get student data
         const { data: studentData, error: studentError } = await supabase
           .from('students')
           .select('id, student_id, grade_level, full_name, email, is_active')
@@ -530,113 +412,180 @@ export default {
           .maybeSingle();
 
         if (studentError || !studentData) {
-          console.warn('Student data error:', studentError);
+          console.warn('⚠️ Student data error:', studentError);
           this.studentName = profile.full_name || 'Student';
-          return;
+          return false;
         }
 
         this.studentRecordId = studentData.id;
-        this.isActive = studentData.is_active || false;
         this.studentName = studentData.full_name || profile.full_name || 'Student';
         
         console.log('✅ Student profile loaded:', {
-          studentRecordId: this.studentRecordId,
-          studentName: this.studentName,
-          isActive: this.isActive
+          name: this.studentName,
+          id: this.studentRecordId,
+          gradeLevel: studentData.grade_level
         });
 
-        // Load enrolled sections first
-        await this.loadEnrolledSections();
-        
-        // Then load dashboard stats
-        await this.loadDashboardStats();
+        return true;
 
       } catch (error) {
-        console.error('Error loading student profile:', error);
+        console.error('❌ Error loading student profile:', error);
         this.studentName = 'Student';
+        return false;
       } finally {
         this.isLoadingName = false;
       }
     },
 
-    async loadDashboardStats() {
+    async loadEnrolledSections() {
+      if (!this.studentRecordId) {
+        console.warn('⚠️ No student record ID');
+        return [];
+      }
+      
       try {
-        if (!this.studentRecordId) {
-          console.warn('No student record ID available');
-          return;
+        console.log('📚 Loading enrolled sections...');
+        
+        const { data: enrollments, error } = await supabase
+          .from('enrollments')
+          .select('section_id')
+          .eq('student_id', this.studentRecordId)
+          .eq('status', 'active');
+
+        if (error) {
+          console.error('❌ Enrollments error:', error);
+          return [];
         }
 
-        // Use cached enrollments if available
+        this.enrolledSectionIds = enrollments?.map(e => e.section_id) || [];
+        console.log('✅ Enrolled sections loaded:', this.enrolledSectionIds.length, 'sections');
+        
+        return this.enrolledSectionIds;
+      } catch (error) {
+        console.error('❌ Error loading enrolled sections:', error);
+        return [];
+      }
+    },
+
+    async loadDashboardStats() {
+      if (!this.studentRecordId) {
+        console.warn('⚠️ Cannot load stats: no student record ID');
+        return;
+      }
+
+      try {
+        this.isLoadingStats = true;
+        console.log('📊 Loading dashboard stats...');
+
+        // Ensure we have enrolled sections
         if (this.enrolledSectionIds.length === 0) {
           await this.loadEnrolledSections();
         }
 
-        // Get unique subjects from enrolled sections
-        if (this.enrolledSectionIds.length > 0) {
-          const { data: sections } = await supabase
-            .from('sections')
-            .select('subject_id')
-            .in('id', this.enrolledSectionIds);
-
-          const uniqueSubjects = new Set(sections?.map(s => s.subject_id) || []);
-          this.totalSubjects = uniqueSubjects.size;
-        } else {
+        if (this.enrolledSectionIds.length === 0) {
+          console.log('ℹ️ Student has no enrolled sections');
           this.totalSubjects = 0;
+          this.pendingAssessments = 0;
+          return;
         }
 
-        await this.loadAvailableQuizzes();
+        // Get unique subjects from enrolled sections
+        const { data: sections, error: sectionsError } = await supabase
+          .from('sections')
+          .select('id, subject_id, name')
+          .in('id', this.enrolledSectionIds);
+
+        if (sectionsError) {
+          console.error('❌ Sections error:', sectionsError);
+          return;
+        }
+
+        // Cache section data
+        sections?.forEach(sec => {
+          this.sectionMap.set(sec.id, sec.name);
+        });
+
+        // Get unique subjects
+        const uniqueSubjectIds = [...new Set(sections?.map(s => s.subject_id) || [])];
+        this.totalSubjects = uniqueSubjectIds.length;
+        console.log('✅ Total subjects:', this.totalSubjects);
+
+        // Get subject names for cache
+        if (uniqueSubjectIds.length > 0) {
+          const { data: subjects } = await supabase
+            .from('subjects')
+            .select('id, name')
+            .in('id', uniqueSubjectIds);
+
+          subjects?.forEach(subj => {
+            this.subjectMap.set(subj.id, subj.name);
+          });
+        }
 
       } catch (error) {
-        console.error('Error loading dashboard stats:', error);
-        this.totalSubjects = 0;
-        this.pendingAssessments = 0;
+        console.error('❌ Error loading dashboard stats:', error);
+      } finally {
+        this.isLoadingStats = false;
       }
     },
 
     async loadAvailableQuizzes() {
-      try {
-        if (!this.studentRecordId) return;
+      if (!this.studentRecordId) {
+        console.warn('⚠️ Cannot load quizzes: no student record ID');
+        return;
+      }
 
-        // Use cached enrolled sections instead of querying again
+      try {
+        this.isLoadingAssessments = true;
+        console.log('📋 Loading available quizzes...');
+
+        // Ensure we have enrolled sections
         if (this.enrolledSectionIds.length === 0) {
           await this.loadEnrolledSections();
         }
 
         if (this.enrolledSectionIds.length === 0) {
+          console.log('ℹ️ No enrolled sections for quizzes');
           this.recentAssessments = [];
           this.pendingAssessments = 0;
           return;
         }
 
+        // Get all published quizzes for enrolled sections
         const { data: quizzes, error: quizError } = await supabase
           .from('quizzes')
-          .select('id, title, description, start_date, end_date, section_id, subject_id, attempts_allowed')
+          .select('id, title, description, start_date, end_date, section_id, subject_id, attempts_allowed, status')
           .in('section_id', this.enrolledSectionIds)
           .eq('status', 'published')
           .order('end_date', { ascending: true });
 
         if (quizError) {
-          console.error('Error loading quizzes:', quizError);
+          console.error('❌ Quizzes error:', quizError);
           this.recentAssessments = [];
           this.pendingAssessments = 0;
           return;
         }
 
         if (!quizzes || quizzes.length === 0) {
+          console.log('ℹ️ No published quizzes');
           this.recentAssessments = [];
           this.pendingAssessments = 0;
           return;
         }
 
+        console.log('✅ Quizzes found:', quizzes.length);
+
+        // Get quiz attempts for this student
         const { data: attempts, error: attemptsError } = await supabase
           .from('quiz_attempts')
           .select('quiz_id, attempt_number, status, submitted_at')
           .eq('student_id', this.studentRecordId);
 
         if (attemptsError) {
-          console.error('Error loading attempts:', attemptsError);
+          console.error('❌ Attempts error:', attemptsError);
         }
 
+        // Build attempt map
         const attemptMap = {};
         if (attempts) {
           attempts.forEach(attempt => {
@@ -647,28 +596,13 @@ export default {
           });
         }
 
+        // Process quizzes
         const nowDate = new Date();
         let pendingCount = 0;
         const processedQuizzes = [];
 
-        // Get all subjects and sections in bulk to reduce queries
-        const subjectIds = [...new Set(quizzes.map(q => q.subject_id))];
-        const { data: subjects } = await supabase
-          .from('subjects')
-          .select('id, name')
-          .in('id', subjectIds);
-
-        const { data: sections } = await supabase
-          .from('sections')
-          .select('id, name')
-          .in('id', this.enrolledSectionIds);
-
-        const subjectMap = new Map(subjects?.map(s => [s.id, s.name]) || []);
-        const sectionMap = new Map(sections?.map(s => [s.id, s.name]) || []);
-
         for (const quiz of quizzes) {
           try {
-
             const startDate = quiz.start_date ? new Date(quiz.start_date) : null;
             const endDate = quiz.end_date ? new Date(quiz.end_date) : null;
             const quizAttempts = attemptMap[quiz.id] || [];
@@ -684,6 +618,7 @@ export default {
 
             const hasInProgress = quizAttempts.some(a => a.status === 'in_progress');
 
+            // Determine status
             if (hasInProgress) {
               status = 'in-progress';
               canTakeQuiz = true;
@@ -701,6 +636,7 @@ export default {
               canTakeQuiz = false;
             }
 
+            // Count pending
             if (status === 'available' || status === 'in-progress') {
               pendingCount++;
             }
@@ -708,8 +644,8 @@ export default {
             processedQuizzes.push({
               id: quiz.id,
               title: quiz.title || 'Untitled Quiz',
-              subject: subjectMap.get(quiz.subject_id) || 'Unknown Subject',
-              section: sectionMap.get(quiz.section_id) || 'Unknown Section',
+              subject: this.subjectMap.get(quiz.subject_id) || 'Unknown Subject',
+              section: this.sectionMap.get(quiz.section_id) || 'Unknown Section',
               startDate: startDate,
               dueDate: endDate,
               status: status,
@@ -718,11 +654,13 @@ export default {
               attemptsAllowed: quiz.attempts_allowed,
               type: 'quiz'
             });
+
           } catch (err) {
-            console.error('Error processing quiz:', err);
+            console.error('⚠️ Error processing quiz:', err);
           }
         }
 
+        // Sort and limit to 5
         this.recentAssessments = processedQuizzes
           .sort((a, b) => {
             const statusPriority = {
@@ -745,15 +683,108 @@ export default {
           .slice(0, 5);
 
         this.pendingAssessments = pendingCount;
-        console.log('Assessments loaded - Pending:', pendingCount, 'Total:', processedQuizzes.length);
+        console.log('✅ Assessments loaded - Pending:', pendingCount, 'Total:', processedQuizzes.length);
 
       } catch (error) {
-        console.error('Error loading available quizzes:', error);
+        console.error('❌ Error loading available quizzes:', error);
         this.recentAssessments = [];
         this.pendingAssessments = 0;
+      } finally {
+        this.isLoadingAssessments = false;
       }
     },
 
+    async loadNotifications() {
+      if (!this.studentRecordId || this.isLoadingNotifications) {
+        return;
+      }
+
+      try {
+        this.isLoadingNotifications = true;
+        console.log('🔔 Loading notifications...');
+
+        if (this.enrolledSectionIds.length === 0) {
+          this.notifications = [];
+          return;
+        }
+
+        const notifications = [];
+        
+        // Get recent messages
+        const { data: messages } = await supabase
+          .from('messages')
+          .select('id, message_text, message_type, sent_at, section_id')
+          .eq('recipient_id', this.studentRecordId)
+          .order('sent_at', { ascending: false })
+          .limit(5);
+
+        // Process messages
+        if (messages?.length > 0) {
+          for (const msg of messages) {
+            notifications.push({
+              id: `msg-${msg.id}`,
+              title: msg.message_type === 'announcement' ? '📢 New Announcement' : '💬 New Message',
+              body: msg.message_text?.substring(0, 80) + (msg.message_text?.length > 80 ? '...' : ''),
+              date: new Date(msg.sent_at).toLocaleString(),
+              type: 'message',
+              rawDate: new Date(msg.sent_at)
+            });
+          }
+        }
+
+        // Get urgent quizzes (due within 3 days)
+        const in3Days = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+        
+        const { data: urgentQuizzes } = await supabase
+          .from('quizzes')
+          .select('id, title, end_date, section_id')
+          .in('section_id', this.enrolledSectionIds)
+          .eq('status', 'published')
+          .gte('end_date', new Date().toISOString())
+          .lte('end_date', in3Days)
+          .limit(5);
+
+        if (urgentQuizzes?.length > 0) {
+          // Get completed quiz IDs
+          const { data: completedAttempts } = await supabase
+            .from('quiz_attempts')
+            .select('quiz_id')
+            .eq('student_id', this.studentRecordId)
+            .in('status', ['submitted', 'graded', 'reviewed']);
+
+          const completedIds = new Set(completedAttempts?.map(a => a.quiz_id) || []);
+
+          for (const quiz of urgentQuizzes) {
+            if (!completedIds.has(quiz.id)) {
+              notifications.push({
+                id: `quiz-${quiz.id}`,
+                title: '⏰ Quiz Due Soon',
+                body: `${quiz.title} - Due: ${new Date(quiz.end_date).toLocaleDateString()}`,
+                date: new Date(quiz.end_date).toLocaleString(),
+                type: 'quiz',
+                rawDate: new Date(quiz.end_date)
+              });
+            }
+          }
+        }
+
+        // Sort by date and take top 10
+        this.notifications = notifications
+          .sort((a, b) => b.rawDate.getTime() - a.rawDate.getTime())
+          .slice(0, 10);
+
+        console.log('✅ Notifications loaded:', this.notifications.length);
+
+      } catch (error) {
+        console.error('❌ Error loading notifications:', error);
+        this.notifications = [];
+      } finally {
+        this.isLoadingNotifications = false;
+      }
+    },
+
+    // ==================== Formatting Methods ====================
+    
     formatDate(date) {
       if (!date) return '';
       const d = typeof date === 'string' ? new Date(date) : date;
@@ -804,95 +835,134 @@ export default {
       return 'default';
     },
 
-    navigateToSubjects() {
-      const parent = this.$parent;
-      if (parent && typeof parent.navigateTo === 'function') {
-        parent.navigateTo('subjects');
-      } else {
-        this.$emit('navigate', 'subjects');
+    // ==================== Real-time Subscriptions ====================
+
+    setupRealtimeSubscriptions() {
+      if (!this.userId || !this.studentRecordId) {
+        console.warn('⚠️ Cannot setup subscriptions: missing userId or studentRecordId');
+        return;
+      }
+
+      console.log('🔄 Setting up real-time subscriptions...');
+      this.cleanupSubscriptions();
+
+      try {
+        // Messages subscription
+        const messagesSub = supabase
+          .channel('student_messages')
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'messages'
+            },
+            (payload) => {
+              const msg = payload.new || payload.old;
+              if (msg.recipient_id === this.studentRecordId) {
+                console.log('📨 New message received');
+                this.loadNotifications();
+              }
+            }
+          )
+          .subscribe((status) => {
+            console.log('Messages subscription status:', status);
+          });
+
+        // Quizzes subscription
+        const quizSub = supabase
+          .channel('student_quizzes')
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'quizzes'
+            },
+            (payload) => {
+              const quiz = payload.new || payload.old;
+              if (this.enrolledSectionIds.includes(quiz.section_id)) {
+                console.log('📝 Quiz updated');
+                this.loadAvailableQuizzes();
+              }
+            }
+          )
+          .subscribe((status) => {
+            console.log('Quizzes subscription status:', status);
+          });
+
+        this.subscriptions = [messagesSub, quizSub];
+        console.log('✅ Real-time subscriptions established');
+
+      } catch (error) {
+        console.error('❌ Error setting up subscriptions:', error);
       }
     },
 
-    navigateToCalendar() {
-      const parent = this.$parent;
-      if (parent && typeof parent.navigateTo === 'function') {
-        parent.navigateTo('calendar');
-      } else {
-        this.$emit('navigate', 'calendar');
-      }
-    },
-
-    navigateToMessages() {
-      const parent = this.$parent;
-      if (parent && typeof parent.navigateTo === 'function') {
-        parent.navigateTo('messages');
-      } else {
-        this.$emit('navigate', 'messages');
-      }
-    },
-
-    navigateToSettings() {
-      const parent = this.$parent;
-      if (parent && typeof parent.navigateTo === 'function') {
-        parent.navigateTo('settings');
-      } else {
-        this.$emit('navigate', 'settings');
+    cleanupSubscriptions() {
+      if (this.subscriptions && this.subscriptions.length > 0) {
+        console.log('🧹 Cleaning up subscriptions');
+        this.subscriptions.forEach(sub => {
+          if (sub && typeof sub.unsubscribe === 'function') {
+            sub.unsubscribe();
+          }
+        });
+        this.subscriptions = [];
       }
     }
   },
+
+  // ==================== Lifecycle Hooks ====================
 
   async mounted() {
-    console.log('🚀 Home component mounted');
+    console.log('🚀 StudentHome component mounted');
     
-    // Add click outside listener for notifications
+    // Add click outside listener
     document.addEventListener('click', this.handleClickOutside);
     
-    // Load initial data in parallel for faster loading
     try {
-      await this.loadStudentProfile();
+      // Step 1: Load student profile (critical path)
+      const profileLoaded = await this.loadStudentProfile();
       
-      // Load other data in parallel after we have student info
-      if (this.studentRecordId) {
-        await Promise.all([
-          this.loadEnrolledSections(),
-          this.loadDashboardStats()
-        ]);
-        
-        // Load notifications in background (non-blocking)
-        this.loadNotifications();
+      if (!profileLoaded || !this.studentRecordId) {
+        console.error('❌ Failed to load student profile');
+        return;
       }
-      
-      // Setup real-time subscriptions in background
-      if (this.userId && this.studentRecordId) {
-        setTimeout(() => {
-          this.setupRealtimeSubscriptions();
-        }, 100);
-      }
-      
-    } catch (error) {
-      console.error('Error loading home data:', error);
-    }
-    
-    // Reduced polling frequency since we have real-time updates
-    this.pollInterval = setInterval(() => {
-      if (this.studentRecordId) {
-        this.loadNotifications();
-      }
-    }, 300000); // Every 5 minutes
-  },
 
-  watch: {
-    $route() {
-      // Reload dashboard data when route changes
-      this.loadStudentProfile();
-      this.loadNotifications();
+      // Step 2: Load enrolled sections in parallel with stats
+      await Promise.all([
+        this.loadEnrolledSections(),
+        this.loadDashboardStats()
+      ]);
+
+      // Step 3: Load assessments and notifications
+      await Promise.all([
+        this.loadAvailableQuizzes(),
+        this.loadNotifications()
+      ]);
+
+      // Step 4: Setup real-time subscriptions
+      if (this.userId && this.studentRecordId) {
+        this.setupRealtimeSubscriptions();
+      }
+
+      // Step 5: Setup polling for notifications (every 5 minutes)
+      this.pollInterval = setInterval(() => {
+        if (this.studentRecordId) {
+          this.loadNotifications();
+        }
+      }, 300000);
+
+      console.log('✅ Dashboard fully loaded and ready');
+
+    } catch (error) {
+      console.error('❌ Critical error during mount:', error);
     }
   },
 
   beforeUnmount() {
-    console.log('🛑 Home component unmounting');
+    console.log('🛑 StudentHome component unmounting');
     
-    // Remove click outside listener
     document.removeEventListener('click', this.handleClickOutside);
     
     if (this.pollInterval) {
