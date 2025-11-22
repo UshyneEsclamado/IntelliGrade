@@ -3140,22 +3140,12 @@ body, html {
 }
 
 .card-title-section .card-desc {
-  /* Add space above Gradebook header */
-  .card-title-section {
-    margin-top: 2rem;
-  }
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin: 0;
-}
-.dark .card-title-section .card-desc {
-  color: #9ca3af;
-}
-
-.card-stats {
-  display: flex;
-  gap: 1.5rem;
-  align-items: center;
+  margin-top: 0.5rem;
+  color: #64748b;
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  line-height: 1.5;
 }
 
 .card-stats .stat-item {
@@ -3478,10 +3468,10 @@ body, html {
 /* Enhanced Subject and Section Cards */
 .subjects-grid.modern {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: 1fr;
   gap: 2rem 1.5rem;
   padding: 0;
-  max-width: 1100px;
+  max-width: 100%;
   margin: 0 auto;
 }
 
@@ -3492,8 +3482,8 @@ body, html {
 }
 
 .subject-card.modern {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border: 1.5px solid transparent;
+  background: #ffffff;
+  border: 1.5px solid #A3D1C6;
   border-radius: 16px;
   padding: 1.5rem;
   cursor: pointer;
@@ -3508,8 +3498,8 @@ body, html {
   box-sizing: border-box;
 }
 .dark .subject-card.modern {
-  background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
-  border-color: rgba(163, 209, 198, 0.2);
+  background: #23272f;
+  border-color: #20c997;
 }
 
 .subject-card.modern:before {
@@ -3552,9 +3542,13 @@ body, html {
   position: relative;
   flex-shrink: 0;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: #3D8D7A;
+  color: #fff;
 }
 .dark .subject-icon.modern {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  background: #20c997;
+  color: #fff;
 }
 
 .subject-icon.modern svg,
@@ -4209,11 +4203,11 @@ body, html {
 
 .review-summary {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 1rem;
-  padding: 1.25rem;
-  background: #FBFFE4;
-  border-radius: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 1.5rem;
+  padding: 0.5rem 0;
+  max-width: 100%;
+  margin: 0 auto;
   margin-bottom: 1.5rem;
   border: 1px solid rgba(61, 141, 122, 0.1);
 }
@@ -4900,6 +4894,7 @@ body, html {
 
   .btn-modal {
     width: 100%;
+    max-width: 100%;
   }
 }
 
@@ -5227,18 +5222,20 @@ body, html {
 }
 
 .section-card.modern {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border: 1.5px solid transparent;
-  border-radius: 16px;
-  padding: 1.5rem;
+  background: #fff;
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 0;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.08);
+  border: 1px solid #e2e8f0;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: box-shadow 0.2s, border 0.2s, background 0.2s;
   position: relative;
-  overflow: hidden;
   display: flex;
   align-items: center;
-  gap: 1rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  gap: 1.25rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 .dark .section-card.modern {
   background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
@@ -5278,17 +5275,20 @@ body, html {
 .section-icon.modern {
   width: 56px;
   height: 56px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
   border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #fff;
+  margin-right: 1.25rem;
+  box-shadow: 0 2px 6px rgba(61, 141, 122, 0.12);
+  background: linear-gradient(135deg, #3D8D7A 0%, #10b981 100%);
 }
 .dark .section-icon.modern {
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.3);
+  background: linear-gradient(135deg, #059669 0%, #20c997 100%);
 }
 
 .section-info.enhanced {
@@ -5430,20 +5430,20 @@ body, html {
   max-width: 400px;
   border-radius: 16px;
   overflow: hidden;
-  background: white;
-  border: 2px solid #3D8D7A;
-  animation: modalSlideIn 0.3s ease-out;
-}
-
-@keyframes modalSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  background: #fff;
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 0;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.08);
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: box-shadow 0.2s, border 0.2s, background 0.2s;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .logout-header {
@@ -5569,4 +5569,5 @@ body, html {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
 </style>
