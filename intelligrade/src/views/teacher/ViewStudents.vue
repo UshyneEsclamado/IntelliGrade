@@ -10,7 +10,6 @@
             <span class="brand-name">IntelliGrade</span>
           </div>
         </div>
-        
         <!-- Center: Empty space for clean look -->
         <div class="navbar-center">
         </div>

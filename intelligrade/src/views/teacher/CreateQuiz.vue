@@ -2356,20 +2356,20 @@ body, html {
 .header-icon {
   width: 60px;
   height: 60px;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
+  background: linear-gradient(135deg, var(--accent-color, #4F8CFF) 0%, var(--accent-light, #6DD5FA) 100%);
   border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(79, 140, 255, 0.15);
+  border: none;
 }
 
 .dark .header-icon {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(135deg, var(--accent-dark, #232a3b) 0%, var(--accent-color, #4F8CFF) 100%);
+  box-shadow: 0 8px 32px rgba(79, 140, 255, 0.25);
+  border: none;
 }
 
 .header-text h1.header-title {

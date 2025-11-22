@@ -10,32 +10,13 @@
             <span class="brand-name">IntelliGrade</span>
           </div>
         </div>
-        
-        <!-- Center: Search and Refresh -->
+        <!-- Center: Empty space for clean look -->
         <div class="navbar-center">
-          <div class="search-box">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"></circle>
-              <path d="M21 21L16.65 16.65"></path>
-            </svg>
-            <input 
-              v-model="searchQuery" 
-              type="text" 
-              placeholder="Search..."
-            >
-          </div>
-          <button @click="refreshData" class="export-btn refresh-btn" :disabled="loading">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :class="{ 'spinning': loading }">
-              <polyline points="23 4 23 10 17 10"></polyline>
-              <polyline points="1 20 1 14 7 14"></polyline>
-              <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
-            </svg>
-            <span>Refresh</span>
-            <span v-if="newSubmissionsCount > 0" class="notification-badge">{{ newSubmissionsCount }}</span>
-          </button>
         </div>
-        <!-- Right: Notifications and Profile -->
+        
+        <!-- Right: User Profile and Notifications -->
         <div class="navbar-right">
+          <!-- Notification Bell -->
           <div class="notif-wrapper">
             <button class="nav-icon-btn rounded-bg" @click="toggleNotifDropdown" aria-label="Notifications">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -44,6 +25,8 @@
               </svg>
               <span v-if="notifications.length" class="notification-badge">{{ notifications.length }}</span>
             </button>
+            
+            <!-- Notification Dropdown -->
             <div v-if="showNotifDropdown" class="notification-dropdown">
               <div class="dropdown-header">
                 <h3>Notifications</h3>
@@ -62,6 +45,8 @@
               </div>
             </div>
           </div>
+          
+          <!-- User Profile -->
           <div class="user-profile-wrapper">
             <div class="user-profile rounded-bg" @click="toggleProfileDropdown">
               <div class="user-avatar">
@@ -75,6 +60,8 @@
                 <path d="M7 10l5 5 5-5z"/>
               </svg>
             </div>
+            
+            <!-- Profile Dropdown -->
             <div v-if="showProfileDropdown" class="profile-dropdown">
               <div class="dropdown-header">
                 <div class="profile-info">
@@ -90,6 +77,7 @@
                   </div>
                 </div>
               </div>
+              
               <div class="dropdown-menu">
                 <router-link to="/teacher/settings" class="dropdown-item">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -97,7 +85,9 @@
                   </svg>
                   <span>Profile & Settings</span>
                 </router-link>
+                
                 <div class="dropdown-divider"></div>
+                
                 <button @click="logout" class="dropdown-item logout-btn">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M16 17V14H9V10H16V7L21 12L16 17M14 2A2 2 0 0 1 16 4V6H14V4H5V20H14V18H16V20A2 2 0 0 1 14 22H5A2 2 0 0 1 3 20V4A2 2 0 0 1 5 2H14Z"/>
@@ -122,7 +112,7 @@
           </div>
           <span class="sidebar-tooltip">Dashboard</span>
         </router-link>
-        <router-link to="/teacher/subjects" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/subjects' }">
+        <router-link to="/teacher/subjects" class="sidebar-item rounded-bg" :class="{ 'active': $route.path.includes('/teacher/subjects') }">
           <div class="sidebar-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="7" width="18" height="13" rx="2" />
@@ -2196,7 +2186,7 @@ body, html {
   background: #0f172a;
 }
 
-/* Sidebar Navigation */
+/* Sidebar Navigation - Simple Outlined Icons Only, Single Color, Active Highlight */
 .sidebar {
   position: fixed;
   top: 64px;
@@ -2225,27 +2215,16 @@ body, html {
   transition: background 0.2s, box-shadow 0.2s;
   cursor: pointer;
   position: relative;
-  text-decoration: none;
+}
+
+.sidebar-item.active {
+  background: rgba(255,255,255,0.15);
+  border: 2px solid #fff;
 }
 
 .sidebar-item:hover {
   background: rgba(255,255,255,0.22);
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-
-.sidebar-item.active {
-  border: 2px solid #fff;
-  background: rgba(255, 255, 255, 0.13);
-  box-sizing: border-box;
-}
-
-.rounded-bg {
-  background: rgba(255,255,255,0.13);
-  border-radius: 16px;
-  transition: background 0.2s;
-}
-.rounded-bg:hover {
-  background: rgba(255,255,255,0.22);
 }
 
 .sidebar-icon svg {
@@ -2276,87 +2255,7 @@ body, html {
   pointer-events: auto;
 }
 
-/* Sidebar Navigation */
-.sidebar {
-  position: fixed;
-  top: 64px;
-  left: 0;
-  width: 80px;
-  height: calc(100vh - 64px);
-  background: #3D8D7A;
-  border-right: none;
-  z-index: 900;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
-  overflow: visible;
-}
-
-.sidebar-nav {
-  padding: 2rem 0.5rem 1rem 0.5rem;
-}
-
-.sidebar-item {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 56px;
-  width: 56px;
-  margin: 8px 0;
-  border-radius: 12px;
-  transition: background 0.2s, box-shadow 0.2s;
-  cursor: pointer;
-  position: relative;
-  text-decoration: none;
-}
-
-.sidebar-item:hover {
-  background: rgba(255,255,255,0.22);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-
-.sidebar-item.active {
-  border: 2px solid #fff;
-  background: rgba(255, 255, 255, 0.13);
-  box-sizing: border-box;
-}
-
-.rounded-bg {
-  background: rgba(255,255,255,0.13);
-  border-radius: 16px;
-  transition: background 0.2s;
-}
-.rounded-bg:hover {
-  background: rgba(255,255,255,0.22);
-}
-
-.sidebar-icon svg {
-  display: block;
-}
-
-.sidebar-tooltip {
-  position: absolute;
-  left: 60px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: #fff;
-  color: #3D8D7A;
-  padding: 4px 12px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-family: Inter, sans-serif;
-  white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s;
-  z-index: 10;
-}
-
-.sidebar-item:hover .sidebar-tooltip {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* Top Navigation Bar (Same as Dashboard) */
+/* Top Navigation Bar (Greenish Theme) */
 .top-navbar {
   position: fixed;
   top: 0;
@@ -2369,29 +2268,138 @@ body, html {
   box-shadow: 0 4px 20px rgba(61, 141, 122, 0.3);
 }
 
-/* Navbar styles to match DashboardHome.vue */
-.notif-wrapper,
+.navbar-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.logo-img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.brand-name {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: white;
+  letter-spacing: -0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-center {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  justify-content: center;
+  max-width: 600px;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-icon-btn {
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: rgba(255, 255, 255, 0.9);
+  position: relative;
+}
+
+.nav-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+}
+
 .user-profile-wrapper {
   position: relative;
 }
 
-.nav-icon-btn,
 .user-profile {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: white;
-  padding: 0.5rem;
-  border-radius: 8px;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 12px;
+  transition: background 0.2s;
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
-.nav-icon-btn:hover,
 .user-profile:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
   background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.user-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: white;
+}
+
+.dropdown-arrow {
+  color: rgba(255, 255, 255, 0.8);
+  transition: transform 0.2s;
+}
+
+.user-profile:hover .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+/* Rounded semi-transparent backgrounds for sidebar and navbar icons/buttons */
+.rounded-bg {
+  background: rgba(255,255,255,0.13);
+  border-radius: 16px;
+  transition: background 0.2s;
+}
+.rounded-bg:hover {
+  background: rgba(255,255,255,0.22);
+}
+
+/* Notification dropdown styles */
+.notif-wrapper {
+  position: relative;
 }
 
 .notification-badge {
@@ -2403,44 +2411,82 @@ body, html {
   border-radius: 50%;
   width: 18px;
   height: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.user-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 2px solid #3D8D7A;
 }
 
-.user-name {
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.dropdown-arrow {
-  transition: transform 0.2s ease;
-}
-
-/* Dropdown Menus */
 .notification-dropdown {
   position: absolute;
-  top: 100%;
+  top: 55px;
   right: 0;
-  margin-top: 0.5rem;
+  width: 360px;
+  max-height: 480px;
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-  border: 1px solid #e5e7eb;
-  min-width: 280px;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
   z-index: 1001;
+  border: 1px solid #e2e8f0;
+}
+
+.dropdown-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fafafa;
+}
+
+.dropdown-header h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.notification-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.no-notifications {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.notification-item {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.notification-item:hover {
+  background: #f8fafc;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notif-content h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.notif-content p {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
+
+.notif-time {
+  font-size: 0.75rem;
+  color: #94a3b8;
 }
 
 .profile-dropdown {
@@ -2451,64 +2497,15 @@ body, html {
   background: white;
   border-radius: 16px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-  overflow-y: auto;
-  max-height: 350px;
+  overflow: hidden;
   z-index: 1001;
   border: 1px solid #e2e8f0;
 }
 
-.dropdown-header {
+.profile-dropdown .dropdown-header {
   padding: 1.5rem;
   background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
   color: white;
-}
-
-.dropdown-header h3 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0;
-}
-
-.notification-list {
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.no-notifications {
-  padding: 2rem;
-  text-align: center;
-  color: #6b7280;
-  font-size: 0.875rem;
-}
-
-.notification-item {
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #f3f4f6;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.notification-item:hover {
-  background: #f9fafb;
-}
-
-.notif-content h4 {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 0.25rem;
-}
-
-.notif-content p {
-  font-size: 0.8rem;
-  color: #6b7280;
-  margin: 0 0 0.25rem;
-}
-
-.notif-time {
-  font-size: 0.75rem;
-  color: #9ca3af;
 }
 
 .profile-info {
@@ -2574,6 +2571,12 @@ body, html {
   color: #3D8D7A;
 }
 
+.dropdown-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 0.5rem 0;
+}
+
 .logout-btn {
   color: #ef4444 !important;
 }
@@ -2589,170 +2592,6 @@ body, html {
 
 .logout-btn:hover svg {
   color: #dc2626 !important;
-}
-
-.dropdown-divider {
-  height: 1px;
-  background: #e2e8f0;
-  margin: 0.5rem 0;
-}
-
-.navbar-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 100%;
-  width: 100%;
-  max-width: 1100px;
-  margin: 0 auto 0 auto;
-  padding: 0 1.5rem;
-}
-
-.navbar-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.brand-logo {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: white;
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.logo-img {
-  width: 36px;
-  height: 36px;
-  object-fit: contain;
-  filter: brightness(0) invert(1);
-}
-
-.brand-name {
-  font-size: 1.4rem;
-  font-weight: 800;
-  color: white;
-  letter-spacing: -0.5px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.navbar-center {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex: 1;
-  justify-content: center;
-  max-width: 600px;
-}
-
-.nav-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
-  text-decoration: none;
-  color: rgba(255, 255, 255, 0.8);
-  transition: all 0.2s ease;
-  position: relative;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.nav-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-}
-
-.nav-item.active {
-  color: white;
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.nav-item.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60%;
-  height: 3px;
-  background: white;
-  border-radius: 2px 2px 0 0;
-}
-
-.navbar-right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.export-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 0.75rem 1.25rem;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.export-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.3);
-  transform: translateY(-1px);
-}
-
-.export-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.refresh-btn {
-  min-width: auto;
-  margin-left: 0.75rem;
-  position: relative;
-  margin-left: 0.75rem;
-}
-
-.notification-badge {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  background: #ef4444;
-  color: white;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: pulse 2s infinite;
-}
-
-.spinning {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
 }
 
 /* Scroll to Top Button */

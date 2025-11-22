@@ -525,7 +525,8 @@
                 Drop student's assessment here or <span class="upload-link">browse</span>
               </p>
               <p v-else class="file-selected">
-                📄 {{ assessmentFile.name }} ({{ formatFileSize(assessmentFile.size) }})
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><path d="M6 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13z"/></svg>
+                {{ assessmentFile.name }} ({{ formatFileSize(assessmentFile.size) }})
               </p>
               <small>Supported: TXT, DOCX, PDF, Images (JPG, PNG)</small>
             </div>
@@ -534,6 +535,7 @@
           <!-- Detected Questions from Upload (if questionnaire only) -->
           <div v-if="detectedQuestions.length > 0" class="detected-questions">
             <h4>📋 Detected Questions - Please Set Correct Answers</h4>
+                        <h4><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 5l9 7 9-7"/></svg> Detected Questions - Please Set Correct Answers</h4>
             <p class="detection-note">We detected {{ detectedQuestions.length }} questions. Please select the correct answers below:</p>
             
             <div class="detected-questions-list">
@@ -578,10 +580,10 @@
             
             <div class="answer-key-actions">
               <button @click="autoGenerateAnswerKey" class="btn-secondary">
-                🎲 Auto-Generate Sample Answers
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;"><circle cx="12" cy="12" r="10"/><path d="M8 12l2 2 4-4"/></svg> Auto-Generate Sample Answers
               </button>
               <button @click="saveDetectedAnswerKey" class="btn-primary" :disabled="!allQuestionsAnswered">
-                ✅ Save Answer Key ({{ answeredQuestionsCount }}/{{ detectedQuestions.length }})
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;"><path d="M9 16.2l-3.5-3.5 1.41-1.41L9 13.38l7.09-7.09 1.41 1.41z"/></svg> Save Answer Key ({{ answeredQuestionsCount }}/{{ detectedQuestions.length }})
               </button>
             </div>
           </div>
@@ -695,6 +697,7 @@
             
             <div class="feedback-section">
               <h4><span class="feedback-icon">💪</span> Strengths Identified</h4>
+                            <h4><span class="feedback-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><path d="M17 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span> Strengths Identified</h4>
               <ul class="feedback-list strengths">
                 <li v-for="strength in gradingResults.feedback.strengths" :key="strength">{{ strength }}</li>
               </ul>
@@ -702,6 +705,7 @@
 
             <div class="feedback-section">
               <h4><span class="feedback-icon">🎯</span> Areas for Improvement</h4>
+                            <h4><span class="feedback-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><circle cx="12" cy="12" r="10"/><path d="M8 12l2 2 4-4"/></svg></span> Areas for Improvement</h4>
               <ul class="feedback-list weaknesses">
                 <li v-for="weakness in gradingResults.feedback.weaknesses" :key="weakness">{{ weakness }}</li>
               </ul>
@@ -709,6 +713,7 @@
 
             <div class="feedback-section">
               <h4><span class="feedback-icon">📚</span> Recommendations</h4>
+                            <h4><span class="feedback-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 5l9 7 9-7"/></svg></span> Recommendations</h4>
               <ul class="feedback-list recommendations">
                 <li v-for="rec in gradingResults.feedback.recommendations" :key="rec">{{ rec }}</li>
               </ul>
@@ -716,6 +721,7 @@
 
             <div v-if="gradingResults.feedback.detailedAnalysis" class="detailed-analysis">
               <h4><span class="feedback-icon">🔍</span> Detailed Analysis</h4>
+                            <h4><span class="feedback-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><circle cx="12" cy="12" r="10"/><path d="M8 12l2 2 4-4"/></svg></span> Detailed Analysis</h4>
               <p>{{ gradingResults.feedback.detailedAnalysis }}</p>
             </div>
           </div>
@@ -729,6 +735,10 @@
                 <div class="question-header">
                   <span class="question-number">Q{{ index + 1 }}</span>
                   <span class="question-status">{{ question.isCorrect ? '✅ Correct' : '❌ Incorrect' }}</span>
+                                    <span class="question-status">
+                                        <svg v-if="question.isCorrect" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;"><path d="M9 16.2l-3.5-3.5 1.41-1.41L9 13.38l7.09-7.09 1.41 1.41z"/></svg> <span v-if="question.isCorrect">Correct</span>
+                                        <svg v-if="!question.isCorrect" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;"><path d="M6 18L18 6M6 6l12 12"/></svg> <span v-if="!question.isCorrect">Incorrect</span>
+                                    </span>
                   <span class="question-points">{{ question.pointsEarned }}/{{ question.pointsPossible }} pts</span>
                 </div>
                 <div v-if="question.feedback" class="question-feedback">
@@ -741,13 +751,13 @@
           <!-- Action Buttons -->
           <div class="results-actions">
             <button @click="downloadReport" class="btn-secondary">
-              📄 Download Report
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;"><path d="M6 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13z"/></svg> Download Report
             </button>
             <button @click="viewAllAssessments" class="btn-primary">
                 View All Assessments
             </button>
             <button @click="resetForm" class="btn-secondary">
-              🔄 Check Another Assessment
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;"><path d="M12 2v2m0 16v2m8-10h2M2 12H0m16.24-7.76l1.42-1.42M4.34 19.66l-1.42 1.42M19.66 19.66l1.42 1.42M4.34 4.34L2.92 2.92"/></svg> Check Another Assessment
             </button>
           </div>
         </div>
@@ -2554,16 +2564,16 @@ False
   }
 
   .card-icon {
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(135deg, #20c997, #17a085);
+    width: 48px;
+    height: 48px;
+    background: #3D8D7A;
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: #fff;
     flex-shrink: 0;
-    box-shadow: 0 3px 8px rgba(32, 201, 151, 0.3);
+    box-shadow: 0 2px 8px rgba(61, 141, 122, 0.08);
   }
 
   .card-header h2 {
