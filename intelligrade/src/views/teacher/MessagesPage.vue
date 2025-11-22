@@ -10,22 +10,14 @@
             <span class="brand-name">IntelliGrade</span>
           </div>
         </div>
-        
         <!-- Center: Empty space for clean look -->
         <div class="navbar-center">
         </div>
         
         <!-- Right: User Profile and Notifications -->
         <div class="navbar-right">
-          <!-- Mark All Read Button -->
-          <button @click="markAllAsRead" class="export-btn rounded-bg">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            <span>Mark All Read</span>
-          </button>
-
-        <div class="notif-wrapper">
+          <!-- Notification Bell -->
+          <div class="notif-wrapper">
             <button class="nav-icon-btn rounded-bg" @click="toggleNotifDropdown" aria-label="Notifications">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
@@ -120,7 +112,7 @@
           </div>
           <span class="sidebar-tooltip">Dashboard</span>
         </router-link>
-        <router-link to="/teacher/subjects" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/subjects' }">
+        <router-link to="/teacher/subjects" class="sidebar-item rounded-bg" :class="{ 'active': $route.path.includes('/teacher/subjects') }">
           <div class="sidebar-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="7" width="18" height="13" rx="2" />
@@ -168,7 +160,6 @@
         </router-link>
       </nav>
     </aside>
-
     <!-- Main Content Area -->
     <main class="main-content">
       <!-- Page Header -->
@@ -3039,7 +3030,6 @@ body, html {
   transition: background 0.2s, box-shadow 0.2s;
   cursor: pointer;
   position: relative;
-  text-decoration: none;
 }
 
 .sidebar-item.active {
@@ -3080,17 +3070,7 @@ body, html {
   pointer-events: auto;
 }
 
-/* Rounded semi-transparent backgrounds for sidebar and navbar icons/buttons */
-.rounded-bg {
-  background: rgba(255,255,255,0.13);
-  border-radius: 16px;
-  transition: background 0.2s;
-}
-.rounded-bg:hover {
-  background: rgba(255,255,255,0.22);
-}
-
-/* Top Navigation Bar (Same as Dashboard) */
+/* Top Navigation Bar (Greenish Theme) */
 .top-navbar {
   position: fixed;
   top: 0;
@@ -3152,68 +3132,10 @@ body, html {
   max-width: 600px;
 }
 
-.nav-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
-  text-decoration: none;
-  color: rgba(255, 255, 255, 0.8);
-  transition: all 0.2s ease;
-  position: relative;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.nav-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-}
-
-.nav-item.active {
-  color: white;
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.nav-item.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60%;
-  height: 3px;
-  background: white;
-  border-radius: 2px 2px 0 0;
-}
-
 .navbar-right {
   display: flex;
   align-items: center;
   gap: 1rem;
-}
-
-.export-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 0.75rem 1.25rem;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.export-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.3);
-  transform: translateY(-1px);
 }
 
 .nav-icon-btn {
@@ -3234,95 +3156,6 @@ body, html {
 .nav-icon-btn:hover {
   background: rgba(255, 255, 255, 0.25);
   color: white;
-}
-
-.notification-badge {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  background: #ef4444;
-  color: white;
-  font-size: 0.7rem;
-  font-weight: 600;
-  padding: 0.125rem 0.375rem;
-  border-radius: 10px;
-  min-width: 18px;
-  text-align: center;
-  line-height: 1;
-}
-
-.notif-wrapper {
-  position: relative;
-}
-
-.notification-dropdown {
-  position: absolute;
-  top: 55px;
-  right: 0;
-  width: 360px;
-  max-height: 480px;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
-  z-index: 1001;
-  border: 1px solid #e2e8f0;
-}
-
-.dropdown-header {
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
-  background: #fafafa;
-}
-
-.dropdown-header h3 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.notification-list {
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.no-notifications {
-  padding: 3rem 1.5rem;
-  text-align: center;
-  color: #94a3b8;
-  font-size: 0.9rem;
-}
-
-.notification-item {
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #f1f5f9;
-  transition: background 0.2s;
-}
-
-.notification-item:hover {
-  background: #f8fafc;
-}
-
-.notification-item:last-child {
-  border-bottom: none;
-}
-
-.notif-content h4 {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 0.25rem;
-}
-
-.notif-content p {
-  font-size: 0.8rem;
-  color: #64748b;
-  margin-bottom: 0.5rem;
-}
-
-.notif-time {
-  font-size: 0.75rem;
-  color: #94a3b8;
 }
 
 .user-profile-wrapper {
@@ -3369,6 +3202,108 @@ body, html {
   transform: rotate(180deg);
 }
 
+/* Rounded semi-transparent backgrounds for sidebar and navbar icons/buttons */
+.rounded-bg {
+  background: rgba(255,255,255,0.13);
+  border-radius: 16px;
+  transition: background 0.2s;
+}
+.rounded-bg:hover {
+  background: rgba(255,255,255,0.22);
+}
+
+/* Notification dropdown styles */
+.notif-wrapper {
+  position: relative;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #3D8D7A;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: 55px;
+  right: 0;
+  width: 360px;
+  max-height: 480px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 1001;
+  border: 1px solid #e2e8f0;
+}
+
+.dropdown-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fafafa;
+}
+
+.dropdown-header h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.notification-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.no-notifications {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.notification-item {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.notification-item:hover {
+  background: #f8fafc;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notif-content h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.notif-content p {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
+
+.notif-time {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
 .profile-dropdown {
   position: absolute;
   top: 55px;
@@ -3382,7 +3317,7 @@ body, html {
   border: 1px solid #e2e8f0;
 }
 
-.dropdown-header {
+.profile-dropdown .dropdown-header {
   padding: 1.5rem;
   background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
   color: white;
@@ -3472,16 +3407,6 @@ body, html {
 
 .logout-btn:hover svg {
   color: #dc2626 !important;
-}
-
-/* Rounded semi-transparent backgrounds for sidebar and navbar icons/buttons */
-.rounded-bg {
-  background: rgba(255,255,255,0.13);
-  border-radius: 16px;
-  transition: background 0.2s;
-}
-.rounded-bg:hover {
-  background: rgba(255,255,255,0.22);
 }
 
 /* Main Content */

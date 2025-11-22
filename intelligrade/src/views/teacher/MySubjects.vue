@@ -752,7 +752,6 @@
             <span class="brand-name">IntelliGrade</span>
           </div>
         </div>
-        
         <!-- Center: Empty space for clean look -->
         <div class="navbar-center">
         </div>
@@ -847,7 +846,7 @@
     <!-- Sidebar Navigation - Custom Tooltip Labels on Hover -->
     <aside class="sidebar" style="background:#3D8D7A; border-right:none;">
       <nav class="sidebar-nav">
-        <router-link to="/teacher/dashboard" class="sidebar-item" :class="{ 'active': $route.path === '/teacher/dashboard' }">
+        <router-link to="/teacher/dashboard" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/dashboard' }">
           <div class="sidebar-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M10 20v-6h4v6m5-8h3L12 3 2 12h3v8h5v-6h4v6h5v-8z" />
@@ -855,7 +854,7 @@
           </div>
           <span class="sidebar-tooltip">Dashboard</span>
         </router-link>
-        <router-link to="/teacher/subjects" class="sidebar-item" :class="{ 'active': $route.path === '/teacher/subjects' }">
+        <router-link to="/teacher/subjects" class="sidebar-item rounded-bg" :class="{ 'active': $route.path.includes('/teacher/subjects') }">
           <div class="sidebar-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="7" width="18" height="13" rx="2" />
@@ -864,7 +863,7 @@
           </div>
           <span class="sidebar-tooltip">Classes</span>
         </router-link>
-        <router-link to="/teacher/gradebook" class="sidebar-item" :class="{ 'active': $route.path === '/teacher/gradebook' }">
+        <router-link to="/teacher/gradebook" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/gradebook' }">
           <div class="sidebar-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="4" y="4" width="16" height="16" rx="2" />
@@ -873,7 +872,7 @@
           </div>
           <span class="sidebar-tooltip">Gradebook</span>
         </router-link>
-        <router-link to="/teacher/upload-assessment" class="sidebar-item" :class="{ 'active': $route.path === '/teacher/upload-assessment' }">
+        <router-link to="/teacher/upload-assessment" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/upload-assessment' }">
           <div class="sidebar-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 19V6M5 12l7-7 7 7" />
@@ -882,7 +881,7 @@
           </div>
           <span class="sidebar-tooltip">Upload Assessment</span>
         </router-link>
-        <router-link to="/teacher/analytics" class="sidebar-item" :class="{ 'active': $route.path === '/teacher/analytics' }">
+        <router-link to="/teacher/analytics" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/analytics' }">
           <div class="sidebar-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="12" width="4" height="8" />
@@ -892,7 +891,7 @@
           </div>
           <span class="sidebar-tooltip">Analytics</span>
         </router-link>
-        <router-link to="/teacher/messages" class="sidebar-item" :class="{ 'active': $route.path === '/teacher/messages' }">
+        <router-link to="/teacher/messages" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/messages' }">
           <div class="sidebar-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="5" width="18" height="14" rx="2" />
@@ -3006,7 +3005,76 @@ onUnmounted(() => {
   background: #f8fafc;
 }
 
-/* Top Navigation Bar */
+/* Sidebar Navigation - Simple Outlined Icons Only, Single Color, Active Highlight */
+.sidebar {
+  position: fixed;
+  top: 64px;
+  left: 0;
+  width: 80px;
+  height: calc(100vh - 64px);
+  background: #3D8D7A;
+  border-right: none;
+  z-index: 900;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+  overflow: visible;
+}
+
+.sidebar-nav {
+  padding: 2rem 0.5rem 1rem 0.5rem;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 56px;
+  width: 56px;
+  margin: 8px 0;
+  border-radius: 12px;
+  transition: background 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  position: relative;
+}
+
+.sidebar-item.active {
+  background: rgba(255,255,255,0.15);
+  border: 2px solid #fff;
+}
+
+.sidebar-item:hover {
+  background: rgba(255,255,255,0.22);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.sidebar-icon svg {
+  display: block;
+}
+
+.sidebar-tooltip {
+  position: absolute;
+  left: 60px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #fff;
+  color: #3D8D7A;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: Inter, sans-serif;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 10;
+}
+
+.sidebar-item:hover .sidebar-tooltip {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Top Navigation Bar (Greenish Theme) */
 .top-navbar {
   position: fixed;
   top: 0;
@@ -3060,7 +3128,12 @@ onUnmounted(() => {
 }
 
 .navbar-center {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   flex: 1;
+  justify-content: center;
+  max-width: 600px;
 }
 
 .navbar-right {
@@ -3069,7 +3142,6 @@ onUnmounted(() => {
   gap: 1rem;
 }
 
-/* Notification and Profile Dropdowns */
 .nav-icon-btn {
   width: 44px;
   height: 44px;
@@ -3341,96 +3413,6 @@ onUnmounted(() => {
   color: #dc2626 !important;
 }
 
-/* Sidebar Navigation */
-.sidebar {
-  position: fixed;
-  top: 64px;
-  left: 0;
-  width: 80px;
-  height: calc(100vh - 64px);
-  background: #3D8D7A;
-  border-right: none;
-  z-index: 900;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
-  overflow: visible;
-}
-
-.sidebar-nav {
-  padding: 2rem 0.5rem 1rem 0.5rem;
-}
-
-.sidebar-item {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 56px;
-  width: 56px;
-  margin: 8px 0;
-  border-radius: 12px;
-  transition: background 0.2s, box-shadow 0.2s;
-  cursor: pointer;
-  position: relative;
-}
-
-.sidebar-item:hover {
-  background: rgba(255,255,255,0.22);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-
-.sidebar-item.active {
-  background: rgba(255,255,255,0.15);
-  border: 2px solid #fff;
-}
-
-.rounded-bg {
-  background: rgba(255,255,255,0.13);
-  border-radius: 16px;
-  transition: background 0.2s;
-}
-.rounded-bg:hover {
-  background: rgba(255,255,255,0.22);
-}
-.sidebar-icon svg {
-  display: block;
-}
-
-.sidebar-tooltip {
-  position: absolute;
-  left: 60px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: #fff;
-  color: #3D8D7A;
-  padding: 4px 12px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-family: Inter, sans-serif;
-  white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s;
-  z-index: 10;
-}
-
-.sidebar-item:hover .sidebar-tooltip {
-  opacity: 1;
-  pointer-events: auto;
-}
-/* Main Content */
-.main-content {
-  margin-left: 80px;
-  margin-top: 64px;
-  padding: 1.5rem;
-  width: calc(100% - 80px);
-  min-height: calc(100vh - 64px);
-  max-height: calc(100vh - 64px);
-  overflow-y: auto;
-  position: relative;
-  background: #f8fafc;
-  padding-bottom: 2rem;
-}
-
 /* Scroll to Top Button */
 .scroll-to-top {
   position: fixed;
@@ -3455,149 +3437,6 @@ onUnmounted(() => {
   background: #2d6a5a;
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(61, 141, 122, 0.4);
-}
-
-/* Hide any parent layout elements */
-body, html {
-  overflow-x: hidden !important;
-}
-
-/* Hide any parent layout elements */
-body, html {
-  overflow-x: hidden !important;
-}
-
-/* Dashboard Container */
-.dashboard-container {
-  display: flex;
-  min-height: 100vh;
-  background: #f8fafc;
-}
-
-/* Top Navigation Bar (Same as Dashboard) */
-.top-navbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 64px;
-  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  z-index: 1000;
-  box-shadow: 0 4px 20px rgba(61, 141, 122, 0.3);
-}
-
-.navbar-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
-}
-
-.navbar-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.brand-logo {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: white;
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.logo-img {
-  width: 36px;
-  height: 36px;
-  object-fit: contain;
-  filter: brightness(0) invert(1);
-}
-
-.brand-name {
-  font-size: 1.4rem;
-  font-weight: 800;
-  color: white;
-  letter-spacing: -0.5px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.navbar-center {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex: 1;
-  justify-content: center;
-  max-width: 600px;
-}
-
-.nav-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
-  text-decoration: none;
-  color: rgba(255, 255, 255, 0.8);
-  transition: all 0.2s ease;
-  position: relative;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.nav-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-}
-
-.nav-item.active {
-  color: white;
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.nav-item.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60%;
-  height: 3px;
-  background: white;
-  border-radius: 2px 2px 0 0;
-}
-
-.navbar-right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.export-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 0.75rem 1.25rem;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.export-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.3);
-  transform: translateY(-1px);
 }
 
 /* Main Content */
