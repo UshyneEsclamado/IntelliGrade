@@ -348,9 +348,9 @@ export default {
       ],
       daysOfWeek: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
       events: [],
-  user: null,
-  studentId: null,
-  fastUpdateInterval: null
+      user: null,
+      studentId: null,
+      fastUpdateInterval: null
     };
   },
   computed: {
@@ -423,14 +423,6 @@ export default {
       return grouped;
     }
   },
-  watch: {
-    events: {
-      handler() {
-        this.$forceUpdate();
-      },
-      deep: true
-    }
-  },
   methods: {
     async initializeData() {
       try {
@@ -496,7 +488,7 @@ export default {
 
         console.log('Loading events for student:', this.studentId);
 
-        // STEP 1: Get all section IDs the student is enrolled in
+        // Get all section IDs the student is enrolled in
         const { data: enrollments, error: enrollError } = await supabase
           .from('enrollments')
           .select('section_id')
@@ -520,7 +512,7 @@ export default {
         const sectionIds = enrollments.map(e => e.section_id);
         console.log('Enrolled section IDs:', sectionIds);
 
-        // STEP 2: Get all published quizzes for those sections
+        // Get all published quizzes for those sections
         const { data: quizzesData, error: quizzesError } = await supabase
           .from('quizzes')
           .select(`
@@ -554,7 +546,7 @@ export default {
           return;
         }
 
-        // STEP 3: Get subject details for each quiz
+        // Get subject details for each quiz
         const subjectIds = [...new Set(quizzesData.map(q => q.subject_id))];
         const { data: subjectsData, error: subjectsError } = await supabase
           .from('subjects')
@@ -571,7 +563,7 @@ export default {
           subjectsMap[subj.id] = subj;
         });
 
-        // STEP 4: Get section details
+        // Get section details
         const { data: sectionsData, error: sectionsError } = await supabase
           .from('sections')
           .select('id, name, section_code')
@@ -587,7 +579,7 @@ export default {
           sectionsMap[sec.id] = sec;
         });
 
-        // STEP 5: Get student's quiz results
+        // Get student's quiz results
         const quizIds = quizzesData.map(q => q.id);
         const { data: resultsData, error: resultsError } = await supabase
           .from('quiz_results')
@@ -606,7 +598,7 @@ export default {
 
         console.log('Quiz results found:', resultsData?.length || 0);
 
-        // STEP 6: Transform data for calendar
+        // Transform data for calendar
         this.events = quizzesData.map(quiz => {
           const result = resultsMap[quiz.id];
           const subject = subjectsMap[quiz.subject_id];
@@ -724,16 +716,71 @@ export default {
         if (isCompleted) {
           this.showNotification(`Quiz completed: ${this.events[eventIndex].title}`, 'success');
         }
+        
+        this.$forceUpdate();
       }
     },
 
     async markAsCompleted(event) {
-      this.showNotification(`Click to take quiz: ${event.title}`, 'info');
-      
-      this.selectedEvent = null;
-      this.selectedDay = null;
-      
-      console.log('Navigate to quiz:', event.id, 'Code:', event.quizCode);
+      try {
+        // Check if quiz result already exists
+        const { data: existingResult, error: checkError } = await supabase
+          .from('quiz_results')
+          .select('id, status')
+          .eq('quiz_id', event.id)
+          .eq('student_id', this.studentId)
+          .single();
+
+        if (checkError && checkError.code !== 'PGRST116') {
+          throw checkError;
+        }
+
+        if (existingResult) {
+          // Update existing result
+          const { error: updateError } = await supabase
+            .from('quiz_results')
+            .update({
+              status: 'completed',
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existingResult.id);
+
+          if (updateError) throw updateError;
+        } else {
+          // Create new result
+          const { error: insertError } = await supabase
+            .from('quiz_results')
+            .insert({
+              quiz_id: event.id,
+              student_id: this.studentId,
+              status: 'completed',
+              best_percentage: 0,
+              total_attempts: 0,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+
+          if (insertError) throw insertError;
+        }
+
+        // Update local event state
+        event.isCompleted = true;
+        event.submittedAt = new Date();
+        
+        // Close any open modals
+        this.selectedEvent = null;
+        this.selectedDay = null;
+        
+        // Show success notification
+        this.showNotification(`✅ ${event.title} marked as completed!`, 'success');
+        
+        // Force update to reflect changes
+        this.$forceUpdate();
+        
+      } catch (error) {
+        console.error('Error marking quiz as completed:', error);
+        this.showNotification('Failed to mark quiz as completed: ' + error.message, 'error');
+      }
     },
 
     showNotification(message, type = 'info') {
@@ -926,12 +973,6 @@ export default {
       if (this.realTimeSubscription) {
         this.realTimeSubscription.unsubscribe();
       }
-    }
-  },
-  watch: {
-    $route() {
-      // Reload calendar data when route changes
-      this.initializeData();
     }
   },
   mounted() {

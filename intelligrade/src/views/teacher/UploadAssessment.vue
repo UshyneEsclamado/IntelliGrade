@@ -11,7 +11,7 @@
           </div>
         </div>
         
- <!-- Center: Empty space for clean look -->
+        <!-- Center: Empty space for clean look -->
         <div class="navbar-center">
         </div>
         
@@ -102,7 +102,7 @@
       </div>
     </nav>
 
-    <!-- Sidebar Navigation - Custom Tooltip Labels on Hover -->
+    <!-- Sidebar Navigation -->
     <aside class="sidebar" style="background:#3D8D7A; border-right:none;">
       <nav class="sidebar-nav">
         <router-link to="/teacher/dashboard" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/dashboard' }">
@@ -172,6 +172,7 @@
           <path d="M8 12l4-4 4 4" stroke="#3D8D7A" stroke-width="2"/>
         </svg>
       </button>
+      
       <!-- Page Header -->
       <div class="page-header">
         <div class="header-content">
@@ -193,607 +194,584 @@
         </div>
       </div>
 
-      <!-- Content Area -->
-    
-    <!-- Content Grid -->
-    <div class="content-grid">
-      
-      <!-- Loading Overlay -->
-      <div v-if="isLoading" class="loading-overlay">
-        <div class="loader"></div>
-        <p>{{ loadingMessage }}</p>
-        <div v-if="processingSteps.length > 0" class="processing-steps">
-          <div v-for="(step, index) in processingSteps" :key="index" 
-               class="processing-step" :class="{ 'completed': step.completed, 'active': step.active }">
-            <span class="step-icon">
-              <span v-if="step.completed" class="icon-completed">✓</span>
-              <span v-else-if="step.active" class="icon-active">⟳</span>
-              <span v-else class="icon-pending">○</span>
-            </span>
-            <span class="step-text">{{ step.text }}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Assessment Configuration Card -->
-      <div class="content-card">
-        <div class="card-header">
-          <div class="card-title-wrapper">
-            <div class="card-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-4"></path>
-                <path d="M9 11V9a3 3 0 0 1 6 0v2"></path>
-              </svg>
-            </div>
-            <div>
-              <h2>Assessment Configuration</h2>
-              <p>Set up your assessment parameters and scoring system</p>
+      <!-- Content Grid -->
+      <div class="content-grid">
+        
+        <!-- Loading Overlay -->
+        <div v-if="isLoading" class="loading-overlay">
+          <div class="loader"></div>
+          <p>{{ loadingMessage }}</p>
+          <div v-if="processingSteps.length > 0" class="processing-steps">
+            <div v-for="(step, index) in processingSteps" :key="index" 
+                 class="processing-step" :class="{ 'completed': step.completed, 'active': step.active }">
+              <span class="step-icon">
+                <span v-if="step.completed" class="icon-completed">✓</span>
+                <span v-else-if="step.active" class="icon-active">⟳</span>
+                <span v-else class="icon-pending">○</span>
+              </span>
+              <span class="step-text">{{ step.text }}</span>
             </div>
           </div>
         </div>
-        <div class="card-body">
-          <div class="form-row">
-            <div class="form-group">
-              <label for="subject">Subject *</label>
-              <input v-model="subject" id="subject" type="text" class="form-control"
-                placeholder="e.g., Mathematics, Science" required />
-            </div>
 
-            <div class="form-group">
-              <label for="assessment-title">Assessment Title *</label>
-              <input v-model="assessmentTitle" id="assessment-title" type="text" class="form-control"
-                placeholder="e.g., Chapter 5 Quiz" required />
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="num-questions">Number of Questions *</label>
-              <input v-model="numQuestions" id="num-questions" type="number" class="form-control" 
-                min="1" max="100" placeholder="10" required @input="updateQuestionsList" />
-            </div>
-
-            <div class="form-group">
-              <label for="scoring-method">Scoring Method *</label>
-              <select v-model="scoringMethod" id="scoring-method" class="form-control" @change="handleScoringMethodChange">
-                <option value="uniform">Uniform Points (All questions same points)</option>
-                <option value="individual">Individual Points (Set points per question)</option>
-              </select>
-            </div>
-          </div>
-
-          <div v-if="scoringMethod === 'uniform'" class="form-row">
-            <div class="form-group">
-              <label for="points-per-question">Points Per Question *</label>
-              <input v-model="pointsPerQuestion" id="points-per-question" type="number" class="form-control" 
-                min="1" placeholder="5" required @input="calculateTotalPoints" />
-            </div>
-          </div>
-
-          <div v-if="scoringMethod === 'individual' && numQuestions > 0" class="individual-points-section">
-            <div class="points-header">
-              <h4>Set Points for Each Question</h4>
-              <div class="quick-assign-buttons">
-                <button type="button" @click="assignAllPoints(1)" class="quick-btn">All 1pt</button>
-                <button type="button" @click="assignAllPoints(2)" class="quick-btn">All 2pts</button>
-                <button type="button" @click="assignAllPoints(5)" class="quick-btn">All 5pts</button>
-                <button type="button" @click="setCustomPattern" class="quick-btn">Custom Pattern</button>
+        <!-- Assessment Configuration Card -->
+        <div class="content-card">
+          <div class="card-header">
+            <div class="card-title-wrapper">
+              <div class="card-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-4"></path>
+                  <path d="M9 11V9a3 3 0 0 1 6 0v2"></path>
+                </svg>
+              </div>
+              <div>
+                <h2>Assessment Configuration</h2>
+                <p>Set up your assessment parameters and scoring system</p>
               </div>
             </div>
-            <div class="points-grid">
-              <div v-for="(question, index) in questionsList" :key="index" class="point-assignment-item" 
-                   :class="{ highlighted: question.points > 1 }">
-                <label class="point-label">Q{{ index + 1 }}</label>
-                <input v-model="question.points" type="number" class="point-input" 
-                       min="1" max="100" placeholder="1" @input="calculateTotalPoints" />
-                <span class="point-unit">{{ question.points == 1 ? 'pt' : 'pts' }}</span>
+          </div>
+          <div class="card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="subject">Subject *</label>
+                <input v-model="subject" id="subject" type="text" class="form-control"
+                  placeholder="e.g., Mathematics, Science" required />
+              </div>
+
+              <div class="form-group">
+                <label for="assessment-title">Assessment Title *</label>
+                <input v-model="assessmentTitle" id="assessment-title" type="text" class="form-control"
+                  placeholder="e.g., Chapter 5 Quiz" required />
               </div>
             </div>
-            <div class="points-summary">
-              <p><strong>Total Questions:</strong> {{ numQuestions }}</p>
-              <p><strong>Point Distribution:</strong> 
-                <span v-for="(count, points) in pointDistribution" :key="points" class="dist-item">
-                  {{ count }} × {{ points }}pt{{ points > 1 ? 's' : '' }}
-                </span>
-              </p>
-            </div>
-          </div>
 
-          <div class="form-group">
-            <label class="calculated-total">
-              Total Points: <strong>{{ totalPoints }}</strong>
-            </label>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="num-questions">Number of Questions *</label>
+                <input v-model="numQuestions" id="num-questions" type="number" class="form-control" 
+                  min="1" max="100" placeholder="10" required @input="updateQuestionsList" />
+              </div>
+
+              <div class="form-group">
+                <label for="scoring-method">Scoring Method *</label>
+                <select v-model="scoringMethod" id="scoring-method" class="form-control" @change="handleScoringMethodChange">
+                  <option value="uniform">Uniform Points (All questions same points)</option>
+                  <option value="individual">Individual Points (Set points per question)</option>
+                </select>
+              </div>
+            </div>
+
+            <div v-if="scoringMethod === 'uniform'" class="form-row">
+              <div class="form-group">
+                <label for="points-per-question">Points Per Question *</label>
+                <input v-model="pointsPerQuestion" id="points-per-question" type="number" class="form-control" 
+                  min="1" placeholder="5" required @input="calculateTotalPoints" />
+              </div>
+            </div>
+
+            <div v-if="scoringMethod === 'individual' && numQuestions > 0" class="individual-points-section">
+              <div class="points-header">
+                <h4>Set Points for Each Question</h4>
+                <div class="quick-assign-buttons">
+                  <button type="button" @click="assignAllPoints(1)" class="quick-btn">All 1pt</button>
+                  <button type="button" @click="assignAllPoints(2)" class="quick-btn">All 2pts</button>
+                  <button type="button" @click="assignAllPoints(5)" class="quick-btn">All 5pts</button>
+                  <button type="button" @click="setCustomPattern" class="quick-btn">Custom Pattern</button>
+                </div>
+              </div>
+              <div class="points-grid">
+                <div v-for="(question, index) in questionsList" :key="index" class="point-assignment-item" 
+                     :class="{ highlighted: question.points > 1 }">
+                  <label class="point-label">Q{{ index + 1 }}</label>
+                  <input v-model="question.points" type="number" class="point-input" 
+                         min="1" max="100" placeholder="1" @input="calculateTotalPoints" />
+                  <span class="point-unit">{{ question.points == 1 ? 'pt' : 'pts' }}</span>
+                </div>
+              </div>
+              <div class="points-summary">
+                <p><strong>Total Questions:</strong> {{ numQuestions }}</p>
+                <p><strong>Point Distribution:</strong> 
+                  <span v-for="(count, points) in pointDistribution" :key="points" class="dist-item">
+                    {{ count }} × {{ points }}pt{{ points > 1 ? 's' : '' }}
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="calculated-total">
+                Total Points: <strong>{{ totalPoints }}</strong>
+              </label>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Answer Key Setup -->
-      <div class="content-card">
-        <div class="card-header">
-          <div class="card-title-wrapper">
-            <div class="card-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 12l2 2 4-4"></path>
-                <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"></path>
-                <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"></path>
-                <path d="M12 3v18"></path>
-              </svg>
-            </div>
-            <div>
-              <h2>Answer Key Setup</h2>
-              <p>Provide the correct answers for automatic scoring</p>
+        <!-- Answer Key Setup -->
+        <div class="content-card">
+          <div class="card-header">
+            <div class="card-title-wrapper">
+              <div class="card-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 12l2 2 4-4"></path>
+                  <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"></path>
+                  <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"></path>
+                  <path d="M12 3v18"></path>
+                </svg>
+              </div>
+              <div>
+                <h2>Answer Key Setup</h2>
+                <p>Provide the correct answers for automatic scoring</p>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="card-body">
-          <div class="answer-key-tabs">
+          <div class="card-body">
+            <div class="answer-key-tabs">
               <button type="button" class="tab-button" :class="{ active: answerKeyMethod === 'upload' }" 
                       @click="answerKeyMethod = 'upload'">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg> Upload Answer Key
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;">
+                  <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+                </svg> Upload Answer Key
               </button>
               <button type="button" class="tab-button" :class="{ active: answerKeyMethod === 'manual' }" 
                       @click="answerKeyMethod = 'manual'">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg> Manual Input
-              </button>
-          </div>
-
-          <!-- Upload Answer Key -->
-          <div v-if="answerKeyMethod === 'upload'" class="answer-key-section">
-            <div class="file-upload-area" :class="{ 'drag-over': isAnswerKeyDragOver }" 
-                 @dragover.prevent="handleAnswerKeyDragOver" @dragleave.prevent="handleAnswerKeyDragLeave" 
-                 @drop.prevent="handleAnswerKeyDrop" @click="($refs.answerKeyInput as HTMLInputElement)?.click()">
-              <input type="file" @change="handleAnswerKeyUpload" class="file-input"
-                accept=".txt,.docx,.pdf,.jpg,.jpeg,.png" ref="answerKeyInput" />
-              <div class="upload-content">
-                <svg class="upload-icon" fill="currentColor" viewBox="0 0 24 24" width="48" height="48">
-                  <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" />
-                </svg>
-                <p v-if="!answerKeyFile">
-                  Drop answer key file here or <span class="upload-link">browse</span>
-                </p>
-                <p v-else class="file-selected">
-                  🔑 {{ answerKeyFile.name }} ({{ formatFileSize(answerKeyFile.size) }})
-                </p>
-                <small>Answer key with correct answers (TXT, DOCX, PDF, Images)</small>
-              </div>
-            </div>
-          </div>
-
-          <!-- Manual Answer Key Input -->
-          <div v-if="answerKeyMethod === 'manual'" class="answer-key-section">
-            <div class="manual-input-tabs">
-              <button type="button" class="input-tab" :class="{ active: manualInputMethod === 'individual' }" 
-                      @click="manualInputMethod = 'individual'">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg> Individual Questions
-              </button>
-              <button type="button" class="input-tab" :class="{ active: manualInputMethod === 'bulk' }" 
-                      @click="manualInputMethod = 'bulk'">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg> Bulk Text Input
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;">
+                  <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                </svg> Manual Input
               </button>
             </div>
 
-            <!-- Individual Question Input -->
-            <div v-if="manualInputMethod === 'individual'" class="manual-answers-container">
-              <div v-if="numQuestions > 0" class="questions-list">
-                <div v-for="(question, index) in questionsList" :key="index" class="question-item-input">
-                  <div class="question-header">
-                    <span class="question-number">Q{{ index + 1 }}</span>
-                    <select v-model="question.type" class="question-type-select">
-                      <option value="multiple-choice">Multiple Choice</option>
-                      <option value="true-false">True/False</option>
-                    </select>
-                  </div>
-                  
-                  <div v-if="question.type === 'multiple-choice'" class="answer-options">
-                    <label>Correct Answer:</label>
-                    <select v-model="question.correctAnswer" class="form-control">
-                      <option value="">Select correct answer...</option>
-                      <option value="A">A</option>
-                      <option value="B">B</option>
-                      <option value="C">C</option>
-                      <option value="D">D</option>
-                      <option value="E">E</option>
-                    </select>
-                  </div>
-                  
-                  <div v-if="question.type === 'true-false'" class="answer-options">
-                    <label>Correct Answer:</label>
-                    <select v-model="question.correctAnswer" class="form-control">
-                      <option value="">Select correct answer...</option>
-                      <option value="True">True</option>
-                      <option value="False">False</option>
-                      <option value="T">T</option>
-                      <option value="F">F</option>
-                    </select>
-                  </div>
+            <!-- Upload Answer Key -->
+            <div v-if="answerKeyMethod === 'upload'" class="answer-key-section">
+              <div class="file-upload-area" :class="{ 'drag-over': isAnswerKeyDragOver }" 
+                   @dragover.prevent="handleAnswerKeyDragOver" 
+                   @dragleave.prevent="handleAnswerKeyDragLeave" 
+                   @drop.prevent="handleAnswerKeyDrop" 
+                   @click="($refs.answerKeyInput as HTMLInputElement)?.click()">
+                <input type="file" @change="handleAnswerKeyUpload" class="file-input"
+                  accept=".txt,.docx,.pdf,.jpg,.jpeg,.png" ref="answerKeyInput" />
+                <div class="upload-content">
+                  <svg class="upload-icon" fill="currentColor" viewBox="0 0 24 24" width="48" height="48">
+                    <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" />
+                  </svg>
+                  <p v-if="!answerKeyFile">
+                    Drop answer key file here or <span class="upload-link">browse</span>
+                  </p>
+                  <p v-else class="file-selected">
+                    🔑 {{ answerKeyFile.name }} ({{ formatFileSize(answerKeyFile.size) }})
+                  </p>
+                  <small>Answer key with correct answers (TXT, DOCX, PDF, Images)</small>
                 </div>
-              </div>
-              <div v-else class="no-questions-message">
-                <p>Please set the number of questions first to create the answer key.</p>
               </div>
             </div>
 
-            <!-- Bulk Text Input -->
-            <div v-if="manualInputMethod === 'bulk'" class="bulk-input-container">
-              <div class="bulk-input-header">
-                <h4><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg> Bulk Answer Key Input</h4>
-                <p>Enter your answer key in any format. The system will automatically detect the pattern.</p>
-                <div class="format-examples">
-                  <div class="example-tabs">
-                    <button v-for="(example, key) in bulkExamples" :key="key" 
-                            @click="activeBulkExample = key" 
-                            class="example-tab" :class="{ active: activeBulkExample === key }">
-                      {{ example.name }}
-                    </button>
-                  </div>
-                  <div class="example-content">
-                    <small>{{ bulkExamples[activeBulkExample].description }}</small>
-                    <pre class="example-code">{{ bulkExamples[activeBulkExample].content }}</pre>
-                    <button @click="loadExample(activeBulkExample)" class="load-example-btn">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg> Use This Example
-                    </button>
-                  </div>
-                </div>
-              </div>
-              
-              <textarea v-model="bulkAnswerText" 
-                        class="bulk-input-textarea" 
-                        placeholder="Enter your answer key here in any format..."
-                        rows="12"
-                        @input="parseBulkInput">
-              </textarea>
-              
-              <div v-if="bulkParsedQuestions.length > 0" class="bulk-preview">
-                <h4><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg> Detected Questions ({{ bulkParsedQuestions.length }})</h4>
-                <div class="bulk-preview-grid">
-                  <div v-for="(question, index) in bulkParsedQuestions" :key="index" 
-                       class="bulk-preview-item" :class="question.type">
-                    <span class="preview-q-num">Q{{ question.id }}</span>
-                    <span class="preview-answer">{{ question.answer }}</span>
-                    <span class="preview-type">{{ question.type }}</span>
-                  </div>
-                </div>
-                <button @click="applyBulkAnswers" class="apply-bulk-btn">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;"><path d="M9 16.2l-3.5-3.5 1.41-1.41L9 13.38l7.09-7.09 1.41 1.41z"/></svg> Apply These Answers ({{ bulkParsedQuestions.length }} questions)
+            <!-- Manual Answer Key Input -->
+            <div v-if="answerKeyMethod === 'manual'" class="answer-key-section">
+              <div class="manual-input-tabs">
+                <button type="button" class="input-tab" :class="{ active: manualInputMethod === 'individual' }" 
+                        @click="manualInputMethod = 'individual'">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;">
+                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                  </svg> Individual Questions
+                </button>
+                <button type="button" class="input-tab" :class="{ active: manualInputMethod === 'bulk' }" 
+                        @click="manualInputMethod = 'bulk'">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;">
+                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                  </svg> Bulk Text Input
                 </button>
               </div>
-            </div>
-          </div>
 
-          <!-- Answer Key Preview -->
-          <div v-if="hasAnswerKey" class="answer-key-preview">
-            <h4>Answer Key Preview</h4>
-            <div class="preview-grid">
-              <div v-for="(answer, index) in answerKeyPreview" :key="index" class="answer-preview-item">
-                <span class="q-num">Q{{ index + 1 }}</span>
-                <span class="q-answer" :class="answer.type">{{ answer.answer }}</span>
-                <span class="q-type">{{ answer.type }}</span>
+              <!-- Individual Question Input -->
+              <div v-if="manualInputMethod === 'individual'" class="manual-answers-container">
+                <div v-if="numQuestions > 0" class="questions-list">
+                  <div v-for="(question, index) in questionsList" :key="index" class="question-item-input">
+                    <div class="question-header">
+                      <span class="question-number">Q{{ index + 1 }}</span>
+                      <select v-model="question.type" class="question-type-select">
+                        <option value="multiple-choice">Multiple Choice</option>
+                        <option value="true-false">True/False</option>
+                      </select>
+                    </div>
+                    
+                    <div v-if="question.type === 'multiple-choice'" class="answer-options">
+                      <label>Correct Answer:</label>
+                      <select v-model="question.correctAnswer" class="form-control">
+                        <option value="">Select correct answer...</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                        <option value="E">E</option>
+                      </select>
+                    </div>
+                    
+                    <div v-if="question.type === 'true-false'" class="answer-options">
+                      <label>Correct Answer:</label>
+                      <select v-model="question.correctAnswer" class="form-control">
+                        <option value="">Select correct answer...</option>
+                        <option value="True">True</option>
+                        <option value="False">False</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div v-else class="no-questions-message">
+                  <p>⚠️ Please set the number of questions first in the Assessment Configuration section above.</p>
+                </div>
+              </div>
+
+              <!-- Bulk Text Input -->
+              <div v-if="manualInputMethod === 'bulk'" class="bulk-input-container">
+                <div class="bulk-input-header">
+                  <h4>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;">
+                      <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                    </svg> Bulk Answer Key Input
+                  </h4>
+                  <p>Enter your answer key in any format. The system will automatically detect the pattern.</p>
+                  <div class="format-examples">
+                    <div class="example-tabs">
+                      <button v-for="(example, key) in bulkExamples" :key="key" 
+                              @click="activeBulkExample = key" 
+                              class="example-tab" :class="{ active: activeBulkExample === key }">
+                        {{ example.name }}
+                      </button>
+                    </div>
+                    <div class="example-content">
+                      <small>{{ bulkExamples[activeBulkExample].description }}</small>
+                      <pre class="example-code">{{ bulkExamples[activeBulkExample].content }}</pre>
+                      <button @click="loadExample(activeBulkExample)" class="load-example-btn">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;">
+                          <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg> Use This Example
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                <textarea v-model="bulkAnswerText" 
+                          class="bulk-input-textarea" 
+                          placeholder="Enter your answer key here in any format..."
+                          rows="12"
+                          @input="parseBulkInput">
+                </textarea>
+                
+                <div v-if="bulkParsedQuestions.length > 0" class="bulk-preview">
+                  <h4>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;">
+                      <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                    </svg> Detected Questions ({{ bulkParsedQuestions.length }})
+                  </h4>
+                  <div class="bulk-preview-grid">
+                    <div v-for="(question, index) in bulkParsedQuestions" :key="index" 
+                         class="bulk-preview-item" :class="question.type">
+                      <span class="preview-q-num">Q{{ question.id }}</span>
+                      <span class="preview-answer">{{ question.answer }}</span>
+                      <span class="preview-type">{{ question.type }}</span>
+                    </div>
+                  </div>
+                  <button @click="applyBulkAnswers" class="apply-bulk-btn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;">
+                      <path d="M9 16.2l-3.5-3.5 1.41-1.41L9 13.38l7.09-7.09 1.41 1.41z"/>
+                    </svg> Apply These Answers ({{ bulkParsedQuestions.length }} questions)
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Answer Key Preview -->
+            <div v-if="hasAnswerKey" class="answer-key-preview">
+              <h4>Answer Key Preview</h4>
+              <div class="preview-grid">
+                <div v-for="(answer, index) in answerKeyPreview" :key="index" class="answer-preview-item">
+                  <span class="q-num">Q{{ index + 1 }}</span>
+                  <span class="q-answer" :class="answer.type">{{ answer.answer }}</span>
+                  <span class="q-type">{{ answer.type }}</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Student Assessment Upload -->
-      <div class="content-card">
-        <div class="card-header">
-          <div class="card-title-wrapper">
-            <div class="card-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="17,8 12,3 7,8"></polyline>
-                <line x1="12" y1="3" x2="12" y2="15"></line>
-              </svg>
-            </div>
-            <div>
-              <h2>Student Assessment Upload</h2>
-              <p>Upload a student's completed assessment for automatic scoring</p>
+        <!-- Student Assessment Upload -->
+        <div class="content-card">
+          <div class="card-header">
+            <div class="card-title-wrapper">
+              <div class="card-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17,8 12,3 7,8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+              </div>
+              <div>
+                <h2>Student Assessment Upload</h2>
+                <p>Upload a student's completed assessment for automatic scoring</p>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="card-body">
-          <div class="form-row">
-            <div class="form-group">
-              <label for="student-name">Student Name (Optional)</label>
-              <input v-model="studentName" id="student-name" type="text" class="form-control"
-                placeholder="Will auto-detect from file if available" />
-              <small class="form-hint">💡 Leave blank if the student name is already in the assessment file</small>
+          <div class="card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="student-name">Student Name (Optional)</label>
+                <input v-model="studentName" id="student-name" type="text" class="form-control"
+                  placeholder="Will auto-detect from file if available" />
+                <small class="form-hint">💡 Leave blank if the student name is already in the assessment file</small>
+              </div>
+
+              <div class="form-group">
+                <label for="assessment-type">Assessment Type</label>
+                <select v-model="selectedTemplate" id="assessment-type" class="form-control" required>
+                  <option value="">Select assessment type...</option>
+                  <option value="multiple-choice">Multiple Choice Questions Only</option>
+                  <option value="true-false">True/False Questions Only</option>
+                  <option value="mixed">Mixed Format (MCQ + True/False)</option>
+                </select>
+              </div>
             </div>
 
-            <div class="form-group">
-              <label for="assessment-type">Assessment Type</label>
-              <select v-model="selectedTemplate" id="assessment-type" class="form-control" required>
-                <option value="">Select assessment type...</option>
-                <option value="multiple-choice">Multiple Choice Questions Only</option>
-                <option value="true-false">True/False Questions Only</option>
-                <option value="mixed">Mixed Format (MCQ + True/False)</option>
-              </select>
+            <!-- Upload File Section -->
+            <div class="file-upload-area" :class="{ 'drag-over': isDragOver }" @dragover.prevent="handleDragOver"
+              @dragleave.prevent="handleDragLeave" @drop.prevent="handleDrop" @click="($refs.fileInput as HTMLInputElement)?.click()">
+              <input type="file" id="file-upload" @change="handleFileUpload" class="file-input"
+                accept=".txt,.docx,.pdf,.jpg,.jpeg,.png" ref="fileInput" />
+              <div class="upload-content">
+                <svg class="upload-icon" fill="currentColor" viewBox="0 0 24 24" width="48" height="48">
+                  <path
+                    d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" />
+                </svg>
+                <p v-if="!assessmentFile">
+                  Drop student's assessment here or <span class="upload-link">browse</span>
+                </p>
+                <p v-else class="file-selected">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;">
+                    <path d="M6 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13z"/>
+                  </svg>
+                  {{ assessmentFile.name }} ({{ formatFileSize(assessmentFile.size) }})
+                </p>
+                <small>Supported: TXT, DOCX, PDF, Images (JPG, PNG)</small>
+              </div>
             </div>
-          </div>
 
-          <!-- Upload File Section -->
-          <div class="file-upload-area" :class="{ 'drag-over': isDragOver }" @dragover.prevent="handleDragOver"
-            @dragleave.prevent="handleDragLeave" @drop.prevent="handleDrop" @click="($refs.fileInput as HTMLInputElement)?.click()">
-            <input type="file" id="file-upload" @change="handleFileUpload" class="file-input"
-              accept=".txt,.docx,.pdf,.jpg,.jpeg,.png" ref="fileInput" />
-            <div class="upload-content">
-              <svg class="upload-icon" fill="currentColor" viewBox="0 0 24 24" width="48" height="48">
-                <path
-                  d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" />
-              </svg>
-              <p v-if="!assessmentFile">
-                Drop student's assessment here or <span class="upload-link">browse</span>
-              </p>
-              <p v-else class="file-selected">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><path d="M6 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13z"/></svg>
-                {{ assessmentFile.name }} ({{ formatFileSize(assessmentFile.size) }})
-              </p>
-              <small>Supported: TXT, DOCX, PDF, Images (JPG, PNG)</small>
-            </div>
-          </div>
-
-          <!-- Detected Questions from Upload (if questionnaire only) -->
-          <div v-if="detectedQuestions.length > 0" class="detected-questions">
-            <h4>📋 Detected Questions - Please Set Correct Answers</h4>
-                        <h4><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 5l9 7 9-7"/></svg> Detected Questions - Please Set Correct Answers</h4>
-            <p class="detection-note">We detected {{ detectedQuestions.length }} questions. Please select the correct answers below:</p>
-            
-            <div class="detected-questions-list">
-              <div v-for="(question, index) in detectedQuestions" :key="index" class="detected-question-item">
-                <div class="question-content">
-                  <div class="question-text">
-                    <span class="q-number">Q{{ index + 1 }}.</span>
-                    <span class="q-text">{{ question.text }}</span>
-                  </div>
-                  
-                  <div v-if="question.options && question.options.length > 0" class="question-options">
-                    <div class="option-selection">
+            <!-- Detected Questions from Upload (if questionnaire only) -->
+            <div v-if="detectedQuestions.length > 0" class="detected-questions">
+              <h4>📋 Detected Questions - Please Set Correct Answers</h4>
+              <p class="detection-note">We detected {{ detectedQuestions.length }} questions. Please select the correct answers below:</p>
+              
+              <div class="detected-questions-list">
+                <div v-for="(question, index) in detectedQuestions" :key="index" class="detected-question-item">
+                  <div class="question-content">
+                    <div class="question-text">
+                      <span class="q-number">Q{{ index + 1 }}.</span>
+                      <span class="q-text">{{ question.text }}</span>
+                    </div>
+                    
+                    <div v-if="question.options && question.options.length > 0" class="question-options">
+                      <div class="option-selection">
+                        <label>Select Correct Answer:</label>
+                        <div class="options-grid">
+                          <label v-for="(option, optIndex) in question.options" :key="optIndex" 
+                                 class="option-item" :class="{ selected: question.correctAnswer === option.letter }">
+                            <input type="radio" :name="`question_${index}`" 
+                                   :value="option.letter" v-model="question.correctAnswer" />
+                            <span class="option-letter">{{ option.letter }}.</span>
+                            <span class="option-text">{{ option.text }}</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div v-else class="true-false-selection">
                       <label>Select Correct Answer:</label>
-                      <div class="options-grid">
-                        <label v-for="(option, optIndex) in question.options" :key="optIndex" 
-                               class="option-item" :class="{ selected: question.correctAnswer === option.letter }">
-                          <input type="radio" :name="`question_${index}`" 
-                                 :value="option.letter" v-model="question.correctAnswer" />
-                          <span class="option-letter">{{ option.letter }}.</span>
-                          <span class="option-text">{{ option.text }}</span>
+                      <div class="tf-options">
+                        <label class="tf-option" :class="{ selected: question.correctAnswer === 'True' }">
+                          <input type="radio" :name="`question_${index}`" value="True" v-model="question.correctAnswer" />
+                          <span>True</span>
+                        </label>
+                        <label class="tf-option" :class="{ selected: question.correctAnswer === 'False' }">
+                          <input type="radio" :name="`question_${index}`" value="False" v-model="question.correctAnswer" />
+                          <span>False</span>
                         </label>
                       </div>
                     </div>
                   </div>
-                  
-                  <div v-else class="true-false-selection">
-                    <label>Select Correct Answer:</label>
-                    <div class="tf-options">
-                      <label class="tf-option" :class="{ selected: question.correctAnswer === 'True' }">
-                        <input type="radio" :name="`question_${index}`" value="True" v-model="question.correctAnswer" />
-                        <span>True</span>
-                      </label>
-                      <label class="tf-option" :class="{ selected: question.correctAnswer === 'False' }">
-                        <input type="radio" :name="`question_${index}`" value="False" v-model="question.correctAnswer" />
-                        <span>False</span>
-                      </label>
-                    </div>
+                </div>
+              </div>
+              
+              <div class="answer-key-actions">
+                <button @click="autoGenerateAnswerKey" class="btn-secondary">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;">
+                    <circle cx="12" cy="12" r="10"/><path d="M8 12l2 2 4-4"/>
+                  </svg> Auto-Generate Sample Answers
+                </button>
+                <button @click="saveDetectedAnswerKey" class="btn-primary" :disabled="!allQuestionsAnswered">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;">
+                    <path d="M9 16.2l-3.5-3.5 1.41-1.41L9 13.38l7.09-7.09 1.41 1.41z"/>
+                  </svg> Save Answer Key ({{ answeredQuestionsCount }}/{{ detectedQuestions.length }})
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Results Display -->
+        <div v-if="gradingResults" class="card results-card">
+          <div class="card-header">
+            <h2>AI Grading Results</h2>
+            <p>Automated analysis completed for {{ gradingResults.studentName }}'s assessment</p>
+          </div>
+          <div class="card-body">
+            
+            <!-- ⭐ Feedback Type Indicator Banner -->
+            <div v-if="feedbackTypeMessage" class="feedback-type-banner" 
+                 :style="{ background: feedbackTypeMessage.bgColor, color: feedbackTypeMessage.textColor }">
+              <div class="banner-content">
+                <span class="banner-icon">{{ feedbackTypeMessage.icon }}</span>
+                <div class="banner-text">
+                  <h4>{{ feedbackTypeMessage.title }}</h4>
+                  <p>{{ feedbackTypeMessage.description }}</p>
+                </div>
+                <span v-if="feedbackTypeMessage.type === 'rule-based'" class="banner-badge">Fallback Mode</span>
+              </div>
+            </div>
+            
+            <!-- Score Overview -->
+            <div class="score-overview">
+              <div class="score-circle" :class="getScoreClass(gradingResults.percentage)">
+                <div class="score-value">{{ gradingResults.percentage }}%</div>
+                <div class="score-label">Overall Score</div>
+              </div>
+              <div class="score-details">
+                <div class="detail-item">
+                  <span class="detail-label">Student:</span>
+                  <span class="detail-value">{{ gradingResults.studentName }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Assessment:</span>
+                  <span class="detail-value">{{ gradingResults.assessmentTitle }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Points Earned:</span>
+                  <span class="detail-value">{{ gradingResults.pointsEarned }} / {{ gradingResults.totalPoints }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Letter Grade:</span>
+                  <span class="detail-value grade-letter" :class="getGradeClass(gradingResults.percentage)">
+                    {{ getLetterGrade(gradingResults.percentage) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- AI Feedback -->
+            <div v-if="gradingResults.feedback" class="ai-feedback">
+              <h3>AI-Generated Feedback</h3>
+              
+              <div class="feedback-section">
+                <h4><span class="feedback-icon">💪</span> Strengths Identified</h4>
+                <ul class="feedback-list strengths">
+                  <li v-for="strength in gradingResults.feedback.strengths" :key="strength">{{ strength }}</li>
+                </ul>
+              </div>
+
+              <div class="feedback-section">
+                <h4><span class="feedback-icon">🎯</span> Areas for Improvement</h4>
+                <ul class="feedback-list weaknesses">
+                  <li v-for="weakness in gradingResults.feedback.weaknesses" :key="weakness">{{ weakness }}</li>
+                </ul>
+              </div>
+
+              <div class="feedback-section">
+                <h4><span class="feedback-icon">📚</span> Recommendations</h4>
+                <ul class="feedback-list recommendations">
+                  <li v-for="rec in gradingResults.feedback.recommendations" :key="rec">{{ rec }}</li>
+                </ul>
+              </div>
+
+              <div v-if="gradingResults.feedback.detailedAnalysis" class="detailed-analysis">
+                <h4><span class="feedback-icon">🔍</span> Detailed Analysis</h4>
+                <p>{{ gradingResults.feedback.detailedAnalysis }}</p>
+              </div>
+            </div>
+
+            <!-- Question-by-Question Breakdown -->
+            <div v-if="gradingResults.questionBreakdown" class="question-breakdown">
+              <h3>Question-by-Question Analysis</h3>
+              <div class="breakdown-list">
+                <div v-for="(question, index) in gradingResults.questionBreakdown" :key="index" 
+                     class="question-item" :class="{ 'correct': question.isCorrect, 'incorrect': !question.isCorrect }">
+                  <div class="question-header">
+                    <span class="question-number">Q{{ index + 1 }}</span>
+                    <span class="question-status">{{ question.isCorrect ? '✅ Correct' : '❌ Incorrect' }}</span>
+                    <span class="question-points">{{ question.pointsEarned }}/{{ question.pointsPossible }} pts</span>
+                  </div>
+                  <div v-if="question.feedback" class="question-feedback">
+                    <p>{{ question.feedback }}</p>
                   </div>
                 </div>
               </div>
             </div>
-            
-            <div class="answer-key-actions">
-              <button @click="autoGenerateAnswerKey" class="btn-secondary">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;"><circle cx="12" cy="12" r="10"/><path d="M8 12l2 2 4-4"/></svg> Auto-Generate Sample Answers
+
+            <!-- Action Buttons -->
+            <div class="results-actions">
+              <button @click="downloadReport" class="btn-secondary">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;">
+                  <path d="M6 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13z"/>
+                </svg> Download Report
               </button>
-              <button @click="saveDetectedAnswerKey" class="btn-primary" :disabled="!allQuestionsAnswered">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;"><path d="M9 16.2l-3.5-3.5 1.41-1.41L9 13.38l7.09-7.09 1.41 1.41z"/></svg> Save Answer Key ({{ answeredQuestionsCount }}/{{ detectedQuestions.length }})
+              <button @click="viewAllAssessments" class="btn-primary">
+                  View All Assessments
+              </button>
+              <button @click="resetForm" class="btn-secondary">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;">
+                  <path d="M12 2v2m0 16v2m8-10h2M2 12H0m16.24-7.76l1.42-1.42M4.34 19.66l-1.42 1.42M19.66 19.66l1.42 1.42M4.34 4.34L2.92 2.92"/>
+                </svg> Check Another Assessment
               </button>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- AI Grading Settings -->
-      <div class="content-card">
-        <div class="card-header">
-          <div class="card-title-wrapper">
-            <div class="card-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9.9 15H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-5.9l-3 3-3-3Z"></path>
-                <path d="m8 11 2 2 4-4"></path>
-              </svg>
-            </div>
-            <div>
-              <h2>AI Grading Configuration</h2>
-              <p>Configure the automated scoring and feedback settings</p>
+        <!-- Error -->
+        <div v-if="error" class="error-message">
+          <div class="error-content">
+            <strong>Error:</strong> 
+            <pre class="error-text">{{ error }}</pre>
+          </div>
+          
+          <!-- Quick Fix Suggestions -->
+          <div v-if="error.includes('questions but no student answers')" class="error-suggestions">
+            <h4>💡 Quick Fix Suggestions:</h4>
+            <div class="suggestion-buttons">
+              <button @click="moveFileToAnswerKey" class="suggestion-btn" v-if="assessmentFile">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;">
+                  <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+                </svg> Use This File as Answer Key
+              </button>
+              <button @click="clearFileAndShowExample" class="suggestion-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;">
+                  <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                </svg> Show Example of Student Response File
+              </button>
+              <button @click="clearErrorAndContinue" class="suggestion-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;">
+                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg> Clear Error & Continue
+              </button>
             </div>
           </div>
         </div>
-        <div class="card-body">
-          <div class="ai-settings-grid">
-            <div class="setting-card">
-              <div class="setting-header">
-                <span class="setting-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12c0 5.52 4.48 10 10 10s10-4.48 10-10C22 6.48 17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg></span>
-                <h3>AI Analysis Level</h3>
-              </div>
-              <select v-model="aiAnalysisLevel" class="form-control">
-                <option value="basic">Basic - Quick scoring</option>
-                <option value="standard">Standard - Detailed analysis</option>
-                <option value="comprehensive">Comprehensive - Full feedback</option>
-              </select>
-            </div>
 
-            <div class="setting-card">
-              <div class="setting-header">
-                <span class="setting-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></span>
-                <h3>Feedback Detail</h3>
-              </div>
-              <select v-model="feedbackLevel" class="form-control">
-                <option value="minimal">Score only</option>
-                <option value="standard">Score + brief feedback</option>
-                <option value="detailed">Score + detailed feedback</option>
-                <option value="comprehensive">Full analysis report</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="checkbox-group">
-            <label class="checkbox-item">
-              <input type="checkbox" v-model="detectWeaknesses" />
-              <span class="checkmark"></span>
-              <span class="checkbox-text">Identify student weaknesses and learning gaps</span>
-            </label>
-            
-            <label class="checkbox-item">
-              <input type="checkbox" v-model="enableRecommendations" />
-              <span class="checkmark"></span>
-              <span class="checkbox-text">Generate improvement recommendations</span>
-            </label>
-            
-            <label class="checkbox-item">
-              <input type="checkbox" v-model="compareToStandards" />
-              <span class="checkmark"></span>
-              <span class="checkbox-text">Compare performance to grade-level standards</span>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <!-- Results Display -->
-      <div v-if="gradingResults" class="card results-card">
-        <div class="card-header">
-          <h2>AI Grading Results</h2>
-          <p>Automated analysis completed for {{ studentName }}'s assessment</p>
-        </div>
-        <div class="card-body">
-          <!-- Score Overview -->
-          <div class="score-overview">
-            <div class="score-circle" :class="getScoreClass(gradingResults.percentage)">
-              <div class="score-value">{{ gradingResults.percentage }}%</div>
-              <div class="score-label">Overall Score</div>
-            </div>
-            <div class="score-details">
-              <div class="detail-item">
-                <span class="detail-label">Student:</span>
-                <span class="detail-value">{{ gradingResults.studentName }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">Assessment:</span>
-                <span class="detail-value">{{ gradingResults.assessmentTitle }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">Points Earned:</span>
-                <span class="detail-value">{{ gradingResults.pointsEarned }} / {{ gradingResults.totalPoints }}</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">Letter Grade:</span>
-                <span class="detail-value grade-letter" :class="getGradeClass(gradingResults.percentage)">
-                  {{ getLetterGrade(gradingResults.percentage) }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- AI Feedback -->
-          <div v-if="gradingResults.feedback" class="ai-feedback">
-            <h3>AI-Generated Feedback</h3>
-            
-            <div class="feedback-section">
-              <h4><span class="feedback-icon">💪</span> Strengths Identified</h4>
-                            <h4><span class="feedback-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><path d="M17 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span> Strengths Identified</h4>
-              <ul class="feedback-list strengths">
-                <li v-for="strength in gradingResults.feedback.strengths" :key="strength">{{ strength }}</li>
-              </ul>
-            </div>
-
-            <div class="feedback-section">
-              <h4><span class="feedback-icon">🎯</span> Areas for Improvement</h4>
-                            <h4><span class="feedback-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><circle cx="12" cy="12" r="10"/><path d="M8 12l2 2 4-4"/></svg></span> Areas for Improvement</h4>
-              <ul class="feedback-list weaknesses">
-                <li v-for="weakness in gradingResults.feedback.weaknesses" :key="weakness">{{ weakness }}</li>
-              </ul>
-            </div>
-
-            <div class="feedback-section">
-              <h4><span class="feedback-icon">📚</span> Recommendations</h4>
-                            <h4><span class="feedback-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 5l9 7 9-7"/></svg></span> Recommendations</h4>
-              <ul class="feedback-list recommendations">
-                <li v-for="rec in gradingResults.feedback.recommendations" :key="rec">{{ rec }}</li>
-              </ul>
-            </div>
-
-            <div v-if="gradingResults.feedback.detailedAnalysis" class="detailed-analysis">
-              <h4><span class="feedback-icon">🔍</span> Detailed Analysis</h4>
-                            <h4><span class="feedback-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><circle cx="12" cy="12" r="10"/><path d="M8 12l2 2 4-4"/></svg></span> Detailed Analysis</h4>
-              <p>{{ gradingResults.feedback.detailedAnalysis }}</p>
-            </div>
-          </div>
-
-          <!-- Question-by-Question Breakdown -->
-          <div v-if="gradingResults.questionBreakdown" class="question-breakdown">
-            <h3>Question-by-Question Analysis</h3>
-            <div class="breakdown-list">
-              <div v-for="(question, index) in gradingResults.questionBreakdown" :key="index" 
-                   class="question-item" :class="{ 'correct': question.isCorrect, 'incorrect': !question.isCorrect }">
-                <div class="question-header">
-                  <span class="question-number">Q{{ index + 1 }}</span>
-                  <span class="question-status">{{ question.isCorrect ? '✅ Correct' : '❌ Incorrect' }}</span>
-                                    <span class="question-status">
-                                        <svg v-if="question.isCorrect" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;"><path d="M9 16.2l-3.5-3.5 1.41-1.41L9 13.38l7.09-7.09 1.41 1.41z"/></svg> <span v-if="question.isCorrect">Correct</span>
-                                        <svg v-if="!question.isCorrect" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;"><path d="M6 18L18 6M6 6l12 12"/></svg> <span v-if="!question.isCorrect">Incorrect</span>
-                                    </span>
-                  <span class="question-points">{{ question.pointsEarned }}/{{ question.pointsPossible }} pts</span>
-                </div>
-                <div v-if="question.feedback" class="question-feedback">
-                  <p>{{ question.feedback }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Action Buttons -->
-          <div class="results-actions">
-            <button @click="downloadReport" class="btn-secondary">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;"><path d="M6 2a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6H6zm7 7V3.5L18.5 9H13z"/></svg> Download Report
-            </button>
-            <button @click="viewAllAssessments" class="btn-primary">
-                View All Assessments
-            </button>
-            <button @click="resetForm" class="btn-secondary">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;"><path d="M12 2v2m0 16v2m8-10h2M2 12H0m16.24-7.76l1.42-1.42M4.34 19.66l-1.42 1.42M19.66 19.66l1.42 1.42M4.34 4.34L2.92 2.92"/></svg> Check Another Assessment
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Error -->
-      <div v-if="error" class="error-message">
-        <div class="error-content">
-          <strong>Error:</strong> 
-          <pre class="error-text">{{ error }}</pre>
-        </div>
-        
-        <!-- Quick Fix Suggestions -->
-        <div v-if="error.includes('questions but no student answers')" class="error-suggestions">
-                <h4><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4-4 4z"/></svg> Quick Fix Suggestions:</h4>
-          <div class="suggestion-buttons">
-            <button @click="moveFileToAnswerKey" class="suggestion-btn" v-if="assessmentFile">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg> Use This File as Answer Key
-            </button>
-            <button @click="clearFileAndShowExample" class="suggestion-btn">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg> Show Example of Student Response File
-            </button>
-            <button @click="clearErrorAndContinue" class="suggestion-btn">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:2px;"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg> Clear Error & Continue
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Action Buttons -->
-      <div class="action-buttons">
-        <button @click="clearForm" class="btn-secondary">Clear Form</button>
-        <button @click="submitAssessment" class="btn-submit" :disabled="!canSubmit || isLoading">
-          <span v-if="isLoading">Processing...</span>
-          <span v-else><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4-4 4z"/></svg> Start AI Grading</span>
-        </button>
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+          <button @click="clearForm" class="btn-secondary">Clear Form</button>
+          <button @click="submitAssessment" class="btn-submit" :disabled="!canSubmit || isLoading">
+            <span v-if="isLoading">Processing...</span>
+            <span v-else>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:4px;">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4-4 4z"/>
+              </svg> Start AI Grading
+            </span>
+          </button>
         </div>
       </div>
     </main>
@@ -841,7 +819,7 @@ const router = useRouter();
 const { isDarkMode } = useDarkMode();
 const { teacherInfo, isAuthenticated } = useTeacherAuth();
 
-// Navbar dropdown states
+// ==================== NAVBAR & AUTH ====================
 const showNotifDropdown = ref(false);
 const showProfileDropdown = ref(false);
 const notifications = ref([]);
@@ -850,659 +828,688 @@ const nameLoading = ref(true);
 const showScrollTop = ref(false);
 const teacherId = ref(null);
 
-// Logout modal states
+// ==================== LOGOUT MODAL ====================
 const showLogoutModal = ref(false);
 const isLoggingOut = ref(false);
 
-// Existing reactive variables
+// ==================== LOADING & ERROR ====================
 const isLoading = ref(false);
 const loadingMessage = ref("Processing...");
 const isDragOver = ref(false);
 const isAnswerKeyDragOver = ref(false);
-    
-    // Student and Assessment Info
-    const studentName = ref("");
-    const assessmentTitle = ref("");
-    const subject = ref("");
-    const numQuestions = ref(10);
-    const pointsPerQuestion = ref(5);
-    const scoringMethod = ref("uniform");
-    const totalPoints = ref(50);
-    const selectedTemplate = ref("");
-    const assessmentFile = ref(null);
-    
-    // Answer Key Management - FIXED: Use reactive array properly
-    const answerKeyMethod = ref("upload");
-    const answerKeyFile = ref(null);
-    const questionsList = ref([]);
-    const detectedQuestions = ref([]);
-    
-    // Manual Input Management
-    const manualInputMethod = ref("individual");
-    const bulkAnswerText = ref("");
-    const bulkParsedQuestions = ref([]);
-    const activeBulkExample = ref("tf_end");
-    
-    // Bulk Examples
-    const bulkExamples = ref({
-      tf_start: {
-        name: "T/F Start",
-        description: "True/False answers at the beginning of each line",
-        content: `T 1. The earth orbits the sun.
+const error = ref("");
+const processingSteps = ref([]);
+
+// ==================== STUDENT & ASSESSMENT INFO ====================
+const studentName = ref("");
+const assessmentTitle = ref("");
+const subject = ref("");
+const numQuestions = ref(10);
+const pointsPerQuestion = ref(5);
+const scoringMethod = ref("uniform");
+const totalPoints = ref(50);
+const selectedTemplate = ref("");
+const assessmentFile = ref(null);
+
+// ==================== ANSWER KEY MANAGEMENT ====================
+const answerKeyMethod = ref("upload");
+const answerKeyFile = ref(null);
+const questionsList = ref([]);
+const detectedQuestions = ref([]);
+
+// ==================== MANUAL INPUT MANAGEMENT ====================
+const manualInputMethod = ref("individual");
+const bulkAnswerText = ref("");
+const bulkParsedQuestions = ref([]);
+const activeBulkExample = ref("tf_end");
+
+// ==================== BULK EXAMPLES ====================
+const bulkExamples = ref({
+  tf_start: {
+    name: "T/F Start",
+    description: "True/False answers at the beginning of each line",
+    content: `T 1. The earth orbits the sun.
 F 2. Fish can live without water.
 T 3. Plants need sunlight to grow.`
-      },
-      tf_end: {
-        name: "T/F End", 
-        description: "True/False answers at the end of each line",
-        content: `1. The sky is blue. T
+  },
+  tf_end: {
+    name: "T/F End", 
+    description: "True/False answers at the end of each line",
+    content: `1. The sky is blue. T
 2. Humans can breathe underwater. F
 3. Fire is hot. T`
-      },
-      mc_start: {
-        name: "MC Start",
-        description: "Multiple choice answers at the beginning",
-        content: `B 1. What is the capital of Japan?
+  },
+  mc_start: {
+    name: "MC Start",
+    description: "Multiple choice answers at the beginning",
+    content: `B 1. What is the capital of Japan?
 A 2. Which is a fruit?
 C 3. What color is grass?`
-      },
-      mc_answer: {
-        name: "MC Answer",
-        description: "Multiple choice with Answer: keyword",
-        content: `1. What is the largest planet?
+  },
+  mc_answer: {
+    name: "MC Answer",
+    description: "Multiple choice with Answer: keyword",
+    content: `1. What is the largest planet?
 Answer: C
 
 2. What color is the sun?  
 Answer: C`
-      },
-      simple: {
-        name: "Simple",
-        description: "Just the answers in order",
-        content: `1. A
+  },
+  simple: {
+    name: "Simple",
+    description: "Just the answers in order",
+    content: `1. A
 2. B
 3. T
 4. F
 5. C`
-      },
-      mixed: {
-        name: "Mixed",
-        description: "Mixed format with sections",
-        content: `True or False
+  },
+  mixed: {
+    name: "Mixed",
+    description: "Mixed format with sections",
+    content: `True or False
 1. The Earth is round. T
 2. Water boils at 100°C. T
 
 Multiple Choice  
 1. What is 2+2? B
 2. What is 3+3? C`
-      }
-    });
-    
-    // AI Grading Settings
-    const aiAnalysisLevel = ref("standard");
-    const feedbackLevel = ref("detailed");
-    const detectWeaknesses = ref(true);
-    const enableRecommendations = ref(true);
-    const compareToStandards = ref(false);
-    
-    // Results and Processing
-    const gradingResults = ref(null);
-    const error = ref("");
-    const processingSteps = ref([]);
+  }
+});
 
-    // FIXED: Computed Properties with proper reactivity
-    const hasAnswerKey = computed(() => {
-      if (answerKeyMethod.value === 'upload') {
-        const hasFile = !!answerKeyFile.value;
-        const hasQuestions = questionsList.value.length > 0;
-        const hasAnswers = questionsList.value.some(q => q.correctAnswer);
-        console.log('📊 hasAnswerKey (upload):', { hasFile, hasQuestions, hasAnswers });
-        return hasFile && hasQuestions && hasAnswers;
-      } else if (answerKeyMethod.value === 'manual') {
-        const hasQuestions = questionsList.value.length > 0;
-        const hasAnswers = questionsList.value.some(q => q.correctAnswer);
-        console.log('📊 hasAnswerKey (manual):', { hasQuestions, hasAnswers });
-        return hasQuestions && hasAnswers;
-      }
-      return false;
-    });
+// ==================== RESULTS ====================
+const gradingResults = ref(null);
 
-    const answerKeyPreview = computed(() => {
-      console.log('🔍 Computing answer key preview...');
-      console.log('   questionsList.value:', questionsList.value);
-      
-      const preview = questionsList.value
-        .filter(q => q.correctAnswer)
-        .map((q, index) => {
-          const type = q.type || 'multiple-choice';
-          const answer = q.correctAnswer || '';
-          console.log(`   Q${index + 1}: type="${type}", answer="${answer}"`);
-          return {
-            answer: answer,
-            type: type
-          };
-        });
-      
-      console.log('   📋 Final preview:', preview);
-      return preview;
-    });
+// ==================== COMPUTED PROPERTIES ====================
 
-    // Watch questionsList for changes - DEBUGGING
-    watch(questionsList, (newVal) => {
-      console.log('👀 questionsList CHANGED:', JSON.stringify(newVal, null, 2));
-    }, { deep: true });
+const canSubmit = computed(() => {
+  const hasBasicInfo = subject.value && 
+                      assessmentTitle.value &&
+                      numQuestions.value &&
+                      pointsPerQuestion.value &&
+                      selectedTemplate.value && 
+                      assessmentFile.value &&
+                      !isLoading.value;
+  
+  const hasAnswerKeyData = questionsList.value.length > 0 && 
+                          questionsList.value.some(q => q.correctAnswer);
+  
+  const hasAnswerKeyFile = !!answerKeyFile.value;
+  
+  const hasAnswerKeySetup = hasAnswerKeyData || hasAnswerKeyFile;
+  
+  console.log('🔍 canSubmit Debug:', {
+    subject: !!subject.value,
+    assessmentTitle: !!assessmentTitle.value,
+    numQuestions: !!numQuestions.value,
+    pointsPerQuestion: !!pointsPerQuestion.value,
+    selectedTemplate: !!selectedTemplate.value,
+    assessmentFile: !!assessmentFile.value,
+    isLoading: isLoading.value,
+    questionsCount: questionsList.value.length,
+    questionsWithAnswers: questionsList.value.filter(q => q.correctAnswer).length,
+    canSubmit: hasBasicInfo && hasAnswerKeySetup
+  });
+  
+  return hasBasicInfo && hasAnswerKeySetup;
+});
 
-    const allQuestionsAnswered = computed(() => {
-      return detectedQuestions.value.length > 0 && 
-             detectedQuestions.value.every(q => q.correctAnswer);
-    });
+const hasAnswerKey = computed(() => {
+  if (answerKeyMethod.value === 'upload') {
+    const hasFile = !!answerKeyFile.value;
+    const hasQuestions = questionsList.value.length > 0;
+    const hasAnswers = questionsList.value.some(q => q.correctAnswer);
+    return hasFile || (hasQuestions && hasAnswers);
+  } else if (answerKeyMethod.value === 'manual') {
+    const hasQuestions = questionsList.value.length > 0;
+    const hasAnswers = questionsList.value.some(q => q.correctAnswer);
+    return hasQuestions && hasAnswers;
+  }
+  return false;
+});
 
-    const answeredQuestionsCount = computed(() => {
-      return detectedQuestions.value.filter(q => q.correctAnswer).length;
-    });
+const answerKeyPreview = computed(() => {
+  return questionsList.value
+    .filter(q => q.correctAnswer)
+    .map((q) => ({
+      answer: q.correctAnswer || '',
+      type: q.type || 'multiple-choice'
+    }));
+});
 
-    const pointDistribution = computed(() => {
-      const distribution = {};
-      questionsList.value.forEach(q => {
-        const points = parseInt(q.points) || 1;
-        distribution[points] = (distribution[points] || 0) + 1;
-      });
-      return distribution;
-    });
+const allQuestionsAnswered = computed(() => {
+  return detectedQuestions.value.length > 0 && 
+         detectedQuestions.value.every(q => q.correctAnswer);
+});
 
-    const canSubmit = computed(() => {
-      const hasBasicInfo = subject.value && 
-                          assessmentTitle.value &&
-                          numQuestions.value &&
-                          pointsPerQuestion.value &&
-                          selectedTemplate.value && 
-                          assessmentFile.value &&
-                          !isLoading.value;
-      
-      const hasAnswerKeySetup = hasAnswerKey.value;
-      
-      console.log('✅ Can submit:', { 
-        hasBasicInfo, 
-        hasAnswerKeySetup, 
-        questionsListLength: questionsList.value.length 
-      });
-      
-      return hasBasicInfo && hasAnswerKeySetup;
-    });
+const answeredQuestionsCount = computed(() => {
+  return detectedQuestions.value.filter(q => q.correctAnswer).length;
+});
 
-    // Question Management
-    const updateQuestionsList = () => {
-      const count = parseInt(String(numQuestions.value)) || 0;
-      const newList = Array.from({ length: count }, (_, index) => ({
-        id: index + 1,
-        type: 'multiple-choice',
-        correctAnswer: '',
-        points: parseInt(String(pointsPerQuestion.value)) || 1
-      }));
-      questionsList.value = newList;
-      calculateTotalPoints();
-      console.log('🔄 Updated questionsList:', questionsList.value);
+const pointDistribution = computed(() => {
+  const distribution = {};
+  questionsList.value.forEach(q => {
+    const points = parseInt(q.points) || 1;
+    distribution[points] = (distribution[points] || 0) + 1;
+  });
+  return distribution;
+});
+
+const feedbackTypeMessage = computed(() => {
+  if (!gradingResults.value) return null;
+  
+  const aiUsed = gradingResults.value.aiUsed;
+  
+  if (aiUsed) {
+    return {
+      type: 'ai',
+      icon: '🤖',
+      title: 'AI-Powered Feedback',
+      description: 'Generated using advanced AI analysis',
+      bgColor: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+      textColor: 'white'
     };
-
-    const handleScoringMethodChange = () => {
-      if (scoringMethod.value === 'uniform') {
-        questionsList.value.forEach(q => {
-          q.points = parseInt(String(pointsPerQuestion.value)) || 1;
-        });
-      }
-      calculateTotalPoints();
+  } else {
+    return {
+      type: 'rule-based',
+      icon: '📊',
+      title: 'Rule-Based Feedback',
+      description: 'Generated using intelligent rule-based analysis',
+      bgColor: 'linear-gradient(135deg, #f59e0b, #d97706)',
+      textColor: 'white'
     };
+  }
+});
 
-    const calculateTotalPoints = () => {
-      if (scoringMethod.value === 'uniform') {
-        const questions = parseInt(String(numQuestions.value)) || 0;
-        const points = parseInt(String(pointsPerQuestion.value)) || 0;
-        totalPoints.value = questions * points;
-      } else {
-        totalPoints.value = questionsList.value.reduce((sum, q) => sum + (parseInt(q.points) || 0), 0);
-      }
-    };
+// ==================== WATCHERS ====================
 
-    const assignAllPoints = (points) => {
-      questionsList.value.forEach(q => {
-        q.points = points;
-      });
-      calculateTotalPoints();
-    };
+watch(questionsList, (newVal) => {
+  console.log('👀 questionsList CHANGED:', {
+    length: newVal.length,
+    withAnswers: newVal.filter(q => q.correctAnswer).length,
+    data: JSON.stringify(newVal, null, 2)
+  });
+}, { deep: true });
 
-    const setCustomPattern = () => {
-      const pattern = prompt(`Set custom point pattern. Examples:
-      
+// ==================== QUESTION MANAGEMENT ====================
+
+const updateQuestionsList = () => {
+  const count = parseInt(String(numQuestions.value)) || 0;
+  const newList = Array.from({ length: count }, (_, index) => ({
+    id: index + 1,
+    type: 'multiple-choice',
+    correctAnswer: '',
+    points: parseInt(String(pointsPerQuestion.value)) || 1
+  }));
+  questionsList.value = newList;
+  calculateTotalPoints();
+  console.log('📋 Updated questions list:', newList);
+};
+
+const handleScoringMethodChange = () => {
+  if (scoringMethod.value === 'uniform') {
+    questionsList.value.forEach(q => {
+      q.points = parseInt(String(pointsPerQuestion.value)) || 1;
+    });
+  }
+  calculateTotalPoints();
+};
+
+const calculateTotalPoints = () => {
+  if (scoringMethod.value === 'uniform') {
+    const questions = parseInt(String(numQuestions.value)) || 0;
+    const points = parseInt(String(pointsPerQuestion.value)) || 0;
+    totalPoints.value = questions * points;
+  } else {
+    totalPoints.value = questionsList.value.reduce((sum, q) => sum + (parseInt(q.points) || 0), 0);
+  }
+  console.log('📊 Total Points Calculated:', totalPoints.value);
+};
+
+const assignAllPoints = (points) => {
+  questionsList.value.forEach(q => {
+    q.points = points;
+  });
+  calculateTotalPoints();
+};
+
+const setCustomPattern = () => {
+  const pattern = prompt(`Set custom point pattern. Examples:
+  
 1. "1-9:1,10:5" = Questions 1-9 get 1 point, Question 10 gets 5 points
 2. "1-5:2,6-10:3" = Questions 1-5 get 2 points, Questions 6-10 get 3 points
 3. "all:1,10:5" = All questions get 1 point except Question 10 gets 5 points
 
 Enter pattern:`);
-      
-      if (pattern) {
-        try {
-          applyCustomPattern(pattern);
-          calculateTotalPoints();
-        } catch (err) {
-          console.error('Error applying pattern:', err);
-          alert("Invalid pattern format. Please use format like '1-9:1,10:5'");
-        }
-      }
-    };
+  
+  if (pattern) {
+    try {
+      applyCustomPattern(pattern);
+      calculateTotalPoints();
+    } catch (err) {
+      console.error('Error applying pattern:', err);
+      alert("Invalid pattern format. Please use format like '1-9:1,10:5'");
+    }
+  }
+};
 
-    const applyCustomPattern = (pattern) => {
-      const parts = pattern.split(',');
-      
-      parts.forEach(part => {
-        const [range, points] = part.split(':');
-        const pointValue = parseInt(points);
-        
-        if (range.trim() === 'all') {
-          questionsList.value.forEach(q => {
-            q.points = pointValue;
-          });
-        } else if (range.includes('-')) {
-          const [start, end] = range.split('-').map(n => parseInt(n.trim()));
-          for (let i = start - 1; i < end && i < questionsList.value.length; i++) {
-            questionsList.value[i].points = pointValue;
-          }
-        } else {
-          const questionNum = parseInt(range.trim());
-          if (questionNum > 0 && questionNum <= questionsList.value.length) {
-            questionsList.value[questionNum - 1].points = pointValue;
-          }
-        }
+const applyCustomPattern = (pattern) => {
+  const parts = pattern.split(',');
+  
+  parts.forEach(part => {
+    const [range, points] = part.split(':');
+    const pointValue = parseInt(points);
+    
+    if (range.trim() === 'all') {
+      questionsList.value.forEach(q => {
+        q.points = pointValue;
       });
-    };
-
-    // Answer Key File Handling
-    const handleAnswerKeyDragOver = () => {
-      isAnswerKeyDragOver.value = true;
-    };
-
-    const handleAnswerKeyDragLeave = () => {
-      isAnswerKeyDragOver.value = false;
-    };
-
-    const handleAnswerKeyDrop = (event) => {
-      const file = event.dataTransfer.files[0];
-      if (file) {
-        answerKeyFile.value = file;
-        processAnswerKeyFile(file);
-        error.value = "";
+    } else if (range.includes('-')) {
+      const [start, end] = range.split('-').map(n => parseInt(n.trim()));
+      for (let i = start - 1; i < end && i < questionsList.value.length; i++) {
+        questionsList.value[i].points = pointValue;
       }
-      isAnswerKeyDragOver.value = false;
-    };
-
-    const handleAnswerKeyUpload = (event) => {
-      const file = event.target.files[0];
-      if (file) {
-        answerKeyFile.value = file;
-        processAnswerKeyFile(file);
-        error.value = "";
+    } else {
+      const questionNum = parseInt(range.trim());
+      if (questionNum > 0 && questionNum <= questionsList.value.length) {
+        questionsList.value[questionNum - 1].points = pointValue;
       }
-    };
+    }
+  });
+};
 
-    // CRITICAL FIX: Process Answer Key with FORCED reactivity
-    const processAnswerKeyFile = async (file) => {
-      isLoading.value = true;
-      loadingMessage.value = "Processing answer key...";
-      
-      try {
-        const formData = new FormData();
-        formData.append('file', file);
-        
-        console.log('🔗 Processing answer key file:', file.name);
-        
-        const response = await fetch('http://localhost:8000/api/assessments/process-answer-key', {
-          method: 'POST',
-          body: formData
-        });
+// ==================== ANSWER KEY FILE HANDLING ====================
 
-        console.log('📡 Response status:', response.status);
+const handleAnswerKeyDragOver = () => {
+  isAnswerKeyDragOver.value = true;
+};
 
-        if (!response.ok) {
-          if (response.status === 0 || !response.status) {
-            throw new Error('Backend server is not running. Please start the backend server at http://localhost:8000');
-          }
-          const errorText = await response.text();
-          throw new Error(`Server error: ${response.status} - ${errorText}`);
-        }
+const handleAnswerKeyDragLeave = () => {
+  isAnswerKeyDragOver.value = false;
+};
 
-        const result = await response.json();
-        console.log('✅ Answer key processed FULL RESULT:', JSON.stringify(result, null, 2));
-        
-        if (result.questions && result.questions.length > 0) {
-          // CRITICAL FIX: Create completely new array with proper structure
-          const newQuestions = result.questions.map((q) => ({
-            id: q.id,
-            type: q.type || 'multiple-choice',
-            correctAnswer: q.answer || q.correctAnswer || '',
-            points: q.points || parseInt(String(pointsPerQuestion.value)) || 1
-          }));
-          
-          console.log('📦 NEW QUESTIONS ARRAY:', newQuestions);
-          
-          // FORCE Vue reactivity - clear first, then assign
-          questionsList.value = [];
-          await nextTick();
-          questionsList.value = newQuestions;
-          await nextTick();
-          
-          // Update other fields
-          numQuestions.value = result.questions.length;
-          calculateTotalPoints();
-          error.value = "";
-          
-          // Count question types
-          const mcqCount = newQuestions.filter(q => q.type === 'multiple-choice').length;
-          const tfCount = newQuestions.filter(q => q.type === 'true-false').length;
-          
-          console.log('📊 Final Question breakdown:', { 
-            mcqCount, 
-            tfCount, 
-            total: newQuestions.length,
-            questions: newQuestions 
-          });
-          
-          // Force another check after a short delay
-          setTimeout(() => {
-            console.log('🔄 QuestionsList after 500ms:', questionsList.value);
-            console.log('🔍 hasAnswerKey:', hasAnswerKey.value);
-            console.log('📋 answerKeyPreview:', answerKeyPreview.value);
-          }, 500);
-          
-          alert(`✅ Successfully processed ${result.questions.length} questions!\n\n📊 Breakdown:\n- Multiple Choice: ${mcqCount}\n- True/False: ${tfCount}\n\nFormat: ${result.format_detected || 'flexible'}\n\n✨ Answer key preview should now be visible!`);
-        } else {
-          throw new Error("No questions found in the uploaded answer key file");
-        }
-      } catch (err) {
-        console.error('❌ Error processing answer key:', err);
-        if (err.message.includes('Failed to fetch') || err.message.includes('Backend server')) {
-          error.value = "🚫 Backend server is not running!\n\nPlease start the backend server:\n1. Open terminal in backend folder\n2. Run: uvicorn main:app --reload\n3. Server should start at http://localhost:8000";
-        } else {
-          error.value = "Failed to process answer key: " + err.message;
-        }
-      } finally {
-        isLoading.value = false;
+const handleAnswerKeyDrop = (event) => {
+  const file = event.dataTransfer.files[0];
+  if (file) {
+    answerKeyFile.value = file;
+    processAnswerKeyFile(file);
+    error.value = "";
+  }
+  isAnswerKeyDragOver.value = false;
+};
+
+const handleAnswerKeyUpload = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    answerKeyFile.value = file;
+    processAnswerKeyFile(file);
+    error.value = "";
+  }
+};
+
+const processAnswerKeyFile = async (file) => {
+  isLoading.value = true;
+  loadingMessage.value = "Processing answer key...";
+  
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await fetch('http://localhost:8000/api/assessments/process-answer-key', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      if (response.status === 0 || !response.status) {
+        throw new Error('Backend server is not running. Please start the backend server at http://localhost:8000');
       }
-    };
+      const errorText = await response.text();
+      throw new Error(`Server error: ${response.status} - ${errorText}`);
+    }
 
-    // Student Assessment File Handling
-    const handleFileUpload = (event) => {
-      const file = event.target.files[0];
-      if (file) {
-        assessmentFile.value = file;
-        error.value = "";
-      }
-    };
-
-    const handleDragOver = () => {
-      isDragOver.value = true;
-    };
-
-    const handleDragLeave = () => {
-      isDragOver.value = false;
-    };
-
-    const handleDrop = (event) => {
-      const file = event.dataTransfer.files[0];
-      if (file) {
-        assessmentFile.value = file;
-        error.value = "";
-      }
-      isDragOver.value = false;
-    };
-
-    const autoGenerateAnswerKey = () => {
-      detectedQuestions.value.forEach(question => {
-        if (question.type === 'true-false') {
-          question.correctAnswer = Math.random() > 0.5 ? 'True' : 'False';
-        } else {
-          const options = ['A', 'B', 'C', 'D', 'E'];
-          const availableOptions = question.options?.map(opt => opt.letter) || options.slice(0, 4);
-          question.correctAnswer = availableOptions[Math.floor(Math.random() * availableOptions.length)];
-        }
-      });
-    };
-
-    const saveDetectedAnswerKey = () => {
-      if (!allQuestionsAnswered.value) {
-        error.value = "Please answer all questions before saving the answer key.";
-        return;
-      }
-      
-      questionsList.value = detectedQuestions.value.map((q, index) => ({
-        id: index + 1,
-        type: q.type,
-        correctAnswer: q.correctAnswer,
-        points: parseInt(String(pointsPerQuestion.value)) || 1
+    const result = await response.json();
+    
+    if (result.questions && result.questions.length > 0) {
+      const newQuestions = result.questions.map((q) => ({
+        id: q.id,
+        type: q.type || 'multiple-choice',
+        correctAnswer: q.answer || q.correctAnswer || '',
+        points: q.points || parseInt(String(pointsPerQuestion.value)) || 1
       }));
       
-      numQuestions.value = detectedQuestions.value.length;
-      calculateTotalPoints();
-      detectedQuestions.value = [];
-      answerKeyMethod.value = 'manual';
+      questionsList.value = [];
+      await nextTick();
+      questionsList.value = newQuestions;
+      await nextTick();
       
-      alert("Answer key saved successfully! You can now proceed with grading.");
-    };
-
-    const formatFileSize = (size) => {
-      if (size < 1024) return size + " bytes";
-      else if (size < 1048576) return (size / 1024).toFixed(1) + " KB";
-      else return (size / 1048576).toFixed(1) + " MB";
-    };
-
-    const setupProcessingSteps = () => {
-      processingSteps.value = [
-        { text: "Uploading files to server", completed: false, active: true },
-        { text: "Parsing assessment content", completed: false, active: false },
-        { text: "Comparing with answer key", completed: false, active: false },
-        { text: "Generating AI feedback", completed: false, active: false },
-        { text: "Calculating final scores", completed: false, active: false },
-        { text: "Saving to database", completed: false, active: false }
-      ];
-    };
-
-    const updateProcessingStep = (stepIndex) => {
-      if (stepIndex > 0) {
-        processingSteps.value[stepIndex - 1].completed = true;
-        processingSteps.value[stepIndex - 1].active = false;
-      }
-      if (stepIndex < processingSteps.value.length) {
-        processingSteps.value[stepIndex].active = true;
-      }
-    };
-
-    // Main Submit Function
-    const submitAssessment = async () => {
-      if (!subject.value || !assessmentTitle.value || !numQuestions.value || !pointsPerQuestion.value || !selectedTemplate.value || !assessmentFile.value) {
-        error.value = "Please fill in all required fields and upload a file.";
-        return;
-      }
-
-      if (!hasAnswerKey.value) {
-        error.value = "Answer key is required! Please provide an answer key before proceeding.";
-        return;
-      }
-
-      console.log('🚀 Starting AI-powered assessment checking...');
-      console.log('📋 Submitting with questionsList:', questionsList.value);
-
-      isLoading.value = true;
+      numQuestions.value = result.questions.length;
+      calculateTotalPoints();
       error.value = "";
-      gradingResults.value = null;
-      setupProcessingSteps();
+      
+      const mcqCount = newQuestions.filter(q => q.type === 'multiple-choice').length;
+      const tfCount = newQuestions.filter(q => q.type === 'true-false').length;
+      
+      alert(`✅ Successfully processed ${result.questions.length} questions!\n\n📊 Breakdown:\n- Multiple Choice: ${mcqCount}\n- True/False: ${tfCount}\n\nFormat: ${result.format_detected || 'flexible'}\n\n✨ Answer key preview should now be visible!`);
+    } else {
+      throw new Error("No questions found in the uploaded answer key file");
+    }
+  } catch (err) {
+    console.error('❌ Error processing answer key:', err);
+    if (err.message.includes('Failed to fetch') || err.message.includes('Backend server')) {
+      error.value = "🚫 Backend server is not running!\n\nPlease start the backend server:\n1. Open terminal in backend folder\n2. Run: uvicorn main:app --reload\n3. Server should start at http://localhost:8000";
+    } else {
+      error.value = "Failed to process answer key: " + err.message;
+    }
+  } finally {
+    isLoading.value = false;
+  }
+};
 
-      try {
-        loadingMessage.value = "Uploading files to server...";
-        updateProcessingStep(0);
+// ==================== STUDENT ASSESSMENT FILE HANDLING ====================
 
-        const formData = new FormData();
-        formData.append('file', assessmentFile.value);
-        formData.append('student_name', studentName.value || 'Anonymous');
-        formData.append('assessment_title', assessmentTitle.value);
-        formData.append('subject', subject.value);
-        formData.append('num_questions', numQuestions.value.toString());
-        formData.append('total_points', totalPoints.value.toString());
-        formData.append('points_per_question', pointsPerQuestion.value.toString());
-        formData.append('assessment_type', selectedTemplate.value);
-        formData.append('use_ai_feedback', 'true');
-        
-        const answerKeyData = questionsList.value.map((q, index) => ({
-          id: index + 1,
-          type: q.type,
-          correctAnswer: q.correctAnswer,
-          points: q.points || parseInt(String(pointsPerQuestion.value)) || 1
-        }));
-        
-        formData.append('answer_key_data', JSON.stringify(answerKeyData));
+const handleFileUpload = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    assessmentFile.value = file;
+    error.value = "";
+  }
+};
 
-        console.log('📤 Sending answer key data:', answerKeyData);
+const handleDragOver = () => {
+  isDragOver.value = true;
+};
 
-        updateProcessingStep(1);
-        loadingMessage.value = "Parsing assessment content...";
-        await new Promise(resolve => setTimeout(resolve, 500));
+const handleDragLeave = () => {
+  isDragOver.value = false;
+};
 
-        const response = await fetch('http://localhost:8000/api/assessments/check-with-answer-key', {
-          method: 'POST',
-          body: formData
-        });
+const handleDrop = (event) => {
+  const file = event.dataTransfer.files[0];
+  if (file) {
+    assessmentFile.value = file;
+    error.value = "";
+  }
+  isDragOver.value = false;
+};
 
-        console.log('📥 Response status:', response.status);
+const autoGenerateAnswerKey = () => {
+  detectedQuestions.value.forEach(question => {
+    if (question.type === 'true-false') {
+      question.correctAnswer = Math.random() > 0.5 ? 'True' : 'False';
+    } else {
+      const options = ['A', 'B', 'C', 'D', 'E'];
+      const availableOptions = question.options?.map(opt => opt.letter) || options.slice(0, 4);
+      question.correctAnswer = availableOptions[Math.floor(Math.random() * availableOptions.length)];
+    }
+  });
+};
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('❌ Backend error:', errorText);
-          throw new Error(`Upload failed: ${response.status} - ${errorText}`);
-        }
+const saveDetectedAnswerKey = () => {
+  if (!allQuestionsAnswered.value) {
+    error.value = "Please answer all questions before saving the answer key.";
+    return;
+  }
+  
+  questionsList.value = detectedQuestions.value.map((q, index) => ({
+    id: index + 1,
+    type: q.type,
+    correctAnswer: q.correctAnswer,
+    points: parseInt(String(pointsPerQuestion.value)) || 1
+  }));
+  
+  numQuestions.value = detectedQuestions.value.length;
+  calculateTotalPoints();
+  detectedQuestions.value = [];
+  answerKeyMethod.value = 'manual';
+  
+  console.log('✅ Answer key saved:', questionsList.value);
+  alert("Answer key saved successfully! You can now proceed with grading.");
+};
 
-        const result = await response.json();
-        console.log('✅ Backend response:', result);
+const formatFileSize = (size) => {
+  if (size < 1024) return size + " bytes";
+  else if (size < 1048576) return (size / 1024).toFixed(1) + " KB";
+  else return (size / 1048576).toFixed(1) + " MB";
+};
 
-        updateProcessingStep(2);
-        loadingMessage.value = "Comparing answers with answer key...";
-        await new Promise(resolve => setTimeout(resolve, 800));
+// ==================== PROCESSING STEPS ====================
 
-        updateProcessingStep(3);
-        loadingMessage.value = "Generating AI-powered feedback...";
-        await new Promise(resolve => setTimeout(resolve, 1500));
+const setupProcessingSteps = () => {
+  processingSteps.value = [
+    { text: "Uploading files to server", completed: false, active: true },
+    { text: "Parsing assessment content", completed: false, active: false },
+    { text: "Comparing with answer key", completed: false, active: false },
+    { text: "Generating AI feedback", completed: false, active: false },
+    { text: "Calculating final scores", completed: false, active: false },
+    { text: "Saving to database", completed: false, active: false }
+  ];
+};
 
-        updateProcessingStep(4);
-        loadingMessage.value = "Calculating final scores...";
-        await new Promise(resolve => setTimeout(resolve, 500));
+const updateProcessingStep = (stepIndex) => {
+  if (stepIndex > 0) {
+    processingSteps.value[stepIndex - 1].completed = true;
+    processingSteps.value[stepIndex - 1].active = false;
+  }
+  if (stepIndex < processingSteps.value.length) {
+    processingSteps.value[stepIndex].active = true;
+  }
+};
 
-        updateProcessingStep(5);
-        loadingMessage.value = "Saving results to database...";
-        await new Promise(resolve => setTimeout(resolve, 800));
+// ==================== MAIN SUBMIT FUNCTION ====================
 
-        if (result.success && result.results) {
-          gradingResults.value = result.results;
-          
-          processingSteps.value.forEach(step => {
-            step.completed = true;
-            step.active = false;
-          });
+const submitAssessment = async () => {
+  if (!subject.value || !assessmentTitle.value || !numQuestions.value || !pointsPerQuestion.value || !selectedTemplate.value || !assessmentFile.value) {
+    error.value = "Please fill in all required fields and upload a file.";
+    return;
+  }
 
-          setTimeout(() => {
-            const aiUsed = result.results.aiUsed ? '✅ WITH AI-POWERED FEEDBACK' : '⚠️ WITHOUT AI';
-            const dbSaved = result.results.databaseSaved ? '✅ SAVED TO DATABASE' : '⚠️ NOT SAVED';
-            
-            alert(`✅ Assessment checked successfully!\n\n${aiUsed}\n${dbSaved}\n\nProcessing Time: ${result.processing_time}s`);
-          }, 500);
-        } else {
-          throw new Error("Invalid response from server");
-        }
+  if (!hasAnswerKey.value) {
+    error.value = "Answer key is required! Please provide an answer key before proceeding.";
+    return;
+  }
 
-      } catch (err) {
-        console.error('Assessment processing error:', err);
-        error.value = "Failed to process assessment: " + err.message;
-      } finally {
-        isLoading.value = false;
-      }
-    };
+  isLoading.value = true;
+  error.value = "";
+  gradingResults.value = null;
+  setupProcessingSteps();
 
-    const getScoreClass = (percentage) => {
-      if (percentage >= 90) return "excellent";
-      if (percentage >= 80) return "good";
-      if (percentage >= 70) return "average";
-      if (percentage >= 60) return "below-average";
-      return "poor";
-    };
+  try {
+    loadingMessage.value = "Uploading files to server...";
+    updateProcessingStep(0);
 
-    const getLetterGrade = (percentage) => {
-      if (percentage >= 90) return "A";
-      if (percentage >= 80) return "B";
-      if (percentage >= 70) return "C";
-      if (percentage >= 60) return "D";
-      return "F";
-    };
+    const formData = new FormData();
+    formData.append('file', assessmentFile.value);
+    formData.append('student_name', studentName.value || 'Anonymous');
+    formData.append('assessment_title', assessmentTitle.value);
+    formData.append('subject', subject.value);
+    formData.append('num_questions', numQuestions.value.toString());
+    formData.append('total_points', totalPoints.value.toString());
+    formData.append('points_per_question', pointsPerQuestion.value.toString());
+    formData.append('assessment_type', selectedTemplate.value);
+    formData.append('use_ai_feedback', 'true');
+    
+    const answerKeyData = questionsList.value.map((q, index) => ({
+      id: index + 1,
+      type: q.type,
+      correctAnswer: q.correctAnswer,
+      points: parseInt(String(q.points)) || 1
+    }));
+    
+    console.log('📤 Sending Answer Key Data:', answerKeyData);
+    console.log('📊 Total Points:', totalPoints.value);
+    
+    formData.append('answer_key_data', JSON.stringify(answerKeyData));
+    formData.append('scoring_method', scoringMethod.value);
 
-    const getGradeClass = (percentage) => {
-      if (percentage >= 80) return "grade-a";
-      if (percentage >= 70) return "grade-b";
-      if (percentage >= 60) return "grade-c";
-      return "grade-f";
-    };
+    updateProcessingStep(1);
+    loadingMessage.value = "Parsing assessment content...";
+    await new Promise(resolve => setTimeout(resolve, 500));
 
-    const downloadReport = () => {
-      const reportData = {
-        student: studentName.value,
-        assessment: assessmentTitle.value,
-        subject: subject.value,
-        score: gradingResults.value.percentage,
-        feedback: gradingResults.value.feedback,
-        aiPowered: gradingResults.value.aiUsed
+    const response = await fetch('http://localhost:8000/api/assessments/check-with-answer-key', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Upload failed: ${response.status} - ${errorText}`);
+    }
+
+    const result = await response.json();
+
+    updateProcessingStep(2);
+    loadingMessage.value = "Comparing answers with answer key...";
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    updateProcessingStep(3);
+    loadingMessage.value = "Generating AI-powered feedback...";
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    updateProcessingStep(4);
+    loadingMessage.value = "Calculating final scores...";
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    updateProcessingStep(5);
+    loadingMessage.value = "Saving results to database...";
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    if (result.success && result.results) {
+      gradingResults.value = {
+        ...result.results,
+        feedbackType: result.results.feedbackType || (result.results.aiUsed ? 'ai' : 'rule-based'),
+        aiError: result.results.aiError || null,
+        totalPoints: totalPoints.value,
+        scoringMethod: scoringMethod.value
       };
       
-      const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${studentName.value}_${assessmentTitle.value}_AI_report.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-    };
+      processingSteps.value.forEach(step => {
+        step.completed = true;
+        step.active = false;
+      });
 
-    const resetForm = () => {
-      studentName.value = "";
-      assessmentTitle.value = "";
-      subject.value = "";
-      numQuestions.value = 10;
-      pointsPerQuestion.value = 5;
-      totalPoints.value = 50;
-      selectedTemplate.value = "";
-      assessmentFile.value = null;
-      answerKeyFile.value = null;
-      questionsList.value = [];
-      gradingResults.value = null;
-      error.value = "";
-      processingSteps.value = [];
-    };
+      setTimeout(() => {
+        const aiUsed = result.results.aiUsed ? '✅ WITH AI-POWERED FEEDBACK' : '⚠️ WITHOUT AI';
+        const dbSaved = result.results.databaseSaved ? '✅ SAVED TO DATABASE' : '⚠️ NOT SAVED';
+        
+        alert(`✅ Assessment checked successfully!\n\n${aiUsed}\n${dbSaved}\n\nScore: ${result.results.percentage}%\nPoints: ${result.results.pointsEarned}/${result.results.totalPoints}\nProcessing Time: ${result.processing_time}s`);
+      }, 500);
+    } else {
+      throw new Error("Invalid response from server");
+    }
 
-    const clearForm = () => {
-      resetForm();
-    };
+  } catch (err) {
+    console.error('Assessment processing error:', err);
+    error.value = "Failed to process assessment: " + err.message;
+  } finally {
+    isLoading.value = false;
+  }
+};
 
-    const viewAllAssessments = () => {
-      router.push('/teacher/assessment-history');
-    };
+// ==================== SCORE & GRADE UTILITIES ====================
 
-    const moveFileToAnswerKey = () => {
-      if (assessmentFile.value) {
-        answerKeyFile.value = assessmentFile.value;
-        answerKeyMethod.value = 'upload';
-        processAnswerKeyFile(assessmentFile.value);
-        assessmentFile.value = null;
-        error.value = "";
-        alert("✅ File moved to Answer Key section!\n\nNow please upload the student's completed assessment.");
-      }
-    };
+const getScoreClass = (percentage) => {
+  if (percentage >= 90) return "excellent";
+  if (percentage >= 80) return "good";
+  if (percentage >= 70) return "average";
+  if (percentage >= 60) return "below-average";
+  return "poor";
+};
 
-    const clearFileAndShowExample = () => {
-      assessmentFile.value = null;
-      error.value = "";
-      
-      alert(`📝 Example Student Response Formats:
+const getLetterGrade = (percentage) => {
+  if (percentage >= 90) return "A";
+  if (percentage >= 80) return "B";
+  if (percentage >= 70) return "C";
+  if (percentage >= 60) return "D";
+  return "F";
+};
+
+const getGradeClass = (percentage) => {
+  if (percentage >= 80) return "grade-a";
+  if (percentage >= 70) return "grade-b";
+  if (percentage >= 60) return "grade-c";
+  return "grade-f";
+};
+
+// ==================== DOWNLOAD & EXPORT ====================
+
+const downloadReport = () => {
+  const reportData = {
+    student: studentName.value,
+    assessment: assessmentTitle.value,
+    subject: subject.value,
+    score: gradingResults.value.percentage,
+    pointsEarned: gradingResults.value.pointsEarned,
+    totalPoints: gradingResults.value.totalPoints,
+    feedback: gradingResults.value.feedback,
+    aiPowered: gradingResults.value.aiUsed,
+    feedbackType: gradingResults.value.feedbackType,
+    scoringMethod: scoringMethod.value
+  };
+  
+  const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${studentName.value}_${assessmentTitle.value}_report.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+// ==================== FORM RESET ====================
+
+const resetForm = () => {
+  console.log('🔄 Resetting form...');
+  
+  studentName.value = "";
+  assessmentTitle.value = "";
+  subject.value = "";
+  numQuestions.value = 10;
+  pointsPerQuestion.value = 5;
+  totalPoints.value = 50;
+  selectedTemplate.value = "";
+  assessmentFile.value = null;
+  answerKeyFile.value = null;
+  questionsList.value = [];
+  gradingResults.value = null;
+  error.value = "";
+  processingSteps.value = [];
+  manualInputMethod.value = "individual";
+  bulkAnswerText.value = "";
+  bulkParsedQuestions.value = [];
+  detectedQuestions.value = [];
+  answerKeyMethod.value = "upload";
+  
+  console.log('✅ Form reset complete');
+  
+  // Reload teacher name after form clear
+  loadTeacherName();
+};
+
+const clearForm = () => {
+  resetForm();
+};
+
+const viewAllAssessments = () => {
+  router.push('/teacher/assessment-history');
+};
+
+const moveFileToAnswerKey = () => {
+  if (assessmentFile.value) {
+    answerKeyFile.value = assessmentFile.value;
+    answerKeyMethod.value = 'upload';
+    processAnswerKeyFile(assessmentFile.value);
+    assessmentFile.value = null;
+    error.value = "";
+    alert("✅ File moved to Answer Key section!\n\nNow please upload the student's completed assessment.");
+  }
+};
+
+const clearFileAndShowExample = () => {
+  assessmentFile.value = null;
+  error.value = "";
+  
+  alert(`📝 Example Student Response Formats:
 
 FORMAT 1 - Complete:
 Student: John Smith
@@ -1517,181 +1524,206 @@ B
 False
 
 ✅ Both formats work!`);
-    };
+};
 
-    const clearErrorAndContinue = () => {
-      error.value = "";
-    };
+const clearErrorAndContinue = () => {
+  error.value = "";
+};
 
-    const loadExample = (exampleKey) => {
-      bulkAnswerText.value = bulkExamples.value[exampleKey].content;
-      parseBulkInput();
-    };
+// ==================== BULK INPUT HANDLING ====================
 
-    const parseBulkInput = async () => {
-      if (!bulkAnswerText.value.trim()) {
-        bulkParsedQuestions.value = [];
-        return;
-      }
+const loadExample = (exampleKey) => {
+  bulkAnswerText.value = bulkExamples.value[exampleKey].content;
+  parseBulkInput();
+};
 
-      try {
-        const formData = new FormData();
-        const blob = new Blob([bulkAnswerText.value], { type: 'text/plain' });
-        formData.append('file', blob, 'bulk_answers.txt');
+const parseBulkInput = async () => {
+  if (!bulkAnswerText.value.trim()) {
+    bulkParsedQuestions.value = [];
+    return;
+  }
 
-        const response = await fetch('http://localhost:8000/api/assessments/process-answer-key', {
-          method: 'POST',
-          body: formData
-        });
+  try {
+    const formData = new FormData();
+    const blob = new Blob([bulkAnswerText.value], { type: 'text/plain' });
+    formData.append('file', blob, 'bulk_answers.txt');
 
-        if (response.ok) {
-          const result = await response.json();
-          if (result.questions && result.questions.length > 0) {
-            bulkParsedQuestions.value = result.questions.map(q => ({
-              id: q.id,
-              answer: q.answer || q.correctAnswer,
-              type: q.type,
-              text: q.text
-            }));
-          } else {
-            bulkParsedQuestions.value = [];
-          }
-        }
-      } catch (err) {
-        console.error('❌ Error parsing bulk input:', err);
-        bulkParsedQuestions.value = [];
-      }
-    };
+    const response = await fetch('http://localhost:8000/api/assessments/process-answer-key', {
+      method: 'POST',
+      body: formData
+    });
 
-    const applyBulkAnswers = async () => {
-      if (bulkParsedQuestions.value.length === 0) {
-        alert("No questions to apply!");
-        return;
-      }
-
-      const newList = bulkParsedQuestions.value.map((q) => ({
-        id: q.id,
-        type: q.type,
-        correctAnswer: q.answer,
-        points: parseInt(String(pointsPerQuestion.value)) || 1
-      }));
-
-      // FORCE reactivity
-      questionsList.value = [];
-      await nextTick();
-      questionsList.value = newList;
-      await nextTick();
-
-      numQuestions.value = bulkParsedQuestions.value.length;
-      calculateTotalPoints();
-      manualInputMethod.value = 'individual';
-      bulkAnswerText.value = "";
-      bulkParsedQuestions.value = [];
-
-      alert(`✅ Successfully applied ${questionsList.value.length} answers!`);
-    };
-
-    // Navbar dropdown methods
-    const toggleNotifDropdown = () => {
-      showNotifDropdown.value = !showNotifDropdown.value;
-      showProfileDropdown.value = false;
-    };
-
-    const toggleProfileDropdown = () => {
-      showProfileDropdown.value = !showProfileDropdown.value;
-      showNotifDropdown.value = false;
-    };
-
-    const handleNotificationClick = (notif) => {
-      console.log('Notification clicked:', notif);
-    };
-
-    // Logout confirmation modal functions
-    const openLogoutModal = () => {
-      showLogoutModal.value = true;
-    };
-
-    const closeLogoutModal = () => {
-      showLogoutModal.value = false;
-    };
-
-    const confirmLogout = () => {
-      isLoggingOut.value = true;
-      
-      console.log('🚪 Logging out...');
-      
-      // Clear storage immediately
-      localStorage.clear();
-      sessionStorage.clear();
-      
-      // Sign out from Supabase (don't wait for response)
-      supabase.auth.signOut({ scope: 'local' });
-      
-      console.log('✅ Logout successful');
-      
-      // Force immediate redirect - most reliable method
-      window.location.replace('/login');
-    };
-
-    const logout = () => {
-      openLogoutModal();
-    };
-
-    const scrollToTop = () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    const getTeacherInfo = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          teacherId.value = user.id;
-          return true;
-        }
-        return false;
-      } catch (err) {
-        console.error('Failed to get teacher info:', err);
-        return false;
-      }
-    };
-
-    // Load teacher name on component mount
-    onMounted(async () => {
-      if (teacherInfo.value?.id) {
-        try {
-          const { data: teacher, error } = await supabase
-            .from('teachers')
-            .select('full_name')
-            .eq('id', teacherInfo.value.id)
-            .single();
-            
-          if (!error && teacher) {
-            fullName.value = teacher.full_name || 'Teacher'
-            console.log('✅ Teacher loaded:', { id: teacherInfo.value.id, name: fullName.value })
-          }
-        } catch (err) {
-          console.warn('Failed to load teacher name:', err)
-          fullName.value = 'Teacher';
-        }
+    if (response.ok) {
+      const result = await response.json();
+      if (result.questions && result.questions.length > 0) {
+        bulkParsedQuestions.value = result.questions.map(q => ({
+          id: q.id,
+          answer: q.answer || q.correctAnswer,
+          type: q.type,
+          text: q.text
+        }));
+        console.log('✅ Parsed bulk answers:', bulkParsedQuestions.value);
       } else {
+        bulkParsedQuestions.value = [];
+      }
+    }
+  } catch (err) {
+    console.error('❌ Error parsing bulk input:', err);
+    bulkParsedQuestions.value = [];
+  }
+};
+
+const applyBulkAnswers = async () => {
+  if (bulkParsedQuestions.value.length === 0) {
+    alert("No questions to apply!");
+    return;
+  }
+
+  console.log('📋 Applying bulk answers:', bulkParsedQuestions.value);
+
+  const newList = bulkParsedQuestions.value.map((q) => ({
+    id: q.id,
+    type: q.type,
+    correctAnswer: q.answer,
+    points: parseInt(String(pointsPerQuestion.value)) || 1
+  }));
+
+  console.log('📝 New question list:', newList);
+
+  questionsList.value = [];
+  await nextTick();
+  questionsList.value = newList;
+  await nextTick();
+
+  numQuestions.value = bulkParsedQuestions.value.length;
+  calculateTotalPoints();
+  manualInputMethod.value = 'individual';
+  bulkAnswerText.value = "";
+  bulkParsedQuestions.value = [];
+
+  console.log('✅ Applied! questionsList is now:', questionsList.value);
+  alert(`✅ Successfully applied ${newList.length} answers!\n\n📊 The "Start Grading" button should now be enabled!`);
+};
+
+// ==================== NAVBAR & DROPDOWN ====================
+
+const toggleNotifDropdown = () => {
+  showNotifDropdown.value = !showNotifDropdown.value;
+  showProfileDropdown.value = false;
+};
+
+const toggleProfileDropdown = () => {
+  showProfileDropdown.value = !showProfileDropdown.value;
+  showNotifDropdown.value = false;
+};
+
+const handleNotificationClick = (notif) => {
+  console.log('Notification clicked:', notif);
+};
+
+// ==================== LOGOUT ====================
+
+const openLogoutModal = () => {
+  showLogoutModal.value = true;
+};
+
+const closeLogoutModal = () => {
+  showLogoutModal.value = false;
+};
+
+const confirmLogout = () => {
+  isLoggingOut.value = true;
+  localStorage.clear();
+  sessionStorage.clear();
+  supabase.auth.signOut({ scope: 'local' });
+  window.location.replace('/login');
+};
+
+const logout = () => {
+  openLogoutModal();
+};
+
+const scrollToTop = () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+// ==================== LOAD TEACHER NAME ====================
+
+const loadTeacherName = async () => {
+  nameLoading.value = true;
+  console.log('👤 Loading teacher name...');
+  
+  try {
+    if (teacherInfo.value?.id) {
+      const { data: teacher, error } = await supabase
+        .from('teachers')
+        .select('full_name')
+        .eq('id', teacherInfo.value.id)
+        .single();
+        
+      if (!error && teacher) {
+        fullName.value = teacher.full_name || 'Teacher';
+        console.log('✅ Teacher name loaded:', fullName.value);
+      } else {
+        console.warn('❌ Failed to fetch teacher:', error);
         fullName.value = 'Teacher';
       }
-      nameLoading.value = false;
+    } else {
+      console.warn('⚠️ teacherInfo not available');
+      fullName.value = 'Teacher';
+    }
+  } catch (err) {
+    console.error('❌ Error loading teacher name:', err);
+    fullName.value = 'Teacher';
+  } finally {
+    nameLoading.value = false;
+  }
+};
 
-      // Add scroll event listener for scroll-to-top button
-      const handleScroll = () => {
-        showScrollTop.value = window.scrollY > 300;
-      };
-      window.addEventListener('scroll', handleScroll);
+// ==================== LIFECYCLE ====================
 
-      // Cleanup scroll listener on unmount
-      return () => {
-        window.removeEventListener('scroll', handleScroll);
-      };
-    });
+onMounted(async () => {
+  console.log('🚀 Component mounted');
+  
+  // Load teacher name on mount
+  await loadTeacherName();
+  
+  // Setup scroll listener
+  const handleScroll = () => {
+    showScrollTop.value = window.scrollY > 300;
+  };
+  window.addEventListener('scroll', handleScroll);
+
+  return () => {
+    window.removeEventListener('scroll', handleScroll);
+  };
+});
+
+// ⭐ Watch for teacherInfo changes - Updates name in real-time
+watch(
+  () => teacherInfo.value,
+  async (newTeacherInfo) => {
+    if (newTeacherInfo?.id) {
+      console.log('👀 teacherInfo changed, reloading name...');
+      await loadTeacherName();
+    }
+  },
+  { deep: true }
+);
+
+// ⭐ Also watch for isAuthenticated changes
+watch(
+  () => isAuthenticated.value,
+  async (newAuth) => {
+    if (newAuth) {
+      console.log('✅ Authentication changed to true, reloading name...');
+      await loadTeacherName();
+    }
+  }
+);
 </script>
 
-  <style scoped>
+<style scoped>
 /* Scroll-to-top floating button */
 .scroll-to-top-btn {
   position: fixed;
@@ -4814,4 +4846,77 @@ False
     to { opacity: 1; }
   }
 
+  /* ⭐ NEW: Feedback Type Banner Styles */
+.feedback-type-banner {
+  margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  animation: slideDown 0.4s ease-out;
+  border-bottom: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.banner-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.banner-icon {
+  font-size: 2rem;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.banner-text {
+  flex: 1;
+}
+
+.banner-text h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: inherit;
+}
+
+.banner-text p {
+  margin: 0;
+  font-size: 0.85rem;
+  opacity: 0.9;
+  color: inherit;
+}
+
+.banner-badge {
+  background: rgba(255, 255, 255, 0.25);
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dark .feedback-type-banner {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
   </style>

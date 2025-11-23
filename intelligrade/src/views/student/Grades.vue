@@ -1,3 +1,4 @@
+
 <template>
   <div class="grades-page">
     <!-- Header Section -->
@@ -130,17 +131,17 @@
               </div>
 
               <div class="grade-actions">
-                <button v-if="quiz.status === 'completed' || quiz.status === 'graded'" @click="viewQuizPreview(quiz)" class="btn btn-secondary">
+                <button v-if="quiz.status === 'completed' || quiz.status === 'submitted'" @click="viewQuizPreview(quiz)" class="btn btn-view pending">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                   </svg>
-                  Preview
+                  View Submitted Quiz
                 </button>
-                <button @click="retakeQuiz(quiz)" :disabled="!canRetake(quiz)" class="btn btn-primary">
+                <button v-else-if="quiz.status === 'graded' || quiz.status === 'reviewed'" @click="viewQuizPreview(quiz)" class="btn btn-view graded">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                   </svg>
-                  {{ canRetake(quiz) ? 'Retake Quiz' : 'No Retakes' }}
+                  View Answers & Results
                 </button>
               </div>
             </div>
@@ -169,7 +170,7 @@
                   <th class="center-header">Status</th>
                   <th>Submitted</th>
                   <th class="center-header">Attempts</th>
-                  <th class="center-header">Actions</th>
+                  <th class="center-header">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -199,18 +200,18 @@
                     {{ quiz.total_attempts }}
                   </td>
                   <td class="actions-cell">
-                    <div class="table-actions">
-                      <button v-if="quiz.status === 'completed' || quiz.status === 'graded'" @click="viewQuizPreview(quiz)" class="btn-icon" title="Preview Quiz">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        </svg>
-                      </button>
-                      <button @click="retakeQuiz(quiz)" :disabled="!canRetake(quiz)" class="btn-icon" title="Retake Quiz">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                        </svg>
-                      </button>
-                    </div>
+                    <button v-if="quiz.status === 'completed' || quiz.status === 'submitted'" @click="viewQuizPreview(quiz)" class="btn-table pending" title="View Submitted Quiz">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                      <span class="btn-text">View Submitted</span>
+                    </button>
+                    <button v-else-if="quiz.status === 'graded' || quiz.status === 'reviewed'" @click="viewQuizPreview(quiz)" class="btn-table graded" title="View Answers & Results">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                      <span class="btn-text">View Results</span>
+                    </button>
                   </td>
                 </tr>
               </tbody>
@@ -241,7 +242,7 @@
     <div v-if="showPreviewModal" class="modal-overlay" @click.self="showPreviewModal = false">
       <div class="preview-modal">
         <div class="modal-header">
-          <h3>{{ selectedQuiz?.title }} - Preview</h3>
+          <h3>{{ selectedQuiz?.title }} - {{ modalTitle }}</h3>
           <button @click="showPreviewModal = false" class="modal-close">×</button>
         </div>
         <div class="modal-body">
@@ -255,7 +256,7 @@
               <div class="summary-item">
                 <span class="summary-label">Your Score:</span>
                 <span class="summary-value" :class="getScoreClass(selectedQuiz.best_percentage)">
-                  {{ selectedQuiz.best_percentage }}% ({{ calculateScore(selectedQuiz.best_percentage, selectedQuiz.number_of_questions) }}/{{ selectedQuiz.number_of_questions }})
+                  {{ selectedQuiz.best_percentage !== null ? `${selectedQuiz.best_percentage}% (${calculateScore(selectedQuiz.best_percentage, selectedQuiz.number_of_questions)}/${selectedQuiz.number_of_questions})` : 'Pending' }}
                 </span>
               </div>
               <div class="summary-item">
@@ -272,7 +273,7 @@
             <div v-for="answer in previewAnswers" :key="answer.question_id" class="answer-item">
               <div class="answer-header">
                 <div class="question-number">Q{{ answer.question_number }}</div>
-                <div class="answer-result" :class="answer.is_correct ? 'correct' : 'incorrect'">
+                <div v-if="isGraded" class="answer-result" :class="answer.is_correct ? 'correct' : 'incorrect'">
                   {{ answer.is_correct ? '✓ Correct' : '✗ Incorrect' }}
                 </div>
               </div>
@@ -281,13 +282,13 @@
               <!-- Student's Answer -->
               <div class="student-answer">
                 <div class="answer-label">Your Answer:</div>
-                <div class="answer-content" :class="answer.is_correct ? 'correct-answer' : 'wrong-answer'">
+                <div class="answer-content" :class="isGraded ? (answer.is_correct ? 'correct-answer' : 'wrong-answer') : 'submitted-answer'">
                   {{ getStudentAnswerText(answer) }}
                 </div>
               </div>
 
-              <!-- Correct Answer (if wrong) -->
-              <div v-if="!answer.is_correct" class="correct-answer-section">
+              <!-- Correct Answer (if graded and wrong) -->
+              <div v-if="isGraded && !answer.is_correct" class="correct-answer-section">
                 <div class="answer-label">Correct Answer:</div>
                 <div class="answer-content correct-answer">
                   {{ getCorrectAnswerText(answer) }}
@@ -365,6 +366,15 @@ export default {
     const lowestGrade = computed(() => {
       const scores = grades.value.filter(g => g.best_percentage !== null).map(g => g.best_percentage);
       return scores.length > 0 ? Math.min(...scores) : 0;
+    });
+
+    const isGraded = computed(() => {
+      return selectedQuiz.value && (selectedQuiz.value.status === 'graded' || selectedQuiz.value.status === 'reviewed');
+    });
+
+    const modalTitle = computed(() => {
+      if (!selectedQuiz.value) return '';
+      return isGraded.value ? 'Answers & Results' : 'Submitted Quiz';
     });
 
     // Utility Functions
@@ -565,6 +575,8 @@ export default {
           let resultStatus = 'completed';
           if (latestAttempt.status === 'graded' || latestAttempt.status === 'reviewed') {
             resultStatus = 'graded';
+          } else if (latestAttempt.status === 'submitted') {
+            resultStatus = 'submitted';
           }
 
           processedGrades.push({
@@ -650,11 +662,6 @@ export default {
 
     const calculateScore = (percentage, totalQuestions) => {
       return Math.round((percentage / 100) * totalQuestions);
-    };
-
-    const canRetake = (quiz) => {
-      if (quiz.attempts_allowed === 999 || quiz.attempts_allowed === null) return true;
-      return quiz.total_attempts < quiz.attempts_allowed;
     };
 
     // Quiz Preview
@@ -782,26 +789,6 @@ export default {
     };
 
     // Navigation
-    const retakeQuiz = (quiz) => {
-      if (!canRetake(quiz)) {
-        alert('You have used all available attempts for this quiz.');
-        return;
-      }
-
-      router.push({
-        name: 'TakeQuiz',
-        params: { 
-          subjectId: subject.value.id, 
-          sectionId: section.value.id 
-        },
-        query: {
-          subjectName: subject.value.name,
-          sectionName: section.value.name,
-          gradeLevel: route.query.gradeLevel
-        }
-      });
-    };
-
     const goBack = () => {
       router.push({ name: 'StudentSubjects' });
     };
@@ -855,9 +842,9 @@ export default {
     return {
       loading, studentInfo, subject, section, grades, recentQuizzes, allGrades,
       completedQuizzes, averageGrade, highestGrade, lowestGrade, showPreviewModal,
-      selectedQuiz, previewAnswers, loadingPreview, formatPHTime, formatShortDate,
-      getStatusClass, getStatusText, getScoreClass, calculateScore, canRetake,
-      retakeQuiz, viewQuizPreview, getStudentAnswerText, getCorrectAnswerText,
+      selectedQuiz, previewAnswers, loadingPreview, isGraded, modalTitle,
+      formatPHTime, formatShortDate, getStatusClass, getStatusText, getScoreClass, 
+      calculateScore, viewQuizPreview, getStudentAnswerText, getCorrectAnswerText,
       goBack, goToQuizzes
     };
   }
@@ -2521,6 +2508,174 @@ export default {
   .stats-grid {
     grid-template-columns: repeat(4, 1fr);
     gap: 2.5rem;
+  }
+}
+
+/* ============================================
+   NEW BUTTON STYLES FOR VIEW ACTIONS
+   ============================================ */
+
+/* View Button Styles - Card Actions */
+.btn-view {
+  width: 100%;
+  justify-content: center;
+}
+
+.btn-view.pending {
+  background: #fbbf24;
+  color: #1f2937;
+  border: 2px solid #fbbf24;
+}
+
+.btn-view.pending:hover {
+  background: #f59e0b;
+  border-color: #f59e0b;
+  color: #1f2937;
+}
+
+.btn-view.graded {
+  background: #3D8D7A;
+  color: white;
+  border: 2px solid #3D8D7A;
+}
+
+.btn-view.graded:hover {
+  background: #2d6b5e;
+  border-color: #2d6b5e;
+  color: white;
+}
+
+.dark .btn-view.pending {
+  background: #fbbf24;
+  color: #1f2937;
+  border-color: #fbbf24;
+}
+
+.dark .btn-view.pending:hover {
+  background: #f59e0b;
+  border-color: #f59e0b;
+}
+
+.dark .btn-view.graded {
+  background: #3D8D7A;
+  color: white;
+  border-color: #3D8D7A;
+}
+
+.dark .btn-view.graded:hover {
+  background: #A3D1C6;
+  color: #23272b;
+  border-color: #A3D1C6;
+}
+
+/* Table Button Styles */
+.btn-table {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: none;
+  font-weight: 600;
+  font-size: 0.813rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-table.pending {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fbbf24;
+}
+
+.btn-table.pending:hover {
+  background: #fbbf24;
+  color: #1f2937;
+}
+
+.btn-table.graded {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #3D8D7A;
+}
+
+.btn-table.graded:hover {
+  background: #3D8D7A;
+  color: white;
+}
+
+.dark .btn-table.pending {
+  background: rgba(251, 191, 36, 0.1);
+  color: #fbbf24;
+  border-color: #fbbf24;
+}
+
+.dark .btn-table.pending:hover {
+  background: #fbbf24;
+  color: #1f2937;
+}
+
+.dark .btn-table.graded {
+  background: rgba(61, 141, 122, 0.1);
+  color: #A3D1C6;
+  border-color: #3D8D7A;
+}
+
+.dark .btn-table.graded:hover {
+  background: #3D8D7A;
+  color: white;
+}
+
+.btn-table svg {
+  flex-shrink: 0;
+}
+
+/* Submitted Answer Style (for non-graded) */
+.submitted-answer {
+  background: #f3f4f6;
+  color: #1f2937;
+  border: 1px solid #d1d5db;
+}
+
+.dark .submitted-answer {
+  background: #374151;
+  color: #e5e7eb;
+  border-color: #4b5563;
+}
+
+/* ============================================
+   RESPONSIVE UPDATES FOR NEW BUTTONS
+   ============================================ */
+
+@media (max-width: 480px) {
+  .btn-table {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.75rem;
+    width: 100%;
+  }
+
+  .btn-text {
+    display: inline;
+  }
+
+  .actions-cell {
+    min-width: 140px;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .btn-table {
+    padding: 0.5rem 1rem;
+    font-size: 0.813rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .btn-view {
+    padding: 0.875rem 1.25rem;
+    font-size: 0.9rem;
   }
 }
 </style>

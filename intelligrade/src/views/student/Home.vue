@@ -117,25 +117,25 @@
           <p class="card-desc">Access key features</p>
         </div>
         <div class="quick-links">
-          <button @click="navigateToSubjects" class="quick-link">
+          <button @click.prevent="navigateToSubjects" class="quick-link" type="button">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M5,19V5H19V19H5Z" />
             </svg>
             My Subjects
           </button>
-          <button @click="navigateToCalendar" class="quick-link">
+          <button @click.prevent="navigateToCalendar" class="quick-link" type="button">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M19,19H5V8H19M19,3H18V1H16V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M16.5,13.5H11V18.5H16.5V13.5Z" />
             </svg>
             Calendar
           </button>
-          <button @click="navigateToMessages" class="quick-link">
+          <button @click.prevent="navigateToMessages" class="quick-link" type="button">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zM4 6h16v.5l-8 5-8-5V6zm0 13.5V8l8 5 8-5v11.5H4z" />
             </svg>
             Messages
           </button>
-          <button @click="navigateToSettings" class="quick-link">
+          <button @click.prevent="navigateToSettings" class="quick-link" type="button">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11.03L21.54,9.37C21.73,9.22 21.78,8.96 21.66,8.74L19.65,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.9,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.1,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.74C2.21,8.96 2.27,9.22 2.46,9.37L4.57,11.03C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.04 2.34,15.26L4.34,18.73C4.46,18.95 4.73,19.04 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.1,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.9,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.04 19.54,18.95 19.66,18.73L21.66,15.26C21.78,15.04 21.73,14.78 21.54,14.63L19.43,12.97Z" />
             </svg>
@@ -262,6 +262,7 @@
     </div>
   </div>
 </template>
+
 <script>
 import { supabase } from '../../supabase.js';
 
@@ -290,6 +291,7 @@ export default {
       pendingAssessments: 0,
       recentAssessments: [],
       notifications: [],
+      unreadNotifications: 0,
       
       // Real-time
       subscriptions: [],
@@ -307,10 +309,28 @@ export default {
     // ==================== UI Methods ====================
     toggleNotifDropdown() {
       this.showNotifDropdown = !this.showNotifDropdown;
+      
+      // Mark notifications as read when dropdown opens
+      if (this.showNotifDropdown && this.unreadNotifications > 0) {
+        this.markNotificationsAsRead();
+      }
     },
 
     closeNotifDropdown() {
       this.showNotifDropdown = false;
+    },
+
+    markNotificationsAsRead() {
+      console.log('📖 Marking notifications as read');
+      // Reset unread count
+      this.unreadNotifications = 0;
+      
+      // Save to localStorage
+      if (this.studentRecordId) {
+        const readKey = `notif_read_${this.studentRecordId}`;
+        const timestamp = new Date().toISOString();
+        localStorage.setItem(readKey, timestamp);
+      }
     },
 
     handleClickOutside(event) {
@@ -328,41 +348,25 @@ export default {
       this.showHelpModal = false;
     },
 
-    // ==================== Navigation Methods ====================
+    // ==================== Navigation Methods (FIXED) ====================
     navigateToSubjects() {
-      const parent = this.$parent;
-      if (parent && typeof parent.navigateTo === 'function') {
-        parent.navigateTo('subjects');
-      } else {
-        this.$emit('navigate', 'subjects');
-      }
+      console.log('🔗 Navigating to subjects...');
+      this.$router.push('/student/subjects');
     },
 
     navigateToCalendar() {
-      const parent = this.$parent;
-      if (parent && typeof parent.navigateTo === 'function') {
-        parent.navigateTo('calendar');
-      } else {
-        this.$emit('navigate', 'calendar');
-      }
+      console.log('🔗 Navigating to calendar...');
+      this.$router.push('/student/calendar');
     },
 
     navigateToMessages() {
-      const parent = this.$parent;
-      if (parent && typeof parent.navigateTo === 'function') {
-        parent.navigateTo('messages');
-      } else {
-        this.$emit('navigate', 'messages');
-      }
+      console.log('🔗 Navigating to messages...');
+      this.$router.push('/student/messages');
     },
 
     navigateToSettings() {
-      const parent = this.$parent;
-      if (parent && typeof parent.navigateTo === 'function') {
-        parent.navigateTo('settings');
-      } else {
-        this.$emit('navigate', 'settings');
-      }
+      console.log('🔗 Navigating to settings...');
+      this.$router.push('/student/settings');
     },
 
     // ==================== Data Loading Methods ====================
@@ -705,10 +709,16 @@ export default {
 
         if (this.enrolledSectionIds.length === 0) {
           this.notifications = [];
+          this.unreadNotifications = 0;
           return;
         }
 
         const notifications = [];
+        
+        // Check last read timestamp
+        const readKey = `notif_read_${this.studentRecordId}`;
+        const lastReadTime = localStorage.getItem(readKey);
+        const lastRead = lastReadTime ? new Date(lastReadTime) : new Date(0);
         
         // Get recent messages
         const { data: messages } = await supabase
@@ -721,13 +731,15 @@ export default {
         // Process messages
         if (messages?.length > 0) {
           for (const msg of messages) {
+            const sentAt = new Date(msg.sent_at);
             notifications.push({
               id: `msg-${msg.id}`,
               title: msg.message_type === 'announcement' ? '📢 New Announcement' : '💬 New Message',
               body: msg.message_text?.substring(0, 80) + (msg.message_text?.length > 80 ? '...' : ''),
-              date: new Date(msg.sent_at).toLocaleString(),
+              date: sentAt.toLocaleString(),
               type: 'message',
-              rawDate: new Date(msg.sent_at)
+              rawDate: sentAt,
+              isUnread: sentAt > lastRead
             });
           }
         }
@@ -737,7 +749,7 @@ export default {
         
         const { data: urgentQuizzes } = await supabase
           .from('quizzes')
-          .select('id, title, end_date, section_id')
+          .select('id, title, end_date, section_id, created_at')
           .in('section_id', this.enrolledSectionIds)
           .eq('status', 'published')
           .gte('end_date', new Date().toISOString())
@@ -756,13 +768,16 @@ export default {
 
           for (const quiz of urgentQuizzes) {
             if (!completedIds.has(quiz.id)) {
+              const createdAt = new Date(quiz.created_at);
+              const endDate = new Date(quiz.end_date);
               notifications.push({
                 id: `quiz-${quiz.id}`,
                 title: '⏰ Quiz Due Soon',
-                body: `${quiz.title} - Due: ${new Date(quiz.end_date).toLocaleDateString()}`,
-                date: new Date(quiz.end_date).toLocaleString(),
+                body: `${quiz.title} - Due: ${endDate.toLocaleDateString()}`,
+                date: endDate.toLocaleString(),
                 type: 'quiz',
-                rawDate: new Date(quiz.end_date)
+                rawDate: endDate,
+                isUnread: createdAt > lastRead
               });
             }
           }
@@ -773,11 +788,15 @@ export default {
           .sort((a, b) => b.rawDate.getTime() - a.rawDate.getTime())
           .slice(0, 10);
 
-        console.log('✅ Notifications loaded:', this.notifications.length);
+        // Count unread
+        this.unreadNotifications = this.notifications.filter(n => n.isUnread).length;
+
+        console.log('✅ Notifications loaded:', this.notifications.length, 'Unread:', this.unreadNotifications);
 
       } catch (error) {
         console.error('❌ Error loading notifications:', error);
         this.notifications = [];
+        this.unreadNotifications = 0;
       } finally {
         this.isLoadingNotifications = false;
       }

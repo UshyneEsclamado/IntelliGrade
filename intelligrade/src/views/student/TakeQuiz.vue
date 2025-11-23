@@ -871,6 +871,7 @@ export default {
       console.log('🚀 Starting quiz:', selectedQuiz.value.id);
       
       try {
+        // Clean up old in-progress attempts
         await supabase
           .from('quiz_attempts')
           .delete()
@@ -880,6 +881,7 @@ export default {
 
         console.log('✅ Cleaned up old attempts');
 
+        // Load questions with options
         console.log('📥 Loading questions...');
         const { data: questionsData, error: questionsError } = await supabase
           .from('quiz_questions')
@@ -898,6 +900,7 @@ export default {
 
         console.log(`✅ Loaded ${questionsData.length} questions`);
 
+        // Load options for each question
         const questionsWithOptions = await Promise.all(
           questionsData.map(async (question) => {
             console.log(`📝 Processing Q${question.question_number}: ${question.question_type}`);
@@ -929,6 +932,7 @@ export default {
           })
         );
 
+        // Shuffle questions if needed
         if (selectedQuiz.value.shuffle_questions) {
           questions.value = shuffleArray(questionsWithOptions);
           console.log('🔀 Questions shuffled');
@@ -940,8 +944,10 @@ export default {
           throw new Error('No questions loaded');
         }
 
+        // Calculate max score
         const maxScore = questions.value.reduce((sum, q) => sum + (q.points || 1), 0);
 
+        // Get next attempt number
         const { data: allAttempts } = await supabase
           .from('quiz_attempts')
           .select('attempt_number')
@@ -956,43 +962,81 @@ export default {
 
         console.log('📝 Creating attempt #' + nextAttemptNumber);
 
-        const { data: attempt, error: attemptError } = await supabase
-          .from('quiz_attempts')
-          .insert({
-            quiz_id: selectedQuiz.value.id,
-            student_id: studentInfo.value.student_id,
-            attempt_number: nextAttemptNumber,
-            max_score: maxScore,
-            status: 'in_progress'
-          })
-          .select()
-          .single();
+        // Create quiz attempt with retry logic
+        let attempt = null;
+        let retryCount = 0;
+        const maxRetries = 3;
 
-        if (attemptError) {
-          console.error('❌ Attempt creation error:', attemptError);
-          throw new Error('Failed to create quiz attempt: ' + attemptError.message);
+        while (!attempt && retryCount < maxRetries) {
+          try {
+            const { data: attemptData, error: attemptError } = await supabase
+              .from('quiz_attempts')
+              .insert({
+                quiz_id: selectedQuiz.value.id,
+                student_id: studentInfo.value.student_id,
+                attempt_number: nextAttemptNumber,
+                max_score: maxScore,
+                status: 'in_progress'
+              })
+              .select()
+              .single();
+
+            if (attemptError) {
+              throw attemptError;
+            }
+
+            attempt = attemptData;
+          } catch (error) {
+            retryCount++;
+            console.log(`⚠️ Attempt creation retry ${retryCount}/${maxRetries}`);
+            if (retryCount >= maxRetries) {
+              throw new Error('Failed to create quiz attempt after retries: ' + error.message);
+            }
+            // Wait before retry
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        }
+
+        if (!attempt) {
+          throw new Error('Failed to create quiz attempt');
         }
 
         currentAttempt.value = attempt;
         console.log('✅ Attempt created:', attempt.id);
 
-        // Initialize student answers
+        // Verify attempt was created
+        const { data: verifyAttempt, error: verifyError } = await supabase
+          .from('quiz_attempts')
+          .select('id, status')
+          .eq('id', attempt.id)
+          .single();
+
+        if (verifyError || !verifyAttempt) {
+          throw new Error('Failed to verify attempt creation');
+        }
+
+        console.log('✅ Attempt verified:', verifyAttempt.id);
+
+        // Initialize student answers AFTER attempt is verified
         studentAnswers.value = {};
         questions.value.forEach(q => {
           studentAnswers.value[q.id] = {
             selected_option_id: null,
-            answer_text: ''
+            answer_text: '',
+            attempt_id: attempt.id  // Store attempt ID with each answer
           };
         });
 
         console.log('✅ Initialized answers for', questions.value.length, 'questions');
 
+        // Start timer if needed
         if (selectedQuiz.value.has_time_limit) {
           timeRemaining.value = selectedQuiz.value.time_limit_minutes * 60;
           startTimer();
           console.log('⏱️ Timer started:', selectedQuiz.value.time_limit_minutes, 'minutes');
         }
 
+        // Set start time and begin quiz
         startTime.value = Date.now();
         currentQuestionIndex.value = 0;
         takingQuiz.value = true;
@@ -1002,6 +1046,11 @@ export default {
       } catch (error) {
         console.error('❌ Error starting quiz:', error);
         alert(`Failed to start quiz: ${error.message}`);
+        // Reset state on error
+        currentAttempt.value = null;
+        questions.value = [];
+        studentAnswers.value = {};
+        takingQuiz.value = false;
       } finally {
         isStarting.value = false;
       }
@@ -1048,25 +1097,42 @@ export default {
           selected_option_id: answer.selected_option_id || null,
           answer_text: answer.answer_text && answer.answer_text.trim() ? answer.answer_text.trim() : null,
           points_possible: parseFloat(question.points) || 1.00,
-          is_correct: false, // Will be graded on submission
+          is_correct: false,
           points_earned: 0
         };
 
-        // Save to database using upsert
-        const { data, error } = await supabase
-          .from('student_answers')
-          .upsert(answerData, { 
-            onConflict: 'attempt_id,question_id'
-          })
-          .select();
+        // Save with retry logic
+        let saved = false;
+        let retryCount = 0;
+        const maxRetries = 3;
 
-        if (error) {
-          console.error('❌ Error saving answer:', error.message);
-          return false;
+        while (!saved && retryCount < maxRetries) {
+          try {
+            const { data, error } = await supabase
+              .from('student_answers')
+              .upsert(answerData, { 
+                onConflict: 'attempt_id,question_id'
+              })
+              .select();
+
+            if (error) {
+              throw error;
+            }
+
+            saved = true;
+            console.log('✅ Answer saved to student_answers table');
+          } catch (error) {
+            retryCount++;
+            console.log(`⚠️ Save answer retry ${retryCount}/${maxRetries}:`, error.message);
+            if (retryCount >= maxRetries) {
+              console.error('❌ Error saving answer after retries:', error.message);
+              return false;
+            }
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
         }
 
-        console.log('✅ Answer saved to student_answers table');
-        return true;
+        return saved;
 
       } catch (error) {
         console.error('❌ Exception saving answer:', error);
@@ -1147,7 +1213,24 @@ export default {
         }
 
         console.log('🔍 Attempt ID:', currentAttempt.value.id);
+
+        // Verify attempt in database
+        const { data: attemptCheck, error: checkError } = await supabase
+          .from('quiz_attempts')
+          .select('id, status')
+          .eq('id', currentAttempt.value.id)
+          .single();
+
+        if (checkError || !attemptCheck) {
+          throw new Error('Quiz attempt not found in database');
+        }
+
+        console.log('✅ Attempt verified in database:', attemptCheck.id);
         console.log('📊 Answers submitted:', answeredCount.value, 'out of', questions.value.length);
+
+        // Wait a moment to ensure all answers are saved
+        await new Promise(resolve => setTimeout(resolve, 500));
+
         console.log('💾 Calling submit_quiz_attempt function...');
         
         // Call the database function to submit and grade
@@ -1175,17 +1258,21 @@ export default {
         // Show success message
         alert('🎉 Quiz submitted successfully!\n\nYour responses have been graded and saved.');
 
-        // Clean up state
+        // Clean up state completely
+        const completedQuizId = selectedQuiz.value.id;
         takingQuiz.value = false;
         currentAttempt.value = null;
         questions.value = [];
         studentAnswers.value = {};
         currentQuestionIndex.value = 0;
         startTime.value = null;
+        timeRemaining.value = 0;
 
         // Reload quizzes
         console.log('🔄 Reloading quizzes...');
         await loadQuizzes();
+        
+        // Return to quiz list
         selectedQuiz.value = null;
         
         console.log('✅ Submission complete - returned to quiz list');
@@ -1196,7 +1283,7 @@ export default {
         
         let errorMessage = 'Failed to submit quiz.\n\n';
         if (error.message.includes('not found')) {
-          errorMessage += 'Your quiz attempt could not be found. Please try again.';
+          errorMessage += 'Your quiz attempt could not be found. Please contact your teacher.';
         } else if (error.message.includes('connection')) {
           errorMessage += 'Network error. Please check your internet connection.';
         } else if (error.message.includes('database')) {
@@ -1231,7 +1318,11 @@ export default {
       if (takingQuiz.value) {
         if (confirm('Leave quiz? Progress will be lost.')) {
           if (timerInterval.value) clearInterval(timerInterval.value);
-          router.back();
+          takingQuiz.value = false;
+          currentAttempt.value = null;
+          questions.value = [];
+          studentAnswers.value = {};
+          selectedQuiz.value = null;
         }
       } else {
         router.back();
@@ -1239,14 +1330,18 @@ export default {
     };
 
     onMounted(async () => {
+      console.log('🔧 Component mounted - initializing...');
+      
       const studentLoaded = await loadStudentInfo();
       if (!studentLoaded) {
+        console.error('❌ Failed to load student info');
         router.push('/login');
         return;
       }
 
       const paramsLoaded = loadRouteParams();
       if (!paramsLoaded) {
+        console.error('❌ Failed to load route params');
         alert('Missing information');
         router.push('/student/subjects');
         return;
@@ -1255,11 +1350,29 @@ export default {
       await loadQuizzes();
       setupRealtimeSubscription();
       loading.value = false;
+      
+      console.log('✅ Component initialization complete');
     });
 
     onUnmounted(() => {
-      if (timerInterval.value) clearInterval(timerInterval.value);
-      if (quizSubscription) supabase.removeChannel(quizSubscription);
+      console.log('🧹 Component unmounting - cleaning up...');
+      
+      if (timerInterval.value) {
+        clearInterval(timerInterval.value);
+        timerInterval.value = null;
+      }
+      
+      if (saveTimeout) {
+        clearTimeout(saveTimeout);
+        saveTimeout = null;
+      }
+      
+      if (quizSubscription) {
+        supabase.removeChannel(quizSubscription);
+        quizSubscription = null;
+      }
+      
+      console.log('✅ Cleanup complete');
     });
 
     return {

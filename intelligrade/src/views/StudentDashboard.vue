@@ -323,9 +323,6 @@
   </div>
 </template>
 
-
-<!-- SCRIPT SECTION -->
-<!-- FIXED SCRIPT - NO PROFILE PHOTO -->
 <script>
 import { supabase } from '../supabase.js';
 
@@ -349,6 +346,13 @@ export default {
       isLoggingOut: false,
       isLoadingProfile: true
     };
+  },
+  watch: {
+    '$route'() {
+      // Close menus when navigating
+      this.isProfileMenuOpen = false;
+      this.isHelpMenuOpen = false;
+    }
   },
   async mounted() {
     console.log('StudentDashboard mounted');

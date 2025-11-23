@@ -1,4 +1,4 @@
-# routes/upload_assessments.py - COMPLETE WORKING VERSION WITH AI
+# routes/upload_assessments.py - COMPLETE FIXED VERSION WITH ACCURATE POINTS CALCULATION
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
@@ -316,15 +316,39 @@ async def check_assessment_with_answer_key(
     points_per_question: int = Form(...),
     assessment_type: str = Form("mixed"),
     use_ai_feedback: bool = Form(True),
+    scoring_method: str = Form("uniform"),
     db: Session = Depends(get_db)
 ):
-    """Process assessment with AI feedback"""
+    """Process assessment with accurate point calculation"""
     
     start_time = time.time()
     logger.info(f"🎯 Processing: {student_name} - {assessment_title}")
     
     try:
+        # ⭐ FIXED: Parse answer key data properly
         answer_key = json.loads(answer_key_data)
+        logger.info(f"📋 Answer Key Data Received:")
+        logger.info(f"   Questions: {len(answer_key)}")
+        logger.info(f"   Scoring Method: {scoring_method}")
+        logger.info(f"   Total Points (expected): {total_points}")
+        
+        # ⭐ FIXED: Validate and build points map
+        question_points_map = {}
+        calculated_total = 0
+        
+        for q in answer_key:
+            q_id = q.get('id', 0)
+            q_points = int(q.get('points', points_per_question))  # ⭐ Read individual points
+            question_points_map[q_id] = q_points
+            calculated_total += q_points
+            logger.info(f"   Q{q_id}: {q_points} points")
+        
+        logger.info(f"   Calculated Total: {calculated_total} points")
+        
+        # ⭐ FIXED: Use calculated total if it differs from received total
+        if calculated_total != total_points:
+            logger.warning(f"⚠️ Total mismatch! Using calculated: {calculated_total}")
+            total_points = calculated_total
         
         file_content = await file.read()
         file_name = file.filename.lower()
@@ -340,7 +364,7 @@ async def check_assessment_with_answer_key(
         
         student_answers = extract_student_answers_contextual(text_content, answer_key, num_questions)
         
-        # GRADING
+        # ⭐ GRADING WITH ACCURATE POINTS
         correct_count = 0
         incorrect_count = 0
         total_score = 0
@@ -353,20 +377,23 @@ async def check_assessment_with_answer_key(
         for i, answer_key_item in enumerate(answer_key):
             student_answer = student_answers[i] if i < len(student_answers) else ''
             correct_answer = answer_key_item.get('correctAnswer', '')
+            
+            # ⭐ FIXED: Read individual points for this question
             question_points = int(answer_key_item.get('points', points_per_question))
             question_type = answer_key_item.get('type', 'multiple-choice')
+            question_id = answer_key_item.get('id', i + 1)
             
             student_normalized = normalize_answer(student_answer, question_type)
             correct_normalized = normalize_answer(correct_answer, question_type)
             
             is_correct = (student_normalized == correct_normalized) and student_normalized != ''
-            points_earned = question_points if is_correct else 0
+            points_earned = question_points if is_correct else 0  # ⭐ Award full question points if correct
             
             status = "✅" if is_correct else "❌"
-            logger.info(f"\nQ{i+1} ({question_type}):")
+            logger.info(f"\nQ{question_id} ({question_type}):")
             logger.info(f"  Student: '{student_answer}' → '{student_normalized}'")
             logger.info(f"  Correct: '{correct_answer}' → '{correct_normalized}'")
-            logger.info(f"  {status} {points_earned}/{question_points}")
+            logger.info(f"  {status} {points_earned}/{question_points} pts")  # ⭐ Show correct points
             
             if is_correct:
                 correct_count += 1
@@ -376,20 +403,20 @@ async def check_assessment_with_answer_key(
             total_score += points_earned
             
             question_breakdown.append({
-                'questionNum': i + 1,
+                'questionNum': question_id,
                 'questionType': question_type,
                 'studentAnswer': student_answer,
                 'correctAnswer': correct_answer,
                 'isCorrect': is_correct,
-                'pointsEarned': points_earned,
-                'pointsPossible': question_points
+                'pointsEarned': points_earned,  # ⭐ Use correct points
+                'pointsPossible': question_points  # ⭐ Use correct points
             })
         
         logger.info("=" * 80)
         percentage = (total_score / total_points * 100) if total_points > 0 else 0
         letter_grade = 'A' if percentage >= 90 else 'B' if percentage >= 80 else 'C' if percentage >= 70 else 'D' if percentage >= 60 else 'F'
         
-        logger.info(f"📈 FINAL: {total_score}/{total_points} ({percentage:.1f}%)")
+        logger.info(f"📈 FINAL: {total_score}/{total_points} ({percentage:.1f}%)")  # ⭐ Show correct calculation
         logger.info(f"📊 {correct_count} ✅ | {incorrect_count} ❌")
         logger.info(f"🎓 Grade: {letter_grade}")
         logger.info("=" * 80)
@@ -400,6 +427,7 @@ async def check_assessment_with_answer_key(
         weaknesses = []
         recommendations = []
         ai_used = False
+        ai_error = None
         
         if use_ai_feedback and AI_ENABLED and client:
             try:
@@ -417,6 +445,7 @@ async def check_assessment_with_answer_key(
                             "content": f"""Analyze this {subject} assessment:
 
 Score: {percentage:.1f}% ({correct_count}/{num_questions} correct)
+Points: {total_score}/{total_points}
 Letter Grade: {letter_grade}
 
 Provide feedback in this format:
@@ -469,6 +498,7 @@ Keep each point to 1 sentence max."""
             except Exception as e:
                 logger.error(f"❌ AI Error: {e}")
                 ai_used = False
+                ai_error = str(e)
                 strengths = [f"Answered {correct_count} correctly"]
                 weaknesses = [f"Missed {incorrect_count} questions"]
                 recommendations = ["Review material and practice"]
@@ -526,8 +556,8 @@ Keep each point to 1 sentence max."""
                 'assessmentTitle': assessment_title,
                 'subject': subject,
                 'percentage': round(percentage, 2),
-                'pointsEarned': total_score,
-                'totalPoints': total_points,
+                'pointsEarned': total_score,  # ⭐ Accurate points
+                'totalPoints': total_points,  # ⭐ Accurate total
                 'correctAnswers': correct_count,
                 'incorrectAnswers': incorrect_count,
                 'totalQuestions': num_questions,
@@ -540,7 +570,9 @@ Keep each point to 1 sentence max."""
                     'detailedAnalysis': ai_feedback_text
                 },
                 'aiUsed': ai_used,
-                'databaseSaved': database_saved
+                'aiError': ai_error,
+                'databaseSaved': database_saved,
+                'processing_time': round(time.time() - start_time, 2)
             }
         })
         

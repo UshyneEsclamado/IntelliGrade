@@ -82,7 +82,7 @@
               <div class="dropdown-menu">
                 <router-link to="/teacher/settings" class="dropdown-item">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1V3H9V1L3 7V9H5V20A2 2 0 0 0 7 22H17A2 2 0 0 0 19 20V9H21M17 20H7V9H10V12H14V9H17V20Z"/>
+                    <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1V3H9V1L3 7V9H5V20A2 2 0 0 0 7 22H17A2 2 0 0 0 19 20V9H21M17 20H7V4H13V9H18V20Z"/>
                   </svg>
                   <span>Profile & Settings</span>
                 </router-link>
@@ -177,6 +177,11 @@
         <div class="section-header">
           <div class="header-content">
             <div class="header-left">
+              <button @click="goBackToSubjects" class="back-btn" title="Back to My Subjects">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
+                </svg>
+              </button>
               <div class="header-icon">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
@@ -559,6 +564,11 @@ const handleScroll = () => {
   showScrollTop.value = window.pageYOffset > 300
 }
 
+// Go back to subjects page
+const goBackToSubjects = () => {
+  router.push('/teacher/subjects')
+}
+
 // Load teacher profile
 const loadTeacherProfile = async () => {
   try {
@@ -673,7 +683,6 @@ const handleNotificationClick = (notif) => {
 }
 
 // Logout functionality
-// Logout confirmation modal functions
 const openLogoutModal = () => {
   showLogoutModal.value = true
 }
@@ -856,15 +865,6 @@ const navigateToCreateQuiz = async () => {
     console.error('Navigation error:', error)
   }
 }
-
-// Remove unused function
-// const goBack = async () => {
-//   try {
-//     await router.push({ name: 'MySubjects' })
-//   } catch (error) {
-//     router.back()
-//   }
-// }
 
 const closeModal = () => {
   selectedQuiz.value = null
@@ -3272,5 +3272,81 @@ onUnmounted(() => {
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+/* Back Button */
+.back-btn {
+  width: 48px;
+  height: 48px;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.back-btn:hover {
+  background: #3D8D7A;
+  border-color: #3D8D7A;
+  color: white;
+  transform: translateX(-2px);
+}
+
+/* Modal Body Scroll */
+.modal-body {
+  padding: 2rem;
+  max-height: calc(85vh - 180px);
+  overflow-y: auto;
+}
+
+.modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Questions List Scroll */
+.questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.questions-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.questions-list::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.questions-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.questions-list::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 </style>
