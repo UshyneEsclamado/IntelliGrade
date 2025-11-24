@@ -1852,6 +1852,9 @@ const successMessage = ref('')
 const showLogoutModal = ref(false)
 const isLoggingOut = ref(false)
 
+// Auth ready state - NEW
+const isAuthReady = ref(false)
+
 // Form data
 const formData = ref({
   name: '',
@@ -1860,6 +1863,31 @@ const formData = ref({
   number_of_sections: '',
   sections: []
 })
+
+// ============================================================
+// WAIT FOR AUTH TO BE READY - NEW FUNCTION
+// ============================================================
+const waitForAuth = async (maxAttempts = 30, intervalMs = 200) => {
+  return new Promise((resolve, reject) => {
+    let attempts = 0
+    
+    const checkAuth = setInterval(() => {
+      attempts++
+      
+      // Check if teacher info is available and has an ID
+      if (teacherInfo.value?.id) {
+        clearInterval(checkAuth)
+        isAuthReady.value = true
+        console.log('✅ Auth ready:', { id: teacherInfo.value.id })
+        resolve(true)
+      } else if (attempts >= maxAttempts) {
+        clearInterval(checkAuth)
+        console.error('❌ Auth timeout after', attempts * intervalMs, 'ms')
+        reject(new Error('Authentication timeout'))
+      }
+    }, intervalMs)
+  })
+}
 
 // Computed
 const canProceedToStep2 = computed(() => {
@@ -2326,7 +2354,7 @@ const viewSectionStudents = async (subject, section) => {
 }
 
 // ============================================================
-// SUBJECT MANAGEMENT
+// SUBJECT MANAGEMENT - ENHANCED WITH AUTH CHECKS
 // ============================================================
 const generateSections = () => {
   const numSections = parseInt(formData.value.number_of_sections)
@@ -2349,14 +2377,23 @@ const nextStep = () => {
 
 const saveSubject = async () => {
   try {
+    // CRITICAL: Check if auth is ready before proceeding
+    if (!isAuthReady.value || !teacherInfo.value?.id) {
+      console.warn('⚠️ Auth not ready, waiting...')
+      showToast('Please wait, authenticating...', 'info')
+      
+      try {
+        await waitForAuth()
+      } catch (error) {
+        showToast('Authentication failed. Please reload the page.', 'error')
+        return
+      }
+    }
+    
     isLoading.value = true
     loadingMessage.value = isEditing.value ? 'Updating subject...' : 'Creating subject...'
     
-    if (!teacherInfo.value?.id) {
-      isLoading.value = false
-      showToast('Please login to continue', 'error')
-      return
-    }
+    console.log('📝 Saving subject with teacher ID:', teacherInfo.value.id)
 
     const subjectData = {
       name: formData.value.name,
@@ -2369,33 +2406,55 @@ const saveSubject = async () => {
     let subjectId
 
     if (isEditing.value) {
+      console.log('✏️ Updating existing subject:', currentSubjectId.value)
+      
       const { error: updateError } = await supabase
         .from('subjects')
         .update(subjectData)
         .eq('id', currentSubjectId.value)
         .eq('teacher_id', teacherInfo.value.id)
 
-      if (updateError) throw updateError
+      if (updateError) {
+        console.error('❌ Update error:', updateError)
+        throw updateError
+      }
       
       subjectId = currentSubjectId.value
 
-      await supabase
+      // Delete old sections
+      const { error: deleteError } = await supabase
         .from('sections')
         .delete()
         .eq('subject_id', subjectId)
+      
+      if (deleteError) {
+        console.error('❌ Delete sections error:', deleteError)
+        throw deleteError
+      }
 
     } else {
+      console.log('➕ Creating new subject')
+      
       const { data: newSubject, error: insertError } = await supabase
         .from('subjects')
         .insert([subjectData])
         .select()
         .single()
 
-      if (insertError) throw insertError
+      if (insertError) {
+        console.error('❌ Insert error:', insertError)
+        throw insertError
+      }
+      
+      if (!newSubject || !newSubject.id) {
+        throw new Error('Failed to create subject - no ID returned')
+      }
       
       subjectId = newSubject.id
+      console.log('✅ Subject created with ID:', subjectId)
     }
 
+    // Create sections
     const sectionsToInsert = []
     const createdSectionCodes = []
     
@@ -2418,25 +2477,53 @@ const saveSubject = async () => {
       createdSectionCodes.push(`${section.name}: ${sectionCode}`)
     }
 
-    await supabase
+    console.log('📋 Inserting', sectionsToInsert.length, 'sections')
+    
+    const { error: sectionsError } = await supabase
       .from('sections')
       .insert(sectionsToInsert)
+    
+    if (sectionsError) {
+      console.error('❌ Sections insert error:', sectionsError)
+      throw sectionsError
+    }
 
+    console.log('✅ All sections created successfully')
+
+    // Close modal
     closeModal()
 
+    // Show success message
     const sectionCodesText = createdSectionCodes.join('\n')
     
     successMessage.value = `Subject "${formData.value.name}" ${isEditing.value ? 'updated' : 'created'} successfully!\n\nSection Codes:\n${sectionCodesText}\n\nShare these codes with your students so they can join their respective sections.`
     showSuccessModal.value = true
 
+    // Refresh subjects list
+    console.log('🔄 Refreshing subjects list...')
     await fetchSubjects(true)
     
     isLoading.value = false
+    console.log('✅ Save complete!')
 
   } catch (error) {
-    console.error('Error saving subject:', error)
+    console.error('❌ Save subject error:', error)
     isLoading.value = false
-    showToast('Error saving subject. Please try again.', 'error')
+    
+    // Show detailed error message
+    let errorMessage = 'Error saving subject. '
+    
+    if (error.message) {
+      errorMessage += error.message
+    } else {
+      errorMessage += 'Please try again.'
+    }
+    
+    if (error.code) {
+      errorMessage += ` (Code: ${error.code})`
+    }
+    
+    showToast(errorMessage, 'error')
   }
 }
 
@@ -2587,58 +2674,6 @@ const deleteSubjectConfirmed = async (subjectId) => {
     
   } catch (error) {
     console.error('Delete subject error:', error)
-    showToast('Error deleting subject. Please try again.', 'error')
-  } finally {
-    isDeleting.value = false
-  }
-}
-
-const deleteSectionConfirmed = async (sectionId) => {
-  try {
-    isDeleting.value = true
-
-    const { error: enrollmentError } = await supabase
-      .from('enrollments')
-      .delete()
-      .eq('section_id', sectionId)
-    
-    if (enrollmentError) {
-      console.error('Error deleting enrollments:', enrollmentError)
-      throw enrollmentError
-    }
-
-    const { error: sectionError } = await supabase
-      .from('sections')
-      .delete()
-      .eq('id', sectionId)
-    
-    if (sectionError) {
-      console.error('Error deleting section:', sectionError)
-      throw sectionError
-    }
-    
-    // Update the sections view if we're currently viewing sections
-    if (selectedSubject.value && viewMode.value === 'sections') {
-      selectedSubject.value.sections = selectedSubject.value.sections.filter(s => s.id !== sectionId)
-      selectedSubject.value.section_count = selectedSubject.value.sections.length
-      
-      selectedSubject.value.total_students = selectedSubject.value.sections.reduce((sum, s) => sum + (s.student_count || 0), 0)
-      
-      // Update in main subjects array as well
-      const subjectIndex = subjects.value.findIndex(s => s.id === selectedSubject.value.id)
-      if (subjectIndex !== -1) {
-        subjects.value[subjectIndex] = { ...selectedSubject.value }
-      }
-    }
-    
-    if (viewMode.value === 'section-detail' && selectedSection.value?.id === sectionId) {
-      goBackToSections()
-    }
-    
-    showToast('Section deleted successfully!', 'success')
-    
-  } catch (error) {
-    console.error('Delete section error:', error)
     showToast('Error deleting section. Please try again.', 'error')
   } finally {
     isDeleting.value = false
@@ -2772,10 +2807,8 @@ const closeEditSectionModal = () => {
 }
 
 // ============================================================
-// ARCHIVE/UNARCHIVE SECTION FUNCTIONALITY - REMOVED
+// CLICK OUTSIDE HANDLER
 // ============================================================
-// Archive functionality has been removed as requested
-
 const handleClickOutside = (event) => {
   const targetElement = event.target
   const isOutsideSectionMenu = !targetElement.closest('.section-menu-container')
@@ -2909,82 +2942,96 @@ const exportStudentRoster = () => {
 }
 
 // ============================================================
-// LIFECYCLE - OPTIMIZED FOR SPEED
+// LIFECYCLE - ENHANCED WITH BETTER AUTH HANDLING
 // ============================================================
 onMounted(async () => {
   try {
+    console.log('🚀 Component mounting...')
+    
+    // Initialize dark mode immediately
     initDarkMode()
     
+    // Initialize auth
     const { initializeAuth, setupAuthListener } = useTeacherAuth()
     setupAuthListener()
     
-    // Start auth but don't wait for full completion
-    const authPromise = initializeAuth()
-    
-    // Set up click handler immediately
+    // Set up click handler
     document.addEventListener('click', handleClickOutside)
     
-    // Handle auth result
-    const authResult = await authPromise
+    console.log('🔐 Starting authentication...')
+    
+    // Initialize auth
+    const authResult = await initializeAuth()
     
     if (!authResult.success) {
       if (authResult.needsLogin || authResult.wrongRole) {
-        console.warn('Authentication failed, redirecting to login')
+        console.warn('⚠️ Authentication failed, redirecting to login')
         await router.push('/login')
         return
       }
     }
     
-    // Faster teacher info checking with shorter intervals
-    let attempts = 0
-    const maxAttempts = 25 // 5 seconds max
+    console.log('✅ Auth initialization complete')
     
-    const quickCheck = setInterval(async () => {
-      attempts++
+    // Wait for teacherInfo to be fully loaded with retry logic
+    try {
+      await waitForAuth(30, 200) // Wait up to 6 seconds
       
-      if (teacherInfo.value?.id) {
-        clearInterval(quickCheck)
-        
-        // Load teacher name
-        try {
-          const { data: teacher, error } = await supabase
-            .from('teachers')
-            .select('full_name')
-            .eq('id', teacherInfo.value.id)
-            .single()
-            
-          if (!error && teacher) {
-            fullName.value = teacher.full_name || 'Teacher'
-            console.log('✅ Teacher loaded:', { id: teacherInfo.value.id, name: fullName.value })
-          }
-        } catch (err) {
-          console.warn('Failed to load teacher name:', err)
+      // Load teacher name
+      try {
+        const { data: teacher, error } = await supabase
+          .from('teachers')
+          .select('full_name')
+          .eq('id', teacherInfo.value.id)
+          .single()
+          
+        if (!error && teacher) {
+          fullName.value = teacher.full_name || 'Teacher'
+          console.log('✅ Teacher loaded:', { id: teacherInfo.value.id, name: fullName.value })
         }
-        
-        await fetchSubjects()
-      } else if (attempts >= maxAttempts) {
-        clearInterval(quickCheck)
-        if (isAuthenticated.value) {
-          console.warn('Timeout waiting for teacher info - trying fetch anyway')
-          fetchSubjects()
-        } else {
-          console.error('Authentication timeout')
-          await router.push('/login')
-        }
+      } catch (err) {
+        console.warn('⚠️ Failed to load teacher name:', err)
+        // Continue anyway - name is not critical
       }
-    }, 200) // Check every 200ms instead of waiting
+      
+      // Fetch subjects only after auth is confirmed ready
+      console.log('📚 Fetching subjects...')
+      await fetchSubjects()
+      
+    } catch (authError) {
+      console.error('❌ Auth timeout:', authError)
+      
+      // Show user-friendly error
+      showToast('Authentication is taking longer than expected. Please reload the page.', 'error')
+      
+      // Still try to fetch if we have any auth info
+      if (teacherInfo.value?.id) {
+        console.log('⚠️ Attempting to fetch with partial auth...')
+        await fetchSubjects()
+      } else {
+        // Redirect to login after delay
+        setTimeout(() => {
+          router.push('/login')
+        }, 3000)
+      }
+    }
     
   } catch (error) {
-    console.error('Component mount error:', error)
-    // Try to continue anyway
+    console.error('❌ Component mount error:', error)
+    showToast('Failed to initialize page. Please reload.', 'error')
+    
+    // Try to continue if we have auth
     if (teacherInfo.value?.id) {
-      fetchSubjects()
+      console.log('⚠️ Attempting recovery...')
+      isAuthReady.value = true
+      await fetchSubjects()
     }
   }
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+  console.log('🧹 Component unmounted')
 })
 </script>
 
