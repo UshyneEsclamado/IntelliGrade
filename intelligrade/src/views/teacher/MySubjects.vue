@@ -3472,6 +3472,7 @@ onUnmounted(() => {
   color: #dc2626 !important;
 }
 
+
 /* Scroll to Top Button */
 .scroll-to-top {
   position: fixed;

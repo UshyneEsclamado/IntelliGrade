@@ -63,7 +63,7 @@
             
             <!-- Profile Dropdown -->
             <div v-if="showProfileDropdown" class="profile-dropdown">
-              <div class="dropdown-header">
+              <div class="dropdown-header" style="padding: 1.5rem; background: linear-gradient(135deg, #3D8D7A, #2d6a5a); color: white; border-bottom: none; border: none;">
                 <div class="profile-info">
                   <div class="profile-avatar">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
@@ -3274,13 +3274,13 @@ body, html {
   border: 1px solid #e2e8f0;
 }
 
-.dropdown-header {
+.notification-dropdown .dropdown-header {
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid #e2e8f0;
   background: #fafafa;
 }
 
-.dropdown-header h3 {
+.notification-dropdown .dropdown-header h3 {
   font-size: 1.1rem;
   font-weight: 600;
   color: #1e293b;
@@ -3344,11 +3344,7 @@ body, html {
   border: 1px solid #e2e8f0;
 }
 
-.profile-dropdown .dropdown-header {
-  padding: 1.5rem;
-  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
-  color: white;
-}
+/* Profile dropdown styling moved to end of file for specificity */
 
 .profile-info {
   display: flex;
@@ -11273,5 +11269,39 @@ body, html {
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+/* Profile Dropdown Override - Maximum specificity */
+div.profile-dropdown div.dropdown-header,
+.profile-dropdown .dropdown-header {
+  padding: 1.5rem !important;
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a) !important;
+  color: white !important;
+  border-bottom: none !important;
+  border: none !important;
+  background-color: transparent !important;
+}
+
+/* Force override any potential conflicts */
+[class*="profile-dropdown"] [class*="dropdown-header"] {
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a) !important;
+  border-bottom: none !important;
+}
+
+/* Nuclear option - override everything */
+.profile-dropdown .dropdown-header {
+  background: #3D8D7A !important;
+  background-image: linear-gradient(135deg, #3D8D7A, #2d6a5a) !important;
+}
+</style>
+
+<style>
+/* Global override for MessagesPage profile dropdown */
+.profile-dropdown .dropdown-header {
+  padding: 1.5rem !important;
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a) !important;
+  color: white !important;
+  border-bottom: none !important;
+  border: none !important;
 }
 </style>
