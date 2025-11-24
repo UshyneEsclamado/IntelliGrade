@@ -814,6 +814,7 @@ import { useRouter } from "vue-router";
 import { supabase } from '@/supabase.js';
 import { useDarkMode } from "../../composables/useDarkMode.js";
 import { useTeacherAuth } from "../../composables/useTeacherAuth.js";
+import { API_URL } from '@/api.js'
 
 const router = useRouter();
 const { isDarkMode } = useDarkMode();
@@ -1155,10 +1156,10 @@ const processAnswerKeyFile = async (file) => {
     const formData = new FormData();
     formData.append('file', file);
     
-    const response = await fetch('http://localhost:8000/api/assessments/process-answer-key', {
-      method: 'POST',
-      body: formData
-    });
+    const response = await fetch(`${API_URL}/api/assessments/process-answer-key`, {
+  method: 'POST',
+  body: formData
+})
 
     if (!response.ok) {
       if (response.status === 0 || !response.status) {
