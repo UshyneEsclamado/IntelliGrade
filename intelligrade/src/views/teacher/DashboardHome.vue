@@ -535,21 +535,32 @@ const confirmLogout = async () => {
   console.log('🚪 Logging out...')
   
   try {
-    // Clear local storage and session storage
+    // Clear storage immediately
     localStorage.clear()
     sessionStorage.clear()
     
-    // Sign out from Supabase
-    await supabase.auth.signOut({ scope: 'local' })
+    // Sign out from Supabase with error handling
+    const { error } = await supabase.auth.signOut({ scope: 'local' })
+    if (error) {
+      console.warn('⚠️ Supabase signOut warning:', error.message)
+    }
     
     console.log('✅ Logout successful')
     
-    // Use router.replace instead of window.location.replace
-    router.replace('/login')
+    // Use router for navigation first, fallback to window.location
+    try {
+      await router.replace('/login')
+    } catch (routerError) {
+      console.warn('Router failed, using window.location:', routerError)
+      window.location.replace('/login')
+    }
   } catch (error) {
     console.error('❌ Logout error:', error)
-    // Fallback to window.location if router fails
+    // Force redirect even on error
     window.location.replace('/login')
+  } finally {
+    isLoggingOut.value = false
+    showLogoutModal.value = false
   }
 }
 
@@ -1528,8 +1539,31 @@ onUnmounted(() => {
   margin-left: 80px;
   padding: 1.5rem;
   width: calc(100% - 80px);
+  height: calc(100vh - 64px);
   min-height: calc(100vh - 64px);
   position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar for main content */
+.main-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.main-content::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 8px;
+}
+
+.main-content::-webkit-scrollbar-thumb {
+  background: #3D8D7A;
+  border-radius: 8px;
+}
+
+.main-content::-webkit-scrollbar-thumb:hover {
+  background: #2d6a5a;
 }
 
 /* Scroll to Top Button - Green Theme */

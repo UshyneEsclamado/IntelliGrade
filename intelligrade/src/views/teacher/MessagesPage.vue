@@ -1629,12 +1629,39 @@ const closeLogoutModal = () => {
   showLogoutModal.value = false
 }
 
-const confirmLogout = () => {
+const confirmLogout = async () => {
   isLoggingOut.value = true
-  localStorage.clear()
-  sessionStorage.clear()
-  supabase.auth.signOut({ scope: 'local' })
-  window.location.replace('/login')
+  
+  console.log('🚪 Logging out...')
+  
+  try {
+    // Clear storage immediately
+    localStorage.clear()
+    sessionStorage.clear()
+    
+    // Sign out from Supabase with error handling
+    const { error } = await supabase.auth.signOut({ scope: 'local' })
+    if (error) {
+      console.warn('⚠️ Supabase signOut warning:', error.message)
+    }
+    
+    console.log('✅ Logout successful')
+    
+    // Use router for navigation first, fallback to window.location
+    try {
+      await router.replace('/login')
+    } catch (routerError) {
+      console.warn('Router failed, using window.location:', routerError)
+      window.location.replace('/login')
+    }
+  } catch (error) {
+    console.error('❌ Logout error:', error)
+    // Force redirect even on error
+    window.location.replace('/login')
+  } finally {
+    isLoggingOut.value = false
+    showLogoutModal.value = false
+  }
 }
 
 const logout = () => {
@@ -3418,9 +3445,67 @@ body, html {
   min-height: calc(100vh - 64px);
   max-height: calc(100vh - 64px);
   overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
   position: relative;
   background: #f8fafc;
   padding-bottom: 2rem;
+}
+
+/* Custom Scrollbar Styling - Green Theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #3D8D7A, #20c997);
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #2d6a5a, #18a577);
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.3);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(135deg, #1e5a4a, #146e5a);
+}
+
+::-webkit-scrollbar-corner {
+  background: #f1f5f9;
+}
+
+/* Firefox Scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3D8D7A #f1f5f9;
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-track {
+  background: #1a1d21;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #20c997, #18a577);
+  border: 1px solid #374151;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #18a577, #146e5a);
+  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.3);
+}
+
+.dark ::-webkit-scrollbar-corner {
+  background: #1a1d21;
 }
 
 /* Page Header */

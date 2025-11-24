@@ -2027,22 +2027,36 @@ const closeLogoutModal = () => {
   showLogoutModal.value = false
 }
 
-const confirmLogout = () => {
+const confirmLogout = async () => {
   isLoggingOut.value = true
   
   console.log('🚪 Logging out...')
   
-  // Clear storage immediately
-  localStorage.clear()
-  sessionStorage.clear()
-  
-  // Sign out from Supabase (don't wait for response)
-  supabase.auth.signOut({ scope: 'local' })
-  
-  console.log('✅ Logout successful')
-  
-  // Force immediate redirect - most reliable method
-  window.location.replace('/login')
+  try {
+    // Clear storage immediately
+    localStorage.clear()
+    sessionStorage.clear()
+    
+    // Sign out from Supabase with error handling
+    await supabase.auth.signOut({ scope: 'local' })
+    
+    console.log('✅ Logout successful')
+    
+    // Use router for navigation first, fallback to window.location
+    try {
+      await router.replace('/login')
+    } catch (routerError) {
+      console.warn('Router failed, using window.location:', routerError)
+      window.location.replace('/login')
+    }
+  } catch (error) {
+    console.error('❌ Logout error:', error)
+    // Force redirect even on error
+    window.location.replace('/login')
+  } finally {
+    isLoggingOut.value = false
+    showLogoutModal.value = false
+  }
 }
 
 const logout = () => {
@@ -3490,10 +3504,33 @@ onUnmounted(() => {
   margin-top: 64px;
   padding: 1.5rem;
   width: calc(100% - 80px);
+  height: calc(100vh - 64px);
   min-height: calc(100vh - 64px);
   position: relative;
   background: #f8fafc;
   padding-bottom: 2rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar for main content */
+.main-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.main-content::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 8px;
+}
+
+.main-content::-webkit-scrollbar-thumb {
+  background: #3D8D7A;
+  border-radius: 8px;
+}
+
+.main-content::-webkit-scrollbar-thumb:hover {
+  background: #2d6a5a;
 }
 
 /* Page Header */
@@ -3906,6 +3943,29 @@ onUnmounted(() => {
   gap: 2rem 1.5rem;
   margin-bottom: 2rem;
   padding: 0.5rem;
+  max-height: calc(100vh - 250px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar for subjects grid */
+.subjects-grid.enhanced::-webkit-scrollbar {
+  width: 6px;
+}
+
+.subjects-grid.enhanced::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 6px;
+}
+
+.subjects-grid.enhanced::-webkit-scrollbar-thumb {
+  background: #3D8D7A;
+  border-radius: 6px;
+}
+
+.subjects-grid.enhanced::-webkit-scrollbar-thumb:hover {
+  background: #2d6a5a;
 }
 
 /* Enhanced Subject Card */
@@ -4241,6 +4301,29 @@ onUnmounted(() => {
   padding: 1rem;
   width: 100%;
   box-sizing: border-box;
+  max-height: calc(100vh - 300px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar for sections grid */
+.sections-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sections-grid::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 6px;
+}
+
+.sections-grid::-webkit-scrollbar-thumb {
+  background: #3D8D7A;
+  border-radius: 6px;
+}
+
+.sections-grid::-webkit-scrollbar-thumb:hover {
+  background: #2d6a5a;
 }
 
 .section-card {

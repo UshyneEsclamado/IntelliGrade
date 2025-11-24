@@ -188,75 +188,75 @@
 
       <!-- Content Area -->
 
-    <!-- Subject Filter Buttons -->
-    <div v-if="!selectedSubject && !selectedSection" class="subject-filters">
-      <div class="filter-header" style="border-bottom: none;">
-        <h3 class="filter-title">Filter by Subject</h3>
-        <span class="filter-subtitle">Choose a subject type to filter courses</span>
+      <!-- Subject Filter Buttons -->
+      <div v-if="!selectedSubject && !selectedSection" class="subject-filters">
+        <div class="filter-header" style="border-bottom: none;">
+          <h3 class="filter-title">Filter by Subject</h3>
+          <span class="filter-subtitle">Choose a subject type to filter courses</span>
+        </div>
+        <div class="filter-buttons">
+          <button 
+            @click="selectedSubjectFilter = ''" 
+            class="filter-btn modern" 
+            :class="{ 'active': selectedSubjectFilter === '' }"
+          >
+            <div class="filter-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M9,5V9H21V5M9,19H21V15H9M9,14H21V10H9M4,9H8L6,7L4,9M4,19H8L6,17L4,19M4,14H8L6,12L4,14Z" />
+              </svg>
+            </div>
+            <span class="filter-text">All Subjects</span>
+          </button>
+          <button 
+            v-for="filterType in availableSubjectTypes" 
+            :key="filterType.name"
+            @click="selectedSubjectFilter = filterType.name" 
+            class="filter-btn modern" 
+            :class="{ 'active': selectedSubjectFilter === filterType.name }"
+            :style="{ '--filter-color': filterType.color }"
+          >
+            <div class="filter-icon" v-html="filterType.icon"></div>
+            <span class="filter-text">{{ filterType.name }}</span>
+          </button>
+        </div>
       </div>
-      <div class="filter-buttons">
-        <button 
-          @click="selectedSubjectFilter = ''" 
-          class="filter-btn modern" 
-          :class="{ 'active': selectedSubjectFilter === '' }"
-        >
-          <div class="filter-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M9,5V9H21V5M9,19H21V15H9M9,14H21V10H9M4,9H8L6,7L4,9M4,19H8L6,17L4,19M4,14H8L6,12L4,14Z" />
-            </svg>
-          </div>
-          <span class="filter-text">All Subjects</span>
-        </button>
-        <button 
-          v-for="filterType in availableSubjectTypes" 
-          :key="filterType.name"
-          @click="selectedSubjectFilter = filterType.name" 
-          class="filter-btn modern" 
-          :class="{ 'active': selectedSubjectFilter === filterType.name }"
-          :style="{ '--filter-color': filterType.color }"
-        >
-          <div class="filter-icon" v-html="filterType.icon"></div>
-          <span class="filter-text">{{ filterType.name }}</span>
-        </button>
-      </div>
-    </div>
 
-    <!-- Breadcrumb Navigation -->
-    <div class="breadcrumb-nav" v-if="selectedSubject || selectedSection">
-      <button @click="resetToSubjects" class="breadcrumb-btn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,12V19A3,3 0 0,1 16,22H8A3,3 0 0,1 5,19V12A3,3 0 0,1 8,9H16A3,3 0 0,1 19,12Z" />
+      <!-- Breadcrumb Navigation -->
+      <div class="breadcrumb-nav" v-if="selectedSubject || selectedSection">
+        <button @click="resetToSubjects" class="breadcrumb-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,12V19A3,3 0 0,1 16,22H8A3,3 0 0,1 5,19V12A3,3 0 0,1 8,9H16A3,3 0 0,1 19,12Z" />
+          </svg>
+          Subjects
+        </button>
+        <span v-if="selectedSubject" class="breadcrumb-separator">/</span>
+        <button v-if="selectedSubject" @click="resetToSections" class="breadcrumb-btn">
+          {{ selectedSubject.name }}
+        </button>
+        <span v-if="selectedSection" class="breadcrumb-separator">/</span>
+        <span v-if="selectedSection" class="breadcrumb-current">
+          {{ selectedSection.name }}
+        </span>
+      </div>
+
+      <!-- Loading State -->
+      <div v-if="loading" class="loading-container">
+        <div class="spinner-large"></div>
+        <p>Loading...</p>
+      </div>
+
+      <!-- Error State -->
+      <div v-else-if="error" class="error-container">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12,2C17.53,2 22,6.47 22,12C22,17.53 17.53,22 12,22C6.47,22 2,17.53 2,12C2,6.47 6.47,2 12,2M15.59,7L12,10.59L8.41,7L7,8.41L10.59,12L7,15.59L8.41,17L12,13.41L15.59,17L17,15.59L13.41,12L17,8.41L15.59,7Z" />
         </svg>
-        Subjects
-      </button>
-      <span v-if="selectedSubject" class="breadcrumb-separator">/</span>
-      <button v-if="selectedSubject" @click="resetToSections" class="breadcrumb-btn">
-        {{ selectedSubject.name }}
-      </button>
-      <span v-if="selectedSection" class="breadcrumb-separator">/</span>
-      <span v-if="selectedSection" class="breadcrumb-current">
-        {{ selectedSection.name }}
-      </span>
-    </div>
+        <h3>Error Loading Data</h3>
+        <p>{{ error }}</p>
+        <button @click="refreshData" class="grade-btn">Retry</button>
+      </div>
 
-    <!-- Loading State -->
-    <div v-if="loading" class="loading-container">
-      <div class="spinner-large"></div>
-      <p>Loading...</p>
-    </div>
-
-    <!-- Error State -->
-    <div v-else-if="error" class="error-container">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12,2C17.53,2 22,6.47 22,12C22,17.53 17.53,22 12,22C6.47,22 2,17.53 2,12C2,6.47 6.47,2 12,2M15.59,7L12,10.59L8.41,7L7,8.41L10.59,12L7,15.59L8.41,17L12,13.41L15.59,17L17,15.59L13.41,12L17,8.41L15.59,7Z" />
-      </svg>
-      <h3>Error Loading Data</h3>
-      <p>{{ error }}</p>
-      <button @click="refreshData" class="grade-btn">Retry</button>
-    </div>
-
-    <!-- Main Content -->
-    <div v-else class="main-content">
+    <!-- Content Wrapper -->
+    <div v-else class="content-wrapper">
       <!-- LEVEL 1: Subject Selection -->
       <div v-if="!selectedSubject" class="content-card modern">
         <div class="card-header enhanced">
@@ -313,7 +313,7 @@
       <div v-else-if="selectedSubject && !selectedSection" class="content-card modern">
         <div class="card-header enhanced">
           <div class="card-title-section">
-            <h3>📝 {{ selectedSubject.name }} Sections</h3>
+            <h3>{{ selectedSubject.name }} Sections</h3>
             <p class="card-desc">Choose a section to view quiz submissions and manage grades</p>
           </div>
           <div class="card-stats">
@@ -2629,26 +2629,82 @@ body, html {
   min-height: calc(100vh - 64px);
   max-height: calc(100vh - 64px);
   overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
   position: relative;
   background: #f8fafc;
   padding-bottom: 2rem;
 }
 
+/* Uniform Scrollbar */
+.main-content::-webkit-scrollbar {
+  width: 12px;
+}
+
+.main-content::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 16px;
+}
+
+.main-content::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #3D8D7A, #20c997);
+  border-radius: 16px;
+  border: 2px solid #f1f5f9;
+  transition: all 0.3s ease;
+}
+
+.main-content::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #2a6e61, #1a9d7c);
+  transform: scale(1.1);
+}
+
+.dark .main-content {
+  background: #151821;
+}
+
+.dark .main-content::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+.dark .main-content::-webkit-scrollbar-thumb {
+  border-color: #1e293b;
+}
+
+/* Content Wrapper */
+.content-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
 /* Page Header */
 .page-header {
-    margin-top: 2rem;
   background: white;
   border-radius: 16px;
   padding: 1.5rem 2rem;
   margin-bottom: 1.5rem;
   border: 1px solid #e2e8f0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  background: white;
-  border-radius: 16px;
-  padding: 1.5rem 2rem;
-  margin-bottom: 1.5rem;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+}
+
+.page-header:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #3D8D7A;
+  transform: translateY(-1px);
+}
+
+.page-header {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.dark .page-header {
+  background: #23272b;
+  border: 1px solid #20c997;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
 .header-content {
@@ -2657,17 +2713,9 @@ body, html {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 1rem;
 }
 
 .header-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -2682,14 +2730,7 @@ body, html {
   align-items: center;
   justify-content: center;
   color: white;
-  width: 56px;
-  height: 56px;
-  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.2);
 }
 
 .header-title {
@@ -2697,7 +2738,6 @@ body, html {
   font-weight: 700;
   color: #1e293b;
   margin-bottom: 0.25rem;
-  font-size: 1.75rem;
   font-weight: 700;
   color: #1e293b;
   margin-bottom: 0.25rem;
@@ -2896,18 +2936,59 @@ body, html {
   100% { transform: rotate(360deg); }
 }
 
+@keyframes pulse {
+  0%, 100% { 
+    transform: scale(1);
+    opacity: 0.3;
+  }
+  50% { 
+    transform: scale(1.05);
+    opacity: 0.1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 /* Enhanced Subject Filter Buttons */
 .subject-filters {
   background: white;
   border-radius: 16px;
-  padding: 1.5rem;
-  border: 1px solid rgba(61, 141, 122, 0.1);
+  padding: 2rem;
+  border: 1px solid #e2e8f0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  margin-bottom: 0;
+  margin-bottom: 1.5rem;
+  transition: all 0.2s ease;
 }
+
+.subject-filters:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #3D8D7A;
+  transform: translateY(-1px);
+}
+
 .dark .subject-filters {
   background: #23272b;
-  border-color: #3D8D7A;
+  border: 1px solid #20c997;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.dark .subject-filters:hover {
+  border-color: #34d399;
+  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.15);
 }
 
 .filter-header {
@@ -2919,28 +3000,31 @@ body, html {
 }
 
 .filter-title {
-  font-size: 1.125rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: #1f2937;
-  margin: 0 0 0.25rem 0;
+  margin: 0 0 0.5rem 0;
 }
 .dark .filter-title {
-  color: #A3D1C6;
+  color: #f3f4f6;
 }
 
 .filter-subtitle {
-  font-size: 0.875rem;
+  font-size: 0.95rem;
   color: #6b7280;
   margin: 0;
+  font-weight: 500;
+  line-height: 1.5;
 }
 .dark .filter-subtitle {
   color: #9ca3af;
 }
 
 .filter-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
 }
 
 .filter-btn.modern {
@@ -3007,8 +3091,27 @@ body, html {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 0;
-  margin-bottom: 0.25rem;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.breadcrumb-nav:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  border-color: #3D8D7A;
+}
+
+.dark .breadcrumb-nav {
+  background: #23272b;
+  border: 1px solid #374151;
+}
+
+.dark .breadcrumb-nav:hover {
+  border-color: #20c997;
 }
 
 .breadcrumb-btn {
@@ -3016,8 +3119,10 @@ body, html {
   border: none;
   color: #3D8D7A;
   cursor: pointer;
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 0.75rem;
   border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.2s ease;
   font-size: 1rem;
   font-weight: 600;
   display: flex;
@@ -3097,32 +3202,48 @@ body, html {
 }
 
 /* Enhanced Main Content */
-.main-content {
+.content-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  padding-top: 0;
+  gap: 1.5rem;
+  width: 100%;
 }
 
 .content-card.modern {
-    margin-top: 0;
+  margin-top: 0;
   background: white;
   border-radius: 16px;
-  padding: 1.5rem;
+  padding: 2rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(61, 141, 122, 0.1);
-  max-width: 1100px;
+  border: 1px solid #e2e8f0;
+  max-width: 1200px;
   width: 100%;
-  margin: 0 auto;
+  margin: 0 auto 1.5rem auto;
   position: relative;
-  /* Removed negative top offset to avoid cutting off */
   box-sizing: border-box;
-  min-height: 110px;
+  min-height: 120px;
+  transition: all 0.2s ease;
 }
+
+.content-card.modern:hover {
+  box-shadow: 0 8px 24px rgba(61, 141, 122, 0.12);
+  border-color: #3D8D7A;
+  transform: translateY(-2px);
+}
+
+.content-card.modern {
+  animation: slideUp 0.6s ease-out;
+}
+
 .dark .content-card.modern {
   background: #23272b;
-  border: 1px solid rgba(163, 209, 198, 0.2);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border: 1px solid #20c997;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.dark .content-card.modern:hover {
+  box-shadow: 0 8px 24px rgba(32, 201, 151, 0.2);
+  border-color: #34d399;
 }
 
 .card-header.enhanced {
@@ -3468,11 +3589,10 @@ body, html {
 /* Enhanced Subject and Section Cards */
 .subjects-grid.modern {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 2rem 1.5rem;
-  padding: 0;
-  max-width: 100%;
-  margin: 0 auto;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+  padding: 1rem;
+  margin-top: 1rem;
 }
 
 .subjects-grid, .sections-grid {
@@ -5165,8 +5285,12 @@ body, html {
 
 @media (max-width: 768px) {
   .subjects-grid,
-  .sections-grid {
+  .sections-grid,
+  .subjects-grid.modern,
+  .sections-grid.enhanced {
     grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 0.5rem;
   }
 
   .breadcrumb {
@@ -5187,10 +5311,30 @@ body, html {
   
   .main-content {
     padding: 1rem;
+    margin-left: 0;
+    width: 100%;
   }
   
   .page-header {
     padding: 1rem;
+  }
+  
+  .filter-buttons {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .content-card.modern {
+    padding: 1.5rem;
+    margin: 0 0 1rem 0;
+  }
+  
+  .filter-title {
+    font-size: 1.25rem;
+  }
+  
+  .header-title {
+    font-size: 1.5rem;
     margin-bottom: 1.5rem;
   }
   
@@ -5216,9 +5360,10 @@ body, html {
 /* Enhanced Sections */
 .sections-grid.enhanced {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.5rem;
-  padding: 2rem;
+  padding: 1rem;
+  margin-top: 1rem;
 }
 
 .section-card.modern {
@@ -5344,16 +5489,43 @@ body, html {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 3rem 2rem;
+  padding: 4rem 2rem;
   text-align: center;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border: 2px dashed rgba(107, 114, 128, 0.2);
+  border: 2px dashed #e2e8f0;
   border-radius: 16px;
   grid-column: 1 / -1;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
+
+.empty-state.modern:hover {
+  border-color: #3D8D7A;
+  background: linear-gradient(135deg, #f8fdfa 0%, #ecfdf5 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(61, 141, 122, 0.1);
+}
+
+.empty-state.modern:before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(61, 141, 122, 0.03) 0%, transparent 70%);
+  animation: pulse 4s ease-in-out infinite;
+}
+
 .dark .empty-state.modern {
-  background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
-  border-color: rgba(163, 209, 198, 0.2);
+  background: linear-gradient(135deg, #23272b 0%, #2a2f33 100%);
+  border-color: #374151;
+}
+
+.dark .empty-state.modern:hover {
+  border-color: #20c997;
+  background: linear-gradient(135deg, #2a2f33 0%, #1f2937 100%);
 }
 
 .empty-icon {
@@ -5568,6 +5740,69 @@ body, html {
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+/* Custom Scrollbar Styling - Green Theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #3D8D7A, #20c997);
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #2d6a5a, #18a577);
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.3);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(135deg, #1e5a4a, #146e5a);
+}
+
+::-webkit-scrollbar-corner {
+  background: #f1f5f9;
+}
+
+/* Firefox Scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3D8D7A #f1f5f9;
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-track {
+  background: #1a1d21;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #20c997, #18a577);
+  border: 1px solid #374151;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #18a577, #146e5a);
+  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.3);
+}
+
+.dark ::-webkit-scrollbar-corner {
+  background: #1a1d21;
+}
+
+/* Main content scroll behavior */
+.main-content {
+  scroll-behavior: smooth;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 </style>
