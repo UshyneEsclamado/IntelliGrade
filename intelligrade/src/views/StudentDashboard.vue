@@ -605,9 +605,16 @@ export default {
           supabase.removeChannel(this.studentSubscription);
         }
         
-        await supabase.auth.signOut();
         localStorage.clear();
-        window.location.replace('/login');
+        sessionStorage.clear();
+        await supabase.auth.signOut();
+        
+        // Use router for smooth navigation if available, otherwise window.location
+        if (this.$router) {
+          await this.$router.replace('/login');
+        } else {
+          window.location.replace('/login');
+        }
       } catch (error) {
         console.error('Logout error:', error);
         localStorage.clear();

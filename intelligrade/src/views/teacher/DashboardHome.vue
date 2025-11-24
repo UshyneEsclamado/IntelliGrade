@@ -529,39 +529,22 @@ const closeLogoutModal = () => {
   showLogoutModal.value = false
 }
 
-const confirmLogout = async () => {
-  isLoggingOut.value = true
-  
+const confirmLogout = () => {
   console.log('🚪 Logging out...')
   
-  try {
-    // Clear storage immediately
-    localStorage.clear()
-    sessionStorage.clear()
-    
-    // Sign out from Supabase with error handling
-    const { error } = await supabase.auth.signOut({ scope: 'local' })
-    if (error) {
-      console.warn('⚠️ Supabase signOut warning:', error.message)
-    }
-    
-    console.log('✅ Logout successful')
-    
-    // Use router for navigation first, fallback to window.location
-    try {
-      await router.replace('/login')
-    } catch (routerError) {
-      console.warn('Router failed, using window.location:', routerError)
-      window.location.replace('/login')
-    }
-  } catch (error) {
-    console.error('❌ Logout error:', error)
-    // Force redirect even on error
-    window.location.replace('/login')
-  } finally {
-    isLoggingOut.value = false
-    showLogoutModal.value = false
-  }
+  // Clear storage immediately
+  localStorage.clear()
+  sessionStorage.clear()
+  
+  // Sign out from Supabase (don't wait)
+  supabase.auth.signOut().catch(err => console.log('Signout error:', err))
+  
+  // Immediate redirect - no waiting!
+  setTimeout(() => {
+    window.location.assign('/login')
+  }, 100)
+  
+  console.log('✅ Logout initiated')
 }
 
 const logout = () => {

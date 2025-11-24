@@ -678,21 +678,21 @@ const closeLogoutModal = () => {
 }
 
 const confirmLogout = () => {
-  isLoggingOut.value = true
-  
   console.log('🚪 Logging out...')
   
   // Clear storage immediately
   localStorage.clear()
   sessionStorage.clear()
   
-  // Sign out from Supabase (don't wait for response)
-  supabase.auth.signOut({ scope: 'local' })
+  // Sign out from Supabase (don't wait)
+  supabase.auth.signOut().catch(err => console.log('Signout error:', err))
   
-  console.log('✅ Logout successful')
+  // Immediate redirect - no waiting!
+  setTimeout(() => {
+    window.location.assign('/login')
+  }, 100)
   
-  // Force immediate redirect - most reliable method
-  window.location.replace('/login')
+  console.log('✅ Logout initiated')
 }
 
 const logout = () => {

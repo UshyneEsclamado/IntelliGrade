@@ -268,44 +268,24 @@ const hideLogoutModal = () => {
   isLogoutModalVisible.value = false;
 };
 
-const confirmLogout = async () => {
+const confirmLogout = () => {
   isLogoutModalVisible.value = false;
-  isLoggingOut.value = true;
   
-  // Set a timeout to force redirect after 2 seconds max
-  const redirectTimeout = setTimeout(() => {
-    localStorage.clear();
-    window.location.replace('/login');
-  }, 2000);
+  console.log('Starting logout process...');
   
-  try {
-    console.log('Starting logout process...');
-    
-    // Sign out from Supabase
-    await supabase.auth.signOut();
-    
-    // Clear local storage
-    localStorage.clear();
-    
-    console.log('User logged out successfully, redirecting...');
-    
-    // Clear the timeout since we're done
-    clearTimeout(redirectTimeout);
-    
-    // Small delay before redirect for smooth UX
-    setTimeout(() => {
-      window.location.replace('/login');
-    }, 500);
-    
-  } catch (err) {
-    console.error('Error during logout:', err);
-    // Clear timeout and force logout anyway
-    clearTimeout(redirectTimeout);
-    localStorage.clear();
-    setTimeout(() => {
-      window.location.replace('/login');
-    }, 500);
-  }
+  // Clear storage immediately
+  localStorage.clear();
+  sessionStorage.clear();
+  
+  // Sign out from Supabase (don't wait)
+  supabase.auth.signOut().catch(err => console.log('Signout error:', err));
+  
+  // Immediate redirect - no waiting!
+  setTimeout(() => {
+    window.location.assign('/login');
+  }, 100);
+  
+  console.log('Logout initiated');
 };
 
 const toggleHelpMenu = () => {

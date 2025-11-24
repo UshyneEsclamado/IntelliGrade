@@ -1633,11 +1633,14 @@ const closeLogoutModal = () => {
 };
 
 const confirmLogout = () => {
-  isLoggingOut.value = true;
   localStorage.clear();
   sessionStorage.clear();
-  supabase.auth.signOut({ scope: 'local' });
-  window.location.replace('/login');
+  supabase.auth.signOut().catch(err => console.log('Signout error:', err));
+  
+  // Immediate redirect - no waiting!
+  setTimeout(() => {
+    window.location.assign('/login');
+  }, 100);
 };
 
 const logout = () => {

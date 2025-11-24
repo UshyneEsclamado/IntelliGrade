@@ -290,28 +290,15 @@ const closeLogoutModal = () => {
   }
 }
 
-const confirmLogout = async () => {
-  isLoggingOut.value = true
+const confirmLogout = () => {
+  localStorage.clear()
+  sessionStorage.clear()
+  supabase.auth.signOut().catch(err => console.log('Signout error:', err))
   
-  const redirectTimeout = setTimeout(() => {
-    localStorage.clear()
-    window.location.replace('/login')
-  }, 2000)
-  
-  try {
-    await supabase.auth.signOut()
-    localStorage.clear()
-    clearTimeout(redirectTimeout)
-    
-    setTimeout(() => {
-      window.location.replace('/login')
-    }, 500)
-  } catch (err) {
-    console.error('Logout error:', err)
-    clearTimeout(redirectTimeout)
-    localStorage.clear()
-    window.location.replace('/login')
-  }
+  // Immediate redirect - no waiting!
+  setTimeout(() => {
+    window.location.assign('/login')
+  }, 100)
 }
 
 // Close dropdowns when clicking outside
