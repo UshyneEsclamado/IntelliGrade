@@ -24,21 +24,33 @@
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                 <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
               </svg>
-              <span v-if="notifications.length" class="notification-badge">{{ notifications.length }}</span>
+              <span v-if="unreadCount > 0" class="notification-badge">{{ unreadCount }}</span>
             </button>
             
             <!-- Notification Dropdown -->
             <div v-if="showNotifDropdown" class="notification-dropdown">
               <div class="dropdown-header">
                 <h3>Notifications</h3>
+                <button v-if="unreadCount > 0" @click="markAllAsViewed" class="mark-all-read-btn">
+                  Mark all as read
+                </button>
               </div>
               <div class="notification-list">
                 <div v-if="notifications.length === 0" class="no-notifications">
                   No new notifications
                 </div>
-                <div v-for="notif in notifications" :key="notif.id" class="notification-item" @click="handleNotificationClick(notif)">
+                <div 
+                  v-for="notif in notifications" 
+                  :key="notif.id" 
+                  class="notification-item" 
+                  :class="{ 'unread': !notif.viewed }"
+                  @click="handleNotificationClick(notif)"
+                >
                   <div class="notif-content">
-                    <h4>{{ notif.title }}</h4>
+                    <div class="notif-header">
+                      <h4>{{ notif.title }}</h4>
+                      <span v-if="!notif.viewed" class="unread-dot"></span>
+                    </div>
                     <p>{{ notif.body }}</p>
                     <span class="notif-time">{{ notif.date }}</span>
                   </div>
@@ -398,7 +410,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '../../supabase.js'
 
@@ -427,12 +439,57 @@ const userId = ref(null)
 const sidebarExpanded = ref(false)
 const showLogoutModal = ref(false)
 
+// Realtime subscription references for cleanup
+let quizSubscription = null
+let messageSubscription = null
+let enrollmentSubscription = null
+let statsIntervalId = null
+let notifIntervalId = null
+
+// Computed property for unread count
+const unreadCount = computed(() => {
+  return notifications.value.filter(n => !n.viewed).length
+})
+
 // Methods
 const toggleNotifDropdown = () => {
   showNotifDropdown.value = !showNotifDropdown.value
   if (showNotifDropdown.value) {
     showProfileDropdown.value = false
+    // Mark all notifications as viewed when dropdown is opened
+    markNotificationsAsViewed()
   }
+}
+
+// Mark all current notifications as viewed
+const markNotificationsAsViewed = () => {
+  notifications.value = notifications.value.map(notif => ({
+    ...notif,
+    viewed: true
+  }))
+  
+  // Save viewed state to localStorage
+  saveViewedNotifications()
+}
+
+// Mark all as viewed (button click)
+const markAllAsViewed = () => {
+  markNotificationsAsViewed()
+}
+
+// Save viewed notifications to localStorage
+const saveViewedNotifications = () => {
+  const viewedIds = notifications.value
+    .filter(n => n.viewed)
+    .map(n => n.id)
+  
+  localStorage.setItem(`teacher_${teacherId.value}_viewed_notifications`, JSON.stringify(viewedIds))
+}
+
+// Load viewed notifications from localStorage
+const loadViewedNotifications = () => {
+  const stored = localStorage.getItem(`teacher_${teacherId.value}_viewed_notifications`)
+  return stored ? JSON.parse(stored) : []
 }
 
 const toggleProfileDropdown = () => {
@@ -443,17 +500,11 @@ const toggleProfileDropdown = () => {
 }
 
 const toggleAnalytics = () => {
-  // Navigate to the actual Analytics page
   window.location.href = '/teacher/analytics'
-  // Alternative router navigation (if you have access to router):
-  // this.$router.push('/teacher/analytics')
 }
 
 const toggleMessages = () => {
-  // Navigate to the actual Messages page
   window.location.href = '/teacher/messages'
-  // Alternative router navigation (if you have access to router):
-  // this.$router.push('/teacher/messages')
 }
 
 const scrollToTop = () => {
@@ -464,12 +515,10 @@ const toggleSidebar = () => {
   sidebarExpanded.value = !sidebarExpanded.value
 }
 
-// Handle scroll to show/hide scroll-to-top button
 const handleScroll = () => {
   showScrollTop.value = window.pageYOffset > 300
 }
 
-// Logout confirmation modal
 const openLogoutModal = () => {
   showLogoutModal.value = true
 }
@@ -483,16 +532,13 @@ const confirmLogout = () => {
   
   console.log('🚪 Logging out...')
   
-  // Clear storage immediately
   localStorage.clear()
   sessionStorage.clear()
   
-  // Sign out from Supabase (don't wait for response)
   supabase.auth.signOut({ scope: 'local' })
   
   console.log('✅ Logout successful')
   
-  // Force immediate redirect - most reliable method
   window.location.replace('/login')
 }
 
@@ -508,7 +554,6 @@ const refreshAssessments = async () => {
 
 const gradeAssessment = (assessment) => {
   console.log('Grading assessment:', assessment)
-  // Navigate to gradebook with the specific assessment
   router.push({
     path: '/teacher/gradebook',
     query: {
@@ -524,7 +569,6 @@ const loadTeacherProfile = async () => {
   try {
     console.log('🔍 Loading teacher profile...')
     
-    // First check if we have user info in localStorage
     const storedUserInfo = localStorage.getItem('userInfo')
     if (storedUserInfo) {
       const userInfo = JSON.parse(storedUserInfo)
@@ -533,7 +577,6 @@ const loadTeacherProfile = async () => {
         fullName.value = userInfo.full_name
         userId.value = userInfo.id
         
-        // Get teacher ID from database
         const { data: teacher } = await supabase
           .from('teachers')
           .select('id')
@@ -550,7 +593,6 @@ const loadTeacherProfile = async () => {
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError || !user) {
       console.error('❌ No user found:', userError)
-      // Don't redirect immediately, give a chance for auth to settle
       setTimeout(() => {
         window.location.href = '/login'
       }, 2000)
@@ -560,7 +602,6 @@ const loadTeacherProfile = async () => {
     userId.value = user.id
     console.log('✅ User ID:', user.id)
     
-    // Get profile
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('id, full_name, role')
@@ -574,7 +615,6 @@ const loadTeacherProfile = async () => {
     
     console.log('✅ Profile found:', profile)
     
-    // Get teacher data
     const { data: teacher, error: teacherError } = await supabase
       .from('teachers')
       .select('id, full_name')
@@ -598,7 +638,7 @@ const loadTeacherProfile = async () => {
   }
 }
 
-// Load notifications
+// Load notifications - Enhanced with messages and enrollments
 const loadNotifications = async () => {
   if (!teacherId.value) {
     console.warn('⚠️ No teacher ID, cannot load notifications')
@@ -608,73 +648,169 @@ const loadNotifications = async () => {
   try {
     console.log('🔔 Loading notifications for teacher:', teacherId.value)
     
-    // Get recent quiz submissions (last 24 hours)
+    const allNotifications = []
+    
+    // Get recent time range (last 24 hours)
     const yesterday = new Date()
     yesterday.setDate(yesterday.getDate() - 1)
     const yesterdayISO = yesterday.toISOString()
     
-    const { data: recentSubmissions, error: submissionsError } = await supabase
-      .from('quiz_attempts')
-      .select(`
-        id,
-        submitted_at,
-        student_id,
-        quiz_id,
-        quizzes!inner(title, teacher_id),
-        students!inner(full_name)
-      `)
-      .eq('quizzes.teacher_id', teacherId.value)
-      .eq('status', 'submitted')
-      .gte('submitted_at', yesterdayISO)
-      .order('submitted_at', { ascending: false })
-      .limit(10)
+    // Load previously viewed notifications
+    const viewedIds = loadViewedNotifications()
     
-    if (!submissionsError && recentSubmissions) {
-      const submissionNotifications = recentSubmissions.map(submission => ({
-        id: `submission-${submission.id}`,
-        title: 'New Quiz Submission',
-        body: `${submission.students.full_name} submitted "${submission.quizzes.title}"`,
-        date: new Date(submission.submitted_at).toLocaleString(),
-        type: 'submission'
-      }))
+    // 1. Get recent quiz submissions
+    try {
+      const { data: recentSubmissions, error: submissionsError } = await supabase
+        .from('quiz_attempts')
+        .select(`
+          id,
+          submitted_at,
+          student_id,
+          quiz_id,
+          quizzes!inner(title, teacher_id),
+          students!inner(full_name)
+        `)
+        .eq('quizzes.teacher_id', teacherId.value)
+        .eq('status', 'submitted')
+        .gte('submitted_at', yesterdayISO)
+        .order('submitted_at', { ascending: false })
+        .limit(10)
       
-      notifications.value = [...submissionNotifications]
-      console.log('✅ Loaded', submissionNotifications.length, 'submission notifications')
+      if (!submissionsError && recentSubmissions) {
+        const submissionNotifications = recentSubmissions.map(submission => {
+          const notifId = `submission-${submission.id}`
+          return {
+            id: notifId,
+            title: '📝 New Quiz Submission',
+            body: `${submission.students.full_name} submitted "${submission.quizzes.title}"`,
+            date: new Date(submission.submitted_at).toLocaleString(),
+            timestamp: new Date(submission.submitted_at).getTime(),
+            type: 'submission',
+            viewed: viewedIds.includes(notifId)
+          }
+        })
+        
+        allNotifications.push(...submissionNotifications)
+        console.log('✅ Loaded', submissionNotifications.length, 'submission notifications')
+      }
+    } catch (error) {
+      console.error('❌ Error loading quiz submissions:', error)
     }
     
-    // Get recent messages from students using your existing schema
+    // 2. Get unread messages from students
     try {
-      const { data: recentMessages, error: messagesError } = await supabase
+      const { data: unreadMessages, error: messagesError } = await supabase
         .from('messages')
         .select(`
           id, 
           message_text, 
           sent_at,
           sender_id,
-          students!sender_id(full_name)
+          section_id,
+          sections!inner(
+            name,
+            subject_id,
+            subjects!inner(name, teacher_id)
+          )
         `)
+        .eq('sections.subjects.teacher_id', teacherId.value)
         .eq('recipient_id', teacherId.value)
         .eq('message_type', 'direct')
-        .not('message_reads.reader_id', 'eq', teacherId.value)
+        .gte('sent_at', yesterdayISO)
         .order('sent_at', { ascending: false })
-        .limit(5)
+        .limit(10)
       
-      if (!messagesError && recentMessages) {
-        const messageNotifications = recentMessages.map(message => ({
-          id: `message-${message.id}`,
-          title: 'New Message',
-          body: `${message.students?.full_name || 'Student'}: ${message.message_text.substring(0, 50)}...`,
-          date: new Date(message.sent_at).toLocaleString(),
-          type: 'message'
-        }))
+      if (!messagesError && unreadMessages) {
+        // Check which messages are unread
+        for (const message of unreadMessages) {
+          const { data: readStatus } = await supabase
+            .from('message_reads')
+            .select('id')
+            .eq('message_id', message.id)
+            .eq('reader_id', teacherId.value)
+            .single()
+          
+          if (!readStatus) {
+            // Get student name
+            const { data: student } = await supabase
+              .from('students')
+              .select('full_name')
+              .eq('id', message.sender_id)
+              .single()
+            
+            const notifId = `message-${message.id}`
+            allNotifications.push({
+              id: notifId,
+              title: '💬 New Message',
+              body: `${student?.full_name || 'Student'}: ${message.message_text.substring(0, 50)}${message.message_text.length > 50 ? '...' : ''}`,
+              date: new Date(message.sent_at).toLocaleString(),
+              timestamp: new Date(message.sent_at).getTime(),
+              type: 'message',
+              messageId: message.id,
+              viewed: viewedIds.includes(notifId)
+            })
+          }
+        }
         
-        notifications.value = [...notifications.value, ...messageNotifications]
-        console.log('✅ Loaded', messageNotifications.length, 'message notifications')
+        console.log('✅ Loaded', allNotifications.filter(n => n.type === 'message').length, 'message notifications')
       }
     } catch (msgError) {
-      console.log('ℹ️ Messages table not configured or no messages:', msgError.message)
-      // Don't throw error if messages table doesn't have data yet
+      console.log('ℹ️ Error loading messages:', msgError.message)
     }
+    
+    // 3. Get recent enrollments (students joining classes)
+    try {
+      const { data: recentEnrollments, error: enrollError } = await supabase
+        .from('enrollments')
+        .select(`
+          id,
+          enrolled_at,
+          student_id,
+          section_id,
+          students!inner(full_name),
+          sections!inner(
+            name,
+            subject_id,
+            subjects!inner(name, teacher_id)
+          )
+        `)
+        .eq('sections.subjects.teacher_id', teacherId.value)
+        .eq('status', 'active')
+        .gte('enrolled_at', yesterdayISO)
+        .order('enrolled_at', { ascending: false })
+        .limit(10)
+      
+      if (!enrollError && recentEnrollments) {
+        const enrollmentNotifications = recentEnrollments.map(enrollment => {
+          const notifId = `enrollment-${enrollment.id}`
+          return {
+            id: notifId,
+            title: '👥 New Student Enrolled',
+            body: `${enrollment.students.full_name} joined ${enrollment.sections.subjects.name} - ${enrollment.sections.name}`,
+            date: new Date(enrollment.enrolled_at).toLocaleString(),
+            timestamp: new Date(enrollment.enrolled_at).getTime(),
+            type: 'enrollment',
+            sectionId: enrollment.section_id,
+            subjectId: enrollment.sections.subject_id,
+            viewed: viewedIds.includes(notifId)
+          }
+        })
+        
+        allNotifications.push(...enrollmentNotifications)
+        console.log('✅ Loaded', enrollmentNotifications.length, 'enrollment notifications')
+      }
+    } catch (enrollError) {
+      console.log('ℹ️ Error loading enrollments:', enrollError.message)
+    }
+    
+    // Sort all notifications by timestamp (newest first)
+    allNotifications.sort((a, b) => b.timestamp - a.timestamp)
+    
+    // Update notifications state
+    notifications.value = allNotifications
+    
+    console.log('✅ Total notifications loaded:', allNotifications.length)
+    console.log('📊 Unread notifications:', allNotifications.filter(n => !n.viewed).length)
     
   } catch (error) {
     console.error('❌ Error loading notifications:', error)
@@ -691,7 +827,6 @@ const loadDashboardStats = async () => {
   try {
     console.log('📊 Loading dashboard stats for teacher:', teacherId.value)
     
-    // Get total classes (subjects)
     const { data: subjects, error: subjectsError } = await supabase
       .from('subjects')
       .select('id')
@@ -703,8 +838,6 @@ const loadDashboardStats = async () => {
       console.log('📚 Total subjects:', subjects.length)
     }
     
-    // Get total students across all sections taught by this teacher
-    // First, get all sections for this teacher's subjects
     const { data: teacherSections, error: sectionsError } = await supabase
       .from('sections')
       .select(`
@@ -717,7 +850,6 @@ const loadDashboardStats = async () => {
     if (!sectionsError && teacherSections && teacherSections.length > 0) {
       console.log('📋 Found sections:', teacherSections.length)
       
-      // Get unique student count across all sections
       const sectionIds = teacherSections.map(s => s.id)
       
       const { data: enrollments, error: enrollError } = await supabase
@@ -727,7 +859,6 @@ const loadDashboardStats = async () => {
         .eq('status', 'active')
       
       if (!enrollError && enrollments) {
-        // Count unique students (in case a student is in multiple sections)
         const uniqueStudents = new Set(enrollments.map(e => e.student_id))
         totalStudents.value = uniqueStudents.size
         console.log('👥 Total unique students:', uniqueStudents.size)
@@ -740,7 +871,6 @@ const loadDashboardStats = async () => {
       if (sectionsError) console.error('❌ Sections error:', sectionsError)
     }
     
-    // Get graded today
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     const todayISO = today.toISOString()
@@ -757,7 +887,6 @@ const loadDashboardStats = async () => {
       console.log('✅ Graded today:', graded.length)
     }
     
-    // Get pending assessments
     const { data: quizzes, error: quizzesError } = await supabase
       .from('quizzes')
       .select(`
@@ -775,7 +904,6 @@ const loadDashboardStats = async () => {
       const assessmentsWithSubmissions = []
       
       for (const quiz of quizzes) {
-        // Get submitted attempts
         const { data: attempts } = await supabase
           .from('quiz_attempts')
           .select('id, student_id')
@@ -783,7 +911,6 @@ const loadDashboardStats = async () => {
           .eq('status', 'submitted')
         
         if (attempts && attempts.length > 0) {
-          // Get total students in section
           const { data: enrollments } = await supabase
             .from('enrollments')
             .select('student_id')
@@ -815,6 +942,42 @@ const loadDashboardStats = async () => {
   }
 }
 
+// Notification click handler - Enhanced to handle all notification types
+const handleNotificationClick = async (notification) => {
+  console.log('📱 Clicked notification:', notification)
+  
+  if (notification.type === 'submission') {
+    router.push('/teacher/gradebook')
+  } else if (notification.type === 'message') {
+    router.push('/teacher/messages')
+    
+    try {
+      const messageId = notification.messageId
+      
+      if (messageId) {
+        await supabase.rpc('mark_message_read', {
+          p_message_id: messageId,
+          p_reader_id: teacherId.value
+        })
+        
+        await loadNotifications()
+      }
+    } catch (error) {
+      console.error('❌ Error marking message as read:', error)
+    }
+  } else if (notification.type === 'enrollment') {
+    router.push({
+      path: '/teacher/subjects',
+      query: {
+        subjectId: notification.subjectId,
+        sectionId: notification.sectionId
+      }
+    })
+  }
+  
+  showNotifDropdown.value = false
+}
+
 // Lifecycle
 onMounted(async () => {
   console.log('🚀 Dashboard mounting...')
@@ -825,21 +988,17 @@ onMounted(async () => {
     await loadDashboardStats()
     await loadNotifications()
     
-    // Auto-refresh every 30 seconds
-    const statsIntervalId = setInterval(() => {
+    statsIntervalId = setInterval(() => {
       loadDashboardStats()
     }, 30000)
     
-    // Refresh notifications every 15 seconds
-    const notifIntervalId = setInterval(() => {
+    notifIntervalId = setInterval(() => {
       loadNotifications()
     }, 15000)
     
-    // Add scroll listener for scroll-to-top button
     window.addEventListener('scroll', handleScroll)
     
-    // Set up real-time subscription for quiz submissions
-    const quizSubscription = supabase
+    quizSubscription = supabase
       .channel('quiz_attempts_channel')
       .on('postgres_changes', {
         event: 'INSERT',
@@ -848,68 +1007,87 @@ onMounted(async () => {
         filter: `status=eq.submitted`
       }, (payload) => {
         console.log('🆕 New quiz submission:', payload)
-        loadNotifications() // Refresh notifications when new submission
-        loadDashboardStats() // Refresh stats
+        loadNotifications()
+        loadDashboardStats()
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'quiz_attempts',
+        filter: `status=eq.submitted`
+      }, (payload) => {
+        console.log('✏️ Quiz submission updated:', payload)
+        loadNotifications()
+        loadDashboardStats()
       })
       .subscribe()
     
-    // Set up real-time subscription for messages using your schema
-    const messageSubscription = supabase
+    messageSubscription = supabase
       .channel('messages_channel')
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
-        table: 'messages',
-        filter: `recipient_id=eq.${teacherId.value}`
-      }, (payload) => {
+        table: 'messages'
+      }, async (payload) => {
         console.log('💬 New message received:', payload)
-        loadNotifications() // Refresh notifications when new message
+        
+        const { data: section } = await supabase
+          .from('sections')
+          .select('subject_id, subjects!inner(teacher_id)')
+          .eq('id', payload.new.section_id)
+          .single()
+        
+        if (section?.subjects?.teacher_id === teacherId.value) {
+          loadNotifications()
+        }
       })
       .subscribe()
     
-    // Cleanup on unmount
-    return () => {
-      clearInterval(statsIntervalId)
-      clearInterval(notifIntervalId)
-      window.removeEventListener('scroll', handleScroll)
-      quizSubscription.unsubscribe()
-      messageSubscription.unsubscribe()
-    }
+    enrollmentSubscription = supabase
+      .channel('enrollments_channel')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'enrollments',
+        filter: `status=eq.active`
+      }, async (payload) => {
+        console.log('👥 New enrollment:', payload)
+        
+        const { data: section } = await supabase
+          .from('sections')
+          .select('subject_id, subjects!inner(teacher_id)')
+          .eq('id', payload.new.section_id)
+          .single()
+        
+        if (section?.subjects?.teacher_id === teacherId.value) {
+          loadNotifications()
+          loadDashboardStats()
+        }
+      })
+      .subscribe()
   }
 })
 
-// Notification click handler
-const handleNotificationClick = async (notification) => {
-  console.log('📱 Clicked notification:', notification)
+onUnmounted(() => {
+  console.log('🧹 Cleaning up dashboard subscriptions...')
   
-  if (notification.type === 'submission') {
-    // Navigate to gradebook for quiz submissions
-    router.push('/teacher/gradebook')
-  } else if (notification.type === 'message') {
-    // Navigate to messages for message notifications
-    router.push('/teacher/messages')
-    
-    // Mark message as read using your schema
-    try {
-      const messageId = notification.id.replace('message-', '')
-      
-      // Use the mark_message_read function from your schema
-      await supabase.rpc('mark_message_read', {
-        p_message_id: messageId,
-        p_reader_id: teacherId.value
-      })
-      
-      // Refresh notifications to update count
-      await loadNotifications()
-    } catch (error) {
-      console.error('❌ Error marking message as read:', error)
-    }
+  if (statsIntervalId) clearInterval(statsIntervalId)
+  if (notifIntervalId) clearInterval(notifIntervalId)
+  
+  window.removeEventListener('scroll', handleScroll)
+  
+  if (quizSubscription) {
+    supabase.removeChannel(quizSubscription)
   }
-  
-  // Close notification dropdown
-  showNotifDropdown.value = false
-}
+  if (messageSubscription) {
+    supabase.removeChannel(messageSubscription)
+  }
+  if (enrollmentSubscription) {
+    supabase.removeChannel(enrollmentSubscription)
+  }
+})
 </script>
+
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -1946,5 +2124,100 @@ const handleNotificationClick = async (notification) => {
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+/* Add these styles to your existing <style scoped> section */
+
+/* Mark all as read button in notification header */
+.dropdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fafafa;
+}
+
+.mark-all-read-btn {
+  background: none;
+  border: none;
+  color: #3D8D7A;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.mark-all-read-btn:hover {
+  background: #e2e8f0;
+  color: #2d6a5a;
+}
+
+/* Unread notification styling */
+.notification-item.unread {
+  background: #f0f9ff;
+  border-left: 3px solid #3D8D7A;
+}
+
+.notification-item.unread:hover {
+  background: #e0f2fe;
+}
+
+/* Notification header with unread dot */
+.notif-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+/* Unread indicator dot */
+.unread-dot {
+  width: 8px;
+  height: 8px;
+  background: #3D8D7A;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+/* Update existing notification badge to be more prominent */
+.notification-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: #ef4444;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.125rem 0.375rem;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+  line-height: 1;
+  animation: badge-bounce 0.5s ease-in-out;
+}
+
+@keyframes badge-bounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
 }
 </style>
