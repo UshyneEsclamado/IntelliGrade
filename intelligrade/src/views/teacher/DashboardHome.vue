@@ -499,12 +499,14 @@ const toggleProfileDropdown = () => {
   }
 }
 
+// Fixed: Use router.push instead of window.location.href
 const toggleAnalytics = () => {
-  window.location.href = '/teacher/analytics'
+  router.push('/teacher/analytics')
 }
 
+// Fixed: Use router.push instead of window.location.href
 const toggleMessages = () => {
-  window.location.href = '/teacher/messages'
+  router.push('/teacher/messages')
 }
 
 const scrollToTop = () => {
@@ -527,19 +529,28 @@ const closeLogoutModal = () => {
   showLogoutModal.value = false
 }
 
-const confirmLogout = () => {
+const confirmLogout = async () => {
   isLoggingOut.value = true
   
   console.log('🚪 Logging out...')
   
-  localStorage.clear()
-  sessionStorage.clear()
-  
-  supabase.auth.signOut({ scope: 'local' })
-  
-  console.log('✅ Logout successful')
-  
-  window.location.replace('/login')
+  try {
+    // Clear local storage and session storage
+    localStorage.clear()
+    sessionStorage.clear()
+    
+    // Sign out from Supabase
+    await supabase.auth.signOut({ scope: 'local' })
+    
+    console.log('✅ Logout successful')
+    
+    // Use router.replace instead of window.location.replace
+    router.replace('/login')
+  } catch (error) {
+    console.error('❌ Logout error:', error)
+    // Fallback to window.location if router fails
+    window.location.replace('/login')
+  }
 }
 
 const logout = () => {
@@ -594,7 +605,7 @@ const loadTeacherProfile = async () => {
     if (userError || !user) {
       console.error('❌ No user found:', userError)
       setTimeout(() => {
-        window.location.href = '/login'
+        router.replace('/login')
       }, 2000)
       return false
     }
