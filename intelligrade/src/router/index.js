@@ -13,25 +13,19 @@ import ForgotPassword from '../views/ForgotPassword.vue'
 import ResetPassword from '../views/ResetPassword.vue'
 
 // Dashboard views
-import TeacherDashboard from '../views/TeacherDashboard.vue'
 import StudentDashboard from '../views/StudentDashboard.vue'
 
 // Teacher subfolder components that actually exist
 import Analytics from '../views/teacher/Analytics.vue'
-import AssessmentRes from '../views/teacher/AssessmentResults.vue'
-import ClassCodeEntry from '../views/teacher/ClassCodeEntry.vue'
 import CreateQuiz from '../views/teacher/CreateQuiz.vue'
 import EditQuiz from '../views/teacher/EditQuiz.vue'
 import DashboardHome from '../views/teacher/DashboardHome.vue'
 import GradeManagement from '../views/teacher/GradeManagement.vue'
 import MessagesPage from '../views/teacher/MessagesPage.vue'
 import MySubjects from '../views/teacher/MySubjects.vue'
-import SectionCode from '../views/teacher/SectionCode.vue'
-import SectionSelection from '../views/teacher/SectionSelection.vue'
 import SettingsPage from '../views/teacher/SettingsPage.vue'
 import UploadAssessment from '../views/teacher/UploadAssessment.vue'
 import AssessmentHistory from '../views/teacher/AssessmentHistory.vue'
-import AssessmentDetails from '../views/teacher/AssessmentDetails.vue'
 import ViewQuizzes from '../views/teacher/ViewQuizzes.vue'
 import ViewStudents from '../views/teacher/ViewStudents.vue'
 import Gradebook from '../views/teacher/Gradebook.vue'
@@ -116,7 +110,6 @@ const routes = [
   {
     path: '/teacher',
     name: 'TeacherLayout',
-    component: TeacherDashboard,
     meta: { requiresAuth: true, role: 'teacher' },
     children: [
       {
@@ -161,22 +154,6 @@ const routes = [
         meta: { requiresAuth: true, role: 'teacher' }
       },
       {
-        path: 'assessment-details/:id',
-        name: 'AssessmentDetails',
-        component: AssessmentDetails,
-        meta: { requiresAuth: true, role: 'teacher' }
-      },
-      {
-        path: 'assessment-results',
-        name: 'AssessmentRes',
-        component: AssessmentRes
-      },
-      {
-        path: 'class-code-entry',
-        name: 'ClassCodeEntry',
-        component: ClassCodeEntry
-      },
-      {
         path: 'create-quiz/:subjectId/:sectionId',
         name: 'CreateQuiz',
         component: CreateQuiz
@@ -191,16 +168,6 @@ const routes = [
         path: 'grade-management/:subjectId/:sectionId',
         name: 'GradeManagement',
         component: GradeManagement
-      },
-      {
-        path: 'section-code',
-        name: 'SectionCode',
-        component: SectionCode
-      },
-      {
-        path: 'section-selection',
-        name: 'SectionSelection',
-        component: SectionSelection
       },
       {
         path: 'view-quizzes/:subjectId/:sectionId',
