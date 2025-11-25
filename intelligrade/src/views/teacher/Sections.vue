@@ -538,13 +538,15 @@ export default {
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
 .sections-container {
   padding: 1.5rem;
   max-width: 1200px;
   margin: 0 auto;
   background: var(--bg-primary);
   min-height: 100vh;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Inter', sans-serif;
   color: var(--primary-text-color);
   transition: all 0.3s ease;
 }

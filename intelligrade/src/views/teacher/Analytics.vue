@@ -1455,9 +1455,11 @@ body, html {
 
 /* Dashboard Container Layout */
 .dashboard-container {
-  display: flex;
   min-height: 100vh;
+  width: 100vw;
   background: #f8fafc;
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
 }
 
 .dark .dashboard-container {
@@ -1520,7 +1522,7 @@ body, html {
   padding: 4px 12px;
   border-radius: 6px;
   font-size: 14px;
-  font-family: Inter, sans-serif;
+  font-family: 'Inter', sans-serif;
   white-space: nowrap;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   opacity: 0;
@@ -1915,16 +1917,35 @@ body, html {
 
 /* Main Content */
 .main-content {
-  margin-left: 80px;
   margin-top: 64px;
+  margin-left: 80px;
   padding: 1.5rem;
   width: calc(100% - 80px);
+  height: calc(100vh - 64px);
   min-height: calc(100vh - 64px);
-  max-height: calc(100vh - 64px);
-  overflow-y: auto;
   position: relative;
-  background: #f8fafc;
-  padding-bottom: 2rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar for main content */
+.main-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.main-content::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 8px;
+}
+
+.main-content::-webkit-scrollbar-thumb {
+  background: #3D8D7A;
+  border-radius: 8px;
+}
+
+.main-content::-webkit-scrollbar-thumb:hover {
+  background: #2d6a5a;
 }
 
 /* Page Header */

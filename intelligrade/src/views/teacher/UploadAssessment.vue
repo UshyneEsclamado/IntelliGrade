@@ -1728,6 +1728,7 @@ watch(
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 /* Scroll-to-top floating button */
 .scroll-to-top-btn {
   position: fixed;
@@ -1834,7 +1835,7 @@ watch(
     padding: 4px 12px;
     border-radius: 6px;
     font-size: 14px;
-    font-family: Inter, sans-serif;
+    font-family: 'Inter', sans-serif;
     white-space: nowrap;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     opacity: 0;

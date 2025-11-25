@@ -3045,9 +3045,11 @@ onUnmounted(() => {
 
 /* Dashboard Container */
 .dashboard-container {
-  display: flex;
   min-height: 100vh;
+  width: 100vw;
   background: #f8fafc;
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
 }
 
 /* Sidebar Navigation - Simple Outlined Icons Only, Single Color, Active Highlight */
@@ -3105,7 +3107,7 @@ onUnmounted(() => {
   padding: 4px 12px;
   border-radius: 6px;
   font-size: 14px;
-  font-family: Inter, sans-serif;
+  font-family: 'Inter', sans-serif;
   white-space: nowrap;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   opacity: 0;
@@ -3487,15 +3489,13 @@ onUnmounted(() => {
 
 /* Main Content */
 .main-content {
-  margin-left: 80px;
   margin-top: 64px;
+  margin-left: 80px;
   padding: 1.5rem;
   width: calc(100% - 80px);
   height: calc(100vh - 64px);
   min-height: calc(100vh - 64px);
   position: relative;
-  background: #f8fafc;
-  padding-bottom: 2rem;
   overflow-y: auto;
   overflow-x: hidden;
   scroll-behavior: smooth;
