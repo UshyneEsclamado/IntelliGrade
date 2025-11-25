@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { supabase } from '../Supabase'
+import { supabase } from '../supabase'
 
 // Import views that actually exist
 import Login from '../views/Login.vue'
