@@ -880,7 +880,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { supabase } from '@/Supabase.js';
+import { supabase } from '@/supabase.js';
 
 const router = useRouter();
 const route = useRoute();

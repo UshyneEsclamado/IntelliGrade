@@ -824,7 +824,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { supabase } from '@/Supabase.js'
+import { supabase } from '@/supabase.js'
 import { useDarkMode } from '@/composables/useDarkMode.js'
 
 const { isDarkMode } = useDarkMode()
