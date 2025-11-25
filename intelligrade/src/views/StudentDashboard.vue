@@ -364,12 +364,7 @@ export default {
     document.addEventListener('click', this.handleClickOutside);
   },
   beforeUnmount() {
-    if (this.profileSubscription) {
-      supabase.removeChannel(this.profileSubscription);
-    }
-    if (this.studentSubscription) {
-      supabase.removeChannel(this.studentSubscription);
-    }
+    this.cleanupSubscriptions();
     window.removeEventListener('studentProfileUpdated', this.handleProfileUpdate);
     document.removeEventListener('click', this.handleClickOutside);
   },
@@ -527,6 +522,30 @@ export default {
         .subscribe();
     },
 
+    cleanupSubscriptions() {
+      console.log('🧹 Cleaning up subscriptions...');
+      
+      if (this.profileSubscription) {
+        try {
+          supabase.removeChannel(this.profileSubscription);
+          this.profileSubscription = null;
+          console.log('✅ Profile subscription removed');
+        } catch (error) {
+          console.error('❌ Error removing profile subscription:', error);
+        }
+      }
+      
+      if (this.studentSubscription) {
+        try {
+          supabase.removeChannel(this.studentSubscription);
+          this.studentSubscription = null;
+          console.log('✅ Student subscription removed');
+        } catch (error) {
+          console.error('❌ Error removing student subscription:', error);
+        }
+      }
+    },
+
     async createMissingStudentRecord(profile) {
       try {
         const newStudentId = `ST${Date.now().toString().slice(-8)}`;
@@ -594,31 +613,51 @@ export default {
     },
 
     async confirmLogout() {
+      console.log('🚪 Starting logout process...');
+      
+      // Hide modal and show loading overlay
       this.isLogoutModalVisible = false;
       this.isLoggingOut = true;
       
       try {
-        if (this.profileSubscription) {
-          supabase.removeChannel(this.profileSubscription);
-        }
-        if (this.studentSubscription) {
-          supabase.removeChannel(this.studentSubscription);
+        // Step 1: Clean up subscriptions first
+        console.log('Step 1: Cleaning up subscriptions');
+        this.cleanupSubscriptions();
+        
+        // Wait a bit to ensure cleanup
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Step 2: Clear local data
+        console.log('Step 2: Clearing local storage');
+        localStorage.removeItem('darkMode');
+        sessionStorage.clear();
+        
+        // Step 3: Sign out from Supabase
+        console.log('Step 3: Signing out from Supabase');
+        const { error } = await supabase.auth.signOut();
+        
+        if (error) {
+          console.error('❌ Logout error:', error);
+          throw error;
         }
         
+        console.log('✅ Logout successful');
+        
+        // Step 4: Wait a bit before redirecting
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Step 5: Force redirect to login
+        console.log('Step 4: Redirecting to login');
+        window.location.href = '/login';
+        
+      } catch (error) {
+        console.error('❌ Error during logout:', error);
+        
+        // Even if there's an error, try to redirect
+        this.isLoggingOut = false;
         localStorage.clear();
         sessionStorage.clear();
-        await supabase.auth.signOut();
-        
-        // Use router for smooth navigation if available, otherwise window.location
-        if (this.$router) {
-          await this.$router.replace('/login');
-        } else {
-          window.location.replace('/login');
-        }
-      } catch (error) {
-        console.error('Logout error:', error);
-        localStorage.clear();
-        window.location.replace('/login');
+        window.location.href = '/login';
       }
     },
 
