@@ -369,7 +369,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDarkMode } from '../../composables/useDarkMode.js';
-import { supabase } from '@/supabase.js';
+import { supabase } from '@/Supabase.js';
 
 export default {
   name: 'AssessmentHistory',

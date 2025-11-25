@@ -490,7 +490,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { supabase } from '../../supabase.js';
+import { supabase } from '../../Supabase.js';
 import { useRouter } from 'vue-router';
 
 // Click outside directive

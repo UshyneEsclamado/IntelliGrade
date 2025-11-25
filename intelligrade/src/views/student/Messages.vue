@@ -645,7 +645,7 @@
 defineOptions({ name: 'StudentMessages' })
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { supabase } from '@/supabase.js'
+import { supabase } from '@/Supabase.js'
 
 // Watch for route changes
 const route = useRoute()

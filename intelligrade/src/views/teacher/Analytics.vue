@@ -510,7 +510,7 @@
 
 <script lang="ts">
 import { ref, onMounted, computed, onUnmounted } from 'vue'
-import { supabase } from '../../supabase.js'
+import { supabase } from '../../Supabase.js'
 import { useDarkMode } from '../../composables/useDarkMode.js'
 
 interface Section {

@@ -459,7 +459,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { supabase } from '../../supabase'
+import { supabase } from '../../Supabase'
 import { useDarkMode } from '../../composables/useDarkMode.js'
 
 interface Student {

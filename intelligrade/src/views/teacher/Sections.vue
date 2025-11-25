@@ -258,7 +258,7 @@
 
 <script>
 import { ref, onMounted, computed } from 'vue'
-import { supabase } from '../../supabase.js'
+import { supabase } from '../../Supabase.js'
 
 export default {
   name: 'SectionsView',

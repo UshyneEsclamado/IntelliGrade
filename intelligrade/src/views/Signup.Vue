@@ -237,7 +237,7 @@
 </template>
 
 <script lang="ts">
-import { supabase } from '../supabase'
+import { supabase } from '../Supabase'
 
 export default {
   name: 'TeacherSignup',

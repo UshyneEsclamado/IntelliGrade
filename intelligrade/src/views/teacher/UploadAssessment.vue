@@ -811,7 +811,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { supabase } from '@/supabase.js';
+import { supabase } from '@/Supabase.js';
 import { useDarkMode } from "../../composables/useDarkMode.js";
 import { useTeacherAuth } from "../../composables/useTeacherAuth.js";
 import { API_URL } from '@/api.js'

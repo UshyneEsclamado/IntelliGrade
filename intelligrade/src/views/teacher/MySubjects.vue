@@ -1788,7 +1788,7 @@
 <script setup>
 import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { supabase } from '../../supabase.js'
+import { supabase } from '../../Supabase.js'
 import { useDarkMode } from '../../composables/useDarkMode.js'
 import { useTeacherAuth } from '../../composables/useTeacherAuth.js'
 
