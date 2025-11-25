@@ -449,7 +449,7 @@
 
 
 <script lang="ts">
-import { supabase } from '@/Supabase.js';
+import { supabase } from '@/supabase.js';
 
 export default {
   name: 'StudentSettings',
