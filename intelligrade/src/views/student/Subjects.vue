@@ -416,8 +416,6 @@ export default {
         { key: 'all', label: 'All Subjects' },
         { key: 'favorites', label: 'Favorites' },
         { key: 'active', label: 'Active' },
-        { key: 'completed', label: 'Completed' },
-        { key: 'pending', label: 'Pending' },
         { key: 'archived', label: 'Archived' }
       ],
       subjects: [],
