@@ -144,103 +144,6 @@
       </div>
     </div>
 
-
-    <!-- Help & Support Modal -->
-    <div v-if="showHelpModal" class="modal-overlay" @click="closeHelpModal">
-      <div class="modal-content document-modal" @click.stop>
-        <div class="modal-header">
-          <h3>Help & Support</h3>
-          <button @click="closeHelpModal" class="close-btn">×</button>
-        </div>
-        <div class="modal-body document-body">
-          <div class="document-content">
-            <h4>Welcome to IntelliGrade Help Center</h4>
-            <p class="document-date">We're here to help you!</p>
-            
-            <section>
-              <h5>📧 Contact Support</h5>
-              <p>Have a question or need assistance? Reach out to our support team:</p>
-              <ul>
-                <li>Email: <strong>support@intelligrade.edu</strong></li>
-                <li>Response Time: Within 24 hours</li>
-              </ul>
-            </section>
-
-            <section>
-              <h5>🔧 Common Issues</h5>
-              <p><strong>Can't log in?</strong></p>
-              <ul>
-                <li>Check if your email and password are correct</li>
-                <li>Try resetting your password</li>
-                <li>Clear your browser cache and cookies</li>
-              </ul>
-              
-              <p><strong>Profile not updating?</strong></p>
-              <ul>
-                <li>Ensure all required fields are filled</li>
-                <li>Check your internet connection</li>
-                <li>Try refreshing the page</li>
-              </ul>
-            </section>
-
-            <section>
-              <h5>💡 Getting Started</h5>
-              <p><strong>For Students:</strong></p>
-              <ul>
-                <li>Join classes using class codes</li>
-                <li>View assignments and grades</li>
-                <li>Submit work on time</li>
-                <li>Track your academic progress</li>
-              </ul>
-            </section>
-
-            <section>
-              <h5>🔒 Account Security</h5>
-              <ul>
-                <li>Use a strong, unique password</li>
-                <li>Never share your login credentials</li>
-                <li>Log out when using shared computers</li>
-                <li>Update your password regularly</li>
-              </ul>
-            </section>
-
-            <section>
-              <h5>📱 Technical Requirements</h5>
-              <p>For the best experience with IntelliGrade:</p>
-              <ul>
-                <li>Use a modern web browser (Chrome, Firefox, Safari, Edge)</li>
-                <li>Ensure JavaScript is enabled</li>
-                <li>Stable internet connection recommended</li>
-                <li>Screen resolution: 1280x720 or higher</li>
-              </ul>
-            </section>
-
-            <section>
-              <h5>🐛 Report a Bug</h5>
-              <p>Found a bug? Help us improve IntelliGrade by reporting it:</p>
-              <ul>
-                <li>Send detailed description to: <strong>bugs@intelligrade.edu</strong></li>
-                <li>Include screenshots if possible</li>
-                <li>Mention your browser and device type</li>
-              </ul>
-            </section>
-
-            <section>
-              <h5>💬 Feedback</h5>
-              <p>We value your feedback! Share your thoughts and suggestions:</p>
-              <ul>
-                <li>Email: <strong>feedback@intelligrade.edu</strong></li>
-                <li>Your input helps us improve the platform</li>
-              </ul>
-            </section>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button @click="closeHelpModal" class="btn-primary">Close</button>
-        </div>
-      </div>
-    </div>
-
     <!-- Profile Update Modal -->
     <div v-if="showProfileModal" class="modal-overlay" @click="closeProfileModal">
       <div class="modal-content" @click.stop>
@@ -249,48 +152,6 @@
           <button @click="closeProfileModal" class="close-btn">×</button>
         </div>
         <div class="modal-body">
-          <!-- Profile Photo Upload Section -->
-          <div class="form-group">
-            <label>Profile Photo</label>
-            <div class="photo-upload-container">
-              <div class="current-photo">
-                <img 
-                  v-if="profileData.profile_photo_url" 
-                  :src="profileData.profile_photo_url" 
-                  alt="Profile Photo"
-                  class="profile-photo-preview"
-                >
-                <div v-else class="profile-photo-placeholder">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                  </svg>
-                </div>
-              </div>
-              <div class="photo-upload-actions">
-                <input 
-                  type="file" 
-                  ref="photoInput" 
-                  accept="image/jpeg,image/png,image/jpg,image/webp"
-                  @change="handlePhotoSelect"
-                  style="display: none;"
-                >
-                <button @click="triggerPhotoInput" class="btn-upload" type="button">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="17 8 12 3 7 8"></polyline>
-                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                  </svg>
-                  Upload Photo
-                </button>
-                <button v-if="profileData.profile_photo_url" @click="removePhoto" class="btn-remove" type="button">
-                  Remove Photo
-                </button>
-                <p class="photo-hint">Max 5MB. JPEG, PNG, or WebP format</p>
-              </div>
-            </div>
-          </div>
-          
           <!-- Full Name Section -->
           <div class="form-group">
             <label>Full Name</label>
@@ -404,7 +265,7 @@
               <p>We collect information that you provide directly to us, including:</p>
               <ul>
                 <li>Account information (name, email, student ID)</li>
-                <li>Profile information (grade level, profile photo)</li>
+                <li>Profile information (grade level)</li>
                 <li>Academic records and grades</li>
                 <li>Messages and communications within the platform</li>
                 <li>Usage data and analytics</li>
@@ -586,6 +447,7 @@
   </div>
 </template>
 
+
 <script lang="ts">
 import { supabase } from '@/supabase.js';
 
@@ -607,7 +469,6 @@ export default {
       showPrivacyModal: false,
       showTermsModal: false,
       showDeleteModal: false,
-      showHelpModal: false,
       
       // Profile management
       profileData: {
@@ -715,15 +576,6 @@ export default {
       } else {
         document.documentElement.classList.remove('dark');
       }
-    },
-    
-    // ==================== HELP MODAL METHODS ====================
-    openHelpModal() {
-      this.showHelpModal = true;
-    },
-    
-    closeHelpModal() {
-      this.showHelpModal = false;
     },
     
     // ==================== PROFILE MODAL METHODS ====================
