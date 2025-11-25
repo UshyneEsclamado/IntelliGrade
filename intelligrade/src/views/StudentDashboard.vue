@@ -324,7 +324,7 @@
 </template>
 
 <script>
-import { supabase } from '../Supabase.js';
+import { supabase } from '../supabase.js';
 
 export default {
   name: 'StudentDashboard',

@@ -130,7 +130,7 @@
 </template>
 
 <script>
-import { supabase } from '@/Supabase'
+import { supabase } from '@/supabase'
 
 export default {
   name: 'JoinSection',

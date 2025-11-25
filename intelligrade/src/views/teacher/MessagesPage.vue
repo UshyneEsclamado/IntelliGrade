@@ -1348,7 +1348,7 @@ jhsckskfdvdsdokdkfmv
 // Notification Bell State and Methods
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { supabase } from '@/Supabase.js'
+import { supabase } from '@/supabase.js'
 import { useDarkMode } from '../../composables/useDarkMode.js'
 
 // Dark mode
