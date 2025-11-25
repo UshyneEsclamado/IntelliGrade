@@ -314,7 +314,7 @@
 <script>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { supabase } from '@/Supabase.js';
+import { supabase } from '@/supabase.js';
 
 export default {
   name: 'StudentGrades',
