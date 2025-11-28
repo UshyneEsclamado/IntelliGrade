@@ -307,9 +307,15 @@
             </div>
             <small class="form-help">Ask your teacher for the section code to join their class</small>
             <div v-if="joinError" class="error-message">{{ joinError }}</div>
+            
+            <!-- Validation Loading Indicator -->
+            <div v-if="isValidating" class="validation-loading">
+              <div class="validation-spinner"></div>
+              <p>Validating section code...</p>
+            </div>
           </div>
 
-          <div v-if="previewSubject" class="subject-preview">
+          <div v-if="previewSubject && !isValidating" class="subject-preview">
             <h3>Class Preview</h3>
             <div class="preview-card">
               <div class="preview-icon" :style="{ background: previewSubject.color }">
@@ -407,6 +413,7 @@ export default {
       isJoining: false,
       isUnenrolling: false,
       isLoading: true,
+      isValidating: false,
       loadingMessage: 'Loading your subjects...',
       joinError: '',
       joinSuccess: '',
@@ -486,125 +493,119 @@ export default {
   methods: {
     async initializeAuth() {
       try {
-        console.log('Initializing student authentication...')
+        console.log('🔐 Initializing student authentication...')
         
         const { data: { session }, error: sessionError } = await supabase.auth.getSession()
         
         if (sessionError) {
-          console.error('Session error:', sessionError)
+          console.error('❌ Session error:', sessionError)
           throw sessionError
         }
         
         if (!session?.user) {
-          console.log('No active session found')
+          console.log('⚠️ No active session found')
           await this.$router.push('/login')
           return false
         }
         
-        console.log('Session found for user:', session.user.id)
+        console.log('✓ Session found for user:', session.user.id)
         this.currentUser = session.user
         
-        // Get or create profile
-        let { data: profile, error: profileError } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('id, role, full_name, email')
           .eq('auth_user_id', session.user.id)
           .maybeSingle()
         
         if (profileError) {
-          console.error('Error getting profile:', profileError)
-          alert('Error loading profile. Please contact support.')
-          await this.$router.push('/login')
-          return false
+          console.error('❌ Error getting profile:', profileError)
+          throw profileError
         }
 
         if (!profile) {
-          console.log('Profile not found, creating new profile...')
-          const { data: newProfile, error: createProfileError } = await supabase
+          console.log('⚠️ Profile not found, creating...')
+          const { data: newProfile, error: createError } = await supabase
             .from('profiles')
-            .insert([{
+            .insert({
               auth_user_id: session.user.id,
-              full_name: session.user.user_metadata?.full_name || session.user.email,
+              full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Student',
               email: session.user.email,
               role: 'student'
-            }])
+            })
             .select()
             .single()
 
-          if (createProfileError || !newProfile) {
-            console.error('Error creating profile:', createProfileError)
-            alert('Failed to create profile. Please contact support.')
-            await this.$router.push('/login')
-            return false
+          if (createError) {
+            console.error('❌ Failed to create profile:', createError)
+            throw createError
           }
 
-          console.log('Profile created successfully')
-          profile = newProfile
+          this.profile = newProfile
+          console.log('✓ Profile created')
+        } else {
+          this.profile = profile
+          console.log('✓ Profile loaded')
         }
 
-        this.profile = profile
-        console.log('Profile loaded:', profile)
-
-        if (profile.role !== 'student') {
-          console.log('User is not a student:', profile.role)
+        if (this.profile.role !== 'student') {
+          console.error('❌ Not a student account')
           alert('Access denied. Student account required.')
           await this.$router.push('/login')
           return false
         }
 
-        // Get or create student record
-        let { data: student, error: studentError } = await supabase
+        const { data: student, error: studentError } = await supabase
           .from('students')
           .select('*')
-          .eq('profile_id', profile.id)
+          .eq('profile_id', this.profile.id)
           .maybeSingle()
 
-        if (studentError) {
-          console.error('Error getting student info:', studentError)
+        if (studentError && studentError.code !== 'PGRST116') {
+          console.error('❌ Error getting student info:', studentError)
+          throw studentError
         }
 
         if (!student) {
-          console.log('Student record not found, creating...')
+          console.log('⚠️ Student record not found, creating...')
           
-          const gradeLevel = session.user.user_metadata?.grade_level || 9
+          const gradeLevel = session.user.user_metadata?.grade_level || 7
           
           const { data: newStudent, error: createStudentError } = await supabase
             .from('students')
-            .insert([{
-              profile_id: profile.id,
-              full_name: session.user.user_metadata?.full_name || session.user.email,
-              email: session.user.email,
+            .insert({
+              profile_id: this.profile.id,
+              full_name: this.profile.full_name,
+              email: this.profile.email,
               grade_level: gradeLevel,
               is_active: true
-            }])
+            })
             .select()
             .single()
 
-          if (createStudentError || !newStudent) {
-            console.error('Error creating student record:', createStudentError)
-            alert('Failed to create student record. Please contact support.')
+          if (createStudentError) {
+            console.error('❌ Failed to create student record:', createStudentError)
+            throw createStudentError
+          }
+
+          this.studentInfo = newStudent
+          console.log('✓ Student record created:', newStudent.id)
+        } else {
+          if (!student.is_active) {
+            console.error('❌ Student account inactive')
+            alert('Your account is currently inactive. Please contact support.')
             await this.$router.push('/login')
             return false
           }
 
-          console.log('Student record created successfully')
-          student = newStudent
+          this.studentInfo = student
+          console.log('✓ Student info loaded:', student.id)
         }
 
-        if (!student.is_active) {
-          console.log('Student account is inactive')
-          alert('Your account is currently inactive. Please contact support.')
-          await this.$router.push('/login')
-          return false
-        }
-
-        this.studentInfo = student
-        console.log('Student info loaded:', student.id)
         return true
 
       } catch (error) {
-        console.error('Authentication initialization error:', error)
-        alert(`Authentication error: ${error.message}`)
+        console.error('❌ Auth initialization error:', error)
+        alert(`Authentication error: ${error.message || 'Unknown error'}`)
         await this.$router.push('/login')
         return false
       }
@@ -622,34 +623,102 @@ export default {
     async fetchSubjects() {
       try {
         if (!this.studentInfo?.id) {
-          console.log('No student info available, skipping fetch')
-          this.isLoading = false
-          return
-        }
-
-        console.log('Fetching subjects for student:', this.studentInfo.id)
-        this.isLoading = true
-        this.loadingMessage = 'Loading your subjects...'
-
-        const { data: enrollments, error } = await supabase
-          .from('student_dashboard')
-          .select('*')
-          .eq('student_id', this.studentInfo.id)
-          .eq('enrollment_status', 'active')
-
-        if (error) {
-          console.error('Database error fetching enrollments:', error)
-          throw error
-        }
-
-        if (!enrollments || enrollments.length === 0) {
-          console.log('No enrollments found')
+          console.log('⚠️ No student info available')
           this.subjects = []
           this.isLoading = false
           return
         }
 
-        console.log('Found', enrollments.length, 'enrollments')
+        console.log('📚 Fetching subjects for student:', this.studentInfo.id)
+        this.isLoading = true
+        this.loadingMessage = 'Loading your subjects...'
+
+        let { data: enrollments, error: viewError } = await supabase
+          .from('student_dashboard')
+          .select('*')
+          .eq('student_id', this.studentInfo.id)
+          .eq('enrollment_status', 'active')
+
+        console.log('View query result:', { enrollments, viewError })
+
+        if (viewError || !enrollments || enrollments.length === 0) {
+          console.log('⚠️ View query failed or empty, using direct query...')
+          
+          const { data: enrollmentsData, error: enrollError } = await supabase
+            .from('enrollments')
+            .select('id, student_id, section_id, subject_id, status, enrolled_at')
+            .eq('student_id', this.studentInfo.id)
+            .eq('status', 'active')
+
+          if (enrollError) {
+            console.error('❌ Enrollment query error:', enrollError)
+            throw enrollError
+          }
+
+          if (!enrollmentsData || enrollmentsData.length === 0) {
+            console.log('ℹ️ No enrollments found')
+            this.subjects = []
+            this.isLoading = false
+            return
+          }
+
+          console.log('✓ Found', enrollmentsData.length, 'enrollments')
+
+          const sectionIds = enrollmentsData.map(e => e.section_id)
+          const { data: sectionsData } = await supabase
+            .from('sections')
+            .select('id, name, section_code, subject_id')
+            .in('id', sectionIds)
+
+          const subjectIds = [...new Set(sectionsData.map(s => s.subject_id))]
+          const { data: subjectsData } = await supabase
+            .from('subjects')
+            .select('id, name, grade_level, description, teacher_id')
+            .in('id', subjectIds)
+
+          const teacherIds = [...new Set(subjectsData.map(s => s.teacher_id))]
+          const { data: teachersData } = await supabase
+            .from('teachers')
+            .select('id, full_name, email, department')
+            .in('id', teacherIds)
+
+          const sectionsMap = new Map(sectionsData.map(s => [s.id, s]))
+          const subjectsMap = new Map(subjectsData.map(s => [s.id, s]))
+          const teachersMap = new Map(teachersData.map(t => [t.id, t]))
+
+          enrollments = enrollmentsData.map(e => {
+            const section = sectionsMap.get(e.section_id)
+            const subject = subjectsMap.get(section?.subject_id)
+            const teacher = subject ? teachersMap.get(subject.teacher_id) : null
+
+            return {
+              enrollment_id: e.id,
+              student_id: e.student_id,
+              section_id: e.section_id,
+              subject_id: subject?.id,
+              enrollment_status: e.status,
+              enrolled_at: e.enrolled_at,
+              section_name: section?.name,
+              section_code: section?.section_code,
+              subject_name: subject?.name,
+              subject_grade_level: subject?.grade_level,
+              subject_description: subject?.description,
+              teacher_id: teacher?.id,
+              teacher_name: teacher?.full_name,
+              teacher_email: teacher?.email,
+              teacher_department: teacher?.department
+            }
+          })
+        }
+
+        if (!enrollments || enrollments.length === 0) {
+          console.log('ℹ️ No enrollments found after processing')
+          this.subjects = []
+          this.isLoading = false
+          return
+        }
+
+        console.log('✓ Processing', enrollments.length, 'enrollments')
 
         const sectionIds = enrollments.map(e => e.section_id)
 
@@ -739,18 +808,12 @@ export default {
         })
         
         this.subjects = newSubjects
-        console.log('Successfully loaded', this.subjects.length, 'subjects')
+        console.log('✅ Successfully loaded', this.subjects.length, 'subjects')
 
       } catch (error) {
-        console.error('Error fetching subjects:', error)
-        
-        if (error.code === 'PGRST301' || error.message?.includes('JWT')) {
-          alert('Your session has expired. Please log in again.')
-          await this.$router.push('/login')
-        } else {
-          alert(`Unable to load subjects: ${error.message}`)
-          this.subjects = []
-        }
+        console.error('❌ Error fetching subjects:', error)
+        alert(`Unable to load subjects: ${error.message}`)
+        this.subjects = []
       } finally {
         this.isLoading = false
       }
@@ -762,10 +825,15 @@ export default {
       if (!code || code.length < 8) {
         this.previewSubject = null
         this.joinError = ''
+        this.isValidating = false
         return
       }
 
       try {
+        this.isValidating = true
+        this.previewSubject = null
+        this.joinError = ''
+        
         const searchCode = code.toUpperCase()
         console.log('🔍 Validating section code:', searchCode)
 
@@ -784,13 +852,10 @@ export default {
         }
 
         if (!sectionData) {
-          console.log('❌ Section not found')
           this.joinError = 'Section not found. Please check the code with your teacher.'
           this.previewSubject = null
           return
         }
-
-        console.log('✓ Found section:', sectionData.name)
 
         const { data: subjectData, error: subjectError } = await supabase
           .from('subjects')
@@ -800,13 +865,10 @@ export default {
           .maybeSingle()
 
         if (subjectError || !subjectData) {
-          console.error('❌ Subject lookup error:', subjectError)
           this.joinError = 'This section\'s subject is currently inactive.'
           this.previewSubject = null
           return
         }
-
-        console.log('✓ Found subject:', subjectData.name, `(Grade ${subjectData.grade_level})`)
 
         const { data: teacherData, error: teacherError } = await supabase
           .from('teachers')
@@ -816,13 +878,10 @@ export default {
           .maybeSingle()
 
         if (teacherError || !teacherData) {
-          console.error('❌ Teacher lookup error:', teacherError)
           this.joinError = 'This section\'s teacher is currently inactive.'
           this.previewSubject = null
           return
         }
-
-        console.log('✓ Found teacher:', teacherData.full_name)
 
         if (this.studentInfo && subjectData.grade_level !== this.studentInfo.grade_level) {
           this.joinError = `This subject is for Grade ${subjectData.grade_level} students. You are enrolled in Grade ${this.studentInfo.grade_level}.`
@@ -886,83 +945,62 @@ export default {
         }
         this.joinError = ''
 
-        console.log('✅ Preview ready!')
-        console.log('📊 Spots available:', sectionData.max_students - currentEnrollments, '/', sectionData.max_students)
+        console.log('✅ Preview ready!', this.previewSubject)
 
       } catch (error) {
         console.error('❌ Validation error:', error)
         this.joinError = `Error: ${error.message}`
         this.previewSubject = null
+      } finally {
+        this.isValidating = false
       }
     },
 
+    
     async joinClass() {
       if (!this.joinForm.sectionCode || !this.studentInfo || !this.previewSubject) {
-        console.error('❌ Missing required data for joining class')
         this.joinError = 'Please enter a valid section code first.'
         return
       }
 
       this.isJoining = true
       this.joinError = ''
-      this.joinSuccess = ''
 
       try {
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-        console.log('🎓 STARTING CLASS ENROLLMENT')
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-        console.log('👤 Student ID:', this.studentInfo.id)
-        console.log('📚 Section ID:', this.previewSubject.sectionId)
-        console.log('🎯 Subject ID:', this.previewSubject.id)
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+        console.log('🎓 Starting enrollment...')
+        this.isLoading = true
+        this.loadingMessage = 'Joining class...'
 
-        const { data: existingCheck, error: checkError } = await supabase
-          .from('enrollments')
-          .select('id, status')
-          .eq('student_id', this.studentInfo.id)
-          .eq('section_id', this.previewSubject.sectionId)
-        
-        if (checkError) {
-          console.error('❌ Error checking existing enrollment:', checkError)
-        }
-        
-        if (existingCheck && existingCheck.length > 0) {
-          const existing = existingCheck[0]
-          if (existing.status === 'active') {
-            throw new Error('You are already enrolled in this section')
-          }
-        }
-
-        console.log('✓ No existing active enrollment found')
-
-        console.log('Step 2: Creating enrollment record...')
         const { data: newEnrollment, error: enrollmentError } = await supabase
           .from('enrollments')
-          .insert([{
+          .insert({
             student_id: this.studentInfo.id,
             section_id: this.previewSubject.sectionId,
             subject_id: this.previewSubject.id,
             status: 'active'
-          }])
+          })
           .select()
           .single()
 
         if (enrollmentError) {
-          console.error('❌ Enrollment insert error:', enrollmentError)
+          console.error('❌ Enrollment error:', enrollmentError)
+          this.isLoading = false
           throw enrollmentError
         }
 
-        console.log('✅ Enrollment created successfully!')
-        console.log('Enrollment ID:', newEnrollment.id)
+        console.log('✅ Enrollment successful!')
 
-        this.joinSuccess = `Successfully joined ${this.previewSubject.name}!`
-        this.joinError = ''
-
+        const savedPreview = this.previewSubject
+        
         this.showJoinModal = false
         this.joinForm.sectionCode = ''
-        const savedPreview = this.previewSubject
         this.previewSubject = null
 
+        this.loadingMessage = 'Loading your updated subjects...'
+        await this.fetchSubjects()
+
+        this.isLoading = false
+        
         alert(
           `🎉 Welcome to ${savedPreview.name}!\n\n` +
           `📚 Section: ${savedPreview.section}\n` +
@@ -971,20 +1009,10 @@ export default {
           `The subject has been added to your dashboard.`
         )
 
-        console.log('Step 3: Refreshing subject list...')
-        await this.fetchSubjects()
-
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-        console.log('✅ ENROLLMENT COMPLETED SUCCESSFULLY')
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-
       } catch (error) {
-        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-        console.error('❌ ENROLLMENT FAILED')
-        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-        console.error('Error:', error)
+        console.error('❌ Enrollment failed:', error)
+        this.isLoading = false
         this.joinError = error.message || 'Failed to join class. Please try again.'
-        this.joinSuccess = ''
       } finally {
         this.isJoining = false
       }
@@ -992,32 +1020,34 @@ export default {
 
     clearJoinError() {
       this.joinError = ''
-      this.joinSuccess = ''
       
       if (this.validationTimeout) {
         clearTimeout(this.validationTimeout)
       }
       
-      if (this.joinForm.sectionCode.length < 8) {
-        this.previewSubject = null
+      this.previewSubject = null
+      this.isValidating = false
+      
+      const code = this.joinForm.sectionCode?.trim()
+      
+      if (!code || code.length < 8) {
         return
       }
       
       this.validationTimeout = setTimeout(() => {
         this.validateSectionCode()
-      }, 500)
+      }, 800)
     },
 
     closeJoinModal() {
       this.showJoinModal = false
       this.joinForm.sectionCode = ''
       this.joinError = ''
-      this.joinSuccess = ''
       this.previewSubject = null
+      this.isValidating = false
       
       if (this.validationTimeout) {
         clearTimeout(this.validationTimeout)
-        this.validationTimeout = null
       }
     },
 
@@ -1038,22 +1068,13 @@ export default {
       this.isUnenrolling = true
 
       try {
-        console.log('Starting unenrollment process for:', this.unenrollSubject.name)
-
-        const { error: unenrollError } = await supabase
+        const { error } = await supabase
           .from('enrollments')
-          .update({ 
-            status: 'dropped'
-          })
+          .update({ status: 'dropped' })
           .eq('id', this.unenrollSubject.enrollmentId)
           .eq('student_id', this.studentInfo.id)
 
-        if (unenrollError) {
-          console.error('Unenrollment error:', unenrollError)
-          throw unenrollError
-        }
-
-        console.log('Successfully unenrolled from:', this.unenrollSubject.name)
+        if (error) throw error
 
         this.showUnenrollModal = false
         
@@ -1061,74 +1082,20 @@ export default {
         this.archivedSubjects.delete(this.unenrollSubject.id)
         this.saveUserPreferences()
 
-        await new Promise(resolve => setTimeout(resolve, 500))
-        
         await this.fetchSubjects()
 
-        setTimeout(() => {
-          alert(`You have been successfully unenrolled from ${this.unenrollSubject.name}.`)
-        }, 200)
-
+        alert(`You have been successfully unenrolled from ${this.unenrollSubject.name}.`)
         this.unenrollSubject = null
 
       } catch (error) {
-        console.error('Error during unenrollment:', error)
-        alert(`Failed to unenroll: ${error.message}. Please try again.`)
+        console.error('❌ Unenrollment error:', error)
+        alert(`Failed to unenroll: ${error.message}`)
       } finally {
         this.isUnenrolling = false
       }
     },
 
-    viewSubjectDetails(subject) {
-      this.$router.push({
-        name: 'SubjectDetails',
-        params: {
-          subjectId: subject.id,
-          sectionId: subject.sectionId
-        },
-        query: {
-          subjectName: subject.name,
-          sectionName: subject.section,
-          instructor: subject.instructor,
-          gradeLevel: subject.gradeLevel,
-          sectionCode: subject.code
-        }
-      })
-    },
-
-    async refreshSubjectStats(subjectId) {
-      try {
-        const subject = this.subjects.find(s => s.id === subjectId)
-        if (!subject) return
-
-        const { data: quizzes } = await supabase
-          .from('quizzes')
-          .select('id, title, status')
-          .eq('section_id', subject.sectionId)
-          .eq('status', 'published')
-
-        const { data: results } = await supabase
-          .from('quiz_results')
-          .select('quiz_id, best_score, best_percentage')
-          .eq('student_id', this.studentInfo.id)
-          .in('quiz_id', (quizzes || []).map(q => q.id))
-
-        subject.totalQuizzes = (quizzes || []).length
-        subject.completedQuizzes = (results || []).length
-        subject.availableQuizzes = Math.max(0, subject.totalQuizzes - subject.completedQuizzes)
-
-        if (results && results.length > 0) {
-          const avgScore = results.reduce((sum, r) => sum + r.best_percentage, 0) / results.length
-          subject.overallScore = avgScore
-        }
-      } catch (error) {
-        console.warn('Failed to refresh subject stats:', error)
-      }
-    },
-
     takeQuiz(subject) {
-      console.log('Navigating to TakeQuiz for subject:', subject)
-      
       this.$router.push({
         name: 'TakeQuiz',
         params: {
@@ -1139,24 +1106,7 @@ export default {
           subjectName: subject.name,
           sectionName: subject.section,
           gradeLevel: subject.gradeLevel,
-          sectionCode: subject.code,
-          availableQuizzes: subject.availableQuizzes || 0
-        }
-      }).catch(error => {
-        console.error('Navigation error:', error);
-        alert('Unable to navigate to quiz page. Please try again.');
-      });
-    },
-
-    viewCompletedQuizzes(subject) {
-      this.$router.push({
-        name: 'CompletedQuizzes',
-        params: {
-          subjectId: subject.id,
-          sectionId: subject.sectionId
-        },
-        query: {
-          subjectName: subject.name
+          sectionCode: subject.code
         }
       })
     },
@@ -1175,54 +1125,51 @@ export default {
           currentGrade: subject.currentGrade,
           overallScore: subject.overallScore
         }
-      }).catch(error => {
-        console.error('Navigation error:', error);
-        alert('Unable to navigate to grades page. Please try again.');
-      });
+      })
     },
 
     toggleFavorite(subjectId) {
       if (this.favoriteSubjects.has(subjectId)) {
-        this.favoriteSubjects.delete(subjectId);
+        this.favoriteSubjects.delete(subjectId)
       } else {
-        this.favoriteSubjects.add(subjectId);
+        this.favoriteSubjects.add(subjectId)
       }
-      this.saveUserPreferences();
+      this.saveUserPreferences()
     },
 
     toggleArchive(subjectId) {
       if (this.archivedSubjects.has(subjectId)) {
-        this.archivedSubjects.delete(subjectId);
+        this.archivedSubjects.delete(subjectId)
       } else {
-        this.archivedSubjects.add(subjectId);
-        this.favoriteSubjects.delete(subjectId);
+        this.archivedSubjects.add(subjectId)
+        this.favoriteSubjects.delete(subjectId)
       }
-      this.saveUserPreferences();
-      this.closeAllOptionsMenus();
+      this.saveUserPreferences()
+      this.closeAllOptionsMenus()
     },
 
     toggleOptionsMenu(subjectId) {
       this.subjects.forEach(subject => {
         if (subject.id !== subjectId) {
-          subject.showOptions = false;
+          subject.showOptions = false
         }
-      });
+      })
       
-      const subject = this.subjects.find(s => s.id === subjectId);
+      const subject = this.subjects.find(s => s.id === subjectId)
       if (subject) {
-        subject.showOptions = !subject.showOptions;
+        subject.showOptions = !subject.showOptions
       }
     },
 
     closeAllOptionsMenus() {
       this.subjects.forEach(subject => {
-        subject.showOptions = false;
-      });
+        subject.showOptions = false
+      })
     },
 
     getUserStorageKey(key) {
-      const userId = this.currentUser?.id || 'anonymous';
-      return `intelligrade_${key}_${userId}`;
+      const userId = this.currentUser?.id || 'anonymous'
+      return `intelligrade_${key}_${userId}`
     },
 
     saveUserPreferences() {
@@ -1230,93 +1177,66 @@ export default {
         localStorage.setItem(
           this.getUserStorageKey('favorites'),
           JSON.stringify(Array.from(this.favoriteSubjects))
-        );
+        )
         localStorage.setItem(
           this.getUserStorageKey('archived'),
           JSON.stringify(Array.from(this.archivedSubjects))
-        );
+        )
       } catch (error) {
-        console.warn('Failed to save user preferences:', error);
+        console.warn('Failed to save preferences:', error)
       }
     },
 
     loadUserPreferences() {
       try {
-        const favoritesData = localStorage.getItem(this.getUserStorageKey('favorites'));
-        const archivedData = localStorage.getItem(this.getUserStorageKey('archived'));
+        const favoritesData = localStorage.getItem(this.getUserStorageKey('favorites'))
+        const archivedData = localStorage.getItem(this.getUserStorageKey('archived'))
         
         if (favoritesData) {
-          this.favoriteSubjects = new Set(JSON.parse(favoritesData));
+          this.favoriteSubjects = new Set(JSON.parse(favoritesData))
         }
         if (archivedData) {
-          this.archivedSubjects = new Set(JSON.parse(archivedData));
+          this.archivedSubjects = new Set(JSON.parse(archivedData))
         }
       } catch (error) {
-        console.warn('Failed to load user preferences:', error);
-        this.favoriteSubjects = new Set();
-        this.archivedSubjects = new Set();
-      }
-    },
-
-    clearUserPreferences() {
-      try {
-        localStorage.removeItem(this.getUserStorageKey('favorites'));
-        localStorage.removeItem(this.getUserStorageKey('archived'));
-        this.favoriteSubjects = new Set();
-        this.archivedSubjects = new Set();
-      } catch (error) {
-        console.warn('Failed to clear user preferences:', error);
+        console.warn('Failed to load preferences:', error)
+        this.favoriteSubjects = new Set()
+        this.archivedSubjects = new Set()
       }
     },
   },
 
   async mounted() {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-    console.log('🚀 COMPONENT MOUNTED - Student Subjects')
+    console.log('🚀 COMPONENT MOUNTED')
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
     
     try {
       const authSuccess = await this.initializeAuth()
       
       if (!authSuccess) {
-        console.log('❌ Auth initialization failed')
+        console.log('❌ Auth failed')
         return
       }
 
-      console.log('✓ Authentication successful')
-
       this.loadUserPreferences()
-      console.log('✓ User preferences loaded')
-      
       await this.fetchSubjects()
-      console.log('✓ Subjects loaded')
-      
       
       document.addEventListener('click', this.closeAllOptionsMenus)
       
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-      console.log('✅ COMPONENT INITIALIZATION COMPLETE')
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+      console.log('✅ INITIALIZATION COMPLETE')
       
     } catch (error) {
-      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-      console.error('❌ COMPONENT MOUNT ERROR')
-      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-      console.error('Error:', error)
+      console.error('❌ MOUNT ERROR:', error)
       await this.$router.push('/login')
     }
 
     supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔐 Auth state changed:', event)
-      
       if (event === 'SIGNED_IN' && session?.user) {
-        console.log('✓ User signed in, reinitializing...')
         const success = await this.initializeAuth()
-        if (success) {
-          await this.fetchSubjects()
-        }
+        if (success) await this.fetchSubjects()
       } else if (event === 'SIGNED_OUT') {
-        console.log('❌ User signed out, redirecting to login...')
         this.subjects = []
         this.currentUser = null
         this.studentInfo = null
@@ -1324,28 +1244,11 @@ export default {
       }
     })
   },
-
-  beforeUnmount() {
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-    console.log('🧹 COMPONENT UNMOUNTING - Cleanup')
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-    
-    if (this.pollingInterval) {
-      clearInterval(this.pollingInterval)
-      console.log('✓ Polling interval cleared')
-    }
-    
-    if (this.validationTimeout) {
-      clearTimeout(this.validationTimeout)
-      console.log('✓ Validation timeout cleared')
-    }
-    
+  
+  OnUnmounted() {
+    if (this.pollingInterval) clearInterval(this.pollingInterval)
+    if (this.validationTimeout) clearTimeout(this.validationTimeout)
     document.removeEventListener('click', this.closeAllOptionsMenus)
-    console.log('✓ Event listeners removed')
-    
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-    console.log('✅ CLEANUP COMPLETE')
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
   }
 }
 </script>
@@ -3348,4 +3251,64 @@ export default {
 }
 
 /* ==================== END UNENROLL MODAL STYLES ==================== */
+
+/* ==================== VALIDATION LOADING STYLES ==================== */
+.validation-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  margin-top: 1rem;
+  background: rgba(61, 141, 122, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(61, 141, 122, 0.2);
+}
+
+.validation-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(61, 141, 122, 0.2);
+  border-top: 3px solid #3d8d7a;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 0.75rem;
+}
+
+.validation-loading p {
+  color: #3d8d7a;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.dark .validation-loading {
+  background: rgba(32, 201, 151, 0.08);
+  border-color: rgba(32, 201, 151, 0.3);
+}
+
+.dark .validation-spinner {
+  border-color: rgba(32, 201, 151, 0.2);
+  border-top-color: #20c997;
+}
+
+.dark .validation-loading p {
+  color: #20c997;
+}
+
+@media (max-width: 768px) {
+  .validation-loading {
+    padding: 1.5rem 1rem;
+  }
+
+  .validation-spinner {
+    width: 36px;
+    height: 36px;
+  }
+
+  .validation-loading p {
+    font-size: 0.9rem;
+  }
+}
+/* ==================== END VALIDATION LOADING STYLES ==================== */
 </style>

@@ -150,7 +150,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import { supabase } from '@/supabase.js';
 
 export default {
   name: 'ResetPassword',
@@ -166,9 +166,6 @@ export default {
     };
   },
   computed: {
-    token() {
-      return this.$route.query.token;
-    },
     isValidForm() {
       return this.password && 
              this.confirmPassword && 
@@ -176,9 +173,12 @@ export default {
              this.password.length >= 6;
     }
   },
-  mounted() {
-    // Check if token exists
-    if (!this.token) {
+  async mounted() {
+    // Supabase sends the access_token as a URL hash parameter
+    // We need to check if this is a password recovery session
+    const { data: { session }, error } = await supabase.auth.getSession();
+    
+    if (error || !session) {
       this.error = 'Invalid or missing reset token. Please request a new password reset.';
     }
   },
@@ -202,26 +202,25 @@ export default {
         return;
       }
 
-      if (!this.token) {
-        this.error = 'Invalid or missing reset token.';
-        return;
-      }
-
       this.loading = true;
       this.message = '';
       this.error = '';
       
       try {
-        // Use the backend API endpoint
-        const response = await axios.post('http://localhost:8000/auth/reset-password', {
-          token: this.token,
-          new_password: this.password
+        // Update the user's password using Supabase
+        const { data, error } = await supabase.auth.updateUser({
+          password: this.password
         });
+
+        if (error) {
+          throw error;
+        }
+
+        this.message = 'Your password has been reset successfully!';
         
-        this.message = response.data.message || 'Your password has been reset successfully. You can now log in with your new password.';
       } catch (err) {
         console.error('Reset password error:', err);
-        this.error = err.response?.data?.detail || 'Failed to reset password. Please try again or request a new reset link.';
+        this.error = err.message || 'Failed to reset password. Please try again or request a new reset link.';
       } finally {
         this.loading = false;
       }

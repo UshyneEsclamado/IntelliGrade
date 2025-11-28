@@ -1,4 +1,3 @@
-
 <template>
   <div class="grades-page">
     <!-- Header Section -->
@@ -267,6 +266,10 @@
                 <span class="summary-label">Submitted:</span>
                 <span class="summary-value">{{ formatPHTime(selectedQuiz.latest_attempt_date) }}</span>
               </div>
+              <div v-if="selectedAttempt?.teacher_feedback" class="summary-item full-width">
+                <span class="summary-label">Overall Teacher Feedback:</span>
+                <div class="teacher-feedback-box">{{ selectedAttempt.teacher_feedback }}</div>
+              </div>
             </div>
 
             <!-- Questions and Answers -->
@@ -296,10 +299,20 @@
               </div>
 
               <!-- Teacher Comment (if any) -->
-              <div v-if="answer.teacher_comment" class="teacher-comment">
-                <div class="comment-label">Teacher Comment:</div>
+              <div v-if="answer.teacher_comment && answer.teacher_comment.trim() !== ''" class="teacher-comment">
+                <div class="comment-label">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display: inline-block; margin-right: 0.25rem;">
+                    <path d="M8 10h8M8 14h8M6 4h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2z"/>
+                  </svg>
+                  Teacher Comment:
+                </div>
                 <div class="comment-text">{{ answer.teacher_comment }}</div>
               </div>
+            </div>
+
+            <!-- No answers message -->
+            <div v-if="previewAnswers.length === 0" class="no-answers">
+              <p>No answers found for this quiz attempt.</p>
             </div>
           </div>
         </div>
@@ -329,6 +342,7 @@ export default {
     const grades = ref([]);
     const showPreviewModal = ref(false);
     const selectedQuiz = ref(null);
+    const selectedAttempt = ref(null);
     const previewAnswers = ref([]);
     const loadingPreview = ref(false);
 
@@ -397,6 +411,41 @@ export default {
       const date = new Date(utcDateString);
       const options = { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Manila' };
       return date.toLocaleString('en-PH', options);
+    };
+
+    // Helper function to check if answer is correct
+    const checkIfAnswerIsCorrect = (answer, studentAnswer, correctAnswerData) => {
+      // If points_earned equals points_possible, it's correct
+      if (studentAnswer.points_earned >= studentAnswer.points_possible) {
+        return true;
+      }
+
+      // If points_earned is 0, it's incorrect
+      if (studentAnswer.points_earned === 0) {
+        return false;
+      }
+
+      // Double-check with actual answer comparison
+      if (answer.question_type === 'multiple_choice') {
+        // For multiple choice, check if selected option is correct
+        const selectedOption = answer.options.find(opt => opt.id === studentAnswer.selected_option_id);
+        return selectedOption ? selectedOption.is_correct === true : false;
+      } else if (answer.question_type === 'true_false' || answer.question_type === 'fill_blank') {
+        // For true/false and fill-in-blank, compare with correct answer
+        if (!correctAnswerData) return false;
+        
+        const studentAns = (studentAnswer.answer_text || '').trim();
+        const correctAns = correctAnswerData.correct_answer.trim();
+        
+        if (correctAnswerData.case_sensitive) {
+          return studentAns === correctAns;
+        } else {
+          return studentAns.toLowerCase() === correctAns.toLowerCase();
+        }
+      }
+
+      // Fallback to is_correct from database
+      return studentAnswer.is_correct === true;
     };
 
     // Load Functions
@@ -667,14 +716,15 @@ export default {
     // Quiz Preview
     const viewQuizPreview = async (quiz) => {
       selectedQuiz.value = quiz;
+      selectedAttempt.value = null;
       showPreviewModal.value = true;
       loadingPreview.value = true;
 
       try {
-        // Get latest graded/submitted attempt
+        // Get latest graded/submitted attempt with ALL fields including teacher feedback
         const { data: attempts, error: attemptsError } = await supabase
           .from('quiz_attempts')
-          .select('id, attempt_number, status')
+          .select('*')
           .eq('quiz_id', quiz.id)
           .eq('student_id', studentInfo.value.student_id)
           .in('status', ['submitted', 'graded', 'reviewed'])
@@ -687,17 +737,24 @@ export default {
           throw new Error('No quiz attempt found');
         }
 
-        const attemptId = attempts[0].id;
+        const attempt = attempts[0];
+        selectedAttempt.value = attempt;
+        const attemptId = attempt.id;
+        
         console.log('Loading preview for attempt:', attemptId);
+        console.log('Attempt data (including teacher_feedback):', attempt);
+        console.log('Teacher feedback:', attempt.teacher_feedback);
 
-        // Get student answers
+        // Get student answers with ALL fields including teacher comments
         const { data: answers, error: answersError } = await supabase
           .from('student_answers')
-          .select('id, question_id, selected_option_id, answer_text, is_correct, teacher_comment')
+          .select('*')
           .eq('attempt_id', attemptId)
           .order('id');
 
         if (answersError) throw answersError;
+        
+        console.log('Loaded student answers:', answers);
 
         if (!answers || answers.length === 0) {
           previewAnswers.value = [];
@@ -715,13 +772,21 @@ export default {
 
         if (questionsError) throw questionsError;
 
-        // Get options
+        // Get options for multiple choice questions
         const { data: options, error: optionsError } = await supabase
           .from('question_options')
           .select('id, question_id, option_number, option_text, is_correct')
           .in('question_id', questionIds);
 
         if (optionsError) throw optionsError;
+
+        // Get correct answers for true/false and fill-in-blank questions
+        const { data: correctAnswers, error: correctAnswersError } = await supabase
+          .from('question_answers')
+          .select('question_id, correct_answer, case_sensitive')
+          .in('question_id', questionIds);
+
+        if (correctAnswersError) throw correctAnswersError;
 
         // Build maps
         const questionsMap = {};
@@ -737,25 +802,54 @@ export default {
           optionsMap[opt.question_id].push(opt);
         });
 
-        // Build preview
+        const correctAnswersMap = {};
+        (correctAnswers || []).forEach(ca => {
+          correctAnswersMap[ca.question_id] = ca;
+        });
+
+        // Build preview with recalculated is_correct values
         previewAnswers.value = answers.map(answer => {
           const question = questionsMap[answer.question_id] || {};
           const questionOptions = optionsMap[answer.question_id] || [];
+          const correctAnswerData = correctAnswersMap[answer.question_id];
+
+          // Recalculate is_correct based on points or actual answer
+          const isCorrect = checkIfAnswerIsCorrect(
+            { question_type: question.question_type, options: questionOptions },
+            answer,
+            correctAnswerData
+          );
+
+          // Log for debugging
+          console.log(`Question ${question.question_number}:`, {
+            question_type: question.question_type,
+            points_earned: answer.points_earned,
+            points_possible: answer.points_possible,
+            is_correct_from_db: answer.is_correct,
+            is_correct_calculated: isCorrect,
+            teacher_comment: answer.teacher_comment
+          });
 
           return {
             question_id: answer.question_id,
             question_number: question.question_number || 0,
             question_type: question.question_type || 'multiple_choice',
             question_text: question.question_text || 'Question',
-            is_correct: answer.is_correct,
+            is_correct: isCorrect,
             selected_option_id: answer.selected_option_id,
             answer_text: answer.answer_text,
-            teacher_comment: answer.teacher_comment,
-            options: questionOptions
+            teacher_comment: answer.teacher_comment || '',
+            points_earned: answer.points_earned || 0,
+            points_possible: answer.points_possible || 1,
+            options: questionOptions,
+            correct_answer_data: correctAnswerData
           };
         }).sort((a, b) => a.question_number - b.question_number);
 
-        console.log('Preview loaded:', previewAnswers.value.length, 'answers');
+        console.log('Preview answers loaded:', previewAnswers.value.length);
+        console.log('Answers with teacher comments:', previewAnswers.value.filter(a => a.teacher_comment && a.teacher_comment.trim() !== '').length);
+        console.log('Correct answers:', previewAnswers.value.filter(a => a.is_correct).length);
+        console.log('Incorrect answers:', previewAnswers.value.filter(a => !a.is_correct).length);
 
       } catch (error) {
         console.error('Error loading quiz preview:', error);
@@ -785,6 +879,12 @@ export default {
         }
         return 'Unknown';
       }
+      
+      // For true/false and fill-in-blank, get from correct_answer_data
+      if (answer.correct_answer_data) {
+        return answer.correct_answer_data.correct_answer;
+      }
+      
       return 'See correct answer above';
     };
 
@@ -842,7 +942,7 @@ export default {
     return {
       loading, studentInfo, subject, section, grades, recentQuizzes, allGrades,
       completedQuizzes, averageGrade, highestGrade, lowestGrade, showPreviewModal,
-      selectedQuiz, previewAnswers, loadingPreview, isGraded, modalTitle,
+      selectedQuiz, selectedAttempt, previewAnswers, loadingPreview, isGraded, modalTitle,
       formatPHTime, formatShortDate, getStatusClass, getStatusText, getScoreClass, 
       calculateScore, viewQuizPreview, getStudentAnswerText, getCorrectAnswerText,
       goBack, goToQuizzes
@@ -2676,6 +2776,123 @@ export default {
   .btn-view {
     padding: 0.875rem 1.25rem;
     font-size: 0.9rem;
+  }
+}
+
+/* Teacher Feedback Styles */
+.summary-item.full-width {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.teacher-feedback-box {
+  width: 100%;
+  background: #fff7ed;
+  border: 2px solid #fb923c;
+  border-radius: 8px;
+  padding: 1rem;
+  color: #1f2937;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  margin-top: 0.5rem;
+}
+
+.dark .teacher-feedback-box {
+  background: rgba(251, 146, 60, 0.1);
+  border-color: #fb923c;
+  color: #A3D1C6;
+}
+
+.teacher-comment {
+  background: #fef3c7;
+  border: 2px solid #fbbf24;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.dark .teacher-comment {
+  background: rgba(251, 191, 36, 0.1);
+  border-color: #fbbf24;
+}
+
+.comment-label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #92400e;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.dark .comment-label {
+  color: #fbbf24;
+}
+
+.comment-text {
+  background: white;
+  padding: 0.875rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #1f2937;
+  border: 1px solid #fde68a;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.dark .comment-text {
+  background: #23272b;
+  color: #e5e7eb;
+  border-color: rgba(251, 191, 36, 0.3);
+}
+
+/* No answers state */
+.no-answers {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #6b7280;
+}
+
+.dark .no-answers {
+  color: #9ca3af;
+}
+
+.no-answers p {
+  font-size: 1rem;
+  font-style: italic;
+}
+
+/* Responsive adjustments for feedback */
+@media (max-width: 480px) {
+  .teacher-feedback-box {
+    padding: 0.875rem;
+    font-size: 0.813rem;
+  }
+
+  .teacher-comment {
+    padding: 0.875rem;
+    margin-top: 0.875rem;
+  }
+
+  .comment-label {
+    font-size: 0.813rem;
+  }
+
+  .comment-text {
+    padding: 0.75rem;
+    font-size: 0.813rem;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .teacher-feedback-box {
+    padding: 0.95rem;
+  }
+
+  .teacher-comment {
+    padding: 0.95rem;
   }
 }
 </style>

@@ -124,7 +124,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import { supabase } from '@/supabase.js';
 
 export default {
   name: 'ForgotPassword',
@@ -133,11 +133,7 @@ export default {
       email: '',
       loading: false,
       message: '',
-      error: '',
-      showDevHelper: false,
-      gettingLink: false,
-      resetLinkData: null,
-      copied: false
+      error: ''
     };
   },
   methods: {
@@ -147,58 +143,27 @@ export default {
         return;
       }
 
+      // Clear previous messages
       this.loading = true;
       this.message = '';
       this.error = '';
       
       try {
-        // Use the backend API endpoint
-        const response = await axios.post('http://localhost:8000/auth/forgot-password', { 
-          email: this.email 
+        const { error } = await supabase.auth.resetPasswordForEmail(this.email, {
+          redirectTo: 'http://localhost:5173/reset-password'
         });
-        
-        this.message = response.data.message || 'If your email exists in our system, a reset link has been sent.';
-        
-        // Show development helper if response indicates console check or demo mode
-        if (this.message.includes('console') || this.message.includes('demo') || this.message.includes('development')) {
-          this.showDevHelper = true;
+
+        if (error) {
+          throw error;
         }
+
+        this.message = 'If your email exists in our system, a password reset link has been sent. Please check your inbox.';
+        
       } catch (err) {
         console.error('Forgot password error:', err);
-        this.error = err.response?.data?.detail || 'Failed to send reset link. Please try again.';
+        this.error = err.message || 'Failed to send reset link. Please try again.';
       } finally {
         this.loading = false;
-      }
-    },
-
-    async getResetLink() {
-      if (!this.email) {
-        this.error = "Please enter your email first.";
-        return;
-      }
-
-      this.gettingLink = true;
-      this.resetLinkData = null;
-      
-      try {
-        const response = await axios.get(`http://localhost:8000/auth/get-reset-link/${this.email}`);
-        this.resetLinkData = response.data;
-      } catch (err) {
-        console.error('Error getting reset link:', err);
-        this.error = 'Failed to get reset link.';
-      } finally {
-        this.gettingLink = false;
-      }
-    },
-
-    copyLink() {
-      if (this.resetLinkData && this.$refs.linkInput) {
-        this.$refs.linkInput.select();
-        document.execCommand('copy');
-        this.copied = true;
-        setTimeout(() => {
-          this.copied = false;
-        }, 2000);
       }
     }
   }
