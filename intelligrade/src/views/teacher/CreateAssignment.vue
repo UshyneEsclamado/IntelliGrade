@@ -438,7 +438,7 @@
           </svg>
         </div>
         <h3>Assignment Created Successfully!</h3>
-        <p>Your assignment has been created and {{ formData.publish_immediately ? 'published' : 'saved as draft' }}.</p>
+        <p>Your assignment has been created and {{ formData.publish_immediately ? 'published' : 'draft' }}.</p>
         <div class="modal-actions">
           <button @click="createAnother" class="btn-secondary">Create Another</button>
           <button @click="goToAssignments" class="btn-primary">View Assignments</button>
@@ -519,37 +519,72 @@ const minDate = computed(() => {
   return now.toISOString().slice(0, 16)
 })
 
-// Load teacher info
+// ✅✅✅ TAMANG LOAD TEACHER INFO - Para sa iyong DB structure
 const loadTeacherInfo = async () => {
   try {
+    console.log('🔍 Step 1: Getting authenticated user...')
+    
+    // Get current authenticated user
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError) throw userError
     if (!user) throw new Error('Not authenticated')
 
-    // Get teacher ID from profile
+    console.log('✅ Auth user ID:', user.id)
+
+    // ✅ Step 2: Get profile using auth_user_id
+    console.log('🔍 Step 2: Looking up profile...')
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
-      .select('id, role')
-      .eq('auth_user_id', user.id)
+      .select('id, role, full_name, email')
+      .eq('auth_user_id', user.id)  // ← auth_user_id = auth.uid()
       .single()
 
-    if (profileError) throw profileError
-    if (profileData.role !== 'teacher') throw new Error('Not authorized')
+    if (profileError) {
+      console.error('❌ Profile lookup error:', profileError)
+      throw new Error('Profile not found: ' + profileError.message)
+    }
 
-    // Get teacher record
+    if (!profileData) {
+      throw new Error('No profile found for this user')
+    }
+
+    console.log('✅ Profile found:', profileData)
+
+    // Check if user is a teacher
+    if (profileData.role !== 'teacher') {
+      throw new Error('User is not a teacher')
+    }
+
+    // ✅ Step 3: Get teacher record using profile.id
+    console.log('🔍 Step 3: Looking up teacher record...')
     const { data: teacherData, error: teacherError } = await supabase
       .from('teachers')
-      .select('id')
-      .eq('profile_id', profileData.id)
+      .select('id, full_name, email, employee_id')
+      .eq('profile_id', profileData.id)  // ← profile_id = profiles.id
       .single()
 
-    if (teacherError) throw teacherError
+    if (teacherError) {
+      console.error('❌ Teacher lookup error:', teacherError)
+      throw new Error('Teacher record not found: ' + teacherError.message)
+    }
+
+    if (!teacherData) {
+      throw new Error('Teacher record not found in database')
+    }
+
+    console.log('✅ Teacher record found:', teacherData)
     
+    // Set teacher info
     teacherId.value = teacherData.id
+    fullName.value = teacherData.full_name || profileData.full_name || 'Teacher'
+    
+    console.log('✅ Teacher ID set to:', teacherId.value)
+    console.log('✅ Teacher name:', fullName.value)
+    
     return true
   } catch (error) {
-    console.error('Error loading teacher info:', error)
-    errorMessage.value = 'Failed to load teacher information'
+    console.error('❌ Error loading teacher info:', error)
+    errorMessage.value = 'Failed to load teacher information: ' + error.message
     showErrorModal.value = true
     return false
   }
@@ -634,15 +669,23 @@ const uploadFiles = async (assignmentId) => {
   return uploadedUrls
 }
 
+// Create assignment
 const createAssignment = async () => {
   isSubmitting.value = true
   
   try {
+    console.log('📝 Starting assignment creation...')
+    
     // Ensure teacher is loaded
     if (!teacherId.value) {
+      console.log('⚠️ Teacher ID not set, loading...')
       const loaded = await loadTeacherInfo()
-      if (!loaded) return
+      if (!loaded) {
+        throw new Error('Failed to load teacher information')
+      }
     }
+
+    console.log('✅ Using teacher ID:', teacherId.value)
 
     // Validate required fields
     if (!formData.value.title.trim()) {
@@ -677,7 +720,7 @@ const createAssignment = async () => {
       attachments: []
     }
 
-    console.log('Creating assignment:', assignmentData)
+    console.log('📋 Assignment data:', assignmentData)
 
     const { data: assignment, error: assignmentError } = await supabase
       .from('assignments')
@@ -686,35 +729,34 @@ const createAssignment = async () => {
       .single()
 
     if (assignmentError) {
-      console.error('Assignment creation error:', assignmentError)
+      console.error('❌ Assignment creation error:', assignmentError)
       throw assignmentError
     }
 
-    console.log('Assignment created:', assignment)
+    console.log('✅ Assignment created successfully:', assignment)
 
     // Upload files if any
     if (selectedFiles.value.length > 0) {
-      console.log('Uploading files...')
+      console.log('📎 Uploading files...')
       const attachments = await uploadFiles(assignment.id)
       
-      // Update assignment with attachments
       const { error: updateError } = await supabase
         .from('assignments')
         .update({ attachments })
         .eq('id', assignment.id)
 
       if (updateError) {
-        console.error('Error updating attachments:', updateError)
+        console.error('⚠️ Error updating attachments:', updateError)
       } else {
-        console.log('Attachments uploaded:', attachments)
+        console.log('✅ Attachments uploaded:', attachments)
       }
     }
 
-    // Show success
+    console.log('🎉 Assignment creation complete!')
     showSuccessModal.value = true
     
   } catch (error) {
-    console.error('Error creating assignment:', error)
+    console.error('❌ Error creating assignment:', error)
     errorMessage.value = error.message || 'Failed to create assignment. Please try again.'
     showErrorModal.value = true
   } finally {
@@ -739,7 +781,6 @@ const closeErrorModal = () => {
 
 const createAnother = () => {
   showSuccessModal.value = false
-  // Reset form
   formData.value = {
     title: '',
     description: '',
@@ -754,7 +795,6 @@ const createAnother = () => {
   }
   selectedFiles.value = []
   
-  // Set default due date
   const nextWeek = new Date()
   nextWeek.setDate(nextWeek.getDate() + 7)
   nextWeek.setMinutes(nextWeek.getMinutes() - nextWeek.getTimezoneOffset())
@@ -772,14 +812,16 @@ const goToAssignments = () => {
 }
 
 onMounted(async () => {
-  // Load teacher info
+  console.log('🚀 Component mounted')
+  
   await loadTeacherInfo()
   
-  // Set default due date (1 week from now)
   const nextWeek = new Date()
   nextWeek.setDate(nextWeek.getDate() + 7)
   nextWeek.setMinutes(nextWeek.getMinutes() - nextWeek.getTimezoneOffset())
   formData.value.due_date = nextWeek.toISOString().slice(0, 16)
+  
+  console.log('✅ Component ready!')
 })
 </script>
 

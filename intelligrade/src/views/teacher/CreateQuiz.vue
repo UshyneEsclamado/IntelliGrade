@@ -1200,7 +1200,7 @@ const goBack = () => {
 
 const goBackToQuizzes = () => {
   router.push({
-    name: 'ViewQuizzes',
+    name: 'ViewAssessments',
     params: {
       subjectId: subject.value.id,
       sectionId: section.value.id
@@ -1591,9 +1591,9 @@ const publishQuiz = async () => {
     // Show success message
     alert(`✅ Quiz Published Successfully!\n\n📝 ${newQuiz.title}\n🔑 Quiz Code: ${newQuiz.quiz_code}\n📊 ${insertedQuestions.length} questions\n\n✨ Students can now take this quiz!`);
 
-    // Redirect to view quizzes
+    // Redirect to view assessments
     router.push({
-      name: 'ViewQuizzes',
+      name: 'ViewAssessments',
       params: {
         subjectId: subject.value.id,
         sectionId: section.value.id

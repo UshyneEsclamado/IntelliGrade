@@ -290,7 +290,7 @@
         <p class="notice-description">Your teacher will enroll you in their classes. Once enrolled, your subjects will appear here.</p>
         <div class="notice-tip">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z"/>
+            <path d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M11,17H13V11H11V17Z"/>
           </svg>
           <span>Contact your teacher if you believe you should be enrolled in a class</span>
         </div>
@@ -429,13 +429,6 @@ export default {
       
       return filtered;
     },
-    canJoinClass() {
-      return this.joinForm.sectionCode && 
-             this.joinForm.sectionCode.length >= 8 && 
-             this.previewSubject && 
-             !this.joinError && 
-             !this.isJoining;
-    }
   },
   methods: {
     async initializeAuth() {
@@ -669,12 +662,26 @@ export default {
 
         const sectionIds = enrollments.map(e => e.section_id)
 
-        // Fetch quizzes
-        const { data: allQuizzes } = await supabase
+        // ============================================
+        // FETCH QUIZZES - FIXED LOGIC
+        // ============================================
+        console.log('📝 Fetching quizzes for sections:', sectionIds)
+        
+        const { data: allQuizzes, error: quizzesError } = await supabase
           .from('quizzes')
-          .select('id, section_id, title, status')
+          .select('id, section_id, title, status, start_date, end_date, created_at')
           .in('section_id', sectionIds)
-          .eq('status', 'published')
+          .eq('status', 'published')  // ✅ CRITICAL: Only fetch published quizzes
+
+        console.log('📊 Quizzes query result:', { 
+          count: allQuizzes?.length || 0, 
+          error: quizzesError,
+          quizzes: allQuizzes 
+        })
+
+        if (quizzesError) {
+          console.error('❌ Error fetching quizzes:', quizzesError)
+        }
 
         const quizzesBySection = {}
         if (allQuizzes) {
@@ -686,15 +693,26 @@ export default {
           })
         }
 
+        console.log('📦 Quizzes grouped by section:', quizzesBySection)
+
+        // Fetch quiz results for student
         const allQuizIds = allQuizzes ? allQuizzes.map(q => q.id) : []
         const resultsByQuizId = {}
         
         if (allQuizIds.length > 0) {
-          const { data: allResults } = await supabase
+          console.log('📈 Fetching quiz results for', allQuizIds.length, 'quizzes')
+          
+          const { data: allResults, error: resultsError } = await supabase
             .from('quiz_results')
-            .select('quiz_id, best_score, best_percentage')
+            .select('quiz_id, best_score, best_percentage, total_attempts')
             .eq('student_id', this.studentInfo.id)
             .in('quiz_id', allQuizIds)
+          
+          console.log('📊 Quiz results:', { count: allResults?.length || 0, error: resultsError })
+          
+          if (resultsError) {
+            console.error('❌ Error fetching quiz results:', resultsError)
+          }
           
           if (allResults) {
             allResults.forEach(result => {
@@ -703,17 +721,32 @@ export default {
           }
         }
 
-        // Fetch assignments
+        console.log('📋 Results by quiz ID:', resultsByQuizId)
+
+        // ============================================
+        // FETCH ASSIGNMENTS
+        // ============================================
         const assignmentsBySection = {}
         const assignmentsCompletedBySection = {}
         
         if (sectionIds.length > 0) {
-          // Get all assignments for the sections
-          const { data: allAssignments } = await supabase
+          console.log('📝 Fetching assignments for sections:', sectionIds)
+          
+          const { data: allAssignments, error: assignmentsError } = await supabase
             .from('assignments')
-            .select('id, section_id')
+            .select('id, section_id, subject_id, status, due_date')
             .in('section_id', sectionIds)
-            .eq('is_published', true)
+            .eq('status', 'published')
+
+          console.log('📝 Assignments query result:', { 
+            count: allAssignments?.length || 0, 
+            error: assignmentsError,
+            assignments: allAssignments 
+          })
+
+          if (assignmentsError) {
+            console.error('❌ Error fetching assignments:', assignmentsError)
+          }
 
           if (allAssignments) {
             allAssignments.forEach(assignment => {
@@ -721,25 +754,34 @@ export default {
               assignmentsBySection[sectionId] = (assignmentsBySection[sectionId] || 0) + 1
             })
 
-            // Get completed assignments (assignments with submissions)
             const assignmentIds = allAssignments.map(a => a.id)
             if (assignmentIds.length > 0) {
-              const { data: submissions } = await supabase
+              const { data: submissions, error: submissionsError } = await supabase
                 .from('assignment_submissions')
-                .select('assignment_id, assignments!inner(section_id)')
+                .select('assignment_id, assignment:assignments!inner(section_id)')
                 .in('assignment_id', assignmentIds)
-                .eq('student_id', user.value.id)
+                .eq('student_id', this.studentInfo.id)
+
+              console.log('📋 Submissions query result:', { 
+                count: submissions?.length || 0, 
+                error: submissionsError 
+              })
+
+              if (submissionsError) {
+                console.error('❌ Error fetching submissions:', submissionsError)
+              }
 
               if (submissions) {
                 submissions.forEach(submission => {
-                  const sectionId = submission.assignments.section_id
-                  assignmentsCompletedBySection[sectionId] = (assignmentsCompletedBySection[sectionId] || 0) + 1
+                  const sectionId = submission.assignment?.section_id || submission.assignments?.section_id
+                  if (sectionId) {
+                    assignmentsCompletedBySection[sectionId] = (assignmentsCompletedBySection[sectionId] || 0) + 1
+                  }
                 })
               }
             }
           }
 
-          // Initialize sections that have no assignments
           sectionIds.forEach(sId => {
             if (!(sId in assignmentsBySection)) {
               assignmentsBySection[sId] = 0
@@ -748,31 +790,81 @@ export default {
               assignmentsCompletedBySection[sId] = 0
             }
           })
+
+          console.log('📊 Assignment counts by section:', assignmentsBySection)
+          console.log('📊 Completed assignments by section:', assignmentsCompletedBySection)
         }
 
+        // ============================================
+        // BUILD SUBJECTS ARRAY
+        // ============================================
+        const now = new Date()
+        
         const newSubjects = enrollments.map(enrollment => {
           const sectionId = enrollment.section_id
           const subjectId = enrollment.subject_id
 
           const sectionQuizzes = quizzesBySection[sectionId] || []
           
+          console.log(`\n📚 Processing section ${sectionId}:`)
+          console.log('  Total quizzes:', sectionQuizzes.length)
+          
+          // ✅ FIXED: Calculate available quizzes correctly
+          const availableQuizzesList = sectionQuizzes.filter(quiz => {
+            // Check if quiz has started
+            const hasStarted = !quiz.start_date || new Date(quiz.start_date) <= now
+            // Check if quiz has not expired
+            const hasNotExpired = !quiz.end_date || new Date(quiz.end_date) > now
+            // Check if quiz is not completed
+            const result = resultsByQuizId[quiz.id]
+            const isNotCompleted = !result || result.total_attempts === 0
+            
+            const isAvailable = hasStarted && hasNotExpired && isNotCompleted
+            
+            console.log(`  Quiz "${quiz.title}":`, {
+              hasStarted,
+              hasNotExpired,
+              isNotCompleted,
+              isAvailable,
+              result: result ? `${result.total_attempts} attempts` : 'no attempts'
+            })
+            
+            return isAvailable
+          })
+          
           const completedQuizIds = sectionQuizzes
             .map(q => q.id)
-            .filter(quizId => resultsByQuizId[quizId])
+            .filter(quizId => {
+              const result = resultsByQuizId[quizId]
+              return result && result.total_attempts > 0
+            })
 
           const totalQuizzes = sectionQuizzes.length
           const completedQuizzes = completedQuizIds.length
-          const availableQuizzes = Math.max(0, totalQuizzes - completedQuizzes)
+          const availableQuizzes = availableQuizzesList.length
+
+          console.log('  Final counts:', {
+            total: totalQuizzes,
+            completed: completedQuizzes,
+            available: availableQuizzes
+          })
 
           // Get assignment counts
           const totalAssignments = assignmentsBySection[sectionId] || 0
           const completedAssignments = assignmentsCompletedBySection[sectionId] || 0
           const availableAssignments = Math.max(0, totalAssignments - completedAssignments)
 
+          console.log(`  Assignments:`, { 
+            total: totalAssignments, 
+            completed: completedAssignments, 
+            available: availableAssignments 
+          })
+
           // Calculate total assessments
           const totalAssessments = totalQuizzes + totalAssignments
           const completedAssessments = completedQuizzes + completedAssignments
 
+          // Calculate grade
           let currentGrade = '--'
           let overallScore = null
           
@@ -820,7 +912,8 @@ export default {
         })
         
         this.subjects = newSubjects
-        console.log('✅ Successfully loaded', this.subjects.length, 'subjects')
+        console.log('\n✅ Successfully loaded', this.subjects.length, 'subjects')
+        console.log('📋 Final subjects data:', this.subjects)
 
       } catch (error) {
         console.error('❌ Error fetching subjects:', error)
@@ -877,7 +970,6 @@ export default {
 
     viewAssessments(subject, type) {
       if (type === 'assignment') {
-        // Navigate to assignments page
         this.$router.push({
           name: 'TakeAssignments',
           params: {
@@ -891,7 +983,6 @@ export default {
           }
         })
       } else if (type === 'quiz') {
-        // Navigate to quiz page
         this.$router.push({
           name: 'TakeQuiz',
           params: {
@@ -905,7 +996,6 @@ export default {
           }
         })
       } else {
-        // For other types, navigate to assessment list filtered by type
         this.$router.push({
           name: 'StudentAssessments',
           params: {
@@ -915,7 +1005,7 @@ export default {
           query: {
             subjectName: subject.name,
             sectionName: subject.section,
-            type: type, // 'quiz', 'assignment', or 'activity'
+            type: type,
             instructor: subject.instructor
           }
         })
@@ -1072,9 +1162,8 @@ export default {
     })
   },
   
-  OnUnmounted() {
+  beforeUnmount() {
     if (this.pollingInterval) clearInterval(this.pollingInterval)
-    if (this.validationTimeout) clearTimeout(this.validationTimeout)
     document.removeEventListener('click', this.closeAllOptionsMenus)
   }
 }
@@ -2950,114 +3039,6 @@ export default {
   .filter-tab {
     padding: 0.625rem 0.875rem;
     font-size: 0.8rem;
-  }
-}
-
-/* iPhone 12 Pro specific optimizations */
-@media (max-width: 390px) {
-  .section-header-card,
-  .minimal-header-card {
-    margin: 0.5rem;
-  }
-
-  .controls-section {
-    margin: 0 0.5rem 1rem 0.5rem;
-  }
-
-  .subjects-grid {
-    margin: 0 0.5rem;
-  }
-
-  .empty-state {
-    margin: 0.5rem;
-  }
-
-  .options-dropdown {
-    left: 0.5rem;
-    right: 0.5rem;
-  }
-
-  .modal-overlay {
-    padding: 0.5rem;
-  }
-}
-
-/* ==================== END MOBILE RESPONSIVE STYLES ==================== */
-</style>
-<style scoped>
-@media (max-width: 768px) {
-  .header-stats-desktop {
-    display: none !important;
-  }
-  .header-stats-mobile {
-    display: block !important;
-    width: 100%;
-    margin-top: 1.1rem;
-  }
-  .formal-mobile-card {
-    background: #f8fffe;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(61, 141, 122, 0.06);
-    border: 1.5px solid #e6f2ed;
-    padding: 1.1rem 1rem 1.2rem 1rem;
-    margin-top: 0.5rem;
-    margin-bottom: 0.2rem;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.9rem;
-  }
-  .formal-mobile-stats {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1.2rem;
-  }
-  .formal-mobile-stats .stat-item {
-    flex: 1;
-    text-align: left;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.1rem;
-  }
-  .formal-mobile-stats .stat-number {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #3d8d7a;
-    margin-bottom: 0.1rem;
-  }
-  .formal-mobile-stats .stat-label {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #20c997;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  .formal-join-btn {
-    background: #20c997;
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 1rem;
-    padding: 0.85rem 1.3rem;
-    box-shadow: 0 2px 8px rgba(32, 201, 151, 0.13);
-    margin-left: 1.2rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: background 0.2s, box-shadow 0.2s;
-  }
-  .formal-join-btn:hover {
-    background: #1ba085;
-    box-shadow: 0 4px 12px rgba(32, 201, 151, 0.22);
-  }
-}
-@media (min-width: 769px) {
-  .header-stats-mobile {
-    display: none !important;
   }
 }
 

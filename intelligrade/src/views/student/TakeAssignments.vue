@@ -434,7 +434,6 @@
   </div>
 </template>
 
-// ...existing code...
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
@@ -537,6 +536,47 @@ const calculatePercentage = (score, total) => {
   return Math.round((score / total) * 100)
 }
 
+// Helper Methods
+const getSubmission = (assignmentId) => {
+  return submissions.value.find(s => s.assignment_id === assignmentId)
+}
+
+const getSubmissionStatus = (assignment) => {
+  const submission = getSubmission(assignment.id)
+  if (!submission) return 'not_submitted'
+  return submission.status
+}
+
+const getAssignmentStatusClass = () => {
+  if (!selectedAssignment.value) return 'available'
+  
+  const submission = getSubmission(selectedAssignment.value.id)
+  
+  if (submission?.status === 'graded') return 'graded'
+  if (submission?.status === 'submitted') return 'submitted'
+  if (isOverdue(selectedAssignment.value.due_date)) {
+    return selectedAssignment.value.allow_late_submission ? 'overdue-allowed' : 'overdue'
+  }
+  
+  return 'available'
+}
+
+const getAssignmentStatusText = () => {
+  if (!selectedAssignment.value) return 'Available'
+  
+  const submission = getSubmission(selectedAssignment.value.id)
+  
+  if (submission?.status === 'graded') return 'Graded'
+  if (submission?.status === 'submitted') return 'Submitted - Awaiting Grade'
+  if (isOverdue(selectedAssignment.value.due_date)) {
+    return selectedAssignment.value.allow_late_submission 
+      ? 'Overdue - Late Submission Allowed' 
+      : 'Overdue - Closed'
+  }
+  
+  return 'Available'
+}
+
 // Computed Properties
 const newAssignments = computed(() => {
   const now = new Date()
@@ -577,7 +617,7 @@ const canSubmit = computed(() => {
   return false
 })
 
-// Methods
+// Data Loading Methods
 const loadStudentInfo = async () => {
   try {
     const { data: { session } } = await supabase.auth.getSession()
@@ -640,42 +680,83 @@ const loadRouteParams = () => {
 
 const loadAssignments = async () => {
   try {
-    const { data } = await supabase
+    console.log('📚 Fetching assignments...')
+    console.log('🔍 Section ID:', section.value.id)
+    console.log('🔍 Student ID:', studentInfo.value.student_id)
+
+    // ✅ Fetch published assignments for this section
+    const { data: assignmentsData, error: assignmentsError } = await supabase
       .from('assignments')
       .select('*')
       .eq('section_id', section.value.id)
+      .eq('subject_id', subject.value.id)
       .eq('status', 'published')
       .order('created_at', { ascending: false })
 
-    assignments.value = data || []
+    if (assignmentsError) {
+      console.error('❌ Error fetching assignments:', assignmentsError)
+      throw assignmentsError
+    }
+
+    console.log('✅ Assignments fetched:', assignmentsData?.length || 0)
+    console.log('📋 Assignments data:', assignmentsData)
+
+    assignments.value = assignmentsData || []
+    
+    // Load submissions after assignments are loaded
     await loadSubmissions()
+    
   } catch (error) {
-    console.error('Error loading assignments:', error)
-    alert('Failed to load assignments')
+    console.error('❌ Error loading assignments:', error)
+    alert('Failed to load assignments: ' + error.message)
   }
 }
 
 const loadSubmissions = async () => {
   try {
     if (assignments.value.length === 0) {
+      console.log('⚠️ No assignments to load submissions for')
       submissions.value = []
       return
     }
 
-    const { data } = await supabase
+    if (!studentInfo.value.student_id) {
+      console.error('❌ No student ID available')
+      return
+    }
+
+    console.log('📝 Fetching submissions for student:', studentInfo.value.student_id)
+    console.log('📋 Assignment IDs:', assignments.value.map(a => a.id))
+
+    const { data: submissionsData, error: submissionsError } = await supabase
       .from('assignment_submissions')
       .select('*')
       .eq('student_id', studentInfo.value.student_id)
       .in('assignment_id', assignments.value.map(a => a.id))
 
-    submissions.value = data || []
+    if (submissionsError) {
+      console.error('❌ Error fetching submissions:', submissionsError)
+      throw submissionsError
+    }
+
+    console.log('✅ Submissions fetched:', submissionsData?.length || 0)
+    console.log('📋 Submissions data:', submissionsData)
+
+    submissions.value = submissionsData || []
+    
   } catch (error) {
-    console.error('Error loading submissions:', error)
+    console.error('❌ Error loading submissions:', error)
   }
 }
 
+// Real-time Subscription
 const setupRealtimeSubscription = () => {
-  if (!section.value.id) return
+  if (!section.value.id || !subject.value.id) {
+    console.warn('⚠️ Missing section or subject ID for subscription')
+    return
+  }
+
+  console.log('📡 Setting up realtime subscription for section:', section.value.id)
 
   assignmentSubscription = supabase
     .channel(`section-${section.value.id}-assignments`)
@@ -685,76 +766,64 @@ const setupRealtimeSubscription = () => {
       table: 'assignments',
       filter: `section_id=eq.${section.value.id}`
     }, async (payload) => {
+      console.log('📡 Assignment change detected:', payload.eventType)
+      
       if (payload.eventType === 'INSERT') {
-        assignments.value.unshift(payload.new)
+        // Only add if published
+        if (payload.new.status === 'published') {
+          console.log('✅ New published assignment added')
+          assignments.value.unshift(payload.new)
+        }
       } else if (payload.eventType === 'UPDATE') {
         const index = assignments.value.findIndex(a => a.id === payload.new.id)
-        if (index !== -1) assignments.value[index] = payload.new
+        if (payload.new.status === 'published') {
+          if (index !== -1) {
+            console.log('✅ Assignment updated')
+            assignments.value[index] = payload.new
+          } else {
+            console.log('✅ Assignment published, adding to list')
+            assignments.value.unshift(payload.new)
+          }
+        } else {
+          // If unpublished, remove from list
+          if (index !== -1) {
+            console.log('⚠️ Assignment unpublished, removing from list')
+            assignments.value.splice(index, 1)
+          }
+        }
       } else if (payload.eventType === 'DELETE') {
+        console.log('🗑️ Assignment deleted')
         assignments.value = assignments.value.filter(a => a.id !== payload.old.id)
       }
+      
       await loadSubmissions()
     })
-    .subscribe()
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'assignment_submissions',
+      filter: `student_id=eq.${studentInfo.value.student_id}`
+    }, async (payload) => {
+      console.log('📡 Submission change detected:', payload.eventType)
+      await loadSubmissions()
+    })
+    .subscribe((status) => {
+      console.log('📡 Subscription status:', status)
+    })
 }
 
-const getAssignmentStatus = (assignment) => {
-  const submission = getSubmission(assignment.id)
-  const now = new Date()
-  
-  if (submission && submission.status !== 'draft') return 'completed'
-  if (assignment.due_date && new Date(assignment.due_date) <= now) return 'overdue'
-  return 'available'
+// Navigation Methods
+const goBack = () => {
+  router.push({
+    name: 'StudentSubjects'
+  })
 }
 
-const getSubmission = (assignmentId) => {
-  return submissions.value.find(s => s.assignment_id === assignmentId)
-}
-
-const getSubmissionStatus = (assignment) => {
-  const submission = getSubmission(assignment.id)
-  return submission?.status || 'not_started'
-}
-
-const getAssignmentStatusClass = () => {
-  if (!selectedAssignment.value) return ''
-  
-  const submission = getSubmission(selectedAssignment.value.id)
-  if (submission) {
-    if (submission.status === 'graded') return 'graded'
-    if (submission.status === 'submitted') return 'submitted'
-  }
-  
-  if (isOverdue(selectedAssignment.value.due_date)) {
-    if (selectedAssignment.value.allow_late_submission) return 'overdue-allowed'
-    return 'overdue'
-  }
-  
-  return 'available'
-}
-
-const getAssignmentStatusText = () => {
-  if (!selectedAssignment.value) return ''
-  
-  const submission = getSubmission(selectedAssignment.value.id)
-  if (submission) {
-    if (submission.status === 'graded') return 'Graded'
-    if (submission.status === 'submitted') return 'Submitted - Pending Grading'
-  }
-  
-  if (isOverdue(selectedAssignment.value.due_date)) {
-    if (selectedAssignment.value.allow_late_submission) return 'Overdue - Late Submission Allowed'
-    return 'Overdue'
-  }
-  
-  return 'Available'
-}
-
-const viewAssignmentDetails = async (assignment) => {
+const viewAssignmentDetails = (assignment) => {
   selectedAssignment.value = assignment
   currentSubmission.value = getSubmission(assignment.id)
   
-  // Reset form
+  // Reset submission form
   submissionData.value = {
     text_content: '',
     link_url: ''
@@ -762,6 +831,7 @@ const viewAssignmentDetails = async (assignment) => {
   selectedFiles.value = []
 }
 
+// File Handling Methods
 const triggerFileInput = () => {
   fileInput.value?.click()
 }
@@ -792,44 +862,59 @@ const removeFile = (index) => {
   selectedFiles.value.splice(index, 1)
 }
 
-const uploadFiles = async (submissionId) => {
-  const uploadedUrls = []
-  
-  for (const file of selectedFiles.value) {
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${submissionId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`
-    
-    const { data, error } = await supabase.storage
-      .from('assignment-submissions')
-      .upload(fileName, file)
-    
-    if (error) {
-      console.error('Error uploading file:', error)
-      continue
-    }
-    
-    const { data: urlData } = supabase.storage
-      .from('assignment-submissions')
-      .getPublicUrl(fileName)
-    
-    uploadedUrls.push({
-      name: file.name,
-      url: urlData.publicUrl,
-      size: file.size,
-      type: file.type
-    })
-  }
-  
-  return uploadedUrls
-}
-
-const submitAssignment = async () => {
-  if (!canSubmit.value || isSubmitting.value) return
-  
-  isSubmitting.value = true
+// File Upload Method
+const uploadFiles = async () => {
+  const uploadedFiles = []
   
   try {
-    // Prepare submission data
+    for (const file of selectedFiles.value) {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${studentInfo.value.student_id}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`
+      
+      console.log('📤 Uploading file:', fileName)
+      
+      const { data, error } = await supabase.storage
+        .from('assignment-submissions')
+        .upload(fileName, file)
+      
+      if (error) {
+        console.error('❌ File upload error:', error)
+        throw error
+      }
+      
+      const { data: urlData } = supabase.storage
+        .from('assignment-submissions')
+        .getPublicUrl(fileName)
+      
+      uploadedFiles.push({
+        name: file.name,
+        url: urlData.publicUrl,
+        size: file.size,
+        type: file.type
+      })
+      
+      console.log('✅ File uploaded:', fileName)
+    }
+    
+    return uploadedFiles
+  } catch (error) {
+    console.error('❌ Error uploading files:', error)
+    throw error
+  }
+}
+
+// Assignment Submission Method
+const submitAssignment = async () => {
+  if (!canSubmit.value || !selectedAssignment.value || !studentInfo.value.student_id) {
+    alert('Cannot submit assignment')
+    return
+  }
+
+  isSubmitting.value = true
+
+  try {
+    console.log('📤 Submitting assignment...')
+
     const submissionPayload = {
       assignment_id: selectedAssignment.value.id,
       student_id: studentInfo.value.student_id,
@@ -843,56 +928,42 @@ const submitAssignment = async () => {
       submissionPayload.text_content = submissionData.value.text_content.trim()
     } else if (selectedAssignment.value.submission_type === 'link') {
       submissionPayload.link_url = submissionData.value.link_url.trim()
+    } else if (selectedAssignment.value.submission_type === 'file_upload') {
+      // Upload files and get URLs
+      const attachments = await uploadFiles()
+      submissionPayload.attachments = attachments
     }
 
-    // Create submission record
-    const { data: submission, error: submissionError } = await supabase
+    console.log('📋 Submission payload:', submissionPayload)
+
+    const { data, error } = await supabase
       .from('assignment_submissions')
-      .insert(submissionPayload)
+      .insert([submissionPayload])
       .select()
       .single()
 
-    if (submissionError) throw submissionError
-
-    // Upload files if needed
-    if (selectedAssignment.value.submission_type === 'file_upload' && selectedFiles.value.length > 0) {
-      const attachments = await uploadFiles(submission.id)
-      
-      // Update submission with attachments
-      const { error: updateError } = await supabase
-        .from('assignment_submissions')
-        .update({ attachments })
-        .eq('id', submission.id)
-
-      if (updateError) throw updateError
+    if (error) {
+      console.error('❌ Submission error:', error)
+      throw error
     }
+
+    console.log('✅ Submission successful:', data)
 
     alert('✅ Assignment submitted successfully!')
-    
-    // Reload data
+
+    // Reload submissions and go back
     await loadSubmissions()
-    currentSubmission.value = getSubmission(selectedAssignment.value.id)
-    
-    // Reset form
-    submissionData.value = {
-      text_content: '',
-      link_url: ''
-    }
-    selectedFiles.value = []
+    selectedAssignment.value = null
 
   } catch (error) {
-    console.error('Error submitting assignment:', error)
+    console.error('❌ Error submitting assignment:', error)
     alert('Failed to submit assignment: ' + error.message)
   } finally {
     isSubmitting.value = false
   }
 }
 
-const goBack = () => {
-  router.back()
-}
-
-// Lifecycle
+// Lifecycle Hooks
 onMounted(async () => {
   console.log('🔧 Component mounted - initializing...')
   
@@ -911,11 +982,22 @@ onMounted(async () => {
     return
   }
 
+  console.log('📍 Route params:', {
+    subjectId: subject.value.id,
+    sectionId: section.value.id,
+    subjectName: subject.value.name,
+    sectionName: section.value.name
+  })
+
   await loadAssignments()
   setupRealtimeSubscription()
   loading.value = false
   
   console.log('✅ Component initialization complete')
+  console.log('📊 Final state:', {
+    assignments: assignments.value.length,
+    submissions: submissions.value.length
+  })
 })
 
 onUnmounted(() => {

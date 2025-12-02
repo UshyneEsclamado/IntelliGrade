@@ -26,10 +26,11 @@ import MySubjects from '../views/teacher/MySubjects.vue'
 import SettingsPage from '../views/teacher/SettingsPage.vue'
 import UploadAssessment from '../views/teacher/UploadAssessment.vue'
 import AssessmentHistory from '../views/teacher/AssessmentHistory.vue'
-import ViewQuizzes from '../views/teacher/ViewQuizzes.vue'
+import ViewAssessments from '../views/teacher/ViewAssessments.vue'
 import ViewStudents from '../views/teacher/ViewStudents.vue'
 import Gradebook from '../views/teacher/Gradebook.vue'
 import CreateAssignment from '../views/teacher/CreateAssignment.vue'
+import StudentSubmissions from '../views/teacher/StudentSubmissions.vue'
 
 // Student subfolder components - FIXED: Removed duplicates
 import Home from '../views/student/Home.vue'
@@ -172,9 +173,9 @@ const routes = [
         component: GradeManagement
       },
       {
-        path: 'view-quizzes/:subjectId/:sectionId',
-        name: 'ViewQuizzes',
-        component: ViewQuizzes
+        path: 'view-assessments/:subjectId/:sectionId',
+        name: 'ViewAssessments',
+        component: ViewAssessments
       },
       {
         path: 'view-students/:subjectId/:sectionId',
@@ -191,6 +192,12 @@ const routes = [
         path: 'create-assignment/:subjectId/:sectionId',
         name: 'CreateAssignment',
         component: CreateAssignment,
+        meta: { requiresAuth: true, role: 'teacher' }
+      },
+      {
+        path: 'student-submissions/:subjectId/:sectionId',
+        name: 'StudentSubmissions',
+        component: StudentSubmissions,
         meta: { requiresAuth: true, role: 'teacher' }
       }
     ]

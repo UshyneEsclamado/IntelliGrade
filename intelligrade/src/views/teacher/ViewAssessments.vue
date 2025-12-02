@@ -102,7 +102,7 @@
       </div>
     </nav>
 
-    <!-- Sidebar Navigation - Custom Tooltip Labels on Hover -->
+    <!-- Sidebar Navigation -->
     <aside class="sidebar" style="background:#3D8D7A; border-right:none;">
       <nav class="sidebar-nav">
         <router-link to="/teacher/dashboard" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/dashboard' }">
@@ -171,9 +171,9 @@
         </svg>
       </button>
       
-      <!-- Main Content Container - Same as DashboardHome -->
+      <!-- Main Content Container -->
       <div class="main-container">
-        <!-- Quiz Management Header -->
+        <!-- Assessment Management Header -->
         <div class="section-header">
           <div class="header-content">
             <div class="header-left">
@@ -188,211 +188,305 @@
                 </svg>
               </div>
               <div class="header-info">
-                <h1 class="section-title">Quiz Management</h1>
+                <h1 class="section-title">Assessment Management</h1>
                 <p class="section-subtitle">{{ subjectName }}<span v-if="sectionName"> - {{ sectionName }}</span></p>
               </div>
+            </div>
+            <div class="header-actions">
+              <button @click="navigateToCreateQuiz" class="action-btn primary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+                </svg>
+                Create Quiz
+              </button>
+              <button @click="navigateToCreateAssignment" class="action-btn primary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+                </svg>
+                Create Assignment
+              </button>
             </div>
           </div>
         </div>
         
         <div class="container">
-        <!-- Loading State -->
-        <div v-if="isLoading" class="status-card loading-card">
-          <div class="status-icon">
-            <div class="spinner"></div>
+          <!-- Loading State -->
+          <div v-if="isLoading" class="status-card loading-card">
+            <div class="status-icon">
+              <div class="spinner"></div>
+            </div>
+            <h3 class="status-title">Loading Assessment Data...</h3>
+            <p class="status-description">Please wait while we fetch your assessments.</p>
           </div>
-          <h3 class="status-title">Loading Quiz Data...</h3>
-          <p class="status-description">Please wait while we fetch your quizzes.</p>
-        </div>
 
-        <!-- Error State -->
-        <div v-else-if="error" class="status-card error-card">
-          <div class="status-icon error-icon">
-            <svg width="80" height="80" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M11,15H13V17H11V15M11,7H13V13H11V7M12,2C6.47,2 2,6.5 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20Z" />
-            </svg>
-          </div>
-          <h3 class="status-title">Error Loading Quizzes</h3>
-          <p class="status-description">{{ error }}</p>
-          <div class="status-actions">
-            <button @click="fetchQuizzes" class="btn btn-primary">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z"/>
+          <!-- Error State -->
+          <div v-else-if="error" class="status-card error-card">
+            <div class="status-icon error-icon">
+              <svg width="80" height="80" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M11,15H13V17H11V15M11,7H13V13H11V7M12,2C6.47,2 2,6.5 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20Z" />
               </svg>
-              Try Again
-            </button>
+            </div>
+            <h3 class="status-title">Error Loading Assessments</h3>
+            <p class="status-description">{{ error }}</p>
+            <div class="status-actions">
+              <button @click="fetchAllAssessments" class="btn btn-primary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z"/>
+                </svg>
+                Try Again
+              </button>
+            </div>
           </div>
-        </div>
 
-        <!-- Empty State -->
-        <div v-else-if="quizzes.length === 0" class="status-card empty-state-card">
-          <div class="status-icon">
-            <svg width="80" height="80" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-            </svg>
-          </div>
-          <h3 class="status-title">No Quizzes Available</h3>
-          <p class="status-description">You haven't created any quizzes for this section yet.</p>
-          <div class="status-actions">
-            <button @click="navigateToCreateQuiz" class="create-quiz-btn">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
-              </svg>
-              Create Your First Quiz
-            </button>
-          </div>
-        </div>
-
-        <!-- Quizzes Grid -->
-        <div v-else class="content-section">
-          <div class="section-header">
-            <div class="section-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+          <!-- Empty State -->
+          <div v-else-if="allAssessments.length === 0" class="status-card empty-state-card">
+            <div class="status-icon">
+              <svg width="80" height="80" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
               </svg>
             </div>
-            <div class="section-content">
-              <h2 class="section-title">Your Quizzes</h2>
-              <p class="section-subtitle">{{ quizzes.length }} quiz{{ quizzes.length !== 1 ? 'es' : '' }} created</p>
+            <h3 class="status-title">No Assessments Available</h3>
+            <p class="status-description">You haven't created any assessments for this section yet.</p>
+            <div class="status-actions">
+              <button @click="navigateToCreateQuiz" class="create-quiz-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+                </svg>
+                Create Your First Assessment
+              </button>
             </div>
           </div>
 
-          <div class="quizzes-grid-modern">
-            <div v-for="quiz in quizzes" :key="quiz.id" class="quiz-card-modern">
-              <div class="quiz-card-header">
-                <div class="quiz-status-badge" :class="quiz.status">
-                  <span class="status-indicator"></span>
-                  {{ formatStatus(quiz.status) }}
-                </div>
-                <div class="quiz-menu">
-                  <button @click="deleteQuiz(quiz)" class="menu-btn danger">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
+          <!-- Assessments Grid -->
+          <div v-else class="content-section">
+            <!-- Filter Tabs -->
+            <div class="filter-tabs">
+              <button 
+                @click="activeView = 'all'" 
+                :class="['filter-tab', { active: activeView === 'all' }]"
+              >
+                All ({{ allAssessments.length }})
+              </button>
+              <button 
+                @click="activeView = 'quizzes'" 
+                :class="['filter-tab', { active: activeView === 'quizzes' }]"
+              >
+                Quizzes ({{ quizzes.length }})
+              </button>
+              <button 
+                @click="activeView = 'assignments'" 
+                :class="['filter-tab', { active: activeView === 'assignments' }]"
+              >
+                Assignments ({{ assignments.length }})
+              </button>
+            </div>
+
+            <div class="section-header">
+              <div class="section-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                </svg>
+              </div>
+              <div class="section-content">
+                <h2 class="section-title">Your Assessments</h2>
+                <p class="section-subtitle">{{ allAssessments.length }} assessment{{ allAssessments.length !== 1 ? 's' : '' }} created</p>
+              </div>
+            </div>
+
+            <div class="quizzes-grid-modern">
+              <!-- Quiz Cards -->
+              <div 
+                v-for="item in allAssessments" 
+                :key="item.id" 
+                class="quiz-card-modern"
+                :class="{ 'assignment-card': item.type === 'assignment' }"
+              >
+                <div class="quiz-card-header">
+                  <div class="assessment-type-badge" :class="item.type">
+                    <svg v-if="item.type === 'quiz'" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
                     </svg>
+                    <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M14,17H7V15H14M17,13H7V11H17M17,9H7V7H17M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3Z" />
+                    </svg>
+                    {{ item.type === 'quiz' ? 'Quiz' : 'Assignment' }}
+                  </div>
+                  <div class="quiz-status-badge" :class="item.status">
+                    <span class="status-indicator"></span>
+                    {{ formatStatus(item.status) }}
+                  </div>
+                  <div class="quiz-menu">
+                    <button 
+                      @click="item.type === 'quiz' ? deleteQuiz(item) : deleteAssignment(item)" 
+                      class="menu-btn danger"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="quiz-card-body">
+                  <h3 class="quiz-title-modern">{{ item.title }}</h3>
+                  
+                  <!-- Quiz Code Display (only for quizzes) -->
+                  <div v-if="item.type === 'quiz' && item.quiz_code" class="quiz-code-modern">
+                    <span class="code-icon">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M8,3A2,2 0 0,0 6,5V9A2,2 0 0,1 4,11H3V13H4A2,2 0 0,1 6,15V19A2,2 0 0,0 8,21H10V19H8V14A2,2 0 0,0 6,12A2,2 0 0,0 8,10V5H10V3M16,3A2,2 0 0,1 18,5V9A2,2 0 0,0 20,11H21V13H20A2,2 0 0,0 18,15V19A2,2 0 0,1 16,21H14V19H16V14A2,2 0 0,1 18,12A2,2 0 0,1 16,10V5H14V3H16Z" />
+                      </svg>
+                    </span>
+                    <span class="code-text">{{ item.quiz_code }}</span>
+                  </div>
+
+                  <!-- Assignment Type Badge -->
+                  <div v-if="item.type === 'assignment'" class="assignment-type-badge">
+                    {{ formatAssignmentType(item.assignment_type) }}
+                  </div>
+
+                  <p v-if="item.description" class="quiz-description-modern">{{ item.description }}</p>
+
+                  <!-- Stats (different for quiz vs assignment) -->
+                  <div class="quiz-stats-modern">
+                    <template v-if="item.type === 'quiz'">
+                      <div class="stat-item-modern">
+                        <div class="stat-icon-modern">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M9,22A1,1 0 0,1 8,21V18H4A2,2 0 0,1 2,16V4C2,2.89 2.9,2 4,2H20A2,2 0 0,1 22,4V16A2,2 0 0,1 20,18H13.9L10.2,21.71C10,21.9 9.75,22 9.5,22V22H9M10,16V19.08L13.08,16H20V4H4V16H10Z" />
+                          </svg>
+                        </div>
+                        <div class="stat-content-modern">
+                          <span class="stat-number-modern">{{ item.question_count || 0 }}</span>
+                          <span class="stat-label-modern">Questions</span>
+                        </div>
+                      </div>
+
+                      <div class="stat-item-modern">
+                        <div class="stat-icon-modern">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z" />
+                          </svg>
+                        </div>
+                        <div class="stat-content-modern">
+                          <span class="stat-number-modern">{{ item.total_points || 0 }}</span>
+                          <span class="stat-label-modern">Points</span>
+                        </div>
+                      </div>
+
+                      <div class="stat-item-modern" v-if="item.has_time_limit && item.time_limit_minutes">
+                        <div class="stat-icon-modern">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
+                          </svg>
+                        </div>
+                        <div class="stat-content-modern">
+                          <span class="stat-number-modern">{{ item.time_limit_minutes }}</span>
+                          <span class="stat-label-modern">Minutes</span>
+                        </div>
+                      </div>
+                    </template>
+
+                    <template v-else>
+                      <div class="stat-item-modern">
+                        <div class="stat-icon-modern">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z" />
+                          </svg>
+                        </div>
+                        <div class="stat-content-modern">
+                          <span class="stat-number-modern">{{ item.total_points || 100 }}</span>
+                          <span class="stat-label-modern">Points</span>
+                        </div>
+                      </div>
+
+                      <div class="stat-item-modern">
+                        <div class="stat-icon-modern">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M9,10H7V12H9V10M13,10H11V12H13V10M17,10H15V12H17V10M19,3H18V1H16V3H8V1H6V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M19,19H5V8H19V19Z" />
+                          </svg>
+                        </div>
+                        <div class="stat-content-modern">
+                          <span class="stat-number-modern">{{ formatDate(item.due_date) }}</span>
+                          <span class="stat-label-modern">Due Date</span>
+                        </div>
+                      </div>
+
+                      <div class="stat-item-modern">
+                        <div class="stat-icon-modern">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M16,9H13V14.5H16M21,3H3A2,2 0 0,0 1,5V19A2,2 0 0,0 3,21H21A2,2 0 0,0 23,19V5A2,2 0 0,0 21,3M11,8H6V10H11V8M21,19H3V5H21V19M16,12H13V14H16V12Z" />
+                          </svg>
+                        </div>
+                        <div class="stat-content-modern">
+                          <span class="stat-number-modern">{{ item.submission_count || 0 }}</span>
+                          <span class="stat-label-modern">Submissions</span>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+
+                  <!-- Meta Info -->
+                  <div class="quiz-meta-modern">
+                    <span class="meta-item-modern">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+                      </svg>
+                      Created {{ formatDate(item.created_at) }}
+                    </span>
+                    <span v-if="item.type === 'quiz' && item.shuffle_questions" class="meta-item-modern">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M14,20H16V18H20V16H16A2,2 0 0,1 14,14V10A2,2 0 0,1 16,8H20V6H16V4H14V6L12,8V10L14,12V14L12,16V18L14,20M10,8V10L12,12L10,14V16L4,10L10,8Z" />
+                      </svg>
+                      Shuffle Enabled
+                    </span>
+                  </div>
+                </div>
+
+                <div class="quiz-card-footer">
+                  <button 
+                    @click="item.type === 'quiz' ? viewQuizDetails(item) : viewAssignmentDetails(item)" 
+                    class="action-btn-modern primary"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
+                    </svg>
+                    View Details
+                  </button>
+
+                  <button 
+                    @click="item.type === 'quiz' ? editQuiz(item) : editAssignment(item)" 
+                    class="action-btn-modern secondary"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
+                    </svg>
+                    Edit
+                  </button>
+
+                  <button 
+                    @click="item.type === 'quiz' ? toggleQuizStatus(item) : toggleAssignmentStatus(item)" 
+                    :class="['action-btn-modern', item.status === 'published' ? 'warning' : 'success']"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path v-if="item.status === 'published'" d="M8.5,8.64L13.77,12L8.5,15.36V8.64M6.5,5V19L17.5,12"/>
+                      <path v-else d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,16.5L18,9.5L16.5,8L11,13.5L7.5,10L6,11.5L11,16.5Z"/>
+                    </svg>
+                    {{ item.status === 'published' ? 'Unpublish' : 'Publish' }}
                   </button>
                 </div>
-              </div>
-
-              <div class="quiz-card-body">
-                <h3 class="quiz-title-modern">{{ quiz.title }}</h3>
-                
-                <!-- Quiz Code Display -->
-                <div class="quiz-code-modern">
-                  <span class="code-icon">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M8,3A2,2 0 0,0 6,5V9A2,2 0 0,1 4,11H3V13H4A2,2 0 0,1 6,15V19A2,2 0 0,0 8,21H10V19H8V14A2,2 0 0,0 6,12A2,2 0 0,0 8,10V5H10V3M16,3A2,2 0 0,1 18,5V9A2,2 0 0,0 20,11H21V13H20A2,2 0 0,0 18,15V19A2,2 0 0,1 16,21H14V19H16V14A2,2 0 0,1 18,12A2,2 0 0,1 16,10V5H14V3H16Z" />
-                    </svg>
-                  </span>
-                  <span class="code-text">{{ quiz.quiz_code || 'N/A' }}</span>
-                </div>
-
-                <p v-if="quiz.description" class="quiz-description-modern">{{ quiz.description }}</p>
-
-                <!-- Quiz Stats -->
-                <div class="quiz-stats-modern">
-                  <div class="stat-item-modern">
-                    <div class="stat-icon-modern">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M9,22A1,1 0 0,1 8,21V18H4A2,2 0 0,1 2,16V4C2,2.89 2.9,2 4,2H20A2,2 0 0,1 22,4V16A2,2 0 0,1 20,18H13.9L10.2,21.71C10,21.9 9.75,22 9.5,22V22H9M10,16V19.08L13.08,16H20V4H4V16H10Z" />
-                      </svg>
-                    </div>
-                    <div class="stat-content-modern">
-                      <span class="stat-number-modern">{{ quiz.question_count || 0 }}</span>
-                      <span class="stat-label-modern">Questions</span>
-                    </div>
-                  </div>
-
-                  <div class="stat-item-modern">
-                    <div class="stat-icon-modern">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z" />
-                      </svg>
-                    </div>
-                    <div class="stat-content-modern">
-                      <span class="stat-number-modern">{{ quiz.total_points || 0 }}</span>
-                      <span class="stat-label-modern">Points</span>
-                    </div>
-                  </div>
-
-                  <div class="stat-item-modern" v-if="quiz.has_time_limit && quiz.time_limit_minutes">
-                    <div class="stat-icon-modern">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
-                      </svg>
-                    </div>
-                    <div class="stat-content-modern">
-                      <span class="stat-number-modern">{{ quiz.time_limit_minutes }}</span>
-                      <span class="stat-label-modern">Minutes</span>
-                    </div>
-                  </div>
-
-                  <div class="stat-item-modern">
-                    <div class="stat-icon-modern">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M1,4 L1,10 L7,10"/>
-                      </svg>
-                    </div>
-                    <div class="stat-content-modern">
-                      <span class="stat-number-modern">{{ quiz.attempts_allowed === 999 ? '∞' : quiz.attempts_allowed }}</span>
-                      <span class="stat-label-modern">Attempts</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Quiz Meta Info -->
-                <div class="quiz-meta-modern">
-                  <span class="meta-item-modern">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
-                    </svg>
-                    Created {{ formatDate(quiz.created_at) }}
-                  </span>
-                  <span class="meta-item-modern" v-if="quiz.shuffle_questions">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M14,20H16V18H20V16H16A2,2 0 0,1 14,14V10A2,2 0 0,1 16,8H20V6H16V4H14V6L12,8V10L14,12V14L12,16V18L14,20M10,8V10L12,12L10,14V16L4,10L10,8Z" />
-                    </svg>
-                    Shuffle Enabled
-                  </span>
-                </div>
-              </div>
-
-              <div class="quiz-card-footer">
-                <button @click="viewQuizDetails(quiz)" class="action-btn-modern primary">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
-                  </svg>
-                  View Details
-                </button>
-
-                <button @click="editQuiz(quiz)" class="action-btn-modern secondary">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
-                  </svg>
-                  Edit
-                </button>
-
-                <button 
-                  @click="toggleQuizStatus(quiz)" 
-                  :class="['action-btn-modern', quiz.status === 'published' ? 'warning' : 'success']"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path v-if="quiz.status === 'published'" d="M8.5,8.64L13.77,12L8.5,15.36V8.64M6.5,5V19L17.5,12"/>
-                    <path v-else d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,16.5L18,9.5L16.5,8L11,13.5L7.5,10L6,11.5L11,16.5Z"/>
-                  </svg>
-                  {{ quiz.status === 'published' ? 'Unpublish' : 'Publish' }}
-                </button>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </main>
 
-    <!-- Quiz Details Modal -->
-    <div v-if="selectedQuiz" class="modal-overlay" @click="closeModal">
+    <!-- Details Modal (for both quiz and assignment) -->
+    <div v-if="selectedItem" class="modal-overlay" @click="closeModal">
       <div class="modal-content quiz-details-modal" @click.stop>
         <div class="modal-header">
-          <h2>{{ selectedQuiz.title }}</h2>
+          <h2>{{ selectedItem.title }}</h2>
           <button @click="closeModal" class="close-btn">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
               <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
@@ -401,69 +495,109 @@
         </div>
 
         <div class="modal-body">
-          <div class="quiz-overview">
-            <!-- Quiz Code Display -->
+          <!-- Quiz Details -->
+          <div v-if="selectedItemType === 'quiz'" class="quiz-overview">
             <div class="quiz-code-section">
               <div class="code-display-box">
                 <span class="code-label-large">Quiz Code</span>
-                <span class="code-value-large">{{ selectedQuiz.quiz_code || 'N/A' }}</span>
+                <span class="code-value-large">{{ selectedItem.quiz_code || 'N/A' }}</span>
               </div>
             </div>
 
-            <p v-if="selectedQuiz.description" class="quiz-description-modal">{{ selectedQuiz.description }}</p>
+            <p v-if="selectedItem.description" class="quiz-description-modal">{{ selectedItem.description }}</p>
             
             <div class="overview-stats">
               <div class="stat-item">
-                <span class="stat-value">{{ selectedQuiz.question_count || 0 }}</span>
+                <span class="stat-value">{{ selectedItem.question_count || 0 }}</span>
                 <span class="stat-label">Questions</span>
               </div>
               <div class="stat-item">
-                <span class="stat-value">{{ selectedQuiz.total_points || 0 }}</span>
+                <span class="stat-value">{{ selectedItem.total_points || 0 }}</span>
                 <span class="stat-label">Total Points</span>
               </div>
               <div class="stat-item">
-                <span class="stat-value">{{ selectedQuiz.has_time_limit && selectedQuiz.time_limit_minutes ? selectedQuiz.time_limit_minutes + ' min' : 'No Limit' }}</span>
+                <span class="stat-value">{{ selectedItem.has_time_limit && selectedItem.time_limit_minutes ? selectedItem.time_limit_minutes + ' min' : 'No Limit' }}</span>
                 <span class="stat-label">Time Limit</span>
               </div>
               <div class="stat-item">
-                <span class="stat-value">{{ selectedQuiz.attempts_allowed === 999 ? '∞' : selectedQuiz.attempts_allowed }}</span>
+                <span class="stat-value">{{ selectedItem.attempts_allowed === 999 ? '∞' : selectedItem.attempts_allowed }}</span>
                 <span class="stat-label">Attempts</span>
               </div>
             </div>
-          </div>
 
-          <div class="questions-preview">
-            <h4>Questions Preview</h4>
-            
-            <!-- Loading State -->
-            <div v-if="loadingQuestions" class="loading-questions">
-              <div class="loading-spinner-small"></div>
-              <p>Loading questions...</p>
-            </div>
+            <div class="questions-preview">
+              <h4>Questions Preview</h4>
+              
+              <div v-if="loadingDetails" class="loading-questions">
+                <div class="loading-spinner-small"></div>
+                <p>Loading questions...</p>
+              </div>
 
-            <!-- Questions List -->
-            <div v-else-if="selectedQuizQuestions.length > 0" class="questions-list">
-              <div v-for="question in selectedQuizQuestions" :key="question.id" class="question-preview">
-                <div class="question-number">{{ question.question_number }}</div>
-                <div class="question-content">
-                  <p class="question-text">{{ question.question_text }}</p>
-                  <div class="question-meta">
-                    <span class="question-type">{{ formatQuestionType(question.question_type) }}</span>
-                    <span class="question-points">{{ question.points }} pts</span>
+              <div v-else-if="selectedQuizQuestions.length > 0" class="questions-list">
+                <div v-for="question in selectedQuizQuestions" :key="question.id" class="question-preview">
+                  <div class="question-number">{{ question.question_number }}</div>
+                  <div class="question-content">
+                    <p class="question-text">{{ question.question_text }}</p>
+                    <div class="question-meta">
+                      <span class="question-type">{{ formatQuestionType(question.question_type) }}</span>
+                      <span class="question-points">{{ question.points }} pts</span>
+                    </div>
                   </div>
                 </div>
               </div>
+
+              <div v-else class="no-questions">
+                <p>No questions found for this quiz.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Assignment Details -->
+          <div v-else-if="selectedItemType === 'assignment'" class="assignment-overview">
+            <p v-if="selectedItem.description" class="quiz-description-modal">{{ selectedItem.description }}</p>
+            
+            <div class="overview-stats">
+              <div class="stat-item">
+                <span class="stat-value">{{ selectedItem.total_points || 100 }}</span>
+                <span class="stat-label">Total Points</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value">{{ formatDate(selectedItem.due_date) }}</span>
+                <span class="stat-label">Due Date</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value">{{ selectedItem.submission_count || 0 }}</span>
+                <span class="stat-label">Submissions</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value">{{ selectedItem.graded_count || 0 }}</span>
+                <span class="stat-label">Graded</span>
+              </div>
             </div>
 
-            <!-- No Questions State -->
-            <div v-else class="no-questions">
-              <p>No questions found for this quiz.</p>
+            <div class="assignment-details">
+              <h4>Assignment Details</h4>
+              <div class="detail-row">
+                <span class="detail-label">Type:</span>
+                <span class="detail-value">{{ formatAssignmentType(selectedItem.assignment_type) }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Submission Type:</span>
+                <span class="detail-value">{{ selectedItem.submission_type }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Allow Late Submission:</span>
+                <span class="detail-value">{{ selectedItem.allow_late_submission ? 'Yes' : 'No' }}</span>
+              </div>
+              <div v-if="selectedItem.allow_late_submission" class="detail-row">
+                <span class="detail-label">Late Penalty:</span>
+                <span class="detail-value">{{ selectedItem.late_penalty }}% per day</span>
+              </div>
             </div>
           </div>
         </div>
-        </div>
       </div>
-    </main>
+    </div>
 
     <!-- Logout Confirmation Modal -->
     <div v-if="showLogoutModal" class="modal-overlay" @click="closeLogoutModal">
@@ -498,7 +632,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { supabase } from '../../supabase.js'
 import { useDarkMode } from '../../composables/useDarkMode.js'
@@ -530,15 +664,34 @@ const sectionName = ref(route.query.sectionName || '')
 const gradeLevel = ref(route.query.gradeLevel || '')
 const sectionCode = ref(route.query.sectionCode || '')
 
-// Quiz management state
+// Assessment management state
 const quizzes = ref([])
-const selectedQuiz = ref(null)
+const assignments = ref([])
+const selectedItem = ref(null)
+const selectedItemType = ref(null) // 'quiz' or 'assignment'
 const selectedQuizQuestions = ref([])
 const isLoading = ref(false)
-const loadingQuestions = ref(false)
+const loadingDetails = ref(false)
 const error = ref(null)
 
+// View toggle
+const activeView = ref('all') // 'all', 'quizzes', 'assignments'
+
 let quizSubscription = null
+let assignmentSubscription = null
+
+// Computed property for combined assessments
+const allAssessments = computed(() => {
+  const all = [...quizzes.value, ...assignments.value]
+  
+  if (activeView.value === 'quizzes') {
+    return quizzes.value
+  } else if (activeView.value === 'assignments') {
+    return assignments.value
+  }
+  
+  return all.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+})
 
 // Methods for UI interactions
 const toggleNotifDropdown = () => {
@@ -559,12 +712,10 @@ const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-// Handle scroll to show/hide scroll-to-top button
 const handleScroll = () => {
   showScrollTop.value = window.pageYOffset > 300
 }
 
-// Go back to subjects page
 const goBackToSubjects = () => {
   router.push('/teacher/subjects')
 }
@@ -584,7 +735,6 @@ const loadTeacherProfile = async () => {
     userId.value = user.id
     console.log('✅ User ID:', user.id)
     
-    // Get profile
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('id, full_name, role')
@@ -598,7 +748,6 @@ const loadTeacherProfile = async () => {
     
     console.log('✅ Profile found:', profile)
     
-    // Get teacher data
     const { data: teacher, error: teacherError } = await supabase
       .from('teachers')
       .select('id, full_name')
@@ -634,7 +783,6 @@ const loadNotifications = async () => {
   try {
     console.log('🔔 Loading notifications for teacher:', teacherId.value)
     
-    // Get recent quiz submissions (last 24 hours)
     const yesterday = new Date()
     yesterday.setDate(yesterday.getDate() - 1)
     const yesterdayISO = yesterday.toISOString()
@@ -659,7 +807,6 @@ const loadNotifications = async () => {
       return
     }
     
-    // Convert submissions to notifications
     const submissionNotifications = (recentSubmissions || []).map(submission => ({
       id: `submission-${submission.id}`,
       title: `New Quiz Submission`,
@@ -679,7 +826,6 @@ const loadNotifications = async () => {
 
 const handleNotificationClick = (notif) => {
   console.log('Notification clicked:', notif)
-  // Handle notification click if needed
 }
 
 // Logout functionality
@@ -693,19 +839,12 @@ const closeLogoutModal = () => {
 
 const confirmLogout = () => {
   console.log('🚪 Logging out...')
-  
-  // Clear storage immediately
   localStorage.clear()
   sessionStorage.clear()
-  
-  // Sign out from Supabase (don't wait)
   supabase.auth.signOut().catch(err => console.log('Signout error:', err))
-  
-  // Immediate redirect - no waiting!
   setTimeout(() => {
     window.location.assign('/login')
   }, 100)
-  
   console.log('✅ Logout initiated')
 }
 
@@ -741,11 +880,10 @@ const loadTeacherInfo = async () => {
 }
 
 const fetchQuizzes = async () => {
-  isLoading.value = true
-  error.value = null
-  
   try {
     if (!teacherId.value) await loadTeacherInfo()
+
+    console.log('📚 Fetching quizzes for:', { teacherId: teacherId.value, subjectId: subjectId.value, sectionId: sectionId.value })
 
     const { data: quizzesData, error: quizzesError } = await supabase
       .from('quizzes')
@@ -757,17 +895,71 @@ const fetchQuizzes = async () => {
 
     if (quizzesError) throw quizzesError
 
+    console.log('✅ Quizzes fetched:', quizzesData?.length || 0)
+
     quizzes.value = (quizzesData || []).map(quiz => {
       const questions = quiz.quiz_questions || []
       return {
         ...quiz,
         question_count: questions.length,
         total_points: questions.reduce((sum, q) => sum + (q.points || 0), 0),
-        quiz_questions: undefined
+        quiz_questions: undefined,
+        type: 'quiz'
       }
     })
   } catch (err) {
+    console.error('❌ Error fetching quizzes:', err)
+    throw err
+  }
+}
+
+const fetchAssignments = async () => {
+  try {
+    if (!teacherId.value) await loadTeacherInfo()
+
+    console.log('📝 Fetching assignments for:', { teacherId: teacherId.value, subjectId: subjectId.value, sectionId: sectionId.value })
+
+    const { data: assignmentsData, error: assignmentsError } = await supabase
+      .from('assignments')
+      .select(`
+        *,
+        assignment_submissions(id, status)
+      `)
+      .eq('subject_id', subjectId.value)
+      .eq('section_id', sectionId.value)
+      .eq('teacher_id', teacherId.value)
+      .order('created_at', { ascending: false })
+
+    if (assignmentsError) throw assignmentsError
+
+    console.log('✅ Assignments fetched:', assignmentsData?.length || 0)
+
+    assignments.value = (assignmentsData || []).map(assignment => {
+      const submissions = assignment.assignment_submissions || []
+      return {
+        ...assignment,
+        submission_count: submissions.length,
+        graded_count: submissions.filter(s => s.status === 'graded').length,
+        assignment_submissions: undefined,
+        type: 'assignment'
+      }
+    })
+  } catch (err) {
+    console.error('❌ Error fetching assignments:', err)
+    throw err
+  }
+}
+
+const fetchAllAssessments = async () => {
+  isLoading.value = true
+  error.value = null
+  
+  try {
+    await Promise.all([fetchQuizzes(), fetchAssignments()])
+    console.log('✅ All assessments loaded:', { quizzes: quizzes.value.length, assignments: assignments.value.length })
+  } catch (err) {
     error.value = err.message
+    console.error('❌ Error loading assessments:', err)
     if (err.message.includes('login') || err.message.includes('not found')) {
       alert('Session expired. Please login again.')
       router.push('/login')
@@ -778,9 +970,10 @@ const fetchQuizzes = async () => {
 }
 
 const viewQuizDetails = async (quiz) => {
-  selectedQuiz.value = quiz
+  selectedItem.value = quiz
+  selectedItemType.value = 'quiz'
   selectedQuizQuestions.value = []
-  loadingQuestions.value = true
+  loadingDetails.value = true
   
   try {
     const { data: questions, error } = await supabase
@@ -795,8 +988,14 @@ const viewQuizDetails = async (quiz) => {
     selectedQuizQuestions.value = []
     alert('Error loading quiz questions: ' + err.message)
   } finally {
-    loadingQuestions.value = false
+    loadingDetails.value = false
   }
+}
+
+const viewAssignmentDetails = async (assignment) => {
+  selectedItem.value = assignment
+  selectedItemType.value = 'assignment'
+  loadingDetails.value = false
 }
 
 const editQuiz = async (quiz) => {
@@ -818,6 +1017,11 @@ const editQuiz = async (quiz) => {
   }
 }
 
+const editAssignment = async (assignment) => {
+  // TODO: Implement edit assignment navigation
+  alert('Edit assignment feature coming soon!')
+}
+
 const toggleQuizStatus = async (quiz) => {
   const newStatus = quiz.status === 'published' ? 'draft' : 'published'
   if (!confirm(`Are you sure you want to ${newStatus === 'published' ? 'publish' : 'unpublish'} this quiz?`)) return
@@ -836,6 +1040,28 @@ const toggleQuizStatus = async (quiz) => {
   }
 }
 
+const toggleAssignmentStatus = async (assignment) => {
+  const newStatus = assignment.status === 'published' ? 'draft' : 'published'
+  if (!confirm(`Are you sure you want to ${newStatus === 'published' ? 'publish' : 'unpublish'} this assignment?`)) return
+  
+  try {
+    const { error } = await supabase
+      .from('assignments')
+      .update({ 
+        status: newStatus, 
+        updated_at: new Date().toISOString(),
+        published_at: newStatus === 'published' ? new Date().toISOString() : null
+      })
+      .eq('id', assignment.id)
+    
+    if (error) throw error
+    assignment.status = newStatus
+    alert(`Assignment ${newStatus === 'published' ? 'published' : 'unpublished'} successfully!`)
+  } catch (err) {
+    alert(`Error updating assignment: ${err.message}`)
+  }
+}
+
 const deleteQuiz = async (quiz) => {
   if (!confirm(`Are you sure you want to delete "${quiz.title}"?\n\nThis action cannot be undone and will delete all associated questions, student attempts, and results.`)) return
   
@@ -846,6 +1072,19 @@ const deleteQuiz = async (quiz) => {
     alert('Quiz deleted successfully!')
   } catch (err) {
     alert(`Error deleting quiz: ${err.message}`)
+  }
+}
+
+const deleteAssignment = async (assignment) => {
+  if (!confirm(`Are you sure you want to delete "${assignment.title}"?\n\nThis action cannot be undone and will delete all associated submissions.`)) return
+  
+  try {
+    const { error } = await supabase.from('assignments').delete().eq('id', assignment.id)
+    if (error) throw error
+    assignments.value = assignments.value.filter(a => a.id !== assignment.id)
+    alert('Assignment deleted successfully!')
+  } catch (err) {
+    alert(`Error deleting assignment: ${err.message}`)
   }
 }
 
@@ -866,10 +1105,16 @@ const navigateToCreateQuiz = async () => {
   }
 }
 
+const navigateToCreateAssignment = async () => {
+  // TODO: Implement create assignment navigation
+  alert('Create assignment feature coming soon!')
+}
+
 const closeModal = () => {
-  selectedQuiz.value = null
+  selectedItem.value = null
+  selectedItemType.value = null
   selectedQuizQuestions.value = []
-  loadingQuestions.value = false
+  loadingDetails.value = false
 }
 
 const formatStatus = (status) => status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Unknown'
@@ -888,6 +1133,19 @@ const formatQuestionType = (type) => {
   return types[type] || type
 }
 
+const formatAssignmentType = (type) => {
+  const types = {
+    'homework': 'Homework',
+    'project': 'Project',
+    'essay': 'Essay',
+    'presentation': 'Presentation',
+    'research': 'Research',
+    'lab': 'Lab Work',
+    'other': 'Other'
+  }
+  return types[type] || type
+}
+
 const setupRealtimeSubscription = () => {
   if (!teacherId.value) return
 
@@ -899,36 +1157,34 @@ const setupRealtimeSubscription = () => {
         table: 'quizzes',
         filter: `teacher_id=eq.${teacherId.value}`
       },
-      (payload) => {
-        if (payload.eventType === 'INSERT') {
-          fetchQuizzes()
-        } else if (payload.eventType === 'UPDATE') {
-          const index = quizzes.value.findIndex(q => q.id === payload.new.id)
-          if (index !== -1) {
-            quizzes.value[index] = {
-              ...payload.new,
-              question_count: quizzes.value[index].question_count,
-              total_points: quizzes.value[index].total_points
-            }
-          }
-        } else if (payload.eventType === 'DELETE') {
-          quizzes.value = quizzes.value.filter(q => q.id !== payload.old.id)
-        }
+      () => {
+        console.log('📡 Quiz change detected, refreshing...')
+        fetchQuizzes()
+      }
+    )
+    .subscribe()
+
+  assignmentSubscription = supabase
+    .channel('assignment-changes')
+    .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'assignments',
+        filter: `teacher_id=eq.${teacherId.value}`
+      },
+      () => {
+        console.log('📡 Assignment change detected, refreshing...')
+        fetchAssignments()
       }
     )
     .subscribe()
 }
 
 onMounted(async () => {
+  console.log('🚀 Component mounted')
   initDarkMode()
-  
-  // Add scroll event listener
   window.addEventListener('scroll', handleScroll)
-  
-  // Load teacher profile first
   await loadTeacherProfile()
-  
-  // Load notifications
   await loadNotifications()
   
   if (!subjectId.value || !sectionId.value) {
@@ -938,15 +1194,14 @@ onMounted(async () => {
     return
   }
 
-  await fetchQuizzes()
+  await fetchAllAssessments()
   setupRealtimeSubscription()
 })
 
 onUnmounted(() => {
-  // Remove scroll event listener
   window.removeEventListener('scroll', handleScroll)
-  
   if (quizSubscription) supabase.removeChannel(quizSubscription)
+  if (assignmentSubscription) supabase.removeChannel(assignmentSubscription)
 })
 </script>
 
@@ -1446,7 +1701,7 @@ onUnmounted(() => {
 
 .dark ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, #18a577, #146e5a);
-  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.3);
+  box-shadow: 0 2px  8px rgba(32, 201, 151, 0.3);
 }
 
 .dark ::-webkit-scrollbar-corner {
@@ -2738,305 +2993,6 @@ onUnmounted(() => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .main-content {
-    margin-left: 0;
-    width: 100%;
-    padding: 1rem;
-  }
-  
-  .sidebar {
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
-  }
-  
-  .sidebar.mobile-open {
-    transform: translateX(0);
-  }
-  
-  .navbar-content {
-    padding: 0 1rem;
-  }
-  
-  .brand-name {
-    display: none;
-  }
-}
-
-@media (max-width: 480px) {
-  .top-navbar {
-    height: 56px;
-  }
-  
-  .main-content {
-    margin-top: 56px;
-    min-height: calc(100vh - 56px);
-  }
-  
-  .sidebar {
-    top: 56px;
-    height: calc(100vh - 56px);
-  }
-}
-
-.dark .stat-item {
-  background: #374151;
-  border-color: #475569;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-}
-
-.dark .stat-item:hover {
-  border-color: #10b981;
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.25);
-}
-
-.stat-value {
-  display: block;
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #10b981;
-  margin-bottom: 0.5rem;
-  line-height: 1;
-}
-
-.dark .stat-value {
-  color: #34d399;
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 600;
-}
-
-.dark .stat-label {
-  color: #94a3b8;
-}
-
-/* Section Header Styles - Match DashboardHome */
-.section-header {
-  margin-bottom: 1.5rem;
-}
-
-.section-header .header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: white;
-  padding: 1.5rem 2rem;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.section-header .header-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.section-header .header-icon {
-  width: 56px;
-  height: 56px;
-  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
-
-.section-title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 0.25rem;
-  letter-spacing: -0.025em;
-}
-
-.section-subtitle {
-  font-size: 0.95rem;
-  color: #64748b;
-  margin: 0;
-  font-weight: 500;
-}
-
-.header-actions {
-  display: flex;
-  gap: 1rem;
-}
-
-.action-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  border-radius: 12px;
-  border: none;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-decoration: none;
-}
-
-.action-btn.primary {
-  background: #3D8D7A;
-  color: white;
-}
-
-.action-btn.primary:hover {
-  background: #2d6a5a;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
-}
-
-.action-btn.secondary {
-  background: #f8fafc;
-  color: #64748b;
-  border: 1px solid #e2e8f0;
-}
-
-.action-btn.secondary:hover {
-  background: white;
-  border-color: #cbd5e1;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.questions-preview h4 {
-  color: #1e293b;
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin-bottom: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.dark .questions-preview h4 {
-  color: #f1f5f9;
-}
-
-.questions-preview h4::before {
-  content: '';
-  width: 4px;
-  height: 20px;
-  background: #10b981;
-  border-radius: 2px;
-}
-
-.questions-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  max-height: 350px;
-  overflow-y: auto;
-  padding-right: 0.5rem;
-}
-
-.question-preview {
-  display: flex;
-  gap: 1rem;
-  padding: 1.5rem;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  transition: all 0.2s ease;
-}
-
-.question-preview:hover {
-  border-color: #10b981;
-  background: #f0fdfa;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
-}
-
-.dark .question-preview {
-  background: #374151;
-  border-color: #475569;
-}
-
-.dark .question-preview:hover {
-  border-color: #10b981;
-  background: rgba(16, 185, 129, 0.05);
-}
-
-.question-number {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 0.875rem;
-  flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-}
-
-.question-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.question-text {
-  color: #1e293b;
-  font-weight: 600;
-  margin: 0 0 0.75rem 0;
-  line-height: 1.5;
-  word-break: break-word;
-}
-
-.dark .question-text {
-  color: #f1f5f9;
-}
-
-.question-meta {
-  display: flex;
-  gap: 0.75rem;
-  font-size: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.question-type {
-  background: #ecfdf5;
-  color: #059669;
-  padding: 0.375rem 0.75rem;
-  border-radius: 6px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-  border: 1px solid #a7f3d0;
-}
-
-.dark .question-type {
-  background: rgba(16, 185, 129, 0.1);
-  color: #34d399;
-  border-color: rgba(16, 185, 129, 0.3);
-}
-
-.question-points {
-  background: #fef3c7;
-  color: #d97706;
-  padding: 0.375rem 0.75rem;
-  border-radius: 6px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-  border: 1px solid #fde68a;
-}
-
-.dark .question-points {
-  background: rgba(245, 158, 11, 0.1);
-  color: #fbbf24;
-  border-color: rgba(245, 158, 11, 0.3);
-}
-
 .loading-questions {
   text-align: center;
   padding: 3rem;
@@ -3070,108 +3026,6 @@ onUnmounted(() => {
 
 .dark .no-questions {
   color: #94a3b8;
-}
-
-/* Responsive Design for Navbar */
-@media (max-width: 1200px) {
-  .main-content {
-    padding: 1.5rem;
-  }
-}
-
-@media (max-width: 1024px) {
-  .main-content {
-    padding: 1rem;
-  }
-  
-  .navbar-center {
-    gap: 0.25rem;
-  }
-  
-  .nav-item {
-    padding: 0.5rem 1rem;
-    font-size: 0.7rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .main-content {
-    padding: 1rem;
-  }
-  
-  .page-header {
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-  }
-  
-  .header-content {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
-  }
-  
-  .navbar-content {
-    padding: 0 0.5rem;
-  }
-  
-  .brand-name {
-    display: none;
-  }
-  
-  .export-btn span {
-    display: none;
-  }
-}
-
-/* Responsive Modal */
-@media (max-width: 768px) {
-  .modal-overlay {
-    padding: 0.5rem;
-  }
-  
-  .modal-content {
-    max-height: 90vh;
-  }
-  
-  .modal-header {
-    padding: 1.5rem;
-  }
-  
-  .modal-header h2 {
-    font-size: 1.25rem;
-  }
-  
-  .modal-body {
-    padding: 1.5rem;
-  }
-  
-  .overview-stats {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-  }
-  
-  .stat-item {
-    padding: 1rem;
-  }
-  
-  .code-display-box {
-    padding: 1.5rem;
-  }
-  
-  .code-value-large {
-    font-size: 2rem;
-    letter-spacing: 3px;
-  }
-  
-  .question-preview {
-    padding: 1rem;
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  .question-number {
-    align-self: center;
-  }
 }
 
 /* Logout Modal Styles */
@@ -3329,11 +3183,6 @@ onUnmounted(() => {
   gap: 0.5rem;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
 /* Back Button */
 .back-btn {
   width: 48px;
@@ -3408,5 +3257,115 @@ onUnmounted(() => {
 
 .questions-list::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+/* Filter Tabs */
+.filter-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  background: white;
+  padding: 0.5rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.filter-tab {
+  flex: 1;
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-tab:hover {
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+.filter-tab.active {
+  background: #10b981;
+  color: white;
+}
+
+/* Assessment Type Badge */
+.assessment-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.assessment-type-badge.quiz {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #93c5fd;
+}
+
+.assessment-type-badge.assignment {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+/* Assignment Type Badge in Card Body */
+.assignment-type-badge {
+  display: inline-flex;
+  padding: 0.5rem 1rem;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Assignment Details in Modal */
+.assignment-details {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.assignment-details h4 {
+  color: #1e293b;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #64748b;
+}
+
+.detail-value {
+  color: #1e293b;
+  font-weight: 500;
 }
 </style>
