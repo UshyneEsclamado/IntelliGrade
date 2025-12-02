@@ -74,7 +74,8 @@
           <div v-else class="submissions-container">
             <!-- Filters Section -->
             <div class="filters-section">
-              <div class="search-filter-bar">
+              <!-- Search Bar -->
+              <div class="search-container">
                 <div class="search-input-container">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="search-icon">
                     <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
@@ -87,16 +88,57 @@
                     placeholder="Search by student name..."
                   />
                 </div>
-                <select v-model="filterType" class="grade-filter">
-                  <option value="all">All Submissions</option>
-                  <option value="quiz">Quizzes Only</option>
-                  <option value="assignment">Assignments Only</option>
-                </select>
+              </div>
+
+              <!-- Filter Tabs -->
+              <div class="filter-tabs">
+                <button 
+                  @click="filterType = 'all'"
+                  :class="['filter-tab', { 'active': filterType === 'all' }]"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                  </svg>
+                  All Submissions
+                  <span class="count">{{ submissions.length }}</span>
+                </button>
+                
+                <button 
+                  @click="filterType = 'quiz'"
+                  :class="['filter-tab', 'quiz-tab', { 'active': filterType === 'quiz' }]"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6v6l4 2"/>
+                  </svg>
+                  Quizzes Only
+                  <span class="count">{{ stats.totalQuizSubmissions }}</span>
+                </button>
+                
+                <button 
+                  @click="filterType = 'assignment'"
+                  :class="['filter-tab', 'assignment-tab', { 'active': filterType === 'assignment' }]"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="9" y1="15" x2="15" y2="15"/>
+                  </svg>
+                  Assignments Only
+                  <span class="count">{{ stats.totalAssignmentSubmissions }}</span>
+                </button>
+              </div>
+
+              <!-- Status Filter -->
+              <div class="status-filter-container">
+                <label class="filter-label">Filter by Status:</label>
                 <select v-model="filterStatus" class="status-filter">
                   <option value="all">All Status</option>
-                  <option value="submitted">Submitted</option>
+                  <option value="submitted">Pending Review</option>
                   <option value="graded">Graded</option>
-                  <option value="pending">Pending Review</option>
+                  <option value="reviewed">Reviewed</option>
+                  <option value="returned">Returned</option>
                 </select>
               </div>
             </div>
@@ -156,6 +198,24 @@
               </div>
             </div>
 
+            <!-- Results Summary -->
+            <div class="results-summary">
+              <div class="results-text">
+                <span class="results-count">{{ filteredSubmissions.length }}</span>
+                <span class="results-label">
+                  {{ filterType === 'quiz' ? 'quiz' : filterType === 'assignment' ? 'assignment' : '' }} 
+                  {{ filteredSubmissions.length === 1 ? 'submission' : 'submissions' }}
+                  {{ searchQuery ? `matching "${searchQuery}"` : '' }}
+                </span>
+              </div>
+              <div v-if="filterType !== 'all'" class="active-filter">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                </svg>
+                Filtered by: {{ filterType === 'quiz' ? 'Quizzes Only' : 'Assignments Only' }}
+              </div>
+            </div>
+
             <!-- Submissions List -->
             <div class="submissions-list">
               <div v-if="filteredSubmissions.length === 0" class="empty-state">
@@ -163,8 +223,11 @@
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                   <polyline points="14 2 14 8 20 8"/>
                 </svg>
-                <h3>No Submissions Found</h3>
-                <p>No student submissions match your current filters.</p>
+                <h3>{{ getEmptyStateTitle() }}</h3>
+                <p>{{ getEmptyStateMessage() }}</p>
+                <button v-if="filterType !== 'all'" @click="filterType = 'all'" class="show-all-btn">
+                  Show All Submissions
+                </button>
               </div>
 
               <div v-else class="submissions-grid">
@@ -357,7 +420,7 @@ const stats = computed(() => {
   const quizSubmissions = submissions.value.filter(s => s.type === 'quiz').length;
   const assignmentSubmissions = submissions.value.filter(s => s.type === 'assignment').length;
   const pending = submissions.value.filter(s => s.status === 'submitted').length;
-  const graded = submissions.value.filter(s => s.status === 'graded').length;
+  const graded = submissions.value.filter(s => ['graded', 'reviewed', 'returned'].includes(s.status)).length;
 
   return {
     totalQuizSubmissions: quizSubmissions,
@@ -396,136 +459,143 @@ const fetchSubmissions = async () => {
     loading.value = true;
     error.value = '';
 
-    // Fetch quiz submissions with proper join
-    const { data: quizData, error: quizError } = await supabase
-      .from('quiz_attempts')
-      .select(`
-        id,
-        quiz_id,
-        student_id,
-        submitted_at,
-        total_score,
-        max_score,
-        percentage,
-        status
-      `)
-      .eq('status', 'submitted');
+    console.log('Fetching submissions for section:', sectionId);
 
-    if (quizError) throw quizError;
+    // First, get quizzes for this section
+    const { data: sectionQuizzes, error: sectionQuizzesError } = await supabase
+      .from('quizzes')
+      .select('id, title')
+      .eq('section_id', sectionId);
 
-    // Get student details separately - FIXED: Use full_name and student_id instead of first_name, last_name, student_number
-    const studentIds = [...new Set(quizData?.map(q => q.student_id) || [])];
+    if (sectionQuizzesError) throw sectionQuizzesError;
+    console.log('Section quizzes:', sectionQuizzes);
+
+    let quizData = [];
+    if (sectionQuizzes && sectionQuizzes.length > 0) {
+      // Fetch quiz submissions for this specific section
+      const quizIds = sectionQuizzes.map(q => q.id);
+      const { data: quizSubmissions, error: quizError } = await supabase
+        .from('quiz_attempts')
+        .select(`
+          id,
+          quiz_id,
+          student_id,
+          submitted_at,
+          total_score,
+          max_score,
+          percentage,
+          status
+        `)
+        .in('quiz_id', quizIds)
+        .in('status', ['submitted', 'graded', 'reviewed']);
+
+      console.log('Quiz attempts query result:', { data: quizSubmissions, error: quizError });
+      if (quizError) throw quizError;
+      quizData = quizSubmissions || [];
+    }
+
+    // First, get assignments for this section
+    const { data: sectionAssignments, error: sectionAssignmentsError } = await supabase
+      .from('assignments')
+      .select('id, title, total_points')
+      .eq('section_id', sectionId);
+
+    if (sectionAssignmentsError) throw sectionAssignmentsError;
+    console.log('Section assignments:', sectionAssignments);
+
+    let assignmentData = [];
+    if (sectionAssignments && sectionAssignments.length > 0) {
+      // Fetch assignment submissions for this specific section
+      const assignmentIds = sectionAssignments.map(a => a.id);
+      const { data: assignmentSubmissions, error: assignmentError } = await supabase
+        .from('assignment_submissions')
+        .select(`
+          id,
+          assignment_id,
+          student_id,
+          submitted_at,
+          score,
+          status,
+          is_late
+        `)
+        .in('assignment_id', assignmentIds)
+        .in('status', ['submitted', 'graded', 'returned']);
+
+      console.log('Assignment submissions query result:', { data: assignmentSubmissions, error: assignmentError });
+      if (assignmentError) throw assignmentError;
+      assignmentData = assignmentSubmissions || [];
+    }
+
+    // Get all unique student IDs from both quiz and assignment submissions
+    const allStudentIds = [
+      ...new Set([
+        ...(quizData?.map(q => q.student_id) || []),
+        ...(assignmentData?.map(a => a.student_id) || [])
+      ])
+    ];
+
+    // Fetch student details once for all submissions
     const { data: studentsData, error: studentsError } = await supabase
       .from('students')
       .select('id, full_name, student_id')
-      .in('id', studentIds);
+      .in('id', allStudentIds);
 
     if (studentsError) throw studentsError;
 
-    // Get quiz details separately
-    const quizIds = [...new Set(quizData?.map(q => q.quiz_id) || [])];
-    const { data: quizzesData, error: quizzesError } = await supabase
-      .from('quizzes')
-      .select('id, title, section_id')
-      .in('id', quizIds)
-      .eq('section_id', sectionId);
-
-    if (quizzesError) throw quizzesError;
-
     // Create lookup maps
     const studentsMap = new Map(studentsData?.map(s => [s.id, s]) || []);
-    const quizzesMap = new Map(quizzesData?.map(q => [q.id, q]) || []);
+    const quizzesMap = new Map(sectionQuizzes?.map(q => [q.id, q]) || []);
+    const assignmentsMap = new Map(sectionAssignments?.map(a => [a.id, a]) || []);
 
-    // Fetch assignment submissions with proper join
-    const { data: assignmentData, error: assignmentError } = await supabase
-      .from('assignment_submissions')
-      .select(`
-        id,
-        assignment_id,
-        student_id,
-        submitted_at,
-        score,
-        status,
-        is_late
-      `)
-      .in('status', ['submitted', 'graded']);
+    // Format quiz submissions
+    const formattedQuizzes = (quizData || []).map((quiz: any) => {
+      const student = studentsMap.get(quiz.student_id);
+      const quizInfo = quizzesMap.get(quiz.quiz_id);
+      
+      return {
+        id: quiz.id,
+        type: 'quiz',
+        student_id: quiz.student_id,
+        student_name: student?.full_name || 'Unknown Student',
+        student_number: student?.student_id || 'N/A',
+        title: quizInfo?.title || 'Unknown Quiz',
+        submitted_at: quiz.submitted_at,
+        score: quiz.total_score || 0,
+        max_score: quiz.max_score || 0,
+        percentage: quiz.percentage || 0,
+        status: quiz.status,
+        is_late: false
+      };
+    });
 
-    if (assignmentError) throw assignmentError;
-
-    // Get student details for assignments - FIXED: Use full_name and student_id
-    const assignmentStudentIds = [...new Set(assignmentData?.map(a => a.student_id) || [])];
-    const { data: assignmentStudentsData, error: assignmentStudentsError } = await supabase
-      .from('students')
-      .select('id, full_name, student_id')
-      .in('id', assignmentStudentIds);
-
-    if (assignmentStudentsError) throw assignmentStudentsError;
-
-    // Get assignment details
-    const assignmentIds = [...new Set(assignmentData?.map(a => a.assignment_id) || [])];
-    const { data: assignmentsData, error: assignmentsError } = await supabase
-      .from('assignments')
-      .select('id, title, total_points, section_id')
-      .in('id', assignmentIds)
-      .eq('section_id', sectionId);
-
-    if (assignmentsError) throw assignmentsError;
-
-    // Create lookup maps for assignments
-    const assignmentStudentsMap = new Map(assignmentStudentsData?.map(s => [s.id, s]) || []);
-    const assignmentsMap = new Map(assignmentsData?.map(a => [a.id, a]) || []);
-
-    // Format quiz submissions - FIXED: Use full_name and student_id
-    const formattedQuizzes = (quizData || [])
-      .filter(quiz => quizzesMap.has(quiz.quiz_id))
-      .map((quiz: any) => {
-        const student = studentsMap.get(quiz.student_id);
-        const quizInfo = quizzesMap.get(quiz.quiz_id);
-        
-        return {
-          id: quiz.id,
-          type: 'quiz',
-          student_id: quiz.student_id,
-          student_name: student?.full_name || 'Unknown Student',
-          student_number: student?.student_id || 'N/A',
-          title: quizInfo?.title || 'Unknown Quiz',
-          submitted_at: quiz.submitted_at,
-          score: quiz.total_score,
-          max_score: quiz.max_score,
-          percentage: quiz.percentage,
-          status: quiz.status,
-          is_late: false
-        };
-      });
-
-    // Format assignment submissions - FIXED: Use full_name and student_id
-    const formattedAssignments = (assignmentData || [])
-      .filter(assignment => assignmentsMap.has(assignment.assignment_id))
-      .map((assignment: any) => {
-        const student = assignmentStudentsMap.get(assignment.student_id);
-        const assignmentInfo = assignmentsMap.get(assignment.assignment_id);
-        
-        return {
-          id: assignment.id,
-          type: 'assignment',
-          student_id: assignment.student_id,
-          student_name: student?.full_name || 'Unknown Student',
-          student_number: student?.student_id || 'N/A',
-          title: assignmentInfo?.title || 'Unknown Assignment',
-          submitted_at: assignment.submitted_at,
-          score: assignment.score || 0,
-          max_score: assignmentInfo?.total_points || 100,
-          percentage: assignment.score && assignmentInfo?.total_points 
-            ? ((assignment.score / assignmentInfo.total_points) * 100).toFixed(2) 
-            : 0,
-          status: assignment.status,
-          is_late: assignment.is_late
-        };
-      });
+    // Format assignment submissions
+    const formattedAssignments = (assignmentData || []).map((assignment: any) => {
+      const student = studentsMap.get(assignment.student_id);
+      const assignmentInfo = assignmentsMap.get(assignment.assignment_id);
+      
+      return {
+        id: assignment.id,
+        type: 'assignment',
+        student_id: assignment.student_id,
+        student_name: student?.full_name || 'Unknown Student',
+        student_number: student?.student_id || 'N/A',
+        title: assignmentInfo?.title || 'Unknown Assignment',
+        submitted_at: assignment.submitted_at,
+        score: assignment.score || 0,
+        max_score: assignmentInfo?.total_points || 100,
+        percentage: assignment.score && assignmentInfo?.total_points 
+          ? ((assignment.score / assignmentInfo.total_points) * 100).toFixed(2) 
+          : 0,
+        status: assignment.status,
+        is_late: assignment.is_late || false
+      };
+    });
 
     // Combine and sort by submission date
     submissions.value = [...formattedQuizzes, ...formattedAssignments]
       .sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime());
+
+    console.log('Submissions fetched:', submissions.value);
 
   } catch (err: any) {
     console.error('Error fetching submissions:', err);
@@ -558,7 +628,10 @@ const getStatusText = (status: string) => {
   const statusMap: Record<string, string> = {
     submitted: 'Pending Review',
     graded: 'Graded',
-    in_progress: 'In Progress'
+    reviewed: 'Reviewed',
+    returned: 'Returned',
+    in_progress: 'In Progress',
+    draft: 'Draft'
   };
   return statusMap[status] || status;
 };
@@ -639,8 +712,46 @@ const goBack = () => {
   router.back();
 };
 
+const getEmptyStateTitle = () => {
+  if (filterType.value === 'quiz') return 'No Quiz Submissions';
+  if (filterType.value === 'assignment') return 'No Assignment Submissions';
+  return 'No Submissions Found';
+};
+
+const getEmptyStateMessage = () => {
+  if (submissions.value.length === 0) {
+    return 'Students haven\'t submitted any work for this section yet.';
+  }
+  
+  if (filterType.value === 'quiz') {
+    return 'No quiz submissions match your current filters.';
+  }
+  if (filterType.value === 'assignment') {
+    return 'No assignment submissions match your current filters.';
+  }
+  
+  if (searchQuery.value) {
+    return `No submissions found for "${searchQuery.value}".`;
+  }
+  
+  return 'No student submissions match your current filters.';
+};
+
 // Lifecycle
 onMounted(() => {
+  console.log('StudentSubmissions mounted with params:', {
+    subjectId,
+    sectionId,
+    subjectName,
+    sectionName
+  });
+  
+  if (!sectionId) {
+    error.value = 'Section ID is missing';
+    loading.value = false;
+    return;
+  }
+  
   fetchSubmissions();
 });
 </script>
@@ -786,7 +897,7 @@ onMounted(() => {
   margin-top: 64px;
   padding: 1.5rem;
   width: 100%;
-  min-height: calc(100vh - 64px);
+  height: calc(100vh - 64px);
   position: relative;
   overflow-y: auto;
   overflow-x: hidden;
@@ -978,6 +1089,8 @@ onMounted(() => {
   max-width: 1400px;
   margin: 0 auto;
   padding: 0;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .filters-section {
@@ -987,6 +1100,9 @@ onMounted(() => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   margin-bottom: 2rem;
   border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .dark .filters-section {
@@ -994,10 +1110,150 @@ onMounted(() => {
   border-color: #334155;
 }
 
-.search-filter-bar {
+.search-container {
+  width: 100%;
+}
+
+.filter-tabs {
   display: flex;
-  gap: 1rem;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.filter-tab {
+  display: flex;
   align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  background: white;
+  color: #6b7280;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+}
+
+.filter-tab:hover {
+  border-color: #d1d5db;
+  background: #f9fafb;
+}
+
+.filter-tab.active {
+  border-color: #3D8D7A;
+  background: #3D8D7A;
+  color: white;
+}
+
+.filter-tab.quiz-tab.active {
+  border-color: #3b82f6;
+  background: #3b82f6;
+}
+
+.filter-tab.assignment-tab.active {
+  border-color: #f59e0b;
+  background: #f59e0b;
+}
+
+.filter-tab .count {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.filter-tab:not(.active) .count {
+  background: #e5e7eb;
+  color: #6b7280;
+}
+
+.status-filter-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.filter-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  white-space: nowrap;
+}
+
+.dark .filter-label {
+  color: #e2e8f0;
+}
+
+.dark .filter-tab {
+  background: #1e293b;
+  border-color: #334155;
+  color: #94a3b8;
+}
+
+.dark .filter-tab:hover {
+  background: #334155;
+  border-color: #475569;
+}
+
+.dark .filter-tab.active {
+  color: white;
+}
+
+.results-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  border: 1px solid #e2e8f0;
+}
+
+.dark .results-summary {
+  background: #0f172a;
+  border-color: #1e293b;
+}
+
+.results-text {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.results-count {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #3D8D7A;
+}
+
+.results-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.dark .results-label {
+  color: #94a3b8;
+}
+
+.active-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+  background: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.dark .active-filter {
+  background: #1e293b;
+  border-color: #334155;
+  color: #94a3b8;
 }
 
 .search-input-container {
@@ -1033,14 +1289,24 @@ onMounted(() => {
   color: #e2e8f0;
 }
 
-.grade-filter, .status-filter {
+.status-filter {
   padding: 0.75rem 1rem;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   background: white;
-  min-width: 150px;
+  min-width: 180px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
-.dark .grade-filter, .dark .status-filter {
+
+.status-filter:focus {
+  outline: none;
+  border-color: #3D8D7A;
+  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
+}
+
+.dark .status-filter {
   background: #1e293b;
   border-color: #334155;
   color: #e2e8f0;
@@ -1122,8 +1388,36 @@ onMounted(() => {
 .submissions-list {
   background: white;
   padding: 1.5rem;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e2e8f0;
+  max-height: 70vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.dark .submissions-list {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.submissions-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.submissions-list::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.submissions-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.submissions-list::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .empty-state {
@@ -1142,6 +1436,35 @@ onMounted(() => {
   font-weight: 600;
   color: #374151;
   margin: 0.5rem 0;
+}
+
+.dark .empty-state h3 {
+  color: #f1f5f9;
+}
+
+.empty-state p {
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+}
+
+.dark .empty-state p {
+  color: #94a3b8;
+}
+
+.show-all-btn {
+  background: #3D8D7A;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.show-all-btn:hover {
+  background: #2d6a5a;
+  transform: translateY(-1px);
 }
 
 .submissions-grid {
@@ -1539,7 +1862,29 @@ onMounted(() => {
   }
 
   .filters-section {
-    grid-template-columns: 1fr;
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .filter-tabs {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .filter-tab {
+    width: 100%;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .status-filter-container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .status-filter {
+    width: 100%;
   }
 
   .stats-grid {
@@ -1554,11 +1899,6 @@ onMounted(() => {
     width: 100%;
   }
   
-  .search-filter-bar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
   .header-content {
     flex-direction: column;
     align-items: flex-start;
@@ -1570,6 +1910,47 @@ onMounted(() => {
   
   .main-content {
     padding: 1rem;
+  }
+
+  .submissions-list {
+    max-height: 60vh;
+    padding: 1rem;
+  }
+
+  .results-summary {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  .active-filter {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-tab {
+    font-size: 0.8rem;
+    padding: 0.875rem;
+  }
+
+  .filter-tab svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .stat-card {
+    padding: 1rem;
+  }
+
+  .submissions-list {
+    max-height: 50vh;
   }
 }
 </style>
