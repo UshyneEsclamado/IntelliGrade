@@ -667,6 +667,24 @@ export default {
         // ============================================
         console.log('📝 Fetching quizzes for sections:', sectionIds)
         
+        // 🔍 DEBUG: Check ALL quizzes in the entire database first
+        const { data: debugAllQuizzes, error: debugError } = await supabase
+          .from('quizzes')
+          .select('id, section_id, subject_id, title, status, created_at')
+          .limit(20)
+        
+        console.log('🔍 DEBUG - ALL quizzes in database (up to 20):', {
+          count: debugAllQuizzes?.length || 0,
+          quizzes: debugAllQuizzes,
+          error: debugError
+        })
+        
+        if (debugAllQuizzes && debugAllQuizzes.length > 0) {
+          console.log('🔍 DEBUG - Section IDs in quizzes table:', debugAllQuizzes.map(q => q.section_id))
+          console.log('🔍 DEBUG - Student enrolled section IDs:', sectionIds)
+          console.log('🔍 DEBUG - Do any match?', debugAllQuizzes.some(q => sectionIds.includes(q.section_id)))
+        }
+        
         const { data: allQuizzes, error: quizzesError } = await supabase
           .from('quizzes')
           .select('id, section_id, title, status, start_date, end_date, created_at')

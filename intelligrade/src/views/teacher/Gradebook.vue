@@ -899,7 +899,6 @@ const fetchGradebookData = async (sectionId) => {
     `)
     .eq('section_id', sectionId)
     .eq('status', 'active')
-    .eq('is_active', true)
 
   if (studentsError) throw studentsError
   students.value = studentsData?.map(enrollment => enrollment.students) || []
@@ -907,12 +906,31 @@ const fetchGradebookData = async (sectionId) => {
   // Get quizzes (auto-graded assessments) for this section
   const { data: quizzesData, error: quizzesError } = await supabase
     .from('quizzes')
-    .select('id, title, max_score, created_at')
+    .select('id, title, created_at, status')
     .eq('section_id', sectionId)
-    .eq('is_active', true)
+    .eq('status', 'published')
     .order('created_at')
 
   if (quizzesError) throw quizzesError
+
+  // Calculate total points for each quiz from questions
+  const quizzesWithPoints = []
+  for (const quiz of quizzesData || []) {
+    const { data: questionsData } = await supabase
+      .from('quiz_questions')
+      .select('points')
+      .eq('quiz_id', quiz.id)
+    
+    const totalPoints = questionsData?.reduce((sum, q) => sum + (q.points || 0), 0) || 100
+    
+    quizzesWithPoints.push({
+      id: quiz.id,
+      title: quiz.title,
+      type: 'auto',
+      max_score: totalPoints,
+      created_at: quiz.created_at
+    })
+  }
 
   // Get manual assessments (for future expansion)
   // For now, we'll create some sample manual assessments
@@ -923,21 +941,15 @@ const fetchGradebookData = async (sectionId) => {
 
   // Combine all assessments
   const allAssessments = [
-    ...(quizzesData?.map(quiz => ({
-      id: quiz.id,
-      title: quiz.title,
-      type: 'auto',
-      max_score: quiz.max_score,
-      created_at: quiz.created_at
-    })) || []),
+    ...quizzesWithPoints,
     ...manualAssessments
   ]
 
   assessments.value = allAssessments
 
   // Get quiz attempts/results for gradebook
-  if (quizzesData && quizzesData.length > 0) {
-    const quizIds = quizzesData.map(q => q.id)
+  if (quizzesWithPoints && quizzesWithPoints.length > 0) {
+    const quizIds = quizzesWithPoints.map(q => q.id)
     const { data: attemptsData } = await supabase
       .from('quiz_attempts')
       .select('student_id, quiz_id, total_score, status, submitted_at')
