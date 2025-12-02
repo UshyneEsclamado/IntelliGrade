@@ -3014,13 +3014,15 @@
                 <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M7,13H17V11H7"/>
               </svg>
               <p>No students found matching your search</p>
+              <p class="empty-subtitle">Try a different search term or check if all eligible students are already enrolled</p>
             </div>
 
-            <div v-else-if="availableStudents.length === 0" class="empty-search">
+            <div v-else-if="availableStudents.length === 0 && !isSearchingStudents" class="empty-search">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M7,13H17V11H7"/>
+                <path d="M16,4C18.21,4 20,5.79 20,8C20,10.21 18.21,12 16,12C13.79,12 12,10.21 12,8C12,5.79 13.79,4 16,4M16,14C20.42,14 24,15.79 24,18V20H8V18C8,15.79 11.58,14 16,14" />
               </svg>
-              <p>Enter a search term to find students</p>
+              <p>No available students for this section</p>
+              <p class="empty-subtitle">All eligible students for Grade {{ selectedSubjectForStudents?.grade_level }} may already be enrolled in this subject</p>
             </div>
 
             <div v-else class="students-grid">
@@ -3903,6 +3905,9 @@ const manageStudents = async (subject, section) => {
   selectedStudentsToAdd.value = []
   studentSearchQuery.value = ''
   gradeFilter.value = subject.grade_level.toString()
+  
+  // Automatically load available students when modal opens
+  await searchStudents()
 }
 
 // ============================================================
@@ -4231,11 +4236,6 @@ const enrollStudentById = async () => {
 }
 
 const searchStudents = async () => {
-  if (!studentSearchQuery.value.trim() && !gradeFilter.value) {
-    availableStudents.value = []
-    return
-  }
-
   try {
     isSearchingStudents.value = true
     
@@ -4249,7 +4249,7 @@ const searchStudents = async () => {
       .from('teacher_available_students')
       .select('*')
       .eq('teacher_id', teacherInfo.value.id)
-      .eq('subject_id', selectedSectionForStudents.value.subject_id || selectedSubjectForStudents.value.id)
+      .eq('subject_id', selectedSubjectForStudents.value.id)
       .eq('section_id', selectedSectionForStudents.value.id)
       .eq('already_enrolled_in_subject', false)
       .eq('is_active', true)
@@ -4277,6 +4277,7 @@ const searchStudents = async () => {
   } catch (error) {
     console.error('Search students error:', error)
     showToast('Failed to search students', 'error')
+    availableStudents.value = []
   } finally {
     isSearchingStudents.value = false
   }
@@ -6128,6 +6129,13 @@ onUnmounted(() => {
 }
 .dark .empty-search svg {
   color: #4b5563;
+}
+
+.empty-subtitle {
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  opacity: 0.7;
+  line-height: 1.4;
 }
 
 .students-grid {
