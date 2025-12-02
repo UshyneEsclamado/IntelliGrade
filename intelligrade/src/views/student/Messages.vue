@@ -113,15 +113,15 @@
 
         <!-- Teachers Grid -->
         <div v-else class="teachers-grid">
-          <div v-for="subject in groupedTeachers" :key="(subject as any).id" class="subject-section">
+          <div v-for="subject in groupedTeachers" :key="subject.id" class="subject-section">
             <div class="subject-section-header">
-              <h3 class="subject-section-name">{{ (subject as any).name }}</h3>
-              <span class="subject-section-code">{{ (subject as any).code }}</span>
+              <h3 class="subject-section-name">{{ subject.name }}</h3>
+              <span class="subject-section-code">{{ subject.code }}</span>
             </div>
             
             <div class="teachers-cards">
               <div 
-                v-for="teacher in (subject as any).teachers" 
+                v-for="teacher in subject.teachers" 
                 :key="`${teacher.id}-${teacher.section_id}`"
                 :class="['simple-teacher-card', { 'has-unread': teacher.unread_count > 0 }]"
                 @click="startChatWithTeacher(teacher)"
@@ -133,7 +133,7 @@
                     </div>
                     <div class="simple-teacher-info">
                       <h4 class="simple-teacher-name">{{ teacher.teacher_name }}</h4>
-                      <p class="simple-teacher-email">{{ teacher.email }}</p>
+                      <p class="simple-teacher-email">{{ teacher.email || teacher.teacher_email }}</p>
                       <div v-if="teacherPresence[teacher.id]?.is_online" class="simple-presence-status">
                         <div class="simple-online-dot"></div>
                         <span>Online</span>
@@ -175,7 +175,7 @@
                 <div class="simple-teacher-body">
                   <p class="simple-last-message">{{ teacher.last_message || 'Start a conversation' }}</p>
                   <div class="simple-message-meta">
-                    <span v-if="teacher.last_message_time" class="simple-message-time">{{ formatTime(teacher.last_message_time) }}</span>
+                    <span v-if="teacher.last_message_time || teacher.last_message_date" class="simple-message-time">{{ formatTime(teacher.last_message_time || teacher.last_message_date) }}</span>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="simple-chat-icon">
                       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                     </svg>
@@ -242,13 +242,13 @@
                   </svg>
                 </div>
                 <div class="notification-info">
-                  <h3 class="notification-title">{{ (group as any).subject }}</h3>
-                  <p class="notification-section">{{ (group as any).section }}</p>
+                  <h3 class="notification-title">{{ group.subject }}</h3>
+                  <p class="notification-section">{{ group.section }}</p>
                 </div>
               </div>
               <div class="notification-card-right">
-                <span class="notification-count">{{ (group as any).announcements.length }}</span>
-                <span v-if="(group as any).announcements.some((a: any) => !a.is_read)" class="unread-dot"></span>
+                <span class="notification-count">{{ group.announcements.length }}</span>
+                <span v-if="group.announcements.some(a => !a.is_read)" class="unread-dot"></span>
               </div>
             </div>
             <div class="notification-card-body">
@@ -258,9 +258,21 @@
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                     <circle cx="12" cy="7" r="4"/>
                   </svg>
-                  {{ (group as any).teacher }}
+                  {{ group.teacher }}
                 </span>
-                <span class="announcement-count">{{ (group as any).announcements.length }} announcement{{ (group as any).announcements.length > 1 ? 's' : '' }}</span>
+                <div class="notification-badges">
+                  <span class="announcement-count">{{ group.announcements.length }} announcement{{ group.announcements.length > 1 ? 's' : '' }}</span>
+                  <span 
+                    v-if="group.announcements.some(a => a.has_attachments || (a.attachments && a.attachments.length > 0))" 
+                    class="attachment-indicator"
+                    title="Contains attachments"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                    </svg>
+                    {{ group.announcements.reduce((total, a) => total + (a.attachments?.length || 0), 0) }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -373,7 +385,7 @@
               style="display: none" 
               accept="image/*,.pdf,.doc,.docx,.txt"
             />
-            <button class="simple-attach-btn" @click="($refs.fileInput as HTMLInputElement)?.click()" :disabled="isSendingMessage">
+            <button class="simple-attach-btn" @click="fileInput?.click()" :disabled="isSendingMessage">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
               </svg>
@@ -645,7 +657,77 @@
 defineOptions({ name: 'StudentMessages' })
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { supabase } from '@/supabase.js'
+import { supabase } from '@/supabase'
+
+// Types
+interface Teacher {
+  id: string
+  teacher_name: string
+  teacher_email?: string
+  email?: string
+  subject_name: string
+  subject_id: number
+  section_id: string
+  section_name: string
+  section_code: string
+  last_message_date?: string
+  last_message_time?: string
+  last_message?: string
+  unread_count: number
+  archived?: boolean
+  full_name?: string
+  name?: string
+}
+
+interface Subject {
+  id: number
+  name: string
+  code: string
+  teachers: Teacher[]
+}
+
+interface Attachment {
+  name: string
+  url: string
+  type: string
+  size: string | number
+  path: string
+  mimeType?: string
+}
+
+interface Notification {
+  notification_id: string
+  title: string
+  body: string
+  created_at: string
+  is_read: boolean
+  read_at?: string
+  notification_type: string
+  teacher_name: string
+  subject_name: string
+  section_name: string
+  section_id: string
+  has_attachments: boolean
+  attachments: Attachment[]
+}
+
+interface BroadcastGroup {
+  section: string
+  subject: string
+  teacher: string
+  announcements: Notification[]
+}
+
+interface Message {
+  id: string
+  sender_id: string
+  recipient_id: string
+  content: string
+  sent_at: string
+  is_read: boolean
+  read_at?: string
+  attachments: Attachment[]
+}
 
 // Watch for route changes
 const route = useRoute()
@@ -661,12 +743,12 @@ const selectedSubject = ref('')
 const isModalOpen = ref(false)
 const isBroadcastModalOpen = ref(false)
 const isAnnouncementDetailOpen = ref(false)
-const selectedAnnouncement = ref(null)
-const activeTeacher = ref(null)
-const selectedBroadcastGroup = ref(null)
+const selectedAnnouncement = ref<Notification | null>(null)
+const activeTeacher = ref<Teacher | null>(null)
+const selectedBroadcastGroup = ref<BroadcastGroup | null>(null)
 const newMessage = ref('')
-const messagesContainer = ref(null)
-const fileInput = ref(null)
+const messagesContainer = ref<HTMLElement | null>(null)
+const fileInput = ref<HTMLInputElement | null>(null)
 
 // Loading states
 const isInitialLoading = ref(true)
@@ -677,22 +759,22 @@ const isSendingMessage = ref(false)
 
 const activeTeacherOptionsId = ref(null)
 const showArchive = ref(false)
-const selectedFile = ref(null)
-const previewFile = ref(null)
-const deletedConversationKeys = ref(new Set())
+const selectedFile = ref<File | null>(null)
+const previewFile = ref<string | null>(null)
+const deletedConversationKeys = ref<Set<string>>(new Set())
 
 // Real-time subscriptions
-let messageChannel = null
-let presenceChannel = null
+let messageChannel: any = null
+let presenceChannel: any = null
 
 // Data
-const enrolledSubjects = ref([])
-const enrolledTeachers = ref([])
-const notifications = ref([])
-const currentMessages = ref([])
-const currentUser = ref(null)
-const currentStudentId = ref(null)
-const teacherPresence = ref({})
+const enrolledSubjects = ref<any[]>([])
+const enrolledTeachers = ref<Teacher[]>([])
+const notifications = ref<Notification[]>([])
+const currentMessages = ref<Message[]>([])
+const currentUser = ref<any>(null)
+const currentStudentId = ref<string | null>(null)
+const teacherPresence = ref<Record<string, any>>({})
 
 // ================================
 // COMPUTED PROPERTIES
@@ -724,8 +806,8 @@ const filteredTeachers = computed(() => {
   return teachers
 })
 
-const groupedTeachers = computed(() => {
-  const subjects = {}
+const groupedTeachers = computed((): Subject[] => {
+  const subjects: Record<number, Subject> = {}
   
   filteredTeachers.value.forEach(teacher => {
     const subjectId = teacher.subject_id
@@ -743,8 +825,8 @@ const groupedTeachers = computed(() => {
   return Object.values(subjects)
 })
 
-const groupedBroadcasts = computed(() => {
-  const groups = {}
+const groupedBroadcasts = computed((): Record<string, BroadcastGroup> => {
+  const groups: Record<string, BroadcastGroup> = {}
   let notifs = notifications.value
   
   if (currentFilter.value === 'unread') {
@@ -918,7 +1000,9 @@ const handleFileSelect = (event) => {
   if (file.type.startsWith('image/')) {
     const reader = new FileReader()
     reader.onload = (e) => {
-      previewFile.value = e.target.result
+      if (e.target?.result && typeof e.target.result === 'string') {
+        previewFile.value = e.target.result
+      }
     }
     reader.readAsDataURL(file)
   } else {
@@ -948,12 +1032,12 @@ const downloadAttachment = (attachment) => {
   document.body.removeChild(link)
 }
 
-const openBroadcastGroup = async (group) => {
+const openBroadcastGroup = async (group: BroadcastGroup) => {
   selectedBroadcastGroup.value = group
   
   console.log('Opening broadcast group:', group)
   
-  // Load attachments for all announcements in this group
+  // Load attachments for announcements that don't have them loaded yet
   for (const announcement of group.announcements) {
     if (!announcement.attachments || announcement.attachments.length === 0) {
       console.log('Loading attachments for announcement:', announcement.notification_id)
@@ -963,15 +1047,16 @@ const openBroadcastGroup = async (group) => {
           .select('*')
           .eq('message_id', announcement.notification_id)
         
-        if (error) throw error
-        
-        if (attachments && attachments.length > 0) {
+        if (error) {
+          console.warn('Error loading attachments for announcement:', error)
+        } else if (attachments && attachments.length > 0) {
           announcement.attachments = attachments.map(att => ({
             name: att.file_name,
             url: att.file_url,
             type: att.file_type,
-            size: att.file_size,
-            path: att.file_path
+            size: att.file_size || 'Unknown size',
+            path: att.file_path,
+            mimeType: att.mime_type
           }))
           announcement.has_attachments = true
           console.log('Loaded attachments for announcement:', announcement.attachments)
@@ -980,7 +1065,7 @@ const openBroadcastGroup = async (group) => {
           announcement.has_attachments = false
         }
       } catch (error) {
-        console.error('Error loading attachments for announcement:', error)
+        console.warn('Error loading attachments for announcement (table might not exist):', error)
         announcement.attachments = []
         announcement.has_attachments = false
       }
@@ -995,7 +1080,7 @@ const closeBroadcastModal = () => {
   selectedBroadcastGroup.value = null
 }
 
-const openAnnouncementDetail = async (announcement) => {
+const openAnnouncementDetail = async (announcement: Notification) => {
   selectedAnnouncement.value = announcement
   await loadAnnouncementAttachments(announcement.notification_id)
   await markBroadcastAsRead(announcement)
@@ -1007,30 +1092,46 @@ const closeAnnouncementDetail = () => {
   selectedAnnouncement.value = null
 }
 
-const loadAnnouncementAttachments = async (messageId) => {
+const loadAnnouncementAttachments = async (messageId: string) => {
   try {
+    if (!selectedAnnouncement.value) return
+    
+    console.log('Loading attachments for announcement:', messageId)
+    
     const { data: attachments, error } = await supabase
       .from('message_attachments')
       .select('*')
       .eq('message_id', messageId)
-    if (error) throw error
+    
+    if (error) {
+      console.warn('Error loading announcement attachments:', error)
+      selectedAnnouncement.value.attachments = []
+      selectedAnnouncement.value.has_attachments = false
+      return
+    }
+    
     if (attachments && attachments.length > 0) {
       selectedAnnouncement.value.attachments = attachments.map(att => ({
         name: att.file_name,
         url: att.file_url,
         type: att.file_type,
-        size: att.file_size,
-        path: att.file_path
+        size: att.file_size || 'Unknown size',
+        path: att.file_path,
+        mimeType: att.mime_type
       }))
       selectedAnnouncement.value.has_attachments = true
+      console.log('Loaded attachments for announcement:', selectedAnnouncement.value.attachments)
     } else {
       selectedAnnouncement.value.attachments = []
       selectedAnnouncement.value.has_attachments = false
+      console.log('No attachments found for announcement:', messageId)
     }
   } catch (err) {
-    console.error('Error loading announcement attachments:', err)
-    selectedAnnouncement.value.attachments = []
-    selectedAnnouncement.value.has_attachments = false
+    console.warn('Error loading announcement attachments (table might not exist):', err)
+    if (selectedAnnouncement.value) {
+      selectedAnnouncement.value.attachments = []
+      selectedAnnouncement.value.has_attachments = false
+    }
   }
 }
 
@@ -1057,32 +1158,47 @@ const formatFullDate = (dateString) => {
   })
 }
 
-const markBroadcastAsRead = async (announcement) => {
+const markBroadcastAsRead = async (announcement: Notification) => {
   if (announcement.is_read) return
   
   try {
+    if (!currentStudentId.value) return
+    
+    console.log('Marking broadcast as read:', announcement.notification_id, 'for student:', currentStudentId.value)
+    
+    // Insert into message_reads table to track that this student has read this message
     const { error } = await supabase
-      .from('messages')
-      .update({ is_read: true })
-      .eq('id', announcement.notification_id)
+      .from('message_reads')
+      .insert({
+        message_id: announcement.notification_id,
+        reader_id: currentStudentId.value
+      })
     
-    if (error) throw error
+    if (error && !error.message?.includes('duplicate key')) {
+      throw error
+    }
     
+    // Update local state
     announcement.is_read = true
+    announcement.read_at = new Date().toISOString()
     
+    // Update in notifications array
     const notificationIndex = notifications.value.findIndex(n => n.notification_id === announcement.notification_id)
     if (notificationIndex !== -1) {
       notifications.value[notificationIndex].is_read = true
+      notifications.value[notificationIndex].read_at = announcement.read_at
     }
     
+    // Update in broadcast group if open
     if (selectedBroadcastGroup.value) {
       const groupAnnouncement = selectedBroadcastGroup.value.announcements.find(a => a.notification_id === announcement.notification_id)
       if (groupAnnouncement) {
         groupAnnouncement.is_read = true
+        groupAnnouncement.read_at = announcement.read_at
       }
     }
     
-    console.log('Broadcast marked as read:', announcement.notification_id)
+    console.log('Broadcast marked as read successfully:', announcement.notification_id)
     
   } catch (error) {
     console.error('Error marking broadcast as read:', error)
@@ -1307,6 +1423,7 @@ const loadNotifications = async () => {
     isLoadingNotifications.value = true
     console.log('Loading notifications for student:', currentStudentId.value)
     
+    // Get student enrollments
     const { data: enrollments } = await supabase
       .from('enrollments')
       .select('section_id')
@@ -1320,11 +1437,13 @@ const loadNotifications = async () => {
     
     const sectionIds = enrollments.map(e => e.section_id)
     
+    // Get broadcast messages for these sections
     const { data: messages, error } = await supabase
       .from('messages')
       .select('*')
       .in('section_id', sectionIds)
       .eq('message_type', 'announcement')
+      .is('recipient_id', null) // Ensure it's a broadcast message
       .order('sent_at', { ascending: false })
     
     if (error) throw error
@@ -1334,28 +1453,38 @@ const loadNotifications = async () => {
       return
     }
     
+    // Load attachments for all messages
     const messageIds = messages.map(m => m.id)
-    const { data: attachments } = await supabase
-      .from('message_attachments')
-      .select('*')
-      .in('message_id', messageIds)
+    let attachmentsMap: Record<string, any[]> = {}
     
-    const attachmentsMap = {}
-    if (attachments) {
-      attachments.forEach(att => {
-        if (!attachmentsMap[att.message_id]) {
-          attachmentsMap[att.message_id] = []
-        }
-        attachmentsMap[att.message_id].push({
-          name: att.file_name,
-          url: att.file_url,
-          type: att.file_type,
-          size: att.file_size,
-          path: att.file_path
+    try {
+      const { data: attachments, error: attachError } = await supabase
+        .from('message_attachments')
+        .select('*')
+        .in('message_id', messageIds)
+      
+      if (attachError) {
+        console.warn('Error loading attachments:', attachError)
+      } else if (attachments) {
+        attachments.forEach(att => {
+          if (!attachmentsMap[att.message_id]) {
+            attachmentsMap[att.message_id] = []
+          }
+          attachmentsMap[att.message_id].push({
+            name: att.file_name,
+            url: att.file_url,
+            type: att.file_type,
+            size: att.file_size || 'Unknown size',
+            path: att.file_path,
+            mimeType: att.mime_type
+          })
         })
-      })
+      }
+    } catch (attachError) {
+      console.warn('Message attachments table not found or error:', attachError)
     }
     
+    // Load section details
     const { data: sections } = await supabase
       .from('sections')
       .select('id, name, subject_id')
@@ -1363,6 +1492,7 @@ const loadNotifications = async () => {
     
     const sectionMap = new Map(sections?.map(s => [s.id, s]) || [])
     
+    // Load subject details
     const subjectIds = [...new Set(sections?.map(s => s.subject_id) || [])]
     const { data: subjects } = await supabase
       .from('subjects')
@@ -1371,6 +1501,7 @@ const loadNotifications = async () => {
     
     const subjectMap = new Map(subjects?.map(s => [s.id, s]) || [])
     
+    // Load teacher details
     const senderIds = [...new Set(messages.map(m => m.sender_id))]
     const { data: senders } = await supabase
       .from('teachers')
@@ -1379,31 +1510,46 @@ const loadNotifications = async () => {
     
     const senderMap = new Map(senders?.map(s => [s.id, s]) || [])
     
+    // Check message reads for this student
+    const { data: messageReads } = await supabase
+      .from('message_reads')
+      .select('message_id, read_at')
+      .eq('reader_id', currentStudentId.value)
+      .in('message_id', messageIds)
+    
+    const readMap = new Map(messageReads?.map(mr => [mr.message_id, mr.read_at]) || [])
+    
+    // Transform messages to notifications
     notifications.value = messages.map(msg => {
       const section = sectionMap.get(msg.section_id)
       const subject = section ? subjectMap.get(section.subject_id) : null
       const sender = senderMap.get(msg.sender_id)
       const messageAttachments = attachmentsMap[msg.id] || []
+      const isRead = readMap.has(msg.id)
       
       return {
         notification_id: msg.id,
         title: 'Class Announcement',
         body: msg.message_text,
         created_at: msg.sent_at,
-        is_read: msg.is_read,
+        is_read: isRead,
+        read_at: readMap.get(msg.id),
         notification_type: 'announcement',
-        teacher_name: sender?.full_name,
-        subject_name: subject?.name,
-        section_name: section?.name,
+        teacher_name: sender?.full_name || 'Unknown Teacher',
+        subject_name: subject?.name || 'Unknown Subject',
+        section_name: section?.name || 'Unknown Section',
+        section_id: msg.section_id,
         has_attachments: messageAttachments.length > 0,
         attachments: messageAttachments
       }
     })
     
-    console.log('Loaded notifications with attachments:', notifications.value)
+    console.log('Loaded notifications with attachments:', notifications.value.length, 'notifications')
+    console.log('Attachments found:', Object.keys(attachmentsMap).length, 'messages have attachments')
     
   } catch (error) {
     console.error('Error loading notifications:', error)
+    notifications.value = []
   } finally {
     isLoadingNotifications.value = false
   }
@@ -1553,16 +1699,15 @@ const sendMessage = async () => {
     newMessage.value = ''
     
     // Clear file input immediately
-    const fileInputEl = fileInput.value as HTMLInputElement
-    if (fileInputEl) {
-      fileInputEl.value = ''
+    if (fileInput.value) {
+      fileInput.value.value = ''
     }
     removeFile()
     
     await nextTick()
     scrollToBottom()
 
-    let uploadedAttachment = null
+    let uploadedAttachment: Attachment | null = null
     
     // Step 1: Upload file if present
     if (fileToUpload) {
@@ -1630,7 +1775,9 @@ const sendMessage = async () => {
           name: uploadedAttachment.name,
           url: uploadedAttachment.url,
           type: uploadedAttachment.type,
-          size: uploadedAttachment.size
+          size: uploadedAttachment.size,
+          path: uploadedAttachment.path,
+          mimeType: uploadedAttachment.mimeType
         }] : []
       }
     }
@@ -1982,10 +2129,10 @@ const setupPresenceTracking = async () => {
         const userId = (payload.new as { user_id?: string })?.user_id || (payload.old as { user_id?: string })?.user_id
         
         if (payload.eventType === 'DELETE') {
-          if (teacherPresence.value[userId]) {
+          if (userId && teacherPresence.value[userId]) {
             teacherPresence.value[userId].is_online = false
           }
-        } else if (payload.new) {
+        } else if (payload.new && userId) {
           teacherPresence.value[userId] = {
             is_online: payload.new.is_online,
             last_seen: payload.new.last_seen
@@ -7572,5 +7719,54 @@ onUnmounted(() => {
   color: #E8F5E8 !important;
   border: none !important;
   box-shadow: none !important;
+}
+
+/* Attachment indicators */
+.notification-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.attachment-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  background: #e1f5fe;
+  color: #0277bd;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.attachment-indicator svg {
+  width: 12px;
+  height: 12px;
+  opacity: 0.8;
+}
+
+[data-theme="dark"] .attachment-indicator {
+  background: #0d47a1;
+  color: #bbdefb;
+}
+
+.enhanced-attachment-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #666;
+  font-size: 0.75rem;
+}
+
+.enhanced-attachment-indicator svg {
+  width: 12px;
+  height: 12px;
+  opacity: 0.7;
+}
+
+[data-theme="dark"] .enhanced-attachment-indicator {
+  color: #999;
 }
 </style>
