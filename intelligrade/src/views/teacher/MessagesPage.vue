@@ -1879,6 +1879,8 @@ const loadContactsManually = async () => {
   }
 }
 
+
+
 const loadBroadcastHistory = async () => {
   try {
     if (!currentTeacherId.value) return
@@ -1926,30 +1928,36 @@ const loadBroadcastHistory = async () => {
       .select('id, name, grade_level')
       .in('id', subjectIds)
     
-    // Try to get attachments (may not exist)
+    // Load attachments for all broadcast messages
     const broadcastIds = broadcasts.map(b => b.id)
     let attachmentsMap: Record<string, any[]> = {}
     
-    try {
-      const { data: attachments } = await supabase
-        .from('message_attachments')
-        .select('*')
-        .in('message_id', broadcastIds)
-      
-      if (attachments) {
-        attachmentsMap = attachments.reduce((acc: Record<string, any[]>, att) => {
-          if (!acc[att.message_id]) acc[att.message_id] = []
-          acc[att.message_id].push({
-            name: att.file_name,
-            url: att.file_url,
-            type: att.file_type,
-            size: att.file_size
-          })
-          return acc
-        }, {})
+    if (broadcastIds.length > 0) {
+      try {
+        const { data: attachments, error: attachError } = await supabase
+          .from('message_attachments')
+          .select('*')
+          .in('message_id', broadcastIds)
+        
+        if (attachError) {
+          console.warn('Error fetching attachments:', attachError)
+        } else if (attachments) {
+          attachmentsMap = attachments.reduce((acc: Record<string, any[]>, att) => {
+            if (!acc[att.message_id]) acc[att.message_id] = []
+            acc[att.message_id].push({
+              name: att.file_name,
+              url: att.file_url,
+              type: att.file_type,
+              size: att.file_size || 'Unknown size',
+              path: att.file_path,
+              mimeType: att.mime_type
+            })
+            return acc
+          }, {})
+        }
+      } catch (attachError) {
+        console.warn('Attachments table not found or error fetching attachments:', attachError)
       }
-    } catch (e) {
-      console.log('No attachments table or error fetching attachments')
     }
     
     const transformedBroadcasts = broadcasts.map(b => {
@@ -1971,11 +1979,13 @@ const loadBroadcastHistory = async () => {
     })
     
     broadcastHistory.value = transformedBroadcasts
+    console.log('Broadcast history loaded with attachments:', transformedBroadcasts.length)
     
   } catch (error) {
     console.error('Error loading broadcast history:', error)
   }
 }
+
 
 // ================================
 // COMPUTED PROPERTIES
