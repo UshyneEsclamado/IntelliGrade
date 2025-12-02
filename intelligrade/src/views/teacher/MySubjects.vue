@@ -1,3 +1,5 @@
+
+
 /* Section Detail Enhancements */
 .section-detail-card .info-label {
   color: #1f2937;
@@ -229,6 +231,1264 @@
 }
 .dark .section-info h4 {
   color: #A3D1C6;
+}
+
+/* Enhanced Student Count Display */
+.section-stats-primary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+.dark .section-stats-primary {
+  background: linear-gradient(135deg, #064e3b, #065f46);
+}
+
+.student-count-large {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #059669;
+  line-height: 1;
+}
+.dark .student-count-large {
+  color: #34d399;
+}
+
+.student-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+.dark .student-label {
+  color: #9ca3af;
+}
+
+/* Section Capacity Info */
+.section-capacity-info {
+  margin-top: 0.75rem;
+}
+
+.capacity-indicator {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.capacity-bar {
+  width: 100%;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.dark .capacity-bar {
+  background: #374151;
+}
+
+.capacity-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #059669);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.capacity-text {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+  text-align: center;
+}
+.dark .capacity-text {
+  color: #9ca3af;
+}
+
+/* Subject Description */
+.subject-description {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin: 0.5rem 0 0 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.dark .subject-description {
+  color: #9ca3af;
+}
+
+.subject-description-empty {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  font-style: italic;
+  margin: 0.5rem 0 0 0;
+}
+.dark .subject-description-empty {
+  color: #6b7280;
+}
+
+/* Subject Content Enhanced */
+.subject-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: #f8fafc;
+  border-radius: 0 0 16px 16px;
+  border-top: 1px solid #e2e8f0;
+}
+.dark .subject-summary {
+  background: #1e293b;
+  border-top-color: #475569;
+}
+
+.summary-stats {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.stat-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.stat-number {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1;
+}
+.dark .stat-number {
+  color: #f9fafb;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+.dark .stat-label {
+  color: #9ca3af;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 2rem;
+  background: #e2e8f0;
+}
+.dark .stat-divider {
+  background: #475569;
+}
+
+.view-sections-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.view-sections-btn:hover {
+  background: #059669;
+  transform: translateX(2px);
+}
+
+/* Section Metadata */
+.section-metadata {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+.dark .section-metadata {
+  background: #374151;
+}
+
+.metadata-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.metadata-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.dark .metadata-label {
+  color: #9ca3af;
+}
+
+.metadata-value {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1f2937;
+}
+.dark .metadata-value {
+  color: #f9fafb;
+}
+
+/* Clean UI - Section code styles removed */
+
+/* Section Detail View Code Styles */
+.section-code-details-expanded {
+  margin-top: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.dark .section-code-details-expanded {
+  border-color: #374151;
+}
+
+.section-code-summary-detail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: #f9fafb;
+  cursor: pointer;
+  list-style: none;
+  border-bottom: 1px solid #e5e7eb;
+}
+.dark .section-code-summary-detail {
+  background: #1f2937;
+  border-bottom-color: #374151;
+}
+
+.code-label-small {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+.dark .code-label-small {
+  color: #9ca3af;
+}
+
+.code-value-small {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.875rem;
+  color: #374151;
+  background: #ffffff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #d1d5db;
+}
+.dark .code-value-small {
+  color: #d1d5db;
+  background: #111827;
+  border-color: #4b5563;
+}
+
+.section-code-expanded-detail {
+  padding: 1rem;
+  background: #ffffff;
+}
+.dark .section-code-expanded-detail {
+  background: #111827;
+}
+
+.code-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.code-description {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.copy-btn-detail {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.copy-btn-detail:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+.dark .copy-btn-detail {
+  border-color: #4b5563;
+  color: #9ca3af;
+}
+.dark .copy-btn-detail:hover {
+  background: #1f2937;
+  border-color: #6b7280;
+}
+
+/* Organized Section Detail Layout */
+.section-detail-enhanced-organized {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.section-header-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.dark .section-header-card {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+.section-main-info {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.section-icon-large {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.section-main-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+.dark .section-main-title {
+  color: #f9fafb;
+}
+
+.section-meta {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.subject-badge, .grade-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.subject-badge {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #d1fae5;
+}
+.dark .subject-badge {
+  background: #064e3b;
+  color: #34d399;
+  border-color: #065f46;
+}
+
+.grade-badge {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #dbeafe;
+}
+.dark .grade-badge {
+  background: #1e3a8a;
+  color: #60a5fa;
+  border-color: #1e40af;
+}
+
+.section-code-minimal {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f3f4f6;
+}
+.dark .section-code-minimal {
+  border-top-color: #374151;
+}
+
+.code-summary-minimal {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  list-style: none;
+  font-size: 0.875rem;
+  color: #6b7280;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+.code-summary-minimal:hover {
+  background: #f9fafb;
+}
+.dark .code-summary-minimal {
+  color: #9ca3af;
+}
+.dark .code-summary-minimal:hover {
+  background: #374151;
+}
+
+.code-text {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.8rem;
+}
+
+.code-details-minimal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  margin-top: 0.5rem;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+.dark .code-details-minimal {
+  background: #374151;
+}
+
+.code-note {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  font-style: italic;
+  margin: 0;
+}
+
+.copy-btn-minimal {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: transparent;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.7rem;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.copy-btn-minimal:hover {
+  background: #ffffff;
+  border-color: #9ca3af;
+}
+.dark .copy-btn-minimal {
+  border-color: #4b5563;
+  color: #9ca3af;
+}
+.dark .copy-btn-minimal:hover {
+  background: #1f2937;
+  border-color: #6b7280;
+}
+
+/* Student Management Card */
+.student-management-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.dark .student-management-card {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+.student-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.student-count-display {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+  border-radius: 12px;
+  border-left: 4px solid #10b981;
+}
+.dark .student-count-display {
+  background: linear-gradient(135deg, #064e3b, #065f46);
+}
+
+.count-circle {
+  width: 64px;
+  height: 64px;
+  background: #10b981;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.count-number {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+}
+
+.count-info h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 0.25rem 0;
+}
+.dark .count-info h4 {
+  color: #f9fafb;
+}
+
+.count-info p {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+.dark .count-info p {
+  color: #9ca3af;
+}
+
+.enrollment-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.add-students-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border: none;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+.add-students-btn:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.view-students-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: transparent;
+  color: #10b981;
+  border: 2px solid #10b981;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.view-students-btn:hover {
+  background: #ecfdf5;
+  transform: translateY(-1px);
+}
+.dark .view-students-btn {
+  color: #34d399;
+  border-color: #34d399;
+}
+.dark .view-students-btn:hover {
+  background: #064e3b;
+}
+
+/* Academic Actions Card */
+.academic-actions-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.dark .academic-actions-card {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+.actions-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+.dark .actions-title {
+  color: #f9fafb;
+}
+
+.actions-grid-organized {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.action-button.secondary {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #f8fafc;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+.action-button.secondary:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  transform: translateX(4px);
+}
+.dark .action-button.secondary {
+  background: #374151;
+  color: #d1d5db;
+  border-color: #4b5563;
+}
+.dark .action-button.secondary:hover {
+  background: #4b5563;
+  border-color: #6b7280;
+}
+
+@media (min-width: 1024px) {
+  .section-detail-enhanced-organized {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .student-management-card {
+    order: 2;
+  }
+  
+  .academic-actions-card {
+    order: 3;
+  }
+}
+
+/* Add Students Modal Styles */
+.add-students-content {
+  padding: 0 1.5rem;
+  max-height: calc(95vh - 200px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Enroll Student by ID Styles */
+.enroll-student-section {
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%);
+  border: 2px solid #5eead4;
+  border-radius: 12px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(94, 234, 212, 0.15);
+}
+
+.dark .enroll-student-section {
+  background: linear-gradient(135deg, #134e4a 0%, #115e59 100%);
+  border-color: #14b8a6;
+  box-shadow: 0 2px 8px rgba(20, 184, 166, 0.2);
+}
+
+.enroll-header {
+  margin-bottom: 0.5rem;
+}
+
+.enroll-header .section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  color: #0f766e;
+  margin-bottom: 0.375rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.dark .enroll-header .section-title {
+  color: #5eead4;
+}
+
+.enroll-header .section-title svg {
+  flex-shrink: 0;
+}
+
+.enroll-description {
+  font-size: 0.875rem;
+  color: #0f766e;
+  margin: 0;
+  font-weight: 500;
+}
+
+.dark .enroll-description {
+  color: #99f6e4;
+}
+
+.enroll-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.enroll-input-wrapper {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.enroll-student-input {
+  flex: 1;
+  padding: 0.75rem 0.875rem 0.75rem 2.75rem;
+  border: 2px solid #14b8a6;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  background: white;
+  color: #1f2937;
+  position: relative;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.dark .enroll-student-input {
+  background: #0f172a;
+  border-color: #14b8a6;
+  color: #f1f5f9;
+}
+
+.enroll-student-input:focus {
+  outline: none;
+  border-color: #0d9488;
+  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.15);
+  background: #ffffff;
+}
+
+.dark .enroll-student-input:focus {
+  border-color: #5eead4;
+  box-shadow: 0 0 0 4px rgba(94, 234, 212, 0.15);
+  background: #020617;
+}
+
+.enroll-student-input::placeholder {
+  color: #6b7280;
+  font-weight: 400;
+}
+
+.dark .enroll-student-input::placeholder {
+  color: #94a3b8;
+}
+
+.enroll-input-wrapper {
+  position: relative;
+}
+
+.id-icon {
+  position: absolute;
+  left: 0.875rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #14b8a6;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.dark .id-icon {
+  color: #5eead4;
+}
+
+.enroll-btn {
+  padding: 0.75rem 1.25rem;
+  background: linear-gradient(135deg, #0d9488, #0f766e);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  box-shadow: 0 2px 4px rgba(13, 148, 136, 0.3);
+}
+
+.enroll-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0f766e, #134e4a);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(13, 148, 136, 0.4);
+}
+
+.enroll-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.enroll-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.spinner-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.enrollment-message {
+  padding: 0.625rem 0.875rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.enrollment-message.success {
+  background: #d1fae5;
+  color: #065f46;
+  border: 2px solid #10b981;
+}
+
+.dark .enrollment-message.success {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+  border-color: rgba(110, 231, 183, 0.4);
+}
+
+.enrollment-message.error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 2px solid #ef4444;
+}
+
+.dark .enrollment-message.error {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border-color: rgba(252, 165, 165, 0.4);
+}
+
+/* Modal Divider */
+.modal-divider {
+  display: flex;
+  align-items: center;
+  margin: 0.5rem 0;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.modal-divider::before,
+.modal-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e2e8f0;
+}
+
+.dark .modal-divider::before,
+.dark .modal-divider::after {
+  background: #334155;
+}
+
+.modal-divider span {
+  padding: 0 1rem;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.dark .modal-divider span {
+  color: #94a3b8;
+}
+
+.student-search-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.search-header {
+  margin-bottom: 0.75rem;
+  flex-shrink: 0;
+}
+
+.section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+.dark .section-title {
+  color: #f9fafb;
+}
+
+.search-description {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin: 0;
+}
+.dark .search-description {
+  color: #9ca3af;
+}
+
+.search-filters-enhanced {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  flex-shrink: 0;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: #9ca3af;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.student-search-input-enhanced {
+  width: 100%;
+  padding: 0.875rem 0.875rem 0.875rem 2.75rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: all 0.2s;
+  background: white;
+}
+.student-search-input-enhanced:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+.dark .student-search-input-enhanced {
+  background: #1f2937;
+  border-color: #374151;
+  color: #f9fafb;
+}
+.dark .student-search-input-enhanced:focus {
+  border-color: #34d399;
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.1);
+}
+
+.grade-filter-select-enhanced {
+  padding: 0.875rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 140px;
+}
+.grade-filter-select-enhanced:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+.dark .grade-filter-select-enhanced {
+  background: #1f2937;
+  border-color: #374151;
+  color: #f9fafb;
+}
+
+.search-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  color: #059669;
+  flex-shrink: 0;
+}
+.dark .search-hint {
+  background: #064e3b;
+  border-color: #065f46;
+  color: #34d399;
+}
+
+.students-list-section {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 0.75rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.dark .students-list-section {
+  border-top-color: #374151;
+}
+
+.students-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  flex-shrink: 0;
+}
+
+.students-header h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+.dark .students-header h4 {
+  color: #f9fafb;
+}
+
+.batch-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.add-batch-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.add-batch-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-1px);
+}
+.add-batch-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.clear-selection-btn {
+  background: transparent;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.clear-selection-btn:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+.dark .clear-selection-btn {
+  color: #9ca3af;
+  border-color: #374151;
+}
+.dark .clear-selection-btn:hover {
+  background: #1f2937;
+  border-color: #4b5563;
+}
+
+.loading-state, .empty-search {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  text-align: center;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+.dark .loading-state, .dark .empty-search {
+  color: #9ca3af;
+}
+
+.students-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.625rem;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  max-height: 200px;
+  padding-right: 0.25rem;
+}
+
+.student-card {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  background: white;
+}
+.student-card:hover {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+.student-card.selected {
+  border-color: #10b981;
+  background: #ecfdf5;
+}
+.dark .student-card {
+  border-color: #374151;
+  background: #1f2937;
+}
+.dark .student-card:hover {
+  border-color: #10b981;
+  background: #064e3b;
+}
+.dark .student-card.selected {
+  background: #065f46;
+}
+
+.student-avatar {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.student-info h4 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+.dark .student-info h4 {
+  color: #f9fafb;
+}
+
+.student-id, .student-grade {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin: 0;
+}
+.dark .student-id, .dark .student-grade {
+  color: #9ca3af;
+}
+
+.selection-indicator {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 24px;
+  height: 24px;
+  background: #10b981;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.2s;
+}
+.student-card.selected .selection-indicator {
+  opacity: 1;
+}
+
+.btn-outline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  color: #10b981;
+  border: 1px solid #10b981;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-outline:hover {
+  background: #ecfdf5;
+}
+.dark .btn-outline {
+  color: #34d399;
+  border-color: #34d399;
+}
+.dark .btn-outline:hover {
+  background: #064e3b;
 }
 
 /* Breadcrumb Styling */
@@ -938,30 +2198,27 @@
       </div>
 
       <!-- Content Area -->
+      <div class="content-wrapper">
 
-    <!-- Search Bar and Subjects Grid -->
-    <div v-if="viewMode === 'subjects'">
-      <!-- Search Bar with Dropdown -->
-      <div class="subject-search-bar enhanced extra">
-        <div class="search-group extra">
-          <select v-model="subjectDropdown" class="subject-dropdown enhanced extra">
-            <option v-for="option in subjectOptions" :key="option" :value="option.toLowerCase()">{{ option }}</option>
-          </select>
-          <div class="search-divider"></div>
+    <!-- Subjects Overview -->
+    <div v-if="viewMode === 'subjects'" class="subjects-overview">
+      <!-- Search and Filter Bar -->
+      <div class="search-filter-bar">
+        <div class="search-input-container">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="search-icon">
+            <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+            <path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
           <input
             v-model="searchQuery"
-            class="subject-search-input enhanced extra"
+            class="search-input"
             type="text"
             placeholder="Search subjects..."
-            @keyup.enter.prevent
           />
-          <button class="search-btn extra" tabindex="0" aria-label="Search" @click.prevent>
-            <svg width="20" height="20" fill="none" viewBox="0 0 20 20">
-              <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="2"/>
-              <line x1="14.5" y1="14.5" x2="18" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </button>
         </div>
+        <select v-model="subjectDropdown" class="grade-filter">
+          <option v-for="option in subjectOptions" :key="option" :value="option.toLowerCase()">{{ option }}</option>
+        </select>
       </div>
       
       <!-- Empty State -->
@@ -991,72 +2248,58 @@
       </div>
 
       <!-- Subjects Grid -->
-      <div v-else class="subjects-grid enhanced">
-        <div v-for="subject in filteredSubjects" :key="subject.id" class="subject-card enhanced">
-          <!-- Subject Card Header with Menu -->
+      <div v-else class="subjects-grid">
+        <div v-for="subject in filteredSubjects" :key="subject.id" class="subject-card" @click="selectSubject(subject)">
           <div class="subject-card-header">
-            <div class="subject-title-area" @click="selectSubject(subject)">
-              <div 
-                class="subject-icon" 
-                :title="subject.subject_name"
-                :style="{
-                  background: getSubjectIconColor(subject.subject_name || subject.name || 'N').bg,
-                  boxShadow: `0 2px 6px ${getSubjectIconColor(subject.subject_name || subject.name || 'N').shadow}`
-                }"
-              >
-                <span class="subject-initial">{{ (subject.subject_name || subject.name || 'N').charAt(0) }}</span>
-              </div>
-              <div class="subject-info">
-                <h3 class="subject-title">{{ subject.subject_name || subject.name }}</h3>
-                <p class="grade-level">{{ subject.grade_level_display }}</p>
-              </div>
+            <div 
+              class="subject-icon" 
+              :style="{
+                background: getSubjectIconColor(subject.subject_name || subject.name || 'N').bg
+              }"
+            >
+              <span class="subject-initial">{{ (subject.subject_name || subject.name || 'N').charAt(0) }}</span>
             </div>
             
-            <!-- Subject Menu (3 dots) -->
-            <div class="subject-menu-container">
-              <button class="subject-menu-btn" @click.stop="toggleSubjectMenu(subject.id)" title="More Options">
+            <!-- Subject Menu -->
+            <div class="subject-menu-container" @click.stop>
+              <button class="subject-menu-btn" @click="toggleSubjectMenu(subject.id)" title="More Options">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                   <circle cx="5" cy="12" r="2" />
                   <circle cx="12" cy="12" r="2" />
                   <circle cx="19" cy="12" r="2" />
                 </svg>
               </button>
-              <transition name="dropdown">
-                <div v-if="openSubjectMenuId === subject.id" class="subject-dropdown-menu">
-                  <button @click.stop="editSubject(subject)" class="menu-item">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
-                    </svg>
-                    Edit Subject
-                  </button>
-                  <button @click.stop="openDeleteModal('subject', subject)" class="menu-item delete">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
-                    </svg>
-                    Delete Subject
-                  </button>
-                </div>
-              </transition>
-            </div>
-            
-            <div class="arrow-icon" @click="selectSubject(subject)">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" />
-              </svg>
+              <div v-if="openSubjectMenuId === subject.id" class="subject-dropdown-menu">
+                <button @click="editSubject(subject)" class="menu-item">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
+                  </svg>
+                  Edit
+                </button>
+                <button @click="openDeleteModal('subject', subject)" class="menu-item delete">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
+                  </svg>
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
           
-          <!-- Enhanced content area -->
-          <div class="subject-content-enhanced">
-            <div class="subject-stats-row">
+          <div class="subject-card-body">
+            <h3 class="subject-title">{{ subject.subject_name || subject.name }}</h3>
+            <p class="grade-level">Grade {{ subject.grade_level }}</p>
+            <p v-if="subject.description" class="subject-description">{{ subject.description }}</p>
+            <p v-else class="subject-description-placeholder">No description provided</p>
+            
+            <div class="subject-stats">
               <div class="stat-item">
-                <div class="stat-number">{{ subject.section_count }}</div>
-                <div class="stat-label">Sections</div>
+                <span class="stat-number">{{ subject.section_count || 0 }}</span>
+                <span class="stat-label">{{ (subject.section_count || 0) === 1 ? 'Section' : 'Sections' }}</span>
               </div>
-              <div class="stat-divider"></div>
               <div class="stat-item">
-                <div class="stat-number">{{ subject.total_students }}</div>
-                <div class="stat-label">Students</div>
+                <span class="stat-number">{{ subject.total_students || 0 }}</span>
+                <span class="stat-label">{{ (subject.total_students || 0) === 1 ? 'Student' : 'Students' }}</span>
               </div>
             </div>
           </div>
@@ -1064,235 +2307,232 @@
       </div>
     </div>
 
-    <!-- Level 2: Sections List -->
+    <!-- Sections View -->
     <div v-if="viewMode === 'sections' && selectedSubject" class="sections-view">
-      <div class="breadcrumb">
-        <button @click="goBackToSubjects" class="breadcrumb-btn">
+      <!-- Navigation -->
+      <div class="view-header">
+        <button @click="goBackToSubjects" class="back-btn">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
           </svg>
-          My Subjects
+          Back to Subjects
         </button>
-        <span class="breadcrumb-separator">/</span>
-        <span class="breadcrumb-current">{{ selectedSubject.subject_name }}</span>
-      </div>
-      
-      <!-- Grade Filter Buttons -->
-      <div class="grade-filter-container">
-        <button 
-          @click="setGradeFilter('all')" 
-          class="grade-filter-btn"
-          :class="{ 'active': selectedGradeFilter === 'all' }"
-        >
-          All
-        </button>
-        <button 
-          v-for="grade in availableGrades" 
-          :key="grade"
-          @click="setGradeFilter(grade.toString())" 
-          class="grade-filter-btn"
-          :class="{ 'active': selectedGradeFilter === grade.toString() }"
-        >
-          Grade {{ grade }}
-        </button>
+        <div class="view-title">
+          <h2>{{ selectedSubject.subject_name }}</h2>
+          <p>Grade {{ selectedSubject.grade_level }} - Manage sections and students</p>
+        </div>
       </div>
       
       <div class="sections-grid">
-        <div v-for="section in filteredSections" :key="section.id" class="section-card enhanced">
+        <div v-for="section in filteredSections" :key="section.id" class="section-card">
           <div class="section-card-header">
-            <!-- Section icon and title -->
-            <div class="section-title-area" @click="selectSection(section)">
-              <div 
-                class="section-icon"
-                :style="{
-                  background: getSectionIconColor(section.section_name, section.grade_level).bg,
-                  boxShadow: `0 2px 6px ${getSectionIconColor(section.section_name, section.grade_level).shadow}`
-                }"
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-                </svg>
-              </div>
-              <h4 class="section-title">{{ section.section_name }} (Grade {{ section.grade_level }})</h4>
+            <div class="section-info" @click="selectSection(section)">
+              <h3 class="section-title">{{ section.section_name }}</h3>
+              <p class="section-subtitle">Grade {{ section.grade_level }}</p>
             </div>
             
-            <!-- Always visible 3-dots menu -->
-            <div class="section-menu-container">
-              <button class="section-menu-btn" @click.stop="toggleSectionMenu(section.id)" title="More Options">
+            <div class="section-menu-container" @click.stop>
+              <button class="section-menu-btn" @click="toggleSectionMenu(section.id)">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                   <circle cx="5" cy="12" r="2" />
                   <circle cx="12" cy="12" r="2" />
                   <circle cx="19" cy="12" r="2" />
                 </svg>
               </button>
-              <transition name="dropdown">
-                <div v-if="openMenuId === section.id" class="section-dropdown-menu">
-                  <button @click.stop="editSection(section)" class="menu-item">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
-                    </svg>
-                    Edit Section
-                  </button>
-                  <button @click.stop="openDeleteModal('section', section)" class="menu-item delete">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
-                    </svg>
-                    Delete Section
-                  </button>
-                </div>
-              </transition>
+              <div v-if="openMenuId === section.id" class="section-dropdown-menu">
+                <button @click="editSection(section)" class="menu-item">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
+                  </svg>
+                  Edit
+                </button>
+                <button @click="openDeleteModal('section', section)" class="menu-item delete">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
+                  </svg>
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
           
           <div class="section-card-body" @click="selectSection(section)">
-            <!-- Section Code in distinct box -->
-            <div class="section-code-box">
-              <div class="code-box-header">
-                <span class="code-label">Section Code</span>
+            <div class="enrollment-status">
+              <div class="student-count">
+                <span class="count-number">{{ section.student_count || 0 }}</span>
+                <span class="count-label">Students</span>
               </div>
-              <div class="code-box-content">
-                <span class="section-code-text">{{ section.section_code }}</span>
-                <button @click.stop="copyCode(section.section_code, section.id)" 
-                        class="copy-code-btn" 
-                        :class="{ 'copied': copiedCodeId === section.id }"
-                        :title="copiedCodeId === section.id ? 'Copied!' : 'Copy Code'">
-                  <svg v-if="copiedCodeId !== section.id" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z" />
-                  </svg>
-                  <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
-                  </svg>
-                  {{ copiedCodeId === section.id ? 'Copied!' : 'Copy' }}
-                </button>
+              <div class="capacity-info">
+                <div class="capacity-bar">
+                  <div 
+                    class="capacity-fill" 
+                    :style="{ width: `${Math.min((section.student_count || 0) / (section.max_students || 40) * 100, 100)}%` }"
+                  ></div>
+                </div>
+                <span class="capacity-text">{{ section.student_count || 0 }} / {{ section.max_students || 40 }}</span>
               </div>
             </div>
             
-            <!-- Student count -->
-            <div class="section-stats">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M16,4C18.21,4 20,5.79 20,8C20,10.21 18.21,12 16,12C13.79,12 12,10.21 12,8C12,5.79 13.79,4 16,4M16,14C20.42,14 24,15.79 24,18V20H8V18C8,15.79 11.58,14 16,14M6,6H4V4H2V6H0V8H2V10H4V8H6V6Z" />
-              </svg>
-              <span>{{ section.student_count || 0 }} students</span>
+            <div class="section-actions" @click.stop>
+              <button class="action-btn primary" @click="manageStudents(selectedSubject, section)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+                Manage Students
+              </button>
+              <button class="action-btn secondary" @click="selectSection(section)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" />
+                </svg>
+                View Details
+              </button>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Level 3: Section Detail -->
+    <!-- Section Detail View -->
     <div v-if="viewMode === 'section-detail' && selectedSection" class="section-detail-view">
-      <div class="breadcrumb">
-        <button @click="goBackToSubjects" class="breadcrumb-btn">
+      <!-- Navigation -->
+      <div class="view-header">
+        <button @click="goBackToSections" class="back-btn">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
           </svg>
-          My Subjects
+          Back to {{ selectedSubject.subject_name }}
         </button>
-        <span class="breadcrumb-separator">/</span>
-        <button @click="goBackToSections" class="breadcrumb-btn">{{ selectedSubject.subject_name }}</button>
-        <span class="breadcrumb-separator">/</span>
-        <span class="breadcrumb-current">{{ selectedSection.section_name }} (Grade {{ selectedSection.grade_level }})</span>
+        <div class="view-title">
+          <h2>{{ selectedSection.section_name }}</h2>
+          <p>Grade {{ selectedSection.grade_level }} - {{ selectedSection.subject_name }}</p>
+        </div>
       </div>
 
-      <div class="section-detail-enhanced">
-        <!-- Left Section: Section Info -->
-        <div class="section-info-card">
-          <div class="section-header">
-            <div class="section-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-              </svg>
-            </div>
-            <div class="section-title-info">
-              <h3 class="section-title">{{ selectedSection.section_name }} (Grade {{ selectedSection.grade_level }})</h3>
-              <p class="section-subtitle">{{ selectedSection.subject_name }}</p>
-            </div>
+      <!-- Section Overview -->
+      <div class="section-overview-card">
+        <div class="overview-stats">
+          <div class="stat-box">
+            <div class="stat-number">{{ selectedSection.student_count || 0 }}</div>
+            <div class="stat-label">Students Enrolled</div>
           </div>
-
-          <!-- Section Details -->
-          <div class="section-details">
-            <div class="detail-item">
-              <span class="detail-label">Subject:</span>
-              <span class="detail-value">{{ selectedSection.subject_name }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Section:</span>
-              <span class="detail-value">{{ selectedSection.section_name }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Grade:</span>
-              <span class="detail-value">{{ selectedSection.grade_level }}</span>
-            </div>
+          <div class="stat-box">
+            <div class="stat-number">{{ selectedSection.max_students || 40 }}</div>
+            <div class="stat-label">Max Capacity</div>
           </div>
-          
-          <!-- Section Code -->
-          <div class="section-code-container">
-            <div class="code-label">Section Code:</div>
-            <div class="code-value">{{ selectedSection.section_code }}</div>
-            <button @click.stop="copyCode(selectedSection.section_code, selectedSection.section_id)" class="copy-btn">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z" />
-              </svg>
-              {{ copiedCodeId === selectedSection.section_id ? 'Copied!' : 'Copy' }}
-            </button>
+          <div class="stat-box">
+            <div class="stat-number">{{ Math.round(((selectedSection.student_count || 0) / (selectedSection.max_students || 40)) * 100) }}%</div>
+            <div class="stat-label">Filled</div>
           </div>
         </div>
+      </div>
 
-        <!-- Right Section: Quick Actions -->
-        <div class="quick-actions-card">
-          <h4 class="actions-title">Quick Actions</h4>
-          <div class="actions-grid">
-            <button 
-              @click.stop="viewSectionStudents(selectedSubject, selectedSection)"
-              class="action-button primary"
-              title="View Students in Section"
-            >
-              <div class="btn-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+      <!-- Quick Actions -->
+      <div class="quick-actions-section">
+        <h3 class="section-heading">Quick Actions</h3>
+        <div class="action-cards-grid">
+          <!-- Student Management -->
+          <div class="action-card student-management">
+            <div class="card-header">
+              <div class="card-icon student-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M16,4C18.21,4 20,5.79 20,8C20,10.21 18.21,12 16,12C13.79,12 12,10.21 12,8C12,5.79 13.79,4 16,4M16,14C20.42,14 24,15.79 24,18V20H8V18C8,15.79 11.58,14 16,14" />
                 </svg>
               </div>
-              <span class="btn-text">View Students</span>
-            </button>
+              <h3>Student Management</h3>
+            </div>
+            <p class="card-description">Manage student enrollment and view class roster</p>
+            <div class="card-actions">
+              <button 
+                @click="manageStudents(selectedSubject, selectedSection)"
+                class="action-btn primary"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+                Add Students
+              </button>
+              <button 
+                @click="viewSectionStudents(selectedSubject, selectedSection)"
+                class="action-btn secondary"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
+                </svg>
+                View All Students
+              </button>
+            </div>
+          </div>
 
-            <button 
-              @click.stop="navigateToCreateQuiz(selectedSubject, selectedSection)"
-              class="action-button secondary"
-              title="Create Quiz/Assessment"
-            >
-              <div class="btn-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <!-- Assessment Management -->
+          <div class="action-card assessment-management">
+            <div class="card-header">
+              <div class="card-icon assessment-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
                 </svg>
               </div>
-              <span class="btn-text">Create Quiz</span>
-            </button>
-            
-            <button 
-              @click.stop="viewQuizzes(selectedSubject, selectedSection)"
-              class="action-button secondary"
-              title="View Past Quizzes"
-            >
-              <div class="btn-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M13,9V3.5L18.5,9M6,2C4.89,2 4,2.89 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2H6Z" />
-                </svg>
+              <h3>Assessment Management</h3>
+            </div>
+            <p class="card-description">Create and manage quizzes and assignments for your students</p>
+            <div class="card-actions">
+              <div class="assessment-type-buttons">
+                <button 
+                  @click="showCreateAssessmentModal(selectedSubject, selectedSection, 'quiz')"
+                  class="assessment-type-btn quiz-btn"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9,5V9H21V7.5L22.5,6L21,4.5L19.5,6L18,4.5L16.5,6L18,7.5V9H15V5H9M9,19V15H15V19H9M21,15V13.5L19.5,12L18,13.5V15H21Z" />
+                  </svg>
+                  Create Quiz
+                  <span class="btn-subtitle">Multiple-choice, True/False, Fill-in-blank</span>
+                </button>
+                <button 
+                  @click="showCreateAssessmentModal(selectedSubject, selectedSection, 'assignment')"
+                  class="assessment-type-btn assignment-btn"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                  </svg>
+                  Create Assignment
+                  <span class="btn-subtitle">Essays, Projects, Research tasks</span>
+                </button>
               </div>
-              <span class="btn-text">View Quizzes</span>
-            </button>
-            
-            <button 
-              @click.stop="manageGrades(selectedSubject, selectedSection)"
-              class="action-button tertiary"
-              title="Grade Management"
-            >
-              <div class="btn-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <div class="view-assessments-section">
+                <button 
+                  @click="viewAllAssessments(selectedSubject, selectedSection)"
+                  class="action-btn secondary full-width"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M13,9V3.5L18.5,9M6,2C4.89,2 4,2.89 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2H6Z" />
+                  </svg>
+                  View All Assessments
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Grade Management -->
+          <div class="action-card grade-management">
+            <div class="card-header">
+              <div class="card-icon grade-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M16,18H18V16H16M16,14H18V12H16M14,18H16V16H14M12,18H14V16H12M12,14H14V12H12M10,18H12V16H10M8,18H10V16H8M8,14H10V12H8M6,18H8V16H6M14,10H16V8H14M12,10H14V8H12M10,10H12V8H10M8,10H10V8H8M6,10H8V8H6M6,14H8V12H6" />
                 </svg>
               </div>
-              <span class="btn-text">Grades</span>
-            </button>
+              <h3>Grade Management</h3>
+            </div>
+            <p class="card-description">Review and manage student grades and performance</p>
+            <div class="card-actions">
+              <button 
+                @click="manageGrades(selectedSubject, selectedSection)"
+                class="action-btn primary"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M9,5V9H21V7.5L22.5,6L21,4.5L19.5,6L18,4.5L16.5,6L18,7.5V9H15V5H9M9,19V15H15V19H9M21,15V13.5L19.5,12L18,13.5V15H21Z" />
+                </svg>
+                Manage Grades
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1623,6 +2863,203 @@
       </div>
     </transition>
 
+    <!-- Add Students Modal -->
+    <div v-if="showAddStudentsModal" class="modal-overlay" @click="closeAddStudentsModal">
+      <div class="modal-content-enhanced" @click.stop>
+        <!-- Modal Header -->
+        <div class="modal-header-enhanced">
+          <div class="modal-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+              <path d="M16,4C18.21,4 20,5.79 20,8C20,10.21 18.21,12 16,12C13.79,12 12,10.21 12,8C12,5.79 13.79,4 16,4M16,14C20.42,14 24,15.79 24,18V20H8V18C8,15.79 11.58,14 16,14" />
+            </svg>
+          </div>
+          <div class="modal-title-area">
+            <h2>Add Students to Section</h2>
+            <p class="modal-subtitle">{{ selectedSectionForStudents?.section_name }} - {{ selectedSubjectForStudents?.subject_name }}</p>
+          </div>
+          <button @click="closeAddStudentsModal" class="close-btn-enhanced">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="add-students-content">
+          <!-- Add Student by ID Section -->
+          <div class="enroll-student-section">
+            <div class="enroll-header">
+              <h3 class="section-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+                Enroll Student by ID
+              </h3>
+              <p class="enroll-description">Enter a student ID to directly enroll them in this section.</p>
+            </div>
+            <div class="enroll-form">
+              <div class="enroll-input-wrapper">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="id-icon">
+                  <path d="M22,18V22H18V19H15V16H12L9.74,13.74C9.19,13.91 8.61,14 8,14A6,6 0 0,1 2,8A6,6 0 0,1 8,2A6,6 0 0,1 14,8C14,8.61 13.91,9.19 13.74,9.74L22,18M7,5A1,1 0 0,0 6,6A1,1 0 0,0 7,7A1,1 0 0,0 8,6A1,1 0 0,0 7,5Z"/>
+                </svg>
+                <input
+                  v-model="enrollStudentId"
+                  type="text"
+                  placeholder="Enter Student ID (e.g., 2024001)"
+                  class="enroll-student-input"
+                  @keyup.enter="enrollStudentById"
+                />
+                <button 
+                  @click="enrollStudentById" 
+                  class="enroll-btn"
+                  :disabled="!enrollStudentId.trim() || isEnrollingStudent"
+                >
+                  <svg v-if="!isEnrollingStudent" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                  </svg>
+                  <svg v-else class="spinner-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/>
+                  </svg>
+                  {{ isEnrollingStudent ? 'Enrolling...' : 'Enroll Student' }}
+                </button>
+              </div>
+              <div v-if="enrollmentMessage" class="enrollment-message" :class="enrollmentMessageType">
+                <svg v-if="enrollmentMessageType === 'success'" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+                </svg>
+                <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
+                </svg>
+                {{ enrollmentMessage }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div class="modal-divider">
+            <span>OR</span>
+          </div>
+
+          <!-- Search Students -->
+          <div class="student-search-section">
+            <div class="search-header">
+              <h3 class="section-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
+                </svg>
+                Find Existing Students
+              </h3>
+              <p class="search-description">Search for students by name or ID, then select them to add to this section.</p>
+            </div>
+            <div class="search-filters-enhanced">
+              <div class="search-input-wrapper">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="search-icon">
+                  <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
+                </svg>
+                <input
+                  v-model="studentSearchQuery"
+                  type="text"
+                  placeholder="Type student name or ID to search..."
+                  class="student-search-input-enhanced"
+                  @input="searchStudents"
+                />
+              </div>
+              <select v-model="gradeFilter" class="grade-filter-select-enhanced" @change="searchStudents">
+                <option value="">All Grades</option>
+                <option v-for="grade in [7, 8, 9, 10]" :key="grade" :value="grade">Grade {{ grade }}</option>
+              </select>
+            </div>
+            <div class="search-hint" v-if="!studentSearchQuery && !availableStudents.length">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
+              </svg>
+              Start typing to search for students to add to this section
+            </div>
+          </div>
+
+          <!-- Available Students List -->
+          <div class="students-list-section">
+            <div class="students-header">
+              <h4>Available Students</h4>
+              <div v-if="selectedStudentsToAdd.length > 0" class="batch-actions">
+                <button @click="addSelectedStudents" class="add-batch-btn" :disabled="isAddingStudents">
+                  <svg v-if="!isAddingStudents" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                  </svg>
+                  <svg v-else class="spinner-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/>
+                  </svg>
+                  {{ isAddingStudents ? 'Adding...' : `Add ${selectedStudentsToAdd.length} Student${selectedStudentsToAdd.length > 1 ? 's' : ''}` }}
+                </button>
+                <button @click="clearSelection" class="clear-selection-btn">Clear</button>
+              </div>
+            </div>
+
+            <div v-if="isSearchingStudents" class="loading-state">
+              <div class="loading-spinner"></div>
+              <span>Searching students...</span>
+            </div>
+
+            <div v-else-if="availableStudents.length === 0 && studentSearchQuery" class="empty-search">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M7,13H17V11H7"/>
+              </svg>
+              <p>No students found matching your search</p>
+            </div>
+
+            <div v-else-if="availableStudents.length === 0" class="empty-search">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M7,13H17V11H7"/>
+              </svg>
+              <p>Enter a search term to find students</p>
+            </div>
+
+            <div v-else class="students-grid">
+              <div 
+                v-for="student in availableStudents" 
+                :key="student.student_id"
+                class="student-card"
+                :class="{ 'selected': selectedStudentsToAdd.includes(student.student_id) }"
+                @click="toggleStudentSelection(student.student_id)"
+              >
+                <div class="student-avatar">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
+                  </svg>
+                </div>
+                <div class="student-info">
+                  <h4>{{ student.student_name }}</h4>
+                  <p class="student-id">ID: {{ student.student_number }}</p>
+                  <p class="student-grade">Grade {{ student.grade_level }}</p>
+                </div>
+                <div class="selection-indicator">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions-enhanced">
+          <button @click="closeAddStudentsModal" class="btn-secondary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
+            </svg>
+            Cancel
+          </button>
+          <button @click="viewSectionStudents(selectedSubjectForStudents, selectedSectionForStudents)" class="btn-outline">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M16,4C18.21,4 20,5.79 20,8C20,10.21 18.21,12 16,12C13.79,12 12,10.21 12,8C12,5.79 13.79,4 16,4M16,14C20.42,14 24,15.79 24,18V20H8V18C8,15.79 11.58,14 16,14" />
+            </svg>
+            View All Students
+          </button>
+        </div>
+      </div>
+      </div> <!-- End content-wrapper -->
+    </div>
+
     </main>
 
     <!-- Loading Overlay -->
@@ -1852,6 +3289,23 @@ const isLoggingOut = ref(false)
 
 // Auth ready state - NEW
 const isAuthReady = ref(false)
+
+// Add Students Modal States
+const showAddStudentsModal = ref(false)
+const selectedSubjectForStudents = ref(null)
+const selectedSectionForStudents = ref(null)
+const availableStudents = ref([])
+const selectedStudentsToAdd = ref([])
+const studentSearchQuery = ref('')
+const gradeFilter = ref('')
+const isSearchingStudents = ref(false)
+const isAddingStudents = ref(false)
+
+// Enrollment by ID states
+const enrollStudentId = ref('')
+const isEnrollingStudent = ref(false)
+const enrollmentMessage = ref('')
+const enrollmentMessageType = ref('success') // 'success' or 'error'
 
 // Form data
 const formData = ref({
@@ -2310,6 +3764,66 @@ const viewQuizzes = async (subject, section) => {
   }
 }
 
+// Assessment Management Methods
+const showCreateAssessmentModal = (subject, section, assessmentType) => {
+  console.log('Creating assessment:', assessmentType, 'for', subject.name, section.name)
+  
+  switch (assessmentType) {
+    case 'quiz':
+      navigateToCreateQuiz(subject, section)
+      break
+    case 'assignment':
+      navigateToCreateAssignment(subject, section)
+      break
+    default:
+      console.warn('Unknown assessment type:', assessmentType)
+  }
+}
+
+const navigateToCreateAssignment = async (subject, section) => {
+  try {
+    await router.push({
+      name: 'CreateAssignment',
+      params: {
+        subjectId: section.subject_id,
+        sectionId: section.id
+      },
+      query: {
+        subjectName: subject.name,
+        sectionName: section.name,
+        gradeLevel: subject.grade_level,
+        sectionCode: section.section_code
+      }
+    })
+  } catch (error) {
+    console.error('Navigation error:', error)
+    // Fallback to quiz creation for now until assignment route is implemented
+    navigateToCreateQuiz(subject, section)
+  }
+}
+
+const viewAllAssessments = async (subject, section) => {
+  try {
+    await router.push({
+      name: 'ViewAssessments',
+      params: {
+        subjectId: section.subject_id,
+        sectionId: section.id
+      },
+      query: {
+        subjectName: subject.name,
+        sectionName: section.name,
+        gradeLevel: subject.grade_level,
+        sectionCode: section.section_code
+      }
+    })
+  } catch (error) {
+    console.error('Navigation error:', error)
+    // Fallback to quiz view for now until assessments route is implemented
+    viewQuizzes(subject, section)
+  }
+}
+
 const manageGrades = async (subject, section) => {
   try {
     await router.push({
@@ -2349,6 +3863,17 @@ const viewSectionStudents = async (subject, section) => {
   } catch (error) {
     console.error('Navigation error:', error)
   }
+}
+
+const manageStudents = async (subject, section) => {
+  selectedSubjectForStudents.value = subject
+  selectedSectionForStudents.value = section
+  showAddStudentsModal.value = true
+  // Clear previous search state
+  availableStudents.value = []
+  selectedStudentsToAdd.value = []
+  studentSearchQuery.value = ''
+  gradeFilter.value = subject.grade_level.toString()
 }
 
 // ============================================================
@@ -2491,10 +4016,10 @@ const saveSubject = async () => {
     // Close modal
     closeModal()
 
-    // Show success message
-    const sectionCodesText = createdSectionCodes.join('\n')
+    // Show success message - Updated for teacher-managed enrollment
+    const sectionsCreatedText = formData.value.sections.map(section => `• ${section.name}`).join('\n')
     
-    successMessage.value = `Subject "${formData.value.name}" ${isEditing.value ? 'updated' : 'created'} successfully!\n\nSection Codes:\n${sectionCodesText}\n\nShare these codes with your students so they can join their respective sections.`
+    successMessage.value = `Subject "${formData.value.name}" ${isEditing.value ? 'updated' : 'created'} successfully!\n\nSections Created:\n${sectionsCreatedText}\n\nYou can now add students directly to each section through the "Manage Students" option.`
     showSuccessModal.value = true
 
     // Refresh subjects list
@@ -2564,6 +4089,230 @@ const copyCode = async (code, codeId) => {
     setTimeout(() => {
       copiedCodeId.value = null
     }, 2000)
+  }
+}
+
+// ============================================================
+// ADD STUDENTS MODAL FUNCTIONS
+// ============================================================
+const closeAddStudentsModal = () => {
+  showAddStudentsModal.value = false
+  selectedSubjectForStudents.value = null
+  selectedSectionForStudents.value = null
+  availableStudents.value = []
+  selectedStudentsToAdd.value = []
+  studentSearchQuery.value = ''
+  gradeFilter.value = ''
+  isSearchingStudents.value = false
+  isAddingStudents.value = false
+  
+  // Reset enrollment fields
+  enrollStudentId.value = ''
+  isEnrollingStudent.value = false
+  enrollmentMessage.value = ''
+  enrollmentMessageType.value = 'success'
+}
+
+// Enroll student by ID function
+const enrollStudentById = async () => {
+  if (!enrollStudentId.value.trim()) {
+    enrollmentMessage.value = 'Please enter a student ID'
+    enrollmentMessageType.value = 'error'
+    return
+  }
+
+  if (!selectedSectionForStudents.value || !selectedSubjectForStudents.value) {
+    enrollmentMessage.value = 'No section selected'
+    enrollmentMessageType.value = 'error'
+    return
+  }
+
+  try {
+    isEnrollingStudent.value = true
+    enrollmentMessage.value = ''
+
+    // Wait for auth to be ready
+    if (!isAuthReady.value || !teacherInfo.value?.id) {
+      await waitForAuth()
+    }
+
+    // Find student by student_id (student_number)
+    const { data: existingStudent, error: studentError } = await supabase
+      .from('students')
+      .select('id, student_id, full_name, grade_level')
+      .eq('student_id', enrollStudentId.value.trim())
+      .eq('is_active', true)
+      .single()
+
+    if (studentError) {
+      if (studentError.code === 'PGRST116') {
+        enrollmentMessage.value = `Student with ID "${enrollStudentId.value}" not found in the system`
+        enrollmentMessageType.value = 'error'
+        return
+      }
+      throw studentError
+    }
+
+    // Use the teacher_add_student_to_section database function
+    const { data, error: enrollError } = await supabase.rpc('teacher_add_student_to_section', {
+      p_teacher_id: teacherInfo.value.id,
+      p_student_id: existingStudent.id,
+      p_section_id: selectedSectionForStudents.value.id
+    })
+
+    if (enrollError) {
+      console.error('Enrollment error:', enrollError)
+      enrollmentMessage.value = 'Failed to enroll student. Please try again.'
+      enrollmentMessageType.value = 'error'
+      return
+    }
+
+    // Check the result from the function
+    const result = data[0]
+    
+    if (result.success) {
+      enrollmentMessage.value = `Successfully enrolled ${existingStudent.full_name} (ID: ${existingStudent.student_id})`
+      enrollmentMessageType.value = 'success'
+      enrollStudentId.value = ''
+
+      // Clear message after 3 seconds
+      setTimeout(() => {
+        enrollmentMessage.value = ''
+      }, 3000)
+
+      // Refresh the available students list if there's a search query
+      if (studentSearchQuery.value.trim()) {
+        await searchStudents()
+      }
+      
+      // Refresh the main subjects data to update student counts
+      await fetchSubjects()
+    } else {
+      enrollmentMessage.value = result.message
+      enrollmentMessageType.value = 'error'
+    }
+
+  } catch (error) {
+    console.error('Error enrolling student:', error)
+    enrollmentMessage.value = 'Failed to enroll student. Please try again.'
+    enrollmentMessageType.value = 'error'
+  } finally {
+    isEnrollingStudent.value = false
+  }
+}
+
+const searchStudents = async () => {
+  if (!studentSearchQuery.value.trim() && !gradeFilter.value) {
+    availableStudents.value = []
+    return
+  }
+
+  try {
+    isSearchingStudents.value = true
+    
+    // Wait for auth to be ready
+    if (!isAuthReady.value || !teacherInfo.value?.id) {
+      await waitForAuth()
+    }
+
+    // Build query for teacher_available_students view
+    let query = supabase
+      .from('teacher_available_students')
+      .select('*')
+      .eq('teacher_id', teacherInfo.value.id)
+      .eq('subject_id', selectedSectionForStudents.value.subject_id || selectedSubjectForStudents.value.id)
+      .eq('section_id', selectedSectionForStudents.value.id)
+      .eq('already_enrolled_in_subject', false)
+      .eq('is_active', true)
+
+    // Add search filters
+    if (studentSearchQuery.value.trim()) {
+      const searchTerm = studentSearchQuery.value.trim()
+      query = query.or(`student_name.ilike.%${searchTerm}%,student_number.ilike.%${searchTerm}%,student_email.ilike.%${searchTerm}%`)
+    }
+
+    if (gradeFilter.value) {
+      query = query.eq('grade_level', parseInt(gradeFilter.value))
+    }
+
+    const { data, error } = await query.order('student_name')
+
+    if (error) {
+      console.error('Search students error:', error)
+      showToast('Failed to search students', 'error')
+      return
+    }
+
+    availableStudents.value = data || []
+
+  } catch (error) {
+    console.error('Search students error:', error)
+    showToast('Failed to search students', 'error')
+  } finally {
+    isSearchingStudents.value = false
+  }
+}
+
+const toggleStudentSelection = (studentId) => {
+  const index = selectedStudentsToAdd.value.indexOf(studentId)
+  if (index > -1) {
+    selectedStudentsToAdd.value.splice(index, 1)
+  } else {
+    selectedStudentsToAdd.value.push(studentId)
+  }
+}
+
+const clearSelection = () => {
+  selectedStudentsToAdd.value = []
+}
+
+const addSelectedStudents = async () => {
+  if (selectedStudentsToAdd.value.length === 0) return
+
+  try {
+    isAddingStudents.value = true
+
+    // Wait for auth to be ready
+    if (!isAuthReady.value || !teacherInfo.value?.id) {
+      await waitForAuth()
+    }
+
+    // Use the teacher_bulk_add_students function from the database
+    const { data, error } = await supabase.rpc('teacher_bulk_add_students', {
+      p_teacher_id: teacherInfo.value.id,
+      p_section_id: selectedSectionForStudents.value.id,
+      p_student_ids: selectedStudentsToAdd.value
+    })
+
+    if (error) {
+      console.error('Bulk add students error:', error)
+      showToast('Failed to add students', 'error')
+      return
+    }
+
+    const result = data[0] // RPC returns array with single result
+    
+    if (result.successful > 0) {
+      showToast(`Successfully added ${result.successful} student${result.successful > 1 ? 's' : ''} to the section`, 'success')
+      
+      // Clear selections and refresh the search
+      selectedStudentsToAdd.value = []
+      await searchStudents()
+      
+      // Refresh the main subjects data to update student counts
+      await fetchSubjects()
+    }
+
+    if (result.failed > 0) {
+      showToast(`${result.failed} student${result.failed > 1 ? 's' : ''} could not be added. Check the details for more information.`, 'info')
+      console.log('Add students details:', result.details)
+    }
+
+  } catch (error) {
+    console.error('Add students error:', error)
+    showToast('Failed to add students', 'error')
+  } finally {
+    isAddingStudents.value = false
   }
 }
 
@@ -2830,6 +4579,7 @@ const viewStudentRoster = async (subject) => {
       .select('*')
       .eq('subject_id', subject.id)
       .eq('teacher_id', teacherInfo.value.id)
+      .eq('enrollment_status', 'active')
 
     const { data: allSections } = await supabase
       .from('sections')
@@ -2858,7 +4608,10 @@ const viewStudentRoster = async (subject) => {
           full_name: enrollment.student_name,
           email: enrollment.student_email,
           grade_level: enrollment.student_grade,
-          enrollment_date: enrollment.enrolled_at
+          enrollment_date: enrollment.enrolled_at,
+          enrollment_method: enrollment.enrollment_method || 'teacher_added',
+          added_by: enrollment.added_by || 'Teacher',
+          enrollment_id: enrollment.enrollment_id
         }
 
         const sectionKey = `${enrollment.section_name} (${enrollment.section_code})`
@@ -2917,10 +4670,11 @@ const exportStudentRoster = () => {
     Object.keys(currentStudentRoster.value.studentsBySection).forEach(sectionKey => {
       const sectionData = currentStudentRoster.value.studentsBySection[sectionKey]
       csvContent += `Section: ${sectionData.section.name} (${sectionData.section.section_code})\n`
-      csvContent += `Student ID,Full Name,Email,Grade,Enrollment Date\n`
+      csvContent += `Student ID,Full Name,Email,Grade,Enrollment Date,Enrollment Method,Added By\n`
       
       sectionData.students.forEach(student => {
-        csvContent += `"${student.student_id}","${student.full_name}","${student.email}","${student.grade_level}","${formatEnrollmentDate(student.enrollment_date)}"\n`
+        const enrollMethod = student.enrollment_method === 'teacher_added' ? 'Teacher Added' : 'Self-Enrolled'
+        csvContent += `"${student.student_id}","${student.full_name}","${student.email}","${student.grade_level}","${formatEnrollmentDate(student.enrollment_date)}","${enrollMethod}","${student.added_by || 'N/A'}"\n`
       })
       csvContent += `\n`
     })
@@ -2936,6 +4690,56 @@ const exportStudentRoster = () => {
     window.URL.revokeObjectURL(url)
   } catch (error) {
     console.error('Error exporting roster:', error)
+  }
+}
+
+// ============================================================
+// REMOVE STUDENT FROM SECTION
+// ============================================================
+const removeStudentFromSection = async (enrollmentId, studentName) => {
+  if (!confirm(`Are you sure you want to remove ${studentName} from this section?`)) {
+    return
+  }
+
+  try {
+    // Wait for auth to be ready
+    if (!isAuthReady.value || !teacherInfo.value?.id) {
+      await waitForAuth()
+    }
+
+    // Use the teacher_remove_student_from_section database function
+    const { data, error } = await supabase.rpc('teacher_remove_student_from_section', {
+      p_teacher_id: teacherInfo.value.id,
+      p_enrollment_id: enrollmentId,
+      p_reason: 'Removed by teacher'
+    })
+
+    if (error) {
+      console.error('Remove student error:', error)
+      showToast('Failed to remove student', 'error')
+      return
+    }
+
+    // Check the result from the function
+    const result = data[0]
+    
+    if (result.success) {
+      showToast(`Successfully removed ${studentName} from the section`, 'success')
+      
+      // Refresh the roster modal
+      if (currentStudentRoster.value?.subject) {
+        await viewStudentRoster(currentStudentRoster.value.subject)
+      }
+      
+      // Refresh the main subjects data to update student counts
+      await fetchSubjects()
+    } else {
+      showToast(result.message, 'error')
+    }
+
+  } catch (error) {
+    console.error('Error removing student:', error)
+    showToast('Failed to remove student. Please try again.', 'error')
   }
 }
 
@@ -3036,14 +4840,17 @@ onUnmounted(() => {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-/* Reset and base styles */
+/* ===============================================
+   MODERN UI SYSTEM - ORGANIZED & USER-FRIENDLY
+   =============================================== */
+
+/* Reset and Base */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-/* Dashboard Container */
 .dashboard-container {
   min-height: 100vh;
   width: 100vw;
@@ -3051,8 +4858,799 @@ onUnmounted(() => {
   font-family: 'Inter', sans-serif;
   overflow-x: hidden;
 }
+.dark .dashboard-container {
+  background: #0f172a;
+}
 
-/* Sidebar Navigation - Simple Outlined Icons Only, Single Color, Active Highlight */
+/* Main Layout */
+.main-content {
+  flex: 1;
+  margin-left: 80px;
+  padding-top: 70px;
+}
+
+.content-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Search and Filter Bar */
+.search-filter-bar {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  align-items: center;
+}
+
+.search-input-container {
+  position: relative;
+  flex: 1;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 3rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 1rem;
+  background: white;
+  transition: all 0.2s ease;
+}
+.search-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+.dark .search-input {
+  background: #1e293b;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+.grade-filter {
+  padding: 0.75rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: white;
+  min-width: 150px;
+}
+.dark .grade-filter {
+  background: #1e293b;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+/* Subject Cards Grid */
+.subjects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.subject-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+.subject-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  border-color: #3b82f6;
+}
+.dark .subject-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+.dark .subject-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.subject-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.subject-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: white;
+  flex-shrink: 0;
+}
+
+.subject-initial {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.subject-card-body {
+  margin-top: 1rem;
+}
+
+.subject-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+.dark .subject-title {
+  color: #f1f5f9;
+}
+
+.grade-level {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+}
+.dark .grade-level {
+  color: #94a3b8;
+}
+
+.subject-description {
+  font-size: 0.875rem;
+  color: #4b5563;
+  line-height: 1.4;
+  margin-bottom: 1rem;
+}
+.dark .subject-description {
+  color: #cbd5e1;
+}
+
+.subject-description-placeholder {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  font-style: italic;
+  margin-bottom: 1rem;
+}
+
+.subject-stats {
+  display: flex;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f3f4f6;
+}
+.dark .subject-stats {
+  border-top-color: #374151;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-number {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #3b82f6;
+}
+.dark .stat-number {
+  color: #60a5fa;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.dark .stat-label {
+  color: #94a3b8;
+}
+
+/* Menu System */
+.subject-menu-container {
+  position: relative;
+}
+
+.subject-menu-btn {
+  background: none;
+  border: none;
+  color: #6b7280;
+  padding: 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.subject-menu-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+.dark .subject-menu-btn {
+  color: #94a3b8;
+}
+.dark .subject-menu-btn:hover {
+  background: #374151;
+  color: #f1f5f9;
+}
+
+.subject-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  min-width: 140px;
+  overflow: hidden;
+}
+.dark .subject-dropdown-menu {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.menu-item {
+  background: none;
+  border: none;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.875rem;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.menu-item:hover {
+  background: #f3f4f6;
+}
+.menu-item.delete {
+  color: #dc2626;
+}
+.menu-item.delete:hover {
+  background: #fef2f2;
+}
+.dark .menu-item {
+  color: #e2e8f0;
+}
+.dark .menu-item:hover {
+  background: #334155;
+}
+.dark .menu-item.delete {
+  color: #f87171;
+}
+.dark .menu-item.delete:hover {
+  background: #7f1d1d;
+}
+
+/* Navigation Headers */
+.view-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+.dark .view-header {
+  border-bottom-color: #334155;
+}
+
+.back-btn {
+  background: #f3f4f6;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  color: #374151;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.back-btn:hover {
+  background: #e5e7eb;
+}
+.dark .back-btn {
+  background: #334155;
+  color: #e2e8f0;
+}
+.dark .back-btn:hover {
+  background: #475569;
+}
+
+.view-title h2 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+.dark .view-title h2 {
+  color: #f1f5f9;
+}
+
+.view-title p {
+  color: #6b7280;
+  font-size: 1rem;
+}
+.dark .view-title p {
+  color: #94a3b8;
+}
+
+/* Sections Grid */
+.sections-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.section-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+.section-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  border-color: #3b82f6;
+}
+.dark .section-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.section-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.section-info h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+.dark .section-info h3 {
+  color: #f1f5f9;
+}
+
+.section-subtitle {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+.dark .section-subtitle {
+  color: #94a3b8;
+}
+
+.enrollment-status {
+  margin-bottom: 1rem;
+}
+
+.student-count {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.count-number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #3b82f6;
+  display: block;
+}
+.dark .count-number {
+  color: #60a5fa;
+}
+
+.count-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.dark .count-label {
+  color: #94a3b8;
+}
+
+.capacity-info {
+  margin-top: 0.75rem;
+}
+
+.capacity-bar {
+  width: 100%;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+.dark .capacity-bar {
+  background: #374151;
+}
+
+.capacity-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.capacity-text {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-align: center;
+  display: block;
+}
+.dark .capacity-text {
+  color: #94a3b8;
+}
+
+.section-actions {
+  padding-top: 1rem;
+  border-top: 1px solid #f3f4f6;
+}
+.dark .section-actions {
+  border-top-color: #374151;
+}
+
+.action-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  justify-content: center;
+}
+.action-btn:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+.action-btn.secondary {
+  background: #6b7280;
+}
+.action-btn.secondary:hover {
+  background: #4b5563;
+}
+
+/* Assessment Management Styles */
+.assessment-type-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.assessment-type-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 2px solid var(--color-border, #e5e7eb);
+  border-radius: 8px;
+  background: var(--color-background-soft, #f8fafc);
+  color: var(--color-text, #374151);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  min-height: 60px;
+  width: 100%;
+}
+
+.dark .assessment-type-btn {
+  background: #1f2937;
+  border-color: #374151;
+  color: #e5e7eb;
+}
+
+.assessment-type-btn:hover {
+  border-color: var(--color-border-hover, #d1d5db);
+  background: var(--color-background-mute, #f1f5f9);
+  transform: translateY(-1px);
+}
+
+.dark .assessment-type-btn:hover {
+  background: #111827;
+  border-color: #4b5563;
+}
+
+.assessment-type-btn svg {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+
+.assessment-type-btn .btn-subtitle {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary, #6b7280);
+  font-weight: 400;
+  margin-top: 0.25rem;
+}
+
+.dark .assessment-type-btn .btn-subtitle {
+  color: #9ca3af;
+}
+
+.quiz-btn:hover {
+  border-color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.assignment-btn:hover {
+  border-color: #f093fb;
+  background: rgba(240, 147, 251, 0.1);
+}
+
+.view-assessments-section {
+  border-top: 1px solid var(--color-border, #e5e7eb);
+  padding-top: 1rem;
+}
+
+.dark .view-assessments-section {
+  border-top-color: #374151;
+}
+
+.action-btn.full-width {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Section Detail View */
+.section-overview-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+.dark .section-overview-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.overview-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 2rem;
+}
+
+.stat-box {
+  text-align: center;
+}
+
+.stat-box .stat-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #3b82f6;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.dark .stat-box .stat-number {
+  color: #60a5fa;
+}
+
+.stat-box .stat-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+.dark .stat-box .stat-label {
+  color: #94a3b8;
+}
+
+/* Quick Actions Section */
+.quick-actions-section {
+  margin-top: 2rem;
+}
+
+.section-heading {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.dark .section-heading {
+  color: #f1f5f9;
+}
+
+.section-heading:before {
+  content: '';
+  width: 4px;
+  height: 24px;
+  background: #3b82f6;
+  border-radius: 2px;
+}
+
+/* Action Cards */
+.action-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.action-card {
+  background: white;
+  border: 2px solid #f1f5f9;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+.action-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+  border-color: #3b82f6;
+}
+.dark .action-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+.dark .action-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Card Type Styling */
+.action-card.student-management {
+  border-left: 4px solid #10b981;
+}
+.action-card.assessment-management {
+  border-left: 4px solid #667eea;
+}
+.action-card.grade-management {
+  border-left: 4px solid #f59e0b;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.card-icon.student-icon {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+.card-icon.assessment-icon {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+}
+
+.card-icon.grade-icon {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+}
+
+.card-header h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+.dark .card-header h3 {
+  color: #f1f5f9;
+}
+
+.card-description {
+  color: #6b7280;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+.dark .card-description {
+  color: #94a3b8;
+}
+
+.card-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.action-btn.primary {
+  background: #3b82f6;
+  color: white;
+}
+.action-btn.primary:hover {
+  background: #2563eb;
+}
+
+/* Empty States */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #6b7280;
+}
+.dark .empty-state {
+  color: #94a3b8;
+}
+
+.empty-icon {
+  margin: 0 auto 1.5rem;
+  color: #d1d5db;
+}
+.dark .empty-icon {
+  color: #4b5563;
+}
+
+.empty-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+.dark .empty-title {
+  color: #e5e7eb;
+}
+
+.empty-desc {
+  margin-bottom: 2rem;
+}
+
+.create-quiz-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.create-quiz-btn:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+/* Navigation Sidebar */
 .sidebar {
   position: fixed;
   top: 64px;
@@ -3064,6 +5662,484 @@ onUnmounted(() => {
   z-index: 900;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
   overflow: visible;
+}
+
+/* Top Navigation Bar */
+.top-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: #3D8D7A;
+  z-index: 1000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  padding: 0 2rem;
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo-img {
+  height: 36px;
+  width: auto;
+}
+
+.brand-name {
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-icon-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  padding: 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.nav-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.user-profile {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+.user-profile:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Page Header */
+.page-header {
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 2rem;
+  padding: 2rem;
+  border-radius: 16px 16px 0 0;
+}
+.dark .page-header {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-icon {
+  color: #3b82f6;
+}
+
+.header-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+.dark .header-title {
+  color: #f1f5f9;
+}
+
+.header-subtitle {
+  color: #6b7280;
+  font-size: 1rem;
+}
+.dark .header-subtitle {
+  color: #94a3b8;
+}
+
+.create-subject-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.create-subject-btn:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+/* Modals */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.modal-content-enhanced {
+  background: white;
+  border-radius: 16px;
+  max-width: 650px;
+  width: 100%;
+  max-height: 95vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+}
+.dark .modal-content-enhanced {
+  background: #1e293b;
+}
+
+.modal-header-enhanced {
+  padding: 1.25rem 1.5rem 0.875rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+.dark .modal-header-enhanced {
+  border-color: #334155;
+}
+
+.modal-icon {
+  color: #3b82f6;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+}
+
+.modal-title-area h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.125rem;
+}
+.dark .modal-title-area h2 {
+  color: #f1f5f9;
+}
+
+.modal-subtitle {
+  color: #6b7280;
+  font-size: 0.8125rem;
+}
+.dark .modal-subtitle {
+  color: #94a3b8;
+}
+
+.close-btn-enhanced {
+  background: none;
+  border: none;
+  color: #6b7280;
+  padding: 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-left: auto;
+}
+.close-btn-enhanced:hover {
+  background: #f3f4f6;
+}
+.dark .close-btn-enhanced {
+  color: #94a3b8;
+}
+.dark .close-btn-enhanced:hover {
+  background: #374151;
+}
+
+/* Scroll to Top Button */
+.scroll-to-top {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  transition: all 0.2s ease;
+}
+.scroll-to-top:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+}
+
+/* Student Management Modal */
+.add-students-content {
+  padding: 2rem;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.student-search-section {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+.dark .student-search-section {
+  border-bottom-color: #334155;
+}
+
+.search-header .section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 0.5rem 0;
+}
+.dark .search-header .section-title {
+  color: #f1f5f9;
+}
+
+.search-description {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin: 0 0 1.5rem 0;
+}
+.dark .search-description {
+  color: #94a3b8;
+}
+
+.search-filters-enhanced {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.search-input-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+.search-input-wrapper .search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280;
+}
+.dark .search-input-wrapper .search-icon {
+  color: #94a3b8;
+}
+
+.student-search-input-enhanced {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 3rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 1rem;
+  background: white;
+  transition: all 0.2s ease;
+}
+.student-search-input-enhanced:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+.dark .student-search-input-enhanced {
+  background: #1e293b;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+.grade-filter-select-enhanced {
+  padding: 0.75rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  background: white;
+  min-width: 150px;
+  font-size: 1rem;
+}
+.dark .grade-filter-select-enhanced {
+  background: #1e293b;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+.search-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+.dark .search-hint {
+  background: #374151;
+  color: #94a3b8;
+}
+
+.students-list-section {
+  margin-top: 1rem;
+}
+
+.students-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.students-header h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+.dark .students-header h4 {
+  color: #f1f5f9;
+}
+
+.batch-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.add-batch-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.add-batch-btn:hover:not(:disabled) {
+  background: #2563eb;
+}
+.add-batch-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.clear-selection-btn {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.clear-selection-btn:hover {
+  background: #e5e7eb;
+}
+
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+  color: #6b7280;
+}
+
+.empty-search {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+}
+.dark .empty-search {
+  color: #94a3b8;
+}
+
+.empty-search svg {
+  color: #d1d5db;
+  margin-bottom: 1rem;
+}
+.dark .empty-search svg {
+  color: #4b5563;
+}
+
+.students-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.spinner-icon {
+  animation: spin 1s linear infinite;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .subjects-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .sections-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .action-cards-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .search-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-filters-enhanced {
+    flex-direction: column;
+  }
+  
+  .students-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .sidebar-nav {
@@ -3119,10 +6195,7 @@ onUnmounted(() => {
 .sidebar-item:hover .sidebar-tooltip {
   opacity: 1;
   pointer-events: auto;
-}
-
-/* Top Navigation Bar (Greenish Theme) */
-.top-navbar {
+}.top-navbar {
   position: fixed;
   top: 0;
   left: 0;
@@ -5108,11 +8181,7 @@ onUnmounted(() => {
   color: #A3D1C6;
 }
 
-/* ============================================
-   DELETE MODAL STYLES - Add to your <style scoped>
-   ============================================ */
-
-/* Delete Modal Specific Styles */
+/* Delete Modal Styles */
 .delete-modal {
   background: white;
   border-radius: 16px;
@@ -6255,10 +9324,10 @@ onUnmounted(() => {
 .modal-actions-enhanced {
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
+  gap: 0.75rem;
+  padding: 0.875rem 1.5rem;
   border-top: 1px solid #f3f4f6;
+  flex-shrink: 0;
 }
 
 .dark .modal-actions-enhanced {
@@ -6314,11 +9383,7 @@ onUnmounted(() => {
   border-color: #4b5563;
 }
 
-.dark .btn-secondary:hover {
-  background: #4b5563;
-  border-color: #6b7280;
-  color: #f3f4f6;
-}
+
 
 .spinner-icon {
   animation: spin 0.8s linear infinite;

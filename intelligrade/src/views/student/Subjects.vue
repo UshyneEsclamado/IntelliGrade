@@ -80,10 +80,12 @@
                 <span class="stat-number">{{ totalSubjects }}</span>
                 <span class="stat-label">Total Subjects</span>
               </div>
-              <button class="join-class-btn formal-join-btn" @click="showJoinModal = true">
-                <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M12 5v14m7-7H5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                Join Class
-              </button>
+              <div class="enrollment-info-badge">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
+                </svg>
+                <span>Enrolled by Teacher</span>
+              </div>
             </div>
           </div>
         </div>
@@ -93,12 +95,12 @@
           <span class="stat-number">{{ totalSubjects }}</span>
           <span class="stat-label">Total Subjects</span>
         </div>
-        <button @click="showJoinModal = true" class="join-class-btn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+        <div class="enrollment-info-badge desktop">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
           </svg>
-          Join Class
-        </button>
+          <span>Enrolled by Teacher</span>
+        </div>
       </div>
     </div>
 
@@ -203,60 +205,67 @@
         
         <div class="subject-stats compact">
           <div class="stat">
-            <span class="stat-value">{{ subject.completedQuizzes }}</span>
-            <span class="stat-text">Completed</span>
+            <span class="stat-value">{{ subject.totalAssessments || 0 }}</span>
+            <span class="stat-text">Total</span>
           </div>
           <div class="stat">
-            <span class="stat-value">{{ subject.availableQuizzes }}</span>
-            <span class="stat-text">Available</span>
+            <span class="stat-value">{{ subject.completedAssessments || 0 }}</span>
+            <span class="stat-text">Completed</span>
           </div>
           <div class="stat">
             <span class="stat-value">{{ subject.currentGrade || '--' }}</span>
             <span class="stat-text">Grade</span>
           </div>
         </div>
-        <div class="subject-actions compact">
-          <!-- Dynamic Quiz Button -->
-          <button 
-            v-if="subject.availableQuizzes > 0"
-            class="action-btn primary pulse" 
-            @click.stop="takeQuiz(subject)"
-            :title="`${subject.availableQuizzes} quiz${subject.availableQuizzes > 1 ? 'zes' : ''} available`"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-            </svg>
-            Take Quiz ({{ subject.availableQuizzes }})
-          </button>
-          
-          <button 
-            v-else-if="subject.completedQuizzes > 0"
-            class="action-btn completed"
-            @click.stop="viewCompletedQuizzes(subject)"
-            disabled
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z" />
-            </svg>
-            All Quizzes Completed
-          </button>
-          
-          <button 
-            v-else
-            class="action-btn clickable"
-            @click.stop="takeQuiz(subject)"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17Z" />
-            </svg>
-            Take Quiz
-          </button>
+        
+        <!-- Assessment Management Actions -->
+        <div class="assessment-actions">
+          <h4 class="actions-title">Assessments</h4>
+          <div class="action-buttons-grid">
+            <!-- Quizzes -->
+            <button 
+              class="assessment-action-btn quiz-btn"
+              @click.stop="viewAssessments(subject, 'quiz')"
+              :class="{ 'has-available': subject.availableQuizzes > 0 }"
+            >
+              <div class="btn-icon quiz-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M9,5V9H21V7.5L22.5,6L21,4.5L19.5,6L18,4.5L16.5,6L18,7.5V9H15V5H9M9,19V15H15V19H9M21,15V13.5L19.5,12L18,13.5V15H21Z" />
+                </svg>
+              </div>
+              <div class="btn-content">
+                <span class="btn-title">Quizzes</span>
+                <span class="btn-count">{{ subject.availableQuizzes || 0 }} available</span>
+              </div>
+              <div v-if="subject.availableQuizzes > 0" class="notification-badge">{{ subject.availableQuizzes }}</div>
+            </button>
 
-          <button class="action-btn secondary" @click.stop="viewGrades(subject)">
+            <!-- Assignments -->
+            <button 
+              class="assessment-action-btn assignment-btn"
+              @click.stop="viewAssessments(subject, 'assignment')"
+              :class="{ 'has-available': subject.availableAssignments > 0 }"
+            >
+              <div class="btn-icon assignment-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                </svg>
+              </div>
+              <div class="btn-content">
+                <span class="btn-title">Assignments</span>
+                <span class="btn-count">{{ subject.availableAssignments || 0 }} available</span>
+              </div>
+              <div v-if="subject.availableAssignments > 0" class="notification-badge">{{ subject.availableAssignments }}</div>
+            </button>
+          </div>
+        </div>
+
+        <div class="subject-actions compact">
+          <button class="action-btn secondary full-width" @click.stop="viewGrades(subject)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <path d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M19,19H5V5H19V19M17,12H7V10H17V12M15,16H7V14H15V16M17,8H7V6H17V8Z" />
             </svg>
-            Grades
+            View Grades
           </button>
         </div>
       </div>
@@ -270,73 +279,21 @@
         </svg>
       </div>
       <h3>No subjects found</h3>
-      <p>{{ searchQuery || activeFilter !== 'all' ? 'Try adjusting your search or filter criteria' : 'Join your first class to get started' }}</p>
-      <button v-if="!searchQuery && activeFilter === 'all'" @click="showJoinModal = true" class="join-first-btn">
-        Join Your First Class
-      </button>
-    </div>
-
-    <!-- Join Class Modal -->
-    <div v-if="showJoinModal" class="modal-overlay" @click="closeJoinModal">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h2>Join a Class</h2>
-          <button @click="closeJoinModal" class="close-btn">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
-            </svg>
-          </button>
+      <p v-if="searchQuery || activeFilter !== 'all'">Try adjusting your search or filter criteria</p>
+      <div v-else class="enrollment-notice">
+        <div class="notice-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M11,16.5L6.5,12L7.91,10.59L11,13.67L16.59,8.09L18,9.5L11,16.5Z"/>
+          </svg>
         </div>
-
-        <form @submit.prevent="joinClass" class="join-form">
-          <div class="form-group">
-            <label for="sectionCode">Section Code</label>
-            <div class="input-with-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z" />
-              </svg>
-              <input
-                id="sectionCode"
-                v-model="joinForm.sectionCode"
-                type="text"
-                placeholder="Enter section code (e.g., MAT7-A01234B)"
-                required
-                :class="{ 'error': joinError }"
-                @input="clearJoinError"
-              />
-            </div>
-            <small class="form-help">Ask your teacher for the section code to join their class</small>
-            <div v-if="joinError" class="error-message">{{ joinError }}</div>
-            
-            <!-- Validation Loading Indicator -->
-            <div v-if="isValidating" class="validation-loading">
-              <div class="validation-spinner"></div>
-              <p>Validating section code...</p>
-            </div>
-          </div>
-
-          <div v-if="previewSubject && !isValidating" class="subject-preview">
-            <h3>Class Preview</h3>
-            <div class="preview-card">
-              <div class="preview-icon" :style="{ background: previewSubject.color }">
-                {{ previewSubject.code.substring(0, 2) }}
-              </div>
-              <div class="preview-info">
-                <h4>{{ previewSubject.name }}</h4>
-                <p>Grade {{ previewSubject.grade_level }}</p>
-                <p>Section: {{ previewSubject.section }}</p>
-                <p>Teacher: {{ previewSubject.instructor }}</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="modal-actions">
-            <button type="button" @click="closeJoinModal" class="cancel-btn">Cancel</button>
-            <button type="submit" :disabled="isJoining || !joinForm.sectionCode" class="join-btn">
-              {{ isJoining ? 'Joining...' : 'Join Class' }}
-            </button>
-          </div>
-        </form>
+        <p class="notice-title">Waiting for Teacher Enrollment</p>
+        <p class="notice-description">Your teacher will enroll you in their classes. Once enrolled, your subjects will appear here.</p>
+        <div class="notice-tip">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z"/>
+          </svg>
+          <span>Contact your teacher if you believe you should be enrolled in a class</span>
+        </div>
       </div>
     </div>
 
@@ -408,16 +365,10 @@ export default {
     return {
       searchQuery: '',
       activeFilter: 'all',
-      showJoinModal: false,
       showUnenrollModal: false,
-      isJoining: false,
       isUnenrolling: false,
       isLoading: true,
-      isValidating: false,
       loadingMessage: 'Loading your subjects...',
-      joinError: '',
-      joinSuccess: '',
-      previewSubject: null,
       unenrollSubject: null,
       filters: [
         { key: 'all', label: 'All Subjects' },
@@ -426,11 +377,7 @@ export default {
         { key: 'archived', label: 'Archived' }
       ],
       subjects: [],
-      joinForm: {
-        sectionCode: ''
-      },
       pollingInterval: null,
-      validationTimeout: null,
       currentUser: null,
       studentInfo: null,
       profile: null,
@@ -722,6 +669,7 @@ export default {
 
         const sectionIds = enrollments.map(e => e.section_id)
 
+        // Fetch quizzes
         const { data: allQuizzes } = await supabase
           .from('quizzes')
           .select('id, section_id, title, status')
@@ -755,6 +703,53 @@ export default {
           }
         }
 
+        // Fetch assignments
+        const assignmentsBySection = {}
+        const assignmentsCompletedBySection = {}
+        
+        if (sectionIds.length > 0) {
+          // Get all assignments for the sections
+          const { data: allAssignments } = await supabase
+            .from('assignments')
+            .select('id, section_id')
+            .in('section_id', sectionIds)
+            .eq('is_published', true)
+
+          if (allAssignments) {
+            allAssignments.forEach(assignment => {
+              const sectionId = assignment.section_id
+              assignmentsBySection[sectionId] = (assignmentsBySection[sectionId] || 0) + 1
+            })
+
+            // Get completed assignments (assignments with submissions)
+            const assignmentIds = allAssignments.map(a => a.id)
+            if (assignmentIds.length > 0) {
+              const { data: submissions } = await supabase
+                .from('assignment_submissions')
+                .select('assignment_id, assignments!inner(section_id)')
+                .in('assignment_id', assignmentIds)
+                .eq('student_id', user.value.id)
+
+              if (submissions) {
+                submissions.forEach(submission => {
+                  const sectionId = submission.assignments.section_id
+                  assignmentsCompletedBySection[sectionId] = (assignmentsCompletedBySection[sectionId] || 0) + 1
+                })
+              }
+            }
+          }
+
+          // Initialize sections that have no assignments
+          sectionIds.forEach(sId => {
+            if (!(sId in assignmentsBySection)) {
+              assignmentsBySection[sId] = 0
+            }
+            if (!(sId in assignmentsCompletedBySection)) {
+              assignmentsCompletedBySection[sId] = 0
+            }
+          })
+        }
+
         const newSubjects = enrollments.map(enrollment => {
           const sectionId = enrollment.section_id
           const subjectId = enrollment.subject_id
@@ -768,6 +763,15 @@ export default {
           const totalQuizzes = sectionQuizzes.length
           const completedQuizzes = completedQuizIds.length
           const availableQuizzes = Math.max(0, totalQuizzes - completedQuizzes)
+
+          // Get assignment counts
+          const totalAssignments = assignmentsBySection[sectionId] || 0
+          const completedAssignments = assignmentsCompletedBySection[sectionId] || 0
+          const availableAssignments = Math.max(0, totalAssignments - completedAssignments)
+
+          // Calculate total assessments
+          const totalAssessments = totalQuizzes + totalAssignments
+          const completedAssessments = completedQuizzes + completedAssignments
 
           let currentGrade = '--'
           let overallScore = null
@@ -796,9 +800,17 @@ export default {
             gradeLevel: enrollment.subject_grade_level || 'N/A',
             color: this.generateSubjectColor(enrollment.subject_name || 'default'),
             status: 'active',
+            // Quiz stats
             completedQuizzes,
             availableQuizzes,
             totalQuizzes,
+            // Assignment stats
+            completedAssignments,
+            availableAssignments,
+            totalAssignments,
+            // Overall stats
+            totalAssessments,
+            completedAssessments,
             currentGrade,
             overallScore,
             enrollmentId: enrollment.enrollment_id,
@@ -816,238 +828,6 @@ export default {
         this.subjects = []
       } finally {
         this.isLoading = false
-      }
-    },
-
-    async validateSectionCode() {
-      const code = this.joinForm.sectionCode?.trim()
-      
-      if (!code || code.length < 8) {
-        this.previewSubject = null
-        this.joinError = ''
-        this.isValidating = false
-        return
-      }
-
-      try {
-        this.isValidating = true
-        this.previewSubject = null
-        this.joinError = ''
-        
-        const searchCode = code.toUpperCase()
-        console.log('🔍 Validating section code:', searchCode)
-
-        const { data: sectionData, error: sectionError } = await supabase
-          .from('sections')
-          .select('id, name, section_code, max_students, is_active, subject_id')
-          .eq('section_code', searchCode)
-          .eq('is_active', true)
-          .maybeSingle()
-
-        if (sectionError) {
-          console.error('❌ Section lookup error:', sectionError)
-          this.joinError = 'Error looking up section. Please try again.'
-          this.previewSubject = null
-          return
-        }
-
-        if (!sectionData) {
-          this.joinError = 'Section not found. Please check the code with your teacher.'
-          this.previewSubject = null
-          return
-        }
-
-        const { data: subjectData, error: subjectError } = await supabase
-          .from('subjects')
-          .select('id, name, grade_level, is_active, teacher_id')
-          .eq('id', sectionData.subject_id)
-          .eq('is_active', true)
-          .maybeSingle()
-
-        if (subjectError || !subjectData) {
-          this.joinError = 'This section\'s subject is currently inactive.'
-          this.previewSubject = null
-          return
-        }
-
-        const { data: teacherData, error: teacherError } = await supabase
-          .from('teachers')
-          .select('id, full_name, is_active')
-          .eq('id', subjectData.teacher_id)
-          .eq('is_active', true)
-          .maybeSingle()
-
-        if (teacherError || !teacherData) {
-          this.joinError = 'This section\'s teacher is currently inactive.'
-          this.previewSubject = null
-          return
-        }
-
-        if (this.studentInfo && subjectData.grade_level !== this.studentInfo.grade_level) {
-          this.joinError = `This subject is for Grade ${subjectData.grade_level} students. You are enrolled in Grade ${this.studentInfo.grade_level}.`
-          this.previewSubject = null
-          return
-        }
-
-        const { data: existingEnrollment } = await supabase
-          .from('enrollments')
-          .select('id, status')
-          .eq('student_id', this.studentInfo.id)
-          .eq('section_id', sectionData.id)
-
-        if (existingEnrollment && existingEnrollment.length > 0) {
-          const activeEnrollment = existingEnrollment.find(e => e.status === 'active')
-          if (activeEnrollment) {
-            this.joinError = 'You are already enrolled in this section.'
-            this.previewSubject = null
-            return
-          }
-        }
-
-        const { data: sameSubjectEnrollment } = await supabase
-          .from('enrollments')
-          .select('id, section_id')
-          .eq('student_id', this.studentInfo.id)
-          .eq('subject_id', sectionData.subject_id)
-          .eq('status', 'active')
-
-        if (sameSubjectEnrollment && sameSubjectEnrollment.length > 0) {
-          this.joinError = 'You are already enrolled in another section of this subject.'
-          this.previewSubject = null
-          return
-        }
-
-        const { count: enrollmentCount } = await supabase
-          .from('enrollments')
-          .select('id', { count: 'exact', head: true })
-          .eq('section_id', sectionData.id)
-          .eq('status', 'active')
-
-        const currentEnrollments = enrollmentCount || 0
-
-        if (currentEnrollments >= sectionData.max_students) {
-          this.joinError = `This section is full (${currentEnrollments}/${sectionData.max_students} students).`
-          this.previewSubject = null
-          return
-        }
-
-        this.previewSubject = {
-          id: sectionData.subject_id,
-          name: subjectData.name,
-          code: sectionData.section_code,
-          section: sectionData.name,
-          instructor: teacherData.full_name,
-          grade_level: subjectData.grade_level,
-          color: this.generateSubjectColor(subjectData.name),
-          sectionId: sectionData.id,
-          currentEnrollments: currentEnrollments,
-          maxStudents: sectionData.max_students
-        }
-        this.joinError = ''
-
-        console.log('✅ Preview ready!', this.previewSubject)
-
-      } catch (error) {
-        console.error('❌ Validation error:', error)
-        this.joinError = `Error: ${error.message}`
-        this.previewSubject = null
-      } finally {
-        this.isValidating = false
-      }
-    },
-
-    
-    async joinClass() {
-      if (!this.joinForm.sectionCode || !this.studentInfo || !this.previewSubject) {
-        this.joinError = 'Please enter a valid section code first.'
-        return
-      }
-
-      this.isJoining = true
-      this.joinError = ''
-
-      try {
-        console.log('🎓 Starting enrollment...')
-        this.isLoading = true
-        this.loadingMessage = 'Joining class...'
-
-        const { data: newEnrollment, error: enrollmentError } = await supabase
-          .from('enrollments')
-          .insert({
-            student_id: this.studentInfo.id,
-            section_id: this.previewSubject.sectionId,
-            subject_id: this.previewSubject.id,
-            status: 'active'
-          })
-          .select()
-          .single()
-
-        if (enrollmentError) {
-          console.error('❌ Enrollment error:', enrollmentError)
-          this.isLoading = false
-          throw enrollmentError
-        }
-
-        console.log('✅ Enrollment successful!')
-
-        const savedPreview = this.previewSubject
-        
-        this.showJoinModal = false
-        this.joinForm.sectionCode = ''
-        this.previewSubject = null
-
-        this.loadingMessage = 'Loading your updated subjects...'
-        await this.fetchSubjects()
-
-        this.isLoading = false
-        
-        alert(
-          `🎉 Welcome to ${savedPreview.name}!\n\n` +
-          `📚 Section: ${savedPreview.section}\n` +
-          `👨‍🏫 Teacher: ${savedPreview.instructor}\n` +
-          `📊 Grade Level: ${savedPreview.grade_level}\n\n` +
-          `The subject has been added to your dashboard.`
-        )
-
-      } catch (error) {
-        console.error('❌ Enrollment failed:', error)
-        this.isLoading = false
-        this.joinError = error.message || 'Failed to join class. Please try again.'
-      } finally {
-        this.isJoining = false
-      }
-    },
-
-    clearJoinError() {
-      this.joinError = ''
-      
-      if (this.validationTimeout) {
-        clearTimeout(this.validationTimeout)
-      }
-      
-      this.previewSubject = null
-      this.isValidating = false
-      
-      const code = this.joinForm.sectionCode?.trim()
-      
-      if (!code || code.length < 8) {
-        return
-      }
-      
-      this.validationTimeout = setTimeout(() => {
-        this.validateSectionCode()
-      }, 800)
-    },
-
-    closeJoinModal() {
-      this.showJoinModal = false
-      this.joinForm.sectionCode = ''
-      this.joinError = ''
-      this.previewSubject = null
-      this.isValidating = false
-      
-      if (this.validationTimeout) {
-        clearTimeout(this.validationTimeout)
       }
     },
 
@@ -1092,6 +872,53 @@ export default {
         alert(`Failed to unenroll: ${error.message}`)
       } finally {
         this.isUnenrolling = false
+      }
+    },
+
+    viewAssessments(subject, type) {
+      if (type === 'assignment') {
+        // Navigate to assignments page
+        this.$router.push({
+          name: 'TakeAssignments',
+          params: {
+            subjectId: subject.id,
+            sectionId: subject.sectionId
+          },
+          query: {
+            subjectName: subject.name,
+            sectionName: subject.section,
+            instructor: subject.instructor
+          }
+        })
+      } else if (type === 'quiz') {
+        // Navigate to quiz page
+        this.$router.push({
+          name: 'TakeQuiz',
+          params: {
+            subjectId: subject.id,
+            sectionId: subject.sectionId
+          },
+          query: {
+            subjectName: subject.name,
+            sectionName: subject.section,
+            instructor: subject.instructor
+          }
+        })
+      } else {
+        // For other types, navigate to assessment list filtered by type
+        this.$router.push({
+          name: 'StudentAssessments',
+          params: {
+            subjectId: subject.id,
+            sectionId: subject.sectionId
+          },
+          query: {
+            subjectName: subject.name,
+            sectionName: subject.section,
+            type: type, // 'quiz', 'assignment', or 'activity'
+            instructor: subject.instructor
+          }
+        })
       }
     },
 
@@ -1306,6 +1133,73 @@ export default {
   color: #20c997;
   border: 1px solid #20c997;
 }
+
+/* Dark Mode - Assessment Action Buttons */
+.dark .assessment-actions {
+  border-top-color: rgba(32, 201, 151, 0.2);
+}
+
+.dark .actions-title {
+  color: #20c997;
+}
+
+.dark .assessment-action-btn {
+  background: #23272b;
+  border-color: #3d4852;
+}
+
+.dark .assessment-action-btn:hover {
+  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.12);
+}
+
+.dark .assessment-action-btn.quiz-btn {
+  border-color: #1e3a5f;
+  background: linear-gradient(135deg, #23272b 0%, #1a2332 100%);
+}
+
+.dark .assessment-action-btn.quiz-btn:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.dark .assessment-action-btn.quiz-btn.has-available {
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #1e293b 0%, #1e3a5f 100%);
+}
+
+.dark .assessment-action-btn.assignment-btn {
+  border-color: #4a1942;
+  background: linear-gradient(135deg, #23272b 0%, #2d1b28 100%);
+}
+
+.dark .assessment-action-btn.assignment-btn:hover {
+  border-color: #ec4899;
+  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.2);
+}
+
+.dark .assessment-action-btn.assignment-btn.has-available {
+  border-color: #ec4899;
+  background: linear-gradient(135deg, #27212e 0%, #4a1942 100%);
+}
+
+.dark .quiz-icon {
+  background: linear-gradient(135deg, #1e3a5f 0%, #1e40af 100%);
+  color: #60a5fa;
+}
+
+.dark .assignment-icon {
+  background: linear-gradient(135deg, #4a1942 0%, #831843 100%);
+  color: #f472b6;
+}
+
+.dark .btn-title {
+  color: #e5e7eb;
+}
+
+.dark .btn-count {
+  color: #9ca3af;
+}
+
 /* DARK MODE OVERRIDES */
 .dark .subjects-container {
   background: #181c20;
@@ -1338,15 +1232,6 @@ export default {
 
 .dark .section-header-stats .stat-label {
   color: #a3d1c6;
-}
-
-.dark .join-class-btn {
-  background: #3d8d7a;
-  color: #fbffe4;
-  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.15);
-}
-.dark .join-class-btn:hover {
-  background: #20c997;
 }
 
 .dark .controls-section {
@@ -1548,27 +1433,32 @@ export default {
   margin-top: 0.5rem;
 }
 
-.join-class-btn {
-  background: #20c997;
-  color: white;
-  border: none;
-  padding: 1rem 1.5rem;
-  border-radius: 12px;
+.enrollment-info-badge {
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+  color: #0369a1;
+  border: 2px solid #7dd3fc;
+  padding: 0.625rem 1rem;
+  border-radius: 10px;
   font-weight: 600;
-  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  transition: all 0.2s ease;
-  font-size: 1rem;
+  font-size: 0.875rem;
   font-family: 'Inter', sans-serif;
-  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.15);
+  box-shadow: 0 2px 6px rgba(14, 165, 233, 0.1);
+  white-space: nowrap;
 }
 
-.join-class-btn:hover {
-  background: #1ba085;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.25);
+.enrollment-info-badge.desktop {
+  padding: 0.75rem 1.25rem;
+  font-size: 0.9375rem;
+}
+
+.dark .enrollment-info-badge {
+  background: linear-gradient(135deg, #075985 0%, #0c4a6e 100%);
+  color: #7dd3fc;
+  border-color: #0ea5e9;
+  box-shadow: 0 2px 6px rgba(14, 165, 233, 0.2);
 }
 
 .controls-section {
@@ -2039,6 +1929,135 @@ export default {
   border-color: #3d8d7a;
 }
 
+/* Assessment Management Section */
+.assessment-actions {
+  margin: 1.25rem 0;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(163, 209, 198, 0.3);
+}
+
+.actions-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #3d8d7a;
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.action-buttons-grid {
+  display: grid;
+  gap: 0.625rem;
+}
+
+.assessment-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: white;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  text-align: left;
+  position: relative;
+}
+
+.assessment-action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.assessment-action-btn.quiz-btn {
+  border-color: #dbeafe;
+  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+}
+
+.assessment-action-btn.quiz-btn:hover {
+  border-color: #60a5fa;
+  box-shadow: 0 4px 12px rgba(96, 165, 250, 0.15);
+}
+
+.assessment-action-btn.quiz-btn.has-available {
+  border-color: #60a5fa;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+}
+
+.assessment-action-btn.assignment-btn {
+  border-color: #fce7f3;
+  background: linear-gradient(135deg, #ffffff 0%, #fdf2f8 100%);
+}
+
+.assessment-action-btn.assignment-btn:hover {
+  border-color: #f472b6;
+  box-shadow: 0 4px 12px rgba(244, 114, 182, 0.15);
+}
+
+.assessment-action-btn.assignment-btn.has-available {
+  border-color: #f472b6;
+  background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
+}
+
+.btn-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.quiz-icon {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #2563eb;
+}
+
+.assignment-icon {
+  background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+  color: #db2777;
+}
+
+.btn-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.btn-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.btn-count {
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.notification-badge {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #ef4444;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  min-width: 24px;
+  text-align: center;
+}
+
+.action-btn.full-width {
+  width: 100%;
+}
+
 .empty-state {
   text-align: center;
   padding: 3rem 2rem;
@@ -2073,23 +2092,96 @@ export default {
   margin: 0 0 1.5rem 0;
 }
 
-.join-first-btn {
-  background: #20c997;
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 10px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.95rem;
-  font-family: 'Inter', sans-serif;
+/* Enrollment Notice Styles */
+.enrollment-notice {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+  border: 2px solid #7dd3fc;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.15);
 }
 
-.join-first-btn:hover {
-  background: #1ba085;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.25);
+.notice-icon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  margin: 0 auto 1.5rem;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+}
+
+.notice-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0c4a6e;
+  margin-bottom: 0.75rem;
+}
+
+.notice-description {
+  color: #075985;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  margin: 0 0 1.5rem 0;
+}
+
+.notice-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(14, 165, 233, 0.1);
+  border-left: 3px solid #0ea5e9;
+  border-radius: 8px;
+}
+
+.notice-tip svg {
+  flex-shrink: 0;
+  color: #0284c7;
+  margin-top: 0.125rem;
+}
+
+.notice-tip span {
+  color: #0c4a6e;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.dark .enrollment-notice {
+  background: linear-gradient(135deg, #0c4a6e 0%, #075985 100%);
+  border-color: #0ea5e9;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25);
+}
+
+.dark .notice-icon {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+}
+
+.dark .notice-title {
+  color: #7dd3fc;
+}
+
+.dark .notice-description {
+  color: #bae6fd;
+}
+
+.dark .notice-tip {
+  background: rgba(14, 165, 233, 0.15);
+  border-left-color: #0ea5e9;
+}
+
+.dark .notice-tip svg {
+  color: #7dd3fc;
+}
+
+.dark .notice-tip span {
+  color: #e0f2fe;
 }
 
 /* Modal Styles */

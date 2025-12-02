@@ -414,10 +414,8 @@ import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '../../supabase.js'
 
-// Initialize router
 const router = useRouter()
 
-// Local state
 const notifications = ref([])
 const showNotifDropdown = ref(false)
 const showProfileDropdown = ref(false)
@@ -426,9 +424,9 @@ const showMessages = ref(false)
 const showAnalyticsLabel = ref(false)
 const showMessagesLabel = ref(false)
 const showScrollTop = ref(false)
-const fullName = ref('Teacher')
+const fullName = ref('Loading...')
 const isLoggingOut = ref(false)
-const isLoadingName = ref(false)
+const isLoadingName = ref(true)
 const totalClasses = ref(0)
 const totalStudents = ref(0)
 const gradedToday = ref(0)
@@ -439,54 +437,43 @@ const userId = ref(null)
 const sidebarExpanded = ref(false)
 const showLogoutModal = ref(false)
 
-// Realtime subscription references for cleanup
 let quizSubscription = null
 let messageSubscription = null
 let enrollmentSubscription = null
 let statsIntervalId = null
 let notifIntervalId = null
 
-// Computed property for unread count
 const unreadCount = computed(() => {
   return notifications.value.filter(n => !n.viewed).length
 })
 
-// Methods
 const toggleNotifDropdown = () => {
   showNotifDropdown.value = !showNotifDropdown.value
   if (showNotifDropdown.value) {
     showProfileDropdown.value = false
-    // Mark all notifications as viewed when dropdown is opened
     markNotificationsAsViewed()
   }
 }
 
-// Mark all current notifications as viewed
 const markNotificationsAsViewed = () => {
   notifications.value = notifications.value.map(notif => ({
     ...notif,
     viewed: true
   }))
-  
-  // Save viewed state to localStorage
   saveViewedNotifications()
 }
 
-// Mark all as viewed (button click)
 const markAllAsViewed = () => {
   markNotificationsAsViewed()
 }
 
-// Save viewed notifications to localStorage
 const saveViewedNotifications = () => {
   const viewedIds = notifications.value
     .filter(n => n.viewed)
     .map(n => n.id)
-  
   localStorage.setItem(`teacher_${teacherId.value}_viewed_notifications`, JSON.stringify(viewedIds))
 }
 
-// Load viewed notifications from localStorage
 const loadViewedNotifications = () => {
   const stored = localStorage.getItem(`teacher_${teacherId.value}_viewed_notifications`)
   return stored ? JSON.parse(stored) : []
@@ -499,12 +486,10 @@ const toggleProfileDropdown = () => {
   }
 }
 
-// Fixed: Use router.push instead of window.location.href
 const toggleAnalytics = () => {
   router.push('/teacher/analytics')
 }
 
-// Fixed: Use router.push instead of window.location.href
 const toggleMessages = () => {
   router.push('/teacher/messages')
 }
@@ -531,19 +516,12 @@ const closeLogoutModal = () => {
 
 const confirmLogout = () => {
   console.log('🚪 Logging out...')
-  
-  // Clear storage immediately
   localStorage.clear()
   sessionStorage.clear()
-  
-  // Sign out from Supabase (don't wait)
   supabase.auth.signOut().catch(err => console.log('Signout error:', err))
-  
-  // Immediate redirect - no waiting!
   setTimeout(() => {
     window.location.assign('/login')
   }, 100)
-  
   console.log('✅ Logout initiated')
 }
 
@@ -569,35 +547,19 @@ const gradeAssessment = (assessment) => {
   })
 }
 
-// Load teacher profile
 const loadTeacherProfile = async () => {
   try {
-    console.log('🔍 Loading teacher profile...')
-    
-    const storedUserInfo = localStorage.getItem('userInfo')
-    if (storedUserInfo) {
-      const userInfo = JSON.parse(storedUserInfo)
-      if (userInfo.role === 'teacher') {
-        console.log('✅ Found stored teacher info:', userInfo.full_name)
-        fullName.value = userInfo.full_name
-        userId.value = userInfo.id
-        
-        const { data: teacher } = await supabase
-          .from('teachers')
-          .select('id')
-          .eq('profile_id', userInfo.profile_id)
-          .single()
-        
-        if (teacher) {
-          teacherId.value = teacher.id
-          return true
-        }
-      }
-    }
+    isLoadingName.value = true
+    fullName.value = 'Loading...'
+    console.log('========================================')
+    console.log('🔍 LOADING TEACHER PROFILE')
+    console.log('========================================')
     
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     if (userError || !user) {
       console.error('❌ No user found:', userError)
+      fullName.value = 'Teacher'
+      isLoadingName.value = false
       setTimeout(() => {
         router.replace('/login')
       }, 2000)
@@ -605,45 +567,79 @@ const loadTeacherProfile = async () => {
     }
     
     userId.value = user.id
-    console.log('✅ User ID:', user.id)
+    console.log('✅ Step 1: User authenticated')
+    console.log('   User ID:', user.id)
+    console.log('   Email:', user.email)
     
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('id, full_name, role')
+      .select('*')
       .eq('auth_user_id', user.id)
       .single()
     
     if (profileError || !profile) {
       console.error('❌ Profile error:', profileError)
+      fullName.value = 'Teacher'
+      isLoadingName.value = false
       return false
     }
     
-    console.log('✅ Profile found:', profile)
+    console.log('✅ Step 2: Profile found')
+    console.log('   Profile ID:', profile.id)
+    console.log('   Full Name:', profile.full_name)
+    console.log('   Role:', profile.role)
+    
+    if (profile.role !== 'teacher') {
+      console.error('❌ Access denied: Role is', profile.role, 'not teacher')
+      fullName.value = 'Teacher'
+      isLoadingName.value = false
+      router.replace('/login')
+      return false
+    }
     
     const { data: teacher, error: teacherError } = await supabase
       .from('teachers')
-      .select('id, full_name')
+      .select('*')
       .eq('profile_id', profile.id)
       .single()
     
     if (teacherError || !teacher) {
-      console.error('❌ Teacher error:', teacherError)
+      console.error('❌ Teacher record error:', teacherError)
+      console.log('⚠️ Using profile name as fallback')
+      fullName.value = profile.full_name || 'Teacher'
+      teacherId.value = null
+      isLoadingName.value = false
       return false
     }
+    
+    console.log('✅ Step 3: Teacher record found')
+    console.log('   Teacher ID:', teacher.id)
+    console.log('   Full Name:', teacher.full_name)
+    console.log('   Employee ID:', teacher.employee_id)
+    console.log('   Department:', teacher.department)
     
     teacherId.value = teacher.id
     fullName.value = teacher.full_name || profile.full_name || 'Teacher'
     
-    console.log('✅ Teacher loaded:', { id: teacher.id, name: fullName.value })
+    console.log('========================================')
+    console.log('✅ PROFILE LOADED SUCCESSFULLY')
+    console.log('   Display Name:', fullName.value)
+    console.log('   Teacher ID:', teacherId.value)
+    console.log('========================================')
+    
+    isLoadingName.value = false
     return true
     
   } catch (error) {
-    console.error('❌ Error loading profile:', error)
+    console.error('❌ CRITICAL ERROR loading profile:', error)
+    console.error('Error message:', error.message)
+    console.error('Error stack:', error.stack)
+    fullName.value = 'Teacher'
+    isLoadingName.value = false
     return false
   }
 }
 
-// Load notifications - Enhanced with messages and enrollments
 const loadNotifications = async () => {
   if (!teacherId.value) {
     console.warn('⚠️ No teacher ID, cannot load notifications')
@@ -654,16 +650,11 @@ const loadNotifications = async () => {
     console.log('🔔 Loading notifications for teacher:', teacherId.value)
     
     const allNotifications = []
-    
-    // Get recent time range (last 24 hours)
     const yesterday = new Date()
     yesterday.setDate(yesterday.getDate() - 1)
     const yesterdayISO = yesterday.toISOString()
-    
-    // Load previously viewed notifications
     const viewedIds = loadViewedNotifications()
     
-    // 1. Get recent quiz submissions
     try {
       const { data: recentSubmissions, error: submissionsError } = await supabase
         .from('quiz_attempts')
@@ -694,7 +685,6 @@ const loadNotifications = async () => {
             viewed: viewedIds.includes(notifId)
           }
         })
-        
         allNotifications.push(...submissionNotifications)
         console.log('✅ Loaded', submissionNotifications.length, 'submission notifications')
       }
@@ -702,7 +692,6 @@ const loadNotifications = async () => {
       console.error('❌ Error loading quiz submissions:', error)
     }
     
-    // 2. Get unread messages from students
     try {
       const { data: unreadMessages, error: messagesError } = await supabase
         .from('messages')
@@ -726,7 +715,6 @@ const loadNotifications = async () => {
         .limit(10)
       
       if (!messagesError && unreadMessages) {
-        // Check which messages are unread
         for (const message of unreadMessages) {
           const { data: readStatus } = await supabase
             .from('message_reads')
@@ -736,7 +724,6 @@ const loadNotifications = async () => {
             .single()
           
           if (!readStatus) {
-            // Get student name
             const { data: student } = await supabase
               .from('students')
               .select('full_name')
@@ -756,14 +743,12 @@ const loadNotifications = async () => {
             })
           }
         }
-        
         console.log('✅ Loaded', allNotifications.filter(n => n.type === 'message').length, 'message notifications')
       }
     } catch (msgError) {
       console.log('ℹ️ Error loading messages:', msgError.message)
     }
     
-    // 3. Get recent enrollments (students joining classes)
     try {
       const { data: recentEnrollments, error: enrollError } = await supabase
         .from('enrollments')
@@ -800,7 +785,6 @@ const loadNotifications = async () => {
             viewed: viewedIds.includes(notifId)
           }
         })
-        
         allNotifications.push(...enrollmentNotifications)
         console.log('✅ Loaded', enrollmentNotifications.length, 'enrollment notifications')
       }
@@ -808,12 +792,8 @@ const loadNotifications = async () => {
       console.log('ℹ️ Error loading enrollments:', enrollError.message)
     }
     
-    // Sort all notifications by timestamp (newest first)
     allNotifications.sort((a, b) => b.timestamp - a.timestamp)
-    
-    // Update notifications state
     notifications.value = allNotifications
-    
     console.log('✅ Total notifications loaded:', allNotifications.length)
     console.log('📊 Unread notifications:', allNotifications.filter(n => !n.viewed).length)
     
@@ -822,7 +802,6 @@ const loadNotifications = async () => {
   }
 }
 
-// Load dashboard stats
 const loadDashboardStats = async () => {
   if (!teacherId.value) {
     console.warn('⚠️ No teacher ID, cannot load stats')
@@ -947,7 +926,6 @@ const loadDashboardStats = async () => {
   }
 }
 
-// Notification click handler - Enhanced to handle all notification types
 const handleNotificationClick = async (notification) => {
   console.log('📱 Clicked notification:', notification)
   
@@ -983,7 +961,6 @@ const handleNotificationClick = async (notification) => {
   showNotifDropdown.value = false
 }
 
-// Lifecycle
 onMounted(async () => {
   console.log('🚀 Dashboard mounting...')
   

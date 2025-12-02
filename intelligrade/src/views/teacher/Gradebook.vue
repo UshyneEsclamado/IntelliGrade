@@ -1,6 +1,6 @@
 <template>
   <div class="dashboard-container" :class="{ 'dark': isDarkMode }">
-    <!-- Top Navigation Bar (Clean) -->
+    <!-- Top Navigation Bar -->
     <nav class="top-navbar">
       <div class="navbar-content">
         <!-- Left: Logo and Brand -->
@@ -169,80 +169,48 @@
           <path d="M7 14l5-5 5 5z"/>
         </svg>
       </button>
-      <!-- Page Header -->
-      <div class="page-header">
+
+      <!-- Unified Gradebook Header -->
+      <div class="gradebook-header">
         <div class="header-content">
           <div class="header-left">
             <div class="header-icon">
-              <svg width="25" height="25" viewBox="0 0 24 24" fill="currentColor">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
               </svg>
             </div>
             <div>
-              <h1 class="header-title">Gradebook</h1>
-              <p class="header-subtitle">Review and grade quiz submissions</p>
+              <h1 class="header-title">Class Record</h1>
+              <p class="header-subtitle">All-in-One Gradebook • Excel-style Layout</p>
             </div>
+          </div>
+          <div class="header-actions">
+            <!-- Section Selector -->
+            <div class="section-selector">
+              <label for="section-select">Section:</label>
+              <select id="section-select" v-model="selectedSectionId" @change="onSectionChange" class="section-select">
+                <option value="">Choose a Section</option>
+                <optgroup v-for="subject in subjects" :key="subject.id" :label="subject.name">
+                  <option v-for="section in subject.sections" :key="section.id" :value="section.id">
+                    {{ section.name }} ({{ subject.name }})
+                  </option>
+                </optgroup>
+              </select>
+            </div>
+            <button @click="refreshData" class="refresh-btn grade-btn" :disabled="loading">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" :class="{ 'spinning': loading }">
+                <path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z" />
+              </svg>
+              Refresh
+            </button>
           </div>
         </div>
       </div>
 
-      <!-- Content Area -->
-
-      <!-- Subject Filter Buttons -->
-      <div v-if="!selectedSubject && !selectedSection" class="subject-filters">
-        <div class="filter-header" style="border-bottom: none;">
-          <h3 class="filter-title">Filter by Subject</h3>
-          <span class="filter-subtitle">Choose a subject type to filter courses</span>
-        </div>
-        <div class="filter-buttons">
-          <button 
-            @click="selectedSubjectFilter = ''" 
-            class="filter-btn modern" 
-            :class="{ 'active': selectedSubjectFilter === '' }"
-          >
-            <div class="filter-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M9,5V9H21V5M9,19H21V15H9M9,14H21V10H9M4,9H8L6,7L4,9M4,19H8L6,17L4,19M4,14H8L6,12L4,14Z" />
-              </svg>
-            </div>
-            <span class="filter-text">All Subjects</span>
-          </button>
-          <button 
-            v-for="filterType in availableSubjectTypes" 
-            :key="filterType.name"
-            @click="selectedSubjectFilter = filterType.name" 
-            class="filter-btn modern" 
-            :class="{ 'active': selectedSubjectFilter === filterType.name }"
-            :style="{ '--filter-color': filterType.color }"
-          >
-            <div class="filter-icon" v-html="filterType.icon"></div>
-            <span class="filter-text">{{ filterType.name }}</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Breadcrumb Navigation -->
-      <div class="breadcrumb-nav" v-if="selectedSubject || selectedSection">
-        <button @click="resetToSubjects" class="breadcrumb-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,12V19A3,3 0 0,1 16,22H8A3,3 0 0,1 5,19V12A3,3 0 0,1 8,9H16A3,3 0 0,1 19,12Z" />
-          </svg>
-          Subjects
-        </button>
-        <span v-if="selectedSubject" class="breadcrumb-separator">/</span>
-        <button v-if="selectedSubject" @click="resetToSections" class="breadcrumb-btn">
-          {{ selectedSubject.name }}
-        </button>
-        <span v-if="selectedSection" class="breadcrumb-separator">/</span>
-        <span v-if="selectedSection" class="breadcrumb-current">
-          {{ selectedSection.name }}
-        </span>
-      </div>
-
       <!-- Loading State -->
-      <div v-if="loading" class="loading-container">
+      <div v-if="loading && !selectedSectionId" class="loading-container">
         <div class="spinner-large"></div>
-        <p>Loading...</p>
+        <p>Loading sections...</p>
       </div>
 
       <!-- Error State -->
@@ -255,335 +223,210 @@
         <button @click="refreshData" class="grade-btn">Retry</button>
       </div>
 
-    <!-- Content Wrapper -->
-    <div v-else class="content-wrapper">
-      <!-- LEVEL 1: Subject Selection -->
-      <div v-if="!selectedSubject" class="content-card modern">
-        <div class="card-header enhanced">
+      <!-- No Section Selected State -->
+      <div v-else-if="!selectedSectionId" class="no-section-state">
+        <div class="empty-icon">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M7,7H9V9H7V7M7,11H9V13H7V11M7,15H9V17H7V15M11,7H17V9H11V7M11,11H17V13H11V11M11,15H17V17H11V15Z" />
+          </svg>
         </div>
-        
-        <div class="subjects-grid modern">
-          <div 
-            v-for="subject in filteredSubjects" 
-            :key="subject.id"
-            class="subject-card modern"
-            @click="selectSubject(subject)"
-          >
-            <div class="subject-icon modern" :style="{ background: getSubjectIconColor(subject.name) }">
-              <div v-html="getSubjectIconSvg(subject.name)"></div>
-            </div>
-            <div class="subject-info">
-              <h4>{{ subject.name }}</h4>
-              <p class="subject-grade">Grade {{ subject.grade_level }}</p>
-              <div class="subject-stats">
-                <span class="stat-item">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12,5.5A3.5,3.5 0 0,1 15.5,9A3.5,3.5 0 0,1 12,12.5A3.5,3.5 0 0,1 8.5,9A3.5,3.5 0 0,1 12,5.5M5,8C5.56,8 6.08,8.15 6.53,8.42C6.38,9.85 6.8,11.27 7.66,12.38C7.16,13.34 6.16,14 5,14A3,3 0 0,1 2,11A3,3 0 0,1 5,8M19,8A3,3 0 0,1 22,11A3,3 0 0,1 19,14C17.84,14 16.84,13.34 16.34,12.38C17.2,11.27 17.62,9.85 17.47,8.42C17.92,8.15 18.44,8 19,8M5.5,18.25C5.5,16.18 8.41,14.5 12,14.5C15.59,14.5 18.5,16.18 18.5,18.25V20H5.5V18.25M0,20V18.5C0,17.11 1.89,15.94 4.45,15.6C3.86,16.28 3.5,17.22 3.5,18.25V20H0M24,20H20.5V18.25C20.5,17.22 20.14,16.28 19.55,15.6C22.11,15.94 24,17.11 24,18.5V20Z" />
-                  </svg>
-                  {{ subject.section_count }} Sections
-                </span>
-                <span class="stat-item pending" v-if="subject.pending_count > 0">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M16.2,16.2L11,13V7H12.5V12.2L17,14.9L16.2,16.2Z" />
-                  </svg>
-                  {{ subject.pending_count }} Pending
-                </span>
-              </div>
-            </div>
-            <div class="card-arrow modern">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" />
-              </svg>
-            </div>
-          </div>
-
-          <div v-if="filteredSubjects.length === 0" class="empty-state modern">
-            <div class="empty-icon">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3.9 19 5 18.1 5 17V9H19C20.1 9 21 8.1 21 7V5C21 3.9 20.1 3 19 3Z" />
-              </svg>
-            </div>
-            <h3>No subjects found</h3>
-            <p>You don't have any subjects assigned yet.</p>
-          </div>
-        </div>
+        <h3>Select a Section</h3>
+        <p>Choose a section from the dropdown above to view the class record</p>
       </div>
 
-      <!-- LEVEL 2: Section Selection -->
-      <div v-else-if="selectedSubject && !selectedSection" class="content-card modern">
-        <div class="card-header enhanced">
-          <div class="card-title-section">
-            <h3>{{ selectedSubject.name }} Sections</h3>
-            <p class="card-desc">Choose a section to view quiz submissions and manage grades</p>
-          </div>
-          <div class="card-stats">
-            <div class="stat-item">
-              <span class="stat-number">{{ filteredSections.length }}</span>
-              <span class="stat-label">Sections</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-number">{{ filteredSections.reduce((sum, s) => sum + (s.quiz_count || 0), 0) }}</span>
-              <span class="stat-label">Quizzes</span>
-            </div>
-          </div>
-        </div>
-        
-        <div class="sections-grid enhanced">
-          <div 
-            v-for="section in filteredSections" 
-            :key="section.id"
-            class="section-card modern"
-            @click="selectSection(section)"
-          >
-            <div class="section-icon modern">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12,5.5A3.5,3.5 0 0,1 15.5,9A3.5,3.5 0 0,1 12,12.5A3.5,3.5 0 0,1 8.5,9A3.5,3.5 0 0,1 12,5.5M5,8C5.56,8 6.08,8.15 6.53,8.42C6.38,9.85 6.8,11.27 7.66,12.38C7.16,13.34 6.16,14 5,14A3,3 0 0,1 2,11A3,3 0 0,1 5,8M19,8A3,3 0 0,1 22,11A3,3 0 0,1 19,14C17.84,14 16.84,13.34 16.34,12.38C17.2,11.27 17.62,9.85 17.47,8.42C17.92,8.15 18.44,8 19,8M5.5,18.25C5.5,16.18 8.41,14.5 12,14.5C15.59,14.5 18.5,16.18 18.5,18.25V20H5.5V18.25M0,20V18.5C0,17.11 1.89,15.94 4.45,15.6C3.86,16.28 3.5,17.22 3.5,18.25V20H0M24,20H20.5V18.25C20.5,17.22 20.14,16.28 19.55,15.6C22.11,15.94 24,17.11 24,18.5V20Z" />
-              </svg>
-            </div>
-            <div class="section-info enhanced">
-              <h4>{{ section.name }}</h4>
-              <p class="section-code">{{ section.section_code }}</p>
-              <div class="section-stats enhanced">
-                <span class="stat-item modern">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-                  </svg>
-                  {{ section.quiz_count }} Quizzes
-                </span>
-                <span class="stat-item modern pending" v-if="section.pending_count > 0">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M16.2,16.2L11,13V7H12.5V12.2L17,14.9L16.2,16.2Z" />
-                  </svg>
-                  {{ section.pending_count }} Pending
-                </span>
-              </div>
-            </div>
-            <div class="card-arrow modern">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" />
-              </svg>
-            </div>
-          </div>
-
-          <div v-if="filteredSections.length === 0" class="empty-state modern">
-            <div class="empty-icon">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12,5.5A3.5,3.5 0 0,1 15.5,9A3.5,3.5 0 0,1 12,12.5A3.5,3.5 0 0,1 8.5,9A3.5,3.5 0 0,1 12,5.5M5,8C5.56,8 6.08,8.15 6.53,8.42C6.38,9.85 6.8,11.27 7.66,12.38C7.16,13.34 6.16,14 5,14A3,3 0 0,1 2,11A3,3 0 0,1 5,8M19,8A3,3 0 0,1 22,11A3,3 0 0,1 19,14C17.84,14 16.84,13.34 16.34,12.38C17.2,11.27 17.62,9.85 17.47,8.42C17.92,8.15 18.44,8 19,8M5.5,18.25C5.5,16.18 8.41,14.5 12,14.5C15.59,14.5 18.5,16.18 18.5,18.25V20H5.5V18.25M0,20V18.5C0,17.11 1.89,15.94 4.45,15.6C3.86,16.28 3.5,17.22 3.5,18.25V20H0M24,20H20.5V18.25C20.5,17.22 20.14,16.28 19.55,15.6C22.11,15.94 24,17.11 24,18.5V20Z" />
-              </svg>
-            </div>
-            <div class="empty-content">
-              <h3>No sections found</h3>
-              <p>No sections available for this subject.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- LEVEL 3: Submissions Table -->
-      <div v-else-if="selectedSection" class="submissions-view">
-        <!-- Stats Cards -->
-        <div class="stats-grid">
-          <div class="stat-card modern pending">
-            <div class="stat-icon-wrapper">
-              <div class="stat-icon pending">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
+      <!-- Excel-Style Gradebook -->
+      <div v-else class="gradebook-main">
+        <!-- Mini Analytics Panel -->
+        <div class="analytics-panel">
+          <div class="analytics-header">
+            <h3>{{ currentSectionInfo.name }} Analytics</h3>
+            <div class="header-actions">
+              <span class="student-count">{{ students.length }} Students</span>
+              <button @click="exportToExcel" class="export-btn grade-btn" :disabled="!students.length">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
                 </svg>
-              </div>
-              <div class="stat-pulse pending"></div>
-            </div>
-            <div class="stat-content">
-              <div class="stat-number">{{ sectionStats.pendingReview }}</div>
-              <div class="stat-label">Pending Review</div>
-              <div class="stat-description">Awaiting your feedback</div>
+                Export to Excel
+              </button>
             </div>
           </div>
-          
-          <div class="stat-card modern graded">
-            <div class="stat-icon-wrapper">
-              <div class="stat-icon graded">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,16.5L18,9.5L16.59,8.09L11,13.67L7.91,10.59L6.5,12L11,16.5Z" />
-                </svg>
-              </div>
-              <div class="stat-pulse graded"></div>
-            </div>
-            <div class="stat-content">
-              <div class="stat-number">{{ sectionStats.graded }}</div>
-              <div class="stat-label">Graded</div>
-              <div class="stat-description">Completed reviews</div>
-            </div>
-          </div>
-          
-          <div class="stat-card modern total">
-            <div class="stat-icon-wrapper">
-              <div class="stat-icon total">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19,3H14.82C14.4,1.84 13.3,1 12,1C10.7,1 9.6,1.84 9.18,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M12,3A1,1 0 0,1 13,4A1,1 0 0,1 12,5A1,1 0 0,1 11,4A1,1 0 0,1 12,3M7,9H17V7H7V9M7,11V13H17V11H7M7,15V17H17V15H7Z" />
-                </svg>
-              </div>
-              <div class="stat-pulse total"></div>
-            </div>
-            <div class="stat-content">
-              <div class="stat-number">{{ sectionStats.total }}</div>
-              <div class="stat-label">Total Submissions</div>
-              <div class="stat-description">All quiz attempts</div>
-            </div>
-          </div>
-          
-          <div class="stat-card modern average">
-            <div class="stat-icon-wrapper">
-              <div class="stat-icon average">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+          <div class="analytics-stats">
+            <div class="stat-mini">
+              <div class="stat-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M16,6L18.29,8.29L13.41,13.17L9.41,9.17L2,16.59L3.41,18L9.41,12L13.41,16L19.71,9.71L22,12V6H16Z" />
                 </svg>
               </div>
-              <div class="stat-pulse average"></div>
+              <div class="stat-content">
+                <div class="stat-value">{{ analyticsData.averageScore }}%</div>
+                <div class="stat-label">Avg Score</div>
+              </div>
             </div>
-            <div class="stat-content">
-              <div class="stat-number">{{ sectionStats.averageScore }}%</div>
-              <div class="stat-label">Average Score</div>
-              <div class="stat-description">Class performance</div>
+            <div class="stat-mini">
+              <div class="stat-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M7,10L12,15L17,10H7Z" />
+                </svg>
+              </div>
+              <div class="stat-content">
+                <div class="stat-value">{{ analyticsData.highestScore }}%</div>
+                <div class="stat-label">Highest</div>
+              </div>
+            </div>
+            <div class="stat-mini">
+              <div class="stat-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M7,14L12,9L17,14H7Z" />
+                </svg>
+              </div>
+              <div class="stat-content">
+                <div class="stat-value">{{ analyticsData.lowestScore }}%</div>
+                <div class="stat-label">Lowest</div>
+              </div>
+            </div>
+            <div class="stat-mini">
+              <div class="stat-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M9,10V12H7V10H9M13,10V12H11V10H13M17,10V12H15V10H17M19,3A2,2 0 0,1 21,5V19A2,2 0 0,1 19,21H5C3.89,21 3,20.1 3,19V5A2,2 0 0,1 5,3H6V1H8V3H16V1H18V3H19M19,19V8H5V19H19M9,14V16H7V14H9M13,14V16H11V14H13M17,14V16H15V14H17Z" />
+                </svg>
+              </div>
+              <div class="stat-content">
+                <div class="stat-value">{{ analyticsData.submissionRate }}%</div>
+                <div class="stat-label">Submitted</div>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Filters -->
-        <div class="submissions-filters">
-          <select v-model="selectedStatus" class="filter-select">
-            <option value="">All Status</option>
-            <option value="submitted">Pending Review</option>
-            <option value="graded">Graded</option>
-          </select>
-        </div>
-
-        <!-- Submissions Table -->
-        <div class="submissions-section">
-          <div v-if="filteredSubmissions.length === 0" class="empty-state">
-            <i class="fas fa-clipboard-list"></i>
-            <h3>No submissions found</h3>
-            <p>There are no quiz submissions for this section yet.</p>
-          </div>
-
-          <div v-else class="submissions-table-container">
-            <table class="submissions-table">
-              <thead>
+        <!-- Excel-Style Gradebook Table -->
+        <div class="gradebook-container">
+          <div class="gradebook-scroll">
+            <table class="gradebook-table">
+              <thead class="gradebook-header">
                 <tr>
-                  <th @click="sortBy('student_name')" class="sortable">
-                    Student Name
-                    <i class="fas fa-sort" :class="getSortIcon('student_name')"></i>
+                  <th class="student-column sticky-col">
+                    <div class="header-content">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12,5.5A3.5,3.5 0 0,1 15.5,9A3.5,3.5 0 0,1 12,12.5A3.5,3.5 0 0,1 8.5,9A3.5,3.5 0 0,1 12,5.5M5,8C5.56,8 6.08,8.15 6.53,8.42C6.38,9.85 6.8,11.27 7.66,12.38C7.16,13.34 6.16,14 5,14A3,3 0 0,1 2,11A3,3 0 0,1 5,8M19,8A3,3 0 0,1 22,11A3,3 0 0,1 19,14C17.84,14 16.84,13.34 16.34,12.38C17.2,11.27 17.62,9.85 17.47,8.42C17.92,8.15 18.44,8 19,8Z" />
+                      </svg>
+                      Student
+                    </div>
                   </th>
-                  <th @click="sortBy('quiz_title')" class="sortable">
-                    Quiz
-                    <i class="fas fa-sort" :class="getSortIcon('quiz_title')"></i>
+                  <th v-for="assessment in assessments" :key="assessment.id" class="assessment-column">
+                    <div class="header-content">
+                      <div class="assessment-title">{{ assessment.title }}</div>
+                      <div class="assessment-info">
+                        <span class="assessment-type">{{ getAssessmentTypeLabel(assessment.type) }}</span>
+                        <span class="assessment-points">{{ assessment.max_score }}pts</span>
+                      </div>
+                    </div>
                   </th>
-                  <th @click="sortBy('submitted_at')" class="sortable">
-                    Submitted
-                    <i class="fas fa-sort" :class="getSortIcon('submitted_at')"></i>
+                  <th class="total-column">
+                    <div class="header-content">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M7,7H17V9H7V7M7,11H17V13H7V11M7,15H17V17H7V15Z" />
+                      </svg>
+                      Total
+                    </div>
                   </th>
-                  <th @click="sortBy('percentage')" class="sortable">
-                    Score
-                    <i class="fas fa-sort" :class="getSortIcon('percentage')"></i>
-                  </th>
-                  <th>Status</th>
-                  <th>Actions</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr 
-                  v-for="submission in paginatedSubmissions" 
-                  :key="submission.id"
-                >
-                  <td>
-                    <div class="student-info">
-                      <div class="student-avatar">
-                        {{ getInitials(submission.student_name) }}
+              <tbody class="gradebook-body">
+                <template v-for="student in students" :key="student.id">
+                  <!-- Main Student Row -->
+                  <tr class="student-row" :class="{ 'expanded': expandedStudent === student.id }">
+                    <td class="student-cell sticky-col" @click="toggleStudentHistory(student.id)">
+                      <div class="student-info">
+                        <div class="student-avatar">{{ getInitials(student.full_name) }}</div>
+                        <div class="student-details">
+                          <div class="student-name">{{ student.full_name }}</div>
+                          <div class="student-id">{{ student.student_id || 'N/A' }}</div>
+                        </div>
+                        <button class="expand-btn" :class="{ 'rotated': expandedStudent === student.id }">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" />
+                          </svg>
+                        </button>
                       </div>
-                      <div>
-                        <div class="student-name">{{ submission.student_name }}</div>
-                        <div class="student-email">{{ submission.student_email }}</div>
+                    </td>
+                    <td v-for="assessment in assessments" :key="assessment.id" class="score-cell">
+                      <div class="score-input-wrapper">
+                        <input 
+                          v-if="assessment.type === 'manual'"
+                          type="number"
+                          :value="getStudentScore(student.id, assessment.id)"
+                          @input="updateManualScore(student.id, assessment.id, $event.target.value)"
+                          @blur="saveManualScore(student.id, assessment.id)"
+                          class="score-input manual"
+                          :max="assessment.max_score"
+                          min="0"
+                          step="0.5"
+                          placeholder="--"
+                        />
+                        <div v-else class="score-display auto" :class="getScoreClass(getStudentPercentage(student.id, assessment.id))">
+                          <span class="score-value">{{ getStudentScore(student.id, assessment.id) || '--' }}</span>
+                          <span v-if="getStudentScore(student.id, assessment.id)" class="score-max">/ {{ assessment.max_score }}</span>
+                        </div>
+                        <div v-if="hasSubmissionPending(student.id, assessment.id)" class="pending-indicator" title="Pending Review">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M16.2,16.2L11,13V7H12.5V12.2L17,14.9L16.2,16.2Z" />
+                          </svg>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="quiz-info">
-                      <div class="quiz-title">{{ submission.quiz_title }}</div>
-                      <div class="quiz-code">{{ submission.quiz_code }}</div>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="date-info">
-                      <div class="date">{{ formatDate(submission.submitted_at) }}</div>
-                      <div class="time">{{ formatTime(submission.submitted_at) }}</div>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="score-display">
-                      <div class="score-percentage" :class="getScoreClass(submission.percentage)">
-                        {{ submission.percentage }}%
+                    </td>
+                    <td class="total-cell">
+                      <div class="total-score" :class="getScoreClass(getStudentTotalPercentage(student.id))">
+                        <span class="total-value">{{ getStudentTotal(student.id) }}</span>
+                        <span class="total-max">/ {{ getTotalMaxScore() }}</span>
+                        <div class="total-percentage">{{ getStudentTotalPercentage(student.id) }}%</div>
                       </div>
-                      <div class="score-fraction">
-                        {{ submission.total_score }}/{{ submission.max_score }}
+                    </td>
+                  </tr>
+                  
+                  <!-- Expandable Student History Row -->
+                  <tr v-if="expandedStudent === student.id" class="student-history-row">
+                    <td colspan="100%" class="history-cell">
+                      <div class="student-history-panel">
+                        <div class="history-header">
+                          <h4>{{ student.full_name }} - Detailed History</h4>
+                        </div>
+                        <div class="history-content">
+                          <div v-for="assessment in assessments" :key="assessment.id" class="history-item">
+                            <div class="history-assessment">
+                              <div class="assessment-name">{{ assessment.title }}</div>
+                              <div class="assessment-details">
+                                <span class="score-info">
+                                  Score: {{ getStudentScore(student.id, assessment.id) || 'Not taken' }}
+                                  <span v-if="getStudentScore(student.id, assessment.id)">/ {{ assessment.max_score }}</span>
+                                </span>
+                                <span v-if="getStudentScore(student.id, assessment.id)" class="percentage-info">
+                                  ({{ getStudentPercentage(student.id, assessment.id) }}%)
+                                </span>
+                              </div>
+                              <div v-if="hasSubmissionPending(student.id, assessment.id)" class="status-pending">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M16.2,16.2L11,13V7H12.5V12.2L17,14.9L16.2,16.2Z" />
+                                </svg>
+                                Pending Review
+                              </div>
+                              <button v-if="hasSubmissionToGrade(student.id, assessment.id)" 
+                                @click="reviewStudentSubmission(student.id, assessment.id)"
+                                class="review-btn">
+                                Grade Submission
+                              </button>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td>
-                    <span class="status-badge" :class="submission.status">
-                      {{ getStatusText(submission.status) }}
-                    </span>
-                  </td>
-                  <td>
-                    <div class="action-buttons">
-                      <button 
-                        @click="reviewSubmission(submission)" 
-                        class="btn-action review modern"
-                        title="Review & Grade"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M14.06,9.02L14.98,9.94L5.92,19H5V18.08L14.06,9.02M17.66,3C17.41,3 17.15,3.1 16.96,3.29L15.13,5.12L18.88,8.87L20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18.17,3.09 17.92,3 17.66,3M14.06,6.19L3,17.25V21H6.75L17.81,9.94L14.06,6.19Z" />
-                        </svg>
-                        <span>Grade</span>
-                      </button>
-                      <button 
-                        @click="viewSubmission(submission)" 
-                        class="btn-action view modern"
-                        title="View Details"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
-                        </svg>
-                        <span>View</span>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                    </td>
+                  </tr>
+                </template>
               </tbody>
             </table>
           </div>
-
-          <!-- Pagination -->
-          <div v-if="totalPages > 1" class="pagination">
-            <button 
-              @click="currentPage--" 
-              :disabled="currentPage === 1"
-              class="pagination-btn"
-            >
-              <i class="fas fa-chevron-left"></i>
-            </button>
-            <span class="pagination-info">
-              Page {{ currentPage }} of {{ totalPages }}
-            </span>
-            <button 
-              @click="currentPage++" 
-              :disabled="currentPage === totalPages"
-              class="pagination-btn"
-            >
-              <i class="fas fa-chevron-right"></i>
-            </button>
-          </div>
         </div>
       </div>
-    </div>
+
 
     <!-- Review/Grade Modal -->
     <div v-if="showReviewModal" class="modal-overlay" @click="closeReviewModal">
@@ -661,12 +504,7 @@
                     <span v-if="question.selected_option_id">{{ getStudentOptionLabel(question) }}</span>
                     <span v-else-if="question.answer_text">{{ question.answer_text }}</span>
                     <span v-else style="color: #ef4444;">
-                      No answer provided 
-                      <!-- Debug info: {{ JSON.stringify({
-                        selected_option_id: question.selected_option_id,
-                        answer_text: question.answer_text,
-                        student_answer_id: question.student_answer_id
-                      }) }} -->
+                      No answer provided
                     </span>
                   </div>
                   <div class="options-grid">
@@ -785,8 +623,8 @@
             {{ savingGrade ? 'Saving...' : 'Save Grade' }}
           </button>
         </div>
-        </div>
       </div>
+    </div>
     </main>
 
     <!-- Logout Confirmation Modal -->
@@ -826,6 +664,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase.js'
 import { useDarkMode } from '@/composables/useDarkMode.js'
+import * as XLSX from 'xlsx'
 
 const { isDarkMode } = useDarkMode()
 const router = useRouter()
@@ -837,17 +676,15 @@ const error = ref(null)
 const searchQuery = ref('')
 const teacherId = ref(null)
 
+// Data for unified gradebook
 const subjects = ref([])
-const selectedSubject = ref(null)
-const sections = ref([])
-const selectedSection = ref(null)
-const submissions = ref([])
-
-const selectedStatus = ref('')
-const currentPage = ref(1)
-const itemsPerPage = ref(10)
-const sortField = ref('submitted_at')
-const sortDirection = ref('desc')
+const selectedSectionId = ref('')
+const currentSectionInfo = ref({})
+const students = ref([])
+const assessments = ref([])
+const gradebookData = ref({}) // student_id -> assessment_id -> score
+const submissions = ref([]) // For pending review tracking
+const expandedStudent = ref(null)
 
 const showReviewModal = ref(false)
 const selectedSubmission = ref(null)
@@ -863,6 +700,12 @@ const selectedSubjectFilter = ref('')
 const lastRefresh = ref(new Date())
 const newSubmissionsCount = ref(0)
 
+// Missing variables for pagination and filtering
+const selectedStatus = ref('all')
+const currentPage = ref(1)
+const sortField = ref('')
+const sortDirection = ref('asc')
+
 // Navbar dropdown states
 const showNotifDropdown = ref(false)
 const showProfileDropdown = ref(false)
@@ -870,14 +713,43 @@ const notifications = ref([])
 const fullName = ref('Teacher')
 const showScrollTop = ref(false)
 
-const sectionStats = computed(() => {
-  const pending = submissions.value.filter(s => s.status === 'submitted').length
-  const graded = submissions.value.filter(s => s.status === 'graded').length
-  const total = submissions.value.length
-  const averageScore = total > 0 
-    ? Math.round(submissions.value.reduce((sum, s) => sum + (s.percentage || 0), 0) / total)
-    : 0
-  return { pendingReview: pending, graded, total, averageScore }
+// Analytics data for the selected section
+const analyticsData = computed(() => {
+  if (!students.value.length || !assessments.value.length) {
+    return {
+      averageScore: 0,
+      highestScore: 0,
+      lowestScore: 0,
+      submissionRate: 0
+    }
+  }
+
+  const scores = []
+  let totalSubmissions = 0
+  let possibleSubmissions = students.value.length * assessments.value.length
+
+  students.value.forEach(student => {
+    assessments.value.forEach(assessment => {
+      const score = getStudentScore(student.id, assessment.id)
+      if (score !== null && score !== undefined && score !== '') {
+        const percentage = (score / assessment.max_score) * 100
+        scores.push(percentage)
+        totalSubmissions++
+      }
+    })
+  })
+
+  const averageScore = scores.length > 0 ? Math.round(scores.reduce((sum, s) => sum + s, 0) / scores.length) : 0
+  const highestScore = scores.length > 0 ? Math.round(Math.max(...scores)) : 0
+  const lowestScore = scores.length > 0 ? Math.round(Math.min(...scores)) : 0
+  const submissionRate = possibleSubmissions > 0 ? Math.round((totalSubmissions / possibleSubmissions) * 100) : 0
+
+  return {
+    averageScore,
+    highestScore, 
+    lowestScore,
+    submissionRate
+  }
 })
 
 const correctAnswerCount = computed(() => {
@@ -888,94 +760,7 @@ const maxReviewScore = computed(() => {
   return reviewQuestions.value.reduce((sum, q) => sum + (q.points || 1), 0)
 })
 
-const availableSubjectTypes = computed(() => {
-  const types = new Set()
-  subjects.value.forEach(subject => {
-    types.add(subject.name)
-  })
-  
-  return Array.from(types).map(type => ({
-    name: type,
-    color: getSubjectIconColor(type),
-    icon: getSubjectIconSvg(type)
-  }))
-})
 
-const filteredSubjects = computed(() => {
-  let filtered = subjects.value
-  
-  if (selectedSubjectFilter.value) {
-    filtered = filtered.filter(subject => subject.name === selectedSubjectFilter.value)
-  }
-  
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(s => 
-      s.name.toLowerCase().includes(query) || 
-      s.grade_level.toString().includes(query)
-    )
-  }
-  
-  return filtered
-})
-
-const filteredSections = computed(() => {
-  if (!searchQuery.value) return sections.value
-  const query = searchQuery.value.toLowerCase()
-  return sections.value.filter(s => 
-    s.name.toLowerCase().includes(query) || 
-    s.section_code.toLowerCase().includes(query)
-  )
-})
-
-const filteredSubmissions = computed(() => {
-  let filtered = submissions.value
-
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(submission => 
-      submission.student_name.toLowerCase().includes(query) ||
-      submission.quiz_title.toLowerCase().includes(query) ||
-      submission.student_email.toLowerCase().includes(query)
-    )
-  }
-
-  if (selectedStatus.value) {
-    filtered = filtered.filter(submission => 
-      submission.status === selectedStatus.value
-    )
-  }
-
-  filtered.sort((a, b) => {
-    let aValue = a[sortField.value]
-    let bValue = b[sortField.value]
-
-    if (sortField.value === 'submitted_at') {
-      aValue = new Date(aValue)
-      bValue = new Date(bValue)
-    }
-
-    if (aValue < bValue) {
-      return sortDirection.value === 'asc' ? -1 : 1
-    }
-    if (aValue > bValue) {
-      return sortDirection.value === 'asc' ? 1 : -1
-    }
-    return 0
-  })
-
-  return filtered
-})
-
-const paginatedSubmissions = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage.value
-  const end = start + itemsPerPage.value
-  return filteredSubmissions.value.slice(start, end)
-})
-
-const totalPages = computed(() => {
-  return Math.ceil(filteredSubmissions.value.length / itemsPerPage.value)
-})
 
 const getTeacherInfo = async () => {
   try {
@@ -1019,365 +804,257 @@ const getTeacherInfo = async () => {
   }
 }
 
+// Fetch all subjects with their sections for the dropdown
 const fetchSubjects = async () => {
   try {
     loading.value = true
     error.value = null
 
-    console.log('🔄 Fetching subjects for teacher:', teacherId.value)
+    console.log('🔄 Fetching subjects and sections for teacher:', teacherId.value)
 
-    // Get subjects first - FAST query, no complex joins
+    // Get subjects with sections
     const { data: subjectsData, error: subjectsError } = await supabase
       .from('subjects')
-      .select('id, name, grade_level, description')
+      .select(`
+        id, 
+        name, 
+        grade_level,
+        sections!inner(
+          id,
+          name,
+          section_code,
+          is_active
+        )
+      `)
       .eq('teacher_id', teacherId.value)
       .eq('is_active', true)
+      .eq('sections.is_active', true)
 
     if (subjectsError) throw subjectsError
 
-    console.log('📚 Found subjects:', subjectsData?.length || 0)
+    console.log('📚 Found subjects with sections:', subjectsData?.length || 0)
 
-    if (!subjectsData || subjectsData.length === 0) {
-      subjects.value = []
-      loading.value = false
-      return
-    }
-
-    // Show subjects immediately with default counts for fast display
-    const quickSubjects = subjectsData.map(subject => ({
+    // Process the data for dropdown
+    subjects.value = subjectsData?.map(subject => ({
       id: subject.id,
       name: subject.name,
       grade_level: subject.grade_level,
-      description: subject.description || '',
-      section_count: 0, // Will be updated
-      pending_count: 0  // Will be updated
-    }))
+      sections: subject.sections || []
+    })) || []
 
-    subjects.value = quickSubjects
-    loading.value = false // Hide loading immediately
-
-    // Now load counts in background without blocking UI
-    console.log('📊 Loading counts in background...')
-    const subjectIds = subjectsData.map(s => s.id)
-
-    try {
-      // Batch query: Get all sections for all subjects at once
-      const { data: allSections } = await supabase
-        .from('sections')
-        .select('id, subject_id')
-        .in('subject_id', subjectIds)
-        .eq('is_active', true)
-
-      // Create lookup for quick count
-      const sectionsBySubject = {}
-      allSections?.forEach(section => {
-        if (!sectionsBySubject[section.subject_id]) {
-          sectionsBySubject[section.subject_id] = 0
-        }
-        sectionsBySubject[section.subject_id]++
-      })
-
-      // Update subjects with section counts
-      subjects.value = subjects.value.map(subject => ({
-        ...subject,
-        section_count: sectionsBySubject[subject.id] || 0
-      }))
-
-      // Only get pending counts if there are sections
-      if (allSections && allSections.length > 0) {
-        const sectionIds = allSections.map(s => s.id)
-        
-        const { data: allQuizzes } = await supabase
-          .from('quizzes')
-          .select('id, section_id')
-          .in('section_id', sectionIds)
-
-        if (allQuizzes && allQuizzes.length > 0) {
-          const quizIds = allQuizzes.map(q => q.id)
-          
-          console.log('🎯 Looking for pending submissions in quizzes:', quizIds)
-          
-          const { data: pendingSubmissions, error: pendingError } = await supabase
-            .from('quiz_attempts')
-            .select('quiz_id, status')
-            .in('quiz_id', quizIds)
-            .eq('status', 'submitted')
-
-          console.log('📊 Pending submissions query result:', {
-            count: pendingSubmissions?.length || 0,
-            data: pendingSubmissions,
-            error: pendingError
-          })
-
-          // Create lookup maps
-          const quizzesBySection = {}
-          allQuizzes.forEach(quiz => {
-            if (!quizzesBySection[quiz.section_id]) {
-              quizzesBySection[quiz.section_id] = []
-            }
-            quizzesBySection[quiz.section_id].push(quiz)
-          })
-
-          const pendingByQuiz = {}
-          pendingSubmissions?.forEach(submission => {
-            pendingByQuiz[submission.quiz_id] = (pendingByQuiz[submission.quiz_id] || 0) + 1
-          })
-
-          // Create pending counts by subject
-          const pendingBySubject = {}
-          allSections.forEach(section => {
-            const sectionQuizzes = quizzesBySection[section.id] || []
-            let subjectPending = 0
-            sectionQuizzes.forEach(quiz => {
-              subjectPending += pendingByQuiz[quiz.id] || 0
-            })
-            
-            if (!pendingBySubject[section.subject_id]) {
-              pendingBySubject[section.subject_id] = 0
-            }
-            pendingBySubject[section.subject_id] += subjectPending
-          })
-
-          // Update subjects with pending counts
-          subjects.value = subjects.value.map(subject => ({
-            ...subject,
-            pending_count: pendingBySubject[subject.id] || 0
-          }))
-
-          console.log('✅ Final subjects with counts:', subjects.value.map(s => ({
-            name: s.name,
-            sections: s.section_count,
-            pending: s.pending_count
-          })))
-        }
-      }
-
-      console.log('✅ Background counts loaded')
-    } catch (bgError) {
-      console.error('⚠️ Error loading background counts:', bgError)
-      // Don't show error for background loading - subjects are already displayed
-    }
+    console.log('✅ Processed subjects:', subjects.value)
   } catch (err) {
     console.error('❌ Error fetching subjects:', err)
     error.value = `Failed to load subjects: ${err.message}`
-    loading.value = false
-  }
-}
-
-const selectSubject = async (subject) => {
-  selectedSubject.value = subject
-  await fetchSections(subject.id)
-}
-
-const fetchSections = async (subjectId) => {
-  try {
-    loading.value = true
-    error.value = null
-
-    console.log('🔄 Fetching sections for subject:', subjectId)
-
-    // Get sections first
-    const { data: sectionsData, error: sectionsError } = await supabase
-      .from('sections')
-      .select('id, name, section_code, max_students')
-      .eq('subject_id', subjectId)
-      .eq('is_active', true)
-
-    if (sectionsError) throw sectionsError
-
-    console.log('📝 Found sections:', sectionsData?.length || 0)
-
-    if (!sectionsData || sectionsData.length === 0) {
-      sections.value = []
-      loading.value = false
-      return
-    }
-
-    const sectionIds = sectionsData.map(s => s.id)
-
-    // Batch query: Get all quizzes for all sections at once
-    const { data: allQuizzes } = await supabase
-      .from('quizzes')
-      .select('id, section_id')
-      .in('section_id', sectionIds)
-
-    // Batch query: Get all pending submissions at once
-    const quizIds = allQuizzes?.map(q => q.id) || []
-    const { data: pendingSubmissions } = await supabase
-      .from('quiz_attempts')
-      .select('quiz_id')
-      .in('quiz_id', quizIds)
-      .eq('status', 'submitted')
-
-    // Create lookup maps for fast counting
-    const quizzesBySection = {}
-    allQuizzes?.forEach(quiz => {
-      if (!quizzesBySection[quiz.section_id]) {
-        quizzesBySection[quiz.section_id] = []
-      }
-      quizzesBySection[quiz.section_id].push(quiz)
-    })
-
-    const pendingByQuiz = {}
-    pendingSubmissions?.forEach(submission => {
-      pendingByQuiz[submission.quiz_id] = (pendingByQuiz[submission.quiz_id] || 0) + 1
-    })
-
-    // Process sections with pre-calculated counts
-    const processedSections = sectionsData.map(section => {
-      const sectionQuizzes = quizzesBySection[section.id] || []
-      const quizCount = sectionQuizzes.length
-
-      // Count pending submissions for this section
-      let pendingCount = 0
-      sectionQuizzes.forEach(quiz => {
-        pendingCount += pendingByQuiz[quiz.id] || 0
-      })
-
-      return {
-        id: section.id,
-        name: section.name,
-        section_code: section.section_code,
-        max_students: section.max_students,
-        quiz_count: quizCount,
-        pending_count: pendingCount
-      }
-    })
-
-    sections.value = processedSections
-    console.log('✅ Sections processed with counts:', processedSections.length)
-  } catch (err) {
-    console.error('❌ Error fetching sections:', err)
-    error.value = `Failed to load sections: ${err.message}`
   } finally {
     loading.value = false
   }
 }
 
-const selectSection = async (section) => {
-  selectedSection.value = section
-  await fetchSubmissions(section.id)
-}
+// Handle section selection from dropdown
+const onSectionChange = async () => {
+  if (!selectedSectionId.value) {
+    currentSectionInfo.value = {}
+    students.value = []
+    assessments.value = []
+    gradebookData.value = {}
+    return
+  }
 
-const fetchSubmissions = async (sectionId) => {
   try {
     loading.value = true
     error.value = null
+    await fetchGradebookData(selectedSectionId.value)
+  } catch (err) {
+    console.error('❌ Error loading gradebook data:', err)
+    error.value = `Failed to load gradebook data: ${err.message}`
+  } finally {
+    loading.value = false
+  }
+}
 
-    console.log('🔄 Fetching submissions for section:', sectionId)
+// Fetch complete gradebook data for a section
+const fetchGradebookData = async (sectionId) => {
+  console.log('🔄 Fetching gradebook data for section:', sectionId)
 
-    // Step 1: Get quiz attempts - simple query first
-    const { data: attempts, error: attemptsError } = await supabase
+  // Get section info
+  const { data: sectionInfo, error: sectionError } = await supabase
+    .from('sections')
+    .select(`
+      id, name, section_code, subject_id,
+      subjects(name, grade_level)
+    `)
+    .eq('id', sectionId)
+    .single()
+
+  if (sectionError) throw sectionError
+  currentSectionInfo.value = sectionInfo
+
+  // Get students in this section
+  const { data: studentsData, error: studentsError } = await supabase
+    .from('enrollments')
+    .select(`
+      student_id,
+      students(id, full_name, email, student_id)
+    `)
+    .eq('section_id', sectionId)
+    .eq('status', 'active')
+    .eq('is_active', true)
+
+  if (studentsError) throw studentsError
+  students.value = studentsData?.map(enrollment => enrollment.students) || []
+
+  // Get quizzes (auto-graded assessments) for this section
+  const { data: quizzesData, error: quizzesError } = await supabase
+    .from('quizzes')
+    .select('id, title, max_score, created_at')
+    .eq('section_id', sectionId)
+    .eq('is_active', true)
+    .order('created_at')
+
+  if (quizzesError) throw quizzesError
+
+  // Get manual assessments (for future expansion)
+  // For now, we'll create some sample manual assessments
+  const manualAssessments = [
+    { id: 'manual_1', title: 'Assignment 1', type: 'manual', max_score: 50 },
+    { id: 'manual_2', title: 'Activity 1', type: 'manual', max_score: 25 }
+  ]
+
+  // Combine all assessments
+  const allAssessments = [
+    ...(quizzesData?.map(quiz => ({
+      id: quiz.id,
+      title: quiz.title,
+      type: 'auto',
+      max_score: quiz.max_score,
+      created_at: quiz.created_at
+    })) || []),
+    ...manualAssessments
+  ]
+
+  assessments.value = allAssessments
+
+  // Get quiz attempts/results for gradebook
+  if (quizzesData && quizzesData.length > 0) {
+    const quizIds = quizzesData.map(q => q.id)
+    const { data: attemptsData } = await supabase
       .from('quiz_attempts')
-      .select('*')
-      .eq('status', 'submitted')
+      .select('student_id, quiz_id, total_score, status, submitted_at')
+      .in('quiz_id', quizIds)
+      .in('student_id', students.value.map(s => s.id))
       .order('submitted_at', { ascending: false })
 
-    if (attemptsError) throw attemptsError
-    console.log('📝 Found quiz attempts:', attempts?.length || 0)
+    // Process attempts into gradebook data structure
+    const newGradebookData = {}
+    students.value.forEach(student => {
+      newGradebookData[student.id] = {}
+    })
 
-    if (!attempts || attempts.length === 0) {
-      submissions.value = []
-      return
-    }
+    attemptsData?.forEach(attempt => {
+      // Only take the latest attempt for each student-quiz combination
+      if (!newGradebookData[attempt.student_id][attempt.quiz_id]) {
+        newGradebookData[attempt.student_id][attempt.quiz_id] = attempt.total_score
+      }
+    })
 
-    // Step 2: Get quizzes for this section
-    const { data: quizzes, error: quizzesError } = await supabase
-      .from('quizzes')
-      .select('*')
-      .eq('section_id', sectionId)
-
-    if (quizzesError) throw quizzesError
-    console.log('📚 Found quizzes for section:', quizzes?.length || 0)
-
-    if (!quizzes || quizzes.length === 0) {
-      submissions.value = []
-      return
-    }
-
-    // Step 3: Filter attempts for quizzes in this section
-    const quizIds = quizzes.map(q => q.id)
-    const filteredAttempts = attempts.filter(attempt => quizIds.includes(attempt.quiz_id))
-    console.log('🎯 Filtered attempts for this section:', filteredAttempts.length)
-
-    if (filteredAttempts.length === 0) {
-      submissions.value = []
-      return
-    }
-
-    // Step 4: Get students
-    const studentIds = [...new Set(filteredAttempts.map(a => a.student_id))]
-    const { data: students, error: studentsError } = await supabase
-      .from('students')
-      .select('*')
-      .in('id', studentIds)
-
-    if (studentsError) throw studentsError
-
-    // Step 5: Create lookup maps
-    const quizMap = {}
-    quizzes.forEach(q => { quizMap[q.id] = q })
-
-    const studentMap = {}
-    students?.forEach(s => { studentMap[s.id] = s })
-
-    // Step 6: Process submissions
-    submissions.value = filteredAttempts.map(attempt => ({
-      id: attempt.id,
-      quiz_id: attempt.quiz_id,
-      student_id: attempt.student_id,
-      attempt_number: attempt.attempt_number,
-      student_name: studentMap[attempt.student_id]?.full_name || 'Unknown Student',
-      student_email: studentMap[attempt.student_id]?.email || '',
-      quiz_title: quizMap[attempt.quiz_id]?.title || 'Unknown Quiz',
-      quiz_code: quizMap[attempt.quiz_id]?.quiz_code || '',
-      total_score: attempt.total_score || 0,
-      max_score: attempt.max_score || 0,
-      percentage: attempt.max_score > 0 ? Math.round((attempt.total_score / attempt.max_score) * 100) : 0,
-      status: attempt.status || 'submitted',
-      submitted_at: attempt.submitted_at,
-      time_taken_minutes: attempt.time_taken_minutes,
-      teacher_feedback: attempt.teacher_feedback
-    }))
-
-    console.log('✅ Processed submissions:', submissions.value.length)
-  } catch (err) {
-    console.error('❌ Error fetching submissions:', err)
-    error.value = `Failed to load submissions: ${err.message}`
-  } finally {
-    loading.value = false
+    gradebookData.value = newGradebookData
   }
+
+  console.log('✅ Gradebook data loaded:', {
+    section: sectionInfo.name,
+    students: students.value.length,
+    assessments: assessments.value.length
+  })
 }
 
-const resetToSubjects = () => {
-  selectedSubject.value = null
-  selectedSection.value = null
-  sections.value = []
-  submissions.value = []
-  searchQuery.value = ''
+// Gradebook helper functions
+const getStudentScore = (studentId, assessmentId) => {
+  return gradebookData.value[studentId]?.[assessmentId] || null
 }
 
-const resetToSections = () => {
-  selectedSection.value = null
-  submissions.value = []
-  searchQuery.value = ''
+const getStudentPercentage = (studentId, assessmentId) => {
+  const score = getStudentScore(studentId, assessmentId)
+  const assessment = assessments.value.find(a => a.id === assessmentId)
+  if (!score || !assessment) return 0
+  return Math.round((score / assessment.max_score) * 100)
+}
+
+const getStudentTotal = (studentId) => {
+  let total = 0
+  assessments.value.forEach(assessment => {
+    const score = getStudentScore(studentId, assessment.id)
+    if (score) total += score
+  })
+  return total
+}
+
+const getTotalMaxScore = () => {
+  return assessments.value.reduce((sum, assessment) => sum + assessment.max_score, 0)
+}
+
+const getStudentTotalPercentage = (studentId) => {
+  const total = getStudentTotal(studentId)
+  const maxTotal = getTotalMaxScore()
+  if (maxTotal === 0) return 0
+  return Math.round((total / maxTotal) * 100)
+}
+
+const getAssessmentTypeLabel = (type) => {
+  return type === 'auto' ? 'Quiz' : 'Manual'
+}
+
+const hasSubmissionPending = (studentId, assessmentId) => {
+  // Check if there's a pending submission for this student-assessment combination
+  return submissions.value.some(s => 
+    s.student_id === studentId && 
+    s.quiz_id === assessmentId && 
+    s.status === 'submitted'
+  )
+}
+
+const hasSubmissionToGrade = (studentId, assessmentId) => {
+  return hasSubmissionPending(studentId, assessmentId)
+}
+
+const toggleStudentHistory = (studentId) => {
+  expandedStudent.value = expandedStudent.value === studentId ? null : studentId
+}
+
+const updateManualScore = (studentId, assessmentId, value) => {
+  if (!gradebookData.value[studentId]) {
+    gradebookData.value[studentId] = {}
+  }
+  gradebookData.value[studentId][assessmentId] = parseFloat(value) || null
+}
+
+const saveManualScore = async (studentId, assessmentId) => {
+  // Implement saving manual scores to database
+  // For now, just log it
+  const score = getStudentScore(studentId, assessmentId)
+  console.log('💾 Saving manual score:', { studentId, assessmentId, score })
+}
+
+const reviewStudentSubmission = async (studentId, assessmentId) => {
+  // Find the submission to review
+  const submission = submissions.value.find(s => 
+    s.student_id === studentId && s.quiz_id === assessmentId
+  )
+  
+  if (submission) {
+    await reviewSubmission(submission)
+  }
 }
 
 const refreshData = async () => {
-  console.log('🔄 Manual refresh triggered...')
+  console.log('  Manual refresh triggered...')
   loading.value = true
   
   try {
-    // Always refresh subjects to get updated counts
     await fetchSubjects()
     
-    // Refresh current view
-    if (selectedSection.value) {
-      console.log('📝 Refreshing submissions for section:', selectedSection.value.id)
-      await fetchSubmissions(selectedSection.value.id)
-    } else if (selectedSubject.value) {
-      console.log('📚 Refreshing sections for subject:', selectedSubject.value.id)
-      await fetchSections(selectedSubject.value.id)
+    if (selectedSectionId.value) {
+      await fetchGradebookData(selectedSectionId.value)
     }
     
     console.log('✅ Manual refresh completed')
@@ -1515,7 +1192,7 @@ const loadQuestionsAndAnswers = async (submission) => {
     }
 
     // Additional debug: Try a completely raw query to see what's in the database
-    console.log('� Raw debug query to check database...')
+    console.log('  Raw debug query to check database...')
     const { data: debugAnswers, error: debugError } = await supabase
       .from('student_answers')
       .select('*')
@@ -2057,6 +1734,68 @@ const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
+// Excel Export Function
+const exportToExcel = () => {
+  if (!selectedSectionId.value || !students.value.length) {
+    alert('Please select a section with students to export')
+    return
+  }
+
+  // Prepare data for Excel export
+  const exportData = []
+  
+  // Header row
+  const headers = ['Student Name', 'Student ID']
+  assessments.value.forEach(assessment => {
+    headers.push(`${assessment.title} (${assessment.max_score}pts)`)
+  })
+  headers.push('Total', 'Percentage')
+  exportData.push(headers)
+  
+  // Student data rows
+  students.value.forEach(student => {
+    const row = [student.full_name, student.student_id || 'N/A']
+    
+    // Assessment scores
+    assessments.value.forEach(assessment => {
+      const score = getStudentScore(student.id, assessment.id)
+      row.push(score !== null ? score : '--')
+    })
+    
+    // Total and percentage
+    row.push(getStudentTotal(student.id))
+    row.push(`${getStudentTotalPercentage(student.id)}%`)
+    
+    exportData.push(row)
+  })
+  
+  // Create workbook and worksheet
+  const wb = XLSX.utils.book_new()
+  const ws = XLSX.utils.aoa_to_sheet(exportData)
+  
+  // Set column widths
+  const colWidths = [
+    { wch: 25 }, // Student Name
+    { wch: 15 }, // Student ID
+  ]
+  assessments.value.forEach(() => {
+    colWidths.push({ wch: 12 }) // Assessment columns
+  })
+  colWidths.push({ wch: 10 }, { wch: 12 }) // Total, Percentage
+  
+  ws['!cols'] = colWidths
+  
+  // Add worksheet to workbook
+  const sheetName = `${currentSectionInfo.value.name || 'Gradebook'}_${new Date().toISOString().split('T')[0]}`
+  XLSX.utils.book_append_sheet(wb, ws, sheetName)
+  
+  // Download file
+  const fileName = `${currentSectionInfo.value.name || 'Gradebook'}_${new Date().toISOString().split('T')[0]}.xlsx`
+  XLSX.writeFile(wb, fileName)
+  
+  console.log('✅ Gradebook exported to Excel:', fileName)
+}
+
 watch([searchQuery, selectedStatus], () => {
   currentPage.value = 1
 })
@@ -2090,7 +1829,7 @@ onMounted(async () => {
     }
     window.addEventListener('scroll', handleScroll)
     
-    // Set up real-time subscription for quiz submissions
+    // Set up real-time subscription for gradebook updates
     console.log('🔴 Setting up real-time subscriptions...')
     
     const subscription = supabase
@@ -2100,47 +1839,23 @@ onMounted(async () => {
         schema: 'public',
         table: 'quiz_attempts'
       }, async (payload) => {
-        console.log('� Quiz attempt change detected:', payload.eventType, payload.new || payload.old)
+        console.log('🔄 Quiz attempt change detected:', payload.eventType)
         
-        // Always refresh data when submissions change
-        if (selectedSection.value) {
-          console.log('🔄 Refreshing submissions for section:', selectedSection.value.id)
-          await fetchSubmissions(selectedSection.value.id)
+        // Refresh gradebook data if viewing a section
+        if (selectedSectionId.value) {
+          await fetchGradebookData(selectedSectionId.value)
         }
-        if (selectedSubject.value) {
-          console.log('🔄 Refreshing sections for subject:', selectedSubject.value.id)
-          await fetchSections(selectedSubject.value.id)
-        }
-        console.log('🔄 Refreshing subjects with updated counts')
-        await fetchSubjects()
       })
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'quizzes'
       }, async (payload) => {
-        console.log('� Quiz change detected:', payload.eventType, payload.new || payload.old)
+        console.log('🔄 Quiz change detected:', payload.eventType)
         
-        // Refresh relevant data
-        if (selectedSection.value) {
-          await fetchSubmissions(selectedSection.value.id)
-        }
-        if (selectedSubject.value) {
-          await fetchSections(selectedSubject.value.id)
-        }
-        await fetchSubjects()
-      })
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'sections'
-      }, async (payload) => {
-        console.log('🔔 Section change detected:', payload.eventType, payload.new || payload.old)
-        
-        // Refresh subjects when sections change
-        await fetchSubjects()
-        if (selectedSubject.value) {
-          await fetchSections(selectedSubject.value.id)
+        // Refresh gradebook data if viewing a section
+        if (selectedSectionId.value) {
+          await fetchGradebookData(selectedSectionId.value)
         }
       })
       .subscribe((status) => {
@@ -3353,6 +3068,785 @@ body, html {
 
 .stat-card.modern.pending:hover {
   box-shadow: 0 20px 60px rgba(245, 158, 11, 0.2);
+}
+
+/* Unified Gradebook Header */
+.gradebook-header {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+}
+
+.gradebook-header:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #3D8D7A;
+  transform: translateY(-1px);
+}
+
+.dark .gradebook-header {
+  background: #23272b;
+  border: 1px solid #20c997;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+/* Section Selector */
+.section-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.section-selector label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+  min-width: fit-content;
+}
+
+.dark .section-selector label {
+  color: #f1f5f9;
+}
+
+.section-select {
+  padding: 0.625rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: white;
+  color: #1e293b;
+  min-width: 280px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.section-select:hover {
+  border-color: #3D8D7A;
+}
+
+.section-select:focus {
+  outline: none;
+  border-color: #3D8D7A;
+  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
+}
+
+.dark .section-select {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f1f5f9;
+}
+
+/* Loading and Empty States */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: #64748b;
+}
+
+.spinner-large {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e2e8f0;
+  border-top: 4px solid #3D8D7A;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: #dc2626;
+  text-align: center;
+}
+
+.no-section-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.no-section-state .empty-icon {
+  margin-bottom: 1.5rem;
+  color: #94a3b8;
+}
+
+.no-section-state h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.no-section-state p {
+  color: #64748b;
+  font-size: 1rem;
+}
+
+.dark .no-section-state {
+  background: #23272b;
+  border-color: #374151;
+}
+
+.dark .no-section-state h3 {
+  color: #f1f5f9;
+}
+
+.dark .no-section-state p {
+  color: #94a3b8;
+}
+
+/* Excel-Style Gradebook */
+.gradebook-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Mini Analytics Panel */
+.analytics-panel {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  margin-bottom: 1rem;
+}
+
+.analytics-header {
+  display: flex;
+  justify-content: between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.analytics-header h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.student-count {
+  font-size: 0.875rem;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.analytics-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+}
+
+.stat-mini {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.stat-mini .stat-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #3D8D7A;
+  color: white;
+  border-radius: 6px;
+}
+
+.stat-mini .stat-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-mini .stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1;
+}
+
+.stat-mini .stat-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dark .analytics-panel {
+  background: #23272b;
+  border-color: #374151;
+}
+
+.dark .analytics-header h3 {
+  color: #f1f5f9;
+}
+
+.dark .student-count {
+  background: #374151;
+  color: #9ca3af;
+}
+
+.dark .stat-mini {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.dark .stat-mini .stat-value {
+  color: #f1f5f9;
+}
+
+.dark .stat-mini .stat-label {
+  color: #9ca3af;
+}
+
+/* Excel-Style Gradebook Table Container */
+.gradebook-container {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.gradebook-scroll {
+  overflow: auto;
+  max-height: 70vh;
+}
+
+.gradebook-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.875rem;
+}
+
+/* Sticky Headers */
+.gradebook-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #f8fafc;
+  border-bottom: 2px solid #e2e8f0;
+  padding: 1rem 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
+}
+
+.gradebook-table thead th.sticky-col {
+  position: sticky;
+  left: 0;
+  z-index: 11;
+  background: #f1f5f9;
+  border-right: 2px solid #e2e8f0;
+}
+
+/* Table Headers */
+.header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.assessment-title {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.875rem;
+}
+
+.assessment-info {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.assessment-type {
+  background: #3D8D7A;
+  color: white;
+  padding: 0.125rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.assessment-points {
+  font-weight: 500;
+}
+
+/* Student Rows */
+.student-row {
+  border-bottom: 1px solid #f1f5f9;
+  transition: all 0.2s;
+}
+
+.student-row:hover {
+  background: #f8fafc;
+}
+
+.student-row.expanded {
+  background: #f0f9ff;
+  border-color: #3D8D7A;
+}
+
+.student-cell {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  background: white;
+  border-right: 1px solid #e2e8f0;
+  padding: 0.75rem;
+  min-width: 200px;
+}
+
+.student-row:hover .student-cell {
+  background: #f8fafc;
+}
+
+.student-row.expanded .student-cell {
+  background: #f0f9ff;
+}
+
+.student-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.student-avatar {
+  width: 36px;
+  height: 36px;
+  background: #3D8D7A;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.student-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.student-name {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.875rem;
+}
+
+.student-id {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.expand-btn {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.expand-btn:hover {
+  background: #f1f5f9;
+  color: #3D8D7A;
+}
+
+.expand-btn.rotated {
+  transform: rotate(90deg);
+  color: #3D8D7A;
+}
+
+/* Score Cells */
+.score-cell {
+  padding: 0.75rem;
+  border-right: 1px solid #f1f5f9;
+  text-align: center;
+  position: relative;
+}
+
+.score-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.score-input {
+  width: 70px;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.score-input:focus {
+  outline: none;
+  border-color: #3D8D7A;
+  box-shadow: 0 0 0 2px rgba(61, 141, 122, 0.1);
+}
+
+.score-input.manual {
+  background: #fefce8;
+  border-color: #facc15;
+}
+
+.score-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.score-value {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.score-max {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.pending-indicator {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  color: #f59e0b;
+  animation: pulse 2s infinite;
+}
+
+/* Score Color Classes */
+.excellent .score-value { color: #059669; }
+.good .score-value { color: #0891b2; }
+.average .score-value { color: #d97706; }
+.needs-improvement .score-value { color: #dc2626; }
+
+/* Total Column */
+.total-cell {
+  padding: 0.75rem;
+  text-align: center;
+  background: #f8fafc;
+  border-left: 2px solid #e2e8f0;
+  font-weight: 600;
+}
+
+.total-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.total-value {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.total-max {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.total-percentage {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.125rem 0.5rem;
+  border-radius: 12px;
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.total-score.excellent .total-percentage {
+  background: #dcfce7;
+  color: #059669;
+}
+
+.total-score.good .total-percentage {
+  background: #cffafe;
+  color: #0891b2;
+}
+
+.total-score.average .total-percentage {
+  background: #fed7aa;
+  color: #d97706;
+}
+
+.total-score.needs-improvement .total-percentage {
+  background: #fecaca;
+  color: #dc2626;
+}
+
+/* Student History Panel */
+.student-history-row {
+  background: #f0f9ff;
+  border-bottom: 2px solid #3D8D7A;
+}
+
+.history-cell {
+  padding: 0;
+}
+
+.student-history-panel {
+  padding: 1.5rem;
+  background: #f0f9ff;
+  border-left: 4px solid #3D8D7A;
+}
+
+.history-header {
+  margin-bottom: 1rem;
+}
+
+.history-header h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.history-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.history-item {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.history-assessment {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.assessment-name {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.875rem;
+}
+
+.assessment-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+}
+
+.score-info {
+  color: #374151;
+  font-weight: 500;
+}
+
+.percentage-info {
+  color: #64748b;
+  font-style: italic;
+}
+
+.status-pending {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: #f59e0b;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.review-btn {
+  background: #3D8D7A;
+  color: white;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  align-self: flex-start;
+}
+
+.review-btn:hover {
+  background: #2d6a5a;
+  transform: translateY(-1px);
+}
+
+/* Dark Mode for Gradebook */
+.dark .gradebook-container {
+  background: #23272b;
+  border-color: #374151;
+}
+
+.dark .gradebook-table thead th {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f1f5f9;
+}
+
+.dark .gradebook-table thead th.sticky-col {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+.dark .student-row {
+  border-color: #374151;
+}
+
+.dark .student-row:hover {
+  background: #374151;
+}
+
+.dark .student-row.expanded {
+  background: #1e3a8a;
+}
+
+.dark .student-cell {
+  background: #23272b;
+  border-color: #374151;
+}
+
+.dark .student-row:hover .student-cell {
+  background: #374151;
+}
+
+.dark .student-row.expanded .student-cell {
+  background: #1e3a8a;
+}
+
+.dark .student-name {
+  color: #f1f5f9;
+}
+
+.dark .student-id {
+  color: #9ca3af;
+}
+
+.dark .score-cell {
+  border-color: #374151;
+}
+
+.dark .score-input {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f1f5f9;
+}
+
+.dark .score-input.manual {
+  background: #451a03;
+  border-color: #92400e;
+}
+
+.dark .score-max {
+  color: #9ca3af;
+}
+
+.dark .total-cell {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.dark .total-max {
+  color: #9ca3af;
+}
+
+.dark .total-percentage {
+  background: #4b5563;
+  color: #9ca3af;
+}
+
+.dark .student-history-panel {
+  background: #1e3a8a;
+  border-color: #60a5fa;
+}
+
+.dark .history-header h4 {
+  color: #f1f5f9;
+}
+
+.dark .history-item {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.dark .assessment-name {
+  color: #f1f5f9;
+}
+
+.dark .score-info {
+  color: #d1d5db;
+}
+
+.dark .percentage-info {
+  color: #9ca3af;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .analytics-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .gradebook-scroll {
+    max-height: 50vh;
+  }
+  
+  .history-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .section-selector {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .section-select {
+    min-width: 100%;
+  }
+  
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
 }
 
 .stat-card.modern.graded {
@@ -5008,6 +5502,185 @@ body, html {
     grid-template-columns: repeat(2, 1fr);
   }
 
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .btn-modal {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+/* Logout Modal Specific Styles */
+.logout-modal {
+  max-width: 400px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.dark .logout-modal {
+  background: #23272b;
+  border: 1px solid #374151;
+}
+
+.logout-header {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  color: white;
+  padding: 1.5rem;
+  border-bottom: none;
+}
+
+.logout-header h3 {
+  color: white;
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.modal-body {
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+
+.logout-icon {
+  color: #dc2626;
+  margin-bottom: 1rem;
+}
+
+.logout-message {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.dark .logout-message {
+  color: #f1f5f9;
+}
+
+.logout-submessage {
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.dark .logout-submessage {
+  color: #9ca3af;
+}
+
+.logout-footer {
+  padding: 1.5rem;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.dark .logout-footer {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.btn-cancel {
+  padding: 0.75rem 1.5rem;
+  border: 1px solid #d1d5db;
+  background: white;
+  color: #374151;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dark .btn-cancel {
+  background: #4b5563;
+  border-color: #6b7280;
+  color: #f1f5f9;
+}
+
+.btn-cancel:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.dark .btn-cancel:hover:not(:disabled) {
+  background: #6b7280;
+}
+
+.btn-logout {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 120px;
+  justify-content: center;
+}
+
+.btn-logout:hover:not(:disabled) {
+  background: linear-gradient(135deg, #b91c1c, #991b1b);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.btn-logout:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.loading-text {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.logout-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Final responsive adjustments */
+@media (max-width: 480px) {
+  .logout-footer {
+    flex-direction: column;
+  }
+  
+  .btn-cancel,
+  .btn-logout {
+    width: 100%;
+  }
+  
+  .main-content {
+    padding: 1rem;
+  }
+  
+  .gradebook-header {
+    padding: 1rem;
+  }
+  
+  .header-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .section-select {
+    min-width: 100%;
+  }
+  
   .modal-actions {
     flex-direction: column;
   }

@@ -410,7 +410,6 @@ export default {
         console.log('📋 STEP 2: Fetching profile from database...');
         console.log('Looking for auth_user_id:', userId);
         
-        // Query the profiles table
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
@@ -419,8 +418,6 @@ export default {
 
         if (profileError) {
           console.error('❌ Profile Query Error:', profileError);
-          console.error('Error Code:', profileError.code);
-          console.error('Error Message:', profileError.message);
           throw profileError;
         }
 
@@ -429,14 +426,8 @@ export default {
           throw new Error('Profile not found in database');
         }
 
-        console.log('✅ Profile Data Retrieved:');
-        console.log('   - Profile ID:', profileData.id);
-        console.log('   - Full Name:', profileData.full_name);
-        console.log('   - Email:', profileData.email);
-        console.log('   - Role:', profileData.role);
-        console.log('   - Profile Photo:', profileData.profile_photo);
+        console.log('✅ Profile Data Retrieved:', profileData);
 
-        // Verify role is student
         if (profileData.role !== 'student') {
           console.error('❌ Access Denied: User role is', profileData.role, 'not student');
           this.$router.push('/login');
@@ -446,7 +437,6 @@ export default {
         this.currentProfileId = profileData.id;
         console.log('✅ Profile ID stored:', this.currentProfileId);
 
-        // Now fetch student record
         console.log('');
         console.log('📋 STEP 3: Fetching student record...');
         console.log('Looking for profile_id:', profileData.id);
@@ -458,14 +448,7 @@ export default {
           .single();
 
         if (studentError) {
-          if (studentError.code === 'PGRST116') {
-            console.warn('⚠️ No student record found - creating one...');
-            await this.createMissingStudentRecord(profileData);
-            return;
-          }
           console.error('❌ Student Query Error:', studentError);
-          console.error('Error Code:', studentError.code);
-          console.error('Error Message:', studentError.message);
           throw studentError;
         }
 
@@ -474,22 +457,17 @@ export default {
           throw new Error('Student record not found');
         }
 
-        console.log('✅ Student Data Retrieved:');
-        console.log('   - Student ID:', studentData.id);
-        console.log('   - Student Number:', studentData.student_id);
-        console.log('   - Full Name:', studentData.full_name);
-        console.log('   - Email:', studentData.email);
-        console.log('   - Grade Level:', studentData.grade_level);
+        console.log('✅ Student Data Retrieved:', studentData);
 
-        // Set all profile data
         console.log('');
         console.log('📋 STEP 4: Setting userProfile data...');
         
-        this.userProfile.fullName = studentData.full_name || profileData.full_name || 'Student';
-        this.userProfile.email = studentData.email || profileData.email || '';
-        this.userProfile.studentId = studentData.student_id || 'NOT SET';
-        this.userProfile.grade = studentData.grade_level || null;
-        this.userProfile.role = profileData.role || 'student';
+        // FIXED: Direct assignment without fallbacks that cause issues
+        this.userProfile.fullName = studentData.full_name || '';
+        this.userProfile.email = studentData.email || '';
+        this.userProfile.studentId = studentData.student_id || '';
+        this.userProfile.grade = studentData.grade_level;
+        this.userProfile.role = 'student';
         this.userProfile.profilePhoto = profileData.profile_photo || null;
 
         console.log('✅ ========================================');
@@ -503,7 +481,6 @@ export default {
         console.log('Profile Photo:', this.userProfile.profilePhoto);
         console.log('========================================');
 
-        // Force Vue to update
         this.$forceUpdate();
 
       } catch (error) {
@@ -527,7 +504,6 @@ export default {
 
       console.log('🔔 Setting up real-time subscriptions...');
 
-      // Profile subscription
       this.profileSubscription = supabase
         .channel(`profile_${this.currentProfileId}`)
         .on(
@@ -544,7 +520,6 @@ export default {
               this.userProfile.fullName = payload.new.full_name || this.userProfile.fullName;
               this.userProfile.email = payload.new.email || this.userProfile.email;
               this.userProfile.profilePhoto = payload.new.profile_photo || this.userProfile.profilePhoto;
-              this.userProfile.role = payload.new.role || this.userProfile.role;
               this.$forceUpdate();
             }
           }
@@ -553,7 +528,6 @@ export default {
           console.log('Profile subscription status:', status);
         });
 
-      // Student subscription
       this.studentSubscription = supabase
         .channel(`student_${this.currentProfileId}`)
         .on(
@@ -567,10 +541,8 @@ export default {
           (payload) => {
             console.log('📢 Student data updated via real-time:', payload);
             if (payload.new) {
-              this.userProfile.fullName = payload.new.full_name || this.userProfile.fullName;
-              this.userProfile.email = payload.new.email || this.userProfile.email;
               this.userProfile.studentId = payload.new.student_id || this.userProfile.studentId;
-              this.userProfile.grade = payload.new.grade_level || this.userProfile.grade;
+              this.userProfile.grade = payload.new.grade_level;
               this.$forceUpdate();
             }
           }
@@ -601,52 +573,6 @@ export default {
         } catch (error) {
           console.error('❌ Error removing student subscription:', error);
         }
-      }
-    },
-
-    async createMissingStudentRecord(profile) {
-      try {
-        const newStudentId = `ST${Date.now().toString().slice(-8)}`;
-        const defaultGrade = 7;
-        
-        console.log('🔨 Creating missing student record...');
-        console.log('Generated Student ID:', newStudentId);
-        console.log('Default Grade:', defaultGrade);
-        
-        const { data, error } = await supabase
-          .from('students')
-          .insert([{
-            profile_id: profile.id,
-            student_id: newStudentId,
-            full_name: profile.full_name,
-            email: profile.email,
-            grade_level: defaultGrade,
-            is_active: true
-          }])
-          .select('*')
-          .single();
-
-        if (error) {
-          console.error('❌ Error creating student record:', error);
-          throw error;
-        }
-
-        console.log('✅ Student record created successfully:', data);
-
-        // Set the profile data
-        this.userProfile.fullName = data.full_name || profile.full_name || 'Student';
-        this.userProfile.email = data.email || profile.email || '';
-        this.userProfile.studentId = data.student_id || 'NOT SET';
-        this.userProfile.grade = data.grade_level || null;
-        this.userProfile.role = profile.role || 'student';
-        this.userProfile.profilePhoto = profile.profile_photo || null;
-        
-        console.log('✅ Profile updated with new student record');
-        this.$forceUpdate();
-        
-      } catch (error) {
-        console.error('❌ Error in createMissingStudentRecord:', error);
-        this.handleProfileError();
       }
     },
 

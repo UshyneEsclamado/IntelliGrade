@@ -1,3 +1,6 @@
+
+
+
 <template>
   <div class="grades-page">
     <!-- Header Section -->
@@ -413,25 +416,150 @@ export default {
       return date.toLocaleString('en-PH', options);
     };
 
+    // Auto-grading function
+    const autoGradeAttempt = async (attemptId) => {
+      try {
+        console.log('Auto-grading attempt:', attemptId);
+
+        // Get the attempt details
+        const { data: attempt, error: attemptError } = await supabase
+          .from('quiz_attempts')
+          .select('*, quizzes(*)')
+          .eq('id', attemptId)
+          .single();
+
+        if (attemptError) throw attemptError;
+
+        // Get all student answers for this attempt
+        const { data: studentAnswers, error: answersError } = await supabase
+          .from('student_answers')
+          .select('*')
+          .eq('attempt_id', attemptId);
+
+        if (answersError) throw answersError;
+
+        let totalScore = 0;
+        const maxScore = attempt.max_score;
+        const gradedAnswers = [];
+
+        // Grade each answer
+        for (const answer of studentAnswers) {
+          let isCorrect = false;
+          let pointsEarned = 0;
+
+          // Get question details
+          const { data: question, error: questionError } = await supabase
+            .from('quiz_questions')
+            .select('*')
+            .eq('id', answer.question_id)
+            .single();
+
+          if (questionError) {
+            console.error('Error fetching question:', questionError);
+            continue;
+          }
+
+          // Grade based on question type
+          if (question.question_type === 'multiple_choice') {
+            // Get the selected option
+            const { data: selectedOption, error: optionError } = await supabase
+              .from('question_options')
+              .select('*')
+              .eq('id', answer.selected_option_id)
+              .single();
+
+            if (!optionError && selectedOption) {
+              isCorrect = selectedOption.is_correct === true;
+              pointsEarned = isCorrect ? answer.points_possible : 0;
+            }
+          } else if (question.question_type === 'true_false' || question.question_type === 'fill_blank') {
+            // Get correct answer
+            const { data: correctAnswer, error: correctError } = await supabase
+              .from('question_answers')
+              .select('*')
+              .eq('question_id', answer.question_id)
+              .single();
+
+            if (!correctError && correctAnswer) {
+              const studentAns = (answer.answer_text || '').trim();
+              const correctAns = correctAnswer.correct_answer.trim();
+
+              if (correctAnswer.case_sensitive) {
+                isCorrect = studentAns === correctAns;
+              } else {
+                isCorrect = studentAns.toLowerCase() === correctAns.toLowerCase();
+              }
+
+              pointsEarned = isCorrect ? answer.points_possible : 0;
+            }
+          }
+
+          totalScore += pointsEarned;
+
+          // Update student answer with grading
+          gradedAnswers.push({
+            id: answer.id,
+            is_correct: isCorrect,
+            points_earned: pointsEarned
+          });
+        }
+
+        // Update all student answers
+        for (const gradedAnswer of gradedAnswers) {
+          await supabase
+            .from('student_answers')
+            .update({
+              is_correct: gradedAnswer.is_correct,
+              points_earned: gradedAnswer.points_earned
+            })
+            .eq('id', gradedAnswer.id);
+        }
+
+        // Calculate percentage
+        const percentage = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
+
+        // Update quiz attempt with auto-graded status
+        const { error: updateError } = await supabase
+          .from('quiz_attempts')
+          .update({
+            total_score: totalScore,
+            percentage: Math.round(percentage * 100) / 100,
+            status: 'graded',
+            auto_graded: true,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', attemptId);
+
+        if (updateError) throw updateError;
+
+        console.log('Auto-grading completed:', {
+          attemptId,
+          totalScore,
+          maxScore,
+          percentage
+        });
+
+        return { success: true, totalScore, percentage };
+      } catch (error) {
+        console.error('Error in auto-grading:', error);
+        return { success: false, error };
+      }
+    };
+
     // Helper function to check if answer is correct
     const checkIfAnswerIsCorrect = (answer, studentAnswer, correctAnswerData) => {
-      // If points_earned equals points_possible, it's correct
       if (studentAnswer.points_earned >= studentAnswer.points_possible) {
         return true;
       }
 
-      // If points_earned is 0, it's incorrect
       if (studentAnswer.points_earned === 0) {
         return false;
       }
 
-      // Double-check with actual answer comparison
       if (answer.question_type === 'multiple_choice') {
-        // For multiple choice, check if selected option is correct
         const selectedOption = answer.options.find(opt => opt.id === studentAnswer.selected_option_id);
         return selectedOption ? selectedOption.is_correct === true : false;
       } else if (answer.question_type === 'true_false' || answer.question_type === 'fill_blank') {
-        // For true/false and fill-in-blank, compare with correct answer
         if (!correctAnswerData) return false;
         
         const studentAns = (studentAnswer.answer_text || '').trim();
@@ -444,7 +572,6 @@ export default {
         }
       }
 
-      // Fallback to is_correct from database
       return studentAnswer.is_correct === true;
     };
 
@@ -537,7 +664,7 @@ export default {
 
         console.log('Loading grades for student:', studentInfo.value.student_id, 'section:', section.value.id);
 
-        // First, get all quizzes for this section
+        // Get all quizzes for this section
         const { data: sectionQuizzes, error: quizzesError } = await supabase
           .from('quizzes')
           .select('id, title, quiz_code, description, number_of_questions, attempts_allowed, section_id')
@@ -559,13 +686,12 @@ export default {
 
         const quizIds = sectionQuizzes.map(q => q.id);
 
-        // Get ALL attempts for this student for quizzes in this section
+        // Get ALL attempts for this student
         const { data: attempts, error: attemptsError } = await supabase
           .from('quiz_attempts')
           .select('*')
           .eq('student_id', studentInfo.value.student_id)
           .in('quiz_id', quizIds)
-          .in('status', ['submitted', 'graded', 'reviewed'])
           .order('submitted_at', { ascending: false });
 
         if (attemptsError) {
@@ -575,13 +701,37 @@ export default {
 
         console.log('Found attempts:', attempts?.length || 0);
 
+        // Auto-grade any submitted attempts that haven't been graded
+        if (attempts && attempts.length > 0) {
+          for (const attempt of attempts) {
+            if (attempt.status === 'submitted' && !attempt.auto_graded) {
+              console.log('Found ungraded attempt, auto-grading:', attempt.id);
+              await autoGradeAttempt(attempt.id);
+            }
+          }
+
+          // Reload attempts after auto-grading
+          const { data: updatedAttempts, error: reloadError } = await supabase
+            .from('quiz_attempts')
+            .select('*')
+            .eq('student_id', studentInfo.value.student_id)
+            .in('quiz_id', quizIds)
+            .in('status', ['submitted', 'graded', 'reviewed'])
+            .order('submitted_at', { ascending: false });
+
+          if (!reloadError && updatedAttempts) {
+            attempts.length = 0;
+            attempts.push(...updatedAttempts);
+          }
+        }
+
         if (!attempts || attempts.length === 0) {
           grades.value = [];
           console.log('No submitted attempts found');
           return;
         }
 
-        // Build a map of quizzes for quick lookup
+        // Build a map of quizzes
         const quizMap = {};
         sectionQuizzes.forEach(quiz => {
           quizMap[quiz.id] = {
@@ -597,7 +747,7 @@ export default {
           }
         });
 
-        // Process each quiz that has attempts
+        // Process each quiz
         const processedGrades = [];
         
         Object.values(quizMap).forEach(quizData => {
@@ -605,7 +755,7 @@ export default {
 
           const { quiz, attempts: quizAttempts } = quizData;
 
-          // Find best percentage (handling null values)
+          // Find best percentage
           let bestAttempt = quizAttempts[0];
           quizAttempts.forEach(attempt => {
             if (attempt.percentage !== null && attempt.percentage !== undefined) {
@@ -617,7 +767,7 @@ export default {
             }
           });
 
-          // Find latest attempt (already sorted by submitted_at descending)
+          // Find latest attempt
           const latestAttempt = quizAttempts[0];
 
           // Determine status
@@ -667,6 +817,16 @@ export default {
           filter: `student_id=eq.${studentInfo.value.student_id}`
         }, async (payload) => {
           console.log('Quiz attempt changed:', payload);
+          
+          // If a new attempt was submitted, auto-grade it
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            const attempt = payload.new;
+            if (attempt.status === 'submitted' && !attempt.auto_graded) {
+              console.log('New submitted attempt detected, auto-grading:', attempt.id);
+              await autoGradeAttempt(attempt.id);
+            }
+          }
+          
           await loadGrades();
         })
         .subscribe((status) => {
@@ -721,10 +881,10 @@ export default {
       loadingPreview.value = true;
 
       try {
-        // Get latest graded/submitted attempt with ALL fields including teacher feedback
+        // Get latest attempt (no need to fetch teacher_feedback)
         const { data: attempts, error: attemptsError } = await supabase
           .from('quiz_attempts')
-          .select('*')
+          .select('id, quiz_id, student_id, attempt_number, started_at, submitted_at, time_taken_minutes, total_score, max_score, percentage, status')
           .eq('quiz_id', quiz.id)
           .eq('student_id', studentInfo.value.student_id)
           .in('status', ['submitted', 'graded', 'reviewed'])
@@ -742,19 +902,15 @@ export default {
         const attemptId = attempt.id;
         
         console.log('Loading preview for attempt:', attemptId);
-        console.log('Attempt data (including teacher_feedback):', attempt);
-        console.log('Teacher feedback:', attempt.teacher_feedback);
 
-        // Get student answers with ALL fields including teacher comments
+        // Get student answers (no need for teacher_comment)
         const { data: answers, error: answersError } = await supabase
           .from('student_answers')
-          .select('*')
+          .select('id, attempt_id, question_id, selected_option_id, answer_text, is_correct, points_earned, points_possible, answered_at')
           .eq('attempt_id', attemptId)
           .order('id');
 
         if (answersError) throw answersError;
-        
-        console.log('Loaded student answers:', answers);
 
         if (!answers || answers.length === 0) {
           previewAnswers.value = [];
@@ -772,7 +928,7 @@ export default {
 
         if (questionsError) throw questionsError;
 
-        // Get options for multiple choice questions
+        // Get options
         const { data: options, error: optionsError } = await supabase
           .from('question_options')
           .select('id, question_id, option_number, option_text, is_correct')
@@ -780,7 +936,7 @@ export default {
 
         if (optionsError) throw optionsError;
 
-        // Get correct answers for true/false and fill-in-blank questions
+        // Get correct answers
         const { data: correctAnswers, error: correctAnswersError } = await supabase
           .from('question_answers')
           .select('question_id, correct_answer, case_sensitive')
@@ -807,28 +963,17 @@ export default {
           correctAnswersMap[ca.question_id] = ca;
         });
 
-        // Build preview with recalculated is_correct values
+        // Build preview (no teacher comments)
         previewAnswers.value = answers.map(answer => {
           const question = questionsMap[answer.question_id] || {};
           const questionOptions = optionsMap[answer.question_id] || [];
           const correctAnswerData = correctAnswersMap[answer.question_id];
 
-          // Recalculate is_correct based on points or actual answer
           const isCorrect = checkIfAnswerIsCorrect(
             { question_type: question.question_type, options: questionOptions },
             answer,
             correctAnswerData
           );
-
-          // Log for debugging
-          console.log(`Question ${question.question_number}:`, {
-            question_type: question.question_type,
-            points_earned: answer.points_earned,
-            points_possible: answer.points_possible,
-            is_correct_from_db: answer.is_correct,
-            is_correct_calculated: isCorrect,
-            teacher_comment: answer.teacher_comment
-          });
 
           return {
             question_id: answer.question_id,
@@ -838,7 +983,6 @@ export default {
             is_correct: isCorrect,
             selected_option_id: answer.selected_option_id,
             answer_text: answer.answer_text,
-            teacher_comment: answer.teacher_comment || '',
             points_earned: answer.points_earned || 0,
             points_possible: answer.points_possible || 1,
             options: questionOptions,
@@ -847,9 +991,6 @@ export default {
         }).sort((a, b) => a.question_number - b.question_number);
 
         console.log('Preview answers loaded:', previewAnswers.value.length);
-        console.log('Answers with teacher comments:', previewAnswers.value.filter(a => a.teacher_comment && a.teacher_comment.trim() !== '').length);
-        console.log('Correct answers:', previewAnswers.value.filter(a => a.is_correct).length);
-        console.log('Incorrect answers:', previewAnswers.value.filter(a => !a.is_correct).length);
 
       } catch (error) {
         console.error('Error loading quiz preview:', error);
@@ -880,7 +1021,6 @@ export default {
         return 'Unknown';
       }
       
-      // For true/false and fill-in-blank, get from correct_answer_data
       if (answer.correct_answer_data) {
         return answer.correct_answer_data.correct_answer;
       }

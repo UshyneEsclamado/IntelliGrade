@@ -29,6 +29,7 @@ import AssessmentHistory from '../views/teacher/AssessmentHistory.vue'
 import ViewQuizzes from '../views/teacher/ViewQuizzes.vue'
 import ViewStudents from '../views/teacher/ViewStudents.vue'
 import Gradebook from '../views/teacher/Gradebook.vue'
+import CreateAssignment from '../views/teacher/CreateAssignment.vue'
 
 // Student subfolder components - FIXED: Removed duplicates
 import Home from '../views/student/Home.vue'
@@ -37,6 +38,7 @@ import Messages from '../views/student/Messages.vue'
 import Calendar from '../views/student/Calendar.vue'
 import Settings from '../views/student/Settings.vue'
 import TakeQuiz from '../views/student/TakeQuiz.vue'
+import TakeAssignments from '../views/student/TakeAssignments.vue'
 import StudentGrades from '../views/student/Grades.vue'
 
 const routes = [
@@ -184,6 +186,12 @@ const routes = [
         name: 'TeacherGradebook',
         component: Gradebook,
         meta: { requiresAuth: true, role: 'teacher' }
+      },
+      {
+        path: 'create-assignment/:subjectId/:sectionId',
+        name: 'CreateAssignment',
+        component: CreateAssignment,
+        meta: { requiresAuth: true, role: 'teacher' }
       }
     ]
   },
@@ -227,6 +235,11 @@ const routes = [
         path: 'take-quiz/:subjectId/:sectionId',
         name: 'TakeQuiz',
         component: TakeQuiz
+      },
+      {
+        path: 'assignments/:subjectId/:sectionId',
+        name: 'TakeAssignments',
+        component: TakeAssignments
       },
       {
         path: 'grades/:subjectId/:sectionId',
