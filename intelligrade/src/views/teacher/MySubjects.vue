@@ -3823,6 +3823,35 @@ const fetchSubjects = async (forceRefresh = false) => {
 
     subjects.value = processedSubjects
     
+    // Update selectedSubject and selectedSection if they exist
+    if (selectedSubject.value) {
+      const updatedSubject = processedSubjects.find(s => s.id === selectedSubject.value.id || s.name === selectedSubject.value.name)
+      if (updatedSubject) {
+        selectedSubject.value = updatedSubject
+        
+        // Also update selectedSection if it exists
+        if (selectedSection.value) {
+          const updatedSection = updatedSubject.sections?.find(sec => sec.id === selectedSection.value.id)
+          if (updatedSection) {
+            selectedSection.value = updatedSection
+          }
+        }
+      }
+    }
+    
+    // Also update selectedSectionForStudents if modal is open
+    if (selectedSectionForStudents.value) {
+      const parentSubject = processedSubjects.find(s => 
+        s.sections?.some(sec => sec.id === selectedSectionForStudents.value.id)
+      )
+      if (parentSubject) {
+        const updatedSection = parentSubject.sections.find(sec => sec.id === selectedSectionForStudents.value.id)
+        if (updatedSection) {
+          selectedSectionForStudents.value = updatedSection
+        }
+      }
+    }
+    
     // Progress: 100% - Complete
     loadingProgress.value = 100
     loadingMessage.value = 'Complete!'
@@ -4342,6 +4371,59 @@ const closeAddStudentsModal = () => {
   enrollmentMessageType.value = 'success'
 }
 
+// Helper function to update local student count immediately
+const updateLocalStudentCount = (sectionId, countChange) => {
+  // Update in subjects array
+  subjects.value = subjects.value.map(subject => ({
+    ...subject,
+    sections: subject.sections?.map(section => {
+      if (section.id === sectionId) {
+        return {
+          ...section,
+          student_count: (section.student_count || 0) + countChange
+        }
+      }
+      return section
+    }),
+    total_students: subject.sections?.some(s => s.id === sectionId)
+      ? (subject.total_students || 0) + countChange
+      : subject.total_students
+  }))
+  
+  // Update selectedSubject if it contains this section
+  if (selectedSubject.value?.sections?.some(s => s.id === sectionId)) {
+    selectedSubject.value = {
+      ...selectedSubject.value,
+      sections: selectedSubject.value.sections.map(section => {
+        if (section.id === sectionId) {
+          return {
+            ...section,
+            student_count: (section.student_count || 0) + countChange
+          }
+        }
+        return section
+      }),
+      total_students: (selectedSubject.value.total_students || 0) + countChange
+    }
+  }
+  
+  // Update selectedSection if it's the one being modified
+  if (selectedSection.value?.id === sectionId) {
+    selectedSection.value = {
+      ...selectedSection.value,
+      student_count: (selectedSection.value.student_count || 0) + countChange
+    }
+  }
+  
+  // Update selectedSectionForStudents if it's the one being modified (for modal display)
+  if (selectedSectionForStudents.value?.id === sectionId) {
+    selectedSectionForStudents.value = {
+      ...selectedSectionForStudents.value,
+      student_count: (selectedSectionForStudents.value.student_count || 0) + countChange
+    }
+  }
+}
+
 // Enroll student by ID function
 const enrollStudentById = async () => {
   if (!enrollStudentId.value.trim()) {
@@ -4404,6 +4486,9 @@ const enrollStudentById = async () => {
       enrollmentMessageType.value = 'success'
       enrollStudentId.value = ''
 
+      // Immediately update local student count for instant UI feedback
+      updateLocalStudentCount(selectedSectionForStudents.value.id, 1)
+
       // Clear message after 3 seconds
       setTimeout(() => {
         enrollmentMessage.value = ''
@@ -4414,7 +4499,7 @@ const enrollStudentById = async () => {
         await searchStudents()
       }
       
-      // Refresh the main subjects data to update student counts
+      // Refresh the main subjects data to update student counts (confirms from server)
       await fetchSubjects()
     } else {
       enrollmentMessage.value = result.message
@@ -4520,11 +4605,14 @@ const addSelectedStudents = async () => {
     if (result.successful > 0) {
       showToast(`Successfully added ${result.successful} student${result.successful > 1 ? 's' : ''} to the section`, 'success')
       
+      // Immediately update local student count for instant UI feedback
+      updateLocalStudentCount(selectedSectionForStudents.value.id, result.successful)
+      
       // Clear selections and refresh the search
       selectedStudentsToAdd.value = []
       await searchStudents()
       
-      // Refresh the main subjects data to update student counts
+      // Refresh the main subjects data to update student counts (confirms from server)
       await fetchSubjects()
     }
 

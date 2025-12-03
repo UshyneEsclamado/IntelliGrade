@@ -180,7 +180,7 @@
     </aside>
 
     <main class="main-content">
-      <router-view />
+      <router-view :key="$route.fullPath" />
     </main>
 
     <!-- Mobile Bottom Navigation -->

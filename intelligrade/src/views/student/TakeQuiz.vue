@@ -674,48 +674,8 @@ export default {
     const loadQuizzes = async () => {
       try {
         console.log('📚 Loading quizzes for section:', section.value.id)
-        console.log('📚 Section details:', section.value)
-        console.log('📚 Subject details:', subject.value)
         
-        // DEBUG 1: Check ALL quizzes in the entire database (limit 10)
-        const { data: anyQuizzes, error: anyError } = await supabase
-          .from('quizzes')
-          .select('id, title, status, section_id, subject_id, created_at')
-          .limit(10)
-        
-        console.log('🔍 DEBUG 1 - ANY quizzes in database (up to 10):', { 
-          anyQuizzes, 
-          anyError,
-          count: anyQuizzes?.length || 0
-        })
-        
-        // DEBUG 2: Check all quizzes for this specific section (regardless of status)
-        const { data: allQuizzesDebug, error: debugError } = await supabase
-          .from('quizzes')
-          .select('id, title, status, section_id, subject_id')
-          .eq('section_id', section.value.id)
-        
-        console.log('🔍 DEBUG 2 - Quizzes for THIS section (any status):', { 
-          allQuizzesDebug, 
-          debugError,
-          sectionId: section.value.id,
-          count: allQuizzesDebug?.length || 0
-        })
-        
-        // DEBUG 3: Check if section_id might be stored differently - try subject_id instead
-        const { data: subjectQuizzes, error: subjectError } = await supabase
-          .from('quizzes')
-          .select('id, title, status, section_id, subject_id')
-          .eq('subject_id', subject.value.id)
-        
-        console.log('🔍 DEBUG 3 - Quizzes for THIS subject:', { 
-          subjectQuizzes, 
-          subjectError,
-          subjectId: subject.value.id,
-          count: subjectQuizzes?.length || 0
-        })
-        
-        // Now fetch only published quizzes for this section
+        // Fetch only published quizzes for this section
         const { data, error } = await supabase
           .from('quizzes')
           .select('*')
@@ -723,12 +683,17 @@ export default {
           .eq('status', 'published')
           .order('created_at', { ascending: false });
 
-        console.log('📝 Published quizzes for section:', { data, error, sectionId: section.value.id, count: data?.length || 0 })
+        if (error) {
+          console.error('❌ Error loading quizzes:', error)
+          throw error
+        }
+
+        console.log('📝 Loaded', data?.length || 0, 'quizzes')
         quizzes.value = data || [];
         await loadQuizResults();
       } catch (error) {
         console.error('Error loading quizzes:', error);
-        alert('Failed to load quizzes');
+        quizzes.value = [];
       }
     };
 

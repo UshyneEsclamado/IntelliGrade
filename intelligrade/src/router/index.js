@@ -14,6 +14,7 @@ import ResetPassword from '../views/ResetPassword.vue'
 
 // Dashboard views
 import StudentDashboard from '../views/StudentDashboard.vue'
+import TeacherDashboard from '../views/TeacherDashboard.vue'
 
 // Teacher subfolder components that actually exist
 import Analytics from '../views/teacher/Analytics.vue'
@@ -113,6 +114,7 @@ const routes = [
   {
     path: '/teacher',
     name: 'TeacherLayout',
+    component: TeacherDashboard,
     meta: { requiresAuth: true, role: 'teacher' },
     children: [
       {
@@ -272,144 +274,114 @@ const router = createRouter({
   routes
 })
 
-// Enhanced Navigation Guard with Better Error Handling and Refresh Support
+// Cache for auth state to avoid redundant checks
+let cachedSession = null
+let cachedRole = null
+let lastAuthCheck = 0
+const AUTH_CACHE_DURATION = 30000 // 30 seconds
+
+// Enhanced Navigation Guard with Caching for Better Performance
 router.beforeEach(async (to, from, next) => {
-  console.log('=== ROUTER NAVIGATION START ===')
-  console.log('From:', from.path)
-  console.log('To:', to.path)
-  console.log('Route meta:', to.meta)
+  console.log('=== ROUTER NAVIGATION ===')
+  console.log('From:', from.path, '→ To:', to.path)
   
+  // Public routes - no auth needed, proceed immediately
+  if (!to.meta.requiresAuth) {
+    console.log('✓ Public route, proceeding')
+    next()
+    return
+  }
+
+  const now = Date.now()
+  const cacheValid = cachedSession && (now - lastAuthCheck) < AUTH_CACHE_DURATION
+
   try {
-    // Get current session with retry logic for refresh scenarios
-    let session = null
-    let sessionError = null
+    // Use cached session if valid, otherwise fetch fresh
+    let session = cachedSession
     
-    // Try to get session, with retry on refresh
-    for (let attempt = 0; attempt < 3; attempt++) {
-      const result = await supabase.auth.getSession()
-      session = result.data?.session
-      sessionError = result.error
+    if (!cacheValid) {
+      console.log('Fetching fresh session...')
+      const { data, error } = await supabase.auth.getSession()
       
-      if (!sessionError && session) {
-        break // Success
-      }
-      
-      if (attempt < 2) {
-        console.log(`Session attempt ${attempt + 1} failed, retrying...`)
-        await new Promise(resolve => setTimeout(resolve, 100)) // Small delay
-      }
-    }
-    
-    if (sessionError) {
-      console.error('Session error after retries:', sessionError)
-      // Only sign out on authentication errors, not network errors
-      if (sessionError.message?.includes('Invalid') || sessionError.message?.includes('Expired')) {
-        await supabase.auth.signOut()
-      }
-    }
-
-    const isAuthenticated = !!session?.user
-    console.log('Is authenticated:', isAuthenticated)
-
-    // Allow access to guest-only routes even when authenticated
-    // Users can visit login/signup pages to logout or switch accounts
-
-    // Handle routes that require authentication
-    if (to.meta.requiresAuth) {
-      if (!isAuthenticated) {
-        console.log('Authentication required but not authenticated')
-        console.log('→ Redirecting to login')
+      if (error) {
+        console.error('Session error:', error)
+        cachedSession = null
+        cachedRole = null
         next('/login')
         return
       }
-
-      console.log('Valid session found for user:', session.user.email)
-
-      // Handle role-based access with better error handling
-      if (to.meta.role) {
-        console.log('Checking role requirement:', to.meta.role)
-        
-        try {
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('auth_user_id', session.user.id)
-            .single()
-
-          if (profileError) {
-            console.error('Profile fetch error:', profileError)
-            // Don't immediately sign out - might be a temporary network issue
-            // Allow access and let the component handle it
-            console.log('→ Profile error, but allowing navigation (component will handle)')
-            next()
-            return
-          }
-
-          if (!profile) {
-            console.error('No profile found for authenticated user')
-            console.log('→ No profile found, redirecting to role selection')
-            next('/role-selection')
-            return
-          }
-
-          console.log('User profile role:', profile.role)
-
-          if (profile.role !== to.meta.role) {
-            console.log('Role mismatch! Required:', to.meta.role, 'Got:', profile.role)
-            // Redirect to appropriate dashboard based on actual role
-            const redirectPath = profile.role === 'student' 
-              ? '/student/dashboard' 
-              : '/teacher/dashboard'
-            console.log('→ Redirecting to correct dashboard:', redirectPath)
-            next(redirectPath)
-            return
-          }
-
-          console.log('✓ Role check passed')
-        } catch (roleError) {
-          console.error('Role check error:', roleError)
-          // Allow navigation to continue, let component handle the auth state
-          console.log('→ Role check failed, but allowing navigation')
-          next()
-          return
-        }
-      }
       
-      console.log('✓ Authorization successful, proceeding to:', to.path)
-      next()
+      session = data?.session
+      cachedSession = session
+      lastAuthCheck = now
+    } else {
+      console.log('Using cached session')
+    }
+
+    // Check if authenticated
+    if (!session?.user) {
+      console.log('Not authenticated, redirecting to login')
+      cachedSession = null
+      cachedRole = null
+      next('/login')
       return
     }
 
-    // Public routes - no restrictions
-    console.log('Public route, no auth required')
+    // Check role if required
+    if (to.meta.role) {
+      // Use cached role if we have a valid session cache
+      let userRole = cachedRole
+      
+      if (!cacheValid || !userRole) {
+        console.log('Fetching user role...')
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('auth_user_id', session.user.id)
+          .single()
+
+        if (profileError || !profile) {
+          console.error('Profile error:', profileError)
+          // Allow navigation, component will handle
+          next()
+          return
+        }
+        
+        userRole = profile.role
+        cachedRole = userRole
+      } else {
+        console.log('Using cached role:', userRole)
+      }
+
+      // Check role match
+      if (userRole !== to.meta.role) {
+        console.log('Role mismatch:', userRole, '!=', to.meta.role)
+        const redirectPath = userRole === 'student' ? '/student/dashboard' : '/teacher/dashboard'
+        next(redirectPath)
+        return
+      }
+    }
+
+    console.log('✓ Auth check passed, proceeding')
     next()
 
   } catch (error) {
-    console.error('=== NAVIGATION GUARD ERROR ===')
-    console.error('Error details:', error)
-    
-    // On any error, be more forgiving for protected routes
-    if (to.meta.requiresAuth) {
-      console.log('→ Error on protected route, but being more forgiving')
-      // Only redirect to login on authentication-specific errors
-      if (error.message?.includes('Invalid') || error.message?.includes('Expired') || error.message?.includes('JWT')) {
-        console.log('→ Authentication error detected, redirecting to login')
-        try {
-          await supabase.auth.signOut()
-        } catch (signOutError) {
-          console.error('Sign out error:', signOutError)
-        }
-        next('/login')
-      } else {
-        // For network or other errors, allow navigation and let component handle
-        console.log('→ Non-auth error, allowing navigation')
-        next()
-      }
-    } else {
-      // Allow access to public routes even on error
-      console.log('→ Error on public route, allowing access')
-      next()
-    }
+    console.error('Navigation guard error:', error)
+    // On error, allow navigation and let component handle
+    next()
+  }
+})
+
+// Clear cache on auth state change
+supabase.auth.onAuthStateChange((event, session) => {
+  console.log('Auth state changed:', event)
+  cachedSession = session
+  cachedRole = null
+  lastAuthCheck = Date.now()
+  
+  if (event === 'SIGNED_OUT') {
+    cachedSession = null
+    cachedRole = null
   }
 })
 

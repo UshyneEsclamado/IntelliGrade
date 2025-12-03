@@ -670,8 +670,18 @@ export default {
     },
 
     navigateToSubject(subject) {
+      console.log('📌 navigateToSubject called:', subject)
+      
+      if (!subject || !subject.id || !subject.sectionId) {
+        console.error('❌ Invalid subject data:', subject)
+        alert('Unable to navigate. Please refresh the page and try again.')
+        return
+      }
+      
       // Navigate to grades page for this subject
-      this.$router.push(`/student/grades/${subject.id}/${subject.sectionId || subject.section_id || 1}`);
+      this.$router.push(`/student/grades/${subject.id}/${subject.sectionId}`).catch(err => {
+        console.error('❌ Navigation error:', err)
+      })
     },
 
     viewSubjectDetails(subject) {
@@ -787,38 +797,17 @@ export default {
         console.log('📝 Fetching quizzes for sections:', sectionIds)
         
         // 🔍 DEBUG: Check ALL quizzes in the entire database first
-        const { data: debugAllQuizzes, error: debugError } = await supabase
-          .from('quizzes')
-          .select('id, section_id, subject_id, title, status, created_at')
-          .limit(20)
-        
-        console.log('🔍 DEBUG - ALL quizzes in database (up to 20):', {
-          count: debugAllQuizzes?.length || 0,
-          quizzes: debugAllQuizzes,
-          error: debugError
-        })
-        
-        if (debugAllQuizzes && debugAllQuizzes.length > 0) {
-          console.log('🔍 DEBUG - Section IDs in quizzes table:', debugAllQuizzes.map(q => q.section_id))
-          console.log('🔍 DEBUG - Student enrolled section IDs:', sectionIds)
-          console.log('🔍 DEBUG - Do any match?', debugAllQuizzes.some(q => sectionIds.includes(q.section_id)))
-        }
-        
         const { data: allQuizzes, error: quizzesError } = await supabase
           .from('quizzes')
           .select('id, section_id, title, status, start_date, end_date, created_at')
           .in('section_id', sectionIds)
-          .eq('status', 'published')  // ✅ CRITICAL: Only fetch published quizzes
-
-        console.log('📊 Quizzes query result:', { 
-          count: allQuizzes?.length || 0, 
-          error: quizzesError,
-          quizzes: allQuizzes 
-        })
+          .eq('status', 'published')
 
         if (quizzesError) {
           console.error('❌ Error fetching quizzes:', quizzesError)
         }
+
+        console.log('📊 Loaded', allQuizzes?.length || 0, 'published quizzes')
 
         const quizzesBySection = {}
         if (allQuizzes) {
@@ -829,8 +818,6 @@ export default {
             quizzesBySection[quiz.section_id].push(quiz)
           })
         }
-
-        console.log('📦 Quizzes grouped by section:', quizzesBySection)
 
         // Fetch quiz results for student
         const allQuizIds = allQuizzes ? allQuizzes.map(q => q.id) : []
@@ -1106,6 +1093,15 @@ export default {
     },
 
     viewAssessments(subject, type) {
+      console.log('📌 viewAssessments called:', { subject, type })
+      
+      // Validate subject data before navigating
+      if (!subject || !subject.id || !subject.sectionId) {
+        console.error('❌ Invalid subject data:', subject)
+        alert('Unable to navigate. Please refresh the page and try again.')
+        return
+      }
+      
       if (type === 'assignment') {
         this.$router.push({
           name: 'TakeAssignments',
@@ -1118,6 +1114,8 @@ export default {
             sectionName: subject.section,
             instructor: subject.instructor
           }
+        }).catch(err => {
+          console.error('❌ Navigation error:', err)
         })
       } else if (type === 'quiz') {
         this.$router.push({
@@ -1131,6 +1129,8 @@ export default {
             sectionName: subject.section,
             instructor: subject.instructor
           }
+        }).catch(err => {
+          console.error('❌ Navigation error:', err)
         })
       } else {
         this.$router.push({
@@ -1145,11 +1145,21 @@ export default {
             type: type,
             instructor: subject.instructor
           }
+        }).catch(err => {
+          console.error('❌ Navigation error:', err)
         })
       }
     },
 
     takeQuiz(subject) {
+      console.log('📌 takeQuiz called:', subject)
+      
+      if (!subject || !subject.id || !subject.sectionId) {
+        console.error('❌ Invalid subject data:', subject)
+        alert('Unable to navigate. Please refresh the page and try again.')
+        return
+      }
+      
       this.$router.push({
         name: 'TakeQuiz',
         params: {
@@ -1162,10 +1172,20 @@ export default {
           gradeLevel: subject.gradeLevel,
           sectionCode: subject.code
         }
+      }).catch(err => {
+        console.error('❌ Navigation error:', err)
       })
     },
 
     viewGrades(subject) {
+      console.log('📌 viewGrades called:', subject)
+      
+      if (!subject || !subject.id || !subject.sectionId) {
+        console.error('❌ Invalid subject data:', subject)
+        alert('Unable to navigate. Please refresh the page and try again.')
+        return
+      }
+      
       this.$router.push({
         name: 'StudentGrades',
         params: {
@@ -1179,6 +1199,8 @@ export default {
           currentGrade: subject.currentGrade,
           overallScore: subject.overallScore
         }
+      }).catch(err => {
+        console.error('❌ Navigation error:', err)
       })
     },
 
