@@ -294,7 +294,12 @@
               </div>
               <div v-for="assessment in assessmentsToGrade" :key="assessment.id" class="assessment-card">
                 <div class="assessment-header">
-                  <h4>{{ assessment.title }}</h4>
+                  <div class="assessment-title-row">
+                    <h4>{{ assessment.title }}</h4>
+                    <span class="assessment-type-badge" :class="assessment.type">
+                      {{ assessment.type === 'quiz' ? 'Quiz' : 'Assignment' }}
+                    </span>
+                  </div>
                   <span class="assessment-badge">{{ assessment.studentsSubmitted }} submissions</span>
                 </div>
                 <p class="assessment-class">{{ assessment.className }}</p>
@@ -438,6 +443,7 @@ const sidebarExpanded = ref(false)
 const showLogoutModal = ref(false)
 
 let quizSubscription = null
+let assignmentSubscription = null
 let messageSubscription = null
 let enrollmentSubscription = null
 let statsIntervalId = null
@@ -538,7 +544,7 @@ const refreshAssessments = async () => {
 const gradeAssessment = (assessment) => {
   console.log('Grading assessment:', assessment)
   router.push({
-    path: '/teacher/gradebook',
+    path: '/teacher/subjects',
     query: {
       assessmentId: assessment.id,
       sectionId: assessment.sectionId,
@@ -655,6 +661,7 @@ const loadNotifications = async () => {
     const yesterdayISO = yesterday.toISOString()
     const viewedIds = loadViewedNotifications()
     
+    // Load quiz submissions
     try {
       const { data: recentSubmissions, error: submissionsError } = await supabase
         .from('quiz_attempts')
@@ -674,22 +681,60 @@ const loadNotifications = async () => {
       
       if (!submissionsError && recentSubmissions) {
         const submissionNotifications = recentSubmissions.map(submission => {
-          const notifId = `submission-${submission.id}`
+          const notifId = `quiz-submission-${submission.id}`
           return {
             id: notifId,
             title: '📝 New Quiz Submission',
             body: `${submission.students.full_name} submitted "${submission.quizzes.title}"`,
             date: new Date(submission.submitted_at).toLocaleString(),
             timestamp: new Date(submission.submitted_at).getTime(),
-            type: 'submission',
+            type: 'quiz_submission',
             viewed: viewedIds.includes(notifId)
           }
         })
         allNotifications.push(...submissionNotifications)
-        console.log('✅ Loaded', submissionNotifications.length, 'submission notifications')
+        console.log('✅ Loaded', submissionNotifications.length, 'quiz submission notifications')
       }
     } catch (error) {
       console.error('❌ Error loading quiz submissions:', error)
+    }
+    
+    // Load assignment submissions
+    try {
+      const { data: assignmentSubmissions, error: assignmentSubmissionsError } = await supabase
+        .from('assignment_submissions')
+        .select(`
+          id,
+          submitted_at,
+          student_id,
+          assignment_id,
+          assignments!inner(title, teacher_id),
+          students!inner(full_name)
+        `)
+        .eq('assignments.teacher_id', teacherId.value)
+        .eq('status', 'submitted')
+        .gte('submitted_at', yesterdayISO)
+        .order('submitted_at', { ascending: false })
+        .limit(10)
+      
+      if (!assignmentSubmissionsError && assignmentSubmissions) {
+        const assignmentNotifications = assignmentSubmissions.map(submission => {
+          const notifId = `assignment-submission-${submission.id}`
+          return {
+            id: notifId,
+            title: '📄 New Assignment Submission',
+            body: `${submission.students.full_name} submitted "${submission.assignments.title}"`,
+            date: new Date(submission.submitted_at).toLocaleString(),
+            timestamp: new Date(submission.submitted_at).getTime(),
+            type: 'assignment_submission',
+            viewed: viewedIds.includes(notifId)
+          }
+        })
+        allNotifications.push(...assignmentNotifications)
+        console.log('✅ Loaded', assignmentNotifications.length, 'assignment submission notifications')
+      }
+    } catch (error) {
+      console.error('❌ Error loading assignment submissions:', error)
     }
     
     try {
@@ -859,18 +904,29 @@ const loadDashboardStats = async () => {
     today.setHours(0, 0, 0, 0)
     const todayISO = today.toISOString()
     
-    const { data: graded, error: gradedError } = await supabase
+    // Count graded quizzes today
+    const { data: gradedQuizzes, error: gradedQuizzesError } = await supabase
       .from('quiz_attempts')
       .select('id, quiz_id!inner(teacher_id)')
       .eq('quiz_id.teacher_id', teacherId.value)
       .eq('status', 'graded')
       .gte('graded_at', todayISO)
     
-    if (!gradedError && graded) {
-      gradedToday.value = graded.length
-      console.log('✅ Graded today:', graded.length)
-    }
+    // Count graded assignments today
+    const { data: gradedAssignments, error: gradedAssignmentsError } = await supabase
+      .from('assignment_submissions')
+      .select('id, assignment_id!inner(teacher_id)')
+      .eq('assignment_id.teacher_id', teacherId.value)
+      .eq('status', 'graded')
+      .gte('graded_at', todayISO)
     
+    const quizCount = (!gradedQuizzesError && gradedQuizzes) ? gradedQuizzes.length : 0
+    const assignmentCount = (!gradedAssignmentsError && gradedAssignments) ? gradedAssignments.length : 0
+    
+    gradedToday.value = quizCount + assignmentCount
+    console.log('✅ Graded today:', gradedToday.value, '(Quizzes:', quizCount, 'Assignments:', assignmentCount, ')')
+    
+    // Load quizzes with submissions
     const { data: quizzes, error: quizzesError } = await supabase
       .from('quizzes')
       .select(`
@@ -884,9 +940,9 @@ const loadDashboardStats = async () => {
       .eq('teacher_id', teacherId.value)
       .eq('status', 'published')
     
+    const assessmentsWithSubmissions = []
+    
     if (!quizzesError && quizzes) {
-      const assessmentsWithSubmissions = []
-      
       for (const quiz of quizzes) {
         const { data: attempts } = await supabase
           .from('quiz_attempts')
@@ -903,6 +959,7 @@ const loadDashboardStats = async () => {
           
           assessmentsWithSubmissions.push({
             id: quiz.id,
+            type: 'quiz',
             title: quiz.title,
             className: `${quiz.subjects.name} - ${quiz.sections.name}`,
             studentsSubmitted: attempts.length,
@@ -912,13 +969,57 @@ const loadDashboardStats = async () => {
           })
         }
       }
-      
-      assessmentsToGrade.value = assessmentsWithSubmissions
-      pendingReviews.value = assessmentsWithSubmissions.length
-      
-      console.log('📝 Assessments to grade:', assessmentsWithSubmissions.length)
+      console.log('📝 Quizzes to grade:', assessmentsWithSubmissions.filter(a => a.type === 'quiz').length)
     }
     
+    // Load assignments with submissions
+    const { data: assignments, error: assignmentsError } = await supabase
+      .from('assignments')
+      .select(`
+        id,
+        title,
+        subject_id,
+        section_id,
+        subjects!inner(name),
+        sections!inner(name)
+      `)
+      .eq('teacher_id', teacherId.value)
+      .eq('status', 'published')
+    
+    if (!assignmentsError && assignments) {
+      for (const assignment of assignments) {
+        const { data: submissions } = await supabase
+          .from('assignment_submissions')
+          .select('id, student_id')
+          .eq('assignment_id', assignment.id)
+          .eq('status', 'submitted')
+        
+        if (submissions && submissions.length > 0) {
+          const { data: enrollments } = await supabase
+            .from('enrollments')
+            .select('student_id')
+            .eq('section_id', assignment.section_id)
+            .eq('status', 'active')
+          
+          assessmentsWithSubmissions.push({
+            id: assignment.id,
+            type: 'assignment',
+            title: assignment.title,
+            className: `${assignment.subjects.name} - ${assignment.sections.name}`,
+            studentsSubmitted: submissions.length,
+            totalStudents: enrollments?.length || 0,
+            sectionId: assignment.section_id,
+            subjectId: assignment.subject_id
+          })
+        }
+      }
+      console.log('📝 Assignments to grade:', assessmentsWithSubmissions.filter(a => a.type === 'assignment').length)
+    }
+    
+    assessmentsToGrade.value = assessmentsWithSubmissions
+    pendingReviews.value = assessmentsWithSubmissions.length
+    
+    console.log('📝 Total assessments to grade:', assessmentsWithSubmissions.length)
     console.log('✅ Dashboard stats loaded successfully')
     
   } catch (error) {
@@ -929,7 +1030,7 @@ const loadDashboardStats = async () => {
 const handleNotificationClick = async (notification) => {
   console.log('📱 Clicked notification:', notification)
   
-  if (notification.type === 'submission') {
+  if (notification.type === 'quiz_submission' || notification.type === 'assignment_submission') {
     router.push('/teacher/gradebook')
   } else if (notification.type === 'message') {
     router.push('/teacher/messages')
@@ -1004,6 +1105,30 @@ onMounted(async () => {
       })
       .subscribe()
     
+    assignmentSubscription = supabase
+      .channel('assignment_submissions_channel')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'assignment_submissions',
+        filter: `status=eq.submitted`
+      }, (payload) => {
+        console.log('🆕 New assignment submission:', payload)
+        loadNotifications()
+        loadDashboardStats()
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'assignment_submissions',
+        filter: `status=eq.submitted`
+      }, (payload) => {
+        console.log('✏️ Assignment submission updated:', payload)
+        loadNotifications()
+        loadDashboardStats()
+      })
+      .subscribe()
+    
     messageSubscription = supabase
       .channel('messages_channel')
       .on('postgres_changes', {
@@ -1060,6 +1185,9 @@ onUnmounted(() => {
   
   if (quizSubscription) {
     supabase.removeChannel(quizSubscription)
+  }
+  if (assignmentSubscription) {
+    supabase.removeChannel(assignmentSubscription)
   }
   if (messageSubscription) {
     supabase.removeChannel(messageSubscription)
@@ -1794,15 +1922,42 @@ onUnmounted(() => {
 
 .assessment-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.5rem;
   margin-bottom: 0.5rem;
 }
 
-.assessment-header h4 {
+.assessment-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.assessment-title-row h4 {
   font-size: 1rem;
   font-weight: 600;
   color: #1e293b;
+  flex: 1;
+}
+
+.assessment-type-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.assessment-type-badge.quiz {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.assessment-type-badge.assignment {
+  background: #fef3c7;
+  color: #92400e;
 }
 
 .assessment-badge {
@@ -1812,6 +1967,7 @@ onUnmounted(() => {
   border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 500;
+  align-self: flex-start;
 }
 
 .assessment-class {

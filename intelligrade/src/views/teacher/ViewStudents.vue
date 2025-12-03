@@ -167,6 +167,12 @@
       <div class="page-header">
         <div class="header-content">
           <div class="header-left">
+            <button @click="goBack" class="back-button">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+              </svg>
+              <span>Back to Subject</span>
+            </button>
             <div class="header-icon">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M16,4C18.21,4 20,5.79 20,8C20,10.21 18.21,12 16,12C13.79,12 12,10.21 12,8C12,5.79 13.79,4 16,4M16,14C20.42,14 24,15.79 24,18V20H8V18C8,15.79 11.58,14 16,14M6,6C7.1,6 8,6.9 8,8C8,9.1 7.1,10 6,10C4.9,10 4,9.1 4,8C4,6.9 4.9,6 6,6M6,12C8.67,12 12,13.34 12,16V18H0V16C0,13.34 3.33,12 6,12Z" />
@@ -184,11 +190,6 @@
 
     <!-- Main Content -->
     <div class="main-content-wrapper">
-      <button v-if="showScrollTop" @click="scrollToTop" class="scroll-to-top">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M7 14l5-5 5 5z"/>
-        </svg>
-      </button>
       <div v-if="isLoading" class="loading-state">
         <div class="loading-spinner"></div>
         <p>{{ loadingMessage }}</p>
@@ -306,8 +307,13 @@ import { useTeacherAuth } from '../../composables/useTeacherAuth.js'
 const { isDarkMode } = useDarkMode()
 
 // Teacher authentication
-const { teacherProfile } = useTeacherAuth()
-const fullName = computed(() => teacherProfile.value?.full_name || 'Teacher')
+const { teacherProfile, initializeAuth } = useTeacherAuth()
+const fullName = computed(() => {
+  const name = teacherProfile.value?.full_name
+  console.log('Teacher profile:', teacherProfile.value)
+  console.log('Full name:', name)
+  return name || 'Teacher'
+})
 
 const router = useRouter()
 const route = useRoute()
@@ -352,15 +358,6 @@ const notifications = ref<Notification[]>([])
 // Logout modal states
 const showLogoutModal = ref(false)
 const isLoggingOut = ref(false)
-
-// Scroll to Top Button State
-const showScrollTop = ref(false)
-const handleScroll = () => {
-  showScrollTop.value = window.scrollY > 200
-}
-const scrollToTop = () => {
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-}
 
 // Profile dropdown functions
 const toggleProfileDropdown = () => {
@@ -430,6 +427,22 @@ const filteredStudents = computed(() => {
   if (filterStatus.value !== 'all') {
     filtered = filtered.filter((student: Student) => student.status === filterStatus.value)
   }
+
+  // Sort alphabetically by surname (last name)
+  filtered.sort((a, b) => {
+    // Get last names (assuming format: "First Last" or "First Middle Last")
+    const lastNameA = a.full_name.trim().split(' ').pop()?.toLowerCase() || ''
+    const lastNameB = b.full_name.trim().split(' ').pop()?.toLowerCase() || ''
+    
+    // If last names are the same, sort by first name
+    if (lastNameA === lastNameB) {
+      const firstNameA = a.full_name.trim().split(' ')[0]?.toLowerCase() || ''
+      const firstNameB = b.full_name.trim().split(' ')[0]?.toLowerCase() || ''
+      return firstNameA.localeCompare(firstNameB)
+    }
+    
+    return lastNameA.localeCompare(lastNameB)
+  })
 
   return filtered
 })
@@ -569,13 +582,16 @@ const exportStudents = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // Initialize teacher authentication first
+  await initializeAuth()
+  console.log('Auth initialized, teacher profile:', teacherProfile.value)
+  
+  // Then fetch students
   fetchStudents()
-  window.addEventListener('scroll', handleScroll)
 })
 
 onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll)
 })
 </script>
 
@@ -1019,27 +1035,28 @@ onUnmounted(() => {
   scroll-behavior: smooth;
 }
 
-/* Custom Scrollbar Styling - Green Theme */
+/* Custom Scrollbar Styling - Green Theme - More Visible */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 12px;
+  height: 12px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #e2e8f0;
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
   background: linear-gradient(135deg, #3D8D7A, #20c997);
   border-radius: 10px;
-  border: 1px solid #e2e8f0;
+  border: 2px solid #e2e8f0;
   transition: all 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, #2d6a5a, #18a577);
-  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.3);
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.4);
+  border-color: #cbd5e1;
 }
 
 ::-webkit-scrollbar-thumb:active {
@@ -1047,32 +1064,33 @@ onUnmounted(() => {
 }
 
 ::-webkit-scrollbar-corner {
-  background: #f1f5f9;
+  background: #e2e8f0;
 }
 
-/* Firefox Scrollbar */
+/* Firefox Scrollbar - More Visible */
 * {
-  scrollbar-width: thin;
-  scrollbar-color: #3D8D7A #f1f5f9;
+  scrollbar-width: auto;
+  scrollbar-color: #3D8D7A #e2e8f0;
 }
 
-/* Dark mode scrollbar */
+/* Dark mode scrollbar - More Visible */
 .dark ::-webkit-scrollbar-track {
-  background: #1a1d21;
+  background: #1f2937;
 }
 
 .dark ::-webkit-scrollbar-thumb {
   background: linear-gradient(135deg, #20c997, #18a577);
-  border: 1px solid #374151;
+  border: 2px solid #1f2937;
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, #18a577, #146e5a);
-  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.3);
+  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.4);
+  border-color: #374151;
 }
 
 .dark ::-webkit-scrollbar-corner {
-  background: #1a1d21;
+  background: #1f2937;
 }
 
 .spinner {
@@ -1223,6 +1241,36 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.2);
+}
+
+.back-button:hover {
+  background: linear-gradient(135deg, #2d6a5a, #1e5a4a);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
+}
+
+.back-button svg {
+  transition: transform 0.2s ease;
+}
+
+.back-button:hover svg {
+  transform: translateX(-2px);
 }
 
 .header-icon {
@@ -1771,6 +1819,16 @@ onUnmounted(() => {
     flex-direction: column;
     gap: 1rem;
     align-items: stretch;
+  }
+  
+  .header-left {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .back-button {
+    width: 100%;
+    justify-content: center;
   }
   
   .header-actions {

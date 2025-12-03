@@ -1,6 +1,3 @@
-
-
-
 <template>
   <div class="grades-page">
     <!-- Header Section -->
@@ -46,8 +43,8 @@
             <div class="stat-label">Average Score</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value">{{ completedQuizzes }}</div>
-            <div class="stat-label">Completed Quizzes</div>
+            <div class="stat-value">{{ completedQuizzes + completedAssignments }}</div>
+            <div class="stat-label">Graded Items</div>
           </div>
           <div class="stat-card">
             <div class="stat-value">{{ highestGrade }}%</div>
@@ -75,29 +72,38 @@
             <span class="category-count">{{ recentQuizzes.length }}</span>
           </div>
           <div class="grades-list">
-            <div v-for="quiz in recentQuizzes" :key="quiz.id" class="grade-card recent-grade">
+            <div v-for="item in recentQuizzes" :key="item.id" class="grade-card recent-grade">
               <div class="grade-header">
                 <div class="quiz-info">
-                  <h3 class="quiz-title">{{ quiz.title }}</h3>
+                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="item-type-badge" :class="item.type === 'quiz' ? 'type-quiz' : 'type-assignment'">
+                      {{ item.type === 'quiz' ? 'Quiz' : 'Assignment' }}
+                    </span>
+                    <h3 class="quiz-title">{{ item.title }}</h3>
+                  </div>
                   <div class="quiz-code">
-                    <span class="code-label">Code:</span>
-                    <span class="code-value">{{ quiz.quiz_code }}</span>
+                    <span class="code-label">{{ item.type === 'quiz' ? 'Code:' : 'Type:' }}</span>
+                    <span class="code-value">{{ item.quiz_code }}</span>
                   </div>
                 </div>
-                <div class="grade-status" :class="getStatusClass(quiz.status)">
-                  {{ getStatusText(quiz.status) }}
+                <div class="grade-status" :class="getStatusClass(item.status)">
+                  {{ getStatusText(item.status) }}
                 </div>
               </div>
 
               <div class="grade-content">
                 <div class="grade-info">
-                  <div v-if="quiz.best_percentage !== null" class="score-display">
-                    <div class="score-circle" :class="getScoreClass(quiz.best_percentage)">
-                      <span class="score-value">{{ quiz.best_percentage }}%</span>
+                  <div v-if="item.best_percentage !== null" class="score-display">
+                    <div class="score-circle" :class="getScoreClass(item.best_percentage)">
+                      <span class="score-value">{{ item.best_percentage }}%</span>
                     </div>
                     <div class="score-details">
-                      <div class="score-fraction">{{ calculateScore(quiz.best_percentage, quiz.number_of_questions) }} / {{ quiz.number_of_questions }}</div>
-                      <div class="score-label">Questions Correct</div>
+                      <div class="score-fraction">
+                        {{ item.type === 'quiz' ? calculateScore(item.best_percentage, item.number_of_questions) : Math.round(item.best_percentage * item.total_points / 100) }} 
+                        / 
+                        {{ item.type === 'quiz' ? item.number_of_questions : item.total_points }}
+                      </div>
+                      <div class="score-label">{{ item.type === 'quiz' ? 'Questions Correct' : 'Points Earned' }}</div>
                     </div>
                   </div>
                   <div v-else class="score-pending">
@@ -115,35 +121,53 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
-                    <span>Submitted: {{ formatPHTime(quiz.latest_attempt_date) }}</span>
+                    <span>Submitted: {{ formatPHTime(item.latest_attempt_date) }}</span>
                   </div>
-                  <div class="info-item">
+                  <div v-if="item.type === 'quiz'" class="info-item">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                     </svg>
-                    <span>{{ quiz.total_attempts }} attempt(s)</span>
+                    <span>{{ item.total_attempts }} attempt(s)</span>
                   </div>
-                  <div v-if="quiz.time_taken_minutes" class="info-item">
+                  <div v-if="item.type === 'quiz' && item.time_taken_minutes" class="info-item">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
-                    <span>{{ quiz.time_taken_minutes }} minutes</span>
+                    <span>{{ item.time_taken_minutes }} minutes</span>
+                  </div>
+                  <div v-if="item.type === 'assignment' && item.is_late" class="info-item late-warning">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    <span>Late Submission ({{ item.penalty_applied }}% penalty)</span>
                   </div>
                 </div>
               </div>
 
               <div class="grade-actions">
-                <button v-if="quiz.status === 'completed' || quiz.status === 'submitted'" @click="viewQuizPreview(quiz)" class="btn btn-view pending">
+                <button v-if="item.type === 'quiz' && (item.status === 'completed' || item.status === 'submitted')" @click="viewQuizPreview(item)" class="btn btn-view pending">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                   </svg>
                   View Submitted Quiz
                 </button>
-                <button v-else-if="quiz.status === 'graded' || quiz.status === 'reviewed'" @click="viewQuizPreview(quiz)" class="btn btn-view graded">
+                <button v-else-if="item.type === 'quiz' && (item.status === 'graded' || item.status === 'reviewed')" @click="viewQuizPreview(item)" class="btn btn-view graded">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                   </svg>
                   View Answers & Results
+                </button>
+                <button v-else-if="item.type === 'assignment' && item.status === 'graded'" @click="viewAssignmentFeedback(item)" class="btn btn-view graded">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  View Feedback
+                </button>
+                <button v-else-if="item.type === 'assignment'" @click="viewAssignmentFeedback(item)" class="btn btn-view pending">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                  View Submission
                 </button>
               </div>
             </div>
@@ -167,52 +191,66 @@
             <table class="grades-table">
               <thead>
                 <tr>
-                  <th>Quiz</th>
+                  <th>Type</th>
+                  <th>Title</th>
                   <th class="center-header">Score</th>
                   <th class="center-header">Status</th>
                   <th>Submitted</th>
-                  <th class="center-header">Attempts</th>
                   <th class="center-header">Action</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="quiz in allGrades" :key="quiz.id" class="grade-row">
+                <tr v-for="item in allGrades" :key="item.type + '-' + item.id" class="grade-row">
+                  <td class="type-cell">
+                    <span class="item-type-badge-small" :class="item.type === 'quiz' ? 'type-quiz' : 'type-assignment'">
+                      {{ item.type === 'quiz' ? 'Quiz' : 'Assignment' }}
+                    </span>
+                  </td>
                   <td class="quiz-cell">
-                    <div class="quiz-name">{{ quiz.title }}</div>
-                    <div class="quiz-code-small">{{ quiz.quiz_code }}</div>
+                    <div class="quiz-name">{{ item.title }}</div>
+                    <div class="quiz-code-small">{{ item.quiz_code }}</div>
                   </td>
                   <td class="score-cell">
-                    <div v-if="quiz.best_percentage !== null" class="score-badge" :class="getScoreClass(quiz.best_percentage)">
-                      {{ quiz.best_percentage }}%
+                    <div v-if="item.best_percentage !== null" class="score-badge" :class="getScoreClass(item.best_percentage)">
+                      {{ item.best_percentage }}%
                     </div>
                     <div v-else class="score-pending-small">Pending</div>
                   </td>
                   <td class="status-cell">
-                    <div class="status-badge" :class="getStatusClass(quiz.status)">
-                      {{ getStatusText(quiz.status) }}
+                    <div class="status-badge" :class="getStatusClass(item.status)">
+                      {{ getStatusText(item.status) }}
                     </div>
                   </td>
                   <td class="date-cell">
-                    <div v-if="quiz.latest_attempt_date" class="date-text">
-                      {{ formatShortDate(quiz.latest_attempt_date) }}
+                    <div v-if="item.latest_attempt_date" class="date-text">
+                      {{ formatShortDate(item.latest_attempt_date) }}
                     </div>
                     <div v-else class="date-text">-</div>
                   </td>
-                  <td class="attempts-cell">
-                    {{ quiz.total_attempts }}
-                  </td>
                   <td class="actions-cell">
-                    <button v-if="quiz.status === 'completed' || quiz.status === 'submitted'" @click="viewQuizPreview(quiz)" class="btn-table pending" title="View Submitted Quiz">
+                    <button v-if="item.type === 'quiz' && (item.status === 'completed' || item.status === 'submitted')" @click="viewQuizPreview(item)" class="btn-table pending" title="View Submitted Quiz">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                       </svg>
                       <span class="btn-text">View Submitted</span>
                     </button>
-                    <button v-else-if="quiz.status === 'graded' || quiz.status === 'reviewed'" @click="viewQuizPreview(quiz)" class="btn-table graded" title="View Answers & Results">
+                    <button v-else-if="item.type === 'quiz' && (item.status === 'graded' || item.status === 'reviewed')" @click="viewQuizPreview(item)" class="btn-table graded" title="View Answers & Results">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                       </svg>
                       <span class="btn-text">View Results</span>
+                    </button>
+                    <button v-else-if="item.type === 'assignment' && item.status === 'graded'" @click="viewAssignmentFeedback(item)" class="btn-table graded" title="View Assignment Feedback">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                      <span class="btn-text">View Feedback</span>
+                    </button>
+                    <button v-else-if="item.type === 'assignment'" @click="viewAssignmentFeedback(item)" class="btn-table pending" title="View Submission">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                      </svg>
+                      <span class="btn-text">View Submission</span>
                     </button>
                   </td>
                 </tr>
@@ -229,12 +267,12 @@
             </svg>
           </div>
           <h3>No Grades Yet</h3>
-          <p>You haven't submitted any quizzes for this subject yet.</p>
-          <button @click="goToQuizzes" class="btn btn-primary">
+          <p>You haven't submitted any quizzes or assignments for this subject yet.</p>
+          <button @click="goBack" class="btn btn-primary">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+              <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
             </svg>
-            Take a Quiz
+            Back to Subject
           </button>
         </div>
       </div>
@@ -366,6 +404,10 @@ export default {
 
     const completedQuizzes = computed(() => {
       return grades.value.filter(g => g.status === 'completed' || g.status === 'graded').length;
+    });
+
+    const completedAssignments = computed(() => {
+      return grades.value.filter(g => g.type === 'assignment' && (g.status === 'completed' || g.status === 'graded')).length;
     });
 
     const averageGrade = computed(() => {
@@ -664,7 +706,9 @@ export default {
 
         console.log('Loading grades for student:', studentInfo.value.student_id, 'section:', section.value.id);
 
-        // Get all quizzes for this section
+        const processedGrades = [];
+
+        // ============ LOAD QUIZZES ============
         const { data: sectionQuizzes, error: quizzesError } = await supabase
           .from('quizzes')
           .select('id, title, quiz_code, description, number_of_questions, attempts_allowed, section_id')
@@ -673,129 +717,225 @@ export default {
 
         if (quizzesError) {
           console.error('Error loading quizzes:', quizzesError);
-          throw quizzesError;
-        }
+        } else {
+          console.log('Found quizzes for section:', sectionQuizzes?.length || 0);
 
-        console.log('Found quizzes for section:', sectionQuizzes?.length || 0);
+          if (sectionQuizzes && sectionQuizzes.length > 0) {
+            const quizIds = sectionQuizzes.map(q => q.id);
 
-        if (!sectionQuizzes || sectionQuizzes.length === 0) {
-          grades.value = [];
-          console.log('No quizzes found for this section');
-          return;
-        }
+            // Get ALL attempts for this student (that have been submitted)
+            const { data: attempts, error: attemptsError } = await supabase
+              .from('quiz_attempts')
+              .select('*')
+              .eq('student_id', studentInfo.value.student_id)
+              .in('quiz_id', quizIds)
+              .in('status', ['submitted', 'graded', 'reviewed'])
+              .order('created_at', { ascending: false });
 
-        const quizIds = sectionQuizzes.map(q => q.id);
+            if (attemptsError) {
+              console.error('Error loading attempts:', attemptsError);
+            } else {
+              console.log('Found quiz attempts:', attempts?.length || 0);
+              
+              if (attempts && attempts.length > 0) {
+                console.log('Quiz attempts details:', attempts.map(a => ({
+                  id: a.id,
+                  quiz_id: a.quiz_id,
+                  status: a.status,
+                  submitted_at: a.submitted_at,
+                  percentage: a.percentage
+                })));
+              }
 
-        // Get ALL attempts for this student
-        const { data: attempts, error: attemptsError } = await supabase
-          .from('quiz_attempts')
-          .select('*')
-          .eq('student_id', studentInfo.value.student_id)
-          .in('quiz_id', quizIds)
-          .order('submitted_at', { ascending: false });
+              // Auto-grade any submitted attempts that haven't been graded
+              if (attempts && attempts.length > 0) {
+                for (const attempt of attempts) {
+                  if (attempt.status === 'submitted' && !attempt.auto_graded) {
+                    console.log('Found ungraded attempt, auto-grading:', attempt.id);
+                    await autoGradeAttempt(attempt.id);
+                  }
+                }
 
-        if (attemptsError) {
-          console.error('Error loading attempts:', attemptsError);
-          throw attemptsError;
-        }
+                // Reload attempts after auto-grading
+                const { data: updatedAttempts, error: reloadError } = await supabase
+                  .from('quiz_attempts')
+                  .select('*')
+                  .eq('student_id', studentInfo.value.student_id)
+                  .in('quiz_id', quizIds)
+                  .in('status', ['submitted', 'graded', 'reviewed'])
+                  .order('created_at', { ascending: false });
 
-        console.log('Found attempts:', attempts?.length || 0);
+                if (!reloadError && updatedAttempts) {
+                  attempts.length = 0;
+                  attempts.push(...updatedAttempts);
+                  console.log('Reloaded quiz attempts after auto-grading:', updatedAttempts.length);
+                }
+              }
 
-        // Auto-grade any submitted attempts that haven't been graded
-        if (attempts && attempts.length > 0) {
-          for (const attempt of attempts) {
-            if (attempt.status === 'submitted' && !attempt.auto_graded) {
-              console.log('Found ungraded attempt, auto-grading:', attempt.id);
-              await autoGradeAttempt(attempt.id);
-            }
-          }
+              if (attempts && attempts.length > 0) {
+                // Build a map of quizzes
+                const quizMap = {};
+                sectionQuizzes.forEach(quiz => {
+                  quizMap[quiz.id] = {
+                    quiz: quiz,
+                    attempts: []
+                  };
+                });
 
-          // Reload attempts after auto-grading
-          const { data: updatedAttempts, error: reloadError } = await supabase
-            .from('quiz_attempts')
-            .select('*')
-            .eq('student_id', studentInfo.value.student_id)
-            .in('quiz_id', quizIds)
-            .in('status', ['submitted', 'graded', 'reviewed'])
-            .order('submitted_at', { ascending: false });
+                // Group attempts by quiz
+                attempts.forEach(attempt => {
+                  if (quizMap[attempt.quiz_id]) {
+                    quizMap[attempt.quiz_id].attempts.push(attempt);
+                  }
+                });
 
-          if (!reloadError && updatedAttempts) {
-            attempts.length = 0;
-            attempts.push(...updatedAttempts);
-          }
-        }
+                // Process each quiz
+                Object.values(quizMap).forEach(quizData => {
+                  if (quizData.attempts.length === 0) return;
 
-        if (!attempts || attempts.length === 0) {
-          grades.value = [];
-          console.log('No submitted attempts found');
-          return;
-        }
+                  const { quiz, attempts: quizAttempts } = quizData;
 
-        // Build a map of quizzes
-        const quizMap = {};
-        sectionQuizzes.forEach(quiz => {
-          quizMap[quiz.id] = {
-            quiz: quiz,
-            attempts: []
-          };
-        });
+                  // Find best percentage
+                  let bestAttempt = quizAttempts[0];
+                  quizAttempts.forEach(attempt => {
+                    if (attempt.percentage !== null && attempt.percentage !== undefined) {
+                      if (bestAttempt.percentage === null || bestAttempt.percentage === undefined) {
+                        bestAttempt = attempt;
+                      } else if (attempt.percentage > bestAttempt.percentage) {
+                        bestAttempt = attempt;
+                      }
+                    }
+                  });
 
-        // Group attempts by quiz
-        attempts.forEach(attempt => {
-          if (quizMap[attempt.quiz_id]) {
-            quizMap[attempt.quiz_id].attempts.push(attempt);
-          }
-        });
+                  // Find latest attempt
+                  const latestAttempt = quizAttempts[0];
 
-        // Process each quiz
-        const processedGrades = [];
-        
-        Object.values(quizMap).forEach(quizData => {
-          if (quizData.attempts.length === 0) return;
+                  // Determine status
+                  let resultStatus = 'completed';
+                  if (latestAttempt.status === 'graded' || latestAttempt.status === 'reviewed') {
+                    resultStatus = 'graded';
+                  } else if (latestAttempt.status === 'submitted') {
+                    resultStatus = 'submitted';
+                  }
 
-          const { quiz, attempts: quizAttempts } = quizData;
-
-          // Find best percentage
-          let bestAttempt = quizAttempts[0];
-          quizAttempts.forEach(attempt => {
-            if (attempt.percentage !== null && attempt.percentage !== undefined) {
-              if (bestAttempt.percentage === null || bestAttempt.percentage === undefined) {
-                bestAttempt = attempt;
-              } else if (attempt.percentage > bestAttempt.percentage) {
-                bestAttempt = attempt;
+                  processedGrades.push({
+                    type: 'quiz',
+                    id: quiz.id,
+                    title: quiz.title,
+                    quiz_code: quiz.quiz_code,
+                    description: quiz.description,
+                    number_of_questions: quiz.number_of_questions || 1,
+                    attempts_allowed: quiz.attempts_allowed || 999,
+                    best_percentage: bestAttempt.percentage !== null ? bestAttempt.percentage : null,
+                    total_attempts: quizAttempts.length,
+                    latest_attempt_date: latestAttempt.submitted_at,
+                    status: resultStatus,
+                    time_taken_minutes: latestAttempt.time_taken_minutes,
+                    visible_to_student: true
+                  });
+                });
               }
             }
-          });
-
-          // Find latest attempt
-          const latestAttempt = quizAttempts[0];
-
-          // Determine status
-          let resultStatus = 'completed';
-          if (latestAttempt.status === 'graded' || latestAttempt.status === 'reviewed') {
-            resultStatus = 'graded';
-          } else if (latestAttempt.status === 'submitted') {
-            resultStatus = 'submitted';
           }
+        }
 
-          processedGrades.push({
-            id: quiz.id,
-            title: quiz.title,
-            quiz_code: quiz.quiz_code,
-            description: quiz.description,
-            number_of_questions: quiz.number_of_questions || 1,
-            attempts_allowed: quiz.attempts_allowed || 999,
-            best_percentage: bestAttempt.percentage !== null ? bestAttempt.percentage : null,
-            total_attempts: quizAttempts.length,
-            latest_attempt_date: latestAttempt.submitted_at,
-            status: resultStatus,
-            time_taken_minutes: latestAttempt.time_taken_minutes,
-            visible_to_student: true
-          });
-        });
+        // ============ LOAD ASSIGNMENTS ============
+        const { data: sectionAssignments, error: assignmentsError } = await supabase
+          .from('assignments')
+          .select('id, title, description, total_points, due_date, assignment_type, section_id')
+          .eq('section_id', section.value.id)
+          .eq('status', 'published');
+
+        if (assignmentsError) {
+          console.error('Error loading assignments:', assignmentsError);
+        } else {
+          console.log('Found assignments for section:', sectionAssignments?.length || 0);
+
+          if (sectionAssignments && sectionAssignments.length > 0) {
+            const assignmentIds = sectionAssignments.map(a => a.id);
+
+            // Get all submissions for this student
+            const { data: submissions, error: submissionsError } = await supabase
+              .from('assignment_submissions')
+              .select('*')
+              .eq('student_id', studentInfo.value.student_id)
+              .in('assignment_id', assignmentIds)
+              .in('status', ['submitted', 'graded', 'returned'])
+              .order('submitted_at', { ascending: false });
+
+            if (submissionsError) {
+              console.error('Error loading submissions:', submissionsError);
+            } else {
+              console.log('Found assignment submissions:', submissions?.length || 0);
+
+              if (submissions && submissions.length > 0) {
+                // Build a map of assignments
+                const assignmentMap = {};
+                sectionAssignments.forEach(assignment => {
+                  assignmentMap[assignment.id] = {
+                    assignment: assignment,
+                    submission: null
+                  };
+                });
+
+                // Map submissions to assignments (only one submission per assignment)
+                submissions.forEach(submission => {
+                  if (assignmentMap[submission.assignment_id]) {
+                    // Keep the latest submission
+                    if (!assignmentMap[submission.assignment_id].submission ||
+                        new Date(submission.submitted_at) > new Date(assignmentMap[submission.assignment_id].submission.submitted_at)) {
+                      assignmentMap[submission.assignment_id].submission = submission;
+                    }
+                  }
+                });
+
+                // Process each assignment that has a submission
+                Object.values(assignmentMap).forEach(assignmentData => {
+                  if (!assignmentData.submission) return;
+
+                  const { assignment, submission } = assignmentData;
+
+                  // Calculate percentage
+                  let percentage = null;
+                  if (submission.score !== null && submission.score !== undefined) {
+                    percentage = assignment.total_points > 0 
+                      ? Math.round((submission.score / assignment.total_points) * 100 * 100) / 100
+                      : 0;
+                  }
+
+                  // Determine status
+                  let resultStatus = 'submitted';
+                  if (submission.status === 'graded' || submission.status === 'returned') {
+                    resultStatus = 'graded';
+                  }
+
+                  processedGrades.push({
+                    type: 'assignment',
+                    id: assignment.id,
+                    title: assignment.title,
+                    quiz_code: assignment.assignment_type.toUpperCase(), // Use assignment type as code
+                    description: assignment.description,
+                    total_points: assignment.total_points,
+                    number_of_questions: assignment.total_points, // Use total points for display
+                    attempts_allowed: 1, // Assignments typically allow one submission
+                    best_percentage: percentage,
+                    total_attempts: 1, // Only one submission
+                    latest_attempt_date: submission.submitted_at,
+                    status: resultStatus,
+                    submission_id: submission.id,
+                    feedback: submission.feedback,
+                    is_late: submission.is_late,
+                    penalty_applied: submission.penalty_applied,
+                    visible_to_student: true
+                  });
+                });
+              }
+            }
+          }
+        }
 
         grades.value = processedGrades;
-        console.log('Processed grades:', grades.value.length, grades.value);
+        console.log('Processed total grades (quizzes + assignments):', grades.value.length, grades.value);
 
       } catch (error) {
         console.error('Error loading grades:', error);
@@ -827,6 +967,15 @@ export default {
             }
           }
           
+          await loadGrades();
+        })
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'assignment_submissions',
+          filter: `student_id=eq.${studentInfo.value.student_id}`
+        }, async (payload) => {
+          console.log('Assignment submission changed:', payload);
           await loadGrades();
         })
         .subscribe((status) => {
@@ -1028,6 +1177,19 @@ export default {
       return 'See correct answer above';
     };
 
+    // Assignment Feedback
+    const viewAssignmentFeedback = (assignment) => {
+      // For now, show a simple alert with the feedback
+      // You can expand this to a modal similar to quiz preview
+      if (assignment.feedback) {
+        alert(`Assignment Feedback:\n\n${assignment.feedback}`);
+      } else if (assignment.status === 'graded') {
+        alert(`Score: ${assignment.best_percentage}%\n\nNo additional feedback provided.`);
+      } else {
+        alert('Your assignment has been submitted and is awaiting grading.');
+      }
+    };
+
     // Navigation
     const goBack = () => {
       router.push({ name: 'StudentSubjects' });
@@ -1081,10 +1243,10 @@ export default {
 
     return {
       loading, studentInfo, subject, section, grades, recentQuizzes, allGrades,
-      completedQuizzes, averageGrade, highestGrade, lowestGrade, showPreviewModal,
+      completedQuizzes, completedAssignments, averageGrade, highestGrade, lowestGrade, showPreviewModal,
       selectedQuiz, selectedAttempt, previewAnswers, loadingPreview, isGraded, modalTitle,
       formatPHTime, formatShortDate, getStatusClass, getStatusText, getScoreClass, 
-      calculateScore, viewQuizPreview, getStudentAnswerText, getCorrectAnswerText,
+      calculateScore, viewQuizPreview, viewAssignmentFeedback, getStudentAnswerText, getCorrectAnswerText,
       goBack, goToQuizzes
     };
   }
@@ -1411,6 +1573,53 @@ export default {
 
 .dark .quiz-info h3 {
   color: #A3D1C6;
+}
+
+/* Type Badges */
+.item-type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.type-quiz {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+}
+
+.type-assignment {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.item-type-badge-small {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  border-radius: 10px;
+  font-size: 0.688rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.type-cell {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.late-warning {
+  color: #f59e0b !important;
+  font-weight: 600;
+}
+
+.dark .late-warning {
+  color: #fbbf24 !important;
 }
 
 .quiz-code {

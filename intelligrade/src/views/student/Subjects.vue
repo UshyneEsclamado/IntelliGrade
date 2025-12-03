@@ -62,237 +62,296 @@
 
 <template>
   <div class="subjects-container">
-    <!-- Header Section (Uniform Card Style) -->
-    <div class="section-header-card minimal-header-card">
-      <div class="section-header-left">
-        <div class="section-header-icon minimal-header-icon desktop-only">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M5,19V5H19V19H5Z" />
-          </svg>
-        </div>
-        <div style="width:100%">
-          <div class="section-header-title minimal-header-title">My Subjects</div>
-          <div class="section-header-sub minimal-header-sub">View and manage your enrolled subjects</div>
-          <!-- Enhanced Mobile Card -->
-          <div class="header-stats-mobile formal-mobile-card">
-            <div class="formal-mobile-stats">
-              <div class="stat-item">
-                <span class="stat-number">{{ totalSubjects }}</span>
-                <span class="stat-label">Total Subjects</span>
-              </div>
-              <div class="enrollment-info-badge">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
-                </svg>
-                <span>Enrolled by Teacher</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="section-header-stats header-stats-desktop">
-        <div class="stat-item">
-          <span class="stat-number">{{ totalSubjects }}</span>
-          <span class="stat-label">Total Subjects</span>
-        </div>
-        <div class="enrollment-info-badge desktop">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
-          </svg>
-          <span>Enrolled by Teacher</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Filter and Search -->
-    <div class="controls-section">
-      <div class="search-box">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" />
-        </svg>
-        <input 
-          type="text" 
-          v-model="searchQuery" 
-          placeholder="Search subjects..."
-          class="search-input"
-        />
-      </div>
-      <div class="filter-tabs">
-        <button 
-          v-for="filter in filters" 
-          :key="filter.key"
-          @click="activeFilter = filter.key"
-          :class="['filter-tab', { 'active': activeFilter === filter.key }]"
-        >
-          {{ filter.label }}
-        </button>
-      </div>
-    </div>
-
-    <!-- Subjects Grid -->
-    <div class="subjects-grid">
-      <div 
-        v-for="subject in filteredSubjects" 
-        :key="subject.id" 
-        :class="[
-          'subject-card',
-          { 'favorite-card': favoriteSubjects.has(subject.id) },
-          { 'archived-card': archivedSubjects.has(subject.id) }
-        ]"
-      >
-        <div class="subject-header">
-          <div class="subject-header-left">
-            <div class="subject-icon" :style="{ background: subject.color }">
-              <span>{{ subject.code.substring(0, 2) }}</span>
-            </div>
-            <div class="subject-status">
-              <span :class="['status-badge', subject.status]">{{ subject.status }}</span>
-            </div>
-          </div>
-          <div class="subject-header-right">
-            <!-- Star/Favorite Button -->
-            <button 
-              @click.stop="toggleFavorite(subject.id)"
-              :class="['star-btn', { 'favorited': favoriteSubjects.has(subject.id) }]"
-              :title="favoriteSubjects.has(subject.id) ? 'Remove from favorites' : 'Add to favorites'"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" :fill="favoriteSubjects.has(subject.id) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2">
-                <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2"></polygon>
-              </svg>
-            </button>
-            <!-- Options Menu -->
-            <div class="options-menu" :ref="`options-${subject.id}`">
-              <button 
-                @click.stop="toggleOptionsMenu(subject.id)"
-                class="options-btn"
-                :title="'More options'"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12,16A2,2 0 0,1 14,18A2,2 0 0,1 12,20A2,2 0 0,1 10,18A2,2 0 0,1 12,16M12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12A2,2 0 0,1 12,10M12,4A2,2 0 0,1 14,6A2,2 0 0,1 12,8A2,2 0 0,1 10,6A2,2 0 0,1 12,4Z" />
-                </svg>
-              </button>
-              <div v-if="subject.showOptions" class="options-dropdown" @click.stop>
-                <button 
-                  @click.stop="confirmUnenroll(subject)"
-                  class="dropdown-item unenroll-item"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
-                  </svg>
-                  Unenroll from Class
-                </button>
-                <button 
-                  @click.stop="toggleArchive(subject.id)"
-                  class="dropdown-item"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M3,3H21V6.5H20V19A2,2 0 0,1 18,21H6A2,2 0 0,1 4,19V6.5H3V3M6.5,6.5V18.5H17.5V6.5H6.5M8,8V16.5H9.5V8H8M14.5,8V16.5H16V8H14.5Z" />
-                  </svg>
-                  {{ archivedSubjects.has(subject.id) ? 'Unarchive' : 'Archive' }}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="subject-content">
-          <h3 class="subject-title">{{ subject.name }}</h3>
-          <p class="subject-code">{{ subject.code }}</p>
-          <p class="subject-instructor">Teacher: {{ subject.instructor }}</p>
-          <p class="subject-section">Section: {{ subject.section }}</p>
-          <p class="subject-grade">Grade {{ subject.gradeLevel }}</p>
-        </div>
-        
-        <div class="subject-stats compact">
-          <div class="stat">
-            <span class="stat-value">{{ subject.totalAssessments || 0 }}</span>
-            <span class="stat-text">Total</span>
-          </div>
-          <div class="stat">
-            <span class="stat-value">{{ subject.completedAssessments || 0 }}</span>
-            <span class="stat-text">Completed</span>
-          </div>
-          <div class="stat">
-            <span class="stat-value">{{ subject.currentGrade || '--' }}</span>
-            <span class="stat-text">Grade</span>
-          </div>
-        </div>
-        
-        <!-- Assessment Management Actions -->
-        <div class="assessment-actions">
-          <h4 class="actions-title">Assessments</h4>
-          <div class="action-buttons-grid">
-            <!-- Quizzes -->
-            <button 
-              class="assessment-action-btn quiz-btn"
-              @click.stop="viewAssessments(subject, 'quiz')"
-              :class="{ 'has-available': subject.availableQuizzes > 0 }"
-            >
-              <div class="btn-icon quiz-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M9,5V9H21V7.5L22.5,6L21,4.5L19.5,6L18,4.5L16.5,6L18,7.5V9H15V5H9M9,19V15H15V19H9M21,15V13.5L19.5,12L18,13.5V15H21Z" />
-                </svg>
-              </div>
-              <div class="btn-content">
-                <span class="btn-title">Quizzes</span>
-                <span class="btn-count">{{ subject.availableQuizzes || 0 }} available</span>
-              </div>
-              <div v-if="subject.availableQuizzes > 0" class="notification-badge">{{ subject.availableQuizzes }}</div>
-            </button>
-
-            <!-- Assignments -->
-            <button 
-              class="assessment-action-btn assignment-btn"
-              @click.stop="viewAssessments(subject, 'assignment')"
-              :class="{ 'has-available': subject.availableAssignments > 0 }"
-            >
-              <div class="btn-icon assignment-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-                </svg>
-              </div>
-              <div class="btn-content">
-                <span class="btn-title">Assignments</span>
-                <span class="btn-count">{{ subject.availableAssignments || 0 }} available</span>
-              </div>
-              <div v-if="subject.availableAssignments > 0" class="notification-badge">{{ subject.availableAssignments }}</div>
-            </button>
-          </div>
-        </div>
-
-        <div class="subject-actions compact">
-          <button class="action-btn secondary full-width" @click.stop="viewGrades(subject)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M19,19H5V5H19V19M17,12H7V10H17V12M15,16H7V14H15V16M17,8H7V6H17V8Z" />
+    <!-- Modern Header Section -->
+    <div class="page-header">
+      <div class="header-content">
+        <div class="header-main">
+          <div class="header-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM19 19H5V5H19V19Z" stroke="currentColor" stroke-width="2"/>
+              <path d="M7 7H17M7 10H17M7 13H17M7 16H12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
-            View Grades
+          </div>
+          <div class="header-text">
+            <h1 class="page-title">My Subjects</h1>
+            <p class="page-subtitle">View and manage your enrolled subjects</p>
+          </div>
+        </div>
+        
+        <div class="header-stats">
+          <div class="stat-card">
+            <div class="stat-number">{{ totalSubjects }}</div>
+            <div class="stat-label">Total Subjects</div>
+          </div>
+          <div class="enrollment-badge">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1L13.5 2.5L16.17 5.17L10.5 10.84L6.67 7L1 12.67L2.33 14L6.67 9.67L10.5 13.5L18.33 5.67L21 8.33V6.33L21 9Z"/>
+            </svg>
+            <span>Enrolled by Teacher</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modern Controls Section -->
+    <div class="controls-card">
+      <div class="search-section">
+        <div class="search-wrapper">
+          <div class="search-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+              <path d="21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <input 
+            type="text" 
+            v-model="searchQuery" 
+            placeholder="Search subjects by name, code, or instructor..."
+            class="search-input"
+          />
+          <button v-if="searchQuery" @click="searchQuery = ''" class="clear-search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      
+      <div class="filter-section">
+        <div class="filter-pills">
+          <button 
+            v-for="filter in filters" 
+            :key="filter.key"
+            @click="activeFilter = filter.key"
+            :class="['filter-pill', { 'active': activeFilter === filter.key }]"
+          >
+            <span class="filter-label">{{ filter.label }}</span>
+            <span class="filter-count" v-if="getFilterCount(filter.key) > 0">{{ getFilterCount(filter.key) }}</span>
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Empty State -->
-    <div v-if="filteredSubjects.length === 0 && !isLoading" class="empty-state">
-      <div class="empty-icon">
-        <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M5,19V5H19V19H5Z" />
-        </svg>
+    <!-- Enhanced Subjects Grid -->
+    <div class="content-area">
+      <!-- Loading State -->
+      <div v-if="isLoading" class="loading-state">
+        <div class="loading-spinner"></div>
+        <p>{{ loadingMessage }}</p>
       </div>
-      <h3>No subjects found</h3>
-      <p v-if="searchQuery || activeFilter !== 'all'">Try adjusting your search or filter criteria</p>
-      <div v-else class="enrollment-notice">
-        <div class="notice-icon">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M11,16.5L6.5,12L7.91,10.59L11,13.67L16.59,8.09L18,9.5L11,16.5Z"/>
-          </svg>
+      
+      <!-- Subjects Grid -->
+      <div v-else-if="filteredSubjects.length > 0" class="subjects-grid">
+        <div 
+          v-for="subject in filteredSubjects" 
+          :key="subject.id" 
+          :class="[
+            'subject-card',
+            { 'favorite-card': favoriteSubjects.has(subject.id) },
+            { 'archived-card': archivedSubjects.has(subject.id) }
+          ]"
+        >
+          <!-- Card Header -->
+          <div class="card-header">
+            <div class="subject-info">
+              <div class="subject-avatar" :style="{ background: subject.color || getSubjectColor(subject.code) }">
+                <span>{{ getSubjectInitials(subject) }}</span>
+              </div>
+              <div class="subject-details">
+                <h3 class="subject-title">{{ subject.name }}</h3>
+                <p class="subject-meta">
+                  <span class="subject-code">{{ subject.code }}</span>
+                  <span class="separator">•</span>
+                  <span class="subject-section">{{ subject.section }}</span>
+                </p>
+                <p class="subject-instructor">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z"/>
+                  </svg>
+                  {{ subject.instructor }}
+                </p>
+              </div>
+            </div>
+            
+            <div class="card-actions">
+              <button 
+                @click.stop="toggleFavorite(subject.id)"
+                :class="['action-icon-btn', 'favorite-btn', { 'active': favoriteSubjects.has(subject.id) }]"
+                :title="favoriteSubjects.has(subject.id) ? 'Remove from favorites' : 'Add to favorites'"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" :fill="favoriteSubjects.has(subject.id) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2">
+                  <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2"/>
+                </svg>
+              </button>
+              
+              <div class="dropdown" v-if="!archivedSubjects.has(subject.id)">
+                <button 
+                  @click.stop="toggleOptionsMenu(subject.id)"
+                  class="action-icon-btn options-btn"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12,16A2,2 0 0,1 14,18A2,2 0 0,1 12,20A2,2 0 0,1 10,18A2,2 0 0,1 12,16M12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12A2,2 0 0,1 12,10M12,4A2,2 0 0,1 14,6A2,2 0 0,1 12,8A2,2 0 0,1 10,6A2,2 0 0,1 12,4Z"/>
+                  </svg>
+                </button>
+                
+                <div v-if="subject.showOptions" class="options-dropdown" @click.stop>
+                  <button @click.stop="viewSubjectDetails(subject)" class="dropdown-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 4.5C7 4.5 2.73 7.61 1 12C2.73 16.39 7 19.5 12 19.5S21.27 16.39 23 12C21.27 7.61 17 4.5 12 4.5ZM12 17C9.24 17 7 14.76 7 12S9.24 7 12 7S17 9.24 17 12S14.76 17 12 17ZM12 9C10.34 9 9 10.34 9 12S10.34 15 12 15S15 13.66 15 12S13.66 9 12 9Z"/>
+                    </svg>
+                    View Details
+                  </button>
+                  <button @click.stop="confirmUnenroll(subject)" class="dropdown-item danger">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
+                    </svg>
+                    Unenroll
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progress Section -->
+          <div class="progress-section">
+            <div class="progress-header">
+              <span class="progress-label">Overall Progress</span>
+              <span class="progress-percentage">{{ subject.progress || 0 }}%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" :style="{ width: (subject.progress || 0) + '%' }"></div>
+            </div>
+          </div>
+
+          <!-- Stats Section -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-number">{{ subject.totalAssessments || 0 }}</div>
+              <div class="stat-label">Assignments</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number">{{ subject.availableQuizzes || 0 }}</div>
+              <div class="stat-label">Quizzes</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number">{{ subject.currentGrade || '--' }}</div>
+              <div class="stat-label">Grade</div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="quick-actions">
+            <button class="primary-btn" @click.stop="navigateToSubject(subject)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 18L15 12L9 6"/>
+              </svg>
+              View Grades
+            </button>
+            
+            <div class="secondary-actions">
+              <button 
+                v-if="(subject.availableQuizzes || 0) > 0"
+                class="secondary-btn quiz-btn"
+                @click.stop="viewAssessments(subject, 'quiz')"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M9 11H7V9H9V11ZM13 11H11V9H13V11ZM17 11H15V9H17V11ZM19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM19 19H5V5H19V19Z"/>
+                </svg>
+                {{ subject.availableQuizzes }} Quiz{{ subject.availableQuizzes !== 1 ? 'es' : '' }}
+              </button>
+              
+              <button 
+                v-if="(subject.availableAssignments || 0) > 0"
+                class="secondary-btn assignment-btn"
+                @click.stop="viewAssessments(subject, 'assignment')"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                </svg>
+                {{ subject.availableAssignments }} Assignment{{ subject.availableAssignments !== 1 ? 's' : '' }}
+              </button>
+            </div>
+          </div>
         </div>
-        <p class="notice-title">Waiting for Teacher Enrollment</p>
-        <p class="notice-description">Your teacher will enroll you in their classes. Once enrolled, your subjects will appear here.</p>
-        <div class="notice-tip">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M11,17H13V11H11V17Z"/>
-          </svg>
-          <span>Contact your teacher if you believe you should be enrolled in a class</span>
+      </div>
+
+      <!-- Enhanced Empty State -->
+      <div v-else class="empty-state-wrapper">
+        <div class="empty-state-card">
+          <div class="empty-illustration">
+            <!-- Animated Books Stack -->
+            <div class="books-container">
+              <div class="book book-1"></div>
+              <div class="book book-2"></div>
+              <div class="book book-3"></div>
+            </div>
+            <!-- Floating Elements -->
+            <div class="floating-elements">
+              <div class="element element-1">📚</div>
+              <div class="element element-2">✨</div>
+              <div class="element element-3">📝</div>
+            </div>
+          </div>
+          
+          <div class="empty-content">
+            <h3 class="empty-title">
+              {{ searchQuery || activeFilter !== 'all' ? 'No subjects found' : 'No subjects yet' }}
+            </h3>
+            
+            <div v-if="searchQuery || activeFilter !== 'all'" class="search-empty">
+              <p class="empty-description">
+                Try adjusting your search terms or filter settings to find what you're looking for.
+              </p>
+              <div class="search-suggestions">
+                <button @click="clearFilters" class="suggestion-btn">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6H21M9 6V4C9 3.45 9.45 3 10 3H14C14.55 3 15 3.45 15 4V6M19 6V20C19 20.55 18.55 21 18 21H6C5.45 21 5 20.55 5 20V6"/>
+                  </svg>
+                  Clear all filters
+                </button>
+              </div>
+            </div>
+            
+            <div v-else class="enrollment-info">
+              <p class="empty-description">
+                You haven't been enrolled in any subjects yet. Your teacher will add you to their classes where you can access assignments, quizzes, and track your progress.
+              </p>
+              
+              <div class="info-cards">
+                <div class="info-card">
+                  <div class="info-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1L13.5 2.5L16.17 5.17L10.5 10.84L6.67 7L1 12.67L2.33 14L6.67 9.67L10.5 13.5L18.33 5.67L21 8.33V6.33L21 9Z"/>
+                    </svg>
+                  </div>
+                  <div class="info-content">
+                    <h4>Getting Started</h4>
+                    <p>Your teacher will enroll you in subjects automatically</p>
+                  </div>
+                </div>
+                
+                <div class="info-card">
+                  <div class="info-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2L13.09 8.26L22 9L17 14L18.18 21L12 17.77L5.82 21L7 14L2 9L8.91 8.26L12 2Z"/>
+                    </svg>
+                  </div>
+                  <div class="info-content">
+                    <h4>What's Next?</h4>
+                    <p>Once enrolled, you'll see all your subjects here</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="help-tip">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M11,17H13V11H11V17Z"/>
+                </svg>
+                <span>Need help? Contact your teacher if you believe you should be enrolled in a class</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -558,6 +617,66 @@ export default {
         return a & a;
       }, 0);
       return colors[Math.abs(hash) % colors.length];
+    },
+
+    // New helper methods for enhanced UI
+    getSubjectColor(subjectCode) {
+      const colors = [
+        '#3D8D7A', '#6366f1', '#f59e0b', '#ef4444', 
+        '#8b5cf6', '#10b981', '#06b6d4', '#84cc16',
+        '#f97316', '#ec4899'
+      ];
+      let hash = 0;
+      for (let i = 0; i < subjectCode.length; i++) {
+        hash = subjectCode.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      return colors[Math.abs(hash) % colors.length];
+    },
+
+    getSubjectInitials(subject) {
+      if (subject.code) {
+        return subject.code.substring(0, 2).toUpperCase();
+      }
+      if (subject.name) {
+        const words = subject.name.split(' ');
+        if (words.length >= 2) {
+          return (words[0][0] + words[1][0]).toUpperCase();
+        }
+        return subject.name.substring(0, 2).toUpperCase();
+      }
+      return 'SU';
+    },
+
+    getFilterCount(filterKey) {
+      switch (filterKey) {
+        case 'all':
+          return this.subjects.length;
+        case 'active':
+          return this.subjects.filter(s => s.status === 'active').length;
+        case 'completed':
+          return this.subjects.filter(s => s.status === 'completed').length;
+        case 'favorites':
+          return this.subjects.filter(s => this.favoriteSubjects.has(s.id)).length;
+        case 'archived':
+          return this.subjects.filter(s => this.archivedSubjects.has(s.id)).length;
+        default:
+          return 0;
+      }
+    },
+
+    clearFilters() {
+      this.searchQuery = '';
+      this.activeFilter = 'all';
+    },
+
+    navigateToSubject(subject) {
+      // Navigate to grades page for this subject
+      this.$router.push(`/student/grades/${subject.id}/${subject.sectionId || subject.section_id || 1}`);
+    },
+
+    viewSubjectDetails(subject) {
+      // Show subject details modal or navigate to detail page
+      this.navigateToSubject(subject);
     },
 
     async fetchSubjects() {
@@ -1190,6 +1309,1390 @@ export default {
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ==================== MODERN ENHANCED STYLES ==================== */
+
+/* Page Header Styles */
+.page-header {
+  margin-bottom: 2rem;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.header-content:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.header-main {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.header-icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #3d8d7a 0%, #20c997 100%);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.3);
+}
+
+.header-text {
+  flex: 1;
+}
+
+.page-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.02em;
+}
+
+.page-subtitle {
+  font-size: 1.1rem;
+  color: #6b7280;
+  margin: 0;
+  font-weight: 400;
+}
+
+.header-stats {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.stat-card {
+  text-align: center;
+  padding: 1rem 1.5rem;
+  background: #f9fafb;
+  border-radius: 12px;
+  min-width: 120px;
+}
+
+.stat-number {
+  display: block;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #3d8d7a;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 0.5rem;
+}
+
+.enrollment-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+  color: #0369a1;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  border: 2px solid #7dd3fc;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.15);
+}
+
+/* Controls Card Styles */
+.controls-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.search-section {
+  flex: 1;
+}
+
+.search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  transition: all 0.3s ease;
+}
+
+.search-wrapper:focus-within {
+  border-color: #3d8d7a;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(61, 141, 122, 0.1);
+}
+
+.search-icon {
+  color: #6b7280;
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  color: #374151;
+  outline: none;
+  font-family: 'Inter', sans-serif;
+}
+
+.search-input::placeholder {
+  color: #9ca3af;
+}
+
+.clear-search {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.clear-search:hover {
+  color: #374151;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.filter-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.filter-pills {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.filter-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f3f4f6;
+  border: 2px solid #e5e7eb;
+  border-radius: 24px;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+}
+
+.filter-pill:hover {
+  border-color: #d1d5db;
+  background: #e5e7eb;
+}
+
+.filter-pill.active {
+  background: linear-gradient(135deg, #3d8d7a 0%, #20c997 100%);
+  border-color: #3d8d7a;
+  color: white;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.3);
+}
+
+.filter-label {
+  font-weight: 500;
+}
+
+.filter-count {
+  background: rgba(0, 0, 0, 0.15);
+  color: currentColor;
+  border-radius: 12px;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  min-width: 1.25rem;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.filter-pill.active .filter-count {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Content Area Styles */
+.content-area {
+  min-height: 500px;
+  width: 100%;
+}
+
+.subjects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* Enhanced Subject Cards */
+.subject-card {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 20px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 420px;
+  height: auto;
+}
+
+.subject-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(135deg, #3d8d7a 0%, #20c997 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.subject-card:hover {
+  border-color: #3d8d7a;
+  box-shadow: 0 8px 32px rgba(61, 141, 122, 0.15);
+  transform: translateY(-2px);
+}
+
+.subject-card:hover::before {
+  opacity: 1;
+}
+
+.subject-card.favorite-card {
+  border-color: #f59e0b;
+  background: linear-gradient(135deg, #fef3c7 0%, #fff 100%);
+}
+
+.subject-card.favorite-card::before {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  opacity: 1;
+}
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  flex-shrink: 0;
+}
+
+.subject-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  flex: 1;
+}
+
+.subject-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 800;
+  font-size: 1.125rem;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+  flex-shrink: 0;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 0.02em;
+}
+
+.subject-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.subject-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.subject-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.2;
+}
+
+.subject-code {
+  font-weight: 700;
+  color: #3d8d7a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(61, 141, 122, 0.1);
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.separator {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.subject-section {
+  color: #6b7280;
+  font-weight: 500;
+  background: #f3f4f6;
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.subject-instructor {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: #6b7280;
+  font-size: 0.8125rem;
+  margin: 0;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.card-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.action-icon-btn {
+  width: 40px;
+  height: 40px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #6b7280;
+}
+
+.action-icon-btn:hover {
+  border-color: #d1d5db;
+  background: #f9fafb;
+  color: #374151;
+}
+
+.favorite-btn.active {
+  border-color: #f59e0b;
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.favorite-btn.active:hover {
+  background: #fed7aa;
+  border-color: #d97706;
+}
+
+/* Progress Section */
+.progress-section {
+  margin-bottom: 1.25rem;
+  flex-shrink: 0;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.progress-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #374151;
+  letter-spacing: 0.02em;
+}
+
+.progress-percentage {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #3d8d7a;
+  background: rgba(61, 141, 122, 0.1);
+  padding: 0.125rem 0.5rem;
+  border-radius: 12px;
+}
+
+.progress-bar {
+  height: 6px;
+  background: #f3f4f6;
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(135deg, #3d8d7a 0%, #20c997 100%);
+  border-radius: 3px;
+  transition: width 0.8s ease;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  flex-shrink: 0;
+}
+
+.stats-grid .stat-card {
+  background: #f9fafb;
+  padding: 0.75rem 0.5rem;
+  border-radius: 10px;
+  text-align: center;
+  min-width: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 65px;
+  border: 1px solid #f1f5f9;
+}
+
+.stats-grid .stat-number {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #3d8d7a;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.stats-grid .stat-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+
+/* Quick Actions */
+.quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: auto;
+  padding-top: 1rem;
+}
+
+.primary-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #3d8d7a 0%, #20c997 100%);
+  color: white;
+  border: none;
+  padding: 0.875rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.2);
+  width: 100%;
+  min-height: 44px;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 0.02em;
+}
+
+.primary-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(61, 141, 122, 0.3);
+}
+
+.secondary-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.secondary-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  background: #f9fafb;
+  border: 2px solid #e5e7eb;
+  color: #374151;
+  padding: 0.5rem 0.625rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+  justify-content: center;
+  min-width: 0;
+  white-space: nowrap;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+}
+
+.secondary-btn:hover {
+  border-color: #d1d5db;
+  background: #f3f4f6;
+}
+
+.secondary-btn.quiz-btn {
+  border-color: #dbeafe;
+  background: #eff6ff;
+  color: #1e40af;
+}
+
+.secondary-btn.quiz-btn:hover {
+  border-color: #3b82f6;
+  background: #dbeafe;
+}
+
+.secondary-btn.assignment-btn {
+  border-color: #fce7f3;
+  background: #fdf2f8;
+  color: #be185d;
+}
+
+.secondary-btn.assignment-btn:hover {
+  border-color: #ec4899;
+  background: #fce7f3;
+}
+
+/* Enhanced Empty State */
+.empty-state-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 500px;
+  padding: 2rem;
+}
+
+.empty-state-card {
+  background: white;
+  border-radius: 20px;
+  padding: 3rem 2rem;
+  text-align: center;
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 2px solid #e5e7eb;
+}
+
+.empty-illustration {
+  position: relative;
+  margin-bottom: 2rem;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.books-container {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.book {
+  width: 20px;
+  border-radius: 3px 3px 0 0;
+  position: relative;
+}
+
+.book-1 {
+  height: 60px;
+  background: linear-gradient(135deg, #3d8d7a 0%, #20c997 100%);
+  animation: float 3s ease-in-out infinite;
+}
+
+.book-2 {
+  height: 70px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  animation: float 3s ease-in-out infinite 0.5s;
+}
+
+.book-3 {
+  height: 55px;
+  background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+  animation: float 3s ease-in-out infinite 1s;
+}
+
+.floating-elements {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.element {
+  position: absolute;
+  font-size: 1.5rem;
+  animation: float-element 4s ease-in-out infinite;
+}
+
+.element-1 {
+  top: 10%;
+  left: 20%;
+  animation-delay: 0s;
+}
+
+.element-2 {
+  top: 20%;
+  right: 15%;
+  animation-delay: 1.5s;
+}
+
+.element-3 {
+  bottom: 30%;
+  left: 15%;
+  animation-delay: 3s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes float-element {
+  0%, 100% { 
+    transform: translateY(0) rotate(0deg);
+    opacity: 0.7;
+  }
+  50% { 
+    transform: translateY(-12px) rotate(5deg);
+    opacity: 1;
+  }
+}
+
+.empty-content {
+  margin-bottom: 2rem;
+}
+
+.empty-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 1rem 0;
+}
+
+.empty-description {
+  font-size: 1.1rem;
+  color: #6b7280;
+  line-height: 1.6;
+  margin: 0 0 2rem 0;
+}
+
+.search-suggestions {
+  margin-top: 1.5rem;
+}
+
+.suggestion-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f3f4f6;
+  border: 2px solid #e5e7eb;
+  color: #374151;
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.suggestion-btn:hover {
+  border-color: #3d8d7a;
+  background: #f0fdf4;
+  color: #3d8d7a;
+}
+
+.info-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.info-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  background: #f9fafb;
+  padding: 1.5rem;
+  border-radius: 12px;
+  text-align: left;
+}
+
+.info-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #3d8d7a 0%, #20c997 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.info-content h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 0.5rem 0;
+}
+
+.info-content p {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.help-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: #e0f2fe;
+  border: 1px solid #7dd3fc;
+  padding: 1rem;
+  border-radius: 12px;
+  margin-top: 1.5rem;
+}
+
+.help-tip svg {
+  color: #0369a1;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.help-tip span {
+  color: #0c4a6e;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Dropdown Styles */
+.dropdown {
+  position: relative;
+}
+
+.options-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  padding: 0.5rem;
+  z-index: 10;
+  min-width: 160px;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem;
+  border: none;
+  background: none;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: left;
+  border-radius: 8px;
+}
+
+.dropdown-item:hover {
+  background: #f3f4f6;
+  color: #1f2937;
+}
+
+.dropdown-item.danger {
+  color: #ef4444;
+}
+
+.dropdown-item.danger:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* Loading State */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f4f6;
+  border-top: 3px solid #3d8d7a;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ==================== RESPONSIVE DESIGN ==================== */
+
+@media (max-width: 1024px) {
+  .subjects-grid {
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .subject-card {
+    min-height: 400px;
+  }
+
+  .header-stats {
+    gap: 1.5rem;
+  }
+
+  .stat-card {
+    min-width: 100px;
+    padding: 0.75rem 1rem;
+  }
+
+  .stat-number {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .subjects-container {
+    padding: 1rem;
+  }
+
+  .page-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.5rem;
+    padding: 1.5rem;
+  }
+
+  .header-main {
+    gap: 1rem;
+  }
+
+  .header-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+  }
+
+  .page-subtitle {
+    font-size: 1rem;
+  }
+
+  .header-stats {
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .stat-card {
+    flex: 1;
+    min-width: 80px;
+    padding: 0.75rem;
+  }
+
+  .stat-number {
+    font-size: 1.75rem;
+  }
+
+  .enrollment-badge {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  .controls-card {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .search-wrapper {
+    padding: 0.625rem 0.75rem;
+  }
+
+  .search-input {
+    font-size: 0.9375rem;
+  }
+
+  .filter-pills {
+    gap: 0.5rem;
+  }
+
+  .filter-pill {
+    padding: 0.4375rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+
+  .subjects-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .subject-card {
+    padding: 1.25rem;
+    min-height: 380px;
+  }
+
+  .card-header {
+    margin-bottom: 1.25rem;
+  }
+
+  .subject-avatar {
+    width: 48px;
+    height: 48px;
+    font-size: 1rem;
+  }
+
+  .subject-title {
+    font-size: 1rem;
+  }
+
+  .subject-details {
+    gap: 0.375rem;
+  }
+
+  .subject-meta {
+    font-size: 0.75rem;
+  }
+
+  .subject-instructor {
+    font-size: 0.75rem;
+  }
+
+  .progress-label,
+  .progress-percentage {
+    font-size: 0.75rem;
+  }
+
+  .stats-grid {
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .stats-grid .stat-card {
+    padding: 0.75rem;
+  }
+
+  .stats-grid .stat-number {
+    font-size: 1.25rem;
+  }
+
+  .quick-actions {
+    gap: 0.5rem;
+  }
+
+  .primary-btn {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.875rem;
+  }
+
+  .secondary-btn {
+    padding: 0.4375rem 0.625rem;
+    font-size: 0.75rem;
+  }
+
+  .empty-state-card {
+    padding: 2rem 1.5rem;
+  }
+
+  .empty-illustration {
+    height: 100px;
+    margin-bottom: 1.5rem;
+  }
+
+  .empty-title {
+    font-size: 1.5rem;
+  }
+
+  .empty-description {
+    font-size: 1rem;
+  }
+
+  .info-cards {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .info-card {
+    padding: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .subjects-container {
+    padding: 0.75rem;
+  }
+
+  .header-content {
+    padding: 1.25rem;
+  }
+
+  .header-main {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.75rem;
+  }
+
+  .header-text {
+    text-align: center;
+  }
+
+  .page-title {
+    font-size: 1.375rem;
+  }
+
+  .page-subtitle {
+    font-size: 0.9375rem;
+  }
+
+  .header-stats {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: stretch;
+  }
+
+  .enrollment-badge {
+    justify-content: center;
+    padding: 0.625rem 0.75rem;
+  }
+
+  .controls-card {
+    padding: 0.75rem;
+  }
+
+  .search-wrapper {
+    padding: 0.5625rem;
+  }
+
+  .filter-pills {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .filter-pill {
+    padding: 0.375rem 0.625rem;
+  }
+
+  .subject-card {
+    padding: 1rem;
+    min-height: 360px;
+  }
+
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .subject-info {
+    width: 100%;
+  }
+
+  .card-actions {
+    align-self: flex-end;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+
+  .stats-grid .stat-card {
+    padding: 0.625rem 0.5rem;
+  }
+
+  .stats-grid .stat-number {
+    font-size: 1.125rem;
+  }
+
+  .stats-grid .stat-label {
+    font-size: 0.6875rem;
+  }
+
+  .secondary-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .secondary-btn {
+    justify-content: center;
+  }
+
+  .empty-state-card {
+    padding: 1.5rem 1rem;
+  }
+
+  .books-container {
+    transform: scale(0.8);
+  }
+
+  .empty-title {
+    font-size: 1.25rem;
+  }
+
+  .empty-description {
+    font-size: 0.9375rem;
+  }
+
+  .info-card {
+    padding: 1rem;
+  }
+
+  .info-icon {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 320px) {
+  .subjects-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .header-content {
+    padding: 1rem;
+  }
+
+  .page-title {
+    font-size: 1.25rem;
+  }
+
+  .subject-card {
+    padding: 0.875rem;
+    min-height: 340px;
+  }
+
+  .stats-grid {
+    gap: 0.5rem;
+  }
+
+  .stats-grid .stat-card {
+    padding: 0.5rem 0.375rem;
+    min-height: 60px;
+  }
+
+  .stats-grid .stat-number {
+    font-size: 1rem;
+  }
+
+  .stats-grid .stat-label {
+    font-size: 0.625rem;
+  }
+
+  .secondary-btn {
+    font-size: 0.6875rem;
+    padding: 0.4rem 0.5rem;
+  }
+}
+
+/* Dark Mode Support */
+.dark .page-header .header-content {
+  background: #1f2937;
+  border-color: #374151;
+  color: #f9fafb;
+}
+
+.dark .page-title {
+  color: #f9fafb;
+}
+
+.dark .page-subtitle {
+  color: #9ca3af;
+}
+
+.dark .stat-card {
+  background: #374151;
+  color: #f9fafb;
+}
+
+.dark .enrollment-badge {
+  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+  color: #93c5fd;
+  border-color: #3b82f6;
+}
+
+.dark .controls-card {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+.dark .search-wrapper {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.dark .search-wrapper:focus-within {
+  border-color: #20c997;
+  background: #374151;
+}
+
+.dark .search-input {
+  color: #f9fafb;
+}
+
+.dark .filter-pill {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+.dark .filter-pill:hover {
+  background: #4b5563;
+}
+
+.dark .subject-card {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+.dark .subject-title {
+  color: #f9fafb;
+}
+
+.dark .subject-instructor,
+.dark .subject-section,
+.dark .subject-meta {
+  color: #d1d5db;
+}
+
+.dark .action-icon-btn {
+  background: #374151;
+  border-color: #4b5563;
+  color: #d1d5db;
+}
+
+.dark .stats-grid .stat-card {
+  background: #374151;
+}
+
+.dark .stats-grid .stat-label {
+  color: #9ca3af;
+}
+
+.dark .secondary-btn {
+  background: #374151;
+  border-color: #4b5563;
+  color: #d1d5db;
+}
+
+.dark .empty-state-card {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+.dark .empty-title {
+  color: #f9fafb;
+}
+
+.dark .empty-description {
+  color: #d1d5db;
+}
+
+.dark .info-card {
+  background: #374151;
+}
+
+.dark .help-tip {
+  background: #1e3a8a;
+  border-color: #3b82f6;
+}
+
+.dark .help-tip span {
+  color: #93c5fd;
+}
+
+.dark .options-dropdown {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+.dark .dropdown-item {
+  color: #d1d5db;
+}
+
+.dark .dropdown-item:hover {
+  background: #374151;
+  color: #f9fafb;
+}
 /* Dark mode for empty state */
 .dark .empty-state {
   background: #23272b;

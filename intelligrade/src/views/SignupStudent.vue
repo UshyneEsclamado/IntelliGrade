@@ -184,8 +184,8 @@
                 </svg>
               </button>
             </div>
-            <!-- Password Strength Indicator -->
-            <div v-if="password.length > 0" class="password-strength">
+            <!-- ✅ SAFE: Password Strength Indicator with proper checks -->
+            <div v-if="password && password.length > 0" class="password-strength">
               <div class="strength-bar">
                 <div 
                   class="strength-fill" 
@@ -201,8 +201,8 @@
                 <span v-else class="strong">Strong</span>
               </div>
             </div>
-            <!-- Password Error Messages -->
-            <div v-if="passwordErrors.length > 0 && password.length > 0" class="password-errors">
+            <!-- ✅ SAFE: Password Error Messages with proper checks -->
+            <div v-if="passwordErrors && passwordErrors.length > 0 && password && password.length > 0" class="password-errors">
               <ul>
                 <li v-for="error in passwordErrors" :key="error" class="error-item">{{ error }}</li>
               </ul>
@@ -285,7 +285,9 @@ export default {
   },
   watch: {
     password(newPassword) {
-      this.validatePassword(newPassword);
+      if (newPassword !== undefined && newPassword !== null) {
+        this.validatePassword(newPassword);
+      }
     }
   },
   methods: {
@@ -296,6 +298,12 @@ export default {
     validatePassword(password) {
       this.passwordErrors = [];
       let strength = 0;
+      
+      // Add safety check
+      if (!password || password === undefined || password === null) {
+        this.passwordStrength = 0;
+        return;
+      }
 
       if (password.length < 10) {
         this.passwordErrors.push("Password must be at least 10 characters long");
@@ -329,6 +337,7 @@ export default {
 
       console.log('=== STUDENT SIGNUP STARTED ===');
 
+      // Validation checks
       if (!this.fullName || !this.email || !this.password || !this.studentId || !this.gradeLevel) {
         this.error = "Please fill in all fields.";
         return;
@@ -340,8 +349,8 @@ export default {
       }
 
       const gradeNum = parseInt(this.gradeLevel);
-      if (gradeNum < 7 || gradeNum > 12) {
-        this.error = "Grade level must be between 7 and 12.";
+      if (gradeNum < 7 || gradeNum > 10) {
+        this.error = "Grade level must be between 7 and 10.";
         return;
       }
 
@@ -354,34 +363,58 @@ export default {
       this.isLoading = true;
 
       try {
-        console.log('=== STUDENT SIGNUP ATTEMPT ===');
-        console.log('Full Name:', this.fullName);
-        console.log('Email:', this.email);
-        console.log('Student ID:', this.studentId);
-        console.log('Grade Level:', gradeNum);
+       console.log('📝 Signup Data Being Sent:');
+console.log('Student ID:', this.studentId.trim());
+console.log('Grade Level:', parseInt(this.gradeLevel, 10));
+console.log('Full metadata:', {
+  full_name: this.fullName.trim(),
+  role: 'student',
+  student_id: this.studentId.trim(),
+  grade_level: parseInt(this.gradeLevel, 10)
+});
 
-        // REMOVED THE STUDENT ID CHECK - Let the database handle it
-        // The trigger will fail if student_id is duplicate due to UNIQUE constraint
-        
-        console.log('Creating Supabase auth user...');
-        
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: this.email.toLowerCase().trim(),
-          password: this.password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/email-verified`,
-            data: {
-              full_name: this.fullName.trim(),
-              role: 'student',
-              student_id: this.studentId.trim(),
-              grade_level: gradeNum
-            }
-          }
-        });
+        // Check if student ID is already taken
+        const { data: existingStudent, error: checkError } = await supabase
+          .from('students')
+          .select('student_id')
+          .eq('student_id', this.studentId.trim())
+          .maybeSingle();
 
+        if (existingStudent) {
+          throw new Error('This Student ID is already registered. Please use a different Student ID.');
+        }
+
+        // Check if email is already taken
+        const { data: existingProfile, error: profileError } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('email', this.email.toLowerCase().trim())
+          .maybeSingle();
+
+        if (existingProfile) {
+          throw new Error('An account with this email already exists. Please try logging in instead.');
+        }
+
+        console.log('✅ Validation passed, creating auth user...');
+        
+        // Create the Supabase auth user with properly structured metadata
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+  email: this.email.toLowerCase().trim(),
+  password: this.password,
+  options: {
+    emailRedirectTo: `${window.location.origin}/email-verified`,
+    data: {
+      full_name: this.fullName.trim(),
+      role: 'student',
+      student_id: this.studentId.trim(),
+      grade_level: parseInt(this.gradeLevel, 10) 
+    }
+  }
+});
         if (authError) {
           console.error('❌ Auth signup error:', authError);
           
+          // Handle specific Supabase errors
           if (authError.message?.includes('User already registered')) {
             throw new Error('An account with this email already exists. Please try logging in instead.');
           } else if (authError.message?.includes('Email rate limit exceeded')) {
@@ -390,23 +423,121 @@ export default {
             throw new Error('Please enter a valid email address.');
           } else if (authError.message?.includes('Password')) {
             throw new Error('Password must be at least 6 characters long.');
+          } else if (authError.message?.includes('Signup is disabled')) {
+            throw new Error('Account registration is currently disabled. Please contact support.');
           } else {
             throw new Error(authError.message || 'Failed to create account. Please try again.');
           }
         }
 
         if (!authData.user) {
-          console.error('No user data returned from signup');
-          throw new Error("Signup failed. Please try again.");
+          console.error('❌ No user data returned from signup');
+          throw new Error("Signup failed. No user data returned. Please try again.");
         }
 
-        console.log('✅ Supabase auth user created:', authData.user.id);
-        console.log('User metadata:', authData.user.user_metadata);
+        console.log('✅ Auth user created:', authData.user.id);
+        console.log('User metadata sent:', authData.user.user_metadata);
 
-        console.log('✅ Account creation successful!');
-        console.log('⏳ Database trigger will create profile and student records');
-        console.log('📧 Email verification required');
+        // Wait longer for the database trigger to complete
+        console.log('⏳ Waiting for database trigger to create profile and student record...');
+        await new Promise(resolve => setTimeout(resolve, 3000));
 
+        // Verify that the profile was created
+        console.log('🔍 Verifying profile creation...');
+        const { data: profileCheck, error: profileCheckError } = await supabase
+          .from('profiles')
+          .select('id, role, full_name')
+          .eq('auth_user_id', authData.user.id)
+          .single();
+
+        if (profileCheckError || !profileCheck) {
+          console.error('❌ Profile not created:', profileCheckError);
+          
+          // Try to manually create the profile if trigger failed
+          console.log('⚠️ Trigger failed, attempting manual profile creation...');
+          const { data: manualProfile, error: manualProfileError } = await supabase
+            .from('profiles')
+            .insert({
+              auth_user_id: authData.user.id,
+              full_name: this.fullName.trim(),
+              email: this.email.toLowerCase().trim(),
+              role: 'student',
+              email_verified: authData.user.email_confirmed_at != null
+            })
+            .select()
+            .single();
+
+          if (manualProfileError) {
+            console.error('❌ Manual profile creation failed:', manualProfileError);
+            throw new Error('Failed to create your profile. Please contact support with error: ' + manualProfileError.message);
+          }
+
+          console.log('✅ Manual profile created:', manualProfile);
+
+          // Now create the student record
+          console.log('Creating student record...');
+          const { data: studentRecord, error: studentError } = await supabase
+            .from('students')
+            .insert({
+              profile_id: manualProfile.id,
+              student_id: this.studentId.trim(),
+              full_name: this.fullName.trim(),
+              email: this.email.toLowerCase().trim(),
+              grade_level: gradeNum,
+              is_active: true
+            })
+            .select()
+            .single();
+
+          if (studentError) {
+            console.error('❌ Student record creation failed:', studentError);
+            throw new Error('Failed to create student record. Please contact support with error: ' + studentError.message);
+          }
+
+          console.log('✅ Student record created:', studentRecord);
+        } else {
+          console.log('✅ Profile found:', profileCheck);
+
+          // Verify student record was created
+          console.log('🔍 Verifying student record...');
+          const { data: studentCheck, error: studentCheckError } = await supabase
+            .from('students')
+            .select('id, student_id, grade_level')
+            .eq('profile_id', profileCheck.id)
+            .single();
+
+          if (studentCheckError || !studentCheck) {
+            console.error('❌ Student record not created:', studentCheckError);
+            
+            // Try manual creation
+            console.log('⚠️ Attempting manual student record creation...');
+            const { data: manualStudent, error: manualStudentError } = await supabase
+              .from('students')
+              .insert({
+                profile_id: profileCheck.id,
+                student_id: this.studentId.trim(),
+                full_name: this.fullName.trim(),
+                email: this.email.toLowerCase().trim(),
+                grade_level: gradeNum,
+                is_active: true
+              })
+              .select()
+              .single();
+
+            if (manualStudentError) {
+              console.error('❌ Manual student creation failed:', manualStudentError);
+              throw new Error('Failed to create student record. Please contact support.');
+            }
+
+            console.log('✅ Manual student record created:', manualStudent);
+          } else {
+            console.log('✅ Student record found:', studentCheck);
+          }
+        }
+
+        console.log('✅ SIGNUP SUCCESSFUL!');
+
+        // Show success message
         this.signupSuccess = true;
         
         if (!authData.session) {
@@ -425,10 +556,12 @@ Note: The email might take a few minutes to arrive. Don't forget to check your s
 Your account has been verified and you can now log in.`;
         }
 
+        // Clear sensitive data
         this.password = '';
         this.passwordStrength = 0;
         this.passwordErrors = [];
         
+        // Redirect after 6 seconds
         setTimeout(() => {
           this.$router.push('/login');
         }, 6000);
@@ -436,19 +569,16 @@ Your account has been verified and you can now log in.`;
       } catch (err) {
         console.error("❌ Student Signup error:", err);
         
+        // User-friendly error messages
         if (err.message?.includes('already registered') || 
-            err.message?.includes('User already registered') ||
             err.message?.includes('already exists')) {
           this.error = 'An account with this email already exists. Please try logging in instead.';
-        } else if (err.message?.includes('duplicate key') || 
-                   err.message?.includes('unique constraint')) {
-          this.error = 'This Student ID is already registered. Please use a different Student ID.';
-        } else if (err.message?.includes('Email rate limit')) {
+        } else if (err.message?.includes('Student ID')) {
+          this.error = err.message;
+        } else if (err.message?.includes('rate limit')) {
           this.error = 'Too many signup attempts. Please wait a few minutes and try again.';
-        } else if (err.message?.includes('Invalid email')) {
-          this.error = 'Please enter a valid email address.';
-        } else if (err.message?.includes('Password')) {
-          this.error = 'Password must be at least 6 characters long and meet security requirements.';
+        } else if (err.message?.includes('contact support')) {
+          this.error = err.message;
         } else {
           this.error = err.message || "An unexpected error occurred during signup. Please try again.";
         }

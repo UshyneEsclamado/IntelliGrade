@@ -612,8 +612,6 @@ export default {
         console.log('Step 1: Cleaning up subscriptions');
         this.cleanupSubscriptions();
         
-        await new Promise(resolve => setTimeout(resolve, 200));
-        
         console.log('Step 2: Clearing local storage');
         localStorage.clear();
         sessionStorage.clear();
@@ -623,21 +621,22 @@ export default {
         
         if (error) {
           console.error('❌ Logout error:', error);
+          throw error;
         }
         
         console.log('✅ Logout successful');
         
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
         console.log('Step 4: Redirecting to login');
-        window.location.replace('/login');
+        this.$router.push('/login').then(() => {
+          this.isLoggingOut = false;
+        });
         
       } catch (error) {
         console.error('❌ Error during logout:', error);
         this.isLoggingOut = false;
         localStorage.clear();
         sessionStorage.clear();
-        window.location.replace('/login');
+        this.$router.push('/login');
       }
     },
 

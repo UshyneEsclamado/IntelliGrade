@@ -912,140 +912,172 @@
 
 /* Add Students Modal Styles */
 .add-students-content {
-  padding: 0 1.5rem;
+  padding: 0;
   max-height: calc(95vh - 200px);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0;
 }
 
 /* Enroll Student by ID Styles */
 .enroll-student-section {
-  padding: 1rem 1.25rem;
-  background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%);
-  border: 2px solid #5eead4;
-  border-radius: 12px;
+  padding: 1.5rem 2rem;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border: none;
+  border-bottom: 3px solid #10b981;
+  border-radius: 0;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(94, 234, 212, 0.15);
+  box-shadow: none;
+  margin: 0;
 }
 
 .dark .enroll-student-section {
-  background: linear-gradient(135deg, #134e4a 0%, #115e59 100%);
-  border-color: #14b8a6;
-  box-shadow: 0 2px 8px rgba(20, 184, 166, 0.2);
+  background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
+  border-bottom-color: #10b981;
+  box-shadow: none;
 }
 
 .enroll-header {
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.header-icon-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.icon-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.search-icon-circle {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .enroll-header .section-title {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  color: #0f766e;
-  margin-bottom: 0.375rem;
+  color: #065f46;
+  margin: 0 0 0.25rem 0;
   font-size: 1.125rem;
   font-weight: 700;
 }
 
 .dark .enroll-header .section-title {
-  color: #5eead4;
-}
-
-.enroll-header .section-title svg {
-  flex-shrink: 0;
+  color: #6ee7b7;
 }
 
 .enroll-description {
+  color: #047857;
   font-size: 0.875rem;
-  color: #0f766e;
   margin: 0;
-  font-weight: 500;
+  line-height: 1.5;
 }
 
 .dark .enroll-description {
-  color: #99f6e4;
+  color: #a7f3d0;
 }
 
 .enroll-form {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  margin-top: 1rem;
 }
 
 .enroll-input-wrapper {
   display: flex;
-  gap: 0.5rem;
-  align-items: stretch;
+  gap: 0.75rem;
+  align-items: center;
+  background: white;
+  border: 2px solid #10b981;
+  border-radius: 10px;
+  padding: 0.5rem 0.75rem;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
 }
 
 .enroll-student-input {
   flex: 1;
-  padding: 0.75rem 0.875rem 0.75rem 2.75rem;
-  border: 2px solid #14b8a6;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  background: white;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.9375rem;
   color: #1f2937;
-  position: relative;
+  padding: 0.375rem 0;
   font-weight: 500;
-  transition: all 0.2s ease;
 }
 
 .dark .enroll-student-input {
-  background: #0f172a;
-  border-color: #14b8a6;
-  color: #f1f5f9;
+  color: #065f46;
 }
 
 .enroll-student-input:focus {
   outline: none;
-  border-color: #0d9488;
-  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.15);
-  background: #ffffff;
 }
 
 .dark .enroll-student-input:focus {
-  border-color: #5eead4;
-  box-shadow: 0 0 0 4px rgba(94, 234, 212, 0.15);
-  background: #020617;
+  outline: none;
 }
 
 .enroll-student-input::placeholder {
-  color: #6b7280;
+  color: #9ca3af;
   font-weight: 400;
 }
 
 .dark .enroll-student-input::placeholder {
-  color: #94a3b8;
-}
-
-.enroll-input-wrapper {
-  position: relative;
+  color: #6b7280;
 }
 
 .id-icon {
-  position: absolute;
-  left: 0.875rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #14b8a6;
-  z-index: 1;
-  pointer-events: none;
+  color: #10b981;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
 }
 
 .dark .id-icon {
-  color: #5eead4;
+  color: #10b981;
 }
 
 .enroll-btn {
-  padding: 0.75rem 1.25rem;
-  background: linear-gradient(135deg, #0d9488, #0f766e);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  background: #10b981;
   color: white;
   border: none;
   border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+}
+
+.enroll-btn:hover:not(:disabled) {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+}
+
+.enroll-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.enroll-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1131,62 +1163,73 @@
 
 /* Modal Divider */
 .modal-divider {
+  position: relative;
   display: flex;
   align-items: center;
-  margin: 0.5rem 0;
-  text-align: center;
-  flex-shrink: 0;
+  justify-content: center;
+  padding: 1.5rem 2rem;
+  background: #f9fafb;
 }
 
 .modal-divider::before,
 .modal-divider::after {
   content: '';
   flex: 1;
-  height: 1px;
-  background: #e2e8f0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #d1d5db, transparent);
 }
 
 .dark .modal-divider::before,
 .dark .modal-divider::after {
-  background: #334155;
+  background: linear-gradient(90deg, transparent, #374151, transparent);
 }
 
 .modal-divider span {
-  padding: 0 1rem;
-  color: #64748b;
+  padding: 0 1.25rem;
+  color: #6b7280;
+  font-weight: 600;
   font-size: 0.875rem;
-  font-weight: 500;
+  letter-spacing: 0.05em;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 20px;
+  padding: 0.375rem 1rem;
 }
 
 .dark .modal-divider span {
-  color: #94a3b8;
+  color: #9ca3af;
+  background: #1f2937;
+  border-color: #374151;
 }
 
 .student-search-section {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
+  padding: 2rem;
+  background: white;
 }
 
 .search-header {
-  margin-bottom: 0.75rem;
-  flex-shrink: 0;
+  margin-bottom: 1.25rem;
+}
+
+.header-icon-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .section-title {
-  font-size: 1rem;
-  font-weight: 700;
   color: #1f2937;
-  margin-bottom: 0.25rem;
+  margin: 0 0 0.25rem 0;
+  font-size: 1.125rem;
+  font-weight: 700;
 }
 .dark .section-title {
-  color: #f9fafb;
+  color: #f1f5f9;
 }
 
 .search-description {
-  font-size: 0.8125rem;
   color: #6b7280;
+  font-size: 0.875rem;
   margin: 0;
 }
 .dark .search-description {
@@ -2872,203 +2915,217 @@
       </div>
     </transition>
 
-    <!-- Add Students Modal -->
-    <div v-if="showAddStudentsModal" class="modal-overlay" @click="closeAddStudentsModal">
-      <div class="modal-content-enhanced" @click.stop>
-        <!-- Modal Header -->
-        <div class="modal-header-enhanced">
-          <div class="modal-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-              <path d="M16,4C18.21,4 20,5.79 20,8C20,10.21 18.21,12 16,12C13.79,12 12,10.21 12,8C12,5.79 13.79,4 16,4M16,14C20.42,14 24,15.79 24,18V20H8V18C8,15.79 11.58,14 16,14" />
-            </svg>
-          </div>
-          <div class="modal-title-area">
-            <h2>Add Students to Section</h2>
-            <p class="modal-subtitle">{{ selectedSectionForStudents?.section_name }} - {{ selectedSubjectForStudents?.subject_name }}</p>
-          </div>
-          <button @click="closeAddStudentsModal" class="close-btn-enhanced">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
-            </svg>
-          </button>
-        </div>
+<!-- Replace the Add Students Modal section in your Subjects.vue -->
 
-        <div class="add-students-content">
-          <!-- Add Student by ID Section -->
-          <div class="enroll-student-section">
-            <div class="enroll-header">
-              <h3 class="section-title">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                </svg>
-                Enroll Student by ID
-              </h3>
-              <p class="enroll-description">Enter a student ID to directly enroll them in this section.</p>
-            </div>
-            <div class="enroll-form">
-              <div class="enroll-input-wrapper">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="id-icon">
-                  <path d="M22,18V22H18V19H15V16H12L9.74,13.74C9.19,13.91 8.61,14 8,14A6,6 0 0,1 2,8A6,6 0 0,1 8,2A6,6 0 0,1 14,8C14,8.61 13.91,9.19 13.74,9.74L22,18M7,5A1,1 0 0,0 6,6A1,1 0 0,0 7,7A1,1 0 0,0 8,6A1,1 0 0,0 7,5Z"/>
-                </svg>
-                <input
-                  v-model="enrollStudentId"
-                  type="text"
-                  placeholder="Enter Student ID (e.g., 2024001)"
-                  class="enroll-student-input"
-                  @keyup.enter="enrollStudentById"
-                />
-                <button 
-                  @click="enrollStudentById" 
-                  class="enroll-btn"
-                  :disabled="!enrollStudentId.trim() || isEnrollingStudent"
-                >
-                  <svg v-if="!isEnrollingStudent" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                  </svg>
-                  <svg v-else class="spinner-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/>
-                  </svg>
-                  {{ isEnrollingStudent ? 'Enrolling...' : 'Enroll Student' }}
-                </button>
-              </div>
-              <div v-if="enrollmentMessage" class="enrollment-message" :class="enrollmentMessageType">
-                <svg v-if="enrollmentMessageType === 'success'" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
-                </svg>
-                <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
-                </svg>
-                {{ enrollmentMessage }}
-              </div>
-            </div>
-          </div>
+<!-- Add Students Modal - REDESIGNED -->
+<div v-if="showAddStudentsModal" class="modal-overlay" @click="closeAddStudentsModal">
+  <div class="modal-content-enhanced add-students-modal" @click.stop>
+    <!-- Modal Header -->
+    <div class="modal-header-enhanced">
+      <div class="modal-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+          <path d="M16,4C18.21,4 20,5.79 20,8C20,10.21 18.21,12 16,12C13.79,12 12,10.21 12,8C12,5.79 13.79,4 16,4M16,14C20.42,14 24,15.79 24,18V20H8V18C8,15.79 11.58,14 16,14" />
+        </svg>
+      </div>
+      <div class="modal-title-area">
+        <h2>Add Students to Section</h2>
+        <p class="modal-subtitle">{{ selectedSectionForStudents?.section_name }} - {{ selectedSubjectForStudents?.subject_name }}</p>
+      </div>
+      <button @click="closeAddStudentsModal" class="close-btn-enhanced">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+        </svg>
+      </button>
+    </div>
 
-          <!-- Divider -->
-          <div class="modal-divider">
-            <span>OR</span>
-          </div>
-
-          <!-- Search Students -->
-          <div class="student-search-section">
-            <div class="search-header">
-              <h3 class="section-title">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
-                </svg>
-                Find Existing Students
-              </h3>
-              <p class="search-description">Search for students by name or ID, then select them to add to this section.</p>
-            </div>
-            <div class="search-filters-enhanced">
-              <div class="search-input-wrapper">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="search-icon">
-                  <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
-                </svg>
-                <input
-                  v-model="studentSearchQuery"
-                  type="text"
-                  placeholder="Type student name or ID to search..."
-                  class="student-search-input-enhanced"
-                  @input="searchStudents"
-                />
-              </div>
-              <select v-model="gradeFilter" class="grade-filter-select-enhanced" @change="searchStudents">
-                <option value="">All Grades</option>
-                <option v-for="grade in [7, 8, 9, 10]" :key="grade" :value="grade">Grade {{ grade }}</option>
-              </select>
-            </div>
-            <div class="search-hint" v-if="!studentSearchQuery && !availableStudents.length">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
+    <div class="add-students-content">
+      <!-- Add Student by ID Section - ENHANCED -->
+      <div class="enroll-student-section">
+        <div class="enroll-header">
+          <div class="header-icon-title">
+            <div class="icon-circle">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
               </svg>
-              Start typing to search for students to add to this section
             </div>
-          </div>
-
-          <!-- Available Students List -->
-          <div class="students-list-section">
-            <div class="students-header">
-              <h4>Available Students</h4>
-              <div v-if="selectedStudentsToAdd.length > 0" class="batch-actions">
-                <button @click="addSelectedStudents" class="add-batch-btn" :disabled="isAddingStudents">
-                  <svg v-if="!isAddingStudents" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                  </svg>
-                  <svg v-else class="spinner-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/>
-                  </svg>
-                  {{ isAddingStudents ? 'Adding...' : `Add ${selectedStudentsToAdd.length} Student${selectedStudentsToAdd.length > 1 ? 's' : ''}` }}
-                </button>
-                <button @click="clearSelection" class="clear-selection-btn">Clear</button>
-              </div>
-            </div>
-
-            <div v-if="isSearchingStudents" class="loading-state">
-              <div class="loading-spinner"></div>
-              <span>Searching students...</span>
-            </div>
-
-            <div v-else-if="availableStudents.length === 0 && studentSearchQuery" class="empty-search">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M7,13H17V11H7"/>
-              </svg>
-              <p>No students found matching your search</p>
-              <p class="empty-subtitle">Try a different search term or check if all eligible students are already enrolled</p>
-            </div>
-
-            <div v-else-if="availableStudents.length === 0 && !isSearchingStudents" class="empty-search">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M16,4C18.21,4 20,5.79 20,8C20,10.21 18.21,12 16,12C13.79,12 12,10.21 12,8C12,5.79 13.79,4 16,4M16,14C20.42,14 24,15.79 24,18V20H8V18C8,15.79 11.58,14 16,14" />
-              </svg>
-              <p>No available students for this section</p>
-              <p class="empty-subtitle">All eligible students for Grade {{ selectedSubjectForStudents?.grade_level }} may already be enrolled in this subject</p>
-            </div>
-
-            <div v-else class="students-grid">
-              <div 
-                v-for="student in availableStudents" 
-                :key="student.student_id"
-                class="student-card"
-                :class="{ 'selected': selectedStudentsToAdd.includes(student.student_id) }"
-                @click="toggleStudentSelection(student.student_id)"
-              >
-                <div class="student-avatar">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
-                  </svg>
-                </div>
-                <div class="student-info">
-                  <h4>{{ student.student_name }}</h4>
-                  <p class="student-id">ID: {{ student.student_number }}</p>
-                  <p class="student-grade">Grade {{ student.grade_level }}</p>
-                </div>
-                <div class="selection-indicator">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
-                  </svg>
-                </div>
-              </div>
+            <div>
+              <h3 class="section-title">Enroll Student by ID</h3>
+              <p class="enroll-description">Quick enrollment using student ID number</p>
             </div>
           </div>
         </div>
-
-        <div class="modal-actions-enhanced">
-          <button @click="closeAddStudentsModal" class="btn-secondary">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
+        
+        <div class="enroll-form">
+          <div class="enroll-input-wrapper">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="id-icon">
+              <path d="M22,18V22H18V19H15V16H12L9.74,13.74C9.19,13.91 8.61,14 8,14A6,6 0 0,1 2,8A6,6 0 0,1 8,2A6,6 0 0,1 14,8C14,8.61 13.91,9.19 13.74,9.74L22,18M7,5A1,1 0 0,0 6,6A1,1 0 0,0 7,7A1,1 0 0,0 8,6A1,1 0 0,0 7,5Z"/>
             </svg>
-            Cancel
-          </button>
-          <button @click="viewSectionStudents(selectedSubjectForStudents, selectedSectionForStudents)" class="btn-outline">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M16,4C18.21,4 20,5.79 20,8C20,10.21 18.21,12 16,12C13.79,12 12,10.21 12,8C12,5.79 13.79,4 16,4M16,14C20.42,14 24,15.79 24,18V20H8V18C8,15.79 11.58,14 16,14" />
+            <input
+              v-model="enrollStudentId"
+              type="text"
+              placeholder="Enter Student ID (e.g., 2024001)"
+              class="enroll-student-input"
+              @keyup.enter="enrollStudentById"
+            />
+            <button 
+              @click="enrollStudentById" 
+              class="enroll-btn"
+              :disabled="!enrollStudentId.trim() || isEnrollingStudent"
+            >
+              <svg v-if="!isEnrollingStudent" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+              </svg>
+              <svg v-else class="spinner-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/>
+              </svg>
+              {{ isEnrollingStudent ? 'Enrolling...' : 'Enroll Student' }}
+            </button>
+          </div>
+          
+          <div v-if="enrollmentMessage" class="enrollment-message" :class="enrollmentMessageType">
+            <svg v-if="enrollmentMessageType === 'success'" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
             </svg>
-            View All Students
-          </button>
+            <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
+            </svg>
+            {{ enrollmentMessage }}
+          </div>
         </div>
       </div>
-      </div> <!-- End content-wrapper -->
+
+      <!-- Divider -->
+      <div class="modal-divider">
+        <span>OR</span>
+      </div>
+
+      <!-- Search Students Section - ENHANCED -->
+      <div class="student-search-section">
+        <div class="search-header">
+          <div class="header-icon-title">
+            <div class="icon-circle search-icon-circle">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="section-title">Find Existing Students</h3>
+              <p class="search-description">Search by name or ID, then select students to add</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="search-filters-enhanced">
+          <div class="search-input-wrapper">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="search-icon">
+              <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
+            </svg>
+            <input
+              v-model="studentSearchQuery"
+              type="text"
+              placeholder="Type student name or ID to search..."
+              class="student-search-input-enhanced"
+              @input="searchStudents"
+            />
+          </div>
+          <select v-model="gradeFilter" class="grade-filter-select-enhanced" @change="searchStudents">
+            <option value="">All Grades</option>
+            <option v-for="grade in [7, 8, 9, 10]" :key="grade" :value="grade">Grade {{ grade }}</option>
+          </select>
+        </div>
+
+        <div class="search-hint" v-if="!studentSearchQuery && !availableStudents.length">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
+          </svg>
+          Start typing to search for students to add to this section
+        </div>
+      </div>
+
+      <!-- Available Students List -->
+      <div class="students-list-section">
+        <div class="students-header">
+          <h4>Available Students</h4>
+          <div v-if="selectedStudentsToAdd.length > 0" class="batch-actions">
+            <button @click="addSelectedStudents" class="add-batch-btn" :disabled="isAddingStudents">
+              <svg v-if="!isAddingStudents" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+              </svg>
+              <svg v-else class="spinner-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/>
+              </svg>
+              {{ isAddingStudents ? 'Adding...' : `Add ${selectedStudentsToAdd.length} Student${selectedStudentsToAdd.length > 1 ? 's' : ''}` }}
+            </button>
+            <button @click="clearSelection" class="clear-selection-btn">Clear</button>
+          </div>
+        </div>
+
+        <div v-if="isSearchingStudents" class="loading-state">
+          <div class="loading-spinner"></div>
+          <span>Searching students...</span>
+        </div>
+
+        <div v-else-if="availableStudents.length === 0 && studentSearchQuery" class="empty-search">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M7,13H17V11H7"/>
+          </svg>
+          <p>No students found matching your search</p>
+          <p class="empty-subtitle">Try a different search term or check if all eligible students are already enrolled</p>
+        </div>
+
+        <div v-else-if="availableStudents.length === 0 && !isSearchingStudents" class="empty-search">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M16,4C18.21,4 20,5.79 20,8C20,10.21 18.21,12 16,12C13.79,12 12,10.21 12,8C12,5.79 13.79,4 16,4M16,14C20.42,14 24,15.79 24,18V20H8V18C8,15.79 11.58,14 16,14" />
+          </svg>
+          <p>No available students for this section</p>
+          <p class="empty-subtitle">All eligible students for Grade {{ selectedSubjectForStudents?.grade_level }} may already be enrolled in this subject</p>
+        </div>
+
+        <div v-else class="students-grid">
+          <div 
+            v-for="student in availableStudents" 
+            :key="student.student_id"
+            class="student-card"
+            :class="{ 'selected': selectedStudentsToAdd.includes(student.student_id) }"
+            @click="toggleStudentSelection(student.student_id)"
+          >
+            <div class="student-avatar">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
+              </svg>
+            </div>
+            <div class="student-info">
+              <h4>{{ student.student_name }}</h4>
+              <p class="student-id">ID: {{ student.student_number }}</p>
+              <p class="student-grade">Grade {{ student.grade_level }}</p>
+            </div>
+            <div class="selection-indicator">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-actions-enhanced">
+      <button @click="viewSectionStudents(selectedSubjectForStudents, selectedSectionForStudents)" class="btn-outline">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M16,4C18.21,4 20,5.79 20,8C20,10.21 18.21,12 16,12C13.79,12 12,10.21 12,8C12,5.79 13.79,4 16,4M16,14C20.42,14 24,15.79 24,18V20H8V18C8,15.79 11.58,14 16,14" />
+        </svg>
+        View All Students
+      </button>
+      <button @click="closeAddStudentsModal" class="btn-secondary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
+        </svg>
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
     </div>
 
     </main>
@@ -5182,27 +5239,31 @@ onUnmounted(() => {
 }
 
 .back-btn {
-  background: #f3f4f6;
+  background: #10b981;
   border: none;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  color: #374151;
-  font-weight: 500;
+  padding: 0.875rem 1.5rem;
+  border-radius: 10px;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.625rem;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
 }
 .back-btn:hover {
-  background: #e5e7eb;
+  background: #059669;
+  transform: translateX(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 .dark .back-btn {
-  background: #334155;
-  color: #e2e8f0;
+  background: #10b981;
+  color: white;
 }
 .dark .back-btn:hover {
-  background: #475569;
+  background: #059669;
 }
 
 .view-title h2 {
@@ -5458,9 +5519,9 @@ onUnmounted(() => {
 .section-overview-card {
   background: white;
   border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 2rem;
-  margin-bottom: 2rem;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 .dark .section-overview-card {
@@ -5470,8 +5531,8 @@ onUnmounted(() => {
 
 .overview-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1.25rem;
 }
 
 .stat-box {
@@ -5479,18 +5540,18 @@ onUnmounted(() => {
 }
 
 .stat-box .stat-number {
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: 800;
   color: #3b82f6;
   display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
 }
 .dark .stat-box .stat-number {
   color: #60a5fa;
 }
 
 .stat-box .stat-label {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   color: #6b7280;
   font-weight: 500;
 }
@@ -7327,22 +7388,28 @@ onUnmounted(() => {
 }
 
 .breadcrumb-btn {
-  background: transparent;
+  background: #f3f4f6;
   border: none;
-  color: #20c997;
+  color: #374151;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  font-size: 0.875rem;
-  text-decoration: underline;
+  gap: 0.625rem;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
 }
 .dark .breadcrumb-btn {
-  color: #A3D1C6;
+  background: #374151;
+  color: #d1d5db;
 }
 
 .breadcrumb-btn:hover {
-  color: #3D8D7A;
+  background: #10b981;
+  color: white;
+  transform: translateX(-2px);
 }
 
 .breadcrumb-separator {
@@ -7392,14 +7459,12 @@ onUnmounted(() => {
 /* Sections Grid - Enhanced Design */
 .sections-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
   margin-bottom: 2rem;
   padding: 1rem;
   width: 100%;
   box-sizing: border-box;
-  max-height: calc(100vh - 300px);
-  overflow-y: auto;
   overflow-x: hidden;
   scroll-behavior: smooth;
 }
@@ -7483,15 +7548,15 @@ onUnmounted(() => {
 .section-card.enhanced {
   background: #fff;
   border: 2px solid #e5e7eb;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   padding: 0;
   margin-bottom: 0;
   transition: all 0.3s ease;
   overflow: hidden;
   cursor: pointer;
   width: 100%;
-  min-height: 180px;
+  min-height: 140px;
   position: relative;
 }
 
@@ -7516,7 +7581,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.5rem 1.5rem 1rem 1.5rem;
+  padding: 1rem 1.25rem 0.75rem 1.25rem;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-bottom: 1px solid #e2e8f0;
 }
@@ -7534,9 +7599,9 @@ onUnmounted(() => {
 }
 
 .section-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 16px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -7546,7 +7611,7 @@ onUnmounted(() => {
 }
 
 .section-title {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: #1f2937;
   margin: 0;
@@ -7663,7 +7728,7 @@ onUnmounted(() => {
 }
 
 .section-card-body {
-  padding: 1.5rem;
+  padding: 1rem 1.25rem;
   background: #fff;
 }
 
@@ -7674,9 +7739,9 @@ onUnmounted(() => {
 .section-code-box {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border: 2px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: 10px;
   overflow: hidden;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   transition: all 0.3s ease;
 }
 
@@ -7698,7 +7763,7 @@ onUnmounted(() => {
 
 .code-box-header {
   background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 0.875rem;
   border-bottom: 1px solid #d1d5db;
 }
 
@@ -7709,7 +7774,7 @@ onUnmounted(() => {
 }
 
 .code-label {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
   color: #7ca3c7;
   text-transform: uppercase;
@@ -7725,13 +7790,13 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 0.8rem;
-  gap: 0.7rem;
+  padding: 0.4rem 0.7rem;
+  gap: 0.6rem;
 }
 
 .section-code-text {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 0.98rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: #1e293b;
   letter-spacing: 0.05em;
@@ -7776,12 +7841,15 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.5rem;
   color: #6b7280;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   font-weight: 500;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e5e7eb;
 }
 
 .dark .section-stats {
   color: #A3D1C6;
+  border-color: #374151;
 }
 
 /* Dropdown transition */
@@ -7821,8 +7889,8 @@ onUnmounted(() => {
 .section-detail-enhanced {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  margin-top: 1.5rem;
+  gap: 1.25rem;
+  margin-top: 1rem;
 }
 
 .section-info-card,
@@ -7830,7 +7898,7 @@ onUnmounted(() => {
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
-  padding: 1.5rem;
+  padding: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -7844,22 +7912,22 @@ onUnmounted(() => {
 .section-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: 0.875rem;
+  margin-bottom: 1rem;
 }
 
 .section-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   color: white;
 }
 
 .section-title-info .section-title {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: #1f2937;
   margin: 0 0 0.25rem 0;
@@ -7882,15 +7950,15 @@ onUnmounted(() => {
 .section-details {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 .detail-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.5rem 0;
+  padding: 0.4rem 0;
   border-bottom: 1px solid #f3f4f6;
 }
 
@@ -7901,7 +7969,7 @@ onUnmounted(() => {
 .detail-label {
   font-weight: 600;
   color: #1f2937;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
 }
 
 .dark .detail-label {
@@ -7911,7 +7979,7 @@ onUnmounted(() => {
 .detail-value {
   font-weight: 500;
   color: #6b7280;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
 }
 
 .dark .detail-value {
@@ -7922,10 +7990,10 @@ onUnmounted(() => {
   background: #f8f9fa;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  padding: 1rem;
+  padding: 0.875rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .dark .section-code-container {
@@ -7947,11 +8015,11 @@ onUnmounted(() => {
 
 .code-value {
   font-family: 'Monaco', 'Menlo', monospace;
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 700;
   color: #10b981;
   letter-spacing: 0.1em;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
 }
 
 .dark .code-value {
@@ -7962,13 +8030,13 @@ onUnmounted(() => {
   align-self: flex-start;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
+  gap: 0.4rem;
+  padding: 0.4rem 0.7rem;
   background: #10b981;
   color: white;
   border: none;
   border-radius: 6px;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -7980,10 +8048,10 @@ onUnmounted(() => {
 }
 
 .actions-title {
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 700;
   color: #1f2937;
-  margin: 0 0 1.5rem 0;
+  margin: 0 0 1rem 0;
 }
 
 .dark .actions-title {
@@ -7993,7 +8061,7 @@ onUnmounted(() => {
 .actions-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  gap: 0.875rem;
 }
 
 .action-button {
@@ -8001,14 +8069,14 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
-  padding: 1.5rem 1rem;
+  gap: 0.625rem;
+  padding: 1rem 0.875rem;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s ease;
   text-decoration: none;
-  min-height: 120px;
+  min-height: 95px;
   background: #ffffff;
   color: #1f2937;
   border: 1px solid #e5e7eb;
@@ -8037,9 +8105,9 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   background: rgba(16, 185, 129, 0.1);
   color: #10b981;
 }
@@ -8050,7 +8118,7 @@ onUnmounted(() => {
 }
 
 .btn-text {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   font-weight: 600;
   text-align: center;
 }
@@ -8058,7 +8126,7 @@ onUnmounted(() => {
 @media (max-width: 1024px) {
   .section-detail-enhanced {
     grid-template-columns: 1fr;
-    gap: 1.5rem;
+    gap: 1rem;
   }
 }
 
@@ -9360,25 +9428,27 @@ onUnmounted(() => {
 /* Modal Actions Enhanced */
 .modal-actions-enhanced {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.875rem 1.5rem;
-  border-top: 1px solid #f3f4f6;
+  padding: 1.25rem 2rem;
+  border-top: 2px solid #e5e7eb;
   flex-shrink: 0;
+  background: #f9fafb;
 }
 
 .dark .modal-actions-enhanced {
   border-top-color: #374151;
+  background: #111827;
 }
 
 .btn-primary,
 .btn-secondary {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
+  gap: 0.625rem;
+  padding: 0.875rem 1.75rem;
   border-radius: 10px;
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -9403,21 +9473,48 @@ onUnmounted(() => {
 }
 
 .btn-secondary {
-  background: white;
-  color: #6b7280;
-  border: 2px solid #e5e7eb;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
 .btn-secondary:hover {
-  background: #f9fafb;
-  border-color: #d1d5db;
-  color: #1f2937;
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
 }
 
 .dark .btn-secondary {
-  background: #374151;
-  color: #d1d5db;
-  border-color: #4b5563;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  border: none;
+}
+
+.btn-outline {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.875rem 1.75rem;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-outline:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.dark .btn-outline {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
 }
 
 
@@ -9677,5 +9774,526 @@ onUnmounted(() => {
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+/* ============================================
+   ADD STUDENTS MODAL - ENHANCED DESIGN
+   ============================================ */
+
+.add-students-modal {
+  max-width: 900px;
+  max-height: 85vh;
+}
+
+.add-students-content {
+  padding: 0;
+  max-height: calc(85vh - 200px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Enroll Student by ID Styles - ENHANCED */
+.enroll-student-section {
+  padding: 1.5rem 2rem;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border: none;
+  border-bottom: 3px solid #10b981;
+  border-radius: 0;
+  flex-shrink: 0;
+  box-shadow: none;
+  margin: 0;
+}
+
+.dark .enroll-student-section {
+  background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
+  border-bottom-color: #10b981;
+  box-shadow: none;
+}
+
+.enroll-header {
+  margin-bottom: 1rem;
+}
+
+.header-icon-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.icon-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.search-icon-circle {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.enroll-header .section-title {
+  color: #065f46;
+  margin: 0 0 0.25rem 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.dark .enroll-header .section-title {
+  color: #6ee7b7;
+}
+
+.enroll-description {
+  color: #047857;
+  font-size: 0.875rem;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.dark .enroll-description {
+  color: #a7f3d0;
+}
+
+.enroll-form {
+  margin-top: 1rem;
+}
+
+.enroll-input-wrapper {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  background: white;
+  border: 2px solid #10b981;
+  border-radius: 10px;
+  padding: 0.5rem 0.75rem;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+}
+
+.enroll-student-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.9375rem;
+  color: #1f2937;
+  padding: 0.375rem 0;
+  font-weight: 500;
+}
+
+.dark .enroll-student-input {
+  color: #065f46;
+}
+
+.enroll-student-input:focus {
+  outline: none;
+}
+
+.dark .enroll-student-input:focus {
+  outline: none;
+}
+
+.enroll-student-input::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.dark .enroll-student-input::placeholder {
+  color: #6b7280;
+}
+
+.id-icon {
+  color: #10b981;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+
+.dark .id-icon {
+  color: #10b981;
+}
+
+.enroll-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+}
+
+.enroll-btn:hover:not(:disabled) {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+}
+
+.enroll-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.enroll-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spinner-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.enrollment-message {
+  padding: 0.625rem 0.875rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.enrollment-message.success {
+  background: #d1fae5;
+  color: #065f46;
+  border: 2px solid #10b981;
+}
+
+.dark .enrollment-message.success {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+  border-color: rgba(110, 231, 183, 0.4);
+}
+
+.enrollment-message.error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 2px solid #ef4444;
+}
+
+.dark .enrollment-message.error {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border-color: rgba(252, 165, 165, 0.4);
+}
+
+/* Modal Divider - ENHANCED */
+.modal-divider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 2rem;
+  background: #f9fafb;
+}
+
+.modal-divider::before,
+.modal-divider::after {
+  content: '';
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #d1d5db, transparent);
+}
+
+.dark .modal-divider::before,
+.dark .modal-divider::after {
+  background: linear-gradient(90deg, transparent, #374151, transparent);
+}
+
+.modal-divider span {
+  padding: 0 1.25rem;
+  color: #6b7280;
+  font-weight: 600;
+  font-size: 0.875rem;
+  letter-spacing: 0.05em;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 20px;
+  padding: 0.375rem 1rem;
+}
+
+.dark .modal-divider span {
+  color: #9ca3af;
+  background: #1f2937;
+  border-color: #374151;
+}
+
+/* Student Search Section - ENHANCED */
+.student-search-section {
+  padding: 2rem;
+  background: white;
+}
+
+.search-header {
+  margin-bottom: 1.25rem;
+}
+
+.header-icon-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.section-title {
+  color: #1f2937;
+  margin: 0 0 0.25rem 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+.dark .section-title {
+  color: #f1f5f9;
+}
+
+.search-description {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin: 0;
+}
+.dark .search-description {
+  color: #9ca3af;
+}
+
+.search-filters-enhanced {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  flex-shrink: 0;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: #9ca3af;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.student-search-input-enhanced {
+  width: 100%;
+  padding: 0.875rem 0.875rem 0.875rem 2.75rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: all 0.2s;
+  background: white;
+}
+.student-search-input-enhanced:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+.dark .student-search-input-enhanced {
+  background: #1f2937;
+  border-color: #374151;
+  color: #f9fafb;
+}
+.dark .student-search-input-enhanced:focus {
+  border-color: #34d399;
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.1);
+}
+
+.grade-filter-select-enhanced {
+  padding: 0.875rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 140px;
+}
+.grade-filter-select-enhanced:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+.dark .grade-filter-select-enhanced {
+  background: #1f2937;
+  border-color: #374151;
+  color: #f9fafb;
+}
+
+.search-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  color: #059669;
+  flex-shrink: 0;
+}
+.dark .search-hint {
+  background: #064e3b;
+  border-color: #065f46;
+  color: #34d399;
+}
+
+/* Students List Section - ENHANCED */
+.students-list-section {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 0.75rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.dark .students-list-section {
+  border-top-color: #374151;
+}
+
+.students-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  flex-shrink: 0;
+}
+
+.students-header h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+.dark .students-header h4 {
+  color: #f9fafb;
+}
+
+.batch-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.add-batch-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.add-batch-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-1px);
+}
+.add-batch-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.clear-selection-btn {
+  background: transparent;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.clear-selection-btn:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+.dark .clear-selection-btn {
+  color: #9ca3af;
+  border-color: #374151;
+}
+.dark .clear-selection-btn:hover {
+  background: #1f2937;
+  border-color: #4b5563;
+}
+
+.loading-state, .empty-search {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  text-align: center;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+.dark .loading-state, .dark .empty-search {
+  color: #9ca3af;
+}
+
+.students-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.625rem;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+max-height: 200px;
+padding-right: 0.25rem;
+}
+
+.student-card {
+display: flex;
+align-items: center;
+gap: 0.625rem;
+padding: 0.625rem;
+border: 2px solid #e5e7eb;
+border-radius: 6px;
+cursor: pointer;
+transition: all 0.2s;
+position: relative;
+background: white;
+}
+.student-card:hover {
+border-color: #10b981;
+background: #f0fdf4;
+}
+.student-card.selected {
+border-color: #10b981;
+background: #ecfdf5;
 }
 </style>

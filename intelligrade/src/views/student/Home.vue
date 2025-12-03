@@ -78,7 +78,7 @@
         </div>
         <div>
           <div class="stat-number">{{ pendingAssessments }}</div>
-          <div class="stat-label">Pending Assessments</div>
+          <div class="stat-label">Pending Tasks</div>
         </div>
       </div>
     </div>
@@ -89,7 +89,7 @@
       <div class="content-card">
         <div class="card-header">
           <h3>Recent Assessments</h3>
-          <p class="card-desc">Keep track of your upcoming deadlines</p>
+          <p class="card-desc">Keep track of your quizzes and assignments</p>
         </div>
         <div class="assessment-list">
           <div v-if="recentAssessments.length === 0" class="empty-state">
@@ -97,7 +97,12 @@
           </div>
           <div v-for="assessment in recentAssessments" :key="assessment.id" class="assessment-item">
             <div class="assessment-info">
-              <h4>{{ assessment.title }}</h4>
+              <div class="assessment-title-row">
+                <h4>{{ assessment.title }}</h4>
+                <span class="assessment-type-badge" :class="assessment.type">
+                  {{ assessment.type === 'quiz' ? '📝 Quiz' : '📄 Assignment' }}
+                </span>
+              </div>
               <p class="assessment-class">{{ assessment.subject }}</p>
             </div>
             <div class="assessment-due">
@@ -483,7 +488,7 @@ export default {
       if (!this.studentRecordId) return;
 
       try {
-        console.log('📋 Loading quizzes...');
+        console.log('📋 Loading quizzes and assignments...');
 
         if (this.enrolledSectionIds.length === 0) {
           console.log('ℹ️ No sections enrolled');
@@ -492,38 +497,59 @@ export default {
           return;
         }
 
-        console.log('🔍 Checking quizzes for sections:', this.enrolledSectionIds);
+        console.log('🔍 Checking assessments for sections:', this.enrolledSectionIds);
 
-        const { data: quizzes, error } = await supabase
+        // Load Quizzes
+        const { data: quizzes, error: quizError } = await supabase
           .from('quizzes')
           .select('id, title, start_date, end_date, section_id, subject_id, attempts_allowed, status')
           .in('section_id', this.enrolledSectionIds)
           .eq('status', 'published')
           .order('end_date', { ascending: true });
 
-        if (error) {
-          console.error('❌ Quiz error:', error);
-          return;
+        if (quizError) {
+          console.error('❌ Quiz error:', quizError);
+        }
+
+        // Load Assignments
+        const { data: assignments, error: assignmentError } = await supabase
+          .from('assignments')
+          .select('id, title, due_date, section_id, subject_id, status, total_points')
+          .in('section_id', this.enrolledSectionIds)
+          .eq('status', 'published')
+          .order('due_date', { ascending: true });
+
+        if (assignmentError) {
+          console.error('❌ Assignment error:', assignmentError);
         }
 
         console.log('📝 Quizzes found:', quizzes?.length || 0);
+        console.log('📄 Assignments found:', assignments?.length || 0);
 
-        if (!quizzes || quizzes.length === 0) {
-          this.recentAssessments = [];
-          this.pendingAssessments = 0;
-          return;
-        }
-
-        const { data: attempts } = await supabase
+        // Get quiz attempts
+        const { data: quizAttempts } = await supabase
           .from('quiz_attempts')
           .select('quiz_id, status')
           .eq('student_id', this.studentRecordId);
 
         const attemptMap = {};
-        if (attempts) {
-          attempts.forEach(a => {
+        if (quizAttempts) {
+          quizAttempts.forEach(a => {
             if (!attemptMap[a.quiz_id]) attemptMap[a.quiz_id] = [];
             attemptMap[a.quiz_id].push(a);
+          });
+        }
+
+        // Get assignment submissions
+        const { data: assignmentSubmissions } = await supabase
+          .from('assignment_submissions')
+          .select('assignment_id, status, submitted_at')
+          .eq('student_id', this.studentRecordId);
+
+        const submissionMap = {};
+        if (assignmentSubmissions) {
+          assignmentSubmissions.forEach(s => {
+            submissionMap[s.assignment_id] = s;
           });
         }
 
@@ -531,47 +557,105 @@ export default {
         let pending = 0;
         const processed = [];
 
-        for (const q of quizzes) {
-          const start = q.start_date ? new Date(q.start_date) : null;
-          const end = q.end_date ? new Date(q.end_date) : null;
-          const atts = attemptMap[q.id] || [];
-          
-          const completed = atts.filter(a => ['submitted', 'graded', 'reviewed'].includes(a.status)).length;
-          const inProgress = atts.some(a => a.status === 'in_progress');
-          
-          let status = 'pending';
-          if (inProgress) {
-            status = 'in-progress';
-            pending++;
-          } else if (completed >= q.attempts_allowed) {
-            status = 'completed';
-          } else if (end && end < now) {
-            status = 'overdue';
-          } else if ((!start || start <= now) && (!end || end >= now)) {
-            status = 'available';
-            pending++;
-          } else if (start && start > now) {
-            status = 'upcoming';
+        // Process Quizzes
+        if (quizzes && quizzes.length > 0) {
+          for (const q of quizzes) {
+            const start = q.start_date ? new Date(q.start_date) : null;
+            const end = q.end_date ? new Date(q.end_date) : null;
+            const atts = attemptMap[q.id] || [];
+            
+            const completed = atts.filter(a => ['submitted', 'graded', 'reviewed'].includes(a.status)).length;
+            const inProgress = atts.some(a => a.status === 'in_progress');
+            
+            let status = 'pending';
+            if (inProgress) {
+              status = 'in-progress';
+              pending++;
+            } else if (completed >= q.attempts_allowed) {
+              status = 'completed';
+            } else if (end && end < now) {
+              status = 'overdue';
+            } else if ((!start || start <= now) && (!end || end >= now)) {
+              status = 'available';
+              pending++;
+            } else if (start && start > now) {
+              status = 'upcoming';
+            }
+            
+            processed.push({
+              id: q.id,
+              type: 'quiz',
+              title: q.title || 'Untitled Quiz',
+              subject: this.subjectMap.get(q.subject_id) || 'Unknown',
+              dueDate: end,
+              status: status
+            });
           }
-          
-          processed.push({
-            id: q.id,
-            title: q.title || 'Untitled Quiz',
-            subject: this.subjectMap.get(q.subject_id) || 'Unknown',
-            dueDate: end,
-            status: status
-          });
         }
 
+        // Process Assignments
+        if (assignments && assignments.length > 0) {
+          for (const a of assignments) {
+            const dueDate = a.due_date ? new Date(a.due_date) : null;
+            const submission = submissionMap[a.id];
+            
+            let status = 'pending';
+            if (submission) {
+              if (submission.status === 'draft') {
+                status = 'in-progress';
+                pending++;
+              } else if (submission.status === 'submitted') {
+                status = 'submitted';
+              } else if (submission.status === 'graded') {
+                status = 'completed';
+              } else if (submission.status === 'returned') {
+                status = 'returned';
+              }
+            } else {
+              if (dueDate && dueDate < now) {
+                status = 'overdue';
+              } else {
+                status = 'available';
+                pending++;
+              }
+            }
+            
+            processed.push({
+              id: a.id,
+              type: 'assignment',
+              title: a.title || 'Untitled Assignment',
+              subject: this.subjectMap.get(a.subject_id) || 'Unknown',
+              dueDate: dueDate,
+              status: status
+            });
+          }
+        }
+
+        // Sort by priority and due date
         processed.sort((a, b) => {
-          const priority = { 'in-progress': 1, 'available': 2, 'upcoming': 3, 'overdue': 4, 'completed': 5 };
-          return priority[a.status] - priority[b.status];
+          const priority = { 
+            'in-progress': 1, 
+            'available': 2, 
+            'upcoming': 3, 
+            'overdue': 4, 
+            'submitted': 5,
+            'returned': 6,
+            'completed': 7 
+          };
+          const priorityDiff = priority[a.status] - priority[b.status];
+          if (priorityDiff !== 0) return priorityDiff;
+          
+          // If same priority, sort by due date
+          if (a.dueDate && b.dueDate) {
+            return a.dueDate - b.dueDate;
+          }
+          return 0;
         });
 
         this.recentAssessments = processed.slice(0, 5);
         this.pendingAssessments = pending;
         
-        console.log('✅ Quizzes loaded:', {
+        console.log('✅ Assessments loaded:', {
           total: processed.length,
           pending: pending,
           showing: this.recentAssessments.length
@@ -613,10 +697,10 @@ export default {
           });
         }
 
-        // Also check for urgent quizzes
         if (this.enrolledSectionIds.length > 0) {
           const in3Days = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
           
+          // Check for urgent quizzes
           const { data: urgentQuizzes } = await supabase
             .from('quizzes')
             .select('id, title, end_date, created_at')
@@ -643,6 +727,41 @@ export default {
                   id: `quiz-${q.id}`,
                   title: '⏰ Quiz Due Soon',
                   body: `${q.title} - Due: ${due.toLocaleDateString()}`,
+                  date: due.toLocaleString(),
+                  rawDate: due,
+                  isUnread: created > lastRead
+                });
+              }
+            });
+          }
+
+          // Check for urgent assignments
+          const { data: urgentAssignments } = await supabase
+            .from('assignments')
+            .select('id, title, due_date, created_at')
+            .in('section_id', this.enrolledSectionIds)
+            .eq('status', 'published')
+            .gte('due_date', new Date().toISOString())
+            .lte('due_date', in3Days.toISOString())
+            .limit(5);
+
+          if (urgentAssignments?.length > 0) {
+            const { data: submissions } = await supabase
+              .from('assignment_submissions')
+              .select('assignment_id, status')
+              .eq('student_id', this.studentRecordId)
+              .in('status', ['submitted', 'graded']);
+
+            const submittedIds = new Set(submissions?.map(s => s.assignment_id) || []);
+
+            urgentAssignments.forEach(a => {
+              if (!submittedIds.has(a.id)) {
+                const created = new Date(a.created_at);
+                const due = new Date(a.due_date);
+                notifs.push({
+                  id: `assignment-${a.id}`,
+                  title: '⏰ Assignment Due Soon',
+                  body: `${a.title} - Due: ${due.toLocaleDateString()}`,
                   date: due.toLocaleString(),
                   rawDate: due,
                   isUnread: created > lastRead
@@ -686,7 +805,9 @@ export default {
     getStatusClass(status) {
       const s = status?.toLowerCase() || '';
       if (s.includes('progress') || s.includes('available')) return 'actionable';
-      if (s.includes('completed')) return 'completed';
+      if (s.includes('completed') || s.includes('graded')) return 'completed';
+      if (s.includes('submitted') || s.includes('returned')) return 'submitted';
+      if (s.includes('overdue')) return 'overdue';
       return 'default';
     },
 
@@ -728,6 +849,22 @@ export default {
           })
           .subscribe();
 
+        // Subscribe to assignment changes
+        const assignmentSub = supabase
+          .channel(`assignments_${this.studentRecordId}`)
+          .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'assignments'
+          }, (payload) => {
+            const assignment = payload.new || payload.old;
+            if (assignment && this.enrolledSectionIds.includes(assignment.section_id)) {
+              console.log('📄 Assignment changed, reloading...');
+              this.loadAvailableQuizzes();
+            }
+          })
+          .subscribe();
+
         // Subscribe to messages
         const msgSub = supabase
           .channel(`messages_${this.studentRecordId}`)
@@ -744,7 +881,7 @@ export default {
           })
           .subscribe();
 
-        this.subscriptions = [enrollSub, quizSub, msgSub];
+        this.subscriptions = [enrollSub, quizSub, assignmentSub, msgSub];
         console.log('✅ Real-time subscriptions active');
 
       } catch (error) {
@@ -1545,6 +1682,45 @@ export default {
   color: #A3D1C6;
 }
 
+.assessment-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.assessment-type-badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.assessment-type-badge.quiz {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #3b82f6;
+}
+
+.dark .assessment-type-badge.quiz {
+  background: #1e3a8a;
+  color: #93c5fd;
+  border-color: #3b82f6;
+}
+
+.assessment-type-badge.assignment {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fbbf24;
+}
+
+.dark .assessment-type-badge.assignment {
+  background: #78350f;
+  color: #fde68a;
+  border-color: #fbbf24;
+}
+
 .assessment-class {
   font-size: 0.813rem;
   color: #6b7280;
@@ -1610,6 +1786,28 @@ export default {
   background: #022c22;
   color: #34d399;
   border-color: #059669;
+}
+
+.status.submitted {
+  background: #e0e7ff;
+  color: #4338ca;
+  border: 1px solid #6366f1;
+}
+.dark .status.submitted {
+  background: #312e81;
+  color: #a5b4fc;
+  border-color: #4338ca;
+}
+
+.status.overdue {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #ef4444;
+}
+.dark .status.overdue {
+  background: #7f1d1d;
+  color: #fca5a5;
+  border-color: #dc2626;
 }
 
 .status.default {

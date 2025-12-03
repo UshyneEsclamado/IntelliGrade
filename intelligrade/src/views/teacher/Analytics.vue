@@ -195,7 +195,9 @@
             </div>
             <div>
               <h1 class="header-title">Student Analytics</h1>
-              <p class="header-subtitle">Monitor and analyze student performance</p>
+              <p class="header-subtitle">
+                {{ selectedSection ? `Viewing: ${getSelectedSectionName()}` : 'Monitor and analyze student performance across all sections' }}
+              </p>
             </div>
           </div>
         </div>
@@ -233,7 +235,7 @@
         </div>
         <div>
           <div class="stat-number">{{ overallStats.totalStudents }}</div>
-          <div class="stat-label">Total Students</div>
+          <div class="stat-label">{{ selectedSection ? 'Students in Section' : 'Total Students' }}</div>
         </div>
       </div>
 
@@ -245,7 +247,7 @@
           </div>
           <div>
             <div class="stat-number">{{ overallStats.totalQuizzes }}</div>
-            <div class="stat-label">Quizzes Created</div>
+            <div class="stat-label">{{ selectedSection ? 'Quizzes in Section' : 'Total Quizzes' }}</div>
           </div>
         </div>
       </div>
@@ -311,8 +313,27 @@
       <div v-if="!loading" class="content-card">
         <div class="card-header">
           <h3>Student Performance Overview</h3>
-          <p class="card-desc">Quiz results and performance data for each student</p>
+          <p class="card-desc">
+            {{ selectedSection ? `Showing students from ${getSelectedSectionName()}` : 'Quiz results and performance data for all students' }}
+          </p>
           <div class="table-controls">
+            <select v-model="selectedSection" class="sort-select" style="min-width: 200px;">
+              <option value="">All Sections</option>
+              <option v-for="section in sections" :key="section.id" :value="section.id">
+                {{ section.name }} - {{ section.subject_name }}
+              </option>
+            </select>
+            <button 
+              v-if="selectedSection" 
+              @click="selectedSection = ''; currentPage = 1" 
+              class="clear-filter-btn"
+              title="Clear section filter"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+              </svg>
+              Clear Filter
+            </button>
             <input 
               v-model="searchQuery" 
               type="text" 
@@ -320,7 +341,8 @@
               class="search-input"
             >
             <select v-model="sortBy" @change="sortStudents" class="sort-select">
-              <option value="name">Sort by Name</option>
+              <option value="surname">Sort by Surname (A-Z)</option>
+              <option value="name">Sort by Full Name</option>
               <option value="average">Sort by Average Score</option>
               <option value="quizzes">Sort by Quizzes Taken</option>
             </select>
@@ -582,7 +604,7 @@ export default {
     const quizPerformanceData = ref<QuizPerformance[]>([])
     const selectedSection = ref('')
     const searchQuery = ref('')
-    const sortBy = ref('name')
+    const sortBy = ref('surname')
     const currentPage = ref(1)
     const itemsPerPage = 10
     const loading = ref(false)
@@ -662,6 +684,13 @@ export default {
       }
     })
 
+    // Helper function to extract surname from full name
+    const getSurname = (fullName: string): string => {
+      const parts = fullName.trim().split(' ')
+      // Assuming last name is the last part
+      return parts[parts.length - 1].toLowerCase()
+    }
+
     const filteredStudents = computed(() => {
       let filtered = studentData.value
 
@@ -683,6 +712,11 @@ export default {
       // Sort students
       filtered.sort((a, b) => {
         switch (sortBy.value) {
+          case 'surname':
+            // Sort by surname (last name) alphabetically
+            const surnameA = getSurname(a.student_name)
+            const surnameB = getSurname(b.student_name)
+            return surnameA.localeCompare(surnameB)
           case 'average':
             return (b.average_score || 0) - (a.average_score || 0)
           case 'quizzes':
@@ -1239,6 +1273,11 @@ export default {
       return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
     }
 
+    const getSelectedSectionName = () => {
+      const section = sections.value.find(s => s.id === selectedSection.value)
+      return section ? `${section.name} - ${section.subject_name}` : 'All Sections'
+    }
+
     const getScoreClass = (score: number) => {
       if (score >= 90) return 'excellent'
       if (score >= 80) return 'good'
@@ -1366,13 +1405,20 @@ export default {
       viewStudentDetails,
       exportData,
       getInitials,
+      getSelectedSectionName,
       getScoreClass,
       getStatusClass,
       formatDate,
       toggleProfileDropdown,
       toggleNotifDropdown,
       handleNotificationClick,
-      logout
+      logout,
+      showLogoutModal,
+      isLoggingOut,
+      closeLogoutModal,
+      confirmLogout,
+      showScrollTop,
+      scrollToTop
     }
   }
 }
@@ -2150,12 +2196,108 @@ body, html {
   background: white;
   color: #3D8D7A;
   font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
+
+.search-input {
+  cursor: text;
+}
+
+.sort-select option {
+  background: white;
+  color: #1f2937;
+  padding: 0.5rem;
+  font-weight: 500;
+}
+
+.sort-select:focus,
+.search-input:focus {
+  outline: none;
+  border-color: #3D8D7A;
+  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
+}
+
+/* Make the section filter more prominent */
+.table-controls .sort-select:first-child {
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  color: white;
+  border: 2px solid #3D8D7A;
+  font-weight: 600;
+  padding: 0.6rem 1rem;
+}
+
+.table-controls .sort-select:first-child option {
+  background: white;
+  color: #1f2937;
+  font-weight: 500;
+  padding: 0.5rem;
+}
+
+.table-controls .sort-select:first-child:hover {
+  background: linear-gradient(135deg, #2d6a5a, #1e5a4a);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
+}
+
 .dark .search-input,
 .dark .sort-select {
   background: #23272b;
   border-color: #3D8D7A;
   color: #A3D1C6;
+}
+
+.dark .sort-select option {
+  background: #23272b;
+  color: #A3D1C6;
+}
+
+.dark .table-controls .sort-select:first-child {
+  background: linear-gradient(135deg, #20c997, #18a577);
+  color: #1a1d21;
+  border-color: #20c997;
+}
+
+.dark .table-controls .sort-select:first-child option {
+  background: #23272b;
+  color: #A3D1C6;
+}
+
+/* Clear Filter Button */
+.clear-filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clear-filter-btn:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.clear-filter-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.dark .clear-filter-btn {
+  background: #f87171;
+  color: #1a1d21;
+}
+
+.dark .clear-filter-btn:hover {
+  background: #ef4444;
 }
 
 .chart-controls {
