@@ -10434,12 +10434,88 @@ transition: all 0.2s;
 position: relative;
 background: white;
 }
+
 .student-card:hover {
-border-color: #10b981;
+  border-color:#10b981;
 background: #f0fdf4;
 }
 .student-card.selected {
 border-color: #10b981;
 background: #ecfdf5;
+}
+.dark .student-card {
+border-color: #374151;
+background: #111827;
+}
+.dark .student-card:hover {
+border-color: #10b981;
+background: #064e3b;
+}
+.dark .student-card.selected {
+background: #065f46;
+border-color: #10b981;
+}
+.student-avatar {
+width: 48px;
+height: 48px;
+background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+border-radius: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+color: white;
+flex-shrink: 0;
+}
+.student-info {
+flex: 1;
+}
+.student-info h4 {
+font-size: 0.9375rem;
+font-weight: 600;
+color: #1f2937;
+margin: 0 0 0.25rem 0;
+}
+.dark .student-info h4 {
+color: #f9fafb;
+}
+.student-id,
+.student-grade {
+font-size: 0.75rem;
+color: #6b7280;
+margin: 0;
+}
+.dark .student-id,
+.dark .student-grade {
+color: #9ca3af;
+}
+.selection-indicator {
+position: absolute;
+top: 0.5rem;
+right: 0.5rem;
+width: 24px;
+height: 24px;
+background: #10b981;
+border-radius: 50%;
+color: white;
+display: flex;
+align-items: center;
+justify-content: center;
+opacity: 0;
+transition: all 0.2s;
+}
+.student-card.selected .selection-indicator {
+opacity: 1;
+}
+/* Responsive */
+@media (max-width: 768px) {
+.add-students-modal {
+max-width: 95%;
+}
+.search-filters-enhanced {
+grid-template-columns: 1fr;
+}
+.students-grid {
+grid-template-columns: 1fr;
+}
 }
 </style>
