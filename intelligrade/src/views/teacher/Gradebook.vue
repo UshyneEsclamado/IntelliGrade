@@ -385,7 +385,7 @@
                   
                   <!-- Expandable Student History Row -->
                   <tr v-if="expandedStudent === student.id" class="student-history-row">
-                    <td colspan="100%" class="history-cell">
+                    <td :colspan="assessments.length + 2" class="history-cell">
                       <div class="student-history-panel">
                         <div class="history-header">
                           <h4>{{ student.full_name }} - Detailed History</h4>
@@ -427,204 +427,203 @@
         </div>
       </div>
 
-
-    <!-- Review/Grade Modal -->
-    <div v-if="showReviewModal" class="modal-overlay" @click="closeReviewModal">
-      <div class="review-modal" @click.stop>
-        <div class="modal-header">
-          <div>
-            <h3>{{ modalMode === 'view' ? 'View Submission' : 'Grade Submission' }}</h3>
-            <p class="modal-subtitle" v-if="selectedSubmission">
-              {{ selectedSubmission.student_name }} - {{ selectedSubmission.quiz_title }}
-            </p>
-          </div>
-          <button @click="closeReviewModal" class="modal-close">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-
-        <div class="modal-content">
-          <div v-if="loadingQuestions" class="loading-questions">
-            <div class="spinner-small"></div>
-            <p>Loading questions...</p>
+      <!-- Review/Grade Modal -->
+      <div v-if="showReviewModal" class="modal-overlay" @click="closeReviewModal">
+        <div class="review-modal" @click.stop>
+          <div class="modal-header">
+            <div>
+              <h3>{{ modalMode === 'view' ? 'View Submission' : 'Grade Submission' }}</h3>
+              <p class="modal-subtitle" v-if="selectedSubmission">
+                {{ selectedSubmission.student_name }} - {{ selectedSubmission.quiz_title }}
+              </p>
+            </div>
+            <button @click="closeReviewModal" class="modal-close">
+              <i class="fas fa-times"></i>
+            </button>
           </div>
 
-          <div v-else-if="reviewQuestions.length === 0" class="no-questions">
-            <p>No questions found for this quiz.</p>
-          </div>
-
-          <div v-else class="submission-review">
-            <div class="review-summary">
-              <div class="summary-stat">
-                <span class="stat-label">Score</span>
-                <span class="stat-value">{{ calculateReviewScore() }}/{{ maxReviewScore }}</span>
-              </div>
-              <div class="summary-stat">
-                <span class="stat-label">Percentage</span>
-                <span class="stat-value">{{ calculateReviewPercentage() }}%</span>
-              </div>
-              <div class="summary-stat">
-                <span class="stat-label">Correct</span>
-                <span class="stat-value">{{ correctAnswerCount }}/{{ reviewQuestions.length }}</span>
-              </div>
+          <div class="modal-content">
+            <div v-if="loadingQuestions" class="loading-questions">
+              <div class="spinner-small"></div>
+              <p>Loading questions...</p>
             </div>
 
-            <div class="questions-review">
-              <div v-for="(question, index) in reviewQuestions" :key="question.id" class="question-review-item">
-                <div class="question-header">
-                  <div class="question-number">Q{{ index + 1 }}</div>
-                  <div class="question-result" :class="question.is_correct ? 'correct' : 'incorrect'">
-                    {{ question.is_correct ? '✓ Correct' : '✗ Incorrect' }}
-                  </div>
-                  <div class="question-points" v-if="modalMode === 'grade'">
-                    <input 
-                      v-model.number="question.manualPoints"
-                      type="number"
-                      :max="question.points"
-                      min="0"
-                      step="0.5"
-                      class="points-input"
-                      @input="updateQuestionPoints(question)"
-                    /> / {{ question.points }} pts
-                  </div>
-                  <div class="question-points" v-else>
-                    {{ question.points_earned }} / {{ question.points }} pts
-                  </div>
+            <div v-else-if="reviewQuestions.length === 0" class="no-questions">
+              <p>No questions found for this quiz.</p>
+            </div>
+
+            <div v-else class="submission-review">
+              <div class="review-summary">
+                <div class="summary-stat">
+                  <span class="stat-label">Score</span>
+                  <span class="stat-value">{{ calculateReviewScore() }}/{{ maxReviewScore }}</span>
                 </div>
+                <div class="summary-stat">
+                  <span class="stat-label">Percentage</span>
+                  <span class="stat-value">{{ calculateReviewPercentage() }}%</span>
+                </div>
+                <div class="summary-stat">
+                  <span class="stat-label">Correct</span>
+                  <span class="stat-value">{{ correctAnswerCount }}/{{ reviewQuestions.length }}</span>
+                </div>
+              </div>
 
-                <div class="question-text">{{ question.question_text }}</div>
+              <div class="questions-review">
+                <div v-for="(question, index) in reviewQuestions" :key="question.id" class="question-review-item">
+                  <div class="question-header">
+                    <div class="question-number">Q{{ index + 1 }}</div>
+                    <div class="question-result" :class="question.is_correct ? 'correct' : 'incorrect'">
+                      {{ question.is_correct ? '✓ Correct' : '✗ Incorrect' }}
+                    </div>
+                    <div class="question-points" v-if="modalMode === 'grade'">
+                      <input 
+                        v-model.number="question.manualPoints"
+                        type="number"
+                        :max="question.points"
+                        min="0"
+                        step="0.5"
+                        class="points-input"
+                        @input="updateQuestionPoints(question)"
+                      /> / {{ question.points }} pts
+                    </div>
+                    <div class="question-points" v-else>
+                      {{ question.points_earned }} / {{ question.points }} pts
+                    </div>
+                  </div>
 
-                <!-- Multiple Choice -->
-                <div v-if="question.question_type === 'multiple_choice'" class="answer-section">
-                  <div class="answer-key-label">
-                    <strong>Answer Key:</strong> {{ getCorrectOptionLabel(question) }}
-                  </div>
-                  <div class="answer-key-label">
-                    <strong>Student's Answer:</strong> 
-                    <span v-if="question.selected_option_id">{{ getStudentOptionLabel(question) }}</span>
-                    <span v-else-if="question.answer_text">{{ question.answer_text }}</span>
-                    <span v-else style="color: #ef4444;">
-                      No answer provided
-                    </span>
-                  </div>
-                  <div class="options-grid">
-                    <div 
-                      v-for="option in question.options" 
-                      :key="option.id" 
-                      class="option-item"
-                      :class="{
-                        'selected': question.selected_option_id === option.id,
-                        'correct': option.is_correct,
-                        'incorrect': question.selected_option_id === option.id && !option.is_correct
-                      }"
-                    >
-                      <div class="option-letter">{{ String.fromCharCode(65 + (option.option_number - 1)) }}</div>
-                      <div class="option-content">
-                        <div class="option-text">{{ option.option_text }}</div>
-                        <div v-if="option.is_correct" class="correct-tag">✓ Correct Answer</div>
-                        <div v-if="question.selected_option_id === option.id" class="selected-tag">Student's Answer</div>
+                  <div class="question-text">{{ question.question_text }}</div>
+
+                  <!-- Multiple Choice -->
+                  <div v-if="question.question_type === 'multiple_choice'" class="answer-section">
+                    <div class="answer-key-label">
+                      <strong>Answer Key:</strong> {{ getCorrectOptionLabel(question) }}
+                    </div>
+                    <div class="answer-key-label">
+                      <strong>Student's Answer:</strong> 
+                      <span v-if="question.selected_option_id">{{ getStudentOptionLabel(question) }}</span>
+                      <span v-else-if="question.answer_text">{{ question.answer_text }}</span>
+                      <span v-else style="color: #ef4444;">
+                        No answer provided
+                      </span>
+                    </div>
+                    <div class="options-grid">
+                      <div 
+                        v-for="option in question.options" 
+                        :key="option.id" 
+                        class="option-item"
+                        :class="{
+                          'selected': question.selected_option_id === option.id,
+                          'correct': option.is_correct,
+                          'incorrect': question.selected_option_id === option.id && !option.is_correct
+                        }"
+                      >
+                        <div class="option-letter">{{ String.fromCharCode(65 + (option.option_number - 1)) }}</div>
+                        <div class="option-content">
+                          <div class="option-text">{{ option.option_text }}</div>
+                          <div v-if="option.is_correct" class="correct-tag">✓ Correct Answer</div>
+                          <div v-if="question.selected_option_id === option.id" class="selected-tag">Student's Answer</div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <!-- True/False -->
-                <div v-else-if="question.question_type === 'true_false'" class="answer-section">
-                  <div class="answer-key-label">
-                    <strong>Answer Key:</strong> {{ question.correct_answer }}
-                  </div>
-                  <div class="answer-key-label">
-                    <strong>Student's Answer:</strong> 
-                    <span v-if="question.answer_text" :class="question.is_correct ? 'text-green-600' : 'text-red-600'">
-                      {{ question.answer_text }}
-                    </span>
-                    <span v-else style="color: #ef4444;">No answer provided</span>
-                  </div>
-                  <div class="true-false-options">
-                    <div class="tf-option" :class="{ 
-                      'student-selected': question.answer_text === 'true', 
-                      'correct-answer': question.correct_answer === 'true',
-                      'wrong-answer': question.answer_text === 'true' && question.correct_answer !== 'true'
-                    }">
-                      <strong>True</strong>
-                      <span v-if="question.correct_answer === 'true'" class="correct-tag">✓ Correct</span>
-                      <span v-if="question.answer_text === 'true'" class="selected-tag">Student's Answer</span>
+                  <!-- True/False -->
+                  <div v-else-if="question.question_type === 'true_false'" class="answer-section">
+                    <div class="answer-key-label">
+                      <strong>Answer Key:</strong> {{ question.correct_answer }}
                     </div>
-                    <div class="tf-option" :class="{ 
-                      'student-selected': question.answer_text === 'false', 
-                      'correct-answer': question.correct_answer === 'false',
-                      'wrong-answer': question.answer_text === 'false' && question.correct_answer !== 'false'
-                    }">
-                      <strong>False</strong>
-                      <span v-if="question.correct_answer === 'false'" class="correct-tag">✓ Correct</span>
-                      <span v-if="question.answer_text === 'false'" class="selected-tag">Student's Answer</span>
+                    <div class="answer-key-label">
+                      <strong>Student's Answer:</strong> 
+                      <span v-if="question.answer_text" :class="question.is_correct ? 'text-green-600' : 'text-red-600'">
+                        {{ question.answer_text }}
+                      </span>
+                      <span v-else style="color: #ef4444;">No answer provided</span>
                     </div>
-                  </div>
-                </div>
-
-                <!-- Fill in the Blank -->
-                <div v-else-if="question.question_type === 'fill_blank'" class="answer-section">
-                  <div class="fill-blank-answers">
-                    <div class="answer-key-box">
-                      <div class="answer-label">Answer Key:</div>
-                      <div class="answer-text correct">
-                        {{ question.correct_answer }}
+                    <div class="true-false-options">
+                      <div class="tf-option" :class="{ 
+                        'student-selected': question.answer_text === 'true', 
+                        'correct-answer': question.correct_answer === 'true',
+                        'wrong-answer': question.answer_text === 'true' && question.correct_answer !== 'true'
+                      }">
+                        <strong>True</strong>
+                        <span v-if="question.correct_answer === 'true'" class="correct-tag">✓ Correct</span>
+                        <span v-if="question.answer_text === 'true'" class="selected-tag">Student's Answer</span>
                       </div>
-                    </div>
-                    <div class="student-answer-box">
-                      <div class="answer-label">Student's Answer:</div>
-                      <div class="answer-text" :class="question.is_correct ? 'correct' : 'incorrect'">
-                        {{ question.answer_text || 'No answer' }}
+                      <div class="tf-option" :class="{ 
+                        'student-selected': question.answer_text === 'false', 
+                        'correct-answer': question.correct_answer === 'false',
+                        'wrong-answer': question.answer_text === 'false' && question.correct_answer !== 'false'
+                      }">
+                        <strong>False</strong>
+                        <span v-if="question.correct_answer === 'false'" class="correct-tag">✓ Correct</span>
+                        <span v-if="question.answer_text === 'false'" class="selected-tag">Student's Answer</span>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <!-- Teacher Comment -->
-                <div class="teacher-comment-section" v-if="modalMode === 'grade'">
-                  <textarea 
-                    v-model="question.teacherComment"
-                    class="comment-input"
-                    placeholder="Add feedback for this question..."
-                    rows="2"
-                  ></textarea>
-                </div>
-                <div class="teacher-comment-section" v-else-if="question.teacher_comment">
-                  <div class="comment-display">
-                    <strong>Teacher's Feedback:</strong>
-                    <p>{{ question.teacher_comment }}</p>
+                  <!-- Fill in the Blank -->
+                  <div v-else-if="question.question_type === 'fill_blank'" class="answer-section">
+                    <div class="fill-blank-answers">
+                      <div class="answer-key-box">
+                        <div class="answer-label">Answer Key:</div>
+                        <div class="answer-text correct">
+                          {{ question.correct_answer }}
+                        </div>
+                      </div>
+                      <div class="student-answer-box">
+                        <div class="answer-label">Student's Answer:</div>
+                        <div class="answer-text" :class="question.is_correct ? 'correct' : 'incorrect'">
+                          {{ question.answer_text || 'No answer' }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Teacher Comment -->
+                  <div class="teacher-comment-section" v-if="modalMode === 'grade'">
+                    <textarea 
+                      v-model="question.teacherComment"
+                      class="comment-input"
+                      placeholder="Add feedback for this question..."
+                      rows="2"
+                    ></textarea>
+                  </div>
+                  <div class="teacher-comment-section" v-else-if="question.teacher_comment">
+                    <div class="comment-display">
+                      <strong>Teacher's Feedback:</strong>
+                      <p>{{ question.teacher_comment }}</p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <!-- Overall Feedback -->
-            <div class="overall-feedback-section" v-if="modalMode === 'grade'">
-              <h4>Overall Feedback</h4>
-              <textarea 
-                v-model="reviewFeedback" 
-                class="feedback-textarea"
-                placeholder="Add overall feedback for the student..."
-                rows="3"
-              ></textarea>
-            </div>
-            <div class="overall-feedback-section" v-else-if="selectedSubmission?.teacher_feedback">
-              <h4>Overall Feedback</h4>
-              <div class="feedback-display">
-                <p>{{ selectedSubmission.teacher_feedback }}</p>
+              <!-- Overall Feedback -->
+              <div class="overall-feedback-section" v-if="modalMode === 'grade'">
+                <h4>Overall Feedback</h4>
+                <textarea 
+                  v-model="reviewFeedback" 
+                  class="feedback-textarea"
+                  placeholder="Add overall feedback for the student..."
+                  rows="3"
+                ></textarea>
+              </div>
+              <div class="overall-feedback-section" v-else-if="selectedSubmission?.teacher_feedback">
+                <h4>Overall Feedback</h4>
+                <div class="feedback-display">
+                  <p>{{ selectedSubmission.teacher_feedback }}</p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div class="modal-actions">
-          <button @click="closeReviewModal" class="btn-modal cancel">Close</button>
-          <button v-if="modalMode === 'grade'" @click="saveGrade" class="btn-modal primary" :disabled="savingGrade">
-            {{ savingGrade ? 'Saving...' : 'Save Grade' }}
-          </button>
+          <div class="modal-actions">
+            <button @click="closeReviewModal" class="btn-modal cancel">Close</button>
+            <button v-if="modalMode === 'grade'" @click="saveGrade" class="btn-modal primary" :disabled="savingGrade">
+              {{ savingGrade ? 'Saving...' : 'Save Grade' }}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
     </main>
 
     <!-- Logout Confirmation Modal -->
@@ -660,7 +659,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/supabase.js'
 import { useDarkMode } from '@/composables/useDarkMode.js'
@@ -673,17 +672,15 @@ const loading = ref(true)
 const loadingQuestions = ref(false)
 const savingGrade = ref(false)
 const error = ref(null)
-const searchQuery = ref('')
 const teacherId = ref(null)
 
-// Data for unified gradebook
 const subjects = ref([])
 const selectedSectionId = ref('')
 const currentSectionInfo = ref({})
 const students = ref([])
 const assessments = ref([])
-const gradebookData = ref({}) // student_id -> assessment_id -> score
-const submissions = ref([]) // For pending review tracking
+const gradebookData = ref({})
+const submissions = ref([])
 const expandedStudent = ref(null)
 
 const showReviewModal = ref(false)
@@ -692,36 +689,18 @@ const reviewQuestions = ref([])
 const reviewFeedback = ref('')
 const modalMode = ref('view')
 
-// Logout modal states
 const showLogoutModal = ref(false)
 const isLoggingOut = ref(false)
 
-const selectedSubjectFilter = ref('')
-const lastRefresh = ref(new Date())
-const newSubmissionsCount = ref(0)
-
-// Missing variables for pagination and filtering
-const selectedStatus = ref('all')
-const currentPage = ref(1)
-const sortField = ref('')
-const sortDirection = ref('asc')
-
-// Navbar dropdown states
 const showNotifDropdown = ref(false)
 const showProfileDropdown = ref(false)
 const notifications = ref([])
 const fullName = ref('Teacher')
 const showScrollTop = ref(false)
 
-// Analytics data for the selected section
 const analyticsData = computed(() => {
   if (!students.value.length || !assessments.value.length) {
-    return {
-      averageScore: 0,
-      highestScore: 0,
-      lowestScore: 0,
-      submissionRate: 0
-    }
+    return { averageScore: 0, highestScore: 0, lowestScore: 0, submissionRate: 0 }
   }
 
   const scores = []
@@ -744,23 +723,11 @@ const analyticsData = computed(() => {
   const lowestScore = scores.length > 0 ? Math.round(Math.min(...scores)) : 0
   const submissionRate = possibleSubmissions > 0 ? Math.round((totalSubmissions / possibleSubmissions) * 100) : 0
 
-  return {
-    averageScore,
-    highestScore, 
-    lowestScore,
-    submissionRate
-  }
+  return { averageScore, highestScore, lowestScore, submissionRate }
 })
 
-const correctAnswerCount = computed(() => {
-  return reviewQuestions.value.filter(q => q.is_correct).length
-})
-
-const maxReviewScore = computed(() => {
-  return reviewQuestions.value.reduce((sum, q) => sum + (q.points || 1), 0)
-})
-
-
+const correctAnswerCount = computed(() => reviewQuestions.value.filter(q => q.is_correct).length)
+const maxReviewScore = computed(() => reviewQuestions.value.reduce((sum, q) => sum + (q.points || 1), 0))
 
 const getTeacherInfo = async () => {
   try {
@@ -770,25 +737,22 @@ const getTeacherInfo = async () => {
       return false
     }
 
-    // Get profile first
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('id, role')
       .eq('auth_user_id', user.id)
-      .eq('role', 'teacher')
-      .single()
+      .maybeSingle()
 
-    if (profileError || !profile) {
-      error.value = 'Access denied - Teacher role required'
+    if (profileError || !profile || profile.role !== 'teacher') {
+      error.value = 'Teacher access required'
       return false
     }
 
-    // Get teacher data separately
     const { data: teacher, error: teacherError } = await supabase
       .from('teachers')
-      .select('id')
+      .select('id, full_name')
       .eq('profile_id', profile.id)
-      .single()
+      .maybeSingle()
 
     if (teacherError || !teacher) {
       error.value = 'Teacher record not found'
@@ -796,62 +760,40 @@ const getTeacherInfo = async () => {
     }
 
     teacherId.value = teacher.id
+    fullName.value = teacher.full_name || 'Teacher'
     return true
   } catch (err) {
-    console.error('Error in getTeacherInfo:', err)
-    error.value = err.message || 'An error occurred'
+    error.value = err.message
     return false
   }
 }
 
-// Fetch all subjects with their sections for the dropdown
 const fetchSubjects = async () => {
   try {
     loading.value = true
     error.value = null
 
-    console.log('🔄 Fetching subjects and sections for teacher:', teacherId.value)
-
-    // Get subjects with sections
     const { data: subjectsData, error: subjectsError } = await supabase
       .from('subjects')
-      .select(`
-        id, 
-        name, 
-        grade_level,
-        sections!inner(
-          id,
-          name,
-          section_code,
-          is_active
-        )
-      `)
+      .select('id, name, grade_level, sections(id, name, section_code)')
       .eq('teacher_id', teacherId.value)
       .eq('is_active', true)
-      .eq('sections.is_active', true)
 
     if (subjectsError) throw subjectsError
 
-    console.log('📚 Found subjects with sections:', subjectsData?.length || 0)
-
-    // Process the data for dropdown
     subjects.value = subjectsData?.map(subject => ({
       id: subject.id,
       name: subject.name,
       grade_level: subject.grade_level,
       sections: subject.sections || []
     })) || []
-
-    console.log('✅ Processed subjects:', subjects.value)
   } catch (err) {
-    console.error('❌ Error fetching subjects:', err)
     error.value = `Failed to load subjects: ${err.message}`
   } finally {
     loading.value = false
   }
 }
 
-// Handle section selection from dropdown
 const onSectionChange = async () => {
   if (!selectedSectionId.value) {
     currentSectionInfo.value = {}
@@ -866,132 +808,178 @@ const onSectionChange = async () => {
     error.value = null
     await fetchGradebookData(selectedSectionId.value)
   } catch (err) {
-    console.error('❌ Error loading gradebook data:', err)
     error.value = `Failed to load gradebook data: ${err.message}`
   } finally {
     loading.value = false
   }
 }
 
-// Fetch complete gradebook data for a section
 const fetchGradebookData = async (sectionId) => {
-  console.log('🔄 Fetching gradebook data for section:', sectionId)
+  console.log('🔄 Fetching REAL-TIME gradebook data for section:', sectionId)
 
   // Get section info
   const { data: sectionInfo, error: sectionError } = await supabase
     .from('sections')
-    .select(`
-      id, name, section_code, subject_id,
-      subjects(name, grade_level)
-    `)
+    .select('id, name, section_code, subject_id, subjects(name, grade_level)')
     .eq('id', sectionId)
     .single()
 
   if (sectionError) throw sectionError
   currentSectionInfo.value = sectionInfo
 
-  // Get students in this section
+  // Get students
   const { data: studentsData, error: studentsError } = await supabase
     .from('enrollments')
-    .select(`
-      student_id,
-      students(id, full_name, email, student_id)
-    `)
+    .select('student_id, students(id, full_name, email, student_id)')
     .eq('section_id', sectionId)
     .eq('status', 'active')
 
   if (studentsError) throw studentsError
   students.value = studentsData?.map(enrollment => enrollment.students) || []
 
-  // Get quizzes (auto-graded assessments) for this section
+  console.log('📚 Students loaded:', students.value.length)
+
+  // Initialize gradebook data
+  const newGradebookData = {}
+  students.value.forEach(student => {
+    newGradebookData[student.id] = {}
+  })
+
+  // ONLY REAL DATA - NO FAKE ASSESSMENTS
+  const allAssessments = []
+
+  // Get REAL QUIZZES from database
   const { data: quizzesData, error: quizzesError } = await supabase
     .from('quizzes')
-    .select('id, title, created_at, status')
+    .select('id, title, number_of_questions, created_at, status')
     .eq('section_id', sectionId)
     .eq('status', 'published')
-    .order('created_at')
+    .order('created_at', { ascending: true })
 
-  if (quizzesError) throw quizzesError
-
-  // Calculate total points for each quiz from questions
-  const quizzesWithPoints = []
-  for (const quiz of quizzesData || []) {
-    const { data: questionsData } = await supabase
-      .from('quiz_questions')
-      .select('points')
-      .eq('quiz_id', quiz.id)
+  if (quizzesError) {
+    console.error('❌ Quiz fetch error:', quizzesError)
+  } else {
+    console.log('📝 REAL Quizzes found:', quizzesData?.length || 0, quizzesData)
     
-    const totalPoints = questionsData?.reduce((sum, q) => sum + (q.points || 0), 0) || 100
-    
-    quizzesWithPoints.push({
-      id: quiz.id,
-      title: quiz.title,
-      type: 'auto',
-      max_score: totalPoints,
-      created_at: quiz.created_at
-    })
+    // Add ONLY real quizzes
+    if (quizzesData && quizzesData.length > 0) {
+      quizzesData.forEach(quiz => {
+        allAssessments.push({
+          id: quiz.id,
+          title: quiz.title,
+          type: 'quiz',
+          max_score: quiz.number_of_questions || 1,
+          created_at: quiz.created_at
+        })
+      })
+    }
   }
 
-  // Get manual assessments (for future expansion)
-  // For now, we'll create some sample manual assessments
-  const manualAssessments = [
-    { id: 'manual_1', title: 'Assignment 1', type: 'manual', max_score: 50 },
-    { id: 'manual_2', title: 'Activity 1', type: 'manual', max_score: 25 }
-  ]
+  // Get REAL ASSIGNMENTS from database
+  const { data: assignmentsData, error: assignmentsError } = await supabase
+    .from('assignments')
+    .select('id, title, total_points, created_at, status, published_at')
+    .eq('section_id', sectionId)
+    .eq('status', 'published')
+    .order('created_at', { ascending: true })
 
-  // Combine all assessments
-  const allAssessments = [
-    ...quizzesWithPoints,
-    ...manualAssessments
-  ]
+  if (assignmentsError) {
+    console.error('❌ Assignment fetch error:', assignmentsError)
+  } else {
+    console.log('📋 REAL Assignments found:', assignmentsData?.length || 0, assignmentsData)
+    
+    // Add ONLY real assignments
+    if (assignmentsData && assignmentsData.length > 0) {
+      assignmentsData.forEach(assignment => {
+        allAssessments.push({
+          id: assignment.id,
+          title: assignment.title,
+          type: 'assignment',
+          max_score: assignment.total_points || 100,
+          created_at: assignment.published_at || assignment.created_at
+        })
+      })
+    }
+  }
 
+  // Sort by creation date
+  allAssessments.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
   assessments.value = allAssessments
 
-  // Get quiz attempts/results for gradebook
-  if (quizzesWithPoints && quizzesWithPoints.length > 0) {
-    const quizIds = quizzesWithPoints.map(q => q.id)
-    const { data: attemptsData } = await supabase
+  console.log('📊 Total REAL assessments:', assessments.value.length, assessments.value)
+
+  // Get REAL quiz scores
+  if (quizzesData && quizzesData.length > 0) {
+    const quizIds = quizzesData.map(q => q.id)
+    const { data: attemptsData, error: attemptsError } = await supabase
       .from('quiz_attempts')
       .select('student_id, quiz_id, total_score, status, submitted_at')
       .in('quiz_id', quizIds)
       .in('student_id', students.value.map(s => s.id))
       .order('submitted_at', { ascending: false })
 
-    // Process attempts into gradebook data structure
-    const newGradebookData = {}
-    students.value.forEach(student => {
-      newGradebookData[student.id] = {}
-    })
-
-    attemptsData?.forEach(attempt => {
-      // Only take the latest attempt for each student-quiz combination
-      if (!newGradebookData[attempt.student_id][attempt.quiz_id]) {
-        newGradebookData[attempt.student_id][attempt.quiz_id] = attempt.total_score
-      }
-    })
-
-    gradebookData.value = newGradebookData
+    if (attemptsError) {
+      console.error('❌ Quiz attempts error:', attemptsError)
+    } else {
+      console.log('✅ REAL Quiz attempts loaded:', attemptsData?.length || 0, attemptsData)
+      
+      attemptsData?.forEach(attempt => {
+        if (attempt.status === 'submitted' || attempt.status === 'graded') {
+          if (!newGradebookData[attempt.student_id][attempt.quiz_id]) {
+            newGradebookData[attempt.student_id][attempt.quiz_id] = attempt.total_score
+            console.log(`✅ Quiz score added: Student ${attempt.student_id}, Quiz ${attempt.quiz_id}, Score ${attempt.total_score}`)
+          }
+        }
+      })
+    }
   }
 
-  console.log('✅ Gradebook data loaded:', {
+  // Get REAL assignment scores
+  if (assignmentsData && assignmentsData.length > 0) {
+    const assignmentIds = assignmentsData.map(a => a.id)
+    const { data: submissionsData, error: submissionsError } = await supabase
+      .from('assignment_submissions')
+      .select('student_id, assignment_id, score, status, graded_at, submitted_at')
+      .in('assignment_id', assignmentIds)
+      .in('student_id', students.value.map(s => s.id))
+      .order('submitted_at', { ascending: false })
+
+    if (submissionsError) {
+      console.error('❌ Assignment submissions error:', submissionsError)
+    } else {
+      console.log('✅ REAL Assignment submissions loaded:', submissionsData?.length || 0, submissionsData)
+      
+      submissionsData?.forEach(submission => {
+        // Show scores for graded OR submitted assignments
+        if (submission.score !== null && (submission.status === 'graded' || submission.status === 'submitted')) {
+          if (!newGradebookData[submission.student_id][submission.assignment_id]) {
+            newGradebookData[submission.student_id][submission.assignment_id] = submission.score
+            console.log(`✅ Assignment score added: Student ${submission.student_id}, Assignment ${submission.assignment_id}, Score ${submission.score}`)
+          }
+        }
+      })
+    }
+  }
+
+  gradebookData.value = newGradebookData
+
+  console.log('✅ REAL-TIME Gradebook loaded:', {
     section: sectionInfo.name,
     students: students.value.length,
-    assessments: assessments.value.length
+    quizzes: quizzesData?.length || 0,
+    assignments: assignmentsData?.length || 0,
+    totalAssessments: assessments.value.length,
+    gradebookEntries: Object.keys(newGradebookData).length
   })
 }
 
-// Gradebook helper functions
-const getStudentScore = (studentId, assessmentId) => {
-  return gradebookData.value[studentId]?.[assessmentId] || null
-}
-
+const getStudentScore = (studentId, assessmentId) => gradebookData.value[studentId]?.[assessmentId] || null
 const getStudentPercentage = (studentId, assessmentId) => {
   const score = getStudentScore(studentId, assessmentId)
   const assessment = assessments.value.find(a => a.id === assessmentId)
   if (!score || !assessment) return 0
   return Math.round((score / assessment.max_score) * 100)
 }
-
 const getStudentTotal = (studentId) => {
   let total = 0
   assessments.value.forEach(assessment => {
@@ -1000,436 +988,88 @@ const getStudentTotal = (studentId) => {
   })
   return total
 }
-
-const getTotalMaxScore = () => {
-  return assessments.value.reduce((sum, assessment) => sum + assessment.max_score, 0)
-}
-
+const getTotalMaxScore = () => assessments.value.reduce((sum, assessment) => sum + assessment.max_score, 0)
 const getStudentTotalPercentage = (studentId) => {
   const total = getStudentTotal(studentId)
   const maxTotal = getTotalMaxScore()
-  if (maxTotal === 0) return 0
-  return Math.round((total / maxTotal) * 100)
+  return maxTotal === 0 ? 0 : Math.round((total / maxTotal) * 100)
 }
-
 const getAssessmentTypeLabel = (type) => {
-  return type === 'auto' ? 'Quiz' : 'Manual'
+  if (type === 'quiz') return 'Quiz'
+  if (type === 'assignment') return 'Assignment'
+  return 'Manual'
 }
-
-const hasSubmissionPending = (studentId, assessmentId) => {
-  // Check if there's a pending submission for this student-assessment combination
-  return submissions.value.some(s => 
-    s.student_id === studentId && 
-    s.quiz_id === assessmentId && 
-    s.status === 'submitted'
-  )
-}
-
-const hasSubmissionToGrade = (studentId, assessmentId) => {
-  return hasSubmissionPending(studentId, assessmentId)
-}
-
-const toggleStudentHistory = (studentId) => {
-  expandedStudent.value = expandedStudent.value === studentId ? null : studentId
-}
-
+const hasSubmissionPending = (studentId, assessmentId) => submissions.value.some(s => s.student_id === studentId && s.quiz_id === assessmentId && s.status === 'submitted')
+const hasSubmissionToGrade = (studentId, assessmentId) => hasSubmissionPending(studentId, assessmentId)
+const toggleStudentHistory = (studentId) => expandedStudent.value = expandedStudent.value === studentId ? null : studentId
 const updateManualScore = (studentId, assessmentId, value) => {
-  if (!gradebookData.value[studentId]) {
-    gradebookData.value[studentId] = {}
-  }
+  if (!gradebookData.value[studentId]) gradebookData.value[studentId] = {}
   gradebookData.value[studentId][assessmentId] = parseFloat(value) || null
 }
-
 const saveManualScore = async (studentId, assessmentId) => {
-  // Implement saving manual scores to database
-  // For now, just log it
-  const score = getStudentScore(studentId, assessmentId)
-  console.log('💾 Saving manual score:', { studentId, assessmentId, score })
+  console.log('💾 Saving manual score')
 }
-
-const reviewStudentSubmission = async (studentId, assessmentId) => {
-  // Find the submission to review
-  const submission = submissions.value.find(s => 
-    s.student_id === studentId && s.quiz_id === assessmentId
-  )
-  
-  if (submission) {
-    await reviewSubmission(submission)
-  }
-}
-
 const refreshData = async () => {
-  console.log('  Manual refresh triggered...')
   loading.value = true
-  
   try {
     await fetchSubjects()
-    
-    if (selectedSectionId.value) {
-      await fetchGradebookData(selectedSectionId.value)
-    }
-    
-    console.log('✅ Manual refresh completed')
-  } catch (error) {
-    console.error('❌ Error during manual refresh:', error)
+    if (selectedSectionId.value) await fetchGradebookData(selectedSectionId.value)
   } finally {
     loading.value = false
   }
 }
 
-const loadQuestionsAndAnswers = async (submission) => {
-  try {
-    loadingQuestions.value = true
+const getInitials = (name) => name ? name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : '?'
+const getScoreClass = (percentage) => {
+  if (percentage >= 90) return 'excellent'
+  if (percentage >= 80) return 'good'
+  if (percentage >= 70) return 'average'
+  return 'needs-improvement'
+}
 
-    console.log('🔍 Loading questions for submission:', submission.id)
-    console.log('📊 Submission details:', {
-      id: submission.id,
-      quiz_id: submission.quiz_id,
-      student_id: submission.student_id,
-      student_name: submission.student_name
-    })
+const toggleNotifDropdown = () => {
+  showNotifDropdown.value = !showNotifDropdown.value
+  showProfileDropdown.value = false
+}
+const toggleProfileDropdown = () => {
+  showProfileDropdown.value = !showProfileDropdown.value
+  showNotifDropdown.value = false
+}
+const handleNotificationClick = (notif) => console.log('Notification clicked:', notif)
+const closeLogoutModal = () => showLogoutModal.value = false
+const confirmLogout = () => {
+  localStorage.clear()
+  sessionStorage.clear()
+  supabase.auth.signOut()
+  setTimeout(() => window.location.assign('/login'), 100)
+}
+const logout = () => showLogoutModal.value = true
+const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 
-    // Get questions first
-    const { data: questions, error: questionsError } = await supabase
-      .from('quiz_questions')
-      .select('id, question_number, question_type, question_text, points')
-      .eq('quiz_id', submission.quiz_id)
-      .order('question_number')
-
-    if (questionsError) {
-      console.error('❌ Questions error:', questionsError)
-      throw questionsError
-    }
-
-    console.log('📝 Found questions:', questions?.length || 0, questions)
-
-    if (!questions || questions.length === 0) {
-      reviewQuestions.value = []
-      return
-    }
-
-    const questionIds = questions.map(q => q.id)
-    console.log('🔢 Question IDs:', questionIds)
-
-    // Get question options first
-    console.log('📋 Getting options for questions:', questionIds)
-    const { data: optionsData, error: optionsError } = await supabase
-      .from('question_options')
-      .select('*')
-      .in('question_id', questionIds)
-      .order('option_number')
-
-    if (optionsError) {
-      console.error('❌ Options error:', optionsError)
-      throw optionsError
-    }
-
-    // Get correct answers
-    console.log('✅ Getting correct answers for questions')
-    const { data: answersData, error: answersError } = await supabase
-      .from('question_answers')
-      .select('*')
-      .in('question_id', questionIds)
-
-    if (answersError) {
-      console.error('❌ Answers error:', answersError)
-      throw answersError
-    }
-
-    // Get student answers - simplified query
-    console.log('👤 Getting student answers for attempt:', submission.id)
-    const { data: studentAnswersData, error: studentAnswersError } = await supabase
-      .from('student_answers')
-      .select('*')
-      .eq('attempt_id', submission.id)
-
-    if (studentAnswersError) {
-      console.error('❌ Student answers error:', studentAnswersError)
-      throw studentAnswersError
-    }
-
-    // Create response objects for compatibility
-    const optionsRes = { data: optionsData, error: optionsError }
-    const answersRes = { data: answersData, error: answersError }
-    const studentAnswersRes = { data: studentAnswersData, error: studentAnswersError }
-
-    console.log('📋 Options data:', optionsRes.data?.length || 0, optionsRes.data)
-    console.log('✅ Correct answers data:', answersRes.data?.length || 0, answersRes.data)
-    console.log('👤 Student answers data:', studentAnswersRes.data?.length || 0, studentAnswersRes.data)
-
-    if (optionsRes.error) console.error('Options error:', optionsRes.error)
-    if (answersRes.error) console.error('Answers error:', answersRes.error)
-    if (studentAnswersRes.error) console.error('Student answers error:', studentAnswersRes.error)
-
-    // Enhanced debugging for student answers
-    console.log('🔍 Student answers analysis:', {
-      found: studentAnswersRes.data?.length || 0,
-      attemptId: submission.id,
-      questionIds: questionIds,
-      studentAnswers: studentAnswersRes.data
-    })
-
-    // If no student answers found, try comprehensive search
-    if (!studentAnswersRes.data || studentAnswersRes.data.length === 0) {
-      console.log('🔍 No student answers found, trying multiple approaches...')
-      
-      // Try 1: Get all answers for this attempt (no filters)
-      const { data: allAnswers, error: allError } = await supabase
-        .from('student_answers')
-        .select('*')
-        .eq('attempt_id', submission.id)
-      
-      console.log('🔍 All answers for attempt:', allAnswers?.length || 0, allAnswers)
-      
-      // Try 2: Get answers by student and quiz combination
-      const { data: studentQuizAnswers, error: sqError } = await supabase
-        .from('student_answers')
-        .select(`
-          *,
-          quiz_attempts!inner(quiz_id, student_id)
-        `)
-        .eq('quiz_attempts.quiz_id', submission.quiz_id)
-        .eq('quiz_attempts.student_id', submission.student_id)
-      
-      console.log('🔍 Student-quiz answers:', studentQuizAnswers?.length || 0, studentQuizAnswers)
-      
-      // Use whichever approach found data
-      if (allAnswers && allAnswers.length > 0) {
-        studentAnswersRes.data = allAnswers
-        console.log('🔄 Using all answers approach')
-      } else if (studentQuizAnswers && studentQuizAnswers.length > 0) {
-        studentAnswersRes.data = studentQuizAnswers
-        console.log('🔄 Using student-quiz approach')
-      }
-    }
-
-    // Additional debug: Try a completely raw query to see what's in the database
-    console.log('  Raw debug query to check database...')
-    const { data: debugAnswers, error: debugError } = await supabase
-      .from('student_answers')
-      .select('*')
-      .eq('attempt_id', submission.id)
-    
-    console.log('🔍 Raw debug query result:', debugAnswers?.length || 0, debugAnswers)
-    if (debugError) console.error('Debug query error:', debugError)
-
-    // Create lookup maps with better validation
-    const optionsMap = {}
-    optionsRes.data?.forEach(opt => {
-      if (!optionsMap[opt.question_id]) {
-        optionsMap[opt.question_id] = []
-      }
-      optionsMap[opt.question_id].push(opt)
-    })
-
-    const answersMap = {}
-    answersRes.data?.forEach(ans => {
-      answersMap[ans.question_id] = ans
-    })
-
-    const studentAnswersMap = {}
-    studentAnswersRes.data?.forEach(sa => {
-      console.log('📝 Mapping student answer:', {
-        id: sa.id,
-        question_id: sa.question_id,
-        selected_option_id: sa.selected_option_id,
-        answer_text: sa.answer_text,
-        attempt_id: sa.attempt_id
-      })
-      studentAnswersMap[sa.question_id] = sa
-    })
-
-    console.log('🗺️ Maps created:', {
-      optionsMap: Object.keys(optionsMap).length,
-      answersMap: Object.keys(answersMap).length,
-      studentAnswersMap: Object.keys(studentAnswersMap).length,
-      studentAnswerDetails: Object.entries(studentAnswersMap).map(([qId, answer]) => ({
-        questionId: qId,
-        hasSelectedOption: !!answer.selected_option_id,
-        hasAnswerText: !!answer.answer_text,
-        selectedOptionId: answer.selected_option_id,
-        answerText: answer.answer_text
-      }))
-    })
-
-    // Process the questions with enhanced logic
-    reviewQuestions.value = questions.map(q => {
-      const studentAnswer = studentAnswersMap[q.id] || {}
-      const correctAnswer = answersMap[q.id]
-      const questionOptions = optionsMap[q.id] || []
-
-      console.log(`Processing Question ${q.question_number} (ID: ${q.id}):`, {
-        studentAnswer: {
-          id: studentAnswer.id,
-          selected_option_id: studentAnswer.selected_option_id,
-          answer_text: studentAnswer.answer_text,
-          hasData: !!Object.keys(studentAnswer).length
-        },
-        correctAnswer,
-        questionOptions: questionOptions.length,
-        optionsList: questionOptions.map(opt => ({
-          id: opt.id,
-          number: opt.option_number,
-          text: opt.option_text,
-          correct: opt.is_correct
-        })),
-        type: q.question_type
-      })
-
-      // Determine if answer is correct based on question type
-      let isCorrect = false
-      let correctAnswerText = null
-
-      if (q.question_type === 'multiple_choice') {
-        // Find correct option
-        const correctOption = questionOptions.find(opt => opt.is_correct)
-        correctAnswerText = correctOption ? correctOption.option_text : 'No correct option found'
-        
-        console.log(`Multiple choice analysis:`, {
-          correctOption,
-          studentSelectedId: studentAnswer.selected_option_id,
-          studentAnswerText: studentAnswer.answer_text,
-          allOptions: questionOptions
-        })
-
-        // Check if student selected the correct option by ID
-        if (correctOption && studentAnswer.selected_option_id === correctOption.id) {
-          isCorrect = true
-        }
-        // Enhanced fallback logic for answer_text matching
-        else if (studentAnswer.answer_text && questionOptions.length > 0) {
-          const answerText = studentAnswer.answer_text.toString().toLowerCase().trim()
-          
-          console.log(`🔍 Trying to match answer_text: "${answerText}" for question ${q.id}`)
-          
-          // Method 1: Check if it's a number (like "1", "2", etc.)
-          if (/^\d+$/.test(answerText)) {
-            const optionNumber = parseInt(answerText)
-            const selectedOption = questionOptions.find(opt => opt.option_number === optionNumber)
-            if (selectedOption) {
-              console.log(`✅ Matched by option number: ${optionNumber}`)
-              if (selectedOption.is_correct) isCorrect = true
-              studentAnswer.selected_option_id = selectedOption.id
-            }
-          }
-          // Method 2: Check if it matches option text exactly
-          else {
-            const matchedOption = questionOptions.find(opt => 
-              opt.option_text.toLowerCase().trim() === answerText
-            )
-            if (matchedOption) {
-              console.log(`✅ Matched by option text: "${matchedOption.option_text}"`)
-              if (matchedOption.is_correct) isCorrect = true
-              studentAnswer.selected_option_id = matchedOption.id
-            }
-            // Method 3: Check if it matches option letter (A, B, C, etc.)
-            else if (/^[a-zA-Z]$/.test(answerText)) {
-              const letterIndex = answerText.toUpperCase().charCodeAt(0) - 65 + 1
-              const letterOption = questionOptions.find(opt => opt.option_number === letterIndex)
-              if (letterOption) {
-                console.log(`✅ Matched by letter: ${answerText.toUpperCase()}`)
-                if (letterOption.is_correct) isCorrect = true
-                studentAnswer.selected_option_id = letterOption.id
-              }
-            }
-          }
-        }
-        
-        // If we still don't have a selected_option_id but have answer_text, use it for display
-        if (!studentAnswer.selected_option_id && studentAnswer.answer_text) {
-          console.log(`⚠️ Could not match answer_text "${studentAnswer.answer_text}" to any option`)
-        }
-      } else if (q.question_type === 'true_false') {
-        correctAnswerText = correctAnswer?.correct_answer
-        if (correctAnswerText && studentAnswer.answer_text) {
-          isCorrect = studentAnswer.answer_text.toLowerCase() === correctAnswerText.toLowerCase()
-        }
-      } else if (q.question_type === 'fill_blank') {
-        correctAnswerText = correctAnswer?.correct_answer
-        if (correctAnswerText && studentAnswer.answer_text) {
-          // Case-insensitive comparison, trimmed
-          isCorrect = studentAnswer.answer_text.trim().toLowerCase() === correctAnswerText.trim().toLowerCase()
-        }
-      }
-
-      const pointsEarned = isCorrect ? (q.points || 1) : 0
-
-      console.log(`Question ${q.question_number} final result:`, {
-        type: q.question_type,
-        correct_answer: correctAnswerText,
-        student_answer: studentAnswer.answer_text || studentAnswer.selected_option_id,
-        selected_option_id: studentAnswer.selected_option_id,
-        answer_text: studentAnswer.answer_text,
-        is_correct: isCorrect,
-        points_earned: pointsEarned,
-        studentAnswerObject: studentAnswer
-      })
-
-      return {
-        id: q.id,
-        question_number: q.question_number,
-        question_type: q.question_type,
-        question_text: q.question_text,
-        points: q.points || 1,
-        options: questionOptions,
-        correct_answer: correctAnswerText,
-        selected_option_id: studentAnswer.selected_option_id || null,
-        answer_text: studentAnswer.answer_text || null,
-        is_correct: isCorrect,
-        points_earned: pointsEarned,
-        teacher_comment: studentAnswer.teacher_comment || '',
-        manualPoints: pointsEarned,
-        teacherComment: studentAnswer.teacher_comment || '',
-        student_answer_id: studentAnswer.id || null
-      }
-    })
-
-    console.log('✅ Questions processed:', reviewQuestions.value.length)
-    console.log('📊 Review questions data:', reviewQuestions.value)
-  } catch (err) {
-    console.error('Error loading questions:', err)
-    alert('Failed to load questions: ' + err.message)
-  } finally {
-    loadingQuestions.value = false
+const exportToExcel = () => {
+  if (!selectedSectionId.value || !students.value.length) {
+    alert('Please select a section with students to export')
+    return
   }
-}
 
-const reviewSubmission = async (submission) => {
-  modalMode.value = 'grade'
-  selectedSubmission.value = submission
-  reviewFeedback.value = submission.teacher_feedback || ''
-  showReviewModal.value = true
-  await loadQuestionsAndAnswers(submission)
-}
-
-const viewSubmission = async (submission) => {
-  modalMode.value = 'view'
-  selectedSubmission.value = submission
-  reviewFeedback.value = submission.teacher_feedback || ''
-  showReviewModal.value = true
-  await loadQuestionsAndAnswers(submission)
-}
-
-const updateQuestionPoints = (question) => {
-  if (question.manualPoints > question.points) {
-    question.manualPoints = question.points
-  }
-  if (question.manualPoints < 0) {
-    question.manualPoints = 0
-  }
-}
-
-const calculateReviewScore = () => {
-  if (modalMode.value === 'grade') {
-    return reviewQuestions.value.reduce((sum, q) => sum + (parseFloat(q.manualPoints) || 0), 0)
-  } else {
-    return reviewQuestions.value.reduce((sum, q) => sum + (parseFloat(q.points_earned) || 0), 0)
-  }
-}
-
-const calculateReviewPercentage = () => {
-  if (maxReviewScore.value === 0) return 0
-  return Math.round((calculateReviewScore() / maxReviewScore.value) * 100)
+  const exportData = []
+  const headers = ['Student Name', 'Student ID']
+  assessments.value.forEach(a => headers.push(`${a.title} (${a.max_score}pts)`))
+  headers.push('Total', 'Percentage')
+  exportData.push(headers)
+  
+  students.value.forEach(student => {
+    const row = [student.full_name, student.student_id || 'N/A']
+    assessments.value.forEach(a => row.push(getStudentScore(student.id, a.id) || '--'))
+    row.push(getStudentTotal(student.id))
+    row.push(`${getStudentTotalPercentage(student.id)}%`)
+    exportData.push(row)
+  })
+  
+  const wb = XLSX.utils.book_new()
+  const ws = XLSX.utils.aoa_to_sheet(exportData)
+  XLSX.utils.book_append_sheet(wb, ws, 'Gradebook')
+  XLSX.writeFile(wb, `Gradebook_${new Date().toISOString().split('T')[0]}.xlsx`)
 }
 
 const closeReviewModal = () => {
@@ -1440,449 +1080,32 @@ const closeReviewModal = () => {
   modalMode.value = 'view'
 }
 
+const calculateReviewScore = () => {
+  return reviewQuestions.value.reduce((sum, q) => sum + (q.points_earned || 0), 0)
+}
+
+const calculateReviewPercentage = () => {
+  const max = maxReviewScore.value
+  if (max === 0) return 0
+  return Math.round((calculateReviewScore() / max) * 100)
+}
+
 const getCorrectOptionLabel = (question) => {
-  const correctOption = question.options.find(opt => opt.is_correct)
-  if (correctOption) {
-    return String.fromCharCode(65 + correctOption.option_number - 1)
-  }
-  return 'N/A'
+  const correctOption = question.options?.find(opt => opt.is_correct)
+  return correctOption ? String.fromCharCode(65 + (correctOption.option_number - 1)) : 'N/A'
 }
 
 const getStudentOptionLabel = (question) => {
-  const selectedOption = question.options.find(opt => opt.id === question.selected_option_id)
-  if (selectedOption) {
-    return String.fromCharCode(65 + (selectedOption.option_number - 1))
-  }
-  
-  // Enhanced fallback: if we have answer_text but no selected_option_id, try comprehensive matching
-  if (question.answer_text && question.options.length > 0) {
-    const answerText = question.answer_text.toString().toLowerCase().trim()
-    
-    // Method 1: Check if it's a number (like "1", "2", etc.)
-    if (/^\d+$/.test(answerText)) {
-      const optionNumber = parseInt(answerText)
-      const matchedOption = question.options.find(opt => opt.option_number === optionNumber)
-      if (matchedOption) {
-        return String.fromCharCode(65 + (matchedOption.option_number - 1))
-      }
-    }
-    
-    // Method 2: Check if it's already a letter (A, B, C, etc.)
-    if (/^[a-zA-Z]$/.test(answerText)) {
-      return answerText.toUpperCase()
-    }
-    
-    // Method 3: Try to match by option text
-    const textMatchedOption = question.options.find(opt => 
-      opt.option_text.toLowerCase().trim() === answerText
-    )
-    if (textMatchedOption) {
-      return String.fromCharCode(65 + (textMatchedOption.option_number - 1))
-    }
-    
-    // If no match found, show the raw answer with indication
-    return `"${question.answer_text}"`
-  }
-  
-  return 'No answer'
+  if (!question.selected_option_id) return 'N/A'
+  const selectedOption = question.options?.find(opt => opt.id === question.selected_option_id)
+  return selectedOption ? String.fromCharCode(65 + (selectedOption.option_number - 1)) : 'N/A'
 }
-
-const saveGrade = async () => {
-  try {
-    if (!selectedSubmission.value) return
-
-    savingGrade.value = true
-    const finalScore = calculateReviewScore()
-    const finalPercentage = calculateReviewPercentage()
-
-    const { error: updateError } = await supabase
-      .from('quiz_attempts')
-      .update({
-        total_score: finalScore,
-        percentage: finalPercentage,
-        status: 'graded',
-        teacher_feedback: reviewFeedback.value,
-        manually_reviewed: true,
-        graded_by: teacherId.value,
-        graded_at: new Date().toISOString()
-      })
-      .eq('id', selectedSubmission.value.id)
-
-    if (updateError) throw updateError
-
-    const answerUpdates = reviewQuestions.value
-      .filter(q => q.student_answer_id)
-      .map(q => ({
-        id: q.student_answer_id,
-        teacher_comment: q.teacherComment || null,
-        points_earned: parseFloat(q.manualPoints) || 0
-      }))
-
-    if (answerUpdates.length > 0) {
-      for (const update of answerUpdates) {
-        await supabase
-          .from('student_answers')
-          .update({
-            teacher_comment: update.teacher_comment,
-            points_earned: update.points_earned
-          })
-          .eq('id', update.id)
-      }
-    }
-
-    await supabase
-      .from('quiz_results')
-      .upsert({
-        quiz_id: selectedSubmission.value.quiz_id,
-        student_id: selectedSubmission.value.student_id,
-        best_attempt_id: selectedSubmission.value.id,
-        best_score: finalScore,
-        best_percentage: finalPercentage,
-        total_attempts: selectedSubmission.value.attempt_number,
-        latest_attempt_date: selectedSubmission.value.submitted_at,
-        status: 'graded',
-        finalized: true,
-        visible_to_student: true
-      }, {
-        onConflict: 'quiz_id,student_id',
-        ignoreDuplicates: false
-      })
-
-    const index = submissions.value.findIndex(s => s.id === selectedSubmission.value.id)
-    if (index !== -1) {
-      submissions.value[index].status = 'graded'
-      submissions.value[index].total_score = finalScore
-      submissions.value[index].percentage = finalPercentage
-      submissions.value[index].teacher_feedback = reviewFeedback.value
-    }
-
-    closeReviewModal()
-    alert('Grade saved successfully!')
-  } catch (err) {
-    console.error('Error saving grade:', err)
-    alert(`Error saving grade: ${err.message}`)
-  } finally {
-    savingGrade.value = false
-  }
-}
-
-const sortBy = (field) => {
-  if (sortField.value === field) {
-    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
-  } else {
-    sortField.value = field
-    sortDirection.value = 'asc'
-  }
-}
-
-const getSortIcon = (field) => {
-  if (sortField.value !== field) return ''
-  return sortDirection.value === 'asc' ? 'fa-sort-up' : 'fa-sort-down'
-}
-
-const getInitials = (name) => {
-  if (!name) return '?'
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
-}
-
-const formatDate = (dateString) => {
-  if (!dateString) return 'N/A'
-  return new Date(dateString).toLocaleDateString()
-}
-
-const formatTime = (dateString) => {
-  if (!dateString) return 'N/A'
-  return new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-}
-
-const getStatusText = (status) => {
-  const map = {
-    'in_progress': 'In Progress',
-    'submitted': 'Pending Review',
-    'graded': 'Graded',
-    'reviewed': 'Reviewed'
-  }
-  return map[status] || status
-}
-
-const getScoreClass = (percentage) => {
-  if (percentage >= 90) return 'excellent'
-  if (percentage >= 80) return 'good'
-  if (percentage >= 70) return 'average'
-  return 'needs-improvement'
-}
-
-const getSubjectIconSvg = (subjectName) => {
-  const name = subjectName.toLowerCase()
-  
-  if (name.includes('math') || name.includes('algebra') || name.includes('geometry') || name.includes('calculus')) {
-    return '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M7,7H9V9H7V7M7,11H9V13H7V11M7,15H9V17H7V15M11,7H17V9H11V7M11,11H17V13H11V11M11,15H17V17H11V15Z" /></svg>'
-  }
-  
-  if (name.includes('english') || name.includes('literature') || name.includes('writing')) {
-    return '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" /></svg>'
-  }
-  
-  if (name.includes('science') || name.includes('biology') || name.includes('chemistry') || name.includes('physics')) {
-    return '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M5,13H6.5L9.5,6H14.5L17.5,13H19L15.5,4H8.5L5,13M15,16A1,1 0 0,1 16,17A1,1 0 0,1 15,18A1,1 0 0,1 14,17A1,1 0 0,1 15,16M15,10A1,1 0 0,1 16,11A1,1 0 0,1 15,12A1,1 0 0,1 14,11A1,1 0 0,1 15,10Z" /></svg>'
-  }
-  
-  if (name.includes('filipino') || name.includes('tagalog')) {
-    return '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12.87,15.07L15.28,17.48L17.48,15.28L15.07,12.87L17.48,10.46L15.28,8.26L12.87,10.67L10.46,8.26L8.26,10.46L10.67,12.87L8.26,15.28L10.46,17.48L12.87,15.07M17.5,12A1.5,1.5 0 0,1 16,10.5A1.5,1.5 0 0,1 17.5,9A1.5,1.5 0 0,1 19,10.5A1.5,1.5 0 0,1 17.5,12M10,10.5C10,9.67 9.33,9 8.5,9C7.67,9 7,9.67 7,10.5C7,11.33 7.67,12 8.5,12C9.33,12 10,11.33 10,10.5M12,14C12,11.34 14.33,9.2 17.35,9.04C17.75,6.27 15.41,4 12.5,4C9.59,4 7.25,6.27 7.65,9.04C10.67,9.2 13,11.34 13,14H12Z" /></svg>'
-  }
-  
-  if (name.includes('history') || name.includes('social')) {
-    return '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M13,3V9H21V3M13,21H21V11H13M3,21H11V15H3M3,13H11V3H3V13Z" /></svg>'
-  }
-  
-  if (name.includes('art') || name.includes('music') || name.includes('creative')) {
-    return '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12,3V13.55C11.41,13.21 10.73,13 10,13A4,4 0 0,0 6,17A4,4 0 0,0 10,21A4,4 0 0,0 14,17V7H18V3H12Z" /></svg>'
-  }
-  
-  if (name.includes('pe') || name.includes('physical') || name.includes('sports')) {
-    return '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6.5,2A7.5,7.5 0 0,1 14,9.5C14,10.87 13.61,12.14 12.94,13.22L19.07,19.36L17.66,20.78L11.5,14.63C10.42,15.28 9.17,15.67 7.83,15.67A7.67,7.67 0 0,1 0.17,8A7.5,7.5 0 0,1 6.5,2M6.5,4A5.5,5.5 0 0,0 1,9.5A5.5,5.5 0 0,0 6.5,15A5.5,5.5 0 0,0 12,9.5A5.5,5.5 0 0,0 6.5,4Z" /></svg>'
-  }
-  
-  if (name.includes('computer') || name.includes('ict') || name.includes('programming') || name.includes('technology')) {
-    return '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M4,6H20V16H4M20,18A2,2 0 0,0 22,16V6C22,4.89 21.1,4 20,4H4C2.89,4 2,4.89 2,6V16A2,2 0 0,0 4,18H0V20H24V18H20Z" /></svg>'
-  }
-  
-  return '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5C3.9 3 3 3.9 3 5V19C3.9 19 5 18.1 5 17V9H19C20.1 9 21 8.1 21 7V5C21 3.9 20.1 3 19 3Z" /></svg>'
-}
-
-const getSubjectIconColor = (subjectName) => {
-  const name = subjectName.toLowerCase()
-  
-  if (name.includes('math') || name.includes('algebra') || name.includes('geometry') || name.includes('calculus')) {
-    return '#2563eb'
-  }
-  
-  if (name.includes('english') || name.includes('literature') || name.includes('writing')) {
-    return '#dc2626'
-  }
-  
-  if (name.includes('science') || name.includes('biology') || name.includes('chemistry') || name.includes('physics')) {
-    return '#16a34a'
-  }
-  
-  if (name.includes('filipino') || name.includes('tagalog')) {
-    return '#ca8a04'
-  }
-  
-  if (name.includes('history') || name.includes('social')) {
-    return '#9333ea'
-  }
-  
-  if (name.includes('art') || name.includes('music') || name.includes('creative')) {
-    return '#ec4899'
-  }
-  
-  if (name.includes('pe') || name.includes('physical') || name.includes('sports')) {
-    return '#ea580c'
-  }
-  
-  if (name.includes('computer') || name.includes('ict') || name.includes('programming') || name.includes('technology')) {
-    return '#0891b2'
-  }
-  
-  return '#3D8D7A'
-}
-
-const getSubjectTypeColor = (type) => {
-  return getSubjectIconColor(type)
-}
-
-const getSubjectTypeIcon = (type) => {
-  return getSubjectIconSvg(type)
-}
-
-// Navbar dropdown methods
-const toggleNotifDropdown = () => {
-  showNotifDropdown.value = !showNotifDropdown.value
-  showProfileDropdown.value = false
-}
-
-const toggleProfileDropdown = () => {
-  showProfileDropdown.value = !showProfileDropdown.value
-  showNotifDropdown.value = false
-}
-
-const handleNotificationClick = (notif) => {
-  console.log('Notification clicked:', notif)
-}
-
-// Logout confirmation modal functions
-const openLogoutModal = () => {
-  showLogoutModal.value = true
-}
-
-const closeLogoutModal = () => {
-  showLogoutModal.value = false
-}
-
-const confirmLogout = () => {
-  console.log('🚪 Logging out...')
-  
-  // Clear storage immediately
-  localStorage.clear()
-  sessionStorage.clear()
-  
-  // Sign out from Supabase (don't wait)
-  supabase.auth.signOut().catch(err => console.log('Signout error:', err))
-  
-  // Immediate redirect - no waiting!
-  setTimeout(() => {
-    window.location.assign('/login')
-  }, 100)
-  
-  console.log('✅ Logout initiated')
-}
-
-const logout = () => {
-  openLogoutModal()
-}
-
-const scrollToTop = () => {
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-}
-
-// Excel Export Function
-const exportToExcel = () => {
-  if (!selectedSectionId.value || !students.value.length) {
-    alert('Please select a section with students to export')
-    return
-  }
-
-  // Prepare data for Excel export
-  const exportData = []
-  
-  // Header row
-  const headers = ['Student Name', 'Student ID']
-  assessments.value.forEach(assessment => {
-    headers.push(`${assessment.title} (${assessment.max_score}pts)`)
-  })
-  headers.push('Total', 'Percentage')
-  exportData.push(headers)
-  
-  // Student data rows
-  students.value.forEach(student => {
-    const row = [student.full_name, student.student_id || 'N/A']
-    
-    // Assessment scores
-    assessments.value.forEach(assessment => {
-      const score = getStudentScore(student.id, assessment.id)
-      row.push(score !== null ? score : '--')
-    })
-    
-    // Total and percentage
-    row.push(getStudentTotal(student.id))
-    row.push(`${getStudentTotalPercentage(student.id)}%`)
-    
-    exportData.push(row)
-  })
-  
-  // Create workbook and worksheet
-  const wb = XLSX.utils.book_new()
-  const ws = XLSX.utils.aoa_to_sheet(exportData)
-  
-  // Set column widths
-  const colWidths = [
-    { wch: 25 }, // Student Name
-    { wch: 15 }, // Student ID
-  ]
-  assessments.value.forEach(() => {
-    colWidths.push({ wch: 12 }) // Assessment columns
-  })
-  colWidths.push({ wch: 10 }, { wch: 12 }) // Total, Percentage
-  
-  ws['!cols'] = colWidths
-  
-  // Add worksheet to workbook
-  const sheetName = `${currentSectionInfo.value.name || 'Gradebook'}_${new Date().toISOString().split('T')[0]}`
-  XLSX.utils.book_append_sheet(wb, ws, sheetName)
-  
-  // Download file
-  const fileName = `${currentSectionInfo.value.name || 'Gradebook'}_${new Date().toISOString().split('T')[0]}.xlsx`
-  XLSX.writeFile(wb, fileName)
-  
-  console.log('✅ Gradebook exported to Excel:', fileName)
-}
-
-watch([searchQuery, selectedStatus], () => {
-  currentPage.value = 1
-})
 
 onMounted(async () => {
   const success = await getTeacherInfo()
   if (success) {
     await fetchSubjects()
-    
-    // Load teacher name
-    if (teacherId.value) {
-      try {
-        const { data: teacher, error } = await supabase
-          .from('teachers')
-          .select('full_name')
-          .eq('id', teacherId.value)
-          .single()
-          
-        if (!error && teacher) {
-          fullName.value = teacher.full_name || 'Teacher'
-          console.log('✅ Teacher loaded:', { id: teacherId.value, name: fullName.value })
-        }
-      } catch (err) {
-        console.warn('Failed to load teacher name:', err)
-      }
-    }
-    
-    // Add scroll event listener for scroll-to-top button
-    const handleScroll = () => {
-      showScrollTop.value = window.scrollY > 300
-    }
-    window.addEventListener('scroll', handleScroll)
-    
-    // Set up real-time subscription for gradebook updates
-    console.log('🔴 Setting up real-time subscriptions...')
-    
-    const subscription = supabase
-      .channel('gradebook_realtime')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'quiz_attempts'
-      }, async (payload) => {
-        console.log('🔄 Quiz attempt change detected:', payload.eventType)
-        
-        // Refresh gradebook data if viewing a section
-        if (selectedSectionId.value) {
-          await fetchGradebookData(selectedSectionId.value)
-        }
-      })
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'quizzes'
-      }, async (payload) => {
-        console.log('🔄 Quiz change detected:', payload.eventType)
-        
-        // Refresh gradebook data if viewing a section
-        if (selectedSectionId.value) {
-          await fetchGradebookData(selectedSectionId.value)
-        }
-      })
-      .subscribe((status) => {
-        console.log('📡 Subscription status:', status)
-        if (status === 'SUBSCRIBED') {
-          console.log('✅ Real-time subscriptions active!')
-        }
-      })
-    
-    // Cleanup on unmount
-    return () => {
-      console.log('🧹 Cleaning up subscriptions...')
-      subscription.unsubscribe()
-      window.removeEventListener('scroll', handleScroll)
-    }
+    window.addEventListener('scroll', () => showScrollTop.value = window.scrollY > 300)
   } else {
     loading.value = false
   }
@@ -2376,13 +1599,13 @@ body, html {
 .main-content::-webkit-scrollbar-thumb {
   background: linear-gradient(135deg, #3D8D7A, #20c997);
   border-radius: 16px;
-  border: 2px solid #f1f5f9;
+  border: 1px solid #f1f5f9;
   transition: all 0.3s ease;
 }
 
 .main-content::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #2a6e61, #1a9d7c);
-  transform: scale(1.1);
+  background: linear-gradient(135deg, #2d6a5a, #18a577);
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.3);
 }
 
 .dark .main-content {
@@ -2619,7 +1842,7 @@ body, html {
 .search-box input:focus {
   outline: none;
   border-color: #3D8D7A;
-  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
+  box-shadow: 0 0 0 3px rgba(61, 141, 246, 0.1);
 }
 
 .grade-btn {
@@ -2640,8 +1863,7 @@ body, html {
 
 .grade-btn:hover:not(:disabled) {
   background: #2d6b5c;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(61, 141, 122, 0.15);
 }
 
 .grade-btn:disabled {
@@ -2715,7 +1937,7 @@ body, html {
 
 .dark .subject-filters:hover {
   border-color: #34d399;
-  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .filter-header {
@@ -2953,7 +2175,7 @@ body, html {
 }
 
 .content-card.modern:hover {
-  box-shadow: 0 8px 24px rgba(61, 141, 122, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   border-color: #3D8D7A;
   transform: translateY(-2px);
 }
@@ -2969,7 +2191,7 @@ body, html {
 }
 
 .dark .content-card.modern:hover {
-  box-shadow: 0 8px 24px rgba(32, 201, 151, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   border-color: #34d399;
 }
 
@@ -3682,6 +2904,7 @@ body, html {
   flex-direction: column;
   gap: 0.25rem;
   font-size: 0.8125rem;
+  color: #64748b;
 }
 
 .score-info {
@@ -4042,1650 +3265,21 @@ body, html {
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
-  }
-  
-  .stat-card.modern {
-    padding: 1rem;
-    gap: 0.75rem;
-  }
-  
-  .stat-icon {
-    width: 40px;
-    height: 40px;
-  }
-  
-  .stat-pulse {
-    width: 40px;
-    height: 40px;
-  }
-  
-  .stat-number {
-    font-size: 1.5rem;
-  }
-  
-  .stat-label {
-    font-size: 0.75rem;
-  }
-  
-  .stat-description {
-    font-size: 0.6875rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
-  
-  .stat-card.modern {
-    flex-direction: row;
-    text-align: left;
-    padding: 1rem;
-  }
-  
-  .stat-content {
-    margin-top: 0;
-  }
-}
-
-/* Enhanced Subject and Section Cards */
-.subjects-grid.modern {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.5rem;
-  padding: 1rem;
-  margin-top: 1rem;
-}
-
-.subjects-grid, .sections-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1rem;
-}
-
-.subject-card.modern {
-  background: #ffffff;
-  border: 1.5px solid #A3D1C6;
-  border-radius: 16px;
-  padding: 1.5rem;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
-  width: 100%;
-  box-sizing: border-box;
-}
-.dark .subject-card.modern {
-  background: #23272f;
-  border-color: #20c997;
-}
-
-.subject-card.modern:before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, #3D8D7A, #059669);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  border-radius: 16px;
-}
-
-.subject-card.modern:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
-  border-color: rgba(61, 141, 122, 0.3);
-}
-.dark .subject-card.modern:hover {
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
-  border-color: rgba(163, 209, 198, 0.4);
-}
-
-.subject-card.modern:hover:before {
-  opacity: 0.03;
-}
-.dark .subject-card.modern:hover:before {
-  opacity: 0.08;
-}
-
-.subject-icon.modern {
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  background: #3D8D7A;
-  color: #fff;
-}
-.dark .subject-icon.modern {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  background: #20c997;
-  color: #fff;
-}
-
-.subject-icon.modern svg,
-.subject-icon.modern div {
-  width: 28px;
-  height: 28px;
-  color: white;
-  fill: white;
-}
-
-.subject-card, .section-card {
-  background: #FBFFE4;
-  border: 1px solid #A3D1C6;
-  border-radius: 12px;
-  padding: 1.25rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-.dark .subject-card, .dark .section-card {
-  background: #23272b;
-  border-color: #3D8D7A;
-}
-
-.subject-card:hover, .section-card:hover {
-  background: white;
-  border-color: #3D8D7A;
-  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.15);
-  transform: translateY(-2px);
-}
-.dark .subject-card:hover, .dark .section-card:hover {
-  background: #2a3038;
-  border-color: #A3D1C6;
-}
-
-.subject-icon, .section-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 10px;
-  background: #3D8D7A;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  flex-shrink: 0;
-}
-
-.subject-info, .section-info {
-  flex: 1;
-}
-
-.subject-info h4, .section-info h4 {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0 0 0.25rem 0;
-}
-.dark .subject-info h4, .dark .section-info h4 {
-  color: #A3D1C6;
-}
-
-.subject-grade {
-  color: #6b7280;
-  font-size: 0.875rem;
-  margin: 0 0 0.5rem 0;
-}
-.dark .subject-grade {
-  color: #A3D1C6;
-}
-
-.section-code {
-  background: #B3D8A8;
-  color: #1f2937;
-  border-radius: 6px;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  display: inline-block;
-  font-family: 'Courier New', monospace;
-  margin: 0 0 0.5rem 0;
-}
-.dark .section-code {
-  background: #3D8D7A;
-  color: white;
-}
-
-.subject-stats, .section-stats {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.75rem;
-  color: #6b7280;
-  font-weight: 500;
-}
-.dark .stat-item {
-  color: #A3D1C6;
-}
-
-.stat-item.pending {
-  color: #d97706;
-}
-.dark .stat-item.pending {
-  color: #fbbf24;
-}
-
-.card-arrow {
-  color: #A3D1C6;
-  font-size: 1.25rem;
-  transition: all 0.2s;
-}
-
-.subject-card:hover .card-arrow,
-.section-card:hover .card-arrow {
-  color: #3D8D7A;
-  transform: translateX(2px);
-}
-
-.empty-state {
-  padding: 3rem 2rem;
-  text-align: center;
-  color: #6b7280;
-}
-.dark .empty-state {
-  color: #A3D1C6;
-}
-
-.empty-state svg {
-  margin-bottom: 1rem;
-  color: #A3D1C6;
-}
-
-.empty-state h3 {
-  font-size: 1.125rem;
-  margin-bottom: 0.5rem;
-  color: #1f2937;
-}
-.dark .empty-state h3 {
-  color: #A3D1C6;
-}
-
-/* Submissions Section */
-.submissions-filters {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 1rem;
-}
-
-.filter-select {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #A3D1C6;
-  border-radius: 6px;
-  background: white;
-  font-size: 0.875rem;
-  color: #1f2937;
-}
-.dark .filter-select {
-  background: #23272b;
-  border-color: #3D8D7A;
-  color: #A3D1C6;
-}
-
-.submissions-table-container {
-  overflow-x: auto;
-  border-radius: 8px;
-  border: 1px solid rgba(61, 141, 122, 0.1);
-}
-.dark .submissions-table-container {
-  border-color: #3D8D7A;
-}
-
-.submissions-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-}
-.dark .submissions-table {
-  background: #23272b;
-}
-
-.submissions-table th,
-.submissions-table td {
-  padding: 1.25rem 1rem;
-  text-align: left;
-  border-bottom: 1px solid rgba(61, 141, 122, 0.1);
-}
-.dark .submissions-table th,
-.dark .submissions-table td {
-  border-bottom-color: #3D8D7A;
-}
-
-.submissions-table th {
-  background: #FBFFE4;
-  font-weight: 600;
-  color: #1f2937;
-  font-size: 1rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.dark .submissions-table th {
-  background: #1f2429;
-  color: #A3D1C6;
-}
-
-.submissions-table th.sortable {
-  cursor: pointer;
-  user-select: none;
-  transition: background 0.2s;
-}
-
-.submissions-table th.sortable:hover {
-  background: #B3D8A8;
-}
-.dark .submissions-table th.sortable:hover {
-  background: #2a3038;
-}
-
-.submissions-table th svg {
-  margin-left: 0.5rem;
-  opacity: 0.5;
-}
-
-/* Table Content Styles */
-.student-info {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.student-avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: #3D8D7A;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 0.875rem;
-  flex-shrink: 0;
-}
-
-.student-name {
-  font-weight: 600;
-  color: #1f2937;
-  font-size: 1rem;
-  line-height: 1.3;
-}
-.dark .student-name {
-  color: #A3D1C6;
-}
-
-.student-email {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin-top: 0.125rem;
-}
-.dark .student-email {
-  color: #9ca3af;
-}
-
-.quiz-info {
-  max-width: 200px;
-}
-
-.quiz-title {
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 0.25rem;
-  font-size: 1rem;
-  line-height: 1.3;
-}
-.dark .quiz-title {
-  color: #A3D1C6;
-}
-
-.quiz-code {
-  font-size: 0.75rem;
-  color: #6b7280;
-  font-family: 'Courier New', monospace;
-  background: #B3D8A8;
-  padding: 0.25rem 0.5rem;
-  border-radius: 6px;
-  display: inline-block;
-  font-weight: 500;
-}
-.dark .quiz-code {
-  background: #3D8D7A;
-  color: white;
-}
-
-.date-info {
-  font-size: 0.75rem;
-}
-
-.date {
-  color: #1f2937;
-  font-weight: 500;
-}
-.dark .date {
-  color: #A3D1C6;
-}
-
-.time {
-  color: #6b7280;
-}
-.dark .time {
-  color: #9ca3af;
-}
-
-.score-display {
-  text-align: center;
-}
-
-.score-percentage {
-  font-weight: 700;
-  font-size: 1rem;
-  margin-bottom: 0.25rem;
-}
-
-.score-percentage.excellent { color: #059669; }
-.score-percentage.good { color: #3D8D7A; }
-.score-percentage.average { color: #d97706; }
-.score-percentage.needs-improvement { color: #dc2626; }
-
-.score-fraction {
-  font-size: 0.7rem;
-  color: #6b7280;
-}
-.dark .score-fraction {
-  color: #9ca3af;
-}
-
-.status-badge {
-  padding: 0.25rem 0.625rem;
-  border-radius: 12px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-}
-
-.status-badge.submitted {
-  background: rgba(163, 209, 198, 0.2);
-  color: #1f2937;
-}
-
-.status-badge.graded {
-  background: rgba(179, 216, 168, 0.3);
-  color: #1f2937;
-}
-
-.status-badge.reviewed {
-  background: rgba(61, 141, 122, 0.1);
-  color: #3D8D7A;
-}
-
-/* Action Buttons */
-.action-buttons {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.btn-action {
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* Old style for backward compatibility */
-.btn-action:not(.modern) {
-  width: 32px;
-  height: 32px;
-}
-
-.btn-action:not(.modern).review {
-  background: #B3D8A8;
-  color: #1f2937;
-}
-
-.btn-action:not(.modern).review:hover {
-  background: #3D8D7A;
-  color: white;
-}
-
-.btn-action:not(.modern).view {
-  background: rgba(163, 209, 198, 0.3);
-  color: #3D8D7A;
-}
-
-.btn-action:not(.modern).view:hover {
-  background: #A3D1C6;
-  color: #1f2937;
-}
-
-/* Modern style with text labels */
-.btn-action.modern {
-  padding: 0.5rem 0.75rem;
-  gap: 0.375rem;
-  min-width: auto;
-  white-space: nowrap;
-}
-
-.btn-action.modern svg {
-  flex-shrink: 0;
-}
-
-.btn-action.modern span {
-  font-size: 0.7rem;
-  font-weight: 600;
-}
-
-.btn-action.modern.review {
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: white;
-  border: 1px solid transparent;
-}
-
-.btn-action.modern.review:hover {
-  background: linear-gradient(135deg, #059669, #047857);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-}
-
-.btn-action.modern.view {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  color: white;
-  border: 1px solid transparent;
-}
-
-.btn-action.modern.view:hover {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
-.btn-action.modern:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* Dark mode support */
-.dark .btn-action.modern.review {
-  background: linear-gradient(135deg, #059669, #047857);
-}
-
-.dark .btn-action.modern.review:hover {
-  background: linear-gradient(135deg, #047857, #065f46);
-}
-
-.dark .btn-action.modern.view {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
-}
-
-.dark .btn-action.modern.view:hover {
-  background: linear-gradient(135deg, #1d4ed8, #1e40af);
-}
-
-/* Pagination */
-.pagination {
-  padding: 1.5rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
-  border-top: 1px solid rgba(61, 141, 122, 0.1);
-}
-.dark .pagination {
-  border-top-color: #3D8D7A;
-}
-
-.pagination-btn {
-  width: 36px;
-  height: 36px;
-  border: 1px solid #A3D1C6;
-  background: white;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  color: #3D8D7A;
-}
-.dark .pagination-btn {
-  background: #23272b;
-  border-color: #3D8D7A;
-  color: #A3D1C6;
-}
-
-.pagination-btn:hover:not(:disabled) {
-  background: #B3D8A8;
-  border-color: #3D8D7A;
-  color: #1f2937;
-}
-.dark .pagination-btn:hover:not(:disabled) {
-  background: #3D8D7A;
-  color: white;
-}
-
-.pagination-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.pagination-info {
-  color: #6b7280;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-.dark .pagination-info {
-  color: #A3D1C6;
-}
-
-/* Modal Styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
-}
-
-.review-modal {
-  background: white;
-  border-radius: 12px;
-  width: 100%;
-  max-width: 900px;
-  max-height: 90vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid #A3D1C6;
-}
-.dark .review-modal {
-  background: #23272b;
-  border-color: #3D8D7A;
-}
-
-.modal-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid rgba(61, 141, 122, 0.1);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #FBFFE4;
-}
-.dark .modal-header {
-  background: #1f2429;
-  border-bottom-color: #3D8D7A;
-}
-
-.modal-header h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin: 0;
-}
-.dark .modal-header h3 {
-  color: #A3D1C6;
-}
-
-.modal-subtitle {
-  color: #6b7280;
-  font-size: 0.875rem;
-  margin: 0.25rem 0 0 0;
-}
-.dark .modal-subtitle {
-  color: #A3D1C6;
-}
-
-.modal-close {
-  width: 36px;
-  height: 36px;
-  border: none;
-  background: none;
-  cursor: pointer;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #6b7280;
-  transition: all 0.2s;
-}
-.dark .modal-close {
-  color: #A3D1C6;
-}
-
-.modal-close:hover {
-  background: #B3D8A8;
-  color: #1f2937;
-}
-.dark .modal-close:hover {
-  background: #3D8D7A;
-  color: white;
-}
-
-.modal-content {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.loading-questions, .no-questions {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem 2rem;
-  color: #6b7280;
-}
-.dark .loading-questions, .dark .no-questions {
-  color: #A3D1C6;
-}
-
-.spinner-small {
-  width: 30px;
-  height: 30px;
-  border: 3px solid #B3D8A8;
-  border-top: 3px solid #3D8D7A;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
-}
-
-.submission-review {
-  padding: 1.5rem;
-}
-
-.review-summary {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 1.5rem;
-  padding: 0.5rem 0;
-  max-width: 100%;
-  margin: 0 auto;
-  margin-bottom: 1.5rem;
-  border: 1px solid rgba(61, 141, 122, 0.1);
-}
-.dark .review-summary {
-  background: #1f2429;
-  border-color: #3D8D7A;
-}
-
-.summary-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  color: #6b7280;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-}
-.dark .stat-label {
-  color: #A3D1C6;
-}
-
-.stat-value {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1f2937;
-}
-.dark .stat-value {
-  color: #A3D1C6;
-}
-
-/* Question Review Styles */
-.questions-review {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.question-review-item {
-  border: 1px solid rgba(61, 141, 122, 0.1);
-  border-radius: 8px;
-  padding: 1.25rem;
-  background: white;
-}
-.dark .question-review-item {
-  background: #2a3038;
-  border-color: #3D8D7A;
-}
-
-.question-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  flex-wrap: wrap;
-}
-
-.question-number {
-  background: #3D8D7A;
-  color: white;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  font-weight: 600;
-  font-size: 0.8rem;
-}
-
-.question-result {
-  padding: 0.375rem 0.75rem;
-  border-radius: 6px;
-  font-weight: 600;
-  font-size: 0.8rem;
-}
-
-.question-result.correct {
-  background: rgba(179, 216, 168, 0.3);
-  color: #1f2937;
-}
-
-.question-result.incorrect {
-  background: rgba(248, 113, 113, 0.1);
-  color: #dc2626;
-}
-
-.question-points {
-  margin-left: auto;
-  color: #6b7280;
-  font-weight: 600;
-  font-size: 0.875rem;
-}
-.dark .question-points {
-  color: #A3D1C6;
-}
-
-.question-text {
-  font-size: 1rem;
-  color: #1f2937;
-  margin-bottom: 1rem;
-  line-height: 1.6;
-}
-.dark .question-text {
-  color: #A3D1C6;
-}
-
-.answer-section {
-  margin: 1rem 0;
-}
-
-.options-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.option-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 1rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 0.5rem;
-  background: white;
-}
-
-.option-item.correct {
-  border-color: #10b981;
-  background: #ecfdf5;
-}
-
-.option-item.incorrect {
-  border-color: #ef4444;
-  background: #fef2f2;
-}
-
-.option-letter {
-  min-width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f1f5f9;
-  border-radius: 50%;
-  font-weight: 700;
-  color: #475569;
-}
-
-.option-item.correct .option-letter {
-  background: #10b981;
-  color: white;
-}
-
-.option-item.incorrect .option-letter {
-  background: #ef4444;
-  color: white;
-}
-
-.option-content {
-  flex: 1;
-}
-
-.option-text {
-  color: #1a202c;
-  line-height: 1.5;
-}
-
-.true-false-options {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-
-.tf-option {
-  padding: 1.5rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 0.5rem;
-  text-align: center;
-  background: white;
-}
-
-.tf-option.student-selected {
-  border-color: #3b82f6;
-  background: #eff6ff;
-}
-
-.tf-option.correct-answer {
-  border-color: #10b981;
-  background: #ecfdf5;
-}
-
-.tf-option strong {
-  display: block;
-  font-size: 1.125rem;
-  color: #1a202c;
-}
-
-.fill-blank-answers {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.student-answer-box, .correct-answer-box {
-  padding: 1rem;
-  border-radius: 0.5rem;
-  border: 1px solid #e2e8f0;
-}
-
-.answer-label {
-  font-size: 0.875rem;
-  color: #64748b;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-}
-
-.answer-text {
-  padding: 0.75rem;
-  border-radius: 0.375rem;
-  font-size: 1rem;
-}
-
-.answer-text.correct {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.answer-text.incorrect {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.teacher-comment-section {
-  margin-top: 1rem;
-}
-
-.comment-input {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.375rem;
-  font-family: inherit;
-  font-size: 0.875rem;
-  resize: vertical;
-}
-
-.comment-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.overall-feedback-section {
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 2px solid #e2e8f0;
-}
-
-.overall-feedback-section h4 {
-  font-size: 1.125rem;
-  color: #1a202c;
-  margin-bottom: 0.75rem;
-}
-
-.feedback-textarea {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.375rem;
-  font-family: inherit;
-  font-size: 0.875rem;
-  resize: vertical;
-}
-
-.feedback-textarea:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.modal-actions {
-  padding: 1.5rem;
-  border-top: 1px solid rgba(61, 141, 122, 0.1);
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  background: #FBFFE4;
-}
-.dark .modal-actions {
-  background: #1f2429;
-  border-top-color: #3D8D7A;
-}
-
-.btn-modal {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: 0.875rem;
-}
-
-.btn-modal.cancel {
-  background: #f1f5f9;
-  color: #6b7280;
-  border: 1px solid #A3D1C6;
-}
-.dark .btn-modal.cancel {
-  background: #23272b;
-  color: #A3D1C6;
-  border-color: #3D8D7A;
-}
-
-.btn-modal.cancel:hover {
-  background: #B3D8A8;
-  color: #1f2937;
-}
-.dark .btn-modal.cancel:hover {
-  background: #3D8D7A;
-  color: white;
-}
-
-.btn-modal.primary {
-  background: #3D8D7A;
-  color: white;
-}
-
-.btn-modal.primary:hover:not(:disabled) {
-  background: #2d6b5c;
-  box-shadow: 0 2px 6px rgba(61, 141, 122, 0.2);
-}
-
-.btn-modal:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Points Input */
-.points-input {
-  width: 60px;
-  padding: 0.375rem 0.5rem;
-  border: 1px solid #A3D1C6;
-  border-radius: 4px;
-  text-align: center;
-  font-weight: 600;
-  font-size: 0.875rem;
-  background: white;
-}
-.dark .points-input {
-  background: #23272b;
-  border-color: #3D8D7A;
-  color: #A3D1C6;
-}
-
-.points-input:focus {
-  outline: none;
-  border-color: #3D8D7A;
-  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
-}
-
-/* Input and Textarea Styles */
-.comment-input, .feedback-textarea {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #A3D1C6;
-  border-radius: 6px;
-  font-family: inherit;
-  font-size: 0.875rem;
-  resize: vertical;
-  background: white;
-}
-.dark .comment-input, .dark .feedback-textarea {
-  background: #23272b;
-  border-color: #3D8D7A;
-  color: #A3D1C6;
-}
-
-.comment-input:focus, .feedback-textarea:focus {
-  outline: none;
-  border-color: #3D8D7A;
-  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
-}
-
-/* Answer Styles */
-.answer-section {
-  margin: 1rem 0;
-}
-
-.answer-key-label {
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 0.75rem;
-}
-.dark .answer-key-label {
-  color: #A3D1C6;
-}
-
-.options-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.option-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 1rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  background: white;
-}
-.dark .option-item {
-  background: #23272b;
-  border-color: #374151;
-}
-
-.option-item.correct {
-  border-color: #B3D8A8;
-  background: rgba(179, 216, 168, 0.1);
-}
-
-.option-item.incorrect {
-  border-color: #fca5a5;
-  background: rgba(248, 113, 113, 0.1);
-}
-
-.option-item.selected {
-  border-color: #3D8D7A;
-}
-
-.option-letter {
-  min-width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f1f5f9;
-  border-radius: 50%;
-  font-weight: 700;
-  color: #475569;
-  font-size: 0.875rem;
-}
-
-.option-item.correct .option-letter {
-  background: #B3D8A8;
-  color: #1f2937;
-}
-
-.option-item.incorrect .option-letter {
-  background: #fca5a5;
-  color: white;
-}
-
-.option-content {
-  flex: 1;
-}
-
-.option-text {
-  color: #1f2937;
-  line-height: 1.5;
-}
-.dark .option-text {
-  color: #A3D1C6;
-}
-
-.correct-tag, .selected-tag {
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  margin-top: 0.5rem;
-  display: inline-block;
-}
-
-.correct-tag {
-  background: rgba(179, 216, 168, 0.2);
-  color: #1f2937;
-}
-
-.selected-tag {
-  background: rgba(61, 141, 122, 0.1);
-  color: #3D8D7A;
-}
-
-/* True/False Options */
-.true-false-options {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-
-.tf-option {
-  padding: 1.25rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  text-align: center;
-  background: white;
-  transition: all 0.2s;
-}
-.dark .tf-option {
-  background: #23272b;
-  border-color: #374151;
-}
-
-.tf-option.student-selected {
-  border-color: #3D8D7A;
-  background: rgba(61, 141, 122, 0.05);
-}
-
-.tf-option.correct-answer {
-  border-color: #B3D8A8;
-  background: rgba(179, 216, 168, 0.1);
-}
-
-.tf-option.wrong-answer {
-  border-color: #fca5a5;
-  background: rgba(248, 113, 113, 0.1);
-}
-
-.tf-option strong {
-  display: block;
-  font-size: 1.125rem;
-  color: #1f2937;
-  margin-bottom: 0.5rem;
-}
-.dark .tf-option strong {
-  color: #A3D1C6;
-}
-
-/* Fill in the Blank */
-.fill-blank-answers {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.answer-key-box, .student-answer-box {
-  padding: 1rem;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-}
-.dark .answer-key-box, .dark .student-answer-box {
-  border-color: #374151;
-}
-
-.answer-label {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-}
-.dark .answer-label {
-  color: #A3D1C6;
-}
-
-.answer-text {
-  padding: 0.75rem;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-weight: 500;
-}
-
-.answer-text.correct {
-  background: rgba(179, 216, 168, 0.2);
-  color: #1f2937;
-}
-
-.answer-text.incorrect {
-  background: rgba(248, 113, 113, 0.1);
-  color: #dc2626;
-}
-
-/* Teacher Comments */
-.teacher-comment-section {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(61, 141, 122, 0.1);
-}
-.dark .teacher-comment-section {
-  border-top-color: #3D8D7A;
-}
-
-.overall-feedback-section {
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 2px solid rgba(61, 141, 122, 0.1);
-}
-.dark .overall-feedback-section {
-  border-top-color: #3D8D7A;
-}
-
-.overall-feedback-section h4 {
-  font-size: 1.125rem;
-  color: #1f2937;
-  margin-bottom: 0.75rem;
-  font-weight: 600;
-}
-.dark .overall-feedback-section h4 {
-  color: #A3D1C6;
-}
-
-.feedback-display {
-  background: #FBFFE4;
-  padding: 1rem;
-  border-radius: 8px;
-  border: 1px solid rgba(61, 141, 122, 0.1);
-}
-.dark .feedback-display {
-  background: #1f2429;
-  border-color: #3D8D7A;
-}
-
-.feedback-display p {
-  color: #1f2937;
-  line-height: 1.6;
-  margin: 0;
-}
-.dark .feedback-display p {
-  color: #A3D1C6;
-}
-
-.comment-display {
-  background: rgba(61, 141, 122, 0.05);
-  padding: 0.75rem;
-  border-radius: 6px;
-  margin-top: 0.5rem;
-}
-.dark .comment-display {
-  background: rgba(61, 141, 122, 0.1);
-}
-
-.comment-display strong {
-  color: #3D8D7A;
-  font-weight: 600;
-}
-.dark .comment-display strong {
-  color: #A3D1C6;
-}
-
-.comment-display p {
-  margin: 0.5rem 0 0 0;
-  color: #1f2937;
-}
-.dark .comment-display p {
-  color: #A3D1C6;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .gradebook-container {
-    padding: 1rem;
-  }
-
-  .header-content {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .search-box {
-    min-width: auto;
-  }
-
-  .subjects-grid, .sections-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .submissions-table {
-    font-size: 0.8rem;
-  }
-
-  .review-summary {
+  .analytics-stats {
     grid-template-columns: repeat(2, 1fr);
   }
-
-  .modal-actions {
+  
+  .gradebook-scroll {
+    max-height: 50vh;
+  }
+  
+  .history-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .section-selector {
     flex-direction: column;
-  }
-
-  .btn-modal {
-    width: 100%;
-    max-width: 100%;
-  }
-}
-
-/* Logout Modal Specific Styles */
-.logout-modal {
-  max-width: 400px;
-  border-radius: 16px;
-  overflow: hidden;
-  background: white;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-}
-
-.dark .logout-modal {
-  background: #23272b;
-  border: 1px solid #374151;
-}
-
-.logout-header {
-  background: linear-gradient(135deg, #dc2626, #b91c1c);
-  color: white;
-  padding: 1.5rem;
-  border-bottom: none;
-}
-
-.logout-header h3 {
-  color: white;
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.modal-body {
-  padding: 2rem 1.5rem;
-  text-align: center;
-}
-
-.logout-icon {
-  color: #dc2626;
-  margin-bottom: 1rem;
-}
-
-.logout-message {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 0.5rem;
-}
-
-.dark .logout-message {
-  color: #f1f5f9;
-}
-
-.logout-submessage {
-  color: #64748b;
-  font-size: 0.875rem;
-}
-
-.dark .logout-submessage {
-  color: #9ca3af;
-}
-
-.logout-footer {
-  padding: 1.5rem;
-  background: #f8fafc;
-  border-top: 1px solid #e2e8f0;
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-}
-
-.dark .logout-footer {
-  background: #374151;
-  border-color: #4b5563;
-}
-
-.btn-cancel {
-  padding: 0.75rem 1.5rem;
-  border: 1px solid #d1d5db;
-  background: white;
-  color: #374151;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.dark .btn-cancel {
-  background: #4b5563;
-  border-color: #6b7280;
-  color: #f1f5f9;
-}
-
-.btn-cancel:hover:not(:disabled) {
-  background: #f3f4f6;
-  border-color: #9ca3af;
-}
-
-.dark .btn-cancel:hover:not(:disabled) {
-  background: #6b7280;
-}
-
-.btn-logout {
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #dc2626, #b91c1c);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 120px;
-  justify-content: center;
-}
-
-.btn-logout:hover:not(:disabled) {
-  background: linear-gradient(135deg, #b91c1c, #991b1b);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
-}
-
-.btn-logout:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.loading-text {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.logout-spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid white;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-/* Final responsive adjustments */
-@media (max-width: 480px) {
-  .logout-footer {
-    flex-direction: column;
-  }
-  
-  .btn-cancel,
-  .btn-logout {
-    width: 100%;
-  }
-  
-  .main-content {
-    padding: 1rem;
-  }
-  
-  .gradebook-header {
-    padding: 1rem;
-  }
-  
-  .header-actions {
-    flex-direction: column;
+    align-items: flex-start;
     gap: 0.5rem;
   }
   
@@ -5693,402 +3287,2033 @@ body, html {
     min-width: 100%;
   }
   
-  .modal-actions {
-    flex-direction: column;
-  }
-
-  .btn-modal {
-    width: 100%;
-    max-width: 100%;
-  }
-}
-
-/* Breadcrumb Navigation */
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 1rem 0;
-  margin-bottom: 1rem;
-}
-
-.breadcrumb-item {
-  background: none;
-  border: none;
-  color: #64748b;
-  cursor: pointer;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.2s;
-}
-
-.breadcrumb-item:hover {
-  background: #f1f5f9;
-  color: #3b82f6;
-}
-
-.breadcrumb-item.active {
-  color: #1a202c;
-  font-weight: 600;
-  cursor: default;
-}
-
-.breadcrumb-item.active:hover {
-  background: none;
-}
-
-.breadcrumb-separator {
-  color: #cbd5e1;
-}
-
-/* Subject Cards */
-.subjects-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.5rem;
-}
-
-.subject-card {
-  background: white;
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.subject-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
-}
-
-.subject-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 0.75rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 1.5rem;
-  flex-shrink: 0;
-}
-
-.subject-info {
-  flex: 1;
-}
-
-.subject-info h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1a202c;
-  margin: 0 0 0.25rem 0;
-}
-
-.subject-info p {
-  color: #64748b;
-  font-size: 0.875rem;
-  margin: 0 0 0.75rem 0;
-  font-family: monospace;
-}
-
-.subject-stats {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.stat-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.25rem 0.625rem;
-  background: #f1f5f9;
-  border-radius: 0.375rem;
-  font-size: 0.75rem;
-  color: #475569;
-  font-weight: 500;
-}
-
-.stat-badge.pending {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.stat-badge i {
-  font-size: 0.625rem;
-}
-
-.card-arrow {
-  color: #cbd5e1;
-  font-size: 1.25rem;
-}
-
-/* Section Cards */
-.sections-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.5rem;
-}
-
-.section-card {
-  background: white;
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.section-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
-}
-
-.section-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 0.75rem;
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 1.5rem;
-  flex-shrink: 0;
-}
-
-.section-info {
-  flex: 1;
-}
-
-.section-info h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1a202c;
-  margin: 0 0 0.25rem 0;
-}
-
-.section-info p {
-  color: #64748b;
-  font-size: 0.875rem;
-  margin: 0 0 0.75rem 0;
-}
-
-.section-stats {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-/* Submissions View */
-.submissions-view {
-  animation: fadeIn 0.3s ease-in;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.submissions-filters {
-  padding: 1rem 0;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.stat-card .stat-icon.total {
-  background: #6366f1;
-}
-
-/* Points Input in Modal */
-.points-input {
-  width: 60px;
-  padding: 0.25rem 0.5rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.25rem;
-  text-align: center;
-  font-weight: 600;
-  font-size: 0.875rem;
-}
-
-.points-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-/* True/False styling updates */
-.tf-option.wrong-answer {
-  border-color: #ef4444;
-  background: #fef2f2;
-}
-
-.tf-option.correct-answer.student-selected {
-  border-color: #10b981;
-  background: #ecfdf5;
-}
-
-/* Responsive adjustments */
-@media (max-width: 1200px) {
-  .main-content {
-    padding: 1.5rem;
-  }
-}
-
-@media (max-width: 1024px) {
-  .main-content {
-    padding: 1rem;
-  }
-  
-  .navbar-center {
-    gap: 0.25rem;
-  }
-  
-  .nav-item {
-    padding: 0.5rem 1rem;
-    font-size: 0.7rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .subjects-grid,
-  .sections-grid,
-  .subjects-grid.modern,
-  .sections-grid.enhanced {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-    padding: 0.5rem;
-  }
-
-  .breadcrumb {
-    flex-wrap: wrap;
-  }
-
-  .subject-card,
-  .section-card {
-    padding: 1rem;
-  }
-
-  .subject-icon,
-  .section-icon {
-    width: 50px;
-    height: 50px;
-    font-size: 1.25rem;
-  }
-  
-  .main-content {
-    padding: 1rem;
-    margin-left: 0;
-    width: 100%;
-  }
-  
-  .page-header {
-    padding: 1rem;
-  }
-  
-  .filter-buttons {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
-  
-  .content-card.modern {
-    padding: 1.5rem;
-    margin: 0 0 1rem 0;
-  }
-  
-  .filter-title {
-    font-size: 1.25rem;
-  }
-  
-  .header-title {
-    font-size: 1.5rem;
-    margin-bottom: 1.5rem;
-  }
-  
-  .header-content {
+  .header-actions {
     flex-direction: column;
     align-items: stretch;
-    gap: 1rem;
-  }
-  
-  .navbar-content {
-    padding: 0 0.5rem;
-  }
-  
-  .brand-name {
-    display: none;
-  }
-  
-  .search-box {
-    min-width: 200px;
+    gap: 0.75rem;
   }
 }
 
-/* Enhanced Sections */
-.sections-grid.enhanced {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
-  padding: 1rem;
-  margin-top: 1rem;
+.stat-card.modern.graded {
+  border-left: 4px solid #10b981;
 }
 
-.section-card.modern {
-  background: #fff;
-  border-radius: 14px;
-  padding: 1.25rem 1.5rem;
-  margin-bottom: 0;
-  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.08);
-  border: 1px solid #e2e8f0;
-  cursor: pointer;
-  transition: box-shadow 0.2s, border 0.2s, background 0.2s;
+.stat-card.modern.graded:hover {
+  box-shadow: 0 20px 60px rgba(16, 185, 129, 0.2);
+}
+
+.stat-card.modern.total {
+  border-left: 4px solid #3b82f6;
+}
+
+.stat-card.modern.total:hover {
+  box-shadow: 0 20px 60px rgba(59, 130, 246, 0.2);
+}
+
+.stat-card.modern.average {
+  border-left: 4px solid #8b5cf6;
+}
+
+.stat-card.modern.average:hover {
+  box-shadow: 0 20px 60px rgba(139, 92, 246, 0.2);
+}
+
+/* Icon Wrapper with Animation */
+.stat-icon-wrapper {
   position: relative;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
-  gap: 1.25rem;
-  width: 100%;
-  box-sizing: border-box;
-}
-.dark .section-card.modern {
-  background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
-  border-color: rgba(163, 209, 198, 0.2);
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s ease;
 }
 
-.section-card.modern:before {
+.stat-icon.pending { 
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+}
+
+.stat-icon.graded { 
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+}
+
+.stat-icon.total { 
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+}
+
+.stat-icon.average { 
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+}
+
+/* Pulsing Animation Behind Icons */
+.stat-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  opacity: 0.3;
+  animation: pulse-animation 2s infinite;
+}
+
+.stat-pulse.pending {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.stat-pulse.graded {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.stat-pulse.total {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.stat-pulse.average {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+@keyframes pulse-animation {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0.1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.3;
+  }
+}
+
+/* Stat Content */
+.stat-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.stat-number {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+  background: linear-gradient(135deg, #1f2937, #374151);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dark .stat-number {
+  background: linear-gradient(135deg, #f9fafb, #e5e7eb);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #374151;
+  font-weight: 600;
+  margin-bottom: 0.125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dark .stat-label {
+  color: #d1d5db;
+}
+
+.stat-description {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.dark .stat-description {
+  color: #9ca3af;
+}
+
+/* Card Background Patterns */
+.stat-card.modern::before {
   content: '';
   position: absolute;
   top: 0;
-  left: 0;
   right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  border-radius: 16px;
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border-radius: 50%;
+  transform: translate(30px, -30px);
+  transition: all 0.3s ease;
 }
 
-.section-card.modern:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
-  border-color: rgba(99, 102, 241, 0.3);
+.dark .stat-card.modern::before {
+  background: linear-gradient(135deg, rgba(75, 85, 99, 0.2), rgba(55, 65, 81, 0.1));
+}
+
+.stat-card.modern:hover::before {
+  transform: translate(20px, -20px) scale(1.2);
+  opacity: 0.8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .analytics-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .gradebook-scroll {
+    max-height: 50vh;
+  }
+  
+  .history-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .section-selector {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .section-select {
+    min-width: 100%;
+  }
+  
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+}
+
+.stat-card.modern.graded {
+  border-left: 4px solid #10b981;
+}
+
+.stat-card.modern.graded:hover {
+  box-shadow: 0 20px 60px rgba(16, 185, 129, 0.2);
+}
+
+.stat-card.modern.total {
+  border-left: 4px solid #3b82f6;
+}
+
+.stat-card.modern.total:hover {
+  box-shadow: 0 20px 60px rgba(59, 130, 246, 0.2);
+}
+
+.stat-card.modern.average {
+  border-left: 4px solid #8b5cf6;
+}
+
+.stat-card.modern.average:hover {
+  box-shadow: 0 20px 60px rgba(139, 92, 246, 0.2);
+}
+
+/* Icon Wrapper with Animation */
+.stat-icon-wrapper {
+  position: relative;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.stat-icon.pending { 
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+}
+
+.stat-icon.graded { 
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+}
+
+.stat-icon.total { 
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+}
+
+.stat-icon.average { 
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+}
+
+/* Pulsing Animation Behind Icons */
+.stat-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  opacity: 0.3;
+  animation: pulse-animation 2s infinite;
+}
+
+.stat-pulse.pending {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.stat-pulse.graded {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.stat-pulse.total {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.stat-pulse.average {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+@keyframes pulse-animation {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0.1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.3;
+  }
+}
+
+/* Stat Content */
+.stat-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.stat-number {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+  background: linear-gradient(135deg, #1f2937, #374151);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dark .stat-number {
+  background: linear-gradient(135deg, #f9fafb, #e5e7eb);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #374151;
+  font-weight: 600;
+  margin-bottom: 0.125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dark .stat-label {
+  color: #d1d5db;
+}
+
+.stat-description {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.dark .stat-description {
+  color: #9ca3af;
+}
+
+/* Card Background Patterns */
+.stat-card.modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border-radius: 50%;
+  transform: translate(30px, -30px);
+  transition: all 0.3s ease;
+}
+
+.dark .stat-card.modern::before {
+  background: linear-gradient(135deg, rgba(75, 85, 99, 0.2), rgba(55, 65, 81, 0.1));
+}
+
+.stat-card.modern:hover::before {
+  transform: translate(20px, -20px) scale(1.2);
+  opacity: 0.8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .analytics-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .gradebook-scroll {
+    max-height: 50vh;
+  }
+  
+  .history-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .section-selector {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .section-select {
+    min-width: 100%;
+  }
+  
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+}
+
+.stat-card.modern.graded {
+  border-left: 4px solid #10b981;
+}
+
+.stat-card.modern.graded:hover {
+  box-shadow: 0 20px 60px rgba(16, 185, 129, 0.2);
+}
+
+.stat-card.modern.total {
+  border-left: 4px solid #3b82f6;
+}
+
+.stat-card.modern.total:hover {
+  box-shadow: 0 20px 60px rgba(59, 130, 246, 0.2);
+}
+
+.stat-card.modern.average {
+  border-left: 4px solid #8b5cf6;
+}
+
+.stat-card.modern.average:hover {
+  box-shadow: 0 20px 60px rgba(139, 92, 246, 0.2);
+}
+
+/* Icon Wrapper with Animation */
+.stat-icon-wrapper {
+  position: relative;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.stat-icon.pending { 
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+}
+
+.stat-icon.graded { 
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+}
+
+.stat-icon.total { 
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+}
+
+.stat-icon.average { 
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+}
+
+/* Pulsing Animation Behind Icons */
+.stat-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  opacity: 0.3;
+  animation: pulse-animation 2s infinite;
+}
+
+.stat-pulse.pending {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.stat-pulse.graded {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.stat-pulse.total {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.stat-pulse.average {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+@keyframes pulse-animation {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0.1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.3;
+  }
+}
+
+/* Stat Content */
+.stat-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.stat-number {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+  background: linear-gradient(135deg, #1f2937, #374151);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dark .stat-number {
+  background: linear-gradient(135deg, #f9fafb, #e5e7eb);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #374151;
+  font-weight: 600;
+  margin-bottom: 0.125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dark .stat-label {
+  color: #d1d5db;
+}
+
+.stat-description {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.dark .stat-description {
+  color: #9ca3af;
+}
+
+/* Card Background Patterns */
+.stat-card.modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border-radius: 50%;
+  transform: translate(30px, -30px);
+  transition: all 0.3s ease;
+}
+
+.dark .stat-card.modern::before {
+  background: linear-gradient(135deg, rgba(75, 85, 99, 0.2), rgba(55, 65, 81, 0.1));
+}
+
+.stat-card.modern:hover::before {
+  transform: translate(20px, -20px) scale(1.2);
+  opacity: 0.8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .analytics-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .gradebook-scroll {
+    max-height: 50vh;
+  }
+  
+  .history-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .section-selector {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .section-select {
+    min-width: 100%;
+  }
+  
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+}
+
+.stat-card.modern.graded {
+  border-left: 4px solid #10b981;
+}
+
+.stat-card.modern.graded:hover {
+  box-shadow: 0 20px 60px rgba(16, 185, 129, 0.2);
+}
+
+.stat-card.modern.total {
+  border-left: 4px solid #3b82f6;
+}
+
+.stat-card.modern.total:hover {
+  box-shadow: 0 20px 60px rgba(59, 130, 246, 0.2);
+}
+
+.stat-card.modern.average {
+  border-left: 4px solid #8b5cf6;
+}
+
+.stat-card.modern.average:hover {
+  box-shadow: 0 20px 60px rgba(139, 92, 246, 0.2);
+}
+
+/* Icon Wrapper with Animation */
+.stat-icon-wrapper {
+  position: relative;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.stat-icon.pending { 
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+}
+
+.stat-icon.graded { 
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+}
+
+.stat-icon.total { 
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+}
+
+.stat-icon.average { 
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+}
+
+/* Pulsing Animation Behind Icons */
+.stat-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  opacity: 0.3;
+  animation: pulse-animation 2s infinite;
+}
+
+.stat-pulse.pending {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.stat-pulse.graded {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.stat-pulse.total {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.stat-pulse.average {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+@keyframes pulse-animation {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0.1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.3;
+  }
+}
+
+/* Stat Content */
+.stat-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.stat-number {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+  background: linear-gradient(135deg, #1f2937, #374151);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dark .stat-number {
+  background: linear-gradient(135deg, #f9fafb, #e5e7eb);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #374151;
+  font-weight: 600;
+  margin-bottom: 0.125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dark .stat-label {
+  color: #d1d5db;
+}
+
+.stat-description {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.dark .stat-description {
+  color: #9ca3af;
+}
+
+/* Card Background Patterns */
+.stat-card.modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border-radius: 50%;
+  transform: translate(30px, -30px);
+  transition: all 0.3s ease;
+}
+
+.dark .stat-card.modern::before {
+  background: linear-gradient(135deg, rgba(75, 85, 99, 0.2), rgba(55, 65, 81, 0.1));
+}
+
+.stat-card.modern:hover::before {
+  transform: translate(20px, -20px) scale(1.2);
+  opacity: 0.8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .analytics-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .gradebook-scroll {
+    max-height: 50vh;
+  }
+  
+  .history-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .section-selector {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .section-select {
+    min-width: 100%;
+  }
+  
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+}
+
+.stat-card.modern.graded {
+  border-left: 4px solid #10b981;
+}
+
+.stat-card.modern.graded:hover {
+  box-shadow: 0 20px 60px rgba(16, 185, 129, 0.2);
+}
+
+.stat-card.modern.total {
+  border-left: 4px solid #3b82f6;
+}
+
+.stat-card.modern.total:hover {
+  box-shadow: 0 20px 60px rgba(59, 130, 246, 0.2);
+}
+
+.stat-card.modern.average {
+  border-left: 4px solid #8b5cf6;
+}
+
+.stat-card.modern.average:hover {
+  box-shadow: 0 20px 60px rgba(139, 92, 246, 0.2);
+}
+
+/* Icon Wrapper with Animation */
+.stat-icon-wrapper {
+  position: relative;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.stat-icon.pending { 
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+}
+
+.stat-icon.graded { 
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+}
+
+.stat-icon.total { 
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+}
+
+.stat-icon.average { 
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+}
+
+/* Pulsing Animation Behind Icons */
+.stat-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  opacity: 0.3;
+  animation: pulse-animation 2s infinite;
+}
+
+.stat-pulse.pending {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.stat-pulse.graded {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.stat-pulse.total {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.stat-pulse.average {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+@keyframes pulse-animation {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0.1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.3;
+  }
+}
+
+/* Stat Content */
+.stat-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.stat-number {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+  background: linear-gradient(135deg, #1f2937, #374151);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dark .stat-number {
+  background: linear-gradient(135deg, #f9fafb, #e5e7eb);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #374151;
+  font-weight: 600;
+  margin-bottom: 0.125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dark .stat-label {
+  color: #d1d5db;
+}
+
+.stat-description {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.dark .stat-description {
+  color: #9ca3af;
+}
+
+/* Card Background Patterns */
+.stat-card.modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border-radius: 50%;
+  transform: translate(30px, -30px);
+  transition: all 0.3s ease;
+}
+
+.dark .stat-card.modern::before {
+  background: linear-gradient(135deg, rgba(75, 85, 99, 0.2), rgba(55, 65, 81, 0.1));
+}
+
+.stat-card.modern:hover::before {
+  transform: translate(20px, -20px) scale(1.2);
+  opacity: 0.8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .analytics-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .gradebook-scroll {
+    max-height: 50vh;
+  }
+  
+  .history-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .section-selector {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .section-select {
+    min-width: 100%;
+  }
+  
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+}
+
+.stat-card.modern.graded {
+  border-left: 4px solid #10b981;
+}
+
+.stat-card.modern.graded:hover {
+  box-shadow: 0 20px 60px rgba(16, 185, 129, 0.2);
+}
+
+.stat-card.modern.total {
+  border-left: 4px solid #3b82f6;
+}
+
+.stat-card.modern.total:hover {
+  box-shadow: 0 20px 60px rgba(59, 130, 246, 0.2);
+}
+
+.stat-card.modern.average {
+  border-left: 4px solid #8b5cf6;
+}
+
+.stat-card.modern.average:hover {
+  box-shadow: 0 20px 60px rgba(139, 92, 246, 0.2);
+}
+
+/* Icon Wrapper with Animation */
+.stat-icon-wrapper {
+  position: relative;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.stat-icon.pending { 
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+}
+
+.stat-icon.graded { 
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+}
+
+.stat-icon.total { 
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+}
+
+.stat-icon.average { 
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+}
+
+/* Pulsing Animation Behind Icons */
+.stat-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  opacity: 0.3;
+  animation: pulse-animation 2s infinite;
+}
+
+.stat-pulse.pending {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.stat-pulse.graded {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.stat-pulse.total {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.stat-pulse.average {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+@keyframes pulse-animation {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0.1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.3;
+  }
+}
+
+/* Stat Content */
+.stat-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.stat-number {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+  background: linear-gradient(135deg, #1f2937, #374151);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dark .stat-number {
+  background: linear-gradient(135deg, #f9fafb, #e5e7eb);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #374151;
+  font-weight: 600;
+  margin-bottom: 0.125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dark .stat-label {
+  color: #d1d5db;
+}
+
+.stat-description {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.dark .stat-description {
+  color: #9ca3af;
+}
+
+/* Card Background Patterns */
+.stat-card.modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border-radius: 50%;
+  transform: translate(30px, -30px);
+  transition: all 0.3s ease;
+}
+
+.dark .stat-card.modern::before {
+  background: linear-gradient(135deg, rgba(75, 85, 99, 0.2), rgba(55, 65, 81, 0.1));
+}
+
+.stat-card.modern:hover::before {
+  transform: translate(20px, -20px) scale(1.2);
+  opacity: 0.8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .analytics-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .gradebook-scroll {
+    max-height: 50vh;
+  }
+  
+  .history-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .section-selector {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .section-select {
+    min-width: 100%;
+  }
+  
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+}
+
+.stat-card.modern.graded {
+  border-left: 4px solid #10b981;
+}
+
+.stat-card.modern.graded:hover {
+  box-shadow: 0 20px 60px rgba(16, 185, 129, 0.2);
+}
+
+.stat-card.modern.total {
+  border-left: 4px solid #3b82f6;
+}
+
+.stat-card.modern.total:hover {
+  box-shadow: 0 20px 60px rgba(59, 130, 246, 0.2);
+}
+
+.stat-card.modern.average {
+  border-left: 4px solid #8b5cf6;
+}
+
+.stat-card.modern.average:hover {
+  box-shadow: 0 20px 60px rgba(139, 92, 246, 0.2);
+}
+
+/* Icon Wrapper with Animation */
+.stat-icon-wrapper {
+  position: relative;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.stat-icon.pending { 
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+}
+
+.stat-icon.graded { 
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+}
+
+.stat-icon.total { 
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+}
+
+.stat-icon.average { 
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+}
+
+/* Pulsing Animation Behind Icons */
+.stat-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  opacity: 0.3;
+  animation: pulse-animation 2s infinite;
+}
+
+.stat-pulse.pending {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.stat-pulse.graded {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.stat-pulse.total {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.stat-pulse.average {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+@keyframes pulse-animation {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0.1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.3;
+  }
+}
+
+/* Stat Content */
+.stat-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.stat-number {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+  background: linear-gradient(135deg, #1f2937, #374151);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dark .stat-number {
+  background: linear-gradient(135deg, #f9fafb, #e5e7eb);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #374151;
+  font-weight: 600;
+  margin-bottom: 0.125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dark .stat-label {
+  color: #d1d5db;
+}
+
+.stat-description {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.dark .stat-description {
+  color: #9ca3af;
+}
+
+/* Card Background Patterns */
+.stat-card.modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border-radius: 50%;
+  transform: translate(30px, -30px);
+  transition: all 0.3s ease;
+}
+
+.dark .stat-card.modern::before {
+  background: linear-gradient(135deg, rgba(75, 85, 99, 0.2), rgba(55, 65, 81, 0.1));
+}
+
+.stat-card.modern:hover::before {
+  transform: translate(20px, -20px) scale(1.2);
+  opacity: 0.8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .analytics-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .gradebook-scroll {
+    max-height: 50vh;
+  }
+  
+  .history-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .section-selector {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .section-select {
+    min-width: 100%;
+  }
+  
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+}
+
+.stat-card.modern.graded {
+  border-left: 4px solid #10b981;
+}
+
+.stat-card.modern.graded:hover {
+  box-shadow: 0 20px 60px rgba(16, 185, 129, 0.2);
+}
+
+.stat-card.modern.total {
+  border-left: 4px solid #3b82f6;
+}
+
+.stat-card.modern.total:hover {
+  box-shadow: 0 20px 60px rgba(59, 130, 246, 0.2);
+}
+
+.stat-card.modern.average {
+  border-left: 4px solid #8b5cf6;
+}
+
+.stat-card.modern.average:hover {
+  box-shadow: 0 20px 60px rgba(139, 92, 246, 0.2);
+}
+
+/* Icon Wrapper with Animation */
+.stat-icon-wrapper {
+  position: relative;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.stat-icon.pending { 
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+}
+
+.stat-icon.graded { 
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+}
+
+.stat-icon.total { 
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+}
+
+.stat-icon.average { 
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+}
+
+/* Pulsing Animation Behind Icons */
+.stat-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  opacity: 0.3;
+  animation: pulse-animation 2s infinite;
+}
+
+.stat-pulse.pending {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.stat-pulse.graded {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.stat-pulse.total {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.stat-pulse.average {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+@keyframes pulse-animation {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0.1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.3;
+  }
+}
+
+/* Stat Content */
+.stat-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.stat-number {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+  background: linear-gradient(135deg, #1f2937, #374151);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dark .stat-number {
+  background: linear-gradient(135deg, #f9fafb, #e5e7eb);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #374151;
+  font-weight: 600;
+  margin-bottom: 0.125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dark .stat-label {
+  color: #d1d5db;
+}
+
+.stat-description {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.dark .stat-description {
+  color: #9ca3af;
+}
+
+/* Card Background Patterns */
+.stat-card.modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border-radius: 50%;
+  transform: translate(30px, -30px);
+  transition: all 0.3s ease;
+}
+
+.dark .stat-card.modern::before {
+  background: linear-gradient(135deg, rgba(75, 85, 99, 0.2), rgba(55, 65, 81, 0.1));
+}
+
+.stat-card.modern:hover::before {
+  transform: translate(20px, -20px) scale(1.2);
+  opacity: 0.8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .analytics-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .gradebook-scroll {
+    max-height: 50vh;
+  }
+  
+  .history-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .section-selector {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .section-select {
+    min-width: 100%;
+  }
+  
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+}
+
+.stat-card.modern.graded {
+  border-left: 4px solid #10b981;
+}
+
+.stat-card.modern.graded:hover {
+  box-shadow: 0 20px 60px rgba(16, 185, 129, 0.2);
+}
+
+.stat-card.modern.total {
+  border-left: 4px solid #3b82f6;
+}
+
+.stat-card.modern.total:hover {
+  box-shadow: 0 20px 60px rgba(59, 130, 246, 0.2);
+}
+
+.stat-card.modern.average {
+  border-left: 4px solid #8b5cf6;
+}
+
+.stat-card.modern.average:hover {
+  box-shadow: 0 20px 60px rgba(139, 92, 246, 0.2);
+}
+
+/* Icon Wrapper with Animation */
+.stat-icon-wrapper {
+  position: relative;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.stat-icon.pending { 
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+}
+
+.stat-icon.graded { 
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+}
+
+.stat-icon.total { 
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+}
+
+.stat-icon.average { 
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+}
+
+/* Pulsing Animation Behind Icons */
+.stat-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  opacity: 0.3;
+  animation: pulse-animation 2s infinite;
+}
+
+.stat-pulse.pending {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.stat-pulse.graded {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.stat-pulse.total {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.stat-pulse.average {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+@keyframes pulse-animation {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0.1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.3;
+  }
+}
+
+/* Stat Content */
+.stat-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.stat-number {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+  background: linear-gradient(135deg, #1f2937, #374151);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dark .stat-number {
+  background: linear-gradient(135deg, #f9fafb, #e5e7eb);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #374151;
+  font-weight: 600;
+  margin-bottom: 0.125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dark .stat-label {
+  color: #d1d5db;
+}
+
+.stat-description {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.dark .stat-description {
+  color: #9ca3af;
+}
+
+/* Card Background Patterns */
+.stat-card.modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border-radius: 50%;
+  transform: translate(30px, -30px);
+  transition: all 0.3s ease;
+}
+
+.dark .stat-card.modern::before {
+  background: linear-gradient(135deg, rgba(75, 85, 99, 0.2), rgba(55, 65, 81, 0.1));
+}
+
+.stat-card.modern:hover::before {
+  transform: translate(20px, -20px) scale(1.2);
+  opacity: 0.8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .analytics-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .gradebook-scroll {
+    max-height: 50vh;
+  }
+  
+  .history-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .section-selector {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .section-select {
+    min-width: 100%;
+  }
+  
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+}
+
+.stat-card.modern.graded {
+  border-left: 4px solid #10b981;
+}
+
+.stat-card.modern.graded:hover {
+  box-shadow: 0 20px 60px rgba(16, 185, 129, 0.2);
+}
+
+.stat-card.modern.total {
+  border-left: 4px solid #3b82f6;
+}
+
+.stat-card.modern.total:hover {
+  box-shadow: 0 20px 60px rgba(59, 130, 246, 0.2);
+}
+
+.stat-card.modern.average {
+  border-left: 4px solid #8b5cf6;
+}
+
+.stat-card.modern.average:hover {
+  box-shadow: 0 20px 60px rgba(139, 92, 246, 0.2);
+}
+
+/* Icon Wrapper with Animation */
+.stat-icon-wrapper {
+  position: relative;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.stat-icon.pending { 
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+}
+
+.stat-icon.graded { 
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+}
+
+.stat-icon.total { 
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+}
+
+.stat-icon.average { 
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+}
+
+/* Pulsing Animation Behind Icons */
+.stat-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  opacity: 0.3;
+  animation: pulse-animation 2s infinite;
+}
+
+.stat-pulse.pending {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.stat-pulse.graded {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.stat-pulse.total {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.stat-pulse.average {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+@keyframes pulse-animation {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0.1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.3;
+  }
+}
+
+/* Stat Content */
+.stat-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.stat-number {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+  background: linear-gradient(135deg, #1f2937, #374151);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dark .stat-number {
+  background: linear-gradient(135deg, #f9fafb, #e5e7eb);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 .dark .section-card.modern:hover {
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
