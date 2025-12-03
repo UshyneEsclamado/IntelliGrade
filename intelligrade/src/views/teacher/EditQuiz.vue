@@ -1,6 +1,6 @@
 <template>
-  <div class="analytics-container" :class="{ 'dark': isDarkMode }">
-    <!-- Top Navigation Bar (Same as Dashboard) -->
+  <div class="dashboard-container">
+    <!-- Top Navigation Bar -->
     <nav class="top-navbar">
       <div class="navbar-content">
         <!-- Left: Logo and Brand -->
@@ -10,96 +10,122 @@
             <span class="brand-name">IntelliGrade</span>
           </div>
         </div>
-        
-        <!-- Center: Navigation Links -->
+        <!-- Center: Empty space for clean look -->
         <div class="navbar-center">
-          <router-link to="/teacher/dashboard" class="nav-item">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" />
-            </svg>
-            <span>Dashboard</span>
-          </router-link>
-          
-          <router-link to="/teacher/subjects" class="nav-item active">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"/>
-            </svg>
-            <span>Classes</span>
-          </router-link>
-          
-          <router-link to="/teacher/gradebook" class="nav-item">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19,3H14.82C14.4,1.84 13.3,1 12,1C10.7,1 9.6,1.84 9.18,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M12,3A1,1 0 0,1 13,4A1,1 0 0,1 12,5A1,1 0 0,1 11,4A1,1 0 0,1 12,3Z" />
-            </svg>
-            <span>Gradebook</span>
-          </router-link>
-          
-          <router-link to="/teacher/analytics" class="nav-item">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z" />
-            </svg>
-            <span>Analytics</span>
-          </router-link>
-          
-          <router-link to="/teacher/messages" class="nav-item">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            </svg>
-            <span>Messages</span>
-          </router-link>
-          
-          <router-link to="/teacher/upload-assessment" class="nav-item">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M9,16V10H5L12,3L19,10H15V16H9M5,20V18H19V20H5Z" />
-            </svg>
-            <span>Upload</span>
-          </router-link>
         </div>
         
-        <!-- Right: Actions -->
+        <!-- Right: User Profile -->
         <div class="navbar-right">
-          <button @click="saveQuiz" :disabled="isSaving" class="export-btn save-quiz-btn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z" />
-            </svg>
-            <span>{{ isSaving ? 'Saving...' : 'Save Changes' }}</span>
-          </button>
-          <button @click="goBack" class="export-btn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M10 19l-7-7 7-7m-7 7h18"></path>
-            </svg>
-            <span>Back to Quiz Management</span>
-          </button>
-        </div>
-      </div>
-    </nav>
-
-    <!-- Main Content Area -->
-    <main class="main-content">
-      <!-- Page Header -->
-      <div class="page-header">
-        <div class="section-header-content">
-          <div class="section-header-left">
-            <div class="section-header-icon">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
-              </svg>
-            </div>
-            <div class="header-text">
-              <div class="section-header-title">Edit Quiz</div>
-              <div class="section-header-subtitle">{{ quiz.title || 'Loading...' }}</div>
-              <div class="section-header-description" v-if="quiz.quiz_code">
-                Quiz Code: <span class="code-highlight">{{ quiz.quiz_code }}</span>
+          <div class="user-profile-wrapper">
+            <div class="user-profile rounded-bg">
+              <div class="user-avatar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
               </div>
+              <span class="user-name">{{ fullName }}</span>
             </div>
           </div>
         </div>
       </div>
+    </nav>
 
-      <!-- Content Area -->
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" style="background:#3D8D7A; border-right:none;">
+      <nav class="sidebar-nav">
+        <router-link to="/teacher/dashboard" class="sidebar-item rounded-bg">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 20v-6h4v6m5-8h3L12 3 2 12h3v8h5v-6h4v6h5v-8z" />
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Dashboard</span>
+        </router-link>
+        <router-link to="/teacher/subjects" class="sidebar-item rounded-bg active">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="7" width="18" height="13" rx="2" />
+              <path d="M3 7l9-4 9 4" />
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Classes</span>
+        </router-link>
+        <router-link to="/teacher/gradebook" class="sidebar-item rounded-bg">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="4" width="16" height="16" rx="2" />
+              <path d="M8 2v4M16 2v4" />
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Gradebook</span>
+        </router-link>
+        <router-link to="/teacher/upload-assessment" class="sidebar-item rounded-bg">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 19V6M5 12l7-7 7 7" />
+              <rect x="5" y="19" width="14" height="2" rx="1" />
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Upload Assessment</span>
+        </router-link>
+        <router-link to="/teacher/analytics" class="sidebar-item rounded-bg">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="12" width="4" height="8" />
+              <rect x="10" y="8" width="4" height="12" />
+              <rect x="17" y="4" width="4" height="16" />
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Analytics</span>
+        </router-link>
+        <router-link to="/teacher/messages" class="sidebar-item rounded-bg">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="5" width="18" height="14" rx="2" />
+              <path d="M3 5l9 6 9-6" />
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Messages</span>
+        </router-link>
+      </nav>
+    </aside>
 
-    <!-- Main Content -->
-  <div class="main-wrapper">
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Page Header -->
+      <div class="subjects-header">
+        <div class="header-left">
+          <div class="header-icon-wrapper">
+            <div class="header-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
+              </svg>
+            </div>
+          </div>
+          <div>
+            <h1>Edit Quiz</h1>
+            <p>{{ quiz.title || 'Loading...' }}</p>
+          </div>
+        </div>
+        <div class="header-right">
+          <button @click="saveQuiz" :disabled="isSaving" class="create-subject-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z" />
+            </svg>
+            {{ isSaving ? 'Saving...' : 'Save Changes' }}
+          </button>
+          <button @click="goBack" class="create-subject-btn secondary">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M10 19l-7-7 7-7m-7 7h18"></path>
+            </svg>
+            Back
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+  <div class="content-wrapper">
       <!-- Loading State -->
       <div v-if="isLoading" class="loading-state">
         <div class="loading-spinner"></div>
@@ -107,15 +133,15 @@
       </div>
 
       <!-- Error State -->
-      <div v-else-if="error" class="error-state">
-        <div class="error-icon">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+      <div v-else-if="error" class="empty-state">
+        <div class="empty-icon">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
             <path d="M11,15H13V17H11V15M11,7H13V13H11V7M12,2C6.47,2 2,6.5 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20Z" />
           </svg>
         </div>
-        <h3>Error Loading Quiz</h3>
-        <p>{{ error }}</p>
-        <button @click="loadQuiz" class="retry-btn">Try Again</button>
+        <h3 class="empty-title">Error Loading Quiz</h3>
+        <p class="empty-desc">{{ error }}</p>
+        <button @click="loadQuiz" class="create-quiz-btn">Try Again</button>
       </div>
 
       <!-- Edit Form -->
@@ -387,9 +413,13 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { supabase } from '../../supabase.js'
 import { useDarkMode } from '../../composables/useDarkMode.js'
+import { useTeacherAuth } from '../../composables/useTeacherAuth.js'
 
 // Dark mode
 const { isDarkMode, initDarkMode } = useDarkMode()
+
+// Teacher auth
+const { teacherInfo, initializeAuth } = useTeacherAuth()
 
 const router = useRouter()
 const route = useRoute()
@@ -422,6 +452,7 @@ const questions = ref([])
 const isLoading = ref(false)
 const isSaving = ref(false)
 const error = ref(null)
+const fullName = ref('Teacher')
 
 // TIMEZONE UTILITY FUNCTIONS - Matching CreateQuiz.vue exactly
 const formatPHTime = (utcDateString) => {
@@ -900,6 +931,32 @@ onMounted(async () => {
   console.log('EditQuiz component mounted')
   initDarkMode()
   
+  // Initialize auth and load teacher name
+  try {
+    await initializeAuth()
+    
+    // Load teacher name
+    if (teacherInfo.value?.id) {
+      try {
+        const { data: teacher, error: teacherError } = await supabase
+          .from('teachers')
+          .select('full_name')
+          .eq('id', teacherInfo.value.id)
+          .single()
+        
+        if (!teacherError && teacher) {
+          fullName.value = teacher.full_name || 'Teacher'
+          console.log('✅ Teacher loaded:', { id: teacherInfo.value.id, name: fullName.value })
+        }
+      } catch (err) {
+        console.warn('⚠️ Failed to load teacher name:', err)
+        // Continue anyway - name is not critical
+      }
+    }
+  } catch (err) {
+    console.warn('⚠️ Auth initialization warning:', err)
+  }
+  
   // Debug timezone conversion
   debugTimeConversion();
   
@@ -917,35 +974,22 @@ onMounted(async () => {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
-
-/* Reset and Hide Parent Layouts */
-body, html {
-  overflow-x: hidden !important;
+/* Reset and Base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-/* Force hide any sidebar or layout from parent components */
-.sidebar,
-.dashboard-sidebar,
-.navigation-sidebar,
-.teacher-layout,
-.dashboard-layout {
-  display: none !important;
+.dashboard-container {
+  min-height: 100vh;
+  background: #f8fafc;
+  font-family: 'Inter', sans-serif;
+  padding-left: 80px;
+  padding-top: 64px;
 }
 
-/* Ensure our container is on top */
-.analytics-container {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  z-index: 999999 !important;
-  background: #f8fafc !important;
-  overflow-y: auto !important;
-}
-
-/* Top Navigation Bar (Same as Dashboard) */
+/* Top Navigation Bar */
 .top-navbar {
   position: fixed;
   top: 0;
@@ -955,7 +999,7 @@ body, html {
   background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   z-index: 1000;
-  box-shadow: 0 4px 20px rgba(61, 141, 122, 0.3);
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.15);
 }
 
 .navbar-content {
@@ -963,9 +1007,9 @@ body, html {
   align-items: center;
   justify-content: space-between;
   height: 100%;
-  max-width: 1400px;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 2rem;
 }
 
 .navbar-left {
@@ -977,71 +1021,28 @@ body, html {
 .brand-logo {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
   color: white;
   font-weight: 700;
   text-decoration: none;
 }
 
 .logo-img {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   object-fit: contain;
   filter: brightness(0) invert(1);
 }
 
 .brand-name {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: 800;
   color: white;
   letter-spacing: -0.5px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .navbar-center {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
   flex: 1;
-  justify-content: center;
-  max-width: 600px;
-}
-
-.nav-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
-  text-decoration: none;
-  color: rgba(255, 255, 255, 0.8);
-  transition: all 0.2s ease;
-  position: relative;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.nav-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-}
-
-.nav-item.active {
-  color: white;
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.nav-item.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60%;
-  height: 3px;
-  background: white;
-  border-radius: 2px 2px 0 0;
 }
 
 .navbar-right {
@@ -1050,268 +1051,645 @@ body, html {
   gap: 1rem;
 }
 
-.export-btn {
+.user-profile-wrapper {
+  position: relative;
+}
+
+.user-profile {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 0.75rem 1.25rem;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 500;
+  gap: 0.75rem;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.625rem 1.25rem;
+  border-radius: 50px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.export-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.3);
-  transform: translateY(-1px);
+.user-profile:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
-.export-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
 }
 
-.export-btn.save-quiz-btn {
-  background: rgba(16, 185, 129, 0.9);
-  border-color: rgba(16, 185, 129, 0.5);
-  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+.user-name {
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
 }
 
-.export-btn.save-quiz-btn:hover:not(:disabled) {
-  background: #059669;
-  border-color: #047857;
-  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+/* Sidebar Navigation */
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 64px;
+  bottom: 0;
+  width: 80px;
+  background: #3D8D7A;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem 0;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  align-items: center;
+}
+
+.sidebar-item {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  transition: all 0.2s;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-item.active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-tooltip {
+  position: absolute;
+  left: 100%;
+  margin-left: 1rem;
+  background: #23272b;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 1000;
+}
+
+.sidebar-item:hover .sidebar-tooltip {
+  opacity: 1;
+}
+
+.rounded-bg {
+  border-radius: 12px;
 }
 
 /* Main Content */
 .main-content {
-  margin-top: 64px;
-  padding: 1.5rem;
-  width: 100%;
-  min-height: calc(100vh - 64px);
-  position: relative;
-  background: #f8fafc;
-  padding-bottom: 2rem;
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 /* Page Header */
-.page-header {
+.subjects-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.header-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-icon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.25);
+}
+
+.subjects-header h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.subjects-header p {
+  color: #64748b;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.create-subject-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #3D8D7A;
+  color: white;
+  border: none;
+  padding: 0.875rem 1.75rem;
+  border-radius: 12px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.2);
+}
+
+.create-subject-btn:hover:not(:disabled) {
+  background: #2d6a5a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
+}
+
+.create-subject-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.create-subject-btn.secondary {
+  background: transparent;
+  color: #3D8D7A;
+  border: 2px solid #3D8D7A;
+}
+
+.create-subject-btn.secondary:hover:not(:disabled) {
+  background: rgba(61, 141, 122, 0.1);
+  border-color: #2d6a5a;
+  color: #2d6a5a;
+}
+
+/* Loading State */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e2e8f0;
+  border-top: 4px solid #3D8D7A;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
   background: white;
   border-radius: 16px;
-  padding: 1.5rem 2rem;
-  margin-bottom: 1.5rem;
   border: 1px solid #e2e8f0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
-.section-header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.section-header-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.section-header-icon {
-  width: 56px;
-  height: 56px;
-  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  flex-shrink: 0;
-}
-
-.header-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.section-header-title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0 0 0.25rem 0;
-  line-height: 1.3;
-}
-
-.section-header-subtitle {
-  font-size: 0.95rem;
-  color: #64748b;
-  margin: 0;
-}
-
-.section-header-description {
-  font-size: 0.75rem;
-  color: #9ca3af;
-}
-
-.code-highlight {
-  font-family: 'Courier New', monospace;
-  font-weight: 700;
-  color: #3b82f6;
-  background: rgba(59, 130, 246, 0.1);
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-}
-
-.edit-quiz-container {
-  min-height: 100vh;
-  background: #FBFFE4;
-  padding: 1.5rem;
-  font-family: 'Inter', sans-serif;
-}
-.edit-quiz-container.dark-mode {
-  background: #181c20;
-}
-
-/* Header Card - Matching MySubjects Style */
-.section-header-card {
-  background: white;
-  border: 1.5px solid #3D8D7A;
-  border-radius: 16px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.1);
-}
-.dark-mode .section-header-card {
+.dark .empty-state {
   background: #23272b;
-  border: 1.5px solid #A3D1C6;
-  box-shadow: 0 2px 8px rgba(163, 209, 198, 0.1);
+  border-color: #374151;
 }
 
-.section-header-content {
+.empty-icon {
+  margin-bottom: 1.5rem;
+  color: #94a3b8;
+}
+
+.empty-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.dark .empty-title {
+  color: #f1f5f9;
+}
+
+.empty-desc {
+  color: #64748b;
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.dark .empty-desc {
+  color: #94a3b8;
+}
+
+.create-quiz-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #3D8D7A;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.2);
+}
+
+.create-quiz-btn:hover {
+  background: #2d6a5a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.3);
+}
+
+.dark .create-quiz-btn {
+  background: #A3D1C6;
+  color: #181c20;
+}
+
+.dark .create-quiz-btn:hover {
+  background: #8ebfb3;
+}
+
+/* Form Cards */
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-card {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.dark .form-card {
+  background: #23272b;
+  border-color: #374151;
+}
+
+.card-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.dark .card-header {
+  background: #1e2329;
+  border-bottom-color: #374151;
+}
+
+.card-header h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.dark .card-header h3 {
+  color: #f1f5f9;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+/* Form Elements */
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.dark .form-group label {
+  color: #e5e7eb;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group input[type="datetime-local"],
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  color: #1f2937;
+  background: white;
+  transition: all 0.2s;
+}
+
+.dark .form-group input,
+.dark .form-group select,
+.dark .form-group textarea {
+  background: #1e2329;
+  border-color: #374151;
+  color: #f1f5f9;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #3D8D7A;
+  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
+}
+
+.form-group small {
+  display: block;
+  margin-top: 0.375rem;
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.dark .form-group small {
+  color: #9ca3af;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+  cursor: pointer;
+}
+
+/* Questions Section */
+.card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.section-header-left {
+.add-question-btn {
   display: flex;
   align-items: center;
-  gap: 1rem;
-}
-
-.section-header-icon {
-  width: 56px;
-  height: 56px;
+  gap: 0.5rem;
   background: #3D8D7A;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   color: white;
-  flex-shrink: 0;
-}
-
-.header-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.section-header-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0 0 0.25rem 0;
-  line-height: 1.3;
-}
-.dark-mode .section-header-title {
-  color: #f9fafb;
-}
-
-.section-header-subtitle {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin: 0;
-}
-.dark-mode .section-header-subtitle {
-  color: #A3D1C6;
-}
-
-.section-header-description {
-  font-size: 0.75rem;
-  color: #9ca3af;
-}
-.dark-mode .section-header-description {
-  color: #9ca3af;
-}
-
-.code-highlight {
-  font-family: 'Courier New', monospace;
-  font-weight: 700;
-  color: #3b82f6;
-  background: rgba(59, 130, 246, 0.1);
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-}
-
-.header-actions {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.save-btn, .back-button {
-  background: #20c997;
-  color: #181c20;
-  border: 1px solid #A3D1C6;
-  padding: 0.5rem 1.25rem;
+  border: none;
+  padding: 0.625rem 1rem;
   border-radius: 8px;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+}
+
+.add-question-btn:hover {
+  background: #2d6a5a;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.2);
+}
+
+.dark .add-question-btn {
+  background: #A3D1C6;
+  color: #181c20;
+}
+
+.dark .add-question-btn:hover {
+  background: #8ebfb3;
+}
+
+.no-questions {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: #6b7280;
+  font-size: 0.9375rem;
+}
+
+.dark .no-questions {
+  color: #9ca3af;
+}
+
+.questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.question-item {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition: all 0.2s;
+}
+
+.dark .question-item {
+  background: #1e2329;
+  border-color: #374151;
+}
+
+.question-item:hover {
+  border-color: #3D8D7A;
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.1);
+}
+
+.question-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.question-number {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  outline: none;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: #3D8D7A;
+  color: white;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.9375rem;
 }
 
-.save-btn:hover:not(:disabled) {
+.dark .question-number {
   background: #A3D1C6;
-  color: #23272b;
-  border-color: #20c997;
-  transform: translateY(-1px);
-}
-
-.save-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.back-button:hover {
-  background: #A3D1C6;
-  color: #23272b;
-  border-color: #20c997;
-  transform: translateY(-1px);
-}
-
-.dark-mode .save-btn,
-.dark-mode .back-button {
-  background: #20c997;
   color: #181c20;
-  border: 1px solid #A3D1C6;
 }
 
-.dark-mode .save-btn:hover:not(:disabled),
-.dark-mode .back-button:hover {
-  background: #A3D1C6;
-  color: #23272b;
-  border-color: #20c997;
+.delete-question-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-question-btn:hover {
+  background: #dc2626;
+  transform: scale(1.05);
+}
+
+.question-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.options-section,
+.answer-section {
+  margin-top: 0.5rem;
+}
+
+.options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.option-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.option-item input[type="radio"] {
+  width: auto;
+  margin: 0;
+  cursor: pointer;
+}
+
+.option-item input[type="text"] {
+  flex: 1;
+  padding: 0.625rem 0.875rem;
+  border: 1.5px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+.dark .option-item input[type="text"] {
+  background: #23272b;
+  border-color: #374151;
+  color: #f1f5f9;
+}
+
+.remove-option-btn {
+  background: transparent;
+  color: #ef4444;
+  border: none;
+  padding: 0.375rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.remove-option-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  transform: scale(1.1);
+}
+
+.add-option-btn {
+  background: transparent;
+  color: #3D8D7A;
+  border: 1.5px dashed #3D8D7A;
+  padding: 0.625rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-option-btn:hover {
+  background: rgba(61, 141, 122, 0.05);
+  border-style: solid;
+}
+
+.dark .add-option-btn {
+  color: #A3D1C6;
+  border-color: #A3D1C6;
+}
+
+.dark .add-option-btn:hover {
+  background: rgba(163, 209, 198, 0.1);
 }
 
 /* Main Content */
