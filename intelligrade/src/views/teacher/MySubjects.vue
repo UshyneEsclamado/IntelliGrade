@@ -2605,7 +2605,7 @@
             <p class="modal-subtitle">{{ currentStep === 1 ? 'Enter subject details' : 'Configure your sections' }}</p>
           </div>
           <button @click="closeModal" class="close-btn-enhanced">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
               <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
             </svg>
           </button>
@@ -2697,13 +2697,7 @@
             </div>
 
             <div class="modal-actions-enhanced">
-              <button type="button" @click="closeModal" class="btn-secondary">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
-                </svg>
-                Cancel
-              </button>
-              <button type="submit" :disabled="!canProceedToStep2" class="btn-primary">
+              <button type="submit" :disabled="!canProceedToStep2" class="btn-primary" style="margin-left: auto;">
                 Next: Setup Sections
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z"/>
@@ -2915,6 +2909,94 @@
       </div>
     </transition>
 
+<!-- Edit Subject Info Modal - Simple Quick Edit -->
+<div v-if="showEditSubjectModal" class="modal-overlay" @click="closeEditSubjectModal">
+  <div class="modal-content-enhanced" @click.stop style="max-width: 600px;">
+    <!-- Modal Header -->
+    <div class="modal-header-enhanced">
+      <div class="modal-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
+        </svg>
+      </div>
+      <div class="modal-title-area">
+        <h2>Edit Subject Information</h2>
+        <p class="modal-subtitle">Update subject name and description</p>
+      </div>
+      <button @click="closeEditSubjectModal" class="close-btn-enhanced">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Edit Form -->
+    <form @submit.prevent="saveEditedSubjectInfo" class="subject-form-enhanced">
+      <div class="step-content-enhanced">
+        <div class="form-grid">
+          <div class="form-group-enhanced full-width">
+            <label for="editSubjectName">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"/>
+              </svg>
+              Subject Name <span class="required">*</span>
+            </label>
+            <input
+              id="editSubjectName"
+              v-model="editSubjectData.name"
+              type="text"
+              placeholder="e.g., English, Mathematics, Science"
+              required
+            />
+          </div>
+
+          <div class="form-group-enhanced full-width">
+            <label for="editDescription">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+              </svg>
+              Description <span class="optional">(Optional)</span>
+            </label>
+            <textarea
+              id="editDescription"
+              v-model="editSubjectData.description"
+              placeholder="Brief description of the subject"
+              rows="4"
+            ></textarea>
+          </div>
+
+          <div class="info-note" style="background: #eff6ff; border-left: 3px solid #3b82f6; padding: 1rem; border-radius: 8px; margin-top: 0.5rem;">
+            <div style="display: flex; gap: 0.75rem; align-items: start;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="#3b82f6" style="flex-shrink: 0; margin-top: 2px;">
+                <path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" />
+              </svg>
+              <div>
+                <p style="margin: 0; color: #1e40af; font-weight: 600; font-size: 0.875rem;">Quick Edit Mode</p>
+                <p style="margin: 0.25rem 0 0 0; color: #3730a3; font-size: 0.8125rem;">This will only update the subject name and description. To modify grade level or sections, please delete and recreate the subject.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions-enhanced">
+        <button type="button" @click="closeEditSubjectModal" class="btn-secondary">
+          Cancel
+        </button>
+        <button type="submit" class="btn-primary" :disabled="isLoading || !editSubjectData.name">
+          <svg v-if="!isLoading" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+          </svg>
+          <svg v-else class="spinner-icon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z" />
+          </svg>
+          {{ isLoading ? 'Updating...' : 'Update Subject' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- Replace the Add Students Modal section in your Subjects.vue -->
 
 <!-- Add Students Modal - REDESIGNED -->
@@ -2933,7 +3015,7 @@
         <p class="modal-subtitle">{{ selectedSectionForStudents?.section_name }} - {{ selectedSubjectForStudents?.subject_name }}</p>
       </div>
       <button @click="closeAddStudentsModal" class="close-btn-enhanced">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
           <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
         </svg>
       </button>
@@ -3375,6 +3457,14 @@ const isEnrollingStudent = ref(false)
 const enrollmentMessage = ref('')
 const enrollmentMessageType = ref('success') // 'success' or 'error'
 
+// Edit Subject Modal States
+const showEditSubjectModal = ref(false)
+const editSubjectData = ref({
+  id: null,
+  name: '',
+  description: ''
+})
+
 // Form data
 const formData = ref({
   name: '',
@@ -3682,6 +3772,7 @@ const fetchSubjects = async (forceRefresh = false) => {
             id: subject.id,
             subject_name: subjectName,
             name: subjectName,
+            description: subject.description,
             sections: [],
             grade_levels: new Set(),
             total_students: 0,
@@ -4124,16 +4215,22 @@ const saveSubject = async () => {
     console.error('❌ Save subject error:', error)
     isLoading.value = false
     
-    // Show detailed error message
+    // Show detailed error message with better handling for duplicate key
     let errorMessage = 'Error saving subject. '
     
     if (error.message) {
-      errorMessage += error.message
+      // Check for duplicate key constraint violation
+      if (error.message.includes('duplicate key') || error.code === '23505') {
+        errorMessage = `You already have a subject named "${formData.value.name}" for Grade ${formData.value.grade_level}. `
+        errorMessage += 'Please use a different name or edit the existing subject instead.'
+      } else {
+        errorMessage += error.message
+      }
     } else {
       errorMessage += 'Please try again.'
     }
     
-    if (error.code) {
+    if (error.code && !error.message.includes('duplicate key')) {
       errorMessage += ` (Code: ${error.code})`
     }
     
@@ -4142,21 +4239,62 @@ const saveSubject = async () => {
 }
 
 const editSubject = (subject) => {
-  isEditing.value = true
-  currentSubjectId.value = subject.id
-  formData.value = {
+  // Open the simple edit modal instead
+  editSubjectData.value = {
+    id: subject.id,
     name: subject.subject_name || subject.name,
-    grade_level: subject.grade_level.toString(),
-    description: subject.description || '',
-    number_of_sections: subject.section_count.toString(),
-    sections: subject.sections.map(s => ({
-      name: s.name,
-      max_students: s.max_students
-    }))
+    description: subject.description || ''
   }
-  currentStep.value = 1
-  showCreateModal.value = true
+  showEditSubjectModal.value = true
   openSubjectMenuId.value = null
+}
+
+// Save edited subject info (simple update - name and description only)
+const saveEditedSubjectInfo = async () => {
+  try {
+    if (!editSubjectData.value.name) {
+      showToast('Subject name is required', 'error')
+      return
+    }
+
+    isLoading.value = true
+
+    const { error } = await supabase
+      .from('subjects')
+      .update({
+        name: editSubjectData.value.name,
+        description: editSubjectData.value.description || null
+      })
+      .eq('id', editSubjectData.value.id)
+      .eq('teacher_id', teacherInfo.value.id)
+
+    if (error) {
+      console.error('Error updating subject:', error)
+      throw error
+    }
+
+    showToast('Subject updated successfully!', 'success')
+    closeEditSubjectModal()
+    
+    // Refresh subjects list
+    await fetchSubjects(true)
+
+    isLoading.value = false
+  } catch (error) {
+    console.error('Error saving subject info:', error)
+    showToast('Error updating subject. Please try again.', 'error')
+    isLoading.value = false
+  }
+}
+
+// Close edit subject modal
+const closeEditSubjectModal = () => {
+  showEditSubjectModal.value = false
+  editSubjectData.value = {
+    id: null,
+    name: '',
+    description: ''
+  }
 }
 
 // ============================================================
@@ -5959,22 +6097,30 @@ onUnmounted(() => {
 }
 
 .close-btn-enhanced {
-  background: none;
+  background: linear-gradient(135deg, #10b981, #059669);
   border: none;
-  color: #6b7280;
-  padding: 0.5rem;
-  border-radius: 8px;
+  color: white;
+  padding: 0.75rem;
+  border-radius: 10px;
   cursor: pointer;
   margin-left: auto;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 .close-btn-enhanced:hover {
-  background: #f3f4f6;
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
 }
 .dark .close-btn-enhanced {
-  color: #94a3b8;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
 }
 .dark .close-btn-enhanced:hover {
-  background: #374151;
+  background: linear-gradient(135deg, #059669, #047857);
 }
 
 /* Scroll to Top Button */
@@ -6747,13 +6893,13 @@ onUnmounted(() => {
 .create-subject-btn {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.625rem;
   background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
   color: white;
   border: none;
-  padding: 0.75rem 1.25rem;
+  padding: 0.875rem 1.5rem;
   border-radius: 10px;
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;

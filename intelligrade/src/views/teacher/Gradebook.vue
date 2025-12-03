@@ -172,7 +172,7 @@
 
       <!-- Unified Gradebook Header -->
       <div class="gradebook-header">
-        <div class="header-content">
+        <div class="header-content-left">
           <div class="header-left">
             <div class="header-icon">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
@@ -181,22 +181,10 @@
             </div>
             <div>
               <h1 class="header-title">Class Record</h1>
-              <p class="header-subtitle">All-in-One Gradebook • Excel-style Layout</p>
+              <p class="header-subtitle">Manage student grades and performance tracking</p>
             </div>
           </div>
           <div class="header-actions">
-            <!-- Section Selector -->
-            <div class="section-selector">
-              <label for="section-select">Section:</label>
-              <select id="section-select" v-model="selectedSectionId" @change="onSectionChange" class="section-select">
-                <option value="">Choose a Section</option>
-                <optgroup v-for="subject in subjects" :key="subject.id" :label="subject.name">
-                  <option v-for="section in subject.sections" :key="section.id" :value="section.id">
-                    {{ section.name }} ({{ subject.name }})
-                  </option>
-                </optgroup>
-              </select>
-            </div>
             <button @click="refreshData" class="refresh-btn grade-btn" :disabled="loading">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" :class="{ 'spinning': loading }">
                 <path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z" />
@@ -207,8 +195,106 @@
         </div>
       </div>
 
+      <!-- Grade Level and Section Selection -->
+      <div v-if="!loading || gradeLevels.length > 0" class="selection-container">
+        <!-- Grade Level Selector -->
+        <div class="grade-level-section">
+          <div class="section-title-bar">
+            <div class="title-content">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z" />
+              </svg>
+              <h3>Select Grade Level</h3>
+            </div>
+            <span class="count-badge">{{ gradeLevels.length }} Grade{{ gradeLevels.length !== 1 ? 's' : '' }}</span>
+          </div>
+          <div class="grade-buttons-container">
+            <button
+              v-for="grade in gradeLevels"
+              :key="grade"
+              @click="selectGradeLevel(grade)"
+              class="grade-level-btn"
+              :class="{ 'active': selectedGradeLevel === grade }"
+            >
+              <div class="grade-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z" />
+                </svg>
+              </div>
+              <div class="grade-content">
+                <div class="grade-title">Grade {{ grade }}</div>
+                <div class="grade-count">{{ getSectionCountForGrade(grade) }} Section{{ getSectionCountForGrade(grade) !== 1 ? 's' : '' }}</div>
+              </div>
+              <svg class="arrow-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" />
+              </svg>
+            </button>
+            <div v-if="gradeLevels.length === 0" class="empty-state-inline">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" />
+              </svg>
+              <p>No grade levels available</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Selector (shown when grade level is selected) -->
+        <div v-if="selectedGradeLevel" class="sections-section">
+          <div class="section-title-bar">
+            <div class="title-content">
+              <button @click="clearGradeSelection" class="back-btn-inline">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
+                </svg>
+              </button>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M7,7H17V9H7V7M7,11H17V13H7V11M7,15H17V17H7V15Z" />
+              </svg>
+              <h3>Grade {{ selectedGradeLevel }} Sections</h3>
+            </div>
+            <span class="count-badge">{{ filteredSections.length }} Section{{ filteredSections.length !== 1 ? 's' : '' }}</span>
+          </div>
+          <div class="sections-grid">
+            <button
+              v-for="section in filteredSections"
+              :key="section.id"
+              @click="selectSection(section)"
+              class="section-card-btn"
+              :class="{ 'active': selectedSectionId === section.id }"
+            >
+              <div class="section-card-header">
+                <div class="section-icon-wrapper">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z" />
+                  </svg>
+                </div>
+                <div class="section-badge">{{ section.section_code || 'N/A' }}</div>
+              </div>
+              <div class="section-card-body">
+                <h4>{{ section.name }}</h4>
+                <p class="section-subject">{{ section.subject_name }}</p>
+              </div>
+              <div class="section-card-footer">
+                <span class="section-stat">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16,13C15.71,13 15.38,13 15.03,13.05C16.19,13.89 17,15 17,16.5V19H23V16.5C23,14.17 18.33,13 16,13M8,13C5.67,13 1,14.17 1,16.5V19H15V16.5C15,14.17 10.33,13 8,13M8,11A3,3 0 0,0 11,8A3,3 0 0,0 8,5A3,3 0 0,0 5,8A3,3 0 0,0 8,11M16,11A3,3 0 0,0 19,8A3,3 0 0,0 16,5A3,3 0 0,0 13,8A3,3 0 0,0 16,11Z" />
+                  </svg>
+                  {{ section.student_count || 0 }} Students
+                </span>
+              </div>
+            </button>
+            <div v-if="filteredSections.length === 0" class="empty-state-inline">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" />
+              </svg>
+              <p>No sections available for Grade {{ selectedGradeLevel }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Loading State -->
-      <div v-if="loading && !selectedSectionId" class="loading-container">
+      <div v-if="loading && !selectedSectionId && gradeLevels.length === 0" class="loading-container">
         <div class="spinner-large"></div>
         <p>Loading sections...</p>
       </div>
@@ -221,17 +307,6 @@
         <h3>Error Loading Data</h3>
         <p>{{ error }}</p>
         <button @click="refreshData" class="grade-btn">Retry</button>
-      </div>
-
-      <!-- No Section Selected State -->
-      <div v-else-if="!selectedSectionId" class="no-section-state">
-        <div class="empty-icon">
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M7,7H9V9H7V7M7,11H9V13H7V11M7,15H9V17H7V15M11,7H17V9H11V7M11,11H17V13H11V11M11,15H17V17H11V15Z" />
-          </svg>
-        </div>
-        <h3>Select a Section</h3>
-        <p>Choose a section from the dropdown above to view the class record</p>
       </div>
 
       <!-- Excel-Style Gradebook -->
@@ -675,6 +750,7 @@ const error = ref(null)
 const teacherId = ref(null)
 
 const subjects = ref([])
+const selectedGradeLevel = ref(null)
 const selectedSectionId = ref('')
 const currentSectionInfo = ref({})
 const students = ref([])
@@ -729,6 +805,68 @@ const analyticsData = computed(() => {
 const correctAnswerCount = computed(() => reviewQuestions.value.filter(q => q.is_correct).length)
 const maxReviewScore = computed(() => reviewQuestions.value.reduce((sum, q) => sum + (q.points || 1), 0))
 
+// Computed properties for grade level organization
+const gradeLevels = computed(() => {
+  const levels = new Set()
+  subjects.value.forEach(subject => {
+    if (subject.grade_level) {
+      levels.add(subject.grade_level)
+    }
+  })
+  return Array.from(levels).sort((a, b) => a - b)
+})
+
+const filteredSections = computed(() => {
+  if (!selectedGradeLevel.value) return []
+  
+  const sections = []
+  subjects.value.forEach(subject => {
+    if (subject.grade_level === selectedGradeLevel.value) {
+      subject.sections.forEach(section => {
+        sections.push({
+          ...section,
+          subject_name: subject.name,
+          grade_level: subject.grade_level
+        })
+      })
+    }
+  })
+  return sections
+})
+
+const getSectionCountForGrade = (gradeLevel) => {
+  let count = 0
+  subjects.value.forEach(subject => {
+    if (subject.grade_level === gradeLevel) {
+      count += subject.sections?.length || 0
+    }
+  })
+  return count
+}
+
+const selectGradeLevel = (grade) => {
+  selectedGradeLevel.value = grade
+  selectedSectionId.value = ''
+  currentSectionInfo.value = {}
+  students.value = []
+  assessments.value = []
+  gradebookData.value = {}
+}
+
+const clearGradeSelection = () => {
+  selectedGradeLevel.value = null
+  selectedSectionId.value = ''
+  currentSectionInfo.value = {}
+  students.value = []
+  assessments.value = []
+  gradebookData.value = {}
+}
+
+const selectSection = async (section) => {
+  selectedSectionId.value = section.id
+  await onSectionChange()
+}
+
 const getTeacherInfo = async () => {
   try {
     const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -775,7 +913,17 @@ const fetchSubjects = async () => {
 
     const { data: subjectsData, error: subjectsError } = await supabase
       .from('subjects')
-      .select('id, name, grade_level, sections(id, name, section_code)')
+      .select(`
+        id, 
+        name, 
+        grade_level, 
+        sections(
+          id, 
+          name, 
+          section_code,
+          enrollments(count)
+        )
+      `)
       .eq('teacher_id', teacherId.value)
       .eq('is_active', true)
 
@@ -785,7 +933,12 @@ const fetchSubjects = async () => {
       id: subject.id,
       name: subject.name,
       grade_level: subject.grade_level,
-      sections: subject.sections || []
+      sections: (subject.sections || []).map(section => ({
+        id: section.id,
+        name: section.name,
+        section_code: section.section_code,
+        student_count: section.enrollments?.[0]?.count || 0
+      }))
     })) || []
   } catch (err) {
     error.value = `Failed to load subjects: ${err.message}`
@@ -1665,6 +1818,14 @@ body, html {
   gap: 1rem;
 }
 
+.header-content-left {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
 .header-left {
   display: flex;
   align-items: center;
@@ -1699,6 +1860,479 @@ body, html {
   font-size: 0.95rem;
   color: #64748b;
 }
+
+/* ================================================ */
+/* GRADE LEVEL AND SECTION SELECTION STYLES */
+/* ================================================ */
+
+/* Grade Level and Section Selection Container */
+.selection-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Grade Level Section */
+.grade-level-section,
+.sections-section {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 2px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+}
+
+.dark .grade-level-section,
+.dark .sections-section {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.section-title-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.dark .section-title-bar {
+  border-bottom-color: #334155;
+}
+
+.title-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.title-content svg {
+  color: #3D8D7A;
+  flex-shrink: 0;
+}
+
+.dark .title-content svg {
+  color: #10b981;
+}
+
+.title-content h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.dark .title-content h3 {
+  color: #f1f5f9;
+}
+
+.count-badge {
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  color: white;
+  padding: 0.375rem 0.875rem;
+  border-radius: 20px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+}
+
+.dark .count-badge {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+/* Back Button */
+.back-btn-inline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: rgba(61, 141, 122, 0.1);
+  border: 1px solid rgba(61, 141, 122, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #3D8D7A;
+}
+
+.back-btn-inline:hover {
+  background: rgba(61, 141, 122, 0.2);
+  border-color: #3D8D7A;
+  transform: translateX(-2px);
+}
+
+.dark .back-btn-inline {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+.dark .back-btn-inline:hover {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+}
+
+/* Grade Level Buttons */
+.grade-buttons-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.grade-level-btn {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.grade-level-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(61, 141, 122, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.grade-level-btn:hover::before {
+  left: 100%;
+}
+
+.grade-level-btn:hover {
+  border-color: #3D8D7A;
+  background: rgba(61, 141, 122, 0.05);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.15);
+}
+
+.grade-level-btn.active {
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  border-color: #3D8D7A;
+  color: white;
+  box-shadow: 0 6px 20px rgba(61, 141, 122, 0.3);
+}
+
+.dark .grade-level-btn {
+  background: #334155;
+  border-color: #475569;
+}
+
+.dark .grade-level-btn:hover {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.dark .grade-level-btn.active {
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-color: #10b981;
+}
+
+.grade-icon {
+  width: 48px;
+  height: 48px;
+  background: rgba(61, 141, 122, 0.1);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3D8D7A;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.grade-level-btn.active .grade-icon {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.dark .grade-icon {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.dark .grade-level-btn.active .grade-icon {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+.grade-content {
+  flex: 1;
+}
+
+.grade-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.grade-level-btn.active .grade-title {
+  color: white;
+}
+
+.dark .grade-title {
+  color: #f1f5f9;
+}
+
+.grade-count {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.grade-level-btn.active .grade-count {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.dark .grade-count {
+  color: #94a3b8;
+}
+
+.arrow-icon {
+  color: #94a3b8;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.grade-level-btn:hover .arrow-icon {
+  transform: translateX(4px);
+  color: #3D8D7A;
+}
+
+.grade-level-btn.active .arrow-icon {
+  color: white;
+}
+
+.dark .grade-level-btn:hover .arrow-icon {
+  color: #10b981;
+}
+
+/* Sections Grid */
+.sections-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.section-card-btn {
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.section-card-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #3D8D7A, #2d6a5a);
+  transform: scaleY(0);
+  transition: transform 0.3s ease;
+}
+
+.section-card-btn:hover::before {
+  transform: scaleY(1);
+}
+
+.section-card-btn:hover {
+  border-color: #3D8D7A;
+  background: rgba(61, 141, 122, 0.03);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(61, 141, 122, 0.15);
+}
+
+.section-card-btn.active {
+  background: linear-gradient(135deg, rgba(61, 141, 122, 0.1), rgba(45, 106, 90, 0.1));
+  border-color: #3D8D7A;
+  box-shadow: 0 6px 20px rgba(61, 141, 122, 0.2);
+}
+
+.section-card-btn.active::before {
+  transform: scaleY(1);
+}
+
+.dark .section-card-btn {
+  background: #334155;
+  border-color: #475569;
+}
+
+.dark .section-card-btn:hover {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.dark .section-card-btn.active {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.1));
+  border-color: #10b981;
+}
+
+.section-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-icon-wrapper {
+  width: 40px;
+  height: 40px;
+  background: rgba(61, 141, 122, 0.1);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3D8D7A;
+}
+
+.section-card-btn.active .section-icon-wrapper {
+  background: #3D8D7A;
+  color: white;
+}
+
+.dark .section-icon-wrapper {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.dark .section-card-btn.active .section-icon-wrapper {
+  background: #10b981;
+  color: white;
+}
+
+.section-badge {
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  color: white;
+  padding: 0.25rem 0.625rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.dark .section-badge {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.section-card-body h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 0.375rem 0;
+}
+
+.dark .section-card-body h4 {
+  color: #f1f5f9;
+}
+
+.section-subject {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.dark .section-subject {
+  color: #94a3b8;
+}
+
+.section-card-footer {
+  padding-top: 0.75rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.dark .section-card-footer {
+  border-top-color: #475569;
+}
+
+.section-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.section-stat svg {
+  color: #3D8D7A;
+}
+
+.dark .section-stat {
+  color: #94a3b8;
+}
+
+.dark .section-stat svg {
+  color: #10b981;
+}
+
+/* Empty State Inline */
+.empty-state-inline {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.empty-state-inline svg {
+  color: #cbd5e1;
+  margin-bottom: 1rem;
+}
+
+.dark .empty-state-inline svg {
+  color: #475569;
+}
+
+.empty-state-inline p {
+  font-size: 0.9375rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.dark .empty-state-inline p {
+  color: #94a3b8;
+}
+
+/* ================================================ */
+/* END GRADE LEVEL AND SECTION SELECTION STYLES */
+/* ================================================ */
 
 /* Search Box in Navbar */
 .search-box {

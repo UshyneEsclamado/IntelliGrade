@@ -154,7 +154,12 @@
               >
               <div class="event-time">{{ (event as any).time }}</div>
               <div class="event-content">
-                <h4 class="event-title">{{ (event as any).title }}</h4>
+                <div class="event-title-row">
+                  <h4 class="event-title">{{ (event as any).title }}</h4>
+                  <span :class="['type-badge', (event as any).type]">
+                    {{ formatEventType((event as any).type) }}
+                  </span>
+                </div>
                 <p class="event-subject">{{ (event as any).subject }}</p>
                 <p class="event-description">{{ (event as any).description }}</p>
                 <div class="event-status-badge">
@@ -281,7 +286,7 @@
             <strong>Time:</strong> {{ selectedEvent.time }}
           </div>
           <div class="event-detail">
-            <strong>Type:</strong> {{ selectedEvent.type }}
+            <strong>Type:</strong> {{ formatEventType(selectedEvent.type) }}
           </div>
           <div class="event-detail">
             <strong>Status:</strong> 
@@ -540,14 +545,44 @@ export default {
 
         console.log('Published quizzes found:', quizzesData?.length || 0);
 
-        if (!quizzesData || quizzesData.length === 0) {
+        // Get all published assignments for those sections
+        const { data: assignmentsData, error: assignmentsError } = await supabase
+          .from('assignments')
+          .select(`
+            id,
+            title,
+            description,
+            assignment_type,
+            submission_type,
+            total_points,
+            due_date,
+            allow_late_submission,
+            status,
+            subject_id,
+            section_id
+          `)
+          .in('section_id', sectionIds)
+          .eq('status', 'published')
+          .order('due_date', { ascending: true });
+
+        if (assignmentsError) {
+          console.error('Assignments error:', assignmentsError);
+          throw assignmentsError;
+        }
+
+        console.log('Published assignments found:', assignmentsData?.length || 0);
+
+        if ((!quizzesData || quizzesData.length === 0) && (!assignmentsData || assignmentsData.length === 0)) {
           this.events = [];
-          this.showNotification('No quizzes available yet. Check back later!', 'info');
+          this.showNotification('No quizzes or assignments available yet. Check back later!', 'info');
           return;
         }
 
-        // Get subject details for each quiz
-        const subjectIds = [...new Set(quizzesData.map(q => q.subject_id))];
+        // Get subject details for each quiz and assignment
+        const quizSubjectIds = quizzesData?.map(q => q.subject_id) || [];
+        const assignmentSubjectIds = assignmentsData?.map(a => a.subject_id) || [];
+        const subjectIds = [...new Set([...quizSubjectIds, ...assignmentSubjectIds])];
+        
         const { data: subjectsData, error: subjectsError } = await supabase
           .from('subjects')
           .select('id, name, grade_level')
@@ -580,7 +615,7 @@ export default {
         });
 
         // Get student's quiz results
-        const quizIds = quizzesData.map(q => q.id);
+        const quizIds = quizzesData?.map(q => q.id) || [];
         const { data: resultsData, error: resultsError } = await supabase
           .from('quiz_results')
           .select('quiz_id, status, best_percentage, total_attempts')
@@ -598,8 +633,27 @@ export default {
 
         console.log('Quiz results found:', resultsData?.length || 0);
 
-        // Transform data for calendar
-        this.events = quizzesData.map(quiz => {
+        // Get student's assignment submissions
+        const assignmentIds = assignmentsData?.map(a => a.id) || [];
+        const { data: submissionsData, error: submissionsError } = await supabase
+          .from('assignment_submissions')
+          .select('assignment_id, status, score, submitted_at, is_late')
+          .eq('student_id', this.studentId)
+          .in('assignment_id', assignmentIds);
+
+        if (submissionsError) {
+          console.error('Submissions error:', submissionsError);
+        }
+
+        const submissionsMap = {};
+        submissionsData?.forEach(submission => {
+          submissionsMap[submission.assignment_id] = submission;
+        });
+
+        console.log('Assignment submissions found:', submissionsData?.length || 0);
+
+        // Transform quiz data for calendar
+        const quizEvents = (quizzesData || []).map(quiz => {
           const result = resultsMap[quiz.id];
           const subject = subjectsMap[quiz.subject_id];
           const section = sectionsMap[quiz.section_id];
@@ -631,17 +685,59 @@ export default {
             bestScore: result?.best_percentage || 0,
             startDate: quiz.start_date ? new Date(quiz.start_date) : null
           };
-        }).filter(event => event.date);
+        });
+
+        // Transform assignment data for calendar
+        const assignmentEvents = (assignmentsData || []).map(assignment => {
+          const submission = submissionsMap[assignment.id];
+          const subject = subjectsMap[assignment.subject_id];
+          const section = sectionsMap[assignment.section_id];
+          const isCompleted = submission && (submission.status === 'submitted' || submission.status === 'graded');
+          
+          const deadlineDate = assignment.due_date ? new Date(assignment.due_date) : null;
+          
+          return {
+            id: assignment.id,
+            title: assignment.title,
+            subject: subject?.name || 'Unknown Subject',
+            subjectCode: `Grade ${subject?.grade_level || '?'}`,
+            date: deadlineDate || new Date(),
+            time: deadlineDate ? deadlineDate.toLocaleTimeString('en-US', { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            }) : '11:59 PM',
+            type: 'assignment',
+            description: assignment.description || `${assignment.assignment_type} • ${assignment.submission_type.replace('_', ' ')} • ${assignment.total_points} points`,
+            isCompleted: isCompleted,
+            submittedAt: submission?.submitted_at ? new Date(submission.submitted_at) : null,
+            sectionName: section?.name || '',
+            sectionCode: section?.section_code || '',
+            assignmentType: assignment.assignment_type,
+            submissionType: assignment.submission_type,
+            totalPoints: assignment.total_points,
+            allowLateSubmission: assignment.allow_late_submission,
+            score: submission?.score || 0,
+            isLate: submission?.is_late || false,
+            submissionStatus: submission?.status || 'not_submitted'
+          };
+        });
+
+        // Combine and filter events
+        this.events = [...quizEvents, ...assignmentEvents].filter(event => event.date);
 
         console.log('Events loaded successfully:', this.events.length);
+        console.log('Quizzes:', quizEvents.length, 'Assignments:', assignmentEvents.length);
         
         if (this.events.length > 0) {
-          this.showNotification(`Loaded ${this.events.length} quiz${this.events.length > 1 ? 'zes' : ''}`, 'success');
+          this.showNotification(
+            `Loaded ${quizEvents.length} quiz${quizEvents.length !== 1 ? 'zes' : ''} and ${assignmentEvents.length} assignment${assignmentEvents.length !== 1 ? 's' : ''}`, 
+            'success'
+          );
         }
         
       } catch (error) {
         console.error('Error loading events:', error);
-        this.showNotification('Failed to load quizzes: ' + error.message, 'error');
+        this.showNotification('Failed to load calendar events: ' + error.message, 'error');
       }
     },
 
@@ -650,9 +746,9 @@ export default {
 
       console.log('Setting up real-time subscription...');
 
-      // Subscribe to changes in quizzes table
+      // Subscribe to changes in quizzes and assignments tables
       this.realTimeSubscription = supabase
-        .channel('calendar-quiz-changes')
+        .channel('calendar-changes')
         .on('postgres_changes', {
           event: '*',
           schema: 'public',
@@ -665,11 +761,29 @@ export default {
         .on('postgres_changes', {
           event: '*',
           schema: 'public',
+          table: 'assignments',
+          filter: `status=eq.published`
+        }, (payload) => {
+          console.log('Real-time assignment update:', payload);
+          this.handleAssignmentUpdate(payload);
+        })
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
           table: 'quiz_results',
           filter: `student_id=eq.${this.studentId}`
         }, (payload) => {
           console.log('Real-time quiz result update:', payload);
           this.handleQuizResultUpdate(payload);
+        })
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'assignment_submissions',
+          filter: `student_id=eq.${this.studentId}`
+        }, (payload) => {
+          console.log('Real-time assignment submission update:', payload);
+          this.handleAssignmentSubmissionUpdate(payload);
         })
         .subscribe((status) => {
           console.log('Real-time subscription status:', status);
@@ -715,6 +829,53 @@ export default {
         
         if (isCompleted) {
           this.showNotification(`Quiz completed: ${this.events[eventIndex].title}`, 'success');
+        }
+        
+        this.$forceUpdate();
+      }
+    },
+
+    async handleAssignmentUpdate(payload) {
+      const { eventType, new: newRecord, old: oldRecord } = payload;
+      
+      switch (eventType) {
+        case 'INSERT':
+          await this.loadEvents();
+          if (newRecord?.title) {
+            this.showNotification(`New assignment available: ${newRecord.title}`, 'info');
+          }
+          break;
+        case 'UPDATE':
+          await this.loadEvents();
+          if (newRecord?.title) {
+            this.showNotification(`Assignment updated: ${newRecord.title}`, 'info');
+          }
+          break;
+        case 'DELETE':
+          if (oldRecord?.id) {
+            this.events = this.events.filter(e => e.id !== oldRecord.id || e.type !== 'assignment');
+            this.showNotification('An assignment has been removed', 'warning');
+          }
+          break;
+      }
+    },
+
+    async handleAssignmentSubmissionUpdate(payload) {
+      const { new: newRecord } = payload;
+      
+      if (!newRecord?.assignment_id) return;
+      
+      const eventIndex = this.events.findIndex(e => e.id === newRecord.assignment_id && e.type === 'assignment');
+      if (eventIndex !== -1) {
+        const isCompleted = newRecord.status === 'submitted' || newRecord.status === 'graded';
+        this.events[eventIndex].isCompleted = isCompleted;
+        this.events[eventIndex].submittedAt = newRecord.submitted_at ? new Date(newRecord.submitted_at) : null;
+        this.events[eventIndex].score = newRecord.score || 0;
+        this.events[eventIndex].isLate = newRecord.is_late || false;
+        this.events[eventIndex].submissionStatus = newRecord.status || 'not_submitted';
+        
+        if (isCompleted) {
+          this.showNotification(`Assignment submitted: ${this.events[eventIndex].title}`, 'success');
         }
         
         this.$forceUpdate();
@@ -844,9 +1005,17 @@ export default {
       const status = this.getEventStatus(event);
       switch (status) {
         case 'completed':
-          return `Completed (${event.bestScore.toFixed(0)}%)`;
+          if (event.type === 'quiz') {
+            return `Completed (${event.bestScore.toFixed(0)}%)`;
+          } else {
+            return event.score ? `Completed (${event.score}/${event.totalPoints} pts)` : 'Submitted';
+          }
         case 'overdue':
-          return `Overdue (${event.totalAttempts}/${event.attemptsAllowed} attempts)`;
+          if (event.type === 'quiz') {
+            return `Overdue (${event.totalAttempts}/${event.attemptsAllowed} attempts)`;
+          } else {
+            return 'Overdue';
+          }
         case 'due-today':
           return 'Due Today!';
         case 'upcoming':
@@ -854,6 +1023,11 @@ export default {
         default:
           return 'Unknown';
       }
+    },
+
+    formatEventType(type) {
+      if (!type) return 'Event';
+      return type.charAt(0).toUpperCase() + type.slice(1);
     },
 
     getCompletedCount(events) {
@@ -2224,6 +2398,48 @@ export default {
 .status-badge.overdue {
   background: rgba(245, 158, 11, 0.2);
   color: #d97706;
+}
+
+/* Type Badges for Quiz/Assignment */
+.event-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.type-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.type-badge.quiz {
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563eb;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.type-badge.assignment {
+  background: rgba(147, 51, 234, 0.15);
+  color: #7c3aed;
+  border: 1px solid rgba(147, 51, 234, 0.3);
+}
+
+.dark .type-badge.quiz {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.dark .type-badge.assignment {
+  background: rgba(147, 51, 234, 0.2);
+  color: #a78bfa;
+  border-color: rgba(147, 51, 234, 0.4);
 }
 
 .event-actions {

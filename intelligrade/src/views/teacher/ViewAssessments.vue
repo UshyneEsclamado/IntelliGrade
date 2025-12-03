@@ -1018,8 +1018,22 @@ const editQuiz = async (quiz) => {
 }
 
 const editAssignment = async (assignment) => {
-  // TODO: Implement edit assignment navigation
-  alert('Edit assignment feature coming soon!')
+  try {
+    await router.push({
+      name: 'CreateAssignment',
+      params: { subjectId: subjectId.value, sectionId: sectionId.value },
+      query: {
+        assignmentId: assignment.id,
+        subjectName: subjectName.value,
+        sectionName: sectionName.value,
+        gradeLevel: gradeLevel.value,
+        sectionCode: sectionCode.value,
+        mode: 'edit'
+      }
+    })
+  } catch (error) {
+    alert('Error navigating to edit page: ' + error.message)
+  }
 }
 
 const toggleQuizStatus = async (quiz) => {
@@ -1106,8 +1120,20 @@ const navigateToCreateQuiz = async () => {
 }
 
 const navigateToCreateAssignment = async () => {
-  // TODO: Implement create assignment navigation
-  alert('Create assignment feature coming soon!')
+  try {
+    await router.push({
+      name: 'CreateAssignment',
+      params: { subjectId: subjectId.value, sectionId: sectionId.value },
+      query: {
+        subjectName: subjectName.value,
+        sectionName: sectionName.value,
+        gradeLevel: gradeLevel.value,
+        sectionCode: sectionCode.value
+      }
+    })
+  } catch (error) {
+    console.error('Navigation error:', error)
+  }
 }
 
 const closeModal = () => {

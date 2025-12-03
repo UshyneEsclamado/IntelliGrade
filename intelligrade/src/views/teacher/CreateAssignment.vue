@@ -803,10 +803,15 @@ const createAnother = () => {
 
 const goToAssignments = () => {
   router.push({
-    name: 'MySubjects',
+    name: 'ViewAssessments',
     params: {
       subjectId: subjectId.value,
       sectionId: sectionId.value
+    },
+    query: {
+      subjectName: subjectName.value,
+      sectionName: sectionName.value,
+      gradeLevel: gradeLevel.value
     }
   })
 }
