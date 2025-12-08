@@ -6,8 +6,8 @@
         <!-- Left: Logo and Brand -->
         <div class="navbar-left">
           <div class="brand-logo">
-            <img src="@/assets/LOGO WAY BG.png" alt="IntelliGrade" class="logo-img" />
-            <span class="brand-name">IntelliGrade</span>
+            <img src="@/assets/LOGO WAY BG.png" alt="DigiCheck" class="logo-img" />
+            <span class="brand-name">DigiCheck</span>
           </div>
         </div>
         
@@ -113,7 +113,7 @@
           </div>
           <span class="sidebar-tooltip">Dashboard</span>
         </router-link>
-        <router-link to="/teacher/subjects" class="sidebar-item rounded-bg" :class="{ 'active': $route.path.includes('/subjects') }">
+        <router-link to="/teacher/subjects" class="sidebar-item rounded-bg" :class="{ 'active': $route.path.includes('/teacher/subjects') }">
           <div class="sidebar-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="7" width="18" height="13" rx="2" />
@@ -130,15 +130,6 @@
             </svg>
           </div>
           <span class="sidebar-tooltip">Gradebook</span>
-        </router-link>
-        <router-link to="/teacher/upload-assessment" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/upload-assessment' }">
-          <div class="sidebar-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 19V6M5 12l7-7 7 7" />
-              <rect x="5" y="19" width="14" height="2" rx="1" />
-            </svg>
-          </div>
-          <span class="sidebar-tooltip">Upload Assessment</span>
         </router-link>
         <router-link to="/teacher/analytics" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/analytics' }">
           <div class="sidebar-icon">
@@ -159,6 +150,29 @@
           </div>
           <span class="sidebar-tooltip">Messages</span>
         </router-link>
+        
+        <div class="sidebar-divider"></div>
+        
+        <router-link to="/teacher/settings" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/settings' }">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Profile & Settings</span>
+        </router-link>
+        
+        <button @click="logout" class="sidebar-item sidebar-logout rounded-bg">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Logout</span>
+        </button>
       </nav>
     </aside>
 
@@ -902,10 +916,7 @@ const fetchData = async () => {
 }
 
 const goBack = () => {
-  router.push({ 
-    name: 'ViewStudents', 
-    params: { subjectId: subjectId.value, sectionId: sectionId.value } 
-  })
+  router.push('/teacher/subjects')
 }
 
 const exportGrades = () => {
@@ -980,10 +991,13 @@ onUnmounted(() => {
 
 .dashboard-container {
   min-height: 100vh;
+  height: 100vh;
   width: 100vw;
   background: #f8fafc;
   font-family: 'Inter', sans-serif;
-  overflow-x: hidden;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Sidebar Navigation - Simple Outlined Icons Only, Single Color, Active Highlight */
@@ -1015,11 +1029,6 @@ onUnmounted(() => {
   transition: background 0.2s, box-shadow 0.2s;
   cursor: pointer;
   position: relative;
-  text-decoration: none;
-}
-
-.sidebar-item.rounded-bg {
-  background: rgba(255,255,255,0.1);
 }
 
 .sidebar-item.active {
@@ -1058,6 +1067,29 @@ onUnmounted(() => {
 .sidebar-item:hover .sidebar-tooltip {
   opacity: 1;
   pointer-events: auto;
+}
+
+/* Sidebar Divider */
+.sidebar-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 8px 12px;
+}
+
+/* Sidebar Logout Button */
+.sidebar-logout {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-logout:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 /* Top Navigation Bar (Greenish Theme) */
@@ -1406,9 +1438,43 @@ onUnmounted(() => {
   margin-left: 80px;
   margin-top: 64px;
   padding: 2rem;
-  min-height: calc(100vh - 64px);
+  height: calc(100vh - 64px);
   width: calc(100vw - 80px);
+  overflow-y: auto;
+  overflow-x: hidden;
   position: relative;
+}
+
+/* Custom Scrollbar for Main Content */
+.main-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.main-content::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.main-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+  transition: background 0.2s;
+}
+
+.main-content::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark .main-content::-webkit-scrollbar-track {
+  background: #334155;
+}
+
+.dark .main-content::-webkit-scrollbar-thumb {
+  background: #64748b;
+}
+
+.dark .main-content::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 /* Scroll to Top Button */
@@ -1435,6 +1501,15 @@ onUnmounted(() => {
   background: #2d6a5a;
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(61, 141, 122, 0.4);
+}
+
+/* Main Container */
+.main-container {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 /* Page Header */
@@ -2024,7 +2099,42 @@ onUnmounted(() => {
   color: #f9fafb; 
 }
 
-.table-wrapper { overflow-x: auto; }
+.table-wrapper { 
+  overflow-x: auto; 
+  max-width: 100%;
+}
+
+/* Custom scrollbar for table wrapper */
+.table-wrapper::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+  transition: background 0.2s;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark .table-wrapper::-webkit-scrollbar-track {
+  background: #334155;
+}
+
+.dark .table-wrapper::-webkit-scrollbar-thumb {
+  background: #64748b;
+}
+
+.dark .table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
 .grade-table { width: 100%; border-collapse: collapse; min-width: 800px; }
 
 /* Table Styling */

@@ -75,12 +75,12 @@
           <div class="logo-container">
             <div class="logo-image-container large-logo">
               <img 
-                src="@/assets/New IntelliGrade Logo Way BG 3.png"
-                alt="IntelliGrade Logo" 
+                 src="@/assets/DIGI CHECK LOGO WAY BG.png"
+                alt="DigiCheck Logo" 
                 class="logo-image large-logo-img"
               />
             </div>
-            <p class="brand-tagline">Empower your teaching with AI-powered grading solutions</p>
+            <p class="brand-tagline">Empower your teaching with powered grading solutions</p>
           </div>
         </div>
       </div>
@@ -92,7 +92,7 @@
               <path d="M17,14H19V17H22V19H19V22H17V19H14V17H17V14M12,3A4,4 0 0,1 16,7A4,4 0 0,1 12,11A4,4 0 0,1 8,7A4,4 0 0,1 12,3M12,13C16.42,13 20,14.79 20,17V20H4V17C4,14.79 7.58,13 12,13Z"/>
             </svg>
           </div>
-          <h1>Join IntelliGrade</h1>
+          <h1>Join DigiCheck</h1>
           <p class="subtitle">Create your teacher account</p>
         </div>
 
@@ -347,7 +347,7 @@ export default {
           throw new Error('An account with this email already exists. Please use a different email or try logging in.');
         }
 
-        // Step 4: Create Supabase Auth user first
+        // Step 4: Create Supabase Auth user - the trigger will handle profile and teacher records
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: this.email,
           password: this.password,
@@ -374,7 +374,7 @@ export default {
         
         // Check if email confirmation is required
         if (!authData.session) {
-          console.log('📧 Email confirmation required - database records will be created after email verification');
+          console.log('📧 Email confirmation required - profile and teacher records will be created by trigger after email verification');
         }
 
         // Step 5: Show success message

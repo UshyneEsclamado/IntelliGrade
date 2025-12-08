@@ -64,7 +64,7 @@
           />
           <div class="logo-shine"></div>
         </div>
-        <span class="navbar-title">IntelliGrade</span>
+        <span class="navbar-title">DigiCheck</span>
       </div>
       <div class="navbar-links">
         <a href="#home" :class="{ active: activeSection === 'home' }" @click="scrollToSection('home')">
@@ -91,7 +91,7 @@
           </svg>
           <span>Modern Academic Management</span>
         </div>
-        <h1 class="hero-title">IntelliGrade</h1>
+        <h1 class="hero-title">DigiCheck</h1>
         <p class="hero-desc">A modern, intelligent grading and academic management platform for students and teachers.</p>
       </div>
 

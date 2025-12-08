@@ -46,8 +46,8 @@
         <div class="logo-section">
           <div class="logo-image-container">
             <img 
-              src="@/assets/New IntelliGrade Logo Way BG 3.png"
-              alt="IntelliGrade Logo" 
+             src="@/assets/DIGI CHECK LOGO WAY BG.png"
+              alt="DigiCheck Logo" 
               class="logo-image"
             />
           </div>

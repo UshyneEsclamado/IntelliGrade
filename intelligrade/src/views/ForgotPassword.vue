@@ -31,7 +31,7 @@
                 <path d="M12,3L1,9L12,15L21,9V16H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z"/>
               </svg>
             </div>
-            <h1>IntelliGrade</h1>
+            <h1>DigiCheck</h1>
           </div>
           <h2>Reset Your Password</h2>
           <p class="subtitle">Enter your email address and we'll send you a link to reset your password.</p>

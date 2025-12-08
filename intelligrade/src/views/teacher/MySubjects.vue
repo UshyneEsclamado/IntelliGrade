@@ -910,14 +910,53 @@
   }
 }
 
-/* Add Students Modal Styles */
-.add-students-content {
+/* Add Students Modal Styles - REDESIGNED */
+.add-students-modal-redesigned {
+  max-width: 900px !important;
+  width: 90vw !important;
+  max-height: 90vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.add-students-content-redesigned {
   padding: 0;
-  max-height: calc(95vh - 200px);
   overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0;
+  min-height: 0;
+}
+
+/* Custom Scrollbar for Modal Content */
+.add-students-content-redesigned::-webkit-scrollbar {
+  width: 8px;
+}
+
+.add-students-content-redesigned::-webkit-scrollbar-track {
+  background: #f9fafb;
+}
+
+.dark .add-students-content-redesigned::-webkit-scrollbar-track {
+  background: #0f1419;
+}
+
+.add-students-content-redesigned::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 10px;
+}
+
+.add-students-content-redesigned::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.dark .add-students-content-redesigned::-webkit-scrollbar-thumb {
+  background: #374151;
+}
+
+.dark .add-students-content-redesigned::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
 }
 
 /* Enroll Student by ID Styles */
@@ -1202,9 +1241,21 @@
   border-color: #374151;
 }
 
+/* Search Students Section - REDESIGNED */
 .student-search-section {
-  padding: 2rem;
-  background: white;
+  padding: 1.5rem 2rem;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: none;
+  border-bottom: 3px solid #3b82f6;
+  flex-shrink: 0;
+  box-shadow: none;
+  margin: 0;
+}
+
+.dark .student-search-section {
+  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+  border-bottom-color: #3b82f6;
+  box-shadow: none;
 }
 
 .search-header {
@@ -1213,7 +1264,7 @@
 
 .header-icon-title {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 1rem;
 }
 
@@ -1231,28 +1282,31 @@
   color: #6b7280;
   font-size: 0.875rem;
   margin: 0;
+  line-height: 1.5;
 }
 .dark .search-description {
   color: #9ca3af;
 }
 
 .search-filters-enhanced {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
   flex-shrink: 0;
+  width: 100%;
 }
 
 .search-input-wrapper {
   position: relative;
   display: flex;
   align-items: center;
+  flex: 1;
+  min-width: 0;
 }
 
 .search-icon {
   position: absolute;
-  left: 0.75rem;
+  left: 1rem;
   color: #9ca3af;
   pointer-events: none;
   z-index: 1;
@@ -1260,12 +1314,13 @@
 
 .student-search-input-enhanced {
   width: 100%;
-  padding: 0.875rem 0.875rem 0.875rem 2.75rem;
+  padding: 0.875rem 1rem 0.875rem 2.75rem;
   border: 2px solid #e5e7eb;
   border-radius: 12px;
-  font-size: 1rem;
+  font-size: 0.9375rem;
   transition: all 0.2s;
   background: white;
+  color: #1f2937;
 }
 .student-search-input-enhanced:focus {
   outline: none;
@@ -1292,6 +1347,9 @@
   cursor: pointer;
   transition: all 0.2s;
   min-width: 140px;
+  max-width: 140px;
+  color: #1f2937;
+  flex-shrink: 0;
 }
 .grade-filter-select-enhanced:focus {
   outline: none;
@@ -1308,47 +1366,487 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.625rem 0.875rem;
+  padding: 0.75rem 1rem;
   background: #f0fdf4;
   border: 1px solid #bbf7d0;
-  border-radius: 6px;
-  font-size: 0.8125rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
   color: #059669;
   flex-shrink: 0;
 }
 .dark .search-hint {
-  background: #064e3b;
+  background: rgba(6, 78, 59, 0.3);
   border-color: #065f46;
-  color: #34d399;
+  color: #6ee7b7;
 }
 
-.students-list-section {
-  border-top: 1px solid #e5e7eb;
-  padding-top: 0.75rem;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-.dark .students-list-section {
-  border-top-color: #374151;
+/* Available Students Container - ENHANCED BOX DESIGN */
+.available-students-container {
+  margin-top: 1.5rem;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  transition: all 0.2s ease;
 }
 
-.students-header {
+.dark .available-students-container {
+  background: #1f2937;
+  border-color: #374151;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Enhanced Header */
+.students-header-enhanced {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  background: #f8fafc;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.dark .students-header-enhanced {
+  background: #0f172a;
+  border-bottom-color: #334155;
+}
+
+.header-icon-badge {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+}
+
+.header-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.header-content h4 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 0.25rem 0;
+}
+
+.dark .header-content h4 {
+  color: #f1f5f9;
+}
+
+.student-count-badge {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+}
+
+.dark .student-count-badge {
+  color: #94a3b8;
+}
+
+.batch-actions-enhanced {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.add-batch-btn-enhanced {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+}
+
+.add-batch-btn-enhanced:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+}
+
+.add-batch-btn-enhanced:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.clear-selection-btn-enhanced {
+  width: 36px;
+  height: 36px;
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.clear-selection-btn-enhanced:hover {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.dark .clear-selection-btn-enhanced {
+  background: #374151;
+  color: #9ca3af;
+  border-color: #4b5563;
+}
+
+.dark .clear-selection-btn-enhanced:hover {
+  background: #4b5563;
+  color: #f9fafb;
+}
+
+/* Content Box */
+.students-content-box {
+  padding: 1.5rem;
+  min-height: 200px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* Enhanced Loading State */
+.loading-state-enhanced {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  color: #64748b;
+}
+
+.dark .loading-state-enhanced {
+  color: #94a3b8;
+}
+
+.loading-spinner-enhanced {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e2e8f0;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.dark .loading-spinner-enhanced {
+  border-color: #374151;
+  border-top-color: #60a5fa;
+}
+
+/* Enhanced Empty State */
+.empty-search-enhanced {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  color: #64748b;
+}
+
+.dark .empty-search-enhanced {
+  color: #94a3b8;
+}
+
+.empty-icon-circle {
+  width: 64px;
+  height: 64px;
+  background: #f1f5f9;
+  border: 2px solid #e2e8f0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+}
+
+.dark .empty-icon-circle {
+  background: #374151;
+  border-color: #4b5563;
+  color: #6b7280;
+}
+
+.empty-search-enhanced h5 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+}
+
+.dark .empty-search-enhanced h5 {
+  color: #e2e8f0;
+}
+
+.empty-search-enhanced p {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.dark .empty-search-enhanced p {
+  color: #94a3b8;
+}
+
+/* Enhanced Students Grid */
+.students-grid-enhanced {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+/* Enhanced Student Cards */
+.student-card-enhanced {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 1.25rem !important;
+  padding: 1.5rem !important;
+  background: #ffffff !important;
+  border: 3px solid #e2e8f0 !important;
+  border-radius: 16px !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  position: relative !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+  min-height: 200px !important;
+}
+
+.student-card-enhanced:hover {
+  background: #f8fafc !important;
+  border-color: #3b82f6 !important;
+  transform: translateY(-3px) !important;
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15) !important;
+}
+
+.student-card-enhanced.selected {
+  background: #eff6ff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.2) !important;
+}
+
+.dark .student-card-enhanced {
+  background: #1e293b !important;
+  border-color: #475569 !important;
+}
+
+.dark .student-card-enhanced:hover {
+  background: #334155 !important;
+  border-color: #60a5fa !important;
+}
+
+.dark .student-card-enhanced.selected {
+  background: #1e3a8a !important;
+  border-color: #60a5fa !important;
+  box-shadow: 0 8px 24px rgba(96, 165, 250, 0.2) !important;
+}
+
+.selection-checkbox-enhanced {
+  width: 22px;
+  height: 22px;
+  border: 2px solid #d1d5db;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: white;
+  transition: all 0.2s;
+}
+
+.student-card-enhanced.selected .selection-checkbox-enhanced {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+}
+
+.dark .selection-checkbox-enhanced {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.dark .student-card-enhanced.selected .selection-checkbox-enhanced {
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.student-avatar-enhanced {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.125rem;
+  font-weight: 700;
   flex-shrink: 0;
 }
 
-.students-header h4 {
+.student-info-enhanced {
+  flex: 1 !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+}
+
+.student-info-enhanced h5 {
   font-size: 1rem;
   font-weight: 600;
-  color: #1f2937;
+  color: #1e293b;
+  margin: 0 0 0.25rem 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.dark .students-header h4 {
-  color: #f9fafb;
+
+.dark .student-info-enhanced h5 {
+  color: #f1f5f9;
+}
+
+/* Student Name Box */
+.student-name-box {
+  background: #f1f5f9 !important;
+  border: 2px solid #3b82f6 !important;
+  border-radius: 12px !important;
+  padding: 1rem 1.25rem !important;
+  margin-bottom: 1rem !important;
+  position: relative !important;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1) !important;
+}
+
+.dark .student-name-box {
+  background: #1e293b !important;
+  border-color: #60a5fa !important;
+  box-shadow: 0 2px 8px rgba(96, 165, 250, 0.1) !important;
+}
+
+.student-name-box h5 {
+  font-size: 1.125rem !important;
+  font-weight: 700 !important;
+  color: #1e293b !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  text-align: center !important;
+}
+
+.dark .student-name-box h5 {
+  color: #f1f5f9 !important;
+}
+
+/* Student Details Container */
+.student-details-container {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.75rem !important;
+  background: #ffffff !important;
+  border: 2px solid #e5e7eb !important;
+  border-radius: 10px !important;
+  padding: 1rem !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+}
+
+.dark .student-details-container {
+  background: #374151 !important;
+  border-color: #4b5563 !important;
+}
+
+/* Individual Detail Boxes */
+.detail-box {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 0.75rem !important;
+  padding: 0.75rem 1rem !important;
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+  min-height: 45px !important;
+}
+
+.detail-box:hover {
+  background: #e2e8f0 !important;
+  border-color: #3b82f6 !important;
+  transform: translateX(2px) !important;
+}
+
+.dark .detail-box {
+  background: #1f2937 !important;
+  border-color: #4b5563 !important;
+}
+
+.dark .detail-box:hover {
+  background: #111827 !important;
+  border-color: #60a5fa !important;
+}
+
+.detail-label {
+  font-size: 0.875rem !important;
+  font-weight: 700 !important;
+  color: #475569 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  min-width: 50px !important;
+  flex-shrink: 0 !important;
+  background: #e2e8f0 !important;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 4px !important;
+}
+
+.dark .detail-label {
+  color: #cbd5e1 !important;
+  background: #4b5563 !important;
+}
+
+.detail-value {
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  color: #1e293b !important;
+  flex: 1 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  text-align: right !important;
+}
+
+.dark .detail-value {
+  color: #f1f5f9 !important;
+}
+
+/* Legacy student details for backwards compatibility */
+.student-details {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.dark .student-details {
+  color: #94a3b8;
 }
 
 .batch-actions {
@@ -1363,43 +1861,50 @@
   background: linear-gradient(135deg, #10b981, #059669);
   color: white;
   border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
+  padding: 0.625rem 1rem;
+  border-radius: 8px;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
 }
 .add-batch-btn:hover:not(:disabled) {
   background: linear-gradient(135deg, #059669, #047857);
   transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
 }
 .add-batch-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
 }
 
 .clear-selection-btn {
-  background: transparent;
+  background: white;
   color: #6b7280;
-  border: 1px solid #d1d5db;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
+  border: 2px solid #e5e7eb;
+  padding: 0.625rem 1rem;
+  border-radius: 8px;
   font-size: 0.875rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
 }
 .clear-selection-btn:hover {
   background: #f3f4f6;
   border-color: #9ca3af;
+  color: #1f2937;
 }
 .dark .clear-selection-btn {
+  background: #1f2937;
   color: #9ca3af;
   border-color: #374151;
 }
 .dark .clear-selection-btn:hover {
-  background: #1f2937;
+  background: #374151;
   border-color: #4b5563;
+  color: #f9fafb;
 }
 
 .loading-state, .empty-search {
@@ -1407,7 +1912,7 @@
   flex-direction: column;
   align-items: center;
   gap: 0.75rem;
-  padding: 1.25rem;
+  padding: 2rem;
   text-align: center;
   color: #6b7280;
   flex-shrink: 0;
@@ -1416,52 +1921,140 @@
   color: #9ca3af;
 }
 
-.students-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 0.625rem;
-  flex: 1;
-  overflow-y: auto;
-  min-height: 0;
-  max-height: 200px;
-  padding-right: 0.25rem;
+.empty-search p {
+  margin: 0.25rem 0;
+  font-weight: 600;
+  font-size: 1rem;
 }
 
-.student-card {
+.empty-subtitle {
+  font-size: 0.875rem !important;
+  font-weight: 400 !important;
+  color: #9ca3af !important;
+}
+
+.dark .empty-subtitle {
+  color: #6b7280 !important;
+}
+
+/* Students Grid - REDESIGNED */
+.students-grid-redesigned {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.875rem;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  padding-right: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* Custom Scrollbar for Student Grid */
+.students-grid-redesigned::-webkit-scrollbar {
+  width: 8px;
+}
+
+.students-grid-redesigned::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 10px;
+}
+
+.dark .students-grid-redesigned::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
+.students-grid-redesigned::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 10px;
+}
+
+.students-grid-redesigned::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.dark .students-grid-redesigned::-webkit-scrollbar-thumb {
+  background: #374151;
+}
+
+.dark .students-grid-redesigned::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
+}
+
+.student-card-redesigned {
   display: flex;
   align-items: center;
-  gap: 0.625rem;
-  padding: 0.625rem;
+  gap: 0.875rem;
+  padding: 1rem;
   border: 2px solid #e5e7eb;
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s;
   position: relative;
   background: white;
+  height: fit-content;
 }
-.student-card:hover {
+
+.student-card-redesigned:hover {
   border-color: #10b981;
   background: #f0fdf4;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
 }
-.student-card.selected {
+
+.student-card-redesigned.selected {
   border-color: #10b981;
   background: #ecfdf5;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
 }
-.dark .student-card {
+
+.dark .student-card-redesigned {
   border-color: #374151;
   background: #1f2937;
 }
-.dark .student-card:hover {
+
+.dark .student-card-redesigned:hover {
   border-color: #10b981;
   background: #064e3b;
 }
-.dark .student-card.selected {
+
+.dark .student-card-redesigned.selected {
   background: #065f46;
+  border-color: #10b981;
+}
+
+.selection-checkbox {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #d1d5db;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: white;
+  transition: all 0.2s;
+}
+
+.student-card-redesigned.selected .selection-checkbox {
+  background: #10b981;
+  border-color: #10b981;
+  color: white;
+}
+
+.dark .selection-checkbox {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.dark .student-card-redesigned.selected .selection-checkbox {
+  background: #10b981;
+  border-color: #10b981;
 }
 
 .student-avatar {
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   border-radius: 50%;
   display: flex;
@@ -1471,42 +2064,32 @@
   flex-shrink: 0;
 }
 
-.student-info h4 {
-  font-size: 0.875rem;
+.student-info-redesigned {
+  flex: 1;
+  min-width: 0;
+}
+
+.student-info-redesigned h4 {
+  font-size: 0.9375rem;
   font-weight: 600;
   color: #1f2937;
-  margin-bottom: 0.25rem;
+  margin: 0 0 0.375rem 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.dark .student-info h4 {
+.dark .student-info-redesigned h4 {
   color: #f9fafb;
 }
 
 .student-id, .student-grade {
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   color: #6b7280;
-  margin: 0;
+  margin: 0.125rem 0;
+  line-height: 1.4;
 }
 .dark .student-id, .dark .student-grade {
   color: #9ca3af;
-}
-
-.selection-indicator {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  width: 24px;
-  height: 24px;
-  background: #10b981;
-  border-radius: 50%;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: all 0.2s;
-}
-.student-card.selected .selection-indicator {
-  opacity: 1;
 }
 
 .btn-outline {
@@ -2051,8 +2634,8 @@
         <!-- Left: Logo and Brand -->
         <div class="navbar-left">
           <div class="brand-logo">
-            <img src="@/assets/LOGO WAY BG.png" alt="IntelliGrade" class="logo-img" />
-            <span class="brand-name">IntelliGrade</span>
+            <img src="@/assets/LOGO WAY BG.png" alt="DigiCheck" class="logo-img" />
+            <span class="brand-name">DigiCheck</span>
           </div>
         </div>
         <!-- Center: Empty space for clean look -->
@@ -2175,15 +2758,6 @@
           </div>
           <span class="sidebar-tooltip">Gradebook</span>
         </router-link>
-        <router-link to="/teacher/upload-assessment" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/upload-assessment' }">
-          <div class="sidebar-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 19V6M5 12l7-7 7 7" />
-              <rect x="5" y="19" width="14" height="2" rx="1" />
-            </svg>
-          </div>
-          <span class="sidebar-tooltip">Upload Assessment</span>
-        </router-link>
         <router-link to="/teacher/analytics" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/analytics' }">
           <div class="sidebar-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -2203,6 +2777,29 @@
           </div>
           <span class="sidebar-tooltip">Messages</span>
         </router-link>
+        
+        <div class="sidebar-divider"></div>
+        
+        <router-link to="/teacher/settings" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/settings' }">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Profile & Settings</span>
+        </router-link>
+        
+        <button @click="logout" class="sidebar-item sidebar-logout rounded-bg">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Logout</span>
+        </button>
       </nav>
     </aside>
 
@@ -3001,7 +3598,7 @@
 
 <!-- Add Students Modal - REDESIGNED -->
 <div v-if="showAddStudentsModal" class="modal-overlay" @click="closeAddStudentsModal">
-  <div class="modal-content-enhanced add-students-modal" @click.stop>
+  <div class="modal-content-enhanced add-students-modal-redesigned" @click.stop>
     <!-- Modal Header -->
     <div class="modal-header-enhanced">
       <div class="modal-icon">
@@ -3012,7 +3609,7 @@
       </div>
       <div class="modal-title-area">
         <h2>Add Students to Section</h2>
-        <p class="modal-subtitle">{{ selectedSectionForStudents?.section_name }} - {{ selectedSubjectForStudents?.subject_name }}</p>
+        <p class="modal-subtitle">{{ selectedSectionForStudents?.section_name }} - {{ selectedSubjectForStudents?.subject_name }} (Grade {{ selectedSubjectForStudents?.grade_level }})</p>
       </div>
       <button @click="closeAddStudentsModal" class="close-btn-enhanced">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
@@ -3021,7 +3618,7 @@
       </button>
     </div>
 
-    <div class="add-students-content">
+    <div class="add-students-content-redesigned">
       <!-- Add Student by ID Section - ENHANCED -->
       <div class="enroll-student-section">
         <div class="enroll-header">
@@ -3084,7 +3681,7 @@
 
       <!-- Search Students Section - ENHANCED -->
       <div class="student-search-section">
-        <div class="search-header">
+        <div class="enroll-header">
           <div class="header-icon-title">
             <div class="icon-circle search-icon-circle">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
@@ -3093,99 +3690,180 @@
             </div>
             <div>
               <h3 class="section-title">Find Existing Students</h3>
-              <p class="search-description">Search by name or ID, then select students to add</p>
+              <p class="enroll-description">Search by name or ID, then select students to add</p>
             </div>
           </div>
         </div>
-
-        <div class="search-filters-enhanced">
-          <div class="search-input-wrapper">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="search-icon">
-              <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
+        
+        <div class="enroll-form">
+          <div class="search-filters-enhanced">
+            <div class="search-input-wrapper">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="search-icon">
+                <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
+              </svg>
+              <input
+                v-model="studentSearchQuery"
+                type="text"
+                placeholder="Type student name or ID to search..."
+                class="student-search-input-enhanced"
+                @input="searchStudents"
+              />
+            </div>
+            <select v-model="gradeFilter" class="grade-filter-select-enhanced" @change="searchStudents">
+              <option value="">All Grades</option>
+              <option v-for="grade in [7, 8, 9, 10]" :key="grade" :value="grade">Grade {{ grade }}</option>
+            </select>
+          </div>
+          
+          <div class="search-hint" v-if="!studentSearchQuery && !availableStudents.length">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,20 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
             </svg>
-            <input
-              v-model="studentSearchQuery"
-              type="text"
-              placeholder="Type student name or ID to search..."
-              class="student-search-input-enhanced"
-              @input="searchStudents"
-            />
-          </div>
-          <select v-model="gradeFilter" class="grade-filter-select-enhanced" @change="searchStudents">
-            <option value="">All Grades</option>
-            <option v-for="grade in [7, 8, 9, 10]" :key="grade" :value="grade">Grade {{ grade }}</option>
-          </select>
-        </div>
-
-        <div class="search-hint" v-if="!studentSearchQuery && !availableStudents.length">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
-          </svg>
-          Start typing to search for students to add to this section
-        </div>
-      </div>
-
-      <!-- Available Students List -->
-      <div class="students-list-section">
-        <div class="students-header">
-          <h4>Available Students</h4>
-          <div v-if="selectedStudentsToAdd.length > 0" class="batch-actions">
-            <button @click="addSelectedStudents" class="add-batch-btn" :disabled="isAddingStudents">
-              <svg v-if="!isAddingStudents" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-              </svg>
-              <svg v-else class="spinner-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/>
-              </svg>
-              {{ isAddingStudents ? 'Adding...' : `Add ${selectedStudentsToAdd.length} Student${selectedStudentsToAdd.length > 1 ? 's' : ''}` }}
-            </button>
-            <button @click="clearSelection" class="clear-selection-btn">Clear</button>
+            Start typing to search for students to add to this section
           </div>
         </div>
 
-        <div v-if="isSearchingStudents" class="loading-state">
-          <div class="loading-spinner"></div>
-          <span>Searching students...</span>
-        </div>
-
-        <div v-else-if="availableStudents.length === 0 && studentSearchQuery" class="empty-search">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M7,13H17V11H7"/>
-          </svg>
-          <p>No students found matching your search</p>
-          <p class="empty-subtitle">Try a different search term or check if all eligible students are already enrolled</p>
-        </div>
-
-        <div v-else-if="availableStudents.length === 0 && !isSearchingStudents" class="empty-search">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M16,4C18.21,4 20,5.79 20,8C20,10.21 18.21,12 16,12C13.79,12 12,10.21 12,8C12,5.79 13.79,4 16,4M16,14C20.42,14 24,15.79 24,18V20H8V18C8,15.79 11.58,14 16,14" />
-          </svg>
-          <p>No available students for this section</p>
-          <p class="empty-subtitle">All eligible students for Grade {{ selectedSubjectForStudents?.grade_level }} may already be enrolled in this subject</p>
-        </div>
-
-        <div v-else class="students-grid">
-          <div 
-            v-for="student in availableStudents" 
-            :key="student.student_id"
-            class="student-card"
-            :class="{ 'selected': selectedStudentsToAdd.includes(student.student_id) }"
-            @click="toggleStudentSelection(student.student_id)"
-          >
-            <div class="student-avatar">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
-              </svg>
-            </div>
-            <div class="student-info">
-              <h4>{{ student.student_name }}</h4>
-              <p class="student-id">ID: {{ student.student_number }}</p>
-              <p class="student-grade">Grade {{ student.grade_level }}</p>
-            </div>
-            <div class="selection-indicator">
+        <!-- Available Students List - ENHANCED BOX DESIGN -->
+        <div class="available-students-container">
+          <div class="students-header-enhanced">
+            <div class="header-icon-badge">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+                <path d="M16,4C18.21,4 20,5.79 20,8C20,10.21 18.21,12 16,12C13.79,12 12,10.21 12,8C12,5.79 13.79,4 16,4M16,14C20.42,14 24,15.79 24,18V20H8V18C8,15.79 11.58,14 16,14"/>
               </svg>
+            </div>
+            <div class="header-content">
+              <div class="header-title-premium">
+                <h4>Available Students</h4>
+              </div>
+              <div class="student-count-premium">
+                <span class="count-number">{{ availableStudents.length }}</span>
+                <span class="count-text">{{ availableStudents.length === 1 ? 'student' : 'students' }} found</span>
+              </div>
+            </div>
+            <div v-if="selectedStudentsToAdd.length > 0" class="batch-actions-enhanced">
+              <button @click="addSelectedStudents" class="add-batch-btn-premium" :disabled="isAddingStudents">
+                <div class="btn-content-premium">
+                  <div class="btn-icon-premium">
+                    <svg v-if="!isAddingStudents" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                    </svg>
+                    <svg v-else class="spinner-icon-premium" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z"/>
+                    </svg>
+                  </div>
+                  <div class="btn-text-premium">
+                    <span class="btn-main-text">{{ isAddingStudents ? 'Adding Students...' : `Add Students` }}</span>
+                    <span v-if="!isAddingStudents" class="btn-count-badge">{{ selectedStudentsToAdd.length }}</span>
+                  </div>
+                </div>
+              </button>
+              <button @click="clearSelection" class="clear-selection-btn-premium" :disabled="selectedStudentsToAdd.length === 0">
+                <div class="btn-content-premium">
+                  <div class="btn-icon-premium">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
+                    </svg>
+                  </div>
+                  <span class="btn-text-premium">Clear Selection</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <div class="students-content-box">
+            <div v-if="isSearchingStudents" class="loading-state-enhanced">
+              <div class="loading-spinner-enhanced"></div>
+              <span>Searching students...</span>
+            </div>
+
+            <div v-else-if="availableStudents.length === 0 && studentSearchQuery" class="empty-search-enhanced-premium">
+              <div class="empty-content-box">
+                <div class="empty-icon-premium">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M7,13H17V11H7"/>
+                  </svg>
+                </div>
+                <div class="empty-text-container">
+                  <div class="empty-title-box">
+                    <h5>No Students Found</h5>
+                  </div>
+                  <div class="empty-message-box">
+                    <p>We couldn't find any students matching "<span class="search-term">{{ studentSearchQuery }}</span>"</p>
+                    <div class="suggestion-box">
+                      <ul class="suggestion-list">
+                        <li>Try a different search term</li>
+                        <li>Check spelling and try again</li>
+                        <li>Verify students are eligible for Grade {{ selectedSubjectForStudents?.grade_level }}</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div v-else-if="availableStudents.length === 0 && !isSearchingStudents" class="empty-search-enhanced-premium">
+              <div class="empty-content-box">
+                <div class="empty-icon-premium success">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16,4C18.21,4 20,5.79 20,8C20,10.21 18.21,12 16,12C13.79,12 12,10.21 12,8C12,5.79 13.79,4 16,4M16,14C20.42,14 24,15.79 24,18V20H8V18C8,15.79 11.58,14 16,14M21,6.41L19.59,5L16,8.59L14.41,7L13,8.41L16,11.41L21,6.41Z"/>
+                  </svg>
+                </div>
+                <div class="empty-text-container">
+                  <div class="empty-title-box success">
+                    <h5>All Students Enrolled!</h5>
+                  </div>
+                  <div class="empty-message-box success">
+                    <p>Great job! All eligible students for <span class="grade-highlight">Grade {{ selectedSubjectForStudents?.grade_level }}</span> are already enrolled in this subject.</p>
+                    <div class="success-info-box">
+                      <div class="info-item">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+                        </svg>
+                        <span>Complete enrollment achieved</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div v-else class="students-grid-enhanced">
+              <div 
+                v-for="student in availableStudents" 
+                :key="student.student_id"
+                class="student-card-enhanced"
+                :class="{ 'selected': selectedStudentsToAdd.includes(student.student_id) }"
+                @click="toggleStudentSelection(student.student_id)"
+                style="display: flex; align-items: flex-start; gap: 1.25rem; padding: 1.5rem; background: #ffffff; border: 3px solid #e2e8f0; border-radius: 16px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); min-height: 200px; margin-bottom: 1rem;"
+              >
+                <div class="selection-checkbox-enhanced">
+                  <svg v-if="selectedStudentsToAdd.includes(student.student_id)" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+                  </svg>
+                </div>
+                
+                <div class="student-avatar-enhanced" style="display: none;">
+                  {{ student.student_name?.charAt(0)?.toUpperCase() || 'S' }}
+                </div>
+                
+                <div class="student-info-enhanced" style="flex: 1; width: 100%; display: flex; flex-direction: column;">
+                  <div class="student-name-box" style="background: #f1f5f9; border: 2px solid #3b82f6; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);">
+                    <h5 style="font-size: 1.125rem; font-weight: 700; color: #1e293b; margin: 0; text-align: center;">{{ student.student_name }}</h5>
+                  </div>
+                  
+                  <div class="student-details-container" style="display: flex; flex-direction: column; gap: 0.75rem; background: #ffffff; border: 2px solid #e5e7eb; border-radius: 10px; padding: 1rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);">
+                    <div class="detail-box" style="display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.75rem 1rem; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; transition: all 0.2s ease; min-height: 45px;">
+                      <span class="detail-label" style="font-size: 0.875rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; background: #e2e8f0; padding: 0.25rem 0.5rem; border-radius: 4px;">ID:</span>
+                      <span class="detail-value" style="font-size: 1rem; font-weight: 600; color: #1e293b; text-align: right;">{{ student.student_number }}</span>
+                    </div>
+                    
+                    <div class="detail-box" style="display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.75rem 1rem; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; transition: all 0.2s ease; min-height: 45px;">
+                      <span class="detail-label" style="font-size: 0.875rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; background: #e2e8f0; padding: 0.25rem 0.5rem; border-radius: 4px;">Grade:</span>
+                      <span class="detail-value" style="font-size: 1rem; font-weight: 600; color: #1e293b; text-align: right;">{{ student.grade_level }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -6527,7 +7205,30 @@ onUnmounted(() => {
 .sidebar-item:hover .sidebar-tooltip {
   opacity: 1;
   pointer-events: auto;
-}.top-navbar {
+}
+
+.sidebar-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 8px 12px;
+}
+
+.sidebar-logout {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-logout:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.top-navbar {
   position: fixed;
   top: 0;
   left: 0;
@@ -10605,5 +11306,448 @@ grid-template-columns: 1fr;
 .students-grid {
 grid-template-columns: 1fr;
 }
+}
+
+/* PREMIUM EMPTY STATE STYLES */
+.empty-search-enhanced-premium {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 3rem 2rem;
+  min-height: 300px;
+}
+
+.empty-content-box {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border: 2px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 2.5rem;
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.empty-content-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #06d6a0);
+  border-radius: 20px 20px 0 0;
+}
+
+.dark .empty-content-box {
+  background: linear-gradient(135deg, #1e293b, #334155);
+  border-color: #475569;
+}
+
+.empty-icon-premium {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #ef4444, #f97316);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  margin: 0 auto 1.5rem;
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
+}
+
+.empty-icon-premium.success {
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+}
+
+.empty-text-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.empty-title-box {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.empty-title-box.success {
+  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+  border-color: #10b981;
+}
+
+.dark .empty-title-box {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.empty-title-box h5 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.dark .empty-title-box h5 {
+  color: #f9fafb;
+}
+
+.empty-message-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.empty-message-box.success {
+  background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+  border-color: #a7f3d0;
+}
+
+.dark .empty-message-box {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+.empty-message-box p {
+  color: #4b5563;
+  margin: 0 0 1rem 0;
+  line-height: 1.6;
+}
+
+.dark .empty-message-box p {
+  color: #d1d5db;
+}
+
+.search-term, .grade-highlight {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.suggestion-box {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.dark .suggestion-box {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.suggestion-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.suggestion-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.suggestion-list li::before {
+  content: '•';
+  color: #3b82f6;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.dark .suggestion-list li {
+  color: #9ca3af;
+}
+
+.success-info-box {
+  background: #ffffff;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.dark .success-info-box {
+  background: #064e3b;
+  border-color: #047857;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #059669;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.dark .info-item {
+  color: #34d399;
+}
+
+/* PREMIUM BUTTON STYLES */
+.add-batch-btn-premium {
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: none;
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.add-batch-btn-premium::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.add-batch-btn-premium:hover:not(:disabled)::before {
+  left: 100%;
+}
+
+.add-batch-btn-premium:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+}
+
+.add-batch-btn-premium:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.clear-selection-btn-premium {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border: none;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.clear-selection-btn-premium::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.clear-selection-btn-premium:hover:not(:disabled)::before {
+  left: 100%;
+}
+
+.clear-selection-btn-premium:hover:not(:disabled) {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.35);
+}
+
+.clear-selection-btn-premium:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-content-premium {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.btn-icon-premium {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-text-premium {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-main-text {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.btn-count-badge {
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  min-width: 24px;
+  text-align: center;
+}
+
+.spinner-icon-premium {
+  animation: spin-premium 1s linear infinite;
+}
+
+@keyframes spin-premium {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* PREMIUM HEADER STYLING */
+.header-title-premium {
+  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+  border: 2px solid #3b82f6;
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.header-title-premium::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #06d6a0);
+  border-radius: 12px 12px 0 0;
+}
+
+.dark .header-title-premium {
+  background: linear-gradient(135deg, #1e293b, #334155);
+  border-color: #60a5fa;
+}
+
+.header-title-premium h4 {
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  color: #1e293b !important;
+  margin: 0 !important;
+  text-align: center !important;
+  letter-spacing: 0.025em !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+.dark .header-title-premium h4 {
+  color: #f1f5f9 !important;
+}
+
+.student-count-premium {
+  background: linear-gradient(135deg, #ffffff, #f8fafc);
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  position: relative;
+}
+
+.dark .student-count-premium {
+  background: linear-gradient(135deg, #374151, #4b5563);
+  border-color: #6b7280;
+}
+
+.count-number {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  padding: 0.375rem 0.625rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  min-width: 32px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.count-text {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #4b5563;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dark .count-text {
+  color: #d1d5db;
+}
+
+/* Enhanced Students Header Container */
+.students-header-enhanced {
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0) !important;
+  border: 2px solid #cbd5e1 !important;
+  border-radius: 16px !important;
+  padding: 1.5rem !important;
+  margin-bottom: 1rem !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
+  position: relative !important;
+}
+
+.students-header-enhanced::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #06d6a0, #f59e0b);
+  border-radius: 16px 16px 0 0;
+}
+
+.dark .students-header-enhanced {
+  background: linear-gradient(135deg, #1e293b, #334155) !important;
+  border-color: #475569 !important;
+}
+
+.header-icon-badge {
+  background: transparent !important;
+  border: 2px solid #e5e7eb !important;
+  box-shadow: none !important;
+}
+
+.dark .header-icon-badge {
+  border-color: #4b5563 !important;
 }
 </style>

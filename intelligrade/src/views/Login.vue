@@ -228,8 +228,8 @@
           <div class="logo-container">
             <div class="logo-image-container large-logo">
               <img 
-                src="@/assets/New IntelliGrade Logo Way BG 3.png"
-                alt="IntelliGrade Logo" 
+                src="@/assets/DIGI CHECK LOGO WAY BG.png"
+                alt="DigiCheck Logo" 
                 class="logo-image large-logo-img"
               />
             </div>
@@ -405,7 +405,7 @@ export default {
 
         console.log('✓ Profile loaded, Role:', profile.role);
 
-        // Route based on role
+        // Route based on role - simplified without teacher record check
         if (profile.role === 'student') {
           console.log('→ Redirecting to student dashboard');
           await this.$router.replace('/student-dashboard');

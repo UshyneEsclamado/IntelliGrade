@@ -6,8 +6,8 @@
         <!-- Left: Logo and Brand -->
         <div class="navbar-left">
           <div class="brand-logo">
-            <img src="@/assets/LOGO WAY BG.png" alt="IntelliGrade" class="logo-img" />
-            <span class="brand-name">IntelliGrade</span>
+            <img src="@/assets/LOGO WAY BG.png" alt="DigiCheck" class="logo-img" />
+            <span class="brand-name">DigiCheck</span>
           </div>
         </div>
         
@@ -151,15 +151,6 @@
           </div>
           <span class="sidebar-tooltip">Gradebook</span>
         </router-link>
-        <router-link to="/teacher/upload-assessment" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/upload-assessment' }">
-          <div class="sidebar-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 19V6M5 12l7-7 7 7" />
-              <rect x="5" y="19" width="14" height="2" rx="1" />
-            </svg>
-          </div>
-          <span class="sidebar-tooltip">Upload Assessment</span>
-        </router-link>
         <router-link to="/teacher/analytics" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/analytics' }">
           <div class="sidebar-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -179,6 +170,29 @@
           </div>
           <span class="sidebar-tooltip">Messages</span>
         </router-link>
+        
+        <div class="sidebar-divider"></div>
+        
+        <router-link to="/teacher/settings" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/settings' }">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Profile & Settings</span>
+        </router-link>
+        
+        <button @click="logout" class="sidebar-item sidebar-logout rounded-bg">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Logout</span>
+        </button>
       </nav>
     </aside>
 
@@ -1580,6 +1594,27 @@ body, html {
 .sidebar-item:hover .sidebar-tooltip {
   opacity: 1;
   pointer-events: auto;
+}
+
+.sidebar-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 8px 12px;
+}
+
+.sidebar-logout {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-logout:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 /* Top Navigation Bar (Greenish Theme) */

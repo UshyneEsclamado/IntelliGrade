@@ -26,7 +26,6 @@ import MessagesPage from '../views/teacher/MessagesPage.vue'
 import MySubjects from '../views/teacher/MySubjects.vue'
 import SettingsPage from '../views/teacher/SettingsPage.vue'
 import UploadAssessment from '../views/teacher/UploadAssessment.vue'
-import AssessmentHistory from '../views/teacher/AssessmentHistory.vue'
 import ViewAssessments from '../views/teacher/ViewAssessments.vue'
 import ViewStudents from '../views/teacher/ViewStudents.vue'
 import Gradebook from '../views/teacher/Gradebook.vue'
@@ -152,12 +151,7 @@ const routes = [
         component: UploadAssessment,
         meta: { requiresAuth: true, role: 'teacher' }
       },
-      {
-        path: 'assessment-history',
-        name: 'AssessmentHistory',
-        component: AssessmentHistory,
-        meta: { requiresAuth: true, role: 'teacher' }
-      },
+      
       {
         path: 'create-quiz/:subjectId/:sectionId',
         name: 'CreateQuiz',

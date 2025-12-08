@@ -5,7 +5,7 @@
     <div class="wave wave2"></div>
 
     <!-- Big Logo -->
-    <img src="@/assets/New IntelliGrade Logo Way BG.png" alt="IntelliGrade Logo" class="logo" />
+    <img src="@/assets/DIGI_CHECK_LOGO-removebg-preview.png" alt="DigiCheck Logo" class="logo" />
   </div>
 </template>
 

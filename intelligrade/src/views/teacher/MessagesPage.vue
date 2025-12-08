@@ -6,8 +6,8 @@
         <!-- Left: Logo and Brand -->
         <div class="navbar-left">
           <div class="brand-logo">
-            <img src="@/assets/LOGO WAY BG.png" alt="IntelliGrade" class="logo-img" />
-            <span class="brand-name">IntelliGrade</span>
+            <img src="@/assets/LOGO WAY BG.png" alt="DigiCheck" class="logo-img" />
+            <span class="brand-name">DigiCheck</span>
           </div>
         </div>
         <!-- Center: Empty space for clean look -->
@@ -130,15 +130,6 @@
           </div>
           <span class="sidebar-tooltip">Gradebook</span>
         </router-link>
-        <router-link to="/teacher/upload-assessment" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/upload-assessment' }">
-          <div class="sidebar-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 19V6M5 12l7-7 7 7" />
-              <rect x="5" y="19" width="14" height="2" rx="1" />
-            </svg>
-          </div>
-          <span class="sidebar-tooltip">Upload Assessment</span>
-        </router-link>
         <router-link to="/teacher/analytics" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/analytics' }">
           <div class="sidebar-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -158,6 +149,29 @@
           </div>
           <span class="sidebar-tooltip">Messages</span>
         </router-link>
+        
+        <div class="sidebar-divider"></div>
+        
+        <router-link to="/teacher/settings" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/settings' }">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Profile & Settings</span>
+        </router-link>
+        
+        <button @click="logout" class="sidebar-item sidebar-logout rounded-bg">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Logout</span>
+        </button>
       </nav>
     </aside>
     <!-- Main Content Area -->
@@ -3090,6 +3104,27 @@ body, html {
   pointer-events: auto;
 }
 
+.sidebar-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 8px 12px;
+}
+
+.sidebar-logout {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-logout:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
 /* Top Navigation Bar (Greenish Theme) */
 .top-navbar {
   position: fixed;
@@ -3568,13 +3603,13 @@ body, html {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(240, 253, 244, 0.95);
+  background: rgba(251, 255, 228, 0.95);
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 100;
-  animation: fadeIn 0.2s ease;
+  animation: fadeIn 0.3s ease;
 }
 
 @keyframes fadeIn {
@@ -3586,20 +3621,24 @@ body, html {
   }
 }
 
+.dark .loading-overlay {
+  background: rgba(24, 28, 32, 0.95);
+}
+
 .loading-content {
   background: white;
-  padding: 2rem 3rem;
-  border-radius: 16px;
+  padding: 3rem 4rem;
+  border-radius: 20px;
   text-align: center;
-  box-shadow: 0 10px 40px rgba(32, 201, 151, 0.15);
-  border: 2px solid #d1fae5;
-  animation: slideUp 0.3s ease;
+  box-shadow: 0 20px 60px rgba(61, 141, 122, 0.15);
+  border: 2px solid #a3d1c6;
+  animation: slideUp 0.4s ease;
 }
 
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(15px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -3607,26 +3646,31 @@ body, html {
   }
 }
 
+.dark .loading-content {
+  background: #23272b;
+  border-color: #374151;
+}
+
 .loading-spinner-container {
   position: relative;
-  width: 60px;
-  height: 60px;
-  margin: 0 auto 1rem;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
 }
 
 .loading-spinner {
-  width: 60px;
-  height: 60px;
-  border: 4px solid rgba(32, 201, 151, 0.2);
-  border-left: 4px solid #20c997;
-  border-top: 4px solid #18a577;
+  width: 80px;
+  height: 80px;
+  border: 5px solid rgba(61, 141, 122, 0.1);
+  border-left: 5px solid #3d8d7a;
+  border-top: 5px solid #20c997;
   border-radius: 50%;
-  animation: fastSpin 0.8s linear infinite;
+  animation: spin 1s linear infinite;
   margin: 0 auto;
-  box-shadow: 0 0 20px rgba(32, 201, 151, 0.2);
+  box-shadow: 0 0 20px rgba(61, 141, 122, 0.1);
 }
 
-@keyframes fastSpin {
+@keyframes spin {
   0% {
     transform: rotate(0deg);
   }
@@ -3635,12 +3679,23 @@ body, html {
   }
 }
 
+.dark .loading-spinner {
+  border: 5px solid rgba(32, 201, 151, 0.1);
+  border-left: 5px solid #20c997;
+  border-top: 5px solid #18a577;
+  box-shadow: 0 0 20px rgba(32, 201, 151, 0.1);
+}
+
 .loading-text {
-  font-size: 1rem;
+  font-size: 1.125rem;
   font-weight: 600;
-  color: #20c997;
+  color: #1f2937;
   margin: 0;
   letter-spacing: 0.025em;
+}
+
+.dark .loading-text {
+  color: #A3D1C6;
 }
 
 /* Full Screen Broadcast Form Enhancement */

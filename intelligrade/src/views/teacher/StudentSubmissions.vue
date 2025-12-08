@@ -6,8 +6,8 @@
         <!-- Left: Logo and Brand -->
         <div class="navbar-left">
           <div class="brand-logo">
-            <img src="@/assets/LOGO WAY BG.png" alt="IntelliGrade" class="logo-img" />
-            <span class="brand-name">IntelliGrade</span>
+            <img src="@/assets/LOGO WAY BG.png" alt="DigiCheck" class="logo-img" />
+            <span class="brand-name">DigiCheck</span>
           </div>
         </div>
         <!-- Center: Empty space -->

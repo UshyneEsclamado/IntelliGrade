@@ -96,8 +96,8 @@
           <div class="logo-container">
             <div class="logo-image-container large-logo">
               <img 
-                src="@/assets/New IntelliGrade Logo Way BG 3.png"
-                alt="IntelliGrade Logo" 
+                 src="@/assets/DIGI CHECK LOGO WAY BG.png"
+                alt="DigiCheck Logo" 
                 class="logo-image large-logo-img"
               />
             </div>
@@ -114,7 +114,7 @@
             </svg>
           </div>
           <h1>Student Sign Up</h1>
-          <p class="subtitle">Join your class and start learning with IntelliGrade</p>
+          <p class="subtitle">Join your class and start learning with DigiCheck</p>
         </div>
 
         <div v-if="signupSuccess" class="success-display">
@@ -250,7 +250,7 @@
               <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/>
             </svg>
             <div v-else class="loading-spinner"></div>
-            {{ isLoading ? 'Creating Account...' : 'Join IntelliGrade' }}
+            {{ isLoading ? 'Creating Account...' : 'Join DigiCheck' }}
           </button>
         </form>
 

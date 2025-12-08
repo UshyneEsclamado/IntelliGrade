@@ -6,8 +6,8 @@
         <!-- Left: Logo and Brand -->
         <div class="navbar-left">
           <div class="brand-logo">
-            <img src="@/assets/LOGO WAY BG.png" alt="IntelliGrade" class="logo-img" />
-            <span class="brand-name">IntelliGrade</span>
+            <img src="@/assets/LOGO WAY BG.png" alt="DigiCheck" class="logo-img" />
+            <span class="brand-name">DigiCheck</span>
           </div>
         </div>
         
@@ -143,15 +143,6 @@
           </div>
           <span class="sidebar-tooltip">Gradebook</span>
         </router-link>
-        <router-link to="/teacher/upload-assessment" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/upload-assessment' }">
-          <div class="sidebar-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 19V6M5 12l7-7 7 7" />
-              <rect x="5" y="19" width="14" height="2" rx="1" />
-            </svg>
-          </div>
-          <span class="sidebar-tooltip">Upload Assessment</span>
-        </router-link>
         <router-link to="/teacher/analytics" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/analytics' }">
           <div class="sidebar-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -171,6 +162,32 @@
           </div>
           <span class="sidebar-tooltip">Messages</span>
         </router-link>
+        
+        <!-- Divider -->
+        <div class="sidebar-divider"></div>
+        
+        <!-- Profile & Settings -->
+        <router-link to="/teacher/settings" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/settings' }">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Profile & Settings</span>
+        </router-link>
+        
+        <!-- Logout Button -->
+        <button @click="logout" class="sidebar-item sidebar-logout rounded-bg">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Logout</span>
+        </button>
       </nav>
     </aside>
 
@@ -193,17 +210,17 @@
           <p class="welcome-subtitle">Here's what's happening with your classes today</p>
         </div>
         <div class="quick-actions">
-          <router-link to="/teacher/subjects" class="quick-action-btn primary">
+          <router-link to="/teacher/create-quiz" class="quick-action-btn primary">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
               <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
             </svg>
             <span>Create Quiz</span>
           </router-link>
-          <router-link to="/teacher/upload-assessment" class="quick-action-btn secondary">
+          <router-link to="/teacher/subjects" class="quick-action-btn secondary">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M9,16V10H5L12,3L19,10H15V16H9M5,20V18H19V20H5Z" />
+              <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
             </svg>
-            <span>Upload File</span>
+            <span>Create Class</span>
           </router-link>
         </div>
       </div>
@@ -353,19 +370,19 @@
                 </div>
               </router-link>
               
-              <router-link to="/teacher/upload-assessment" class="action-item">
+              <router-link to="/teacher/subjects" class="action-item">
                 <div class="action-icon">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M9,16V10H5L12,3L19,10H15V16H9M5,20V18H19V20H5Z" />
+                    <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
                   </svg>
                 </div>
                 <div class="action-content">
-                  <h4>Upload Assessment</h4>
-                  <p>Add new materials</p>
+                  <h4>Create Class</h4>
+                  <p>Add new subject class</p>
                 </div>
               </router-link>
               
-              <router-link to="/teacher/subjects" class="action-item">
+              <router-link to="/teacher/create-quiz" class="action-item">
                 <div class="action-icon">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
@@ -561,30 +578,44 @@ const loadTeacherProfile = async () => {
     console.log('🔍 LOADING TEACHER PROFILE')
     console.log('========================================')
     
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError || !user) {
-      console.error('❌ No user found:', userError)
+    // Get session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    
+    if (sessionError || !session?.user) {
+      console.error('❌ No session:', sessionError)
       fullName.value = 'Teacher'
       isLoadingName.value = false
-      setTimeout(() => {
-        router.replace('/login')
-      }, 2000)
       return false
     }
     
+    const user = session.user
     userId.value = user.id
-    console.log('✅ Step 1: User authenticated')
+    console.log('✅ Step 1: Session found')
     console.log('   User ID:', user.id)
     console.log('   Email:', user.email)
     
+    // CRITICAL FIX: Get profile with better error handling
+    console.log('🔍 Fetching profile...')
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
       .eq('auth_user_id', user.id)
-      .single()
+      .maybeSingle()
     
-    if (profileError || !profile) {
+    console.log('Profile query result:', { profile, profileError })
+    
+    if (profileError) {
       console.error('❌ Profile error:', profileError)
+      console.error('Error code:', profileError.code)
+      console.error('Error details:', profileError.details)
+      console.error('Error hint:', profileError.hint)
+      fullName.value = 'Teacher'
+      isLoadingName.value = false
+      return false
+    }
+    
+    if (!profile) {
+      console.error('❌ No profile found')
       fullName.value = 'Teacher'
       isLoadingName.value = false
       return false
@@ -592,26 +623,42 @@ const loadTeacherProfile = async () => {
     
     console.log('✅ Step 2: Profile found')
     console.log('   Profile ID:', profile.id)
-    console.log('   Full Name:', profile.full_name)
     console.log('   Role:', profile.role)
     
     if (profile.role !== 'teacher') {
-      console.error('❌ Access denied: Role is', profile.role, 'not teacher')
+      console.error('❌ Wrong role:', profile.role)
       fullName.value = 'Teacher'
       isLoadingName.value = false
       router.replace('/login')
       return false
     }
     
+    // CRITICAL FIX: Get teacher record with better error handling
+    console.log('🔍 Fetching teacher record...')
     const { data: teacher, error: teacherError } = await supabase
       .from('teachers')
       .select('*')
       .eq('profile_id', profile.id)
-      .single()
+      .maybeSingle()
     
-    if (teacherError || !teacher) {
-      console.error('❌ Teacher record error:', teacherError)
-      console.log('⚠️ Using profile name as fallback')
+    console.log('Teacher query result:', { teacher, teacherError })
+    
+    if (teacherError) {
+      console.error('❌ Teacher error:', teacherError)
+      console.error('Error code:', teacherError.code)
+      console.error('Error details:', teacherError.details)
+      console.error('Error hint:', teacherError.hint)
+      console.error('Error message:', teacherError.message)
+      
+      // Use profile as fallback
+      fullName.value = profile.full_name || 'Teacher'
+      teacherId.value = null
+      isLoadingName.value = false
+      return false
+    }
+    
+    if (!teacher) {
+      console.error('❌ No teacher record found')
       fullName.value = profile.full_name || 'Teacher'
       teacherId.value = null
       isLoadingName.value = false
@@ -621,8 +668,6 @@ const loadTeacherProfile = async () => {
     console.log('✅ Step 3: Teacher record found')
     console.log('   Teacher ID:', teacher.id)
     console.log('   Full Name:', teacher.full_name)
-    console.log('   Employee ID:', teacher.employee_id)
-    console.log('   Department:', teacher.department)
     
     teacherId.value = teacher.id
     fullName.value = teacher.full_name || profile.full_name || 'Teacher'
@@ -637,7 +682,8 @@ const loadTeacherProfile = async () => {
     return true
     
   } catch (error) {
-    console.error('❌ CRITICAL ERROR loading profile:', error)
+    console.error('❌ CRITICAL ERROR:', error)
+    console.error('Error name:', error.name)
     console.error('Error message:', error.message)
     console.error('Error stack:', error.stack)
     fullName.value = 'Teacher'
@@ -1283,6 +1329,33 @@ onUnmounted(() => {
 .sidebar-item:hover .sidebar-tooltip {
   opacity: 1;
   pointer-events: auto;
+}
+
+/* Sidebar Divider */
+.sidebar-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 8px 12px;
+}
+
+/* Sidebar Logout Button */
+.sidebar-logout {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-logout:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-logout .sidebar-icon svg {
+  color: #fff;
 }
 
 /* Top Navigation Bar (Greenish Theme) */
