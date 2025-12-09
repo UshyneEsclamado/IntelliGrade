@@ -94,9 +94,8 @@
       <!-- Centered Role Selection Box -->
       <div class="auth-box">
         <div class="logo-section">
-          <img src="../assets/New IntelliGrade Logo.png" alt="IntelliGrade Logo" class="logo" />
           <h1>Select Your Role</h1>
-          <p class="subtitle">Choose how you want to join IntelliGrade</p>
+          <p class="subtitle">Choose how you want to join DigiCheck</p>
         </div>
 
         <div class="buttons">
