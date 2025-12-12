@@ -398,7 +398,41 @@
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12,5.5A3.5,3.5 0 0,1 15.5,9A3.5,3.5 0 0,1 12,12.5A3.5,3.5 0 0,1 8.5,9A3.5,3.5 0 0,1 12,5.5M5,8C5.56,8 6.08,8.15 6.53,8.42C6.38,9.85 6.8,11.27 7.66,12.38C7.16,13.34 6.16,14 5,14A3,3 0 0,1 2,11A3,3 0 0,1 5,8M19,8A3,3 0 0,1 22,11A3,3 0 0,1 19,14C17.84,14 16.84,13.34 16.34,12.38C17.2,11.27 17.62,9.85 17.47,8.42C17.92,8.15 18.44,8 19,8Z" />
                       </svg>
-                      Student
+                      <div class="student-header-content">
+                        <span class="header-title">Student</span>
+                        <div class="sort-controls">
+                          <button 
+                            @click="changeSortOrder('surname')" 
+                            class="sort-btn" 
+                            :class="{ 'active': sortBy === 'surname' }"
+                            title="Sort by Surname">
+                            Last Name
+                            <svg v-if="sortBy === 'surname'" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" :class="{ 'rotate-180': sortDirection === 'desc' }">
+                              <path d="M7 14l5-5 5 5z"/>
+                            </svg>
+                          </button>
+                          <button 
+                            @click="changeSortOrder('firstname')" 
+                            class="sort-btn" 
+                            :class="{ 'active': sortBy === 'firstname' }"
+                            title="Sort by First Name">
+                            First Name
+                            <svg v-if="sortBy === 'firstname'" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" :class="{ 'rotate-180': sortDirection === 'desc' }">
+                              <path d="M7 14l5-5 5 5z"/>
+                            </svg>
+                          </button>
+                          <button 
+                            @click="changeSortOrder('student-id')" 
+                            class="sort-btn" 
+                            :class="{ 'active': sortBy === 'student-id' }"
+                            title="Sort by Student ID">
+                            ID
+                            <svg v-if="sortBy === 'student-id'" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" :class="{ 'rotate-180': sortDirection === 'desc' }">
+                              <path d="M7 14l5-5 5 5z"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </th>
                   <th v-for="assessment in assessments" :key="assessment.id" class="assessment-column">
@@ -421,7 +455,7 @@
                 </tr>
               </thead>
               <tbody class="gradebook-body">
-                <template v-for="student in students" :key="student.id">
+                <template v-for="student in sortedStudents" :key="student.id">
                   <!-- Main Student Row -->
                   <tr class="student-row" :class="{ 'expanded': expandedStudent === student.id }">
                     <td class="student-cell sticky-col" @click="toggleStudentHistory(student.id)">
@@ -818,6 +852,83 @@ const analyticsData = computed(() => {
 
 const correctAnswerCount = computed(() => reviewQuestions.value.filter(q => q.is_correct).length)
 const maxReviewScore = computed(() => reviewQuestions.value.reduce((sum, q) => sum + (q.points || 1), 0))
+
+// Sorting state
+const sortBy = ref('surname') // 'surname', 'firstname', 'student-id'
+const sortDirection = ref('asc') // 'asc', 'desc'
+
+// Computed property for sorted students by name
+const sortedStudents = computed(() => {
+  return [...students.value].sort((a, b) => {
+    let valueA = ''
+    let valueB = ''
+    
+    if (sortBy.value === 'surname') {
+      // Sort by surname first, then by first name
+      const nameA = a.full_name ? a.full_name.trim().split(' ') : ['']
+      const nameB = b.full_name ? b.full_name.trim().split(' ') : ['']
+      
+      const surnameA = nameA.length > 1 ? nameA[nameA.length - 1] : nameA[0] || ''
+      const surnameB = nameB.length > 1 ? nameB[nameB.length - 1] : nameB[0] || ''
+      
+      const surnameComparison = surnameA.toLowerCase().localeCompare(surnameB.toLowerCase())
+      
+      if (surnameComparison !== 0) {
+        return sortDirection.value === 'asc' ? surnameComparison : -surnameComparison
+      }
+      
+      // If surnames are the same, sort by first name
+      const firstNameA = nameA[0] || ''
+      const firstNameB = nameB[0] || ''
+      
+      const firstNameComparison = firstNameA.toLowerCase().localeCompare(firstNameB.toLowerCase())
+      return sortDirection.value === 'asc' ? firstNameComparison : -firstNameComparison
+      
+    } else if (sortBy.value === 'firstname') {
+      // Sort by first name first, then by surname
+      const nameA = a.full_name ? a.full_name.trim().split(' ') : ['']
+      const nameB = b.full_name ? b.full_name.trim().split(' ') : ['']
+      
+      const firstNameA = nameA[0] || ''
+      const firstNameB = nameB[0] || ''
+      
+      const firstNameComparison = firstNameA.toLowerCase().localeCompare(firstNameB.toLowerCase())
+      
+      if (firstNameComparison !== 0) {
+        return sortDirection.value === 'asc' ? firstNameComparison : -firstNameComparison
+      }
+      
+      // If first names are the same, sort by surname
+      const surnameA = nameA.length > 1 ? nameA[nameA.length - 1] : ''
+      const surnameB = nameB.length > 1 ? nameB[nameB.length - 1] : ''
+      
+      const surnameComparison = surnameA.toLowerCase().localeCompare(surnameB.toLowerCase())
+      return sortDirection.value === 'asc' ? surnameComparison : -surnameComparison
+      
+    } else if (sortBy.value === 'student-id') {
+      // Sort by student ID
+      valueA = a.student_id || ''
+      valueB = b.student_id || ''
+      
+      const comparison = valueA.toLowerCase().localeCompare(valueB.toLowerCase())
+      return sortDirection.value === 'asc' ? comparison : -comparison
+    }
+    
+    return 0
+  })
+})
+
+// Sort function
+const changeSortOrder = (newSortBy) => {
+  if (sortBy.value === newSortBy) {
+    // Toggle direction if same sort field
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    // Change sort field and reset to ascending
+    sortBy.value = newSortBy
+    sortDirection.value = 'asc'
+  }
+}
 
 // Computed properties for grade level organization
 const gradeLevels = computed(() => {
@@ -1225,7 +1336,7 @@ const exportToExcel = () => {
   headers.push('Total', 'Percentage')
   exportData.push(headers)
   
-  students.value.forEach(student => {
+  sortedStudents.value.forEach(student => {
     const row = [student.full_name, student.student_id || 'N/A']
     assessments.value.forEach(a => row.push(getStudentScore(student.id, a.id) || '--'))
     row.push(getStudentTotal(student.id))
@@ -3280,6 +3391,61 @@ body, html {
   gap: 0.25rem;
 }
 
+/* Student Header with Sorting Controls */
+.student-header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.header-title {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.875rem;
+}
+
+.sort-controls {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.sort-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sort-btn:hover {
+  background: #f1f5f9;
+  color: #475569;
+  border-color: #cbd5e1;
+}
+
+.sort-btn.active {
+  background: #3D8D7A;
+  color: white;
+  border-color: #3D8D7A;
+}
+
+.sort-btn svg {
+  transition: transform 0.2s ease;
+}
+
+.sort-btn svg.rotate-180 {
+  transform: rotate(180deg);
+}
+
 .assessment-title {
   font-weight: 600;
   color: #1e293b;
@@ -3628,6 +3794,29 @@ body, html {
 .dark .gradebook-table thead th.sticky-col {
   background: #1f2937;
   border-color: #374151;
+}
+
+/* Dark Mode Sorting Controls */
+.dark .header-title {
+  color: #f1f5f9;
+}
+
+.dark .sort-btn {
+  color: #9ca3af;
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.dark .sort-btn:hover {
+  background: #4b5563;
+  color: #e5e7eb;
+  border-color: #6b7280;
+}
+
+.dark .sort-btn.active {
+  background: #3D8D7A;
+  color: white;
+  border-color: #3D8D7A;
 }
 
 .dark .student-row {
