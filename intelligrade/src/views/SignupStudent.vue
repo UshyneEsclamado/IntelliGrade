@@ -232,11 +232,31 @@
                 <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
               </svg>
               <!-- Drop down styled like an input field -->
-              <select v-model="gradeLevel" required class="styled-select">
+              <select v-model="gradeLevel" required class="styled-select" @change="onGradeLevelChange">
+                <option value="">Select Grade Level</option>
                 <option value="7">Grade 7</option>
                 <option value="8">Grade 8</option>
                 <option value="9">Grade 9</option>
                 <option value="10">Grade 10</option>
+                <option value="11">Grade 11 (Senior High)</option>
+                <option value="12">Grade 12 (Senior High)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Add Strand Selection for Grades 11 and 12 -->
+          <div v-if="gradeLevel === '11' || gradeLevel === '12'" class="form-group">
+            <label>Strand</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z"/>
+              </svg>
+              <select v-model="strand" required class="styled-select">
+                <option value="">Select Strand</option>
+                <option value="STEM">STEM (Science, Technology, Engineering, Mathematics)</option>
+                <option value="ABM">ABM (Accountancy, Business, Management)</option>
+                <option value="HUMSS">HUMSS (Humanities and Social Sciences)</option>
+                <option value="GAS">GAS (General Academic Strand)</option>
               </select>
             </div>
           </div>
@@ -273,7 +293,8 @@ export default {
       email: "",
       password: "",
       studentId: "",
-      gradeLevel: "7",
+      gradeLevel: "",
+      strand: "", // Add strand data
       error: "",
       isLoading: false,
       showPassword: false,
@@ -332,6 +353,14 @@ export default {
       this.passwordStrength = strength;
     },
 
+    // Add grade level change handler
+    onGradeLevelChange() {
+      // Clear strand when switching away from senior high
+      if (this.gradeLevel !== '11' && this.gradeLevel !== '12') {
+        this.strand = '';
+      }
+    },
+
     async handleSignup() {
       this.error = "";
 
@@ -343,14 +372,20 @@ export default {
         return;
       }
 
+      // Check if strand is required for grades 11 and 12
+      if ((this.gradeLevel === '11' || this.gradeLevel === '12') && !this.strand) {
+        this.error = "Please select a strand for Grade 11 or 12.";
+        return;
+      }
+
       if (this.passwordErrors.length > 0) {
         this.error = 'Your password does not meet the security policy. Please fix the issues listed below the password field.';
         return;
       }
 
       const gradeNum = parseInt(this.gradeLevel);
-      if (gradeNum < 7 || gradeNum > 10) {
-        this.error = "Grade level must be between 7 and 10.";
+      if (gradeNum < 7 || gradeNum > 12) {
+        this.error = "Grade level must be between 7 and 12.";
         return;
       }
 
@@ -363,15 +398,17 @@ export default {
       this.isLoading = true;
 
       try {
-       console.log('📝 Signup Data Being Sent:');
-console.log('Student ID:', this.studentId.trim());
-console.log('Grade Level:', parseInt(this.gradeLevel, 10));
-console.log('Full metadata:', {
-  full_name: this.fullName.trim(),
-  role: 'student',
-  student_id: this.studentId.trim(),
-  grade_level: parseInt(this.gradeLevel, 10)
-});
+        console.log('📝 Signup Data Being Sent:');
+        console.log('Student ID:', this.studentId.trim());
+        console.log('Grade Level:', parseInt(this.gradeLevel, 10));
+        console.log('Strand:', this.strand || null);
+        console.log('Full metadata:', {
+          full_name: this.fullName.trim(),
+          role: 'student',
+          student_id: this.studentId.trim(),
+          grade_level: parseInt(this.gradeLevel, 10),
+          strand: this.strand || null
+        });
 
         // Check if student ID is already taken
         const { data: existingStudent, error: checkError } = await supabase
@@ -397,20 +434,21 @@ console.log('Full metadata:', {
 
         console.log('✅ Validation passed, creating auth user...');
         
-        // Create the Supabase auth user with properly structured metadata
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-  email: this.email.toLowerCase().trim(),
-  password: this.password,
-  options: {
-    emailRedirectTo: `${window.location.origin}/email-verified`,
-    data: {
-      full_name: this.fullName.trim(),
-      role: 'student',
-      student_id: this.studentId.trim(),
-      grade_level: parseInt(this.gradeLevel, 10) 
-    }
-  }
-});
+        // Create the Supabase auth user with properly structured metadata including strand
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: this.email.toLowerCase().trim(),
+          password: this.password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/email-verified`,
+            data: {
+              full_name: this.fullName.trim(),
+              role: 'student',
+              student_id: this.studentId.trim(),
+              grade_level: parseInt(this.gradeLevel, 10),
+              strand: this.strand || null
+            }
+          }
+        });
         if (authError) {
           console.error('❌ Auth signup error:', authError);
           
@@ -875,9 +913,9 @@ h1 {
   z-index: 1;
 }
 
-input {
+input, select {
   width: 100%;
-  padding: 0.7rem 0.7rem 0.7rem 2.25rem;
+  padding: 0.65rem 0.65rem 0.65rem 2.1rem;
   font-size: 0.85rem;
   border: 2px solid rgba(61, 141, 122, 0.2);
   border-radius: 9px;
@@ -888,13 +926,13 @@ input {
   font-weight: 500;
 }
 
-input:focus {
+input:focus, select:focus {
   border-color: rgba(61, 141, 122, 0.5);
   box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
   background: white;
 }
 
-input::placeholder {
+input::placeholder, select::placeholder {
   color: rgba(61, 141, 122, 0.4);
   font-size: 0.8rem;
   font-weight: 400;
@@ -1219,79 +1257,6 @@ input::placeholder {
   .form-group {
     margin-bottom: 0.8rem;
   }
-}
-
-.input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.input-icon {
-  position: absolute;
-  left: 0.75rem;
-  color: rgba(61, 141, 122, 0.5);
-  z-index: 1;
-}
-
-input, select {
-  width: 100%;
-  padding: 0.65rem 0.65rem 0.65rem 2.1rem;
-  font-size: 0.85rem;
-  border: 2px solid rgba(61, 141, 122, 0.2);
-  border-radius: 9px;
-  outline: none;
-  background: rgba(255, 255, 255, 0.8);
-  color: #3D8D7A;
-  transition: all 0.3s ease;
-  font-weight: 500;
-}
-
-input:focus, select:focus {
-  border-color: rgba(61, 141, 122, 0.5);
-  box-shadow: 0 0 0 3px rgba(61, 141, 122, 0.1);
-  background: white;
-}
-
-input::placeholder, select::placeholder {
-  color: rgba(61, 141, 122, 0.4);
-  font-size: 0.8rem;
-  font-weight: 400;
-}
-
-/* Same button styles */
-.signup-btn {
-  width: 100%;
-  background: linear-gradient(135deg, #3D8D7A 0%, #A3D1C6 100%);
-  color: white;
-  padding: 0.65rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  border: none;
-  border-radius: 9px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  margin-top: 0.4rem;
-  box-shadow: 0 4px 15px rgba(61, 141, 122, 0.2);
-}
-
-.signup-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.loading-spinner {
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid white;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
 }
 
 /* Password Security Styles */

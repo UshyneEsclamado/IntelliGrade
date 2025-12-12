@@ -452,6 +452,178 @@
       </div>
     </div>
 
+    <!-- View Quiz Details Modal -->
+    <div v-if="showQuizDetailsModal" class="modal-overlay" @click.self="closeQuizDetailsModal">
+      <div class="modal-content view-quiz-modal">
+        <div class="modal-header">
+          <h2>Quiz Submission Details</h2>
+          <button @click="closeQuizDetailsModal" class="close-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body" v-if="selectedQuizAttempt">
+          <!-- Loading State -->
+          <div v-if="loadingQuizDetails" class="loading-container">
+            <div class="loading-spinner"></div>
+            <p>Loading quiz details...</p>
+          </div>
+
+          <!-- Quiz Details Content -->
+          <div v-else-if="quizDetailsData" class="quiz-details-content">
+            <!-- Student Info -->
+            <div class="submission-detail-header">
+              <div class="student-avatar-large">
+                {{ getInitials(selectedQuizAttempt.student_name) }}
+              </div>
+              <div>
+                <h3>{{ selectedQuizAttempt.student_name }}</h3>
+                <p class="student-id">{{ selectedQuizAttempt.student_number }}</p>
+                <p class="submission-date">Submitted: {{ formatDate(selectedQuizAttempt.submitted_at) }}</p>
+              </div>
+            </div>
+
+            <!-- Quiz Title -->
+            <div class="detail-section">
+              <h4>Quiz</h4>
+              <p class="assignment-title-large">{{ selectedQuizAttempt.title }}</p>
+            </div>
+
+            <!-- Score Summary -->
+            <div class="detail-section">
+              <h4>Score Summary</h4>
+              <div class="score-display-large">
+                <span class="score">{{ selectedQuizAttempt.score }}</span>
+                <span class="max-score">/ {{ selectedQuizAttempt.max_score }}</span>
+                <span class="percentage" :class="getScoreClass(selectedQuizAttempt.percentage)">
+                  {{ selectedQuizAttempt.percentage }}%
+                </span>
+              </div>
+              <div class="quiz-meta">
+                <div class="meta-item">
+                  <strong>Total Questions:</strong> {{ quizDetailsData.questions.length }}
+                </div>
+                <div class="meta-item">
+                  <strong>Correct Answers:</strong> {{ quizDetailsData.correctAnswers }}
+                </div>
+                <div class="meta-item" v-if="quizDetailsData.timeTaken">
+                  <strong>Time Taken:</strong> {{ quizDetailsData.timeTaken }} minutes
+                </div>
+              </div>
+            </div>
+
+            <!-- Questions and Answers -->
+            <div class="detail-section">
+              <h4>Questions & Answers</h4>
+              <div class="questions-list">
+                <div 
+                  v-for="(question, index) in quizDetailsData.questions" 
+                  :key="question.id"
+                  class="question-item"
+                  :class="{ 'correct': question.is_correct, 'incorrect': !question.is_correct }"
+                >
+                  <div class="question-header">
+                    <span class="question-number">{{ index + 1 }}</span>
+                    <div class="question-status">
+                      <svg v-if="question.is_correct" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="correct-icon">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                      <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="incorrect-icon">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                      </svg>
+                    </div>
+                  </div>
+                  
+                  <div class="question-content">
+                    <p class="question-text">{{ question.question_text }}</p>
+                    
+                    <!-- Multiple Choice -->
+                    <div v-if="question.question_type === 'multiple_choice'" class="options-list">
+                      <div 
+                        v-for="option in question.options" 
+                        :key="option.id"
+                        class="option-item"
+                        :class="{
+                          'selected': option.id === question.selected_option_id,
+                          'correct': option.is_correct,
+                          'wrong-selection': option.id === question.selected_option_id && !option.is_correct
+                        }"
+                      >
+                        <div class="option-indicator">
+                          <div v-if="option.id === question.selected_option_id" class="selected-indicator">
+                            {{ option.is_correct ? '✓' : '✗' }}
+                          </div>
+                          <div v-else-if="option.is_correct" class="correct-indicator">✓</div>
+                        </div>
+                        <span class="option-text">{{ option.option_text }}</span>
+                      </div>
+                    </div>
+
+                    <!-- True/False -->
+                    <div v-else-if="question.question_type === 'true_false'" class="tf-answer">
+                      <div class="answer-comparison">
+                        <div class="student-answer">
+                          <strong>Student Answer:</strong> {{ question.answer_text }}
+                        </div>
+                        <div class="correct-answer">
+                          <strong>Correct Answer:</strong> {{ question.correct_answer }}
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Fill in the Blank -->
+                    <div v-else-if="question.question_type === 'fill_blank'" class="fill-answer">
+                      <div class="answer-comparison">
+                        <div class="student-answer">
+                          <strong>Student Answer:</strong> "{{ question.answer_text || 'No answer provided' }}"
+                        </div>
+                        <div class="correct-answer">
+                          <strong>Correct Answer:</strong> "{{ question.correct_answer }}"
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Points -->
+                    <div class="question-score">
+                      <span class="points-earned">{{ question.points_earned || 0 }}</span>
+                      <span class="points-possible">/ {{ question.points_possible || question.points || 1 }} points</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Teacher Feedback (if any) -->
+            <div class="detail-section" v-if="selectedQuizAttempt.teacher_feedback">
+              <h4>Teacher Feedback</h4>
+              <div class="feedback-box">
+                {{ selectedQuizAttempt.teacher_feedback }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Error State -->
+          <div v-else-if="quizDetailsError" class="error-container">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <p>{{ quizDetailsError }}</p>
+            <button @click="fetchQuizDetails(selectedQuizAttempt)" class="retry-button">Retry</button>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button @click="closeQuizDetailsModal" class="button secondary">Close</button>
+        </div>
+      </div>
+    </div>
+
     <!-- View Assignment Submission Modal -->
     <div v-if="showViewSubmissionModal" class="modal-overlay" @click.self="closeViewSubmissionModal">
       <div class="modal-content view-submission-modal">
@@ -640,7 +812,12 @@ const filterStatus = ref('all');
 const searchQuery = ref('');
 const showGradeModal = ref(false);
 const showViewSubmissionModal = ref(false);
+const showQuizDetailsModal = ref(false);
 const selectedSubmission = ref<any>(null);
+const selectedQuizAttempt = ref<any>(null);
+const quizDetailsData = ref<any>(null);
+const loadingQuizDetails = ref(false);
+const quizDetailsError = ref('');
 const submitting = ref(false);
 
 // User profile states
@@ -1030,14 +1207,124 @@ const getScoreClass = (percentage: number | string) => {
   return 'poor';
 };
 
-const viewQuizDetails = (submission: any) => {
-  router.push({
-    name: 'QuizResults',
-    params: {
-      quizId: submission.quiz_id,
-      attemptId: submission.id
+const viewQuizDetails = async (submission: any) => {
+  selectedQuizAttempt.value = submission;
+  showQuizDetailsModal.value = true;
+  await fetchQuizDetails(submission);
+};
+
+const fetchQuizDetails = async (quizAttempt: any) => {
+  try {
+    loadingQuizDetails.value = true;
+    quizDetailsError.value = '';
+    quizDetailsData.value = null;
+
+    console.log('=== FETCHING QUIZ DETAILS ===');
+    console.log('Quiz Attempt:', quizAttempt);
+
+    // Fetch the quiz questions
+    const { data: questions, error: questionsError } = await supabase
+      .from('quiz_questions')
+      .select('*')
+      .eq('quiz_id', quizAttempt.quiz_id)
+      .order('question_number');
+
+    if (questionsError) {
+      throw new Error(`Failed to fetch questions: ${questionsError.message}`);
     }
-  });
+
+    console.log('Quiz Questions:', questions);
+
+    // Fetch student answers for this attempt
+    const { data: studentAnswers, error: answersError } = await supabase
+      .from('student_answers')
+      .select('*')
+      .eq('attempt_id', quizAttempt.id);
+
+    if (answersError) {
+      throw new Error(`Failed to fetch student answers: ${answersError.message}`);
+    }
+
+    console.log('Student Answers:', studentAnswers);
+
+    // Create a map of student answers by question_id
+    const answersMap = new Map(studentAnswers?.map(a => [a.question_id, a]) || []);
+
+    // For each question, fetch options (if multiple choice) and correct answers
+    const questionDetails = await Promise.all(questions?.map(async (question: any) => {
+      const studentAnswer = answersMap.get(question.id);
+      
+      let options = [];
+      let correctAnswer = '';
+      
+      // Fetch options for multiple choice questions
+      if (question.question_type === 'multiple_choice') {
+        const { data: questionOptions, error: optionsError } = await supabase
+          .from('question_options')
+          .select('*')
+          .eq('question_id', question.id)
+          .order('option_number');
+          
+        if (!optionsError && questionOptions) {
+          options = questionOptions;
+        }
+      }
+      
+      // Fetch correct answer for true/false and fill_blank questions
+      if (question.question_type === 'true_false' || question.question_type === 'fill_blank') {
+        const { data: questionAnswer, error: correctAnswerError } = await supabase
+          .from('question_answers')
+          .select('correct_answer')
+          .eq('question_id', question.id)
+          .single();
+          
+        if (!correctAnswerError && questionAnswer) {
+          correctAnswer = questionAnswer.correct_answer;
+        }
+      }
+
+      return {
+        ...question,
+        options: options,
+        correct_answer: correctAnswer,
+        selected_option_id: studentAnswer?.selected_option_id,
+        answer_text: studentAnswer?.answer_text,
+        is_correct: studentAnswer?.is_correct || false,
+        points_earned: studentAnswer?.points_earned || 0,
+        points_possible: studentAnswer?.points_possible || question.points || 1,
+        teacher_comment: studentAnswer?.teacher_comment
+      };
+    }) || []);
+
+    console.log('Question Details:', questionDetails);
+
+    // Calculate statistics
+    const correctAnswers = questionDetails.filter(q => q.is_correct).length;
+    const timeTaken = quizAttempt.time_taken_minutes;
+
+    quizDetailsData.value = {
+      questions: questionDetails,
+      correctAnswers: correctAnswers,
+      totalQuestions: questionDetails.length,
+      timeTaken: timeTaken
+    };
+
+    console.log('Quiz Details Data:', quizDetailsData.value);
+
+  } catch (err: any) {
+    console.error('Error fetching quiz details:', err);
+    quizDetailsError.value = err.message || 'Failed to load quiz details';
+  } finally {
+    loadingQuizDetails.value = false;
+  }
+};
+
+const closeQuizDetailsModal = () => {
+  showQuizDetailsModal.value = false;
+  selectedQuizAttempt.value = null;
+  quizDetailsData.value = null;
+  quizDetailsError.value = '';
+  loadingQuizDetails.value = false;
 };
 
 const viewAssignmentSubmission = (submission: any) => {
@@ -2764,6 +3051,424 @@ onUnmounted(() => {
   .main-content {
     padding: 1rem;
   }
+}
+
+/* Quiz Details Modal Styles */
+.view-quiz-modal {
+  max-width: 800px;
+}
+
+.quiz-details-content {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.submission-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+  border-radius: 0.75rem;
+  border: 1px solid #e0f2fe;
+}
+
+.student-avatar-large {
+  width: 60px;
+  height: 60px;
+  background: #3D8D7A;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.submission-detail-header h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.student-id {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin: 0.25rem 0;
+}
+
+.submission-date {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.detail-section {
+  margin-bottom: 2rem;
+}
+
+.detail-section h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.assignment-title-large {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #111827;
+  margin: 0;
+}
+
+.score-display-large {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.score-display-large .score {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.score-display-large .max-score {
+  font-size: 1.5rem;
+  color: #6b7280;
+}
+
+.score-display-large .percentage {
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+.percentage.excellent {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.percentage.good {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.percentage.fair {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.percentage.poor {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.quiz-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.quiz-meta .meta-item {
+  color: #475569;
+  font-size: 0.875rem;
+}
+
+.questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.question-item {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  transition: all 0.2s;
+}
+
+.question-item.correct {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.question-item.incorrect {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.question-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.question-number {
+  background: #374151;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.question-item.correct .question-number {
+  background: #10b981;
+}
+
+.question-item.incorrect .question-number {
+  background: #ef4444;
+}
+
+.question-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.correct-icon {
+  color: #10b981;
+}
+
+.incorrect-icon {
+  color: #ef4444;
+}
+
+.question-content {
+  margin-left: 0;
+}
+
+.question-text {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #111827;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.options-list {
+  margin: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.option-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  margin-bottom: 0.5rem;
+}
+
+.option-item.selected {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.option-item.correct {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.option-item.wrong-selection {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.option-indicator {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.selected-indicator {
+  background: #3b82f6;
+  color: white;
+}
+
+.option-item.correct .selected-indicator {
+  background: #10b981;
+}
+
+.option-item.wrong-selection .selected-indicator {
+  background: #ef4444;
+}
+
+.correct-indicator {
+  background: #10b981;
+  color: white;
+}
+
+.option-text {
+  flex: 1;
+  font-size: 0.875rem;
+  color: #374151;
+  line-height: 1.4;
+}
+
+.tf-answer, .fill-answer {
+  margin: 1rem 0;
+}
+
+.answer-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.student-answer, .correct-answer {
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+}
+
+.student-answer {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+
+.correct-answer {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+.question-score {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.points-earned {
+  font-weight: 600;
+  color: #374151;
+}
+
+.points-possible {
+  color: #6b7280;
+}
+
+.feedback-box {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  color: #0c4a6e;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* Loading and Error States */
+.loading-container, .error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e5e7eb;
+  border-top: 3px solid #3D8D7A;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-container svg {
+  color: #ef4444;
+  margin-bottom: 1rem;
+}
+
+.retry-button {
+  background: #3D8D7A;
+  color: white;
+  border: none;
+  padding: 0.625rem 1.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: background-color 0.2s;
+}
+
+.retry-button:hover {
+  background: #2d6a5a;
+}
+
+/* Responsive Design for Quiz Modal */
+@media (max-width: 768px) {
+  .view-quiz-modal {
+    max-width: 95vw;
+    margin: 0.5rem;
+  }
+  
+  .submission-detail-header {
+    flex-direction: column;
+    text-align: center;
+    padding: 1rem;
+  }
+  
+  .quiz-meta {
+    grid-template-columns: 1fr;
+  }
+  
+  .answer-comparison {
+    grid-template-columns: 1fr;
+  }
+  
+  .score-display-large {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
 
   .submissions-list {
     max-height: 60vh;
@@ -3049,5 +3754,418 @@ onUnmounted(() => {
   background: rgba(254, 243, 199, 0.1);
   border-color: rgba(253, 230, 138, 0.2);
   color: #fbbf24;
+}
+
+/* Quiz Details Modal Styles */
+.view-quiz-modal {
+  max-width: 800px;
+}
+
+.quiz-details-content {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.submission-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+  border-radius: 0.75rem;
+  border: 1px solid #e0f2fe;
+}
+
+.student-avatar-large {
+  width: 60px;
+  height: 60px;
+  background: #3D8D7A;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.submission-detail-header h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.student-id {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin: 0.25rem 0;
+}
+
+.submission-date {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.detail-section {
+  margin-bottom: 2rem;
+}
+
+.detail-section h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.assignment-title-large {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #111827;
+  margin: 0;
+}
+
+.score-display-large {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.score-display-large .score {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.score-display-large .max-score {
+  font-size: 1.5rem;
+  color: #6b7280;
+}
+
+.score-display-large .percentage {
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+.percentage.excellent {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.percentage.good {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.percentage.fair {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.percentage.poor {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.quiz-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.quiz-meta .meta-item {
+  color: #475569;
+  font-size: 0.875rem;
+}
+
+.questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.question-item {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  transition: all 0.2s;
+}
+
+.question-item.correct {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.question-item.incorrect {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.question-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.question-number {
+  background: #374151;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.question-item.correct .question-number {
+  background: #10b981;
+}
+
+.question-item.incorrect .question-number {
+  background: #ef4444;
+}
+
+.question-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.correct-icon {
+  color: #10b981;
+}
+
+.incorrect-icon {
+  color: #ef4444;
+}
+
+.question-content {
+  margin-left: 0;
+}
+
+.question-text {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #111827;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.options-list {
+  margin: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.option-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.option-item.selected {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.option-item.correct {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.option-item.wrong-selection {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.option-indicator {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.selected-indicator {
+  background: #3b82f6;
+  color: white;
+}
+
+.option-item.correct .selected-indicator {
+  background: #10b981;
+}
+
+.option-item.wrong-selection .selected-indicator {
+  background: #ef4444;
+}
+
+.correct-indicator {
+  background: #10b981;
+  color: white;
+}
+
+.option-text {
+  flex: 1;
+  font-size: 0.875rem;
+  color: #374151;
+  line-height: 1.4;
+}
+
+.tf-answer, .fill-answer {
+  margin: 1rem 0;
+}
+
+.answer-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.student-answer, .correct-answer {
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+}
+
+.student-answer {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+
+.correct-answer {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+.question-score {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.points-earned {
+  font-weight: 600;
+  color: #374151;
+}
+
+.points-possible {
+  color: #6b7280;
+}
+
+.feedback-box {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  color: #0c4a6e;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* Loading and Error States for Quiz Modal */
+.quiz-details-content .loading-container, 
+.quiz-details-content .error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+}
+
+.quiz-details-content .loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e5e7eb;
+  border-top: 3px solid #3D8D7A;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.quiz-details-content .error-container svg {
+  color: #ef4444;
+  margin-bottom: 1rem;
+}
+
+.quiz-details-content .retry-button {
+  background: #3D8D7A;
+  color: white;
+  border: none;
+  padding: 0.625rem 1.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: background-color 0.2s;
+}
+
+.quiz-details-content .retry-button:hover {
+  background: #2d6a5a;
+}
+
+/* Responsive Design for Quiz Modal */
+@media (max-width: 768px) {
+  .view-quiz-modal {
+    max-width: 95vw;
+    margin: 0.5rem;
+  }
+  
+  .submission-detail-header {
+    flex-direction: column;
+    text-align: center;
+    padding: 1rem;
+  }
+  
+  .quiz-meta {
+    grid-template-columns: 1fr;
+  }
+  
+  .answer-comparison {
+    grid-template-columns: 1fr;
+  }
+  
+  .score-display-large {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
 }
 </style>

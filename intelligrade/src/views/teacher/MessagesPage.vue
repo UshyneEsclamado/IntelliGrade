@@ -190,6 +190,28 @@
               <p class="header-subtitle">Connect with your students and manage communication</p>
             </div>
           </div>
+          <div class="header-actions">
+            <button @click="refreshPage" class="refresh-page-btn" :disabled="isRefreshingPage" title="Refresh Messages">
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="20" 
+                height="20" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                stroke-width="2" 
+                stroke-linecap="round" 
+                stroke-linejoin="round"
+                :class="{ 'spin': isRefreshingPage }"
+              >
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+              </svg>
+              <span v-if="!isRefreshingPage">Refresh</span>
+              <span v-else>Refreshing...</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -969,6 +991,28 @@
               <span class="section-info">{{ activeConversation?.subject_name }}</span>
             </div>
           </div>
+          <div class="header-actions">
+            <button @click="refreshMessages" class="refresh-btn" :disabled="isRefreshing" title="Refresh Messages">
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="20" 
+                height="20" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                stroke-width="2" 
+                stroke-linecap="round" 
+                stroke-linejoin="round"
+                :class="{ 'spin': isRefreshing }"
+              >
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+              </svg>
+              <span v-if="!isRefreshing">Refresh</span>
+              <span v-else>Refreshing...</span>
+            </button>
+          </div>
         </div>
         <div class="modal-body">
           <!-- Loading indicator for messages -->
@@ -1397,6 +1441,8 @@ const isBroadcastModalOpen = ref(false)
 const isLoading = ref(false)
 const loadingMessage = ref('Loading...')
 const loadingMessages = ref(false)
+const isRefreshing = ref(false)
+const isRefreshingPage = ref(false)
 const showArchive = ref(false)
 const showBroadcastHistory = ref(false)
 const showChatOptions = ref(false)
@@ -2205,6 +2251,59 @@ const loadConversationMessages = async (studentId: string, sectionId: string) =>
     currentMessages.value = []
   } finally {
     loadingMessages.value = false
+  }
+}
+
+// Refresh messages function
+const refreshMessages = async () => {
+  if (!activeConversation.value || isRefreshing.value) {
+    return
+  }
+  
+  try {
+    isRefreshing.value = true
+    console.log('🔄 Refreshing messages for conversation:', activeConversation.value.student_name)
+    
+    // Add a small delay to show the loading state
+    await new Promise(resolve => setTimeout(resolve, 300))
+    
+    await loadConversationMessages(
+      activeConversation.value.student_id, 
+      activeConversation.value.section_id
+    )
+    
+    console.log('✅ Messages refreshed successfully')
+    // You could add a toast notification here if you implement one later
+  } catch (error) {
+    console.error('❌ Error refreshing messages:', error)
+    // You could show an error message here
+  } finally {
+    isRefreshing.value = false
+  }
+}
+
+// Refresh page function  
+const refreshPage = async () => {
+  if (isRefreshingPage.value) {
+    return
+  }
+  
+  try {
+    isRefreshingPage.value = true
+    console.log('🔄 Refreshing page data...')
+    
+    // Add a small delay to show the loading state
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    // Reload main data
+    await loadTeacherContacts()
+    await loadBroadcastHistory()
+    
+    console.log('✅ Page data refreshed successfully')
+  } catch (error) {
+    console.error('❌ Error refreshing page data:', error)
+  } finally {
+    isRefreshingPage.value = false
   }
 }
 
@@ -7211,6 +7310,111 @@ body, html {
 .dark .modal-header {
   border-bottom-color: #374151;
   background: #111827;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.refresh-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #3D8D7A;
+  color: white;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: #2d6a5a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(61, 141, 122, 0.3);
+}
+
+.refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.refresh-btn svg.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.dark .refresh-btn {
+  background: #20c997;
+  color: #1f2937;
+}
+
+.dark .refresh-btn:hover:not(:disabled) {
+  background: #17a085;
+}
+
+/* Page Refresh Button */
+.refresh-page-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 10px;
+  background: #20c997;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.refresh-page-btn:hover:not(:disabled) {
+  background: #17a085;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(32, 201, 151, 0.3);
+}
+
+.refresh-page-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.refresh-page-btn svg {
+  width: 20px;
+  height: 20px;
+  transition: transform 0.2s ease;
+}
+
+.refresh-page-btn svg.spin {
+  animation: spin 1s linear infinite;
+}
+
+.dark .refresh-page-btn {
+  background: #20c997;
+  color: #1f2937;
+}
+
+.dark .refresh-page-btn:hover:not(:disabled) {
+  background: #17a085;
 }
 
 .modal-title {

@@ -2928,7 +2928,12 @@
           
           <div class="subject-card-body">
             <h3 class="subject-title">{{ subject.subject_name || subject.name }}</h3>
-            <p class="grade-level">Grade {{ subject.grade_level }}</p>
+            <p class="grade-level">
+              Grade {{ subject.grade_level }}
+              <span v-if="subject.strand && (subject.grade_level === 11 || subject.grade_level === 12)" class="strand-badge">
+                {{ subject.strand }}
+              </span>
+            </p>
             <p v-if="subject.description" class="subject-description">{{ subject.description }}</p>
             <p v-else class="subject-description-placeholder">No description provided</p>
             
@@ -2959,7 +2964,11 @@
         </button>
         <div class="view-title">
           <h2>{{ selectedSubject.subject_name }}</h2>
-          <p>Grade {{ selectedSubject.grade_level }} - Manage sections and students</p>
+          <p>
+            Grade {{ selectedSubject.grade_level }}
+            <span v-if="selectedSubject.strand && (selectedSubject.grade_level === 11 || selectedSubject.grade_level === 12)" class="strand-info"> - {{ selectedSubject.strand }}</span>
+            - Manage sections and students
+          </p>
         </div>
       </div>
       
@@ -2968,7 +2977,10 @@
           <div class="section-card-header">
             <div class="section-info" @click="selectSection(section)">
               <h3 class="section-title">{{ section.section_name }}</h3>
-              <p class="section-subtitle">Grade {{ section.grade_level }}</p>
+              <p class="section-subtitle">
+                Grade {{ section.grade_level }}
+                <span v-if="section.strand && (section.grade_level === 11 || section.grade_level === 12)"> - {{ section.strand }}</span>
+              </p>
             </div>
             
             <div class="section-menu-container" @click.stop>
@@ -2980,13 +2992,13 @@
                 </svg>
               </button>
               <div v-if="openMenuId === section.id" class="section-dropdown-menu">
-                <button @click="editSection(section)" class="menu-item">
+                <button @click.stop="editSection(section)" class="menu-item">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" />
                   </svg>
                   Edit
                 </button>
-                <button @click="openDeleteModal('section', section)" class="menu-item delete">
+                <button @click.stop="openDeleteModal('section', section)" class="menu-item delete">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
                   </svg>
@@ -3044,7 +3056,9 @@
         </button>
         <div class="view-title">
           <h2>{{ selectedSection.section_name }}</h2>
-          <p>Grade {{ selectedSection.grade_level }} - {{ selectedSection.subject_name }}</p>
+          <p>
+            {{ getGradeDisplayText(selectedSection.grade_level, selectedSection.strand) }} - {{ selectedSection.subject_name }}
+          </p>
         </div>
       </div>
 
@@ -3255,13 +3269,38 @@
                   </svg>
                   Grade Level <span class="required">*</span>
                 </label>
-                <select id="gradeLevel" v-model="formData.grade_level" required>
+                <select id="gradeLevel" v-model="formData.grade_level" required @change="onGradeLevelChange">
                   <option value="">Select Grade Level</option>
                   <option value="7">Grade 7</option>
                   <option value="8">Grade 8</option>
                   <option value="9">Grade 9</option>
                   <option value="10">Grade 10</option>
+                  <option value="11">Grade 11 (Senior High School)</option>
+                  <option value="12">Grade 12 (Senior High School)</option>
                 </select>
+              </div>
+
+              <!-- Strand Selection (only for Grade 11 & 12) -->
+              <div v-if="formData.grade_level === '11' || formData.grade_level === '12'" class="form-group-enhanced">
+                <label for="strand">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z"/>
+                  </svg>
+                  Senior High School Strand <span class="required">*</span>
+                </label>
+                <select id="strand" v-model="formData.strand" required>
+                  <option value="">Select SHS Strand</option>
+                  <option value="ABM">ABM - Accountancy, Business & Management</option>
+                  <option value="STEM">STEM - Science, Technology, Engineering & Mathematics</option>
+                  <option value="HUMSS">HUMSS - Humanities & Social Sciences</option>
+                  <option value="GAS">GAS (General Academic Strand)</option>
+                </select>
+                <p class="form-hint">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
+                  </svg>
+                  Senior High School strands are required for Grades 11 and 12 in the Philippine education system.
+                </p>
               </div>
 
               <div class="form-group-enhanced">
@@ -3609,7 +3648,7 @@
       </div>
       <div class="modal-title-area">
         <h2>Add Students to Section</h2>
-        <p class="modal-subtitle">{{ selectedSectionForStudents?.section_name }} - {{ selectedSubjectForStudents?.subject_name }} (Grade {{ selectedSubjectForStudents?.grade_level }})</p>
+        <p class="modal-subtitle">{{ selectedSectionForStudents?.section_name }} - {{ selectedSubjectForStudents?.subject_name }} ({{ getGradeDisplayText(selectedSubjectForStudents?.grade_level, selectedSubjectForStudents?.strand) }})</p>
       </div>
       <button @click="closeAddStudentsModal" class="close-btn-enhanced">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
@@ -3711,7 +3750,9 @@
             </div>
             <select v-model="gradeFilter" class="grade-filter-select-enhanced" @change="searchStudents">
               <option value="">All Grades</option>
-              <option v-for="grade in [7, 8, 9, 10]" :key="grade" :value="grade">Grade {{ grade }}</option>
+              <option v-for="grade in [7, 8, 9, 10, 11, 12]" :key="grade" :value="grade">
+                Grade {{ grade }}{{ grade >= 11 ? ' (SHS)' : '' }}
+              </option>
             </select>
           </div>
           
@@ -4147,6 +4188,7 @@ const editSubjectData = ref({
 const formData = ref({
   name: '',
   grade_level: '',
+  strand: '',
   description: '',
   number_of_sections: '',
   sections: []
@@ -4179,7 +4221,14 @@ const waitForAuth = async (maxAttempts = 30, intervalMs = 200) => {
 
 // Computed
 const canProceedToStep2 = computed(() => {
-  return formData.value.name && formData.value.grade_level && formData.value.number_of_sections
+  const hasBasicFields = formData.value.name && formData.value.grade_level && formData.value.number_of_sections
+  
+  // For Grades 11 and 12, strand is required
+  if (formData.value.grade_level === '11' || formData.value.grade_level === '12') {
+    return hasBasicFields && formData.value.strand
+  }
+  
+  return hasBasicFields
 })
 
 // Subject filtering and search
@@ -4368,10 +4417,11 @@ const fetchSubjects = async (forceRefresh = false) => {
         id,
         name,
         grade_level,
+        strand,
         description,
         is_active,
         created_at,
-        sections!inner (
+        sections (
           id,
           name,
           section_code,
@@ -4382,7 +4432,6 @@ const fetchSubjects = async (forceRefresh = false) => {
       `)
       .eq('teacher_id', teacherInfo.value.id)
       .eq('is_active', true)
-      .eq('sections.is_active', true)
       .order('name')
 
     if (subjectsError) {
@@ -4438,30 +4487,32 @@ const fetchSubjects = async (forceRefresh = false) => {
     loadingProgress.value = 90
     loadingMessage.value = 'Finalizing...'
 
-    // Process subjects efficiently
+    // Process subjects efficiently - include all subjects, even those without sections
     const subjectGroups = new Map()
 
     subjectsData.forEach(subject => {
+      const subjectName = subject.name
+
+      if (!subjectGroups.has(subjectName)) {
+        subjectGroups.set(subjectName, {
+          id: subject.id,
+          subject_name: subjectName,
+          name: subjectName,
+          description: subject.description,
+          strand: subject.strand,
+          sections: [],
+          grade_levels: new Set(),
+          total_students: 0,
+          section_count: 0,
+          expanded: false
+        })
+      }
+
+      const subjectGroup = subjectGroups.get(subjectName)
+      subjectGroup.grade_levels.add(subject.grade_level)
+
+      // Process sections if they exist
       if (subject.sections && subject.sections.length > 0) {
-        const subjectName = subject.name
-
-        if (!subjectGroups.has(subjectName)) {
-          subjectGroups.set(subjectName, {
-            id: subject.id,
-            subject_name: subjectName,
-            name: subjectName,
-            description: subject.description,
-            sections: [],
-            grade_levels: new Set(),
-            total_students: 0,
-            section_count: 0,
-            expanded: false
-          })
-        }
-
-        const subjectGroup = subjectGroups.get(subjectName)
-        subjectGroup.grade_levels.add(subject.grade_level)
-
         subject.sections.forEach(section => {
           if (section.is_active) {
             const studentCount = enrollmentCounts[section.id] || 0
@@ -4477,6 +4528,7 @@ const fetchSubjects = async (forceRefresh = false) => {
               student_count: studentCount,
               is_active: section.is_active,
               grade_level: subject.grade_level,
+              strand: subject.strand,
               subject_id: subject.id,
               subject_name: subject.name
             })
@@ -4492,14 +4544,20 @@ const fetchSubjects = async (forceRefresh = false) => {
       return {
         ...group,
         grade_levels: gradeLevelsArray,
-        grade_level: gradeLevelsArray[0],
-        grade_level_display: gradeLevelsArray.length === 1 
-          ? `Grade ${gradeLevelsArray[0]}` 
-          : `Grades ${gradeLevelsArray.join(', ')}`
+        grade_level: gradeLevelsArray[0] || null,
+        grade_level_display: gradeLevelsArray.length === 0 
+          ? 'No sections yet' 
+          : gradeLevelsArray.length === 1 
+            ? `Grade ${gradeLevelsArray[0]}` 
+            : `Grades ${gradeLevelsArray.join(', ')}`
       }
     })
 
     subjects.value = processedSubjects
+    
+    console.log(`📊 Subjects loaded: ${processedSubjects.length} subjects total`)
+    console.log('Raw subjects data:', subjectsData.length, 'records from database')
+    console.log('Processed subjects:', processedSubjects.map(s => ({ name: s.name, sections: s.section_count })))
     
     // Update selectedSubject and selectedSection if they exist
     if (selectedSubject.value) {
@@ -4812,6 +4870,7 @@ const saveSubject = async () => {
       grade_level: parseInt(formData.value.grade_level),
       teacher_id: teacherInfo.value.id,
       description: formData.value.description || null,
+      strand: formData.value.strand || null,
       is_active: true
     }
 
@@ -5308,6 +5367,32 @@ const addSelectedStudents = async () => {
 }
 
 // ============================================================
+// GRADE LEVEL CHANGE HANDLER
+// ============================================================
+const onGradeLevelChange = () => {
+  // Clear strand when switching away from Grades 11 and 12
+  if (formData.value.grade_level !== '11' && formData.value.grade_level !== '12') {
+    formData.value.strand = ''
+  }
+}
+
+// ============================================================
+// GRADE LEVEL DISPLAY HELPER
+// ============================================================
+const getGradeDisplayText = (gradeLevel, strand) => {
+  if (gradeLevel >= 11 && strand) {
+    const strandNames = {
+      'STEM': 'STEM',
+      'ABM': 'ABM', 
+      'HUMSS': 'HUMSS',
+      'GAS': 'GAS'
+    };
+    return `Grade ${gradeLevel} - ${strandNames[strand] || strand}`;
+  }
+  return `Grade ${gradeLevel}`;
+}
+
+// ============================================================
 // MODALS
 // ============================================================
 const closeModal = () => {
@@ -5318,6 +5403,7 @@ const closeModal = () => {
   formData.value = {
     name: '',
     grade_level: '',
+    strand: '',
     description: '',
     number_of_sections: '',
     sections: []
@@ -5338,11 +5424,19 @@ const closeSuccessModal = () => {
 // DELETE FUNCTIONALITY
 // ============================================================
 const openDeleteModal = (type, item) => {
+  console.log('🗑️ Opening delete modal for:', type, item)
+  
   deleteType.value = type
   itemToDelete.value = item
   showDeleteModal.value = true
   openMenuId.value = null
   openSubjectMenuId.value = null
+  
+  console.log('🔧 Delete modal state:', { 
+    deleteType: deleteType.value, 
+    itemToDelete: itemToDelete.value, 
+    showDeleteModal: showDeleteModal.value 
+  })
 }
 
 const cancelDelete = () => {
@@ -5362,6 +5456,57 @@ const confirmDelete = async () => {
   itemToDelete.value = null
   deleteType.value = ''
   isDeleting.value = false
+}
+
+const deleteSectionConfirmed = async (sectionId) => {
+  try {
+    if (!teacherInfo.value) return
+
+    isDeleting.value = true
+    
+    console.log('🗑️ Deleting section with ID:', sectionId)
+    
+    // First, delete all enrollments for this section
+    const { error: enrollmentError } = await supabase
+      .from('enrollments')
+      .delete()
+      .eq('section_id', sectionId)
+    
+    if (enrollmentError) {
+      console.error('Error deleting enrollments:', enrollmentError)
+      throw enrollmentError
+    }
+
+    // Then delete the section
+    const { error: sectionError } = await supabase
+      .from('sections')
+      .delete()
+      .eq('id', sectionId)
+    
+    if (sectionError) {
+      console.error('Error deleting section:', sectionError)
+      throw sectionError
+    }
+    
+    // Update local data
+    if (selectedSubject.value && selectedSubject.value.sections) {
+      selectedSubject.value.sections = selectedSubject.value.sections.filter(s => s.id !== sectionId)
+      
+      // Update in main subjects array as well
+      const subjectIndex = subjects.value.findIndex(s => s.id === selectedSubject.value.id)
+      if (subjectIndex !== -1) {
+        subjects.value[subjectIndex].sections = [...selectedSubject.value.sections]
+      }
+    }
+    
+    showToast('Section deleted successfully!', 'success')
+    
+  } catch (error) {
+    console.error('Delete section error:', error)
+    showToast('Error deleting section. Please try again.', 'error')
+  } finally {
+    isDeleting.value = false
+  }
 }
 
 const deleteSubjectConfirmed = async (subjectId) => {
@@ -5468,12 +5613,17 @@ const editingSectionData = ref({
 })
 
 const editSection = (section) => {
+  console.log('🔧 Editing section:', section)
+  
   editingSectionData.value = {
     id: section.id,
     name: section.section_name || section.name,
     max_students: section.max_students,
     section_code: section.section_code
   }
+  
+  console.log('📝 Edit data populated:', editingSectionData.value)
+  
   showEditSectionModal.value = true
   openMenuId.value = null
 }
@@ -5490,19 +5640,33 @@ const saveEditedSection = async () => {
       return
     }
 
+    if (!editingSectionData.value.id) {
+      showToast('Section ID is missing. Please try again.', 'error')
+      return
+    }
+
     isLoading.value = true
 
     const updateData = {
-      name: editingSectionData.value.name.trim(),
+      section_name: editingSectionData.value.name.trim(),
       max_students: parseInt(editingSectionData.value.max_students)
     }
 
-    const { error } = await supabase
+    console.log('🔄 Updating section with ID:', editingSectionData.value.id)
+    console.log('📝 Update data:', updateData)
+
+    const { error, data } = await supabase
       .from('sections')
       .update(updateData)
       .eq('id', editingSectionData.value.id)
+      .select()
 
-    if (error) throw error
+    if (error) {
+      console.error('❌ Supabase update error:', error)
+      throw error
+    }
+
+    console.log('✅ Section updated successfully:', data)
 
     // Update local data immediately for better UX
     if (selectedSubject.value && selectedSubject.value.sections) {
@@ -5510,8 +5674,8 @@ const saveEditedSection = async () => {
       if (sectionIndex !== -1) {
         selectedSubject.value.sections[sectionIndex] = {
           ...selectedSubject.value.sections[sectionIndex],
-          name: updateData.name,
-          section_name: updateData.name,
+          name: updateData.section_name,
+          section_name: updateData.section_name,
           max_students: updateData.max_students
         }
 
@@ -5527,8 +5691,12 @@ const saveEditedSection = async () => {
     showToast('Section updated successfully!', 'success')
 
   } catch (error) {
-    console.error('Error updating section:', error)
-    showToast('Error updating section. Please try again.', 'error')
+    console.error('❌ Error updating section:', error)
+    if (error.message?.includes('duplicate') || error.message?.includes('unique')) {
+      showToast('A section with this name already exists. Please choose a different name.', 'error')
+    } else {
+      showToast('Error updating section. Please try again.', 'error')
+    }
   } finally {
     isLoading.value = false
   }
@@ -5996,6 +6164,36 @@ onUnmounted(() => {
 }
 .dark .grade-level {
   color: #94a3b8;
+}
+
+/* Strand Badge for Senior High School */
+.strand-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  padding: 0.125rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.3);
+}
+
+.dark .strand-badge {
+  background: linear-gradient(135deg, #60a5fa, #3b82f6);
+  box-shadow: 0 1px 3px rgba(96, 165, 250, 0.4);
+}
+
+/* Strand Info for section views */
+.strand-info {
+  font-weight: 600;
+  color: #3b82f6;
+}
+
+.dark .strand-info {
+  color: #60a5fa;
 }
 
 .subject-description {
@@ -10181,6 +10379,32 @@ onUnmounted(() => {
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
+/* Form Hint */
+.form-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #1e40af;
+  line-height: 1.5;
+}
+
+.form-hint svg {
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.dark .form-hint {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #93c5fd;
+}
+
 /* Sections Info Banner */
 .sections-info-banner {
   display: flex;
@@ -11749,5 +11973,47 @@ grid-template-columns: 1fr;
 
 .dark .header-icon-badge {
   border-color: #4b5563 !important;
+}
+
+/* Update the strand badge styles to include GAS */
+.strand-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Different colors for each strand */
+.strand-badge.stem {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2);
+}
+
+.strand-badge.abm {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
+}
+
+.strand-badge.humss {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  box-shadow: 0 2px 4px rgba(124, 58, 237, 0.2);
+}
+
+.strand-badge.gas {
+  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+  box-shadow: 0 2px 4px rgba(234, 88, 12, 0.2);
+}
+
+.dark .strand-badge {
+  border-color: rgba(255, 255, 255, 0.1);
 }
 </style>

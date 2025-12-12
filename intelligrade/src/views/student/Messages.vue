@@ -14,15 +14,26 @@
 
     <!-- Header Section (Uniform Card Style) -->
     <div class="section-header-card minimal-header-card">
-      <div class="section-header-left">
-        <div class="section-header-icon minimal-header-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-          </svg>
+      <div class="section-header-content">
+        <div class="section-header-left">
+          <div class="section-header-icon minimal-header-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+          </div>
+          <div>
+            <div class="section-header-title minimal-header-title">Messages</div>
+            <div class="section-header-sub minimal-header-sub">Chat with your enrolled teachers and view announcements</div>
+          </div>
         </div>
-        <div>
-          <div class="section-header-title minimal-header-title">Messages</div>
-          <div class="section-header-sub minimal-header-sub">Chat with your enrolled teachers and view announcements</div>
+        <div class="header-actions">
+          <button @click="refreshPage" class="refresh-page-btn" :disabled="isRefreshingPage" title="Refresh Messages">
+            <svg :class="{ 'spin': isRefreshingPage }" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="m3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+          </button>
         </div>
       </div>
     </div>
@@ -293,12 +304,21 @@
               <span class="simple-teacher-label">Teacher</span>
             </div>
           </div>
-          <button @click="closeModal" class="simple-close-btn">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
+          <div class="simple-header-actions">
+            <button @click="refreshConversation" class="refresh-btn" :disabled="isRefreshingConversation" title="Refresh Conversation">
+              <svg :class="{ 'spin': isRefreshingConversation }" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="m3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+              </svg>
+            </button>
+            <button @click="closeModal" class="simple-close-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
         </div>
         <div class="simple-modal-body">
           <!-- Loading Messages -->
@@ -756,6 +776,8 @@ const isLoadingTeachers = ref(false)
 const isLoadingNotifications = ref(false)
 const isLoadingMessages = ref(false)
 const isSendingMessage = ref(false)
+const isRefreshingPage = ref(false)
+const isRefreshingConversation = ref(false)
 
 const activeTeacherOptionsId = ref(null)
 const showArchive = ref(false)
@@ -2166,6 +2188,49 @@ const updateStudentPresence = async (isOnline) => {
 }
 
 // ================================
+// REFRESH FUNCTIONS
+// ================================
+
+const refreshPage = async () => {
+  if (isRefreshingPage.value) return
+  
+  try {
+    isRefreshingPage.value = true
+    console.log('Refreshing student messages page...')
+    
+    // Refresh both teachers and notifications
+    await Promise.all([
+      loadEnrolledSubjectsAndTeachers(),
+      loadNotifications()
+    ])
+    
+    console.log('Student messages page refreshed successfully')
+  } catch (error) {
+    console.error('Error refreshing student messages page:', error)
+  } finally {
+    isRefreshingPage.value = false
+  }
+}
+
+const refreshConversation = async () => {
+  if (!activeTeacher.value || isRefreshingConversation.value) return
+  
+  try {
+    isRefreshingConversation.value = true
+    console.log('Refreshing conversation with teacher:', activeTeacher.value.teacher_name)
+    
+    // Reload the conversation messages
+    await loadConversationMessages(activeTeacher.value.id, activeTeacher.value.section_id)
+    
+    console.log('Conversation refreshed successfully')
+  } catch (error) {
+    console.error('Error refreshing conversation:', error)
+  } finally {
+    isRefreshingConversation.value = false
+  }
+}
+
+// ================================
 // LIFECYCLE
 // ================================
 
@@ -2242,6 +2307,13 @@ onUnmounted(() => {
   background: #23272b;
   border: 2px solid #20c997;
   box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+.section-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .section-header-left {
@@ -3538,6 +3610,12 @@ onUnmounted(() => {
     box-sizing: border-box;
   }
   
+  .section-header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
   .section-header-left {
     gap: 0.75rem;
   }
@@ -3555,6 +3633,20 @@ onUnmounted(() => {
   
   .section-header-sub {
     font-size: 0.9rem;
+  }
+  
+  .header-actions {
+    align-self: flex-end;
+  }
+  
+  .refresh-page-btn {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .refresh-page-btn svg {
+    width: 18px;
+    height: 18px;
   }
   
   /* Controls section mobile optimization */
@@ -3976,6 +4068,10 @@ onUnmounted(() => {
     padding: 0.875rem;
   }
   
+  .section-header-content {
+    gap: 0.75rem;
+  }
+  
   .section-header-icon {
     width: 45px;
     height: 45px;
@@ -3983,6 +4079,16 @@ onUnmounted(() => {
   
   .section-header-title {
     font-size: 1.125rem;
+  }
+  
+  .refresh-page-btn {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .refresh-page-btn svg {
+    width: 16px;
+    height: 16px;
   }
   
   .controls-section {
@@ -7768,5 +7874,142 @@ onUnmounted(() => {
 
 [data-theme="dark"] .enhanced-attachment-indicator {
   color: #999;
+}
+
+/* ================================
+   REFRESH BUTTON STYLES
+   ================================ */
+
+/* Header Actions */
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+/* Page Refresh Button */
+.refresh-page-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #20c997, #17a085);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.2);
+}
+
+.refresh-page-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #17a085, #138a72);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(32, 201, 151, 0.35);
+}
+
+.refresh-page-btn:active:not(:disabled) {
+  transform: translateY(0px);
+  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.2);
+}
+
+.refresh-page-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.1);
+  background: linear-gradient(135deg, #20c997, #17a085);
+}
+
+.refresh-page-btn svg {
+  width: 20px;
+  height: 20px;
+  transition: transform 0.3s ease;
+}
+
+/* Modal Header Actions */
+.simple-header-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* Modal Refresh Button */
+.refresh-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #20c997, #17a085);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  box-shadow: 0 2px 6px rgba(32, 201, 151, 0.2);
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #17a085, #138a72);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.35);
+}
+
+.refresh-btn:active:not(:disabled) {
+  transform: translateY(0px);
+  box-shadow: 0 2px 6px rgba(32, 201, 151, 0.2);
+}
+
+.refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 2px 6px rgba(32, 201, 151, 0.1);
+  background: linear-gradient(135deg, #20c997, #17a085);
+}
+
+.refresh-btn svg {
+  width: 18px;
+  height: 18px;
+  transition: transform 0.3s ease;
+}
+
+/* Spin Animation */
+.refresh-btn svg.spin,
+.refresh-page-btn svg.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Dark Mode Support */
+.dark .refresh-btn,
+.dark .refresh-page-btn {
+  background: linear-gradient(135deg, #20c997, #17a085);
+  color: white;
+  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.3);
+}
+
+.dark .refresh-btn:hover:not(:disabled),
+.dark .refresh-page-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #17a085, #138a72);
+  box-shadow: 0 6px 16px rgba(32, 201, 151, 0.4);
+}
+
+.dark .refresh-btn:disabled,
+.dark .refresh-page-btn:disabled {
+  background: linear-gradient(135deg, #20c997, #17a085);
+  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.2);
 }
 </style>

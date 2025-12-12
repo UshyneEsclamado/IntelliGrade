@@ -1,6 +1,6 @@
 <template>
-  <div class="dashboard-container">
-    <!-- Top Navigation Bar (Clean) -->
+  <div class="grade-management-page">
+    <!-- Top Navigation Bar -->
     <nav class="top-navbar">
       <div class="navbar-content">
         <!-- Left: Logo and Brand -->
@@ -11,12 +11,41 @@
           </div>
         </div>
         
-        <!-- Center: Empty space for clean look -->
+        <!-- Center: Breadcrumb Navigation -->
         <div class="navbar-center">
+          <div class="page-breadcrumb">
+            <button @click="goBack" class="breadcrumb-back">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"/>
+              </svg>
+            </button>
+            <span class="breadcrumb-item">Subjects</span>
+            <span class="breadcrumb-separator">></span>
+            <span class="breadcrumb-item">{{ subject?.name || 'Subject' }}</span>
+            <span class="breadcrumb-separator">></span>
+            <span class="breadcrumb-current">Grade Management</span>
+          </div>
         </div>
         
-        <!-- Right: User Profile and Notifications -->
+        <!-- Right: Actions and User Profile -->
         <div class="navbar-right">
+          <button @click="showGradeSettings = true" class="action-btn secondary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/>
+            </svg>
+            Grade Settings
+          </button>
+
+          <button 
+            @click="exportGrades" 
+            :disabled="students.length === 0"
+            class="export-btn"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+            </svg>
+            Export Grades
+          </button>
           <!-- Notification Bell -->
           <div class="notif-wrapper">
             <button class="nav-icon-btn rounded-bg" @click="toggleNotifDropdown" aria-label="Notifications">
@@ -102,79 +131,7 @@
       </div>
     </nav>
 
-    <!-- Sidebar Navigation - Custom Tooltip Labels on Hover -->
-    <aside class="sidebar" style="background:#3D8D7A; border-right:none;">
-      <nav class="sidebar-nav">
-        <router-link to="/teacher/dashboard" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/dashboard' }">
-          <div class="sidebar-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M10 20v-6h4v6m5-8h3L12 3 2 12h3v8h5v-6h4v6h5v-8z" />
-            </svg>
-          </div>
-          <span class="sidebar-tooltip">Dashboard</span>
-        </router-link>
-        <router-link to="/teacher/subjects" class="sidebar-item rounded-bg" :class="{ 'active': $route.path.includes('/teacher/subjects') }">
-          <div class="sidebar-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="7" width="18" height="13" rx="2" />
-              <path d="M3 7l9-4 9 4" />
-            </svg>
-          </div>
-          <span class="sidebar-tooltip">Classes</span>
-        </router-link>
-        <router-link to="/teacher/gradebook" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/gradebook' }">
-          <div class="sidebar-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="4" y="4" width="16" height="16" rx="2" />
-              <path d="M8 2v4M16 2v4" />
-            </svg>
-          </div>
-          <span class="sidebar-tooltip">Gradebook</span>
-        </router-link>
-        <router-link to="/teacher/analytics" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/analytics' }">
-          <div class="sidebar-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="12" width="4" height="8" />
-              <rect x="10" y="8" width="4" height="12" />
-              <rect x="17" y="4" width="4" height="16" />
-            </svg>
-          </div>
-          <span class="sidebar-tooltip">Analytics</span>
-        </router-link>
-        <router-link to="/teacher/messages" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/messages' }">
-          <div class="sidebar-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="5" width="18" height="14" rx="2" />
-              <path d="M3 5l9 7 9-7" />
-            </svg>
-          </div>
-          <span class="sidebar-tooltip">Messages</span>
-        </router-link>
-        
-        <div class="sidebar-divider"></div>
-        
-        <router-link to="/teacher/settings" class="sidebar-item rounded-bg" :class="{ 'active': $route.path === '/teacher/settings' }">
-          <div class="sidebar-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
-          </div>
-          <span class="sidebar-tooltip">Profile & Settings</span>
-        </router-link>
-        
-        <button @click="logout" class="sidebar-item sidebar-logout rounded-bg">
-          <div class="sidebar-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-              <polyline points="16 17 21 12 16 7"></polyline>
-              <line x1="21" y1="12" x2="9" y2="12"></line>
-            </svg>
-          </div>
-          <span class="sidebar-tooltip">Logout</span>
-        </button>
-      </nav>
-    </aside>
+
 
     <!-- Main Content Area -->
     <main class="main-content">
@@ -226,10 +183,15 @@
       </div>
       <div class="controls-content">
         <div class="filters">
-          <select v-model="selectedQuiz" @change="filterByQuiz" class="filter-select">
-            <option value="">All Quizzes ({{ quizzes.length }})</option>
-            <option v-for="quiz in quizzes" :key="quiz.id" :value="quiz.id">
-              {{ quiz.title }}
+          <select v-model="selectedAssessmentType" @change="filterByAssessmentType" class="filter-select">
+            <option value="all">All Assessments ({{ assessments.length }})</option>
+            <option value="quiz">Quizzes Only ({{ quizzes.length }})</option>
+            <option value="assignment">Assignments Only ({{ assignments.length }})</option>
+          </select>
+          <select v-model="selectedAssessment" @change="filterByAssessment" class="filter-select">
+            <option value="">All {{ selectedAssessmentType === 'all' ? 'Assessments' : selectedAssessmentType === 'quiz' ? 'Quizzes' : 'Assignments' }}</option>
+            <option v-for="assessment in displayedAssessments" :key="assessment.id" :value="assessment.id">
+              {{ assessment.title }} ({{ assessment.type === 'quiz' ? 'Quiz' : 'Assignment' }})
             </option>
           </select>
           <select v-model="viewMode" @change="changeViewMode" class="filter-select">
@@ -255,97 +217,113 @@
     <!-- Grade Table -->
     <div class="table-container">
       <div class="table-header">
-        <h2 class="table-title">Student Grades ({{ students.length }} Students)</h2>
+        <h2 class="table-title">
+          Student Grades ({{ students.length }} Students)
+          <span class="assessment-count">
+            - {{ displayedAssessments.length }} {{ selectedAssessmentType === 'all' ? 'Assessments' : selectedAssessmentType === 'quiz' ? 'Quizzes' : 'Assignments' }}
+          </span>
+        </h2>
       </div>
 
       <div v-if="filteredStudents.length > 0" class="table-wrapper">
         <!-- Debug info -->
-        <div v-if="quizzes.length === 0" class="quiz-debug" style="padding: 1rem; background: #fef3c7; margin-bottom: 1rem; border-radius: 8px; color: #92400e;">
-          <p><strong>No quizzes found for this section.</strong></p>
-          <p>Make sure you have published quizzes for this subject and section.</p>
+        <div v-if="assessments.length === 0" class="assessment-debug" style="padding: 1rem; background: #fef3c7; margin-bottom: 1rem; border-radius: 8px; color: #92400e;">
+          <p><strong>No assessments found for this section.</strong></p>
+          <p>Make sure you have published quizzes and assignments for this subject and section.</p>
         </div>
         
-        <table class="grade-table">
-          <thead>
-            <tr>
-              <th class="student-column">
-                <div class="column-header">
-                  <span>Student</span>
-                </div>
-              </th>
-              <th v-for="quiz in displayedQuizzes" :key="quiz.id" class="quiz-column">
-                <div class="column-header quiz-header">
-                  <span class="quiz-title">{{ quiz.title }}</span>
-                  <small class="quiz-points">({{ quiz.total_points || 100 }} pts)</small>
-                </div>
-              </th>
-              <th v-if="quizzes.length === 0" class="no-quizzes-column">
-                <div class="column-header">
-                  <span>No Quizzes</span>
-                  <small>Publish quizzes to see grades</small>
-                </div>
-              </th>
-              <th class="average-column">
-                <div class="column-header">
-                  <span>Average</span>
-                  <small>Overall Grade</small>
-                </div>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="student in filteredStudents" :key="student.id" class="student-row">
-              <td class="student-column">
-                <div class="student-info">
-                  <div class="student-avatar">
-                    {{ getInitials(student.first_name, student.last_name) }}
+        <!-- Scrollable table container -->
+        <div class="scrollable-table-container">
+          <table class="grade-table">
+            <thead>
+              <tr>
+                <th class="student-column sticky-column">
+                  <div class="column-header">
+                    <span>Student</span>
                   </div>
-                  <div class="student-details">
-                    <div class="student-name">{{ student.first_name }} {{ student.last_name }}</div>
-                    <div class="student-email">{{ student.email }}</div>
-                  </div>
-                </div>
-              </td>
-              <td v-for="quiz in displayedQuizzes" :key="quiz.id" class="quiz-column">
-                <div class="grade-cell">
-                  <input
-                    v-if="viewMode === 'edit'"
-                    :value="getGradeValue(student.id, quiz.id)"
-                    @input="updateGrade(student.id, quiz.id, $event)"
-                    @blur="saveGradeToDatabase(student.id, quiz.id)"
-                    type="number"
-                    :min="0"
-                    :max="quiz.total_points || 100"
-                    class="grade-input"
-                    :placeholder="`0/${quiz.total_points || 100}`"
-                  />
-                  <div v-else class="grade-display" :class="getGradeClass(getGradeValue(student.id, quiz.id), quiz.total_points || 100)">
-                    <span class="grade-score">{{ getGradeValue(student.id, quiz.id) }}</span>
-                    <span class="grade-separator">/</span>
-                    <span class="grade-total">{{ quiz.total_points || 100 }}</span>
-                    <div class="grade-percentage">
-                      {{ formatGrade(getGradeValue(student.id, quiz.id), quiz.total_points || 100) }}
+                </th>
+                <th v-for="assessment in displayedAssessments" :key="assessment.id" class="assessment-column" :class="assessment.type + '-column'">
+                  <div class="column-header assessment-header">
+                    <div class="assessment-title">{{ assessment.title }}</div>
+                    <div class="assessment-meta">
+                      <span class="assessment-type" :class="assessment.type">
+                        {{ assessment.type === 'quiz' ? 'Quiz' : 'Assignment' }}
+                      </span>
+                      <span class="assessment-points">({{ assessment.total_points || 100 }} pts)</span>
+                    </div>
+                    <div v-if="assessment.due_date" class="assessment-due">
+                      Due: {{ formatDate(assessment.due_date) }}
                     </div>
                   </div>
-                </div>
-              </td>
-              <td v-if="quizzes.length === 0" class="no-quizzes-column">
-                <div class="no-quiz-message">
-                  <span>No quizzes</span>
-                </div>
-              </td>
-              <td class="average-column">
-                <div class="average-cell">
-                  <div class="average-display" :class="getAverageClass(student.average)">
-                    <span class="average-percentage">{{ student.average !== null ? Math.round(student.average) + '%' : 'N/A' }}</span>
-                    <small class="average-label" v-if="student.average !== null && student.average > 0">{{ getLetterGrade(student.average) }}</small>
-                    <small class="average-label" v-else>No Grades</small>
+                </th>
+                <th v-if="assessments.length === 0" class="no-assessments-column">
+                  <div class="column-header">
+                    <span>No Assessments</span>
+                    <small>Publish assessments to see grades</small>
                   </div>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                </th>
+                <th class="average-column sticky-column">
+                  <div class="column-header">
+                    <span>Average</span>
+                    <small>Overall Grade</small>
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="student in filteredStudents" :key="student.id" class="student-row">
+                <td class="student-column sticky-column">
+                  <div class="student-info">
+                    <div class="student-avatar">
+                      {{ getInitials(student.first_name, student.last_name) }}
+                    </div>
+                    <div class="student-details">
+                      <div class="student-name">{{ student.first_name }} {{ student.last_name }}</div>
+                      <div class="student-email">{{ student.email }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td v-for="assessment in displayedAssessments" :key="assessment.id" class="assessment-column" :class="assessment.type + '-column'">
+                  <div class="grade-cell">
+                    <input
+                      v-if="viewMode === 'edit'"
+                      :value="getGradeValue(student.id, assessment.id)"
+                      @input="updateGrade(student.id, assessment.id, $event, assessment.type)"
+                      @blur="saveGradeToDatabase(student.id, assessment.id, assessment.type)"
+                      type="number"
+                      :min="0"
+                      :max="assessment.total_points || 100"
+                      class="grade-input"
+                      :placeholder="`0/${assessment.total_points || 100}`"
+                    />
+                    <div v-else class="grade-display" :class="getGradeClass(getGradeValue(student.id, assessment.id), assessment.total_points || 100)">
+                      <span class="grade-score">{{ getGradeValue(student.id, assessment.id) }}</span>
+                      <span class="grade-separator">/</span>
+                      <span class="grade-total">{{ assessment.total_points || 100 }}</span>
+                      <div class="grade-percentage">
+                        {{ formatGrade(getGradeValue(student.id, assessment.id), assessment.total_points || 100) }}
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td v-if="assessments.length === 0" class="no-assessments-column">
+                  <div class="no-assessment-message">
+                    <span>No assessments</span>
+                  </div>
+                </td>
+                <td class="average-column sticky-column">
+                  <div class="average-cell">
+                    <div class="average-display" :class="getAverageClass(student.average)">
+                      <span class="average-percentage">{{ student.average !== null ? Math.round(student.average) + '%' : 'N/A' }}</span>
+                      <small class="average-label" v-if="student.average !== null && student.average > 0">{{ getLetterGrade(student.average) }}</small>
+                      <small class="average-label" v-else>No Grades</small>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div v-else class="empty-state">
@@ -484,20 +462,23 @@ interface Student {
   average: number | null
 }
 
-interface Quiz {
+interface Assessment {
   id: string
   title: string
   total_points: number
   created_at: string
   status?: string
+  type: 'quiz' | 'assignment'
+  due_date?: string
 }
 
-interface QuizResult {
+interface AssessmentResult {
   id: string
-  quiz_id: string
+  assessment_id: string
   student_id: string
   best_score: number
   best_percentage: number
+  type: 'quiz' | 'assignment'
 }
 
 // Initialize composables
@@ -521,18 +502,23 @@ const isLoggingOut = ref(false)
 
 // Grade management state
 const students = ref<Student[]>([])
-const quizzes = ref<Quiz[]>([])
+const assessments = ref<Assessment[]>([])
+const quizzes = ref<Assessment[]>([])
+const assignments = ref<Assessment[]>([])
 const grades = ref<Record<string, Record<string, number>>>({})
-const quizResults = ref<QuizResult[]>([])
+const assessmentResults = ref<AssessmentResult[]>([])
 const subject = ref<any>(null)
 const section = ref<any>(null)
 const subjectId = ref(route.params.subjectId as string)
 const sectionId = ref(route.params.sectionId as string)
 
+// New filter state
+const selectedAssessmentType = ref('all') // 'all', 'quiz', 'assignment'
+const selectedAssessment = ref('')
+
 const isLoading = ref(false)
 const loadingMessage = ref('')
 const viewMode = ref('edit')
-const selectedQuiz = ref('')
 const showGradeSettings = ref(false)
 const showToast = ref(false)
 const toastMessage = ref('')
@@ -542,7 +528,27 @@ const gradeScale = ref({ A: 90, B: 80, C: 70, D: 60 })
 const displayOptions = ref({ showPercentages: true, showLetterGrades: false, roundToWhole: true })
 
 const filteredStudents = computed(() => [...students.value])
-const displayedQuizzes = computed(() => selectedQuiz.value ? quizzes.value.filter(q => q.id === selectedQuiz.value) : quizzes.value)
+
+const displayedAssessments = computed(() => {
+  let filtered = assessments.value
+  
+  // Filter by type
+  if (selectedAssessmentType.value === 'quiz') {
+    filtered = assessments.value.filter(a => a.type === 'quiz')
+  } else if (selectedAssessmentType.value === 'assignment') {
+    filtered = assessments.value.filter(a => a.type === 'assignment')
+  }
+  
+  // Filter by specific assessment
+  if (selectedAssessment.value) {
+    filtered = filtered.filter(a => a.id === selectedAssessment.value)
+  }
+  
+  return filtered
+})
+
+// Computed for legacy compatibility
+const displayedQuizzes = computed(() => displayedAssessments.value)
 
 // Methods for UI interactions
 const toggleNotifDropdown = () => {
@@ -761,34 +767,52 @@ const getAverageClass = (average: number | null): string => {
   return 'grade-f'
 }
 
-const updateGrade = (studentId: string, quizId: string, event: Event) => {
+const updateGrade = (studentId: string, assessmentId: string, event: Event, assessmentType?: string) => {
   const target = event.target as HTMLInputElement
   const newGrade = Number(target.value)
   
   if (!grades.value[studentId]) grades.value[studentId] = {}
-  grades.value[studentId][quizId] = newGrade
+  grades.value[studentId][assessmentId] = newGrade
   calculateStudentAverage(studentId)
 }
 
-const saveGradeToDatabase = async (studentId: string, quizId: string) => {
-  const grade = getGradeValue(studentId, quizId)
-  const quiz = quizzes.value.find(q => q.id === quizId)
-  if (!quiz) return
+const saveGradeToDatabase = async (studentId: string, assessmentId: string, assessmentType: string) => {
+  const grade = getGradeValue(studentId, assessmentId)
+  const assessment = assessments.value.find(a => a.id === assessmentId)
+  if (!assessment) return
   
   try {
-    const percentage = (grade / quiz.total_points) * 100
-    const { error } = await supabase.from('quiz_results').upsert({
-      quiz_id: quizId,
-      student_id: studentId,
-      best_score: grade,
-      best_percentage: percentage,
-      status: 'graded',
-      finalized: true,
-      visible_to_student: true,
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'quiz_id,student_id' })
+    const percentage = (grade / assessment.total_points) * 100
     
-    if (error) throw error
+    if (assessmentType === 'quiz') {
+      // Save to quiz_results table
+      const { error } = await supabase.from('quiz_results').upsert({
+        quiz_id: assessmentId,
+        student_id: studentId,
+        best_score: grade,
+        best_percentage: percentage,
+        status: 'graded',
+        finalized: true,
+        visible_to_student: true,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'quiz_id,student_id' })
+      
+      if (error) throw error
+    } else if (assessmentType === 'assignment') {
+      // Save to assignment_submissions table
+      const { error } = await supabase.from('assignment_submissions').upsert({
+        assignment_id: assessmentId,
+        student_id: studentId,
+        score: grade,
+        status: 'graded',
+        graded_by: teacherId.value,
+        graded_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'assignment_id,student_id' })
+      
+      if (error) throw error
+    }
+    
     showToastMessage('Grade saved successfully!', 'success')
   } catch (error) {
     console.error('Error saving grade:', error)
@@ -800,9 +824,9 @@ const calculateStudentAverage = (studentId: string) => {
   const studentGrades = grades.value[studentId]
   if (!studentGrades) return
 
-  const gradeValues = Object.entries(studentGrades).map(([quizId, grade]) => {
-    const quiz = quizzes.value.find(q => q.id === quizId)
-    return quiz ? (Number(grade) / quiz.total_points) * 100 : 0
+  const gradeValues = Object.entries(studentGrades).map(([assessmentId, grade]) => {
+    const assessment = assessments.value.find(a => a.id === assessmentId)
+    return assessment ? (Number(grade) / assessment.total_points) * 100 : 0
   }).filter(val => val > 0)
 
   if (gradeValues.length > 0) {
@@ -812,12 +836,28 @@ const calculateStudentAverage = (studentId: string) => {
   }
 }
 
-const filterByQuiz = () => {
-  console.log('Filtering by quiz:', selectedQuiz.value)
+const filterByAssessmentType = () => {
+  console.log('Filtering by assessment type:', selectedAssessmentType.value)
+  selectedAssessment.value = '' // Reset specific assessment filter
+}
+
+const filterByAssessment = () => {
+  console.log('Filtering by assessment:', selectedAssessment.value)
 }
 
 const changeViewMode = () => {
   console.log('View mode changed to:', viewMode.value)
+}
+
+// Add date formatting function
+const formatDate = (dateString: string) => {
+  if (!dateString) return 'N/A'
+  const date = new Date(dateString)
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  })
 }
 
 const saveGradeSettings = () => {
@@ -865,6 +905,7 @@ const fetchData = async () => {
       }
     }) || []
     
+    // Fetch quizzes
     const { data: quizzesData, error: quizzesError } = await supabase
       .from('quizzes').select('id, title, created_at, status')
       .eq('subject_id', subjectId.value).eq('section_id', sectionId.value)
@@ -872,7 +913,7 @@ const fetchData = async () => {
     
     if (quizzesError) throw quizzesError
     
-    const quizzesWithPoints: Quiz[] = []
+    const quizzesWithPoints: Assessment[] = []
     for (const quiz of quizzesData || []) {
       const { data: questionsData } = await supabase
         .from('quiz_questions').select('points').eq('quiz_id', quiz.id)
@@ -884,26 +925,93 @@ const fetchData = async () => {
         title: quiz.title,
         created_at: quiz.created_at,
         status: quiz.status,
-        total_points: totalPoints
+        total_points: totalPoints,
+        type: 'quiz'
       })
     }
     
-    quizzes.value = quizzesWithPoints
+    // Fetch assignments
+    const { data: assignmentsData, error: assignmentsError } = await supabase
+      .from('assignments').select('id, title, total_points, created_at, status, due_date')
+      .eq('subject_id', subjectId.value).eq('section_id', sectionId.value)
+      .eq('status', 'published').order('created_at', { ascending: true })
     
-    if (quizzes.value.length > 0 && students.value.length > 0) {
-      const { data: resultsData, error: resultsError } = await supabase
-        .from('quiz_results').select('*')
-        .in('quiz_id', quizzes.value.map(q => q.id))
-        .in('student_id', students.value.map(s => s.id))
-      
-      if (resultsError) throw resultsError
-      
-      quizResults.value = resultsData || []
+    if (assignmentsError) throw assignmentsError
+    
+    const assignmentsWithType: Assessment[] = (assignmentsData || []).map(assignment => ({
+      id: assignment.id,
+      title: assignment.title,
+      created_at: assignment.created_at,
+      status: assignment.status,
+      total_points: assignment.total_points || 100,
+      type: 'assignment' as const,
+      due_date: assignment.due_date
+    }))
+    
+    // Combine and set data
+    quizzes.value = quizzesWithPoints
+    assignments.value = assignmentsWithType
+    assessments.value = [...quizzesWithPoints, ...assignmentsWithType].sort((a, b) => 
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    )
+    
+    // Load grades for both quizzes and assignments
+    if (assessments.value.length > 0 && students.value.length > 0) {
       grades.value = {}
-      resultsData?.forEach((result: QuizResult) => {
-        if (!grades.value[result.student_id]) grades.value[result.student_id] = {}
-        grades.value[result.student_id][result.quiz_id] = result.best_score || 0
-      })
+      assessmentResults.value = []
+      
+      // Load quiz results
+      if (quizzesWithPoints.length > 0) {
+        const { data: quizResultsData, error: quizResultsError } = await supabase
+          .from('quiz_results').select('*')
+          .in('quiz_id', quizzesWithPoints.map(q => q.id))
+          .in('student_id', students.value.map(s => s.id))
+        
+        if (quizResultsError) throw quizResultsError
+        
+        quizResultsData?.forEach((result: any) => {
+          if (!grades.value[result.student_id]) grades.value[result.student_id] = {}
+          grades.value[result.student_id][result.quiz_id] = result.best_score || 0
+          
+          assessmentResults.value.push({
+            id: result.id,
+            assessment_id: result.quiz_id,
+            student_id: result.student_id,
+            best_score: result.best_score || 0,
+            best_percentage: result.best_percentage || 0,
+            type: 'quiz'
+          })
+        })
+      }
+      
+      // Load assignment submissions
+      if (assignmentsWithType.length > 0) {
+        const { data: assignmentSubmissions, error: assignmentSubmissionsError } = await supabase
+          .from('assignment_submissions').select('*')
+          .in('assignment_id', assignmentsWithType.map(a => a.id))
+          .in('student_id', students.value.map(s => s.id))
+          .eq('status', 'graded')
+        
+        if (assignmentSubmissionsError) throw assignmentSubmissionsError
+        
+        assignmentSubmissions?.forEach((submission: any) => {
+          if (!grades.value[submission.student_id]) grades.value[submission.student_id] = {}
+          grades.value[submission.student_id][submission.assignment_id] = submission.score || 0
+          
+          // Calculate percentage for assignment
+          const assignment = assignmentsWithType.find(a => a.id === submission.assignment_id)
+          const percentage = assignment ? (submission.score / assignment.total_points) * 100 : 0
+          
+          assessmentResults.value.push({
+            id: submission.id,
+            assessment_id: submission.assignment_id,
+            student_id: submission.student_id,
+            best_score: submission.score || 0,
+            best_percentage: percentage,
+            type: 'assignment'
+          })
+        })
+      }
     }
     
     students.value.forEach(student => calculateStudentAverage(student.id))
@@ -926,13 +1034,15 @@ const exportGrades = () => {
   }
   
   try {
-    let csv = 'Student Name,Email,' + quizzes.value.map(q => q.title).join(',') + ',Average\n'
+    // Create headers with assessment names and types
+    const assessmentHeaders = displayedAssessments.value.map(a => `${a.title} (${a.type === 'quiz' ? 'Quiz' : 'Assignment'})`)
+    let csv = 'Student Name,Email,' + assessmentHeaders.join(',') + ',Average\n'
     
     students.value.forEach(student => {
       csv += `"${student.first_name} ${student.last_name}","${student.email}",`
-      quizzes.value.forEach(quiz => {
-        const grade = getGradeValue(student.id, quiz.id)
-        const percentage = quiz.total_points ? Math.round((grade / quiz.total_points) * 100) : 0
+      displayedAssessments.value.forEach(assessment => {
+        const grade = getGradeValue(student.id, assessment.id)
+        const percentage = assessment.total_points ? Math.round((grade / assessment.total_points) * 100) : 0
         csv += `${percentage}%,`
       })
       csv += `${student.average ? Math.round(student.average) + '%' : 'N/A'}\n`
@@ -989,7 +1099,7 @@ onUnmounted(() => {
   box-sizing: border-box;
 }
 
-.dashboard-container {
+.grade-management-page {
   min-height: 100vh;
   height: 100vh;
   width: 100vw;
@@ -1163,6 +1273,108 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+/* Breadcrumb Navigation */
+.page-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.breadcrumb-back {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.breadcrumb-back:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateX(-2px);
+}
+
+.breadcrumb-item {
+  color: rgba(255, 255, 255, 0.8);
+  transition: color 0.2s;
+}
+
+.breadcrumb-item:hover {
+  color: white;
+}
+
+.breadcrumb-separator {
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0 0.25rem;
+}
+
+.breadcrumb-current {
+  color: white;
+  font-weight: 600;
+}
+
+/* Action Buttons */
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  text-decoration: none;
+}
+
+.action-btn.secondary {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.action-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.export-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.export-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.export-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* User Profile and Notifications */
@@ -1435,11 +1647,10 @@ onUnmounted(() => {
 }
 /* Main Content */
 .main-content {
-  margin-left: 80px;
   margin-top: 64px;
-  padding: 2rem;
+  padding: 1.5rem;
   height: calc(100vh - 64px);
-  width: calc(100vw - 80px);
+  width: 100vw;
   overflow-y: auto;
   overflow-x: hidden;
   position: relative;
@@ -1447,22 +1658,25 @@ onUnmounted(() => {
 
 /* Custom Scrollbar for Main Content */
 .main-content::-webkit-scrollbar {
-  width: 6px;
+  width: 10px;
 }
 
 .main-content::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 3px;
+  background: #e2e8f0;
+  border-radius: 5px;
+  margin: 4px;
 }
 
 .main-content::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
-  transition: background 0.2s;
+  background: #94a3b8;
+  border-radius: 5px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s;
 }
 
 .main-content::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #64748b;
+  border-color: #cbd5e1;
 }
 
 .dark .main-content::-webkit-scrollbar-track {
@@ -2135,7 +2349,7 @@ onUnmounted(() => {
 .dark .table-wrapper::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
-.grade-table { width: 100%; border-collapse: collapse; min-width: 800px; }
+.grade-table { width: 100%; border-collapse: collapse; min-width: 1200px; }
 
 /* Table Styling */
 .grade-table thead tr {
@@ -3053,6 +3267,240 @@ onUnmounted(() => {
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+/* Enhanced Scrollable Table Styles */
+.scrollable-table-container {
+  overflow: auto;
+  max-height: calc(100vh - 280px);
+  max-width: 100%;
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 #e2e8f0;
+  position: relative;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  background: white;
+}
+
+.scrollable-table-container::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.scrollable-table-container::-webkit-scrollbar-track {
+  background: #e2e8f0;
+  border-radius: 6px;
+  margin: 4px;
+}
+
+.scrollable-table-container::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 6px;
+  border: 2px solid #e2e8f0;
+  transition: all 0.2s;
+}
+
+.scrollable-table-container::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+  border-color: #cbd5e1;
+}
+
+.scrollable-table-container::-webkit-scrollbar-corner {
+  background: #f1f5f9;
+}
+
+.dark .scrollable-table-container {
+  scrollbar-color: #64748b #334155;
+}
+
+.dark .scrollable-table-container::-webkit-scrollbar-track {
+  background: #374151;
+  border-radius: 6px;
+  margin: 4px;
+}
+
+.dark .scrollable-table-container::-webkit-scrollbar-thumb {
+  background: #64748b;
+  border-radius: 6px;
+  border: 2px solid #374151;
+  transition: all 0.2s;
+}
+
+.dark .scrollable-table-container::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+  border-color: #4b5563;
+}
+
+.dark .scrollable-table-container::-webkit-scrollbar-corner {
+  background: #334155;
+}
+
+/* Sticky columns for better scrolling experience */
+.sticky-column {
+  position: sticky;
+  background: white;
+  z-index: 2;
+}
+
+.dark .sticky-column {
+  background: #23272b;
+}
+
+.student-column.sticky-column {
+  left: 0;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+}
+
+.average-column.sticky-column {
+  right: 0;
+  box-shadow: -2px 0 4px rgba(0, 0, 0, 0.1);
+}
+
+.dark .student-column.sticky-column,
+.dark .average-column.sticky-column {
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Assessment column styling for different types */
+.assessment-column.quiz-column {
+  background: rgba(59, 130, 246, 0.02);
+}
+
+.assessment-column.assignment-column {
+  background: rgba(245, 158, 11, 0.02);
+}
+
+.dark .assessment-column.quiz-column {
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.dark .assessment-column.assignment-column {
+  background: rgba(245, 158, 11, 0.05);
+}
+
+/* Assessment header styling */
+.assessment-header {
+  min-height: 80px;
+  justify-content: center;
+  text-align: center;
+}
+
+.assessment-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  margin-bottom: 0.5rem;
+}
+
+.assessment-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.assessment-type {
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.assessment-type.quiz {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.assessment-type.assignment {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.dark .assessment-type.quiz {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+}
+
+.dark .assessment-type.assignment {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fcd34d;
+}
+
+.assessment-points {
+  font-size: 0.75rem;
+  opacity: 0.8;
+  font-weight: 400;
+}
+
+.assessment-due {
+  font-size: 0.7rem;
+  opacity: 0.7;
+  font-style: italic;
+  margin-top: 0.25rem;
+}
+
+.assessment-count {
+  font-weight: 500;
+  opacity: 0.8;
+  font-size: 0.9rem;
+}
+
+/* No assessments styling */
+.no-assessments-column {
+  min-width: 200px;
+  text-align: center;
+}
+
+.no-assessment-message {
+  color: #6b7280;
+  font-style: italic;
+  padding: 1rem;
+}
+
+.dark .no-assessment-message {
+  color: #9ca3af;
+}
+
+.assessment-debug {
+  background: #fef3c7;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  color: #92400e;
+  border: 1px solid #fed7aa;
+}
+
+.dark .assessment-debug {
+  background: rgba(251, 146, 60, 0.1);
+  color: #fed7aa;
+  border-color: rgba(251, 146, 60, 0.3);
+}
+
+/* Mobile responsiveness for scrollable table */
+@media (max-width: 768px) {
+  .scrollable-table-container {
+    max-height: 60vh;
+  }
+  
+  .assessment-header {
+    min-height: 70px;
+  }
+  
+  .assessment-title {
+    font-size: 0.8rem;
+  }
+  
+  .assessment-type {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.4rem;
+  }
+  
+  .assessment-points {
+    font-size: 0.7rem;
+  }
 }
 
 </style>

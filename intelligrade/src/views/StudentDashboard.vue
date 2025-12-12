@@ -1,4 +1,4 @@
-<!-- TEMPLATE SECTION -->
+<!-- UPDATED TEMPLATE SECTION WITH STRAND SUPPORT -->
 <template>
   <div class="dashboard-container">
     <!-- Mobile Top Header -->
@@ -24,8 +24,12 @@
           <h3 v-else class="no-name-text">
             Hi Student!
           </h3>
+          <!-- Updated Grade Display with Strand -->
           <p v-if="userProfile.grade" class="grade">
             Grade {{ userProfile.grade }}
+            <span v-if="isSeniorHigh && userProfile.strand" class="strand-badge">
+              {{ userProfile.strand }}
+            </span>
           </p>
         </div>
       </div>
@@ -59,7 +63,13 @@
               <h4 v-if="userProfile.fullName">{{ userProfile.fullName }}</h4>
               <h4 v-else>Student</h4>
               <p class="role-text">STUDENT</p>
-              <p v-if="userProfile.grade" class="grade-text">GRADE {{ userProfile.grade }}</p>
+              <!-- Updated Grade Display with Strand in Dropdown -->
+              <p v-if="userProfile.grade" class="grade-text">
+                GRADE {{ userProfile.grade }}
+                <span v-if="isSeniorHigh && userProfile.strand" class="strand-text">
+                  - {{ userProfile.strand }}
+                </span>
+              </p>
               <p v-if="userProfile.studentId" class="student-id-text">ID: {{ userProfile.studentId }}</p>
             </div>
           </div>
@@ -107,11 +117,20 @@
           
           <p class="role">STUDENT</p>
           
+          <!-- Updated Grade Display with Strand in Sidebar -->
           <p v-if="userProfile.grade" class="grade">
             GRADE {{ userProfile.grade }}
+            <span v-if="isSeniorHigh && userProfile.strand" class="strand-inline">
+              - {{ userProfile.strand }}
+            </span>
           </p>
           <p v-else class="grade grade-missing">
             GRADE NOT SET
+          </p>
+          
+          <!-- Display School Level -->
+          <p v-if="userProfile.grade" class="school-level">
+            {{ schoolLevel }}
           </p>
           
           <p v-if="userProfile.studentId" class="student-id">
@@ -334,6 +353,7 @@ export default {
         fullName: '',
         studentId: '',
         grade: null,
+        strand: null,
         email: '',
         role: '',
         profilePhoto: null
@@ -347,6 +367,43 @@ export default {
       isLoggingOut: false,
       isLoadingProfile: true
     };
+  },
+  computed: {
+    // Check if student is in Senior High School (Grades 11-12)
+    isSeniorHigh() {
+      return this.userProfile.grade === 11 || this.userProfile.grade === 12;
+    },
+    
+    // Get school level text
+    schoolLevel() {
+      if (!this.userProfile.grade) return '';
+      return this.isSeniorHigh ? 'Senior High School' : 'Junior High School';
+    },
+    
+    // Get full strand name
+    strandFullName() {
+      if (!this.userProfile.strand) return '';
+      
+      const strandNames = {
+        'STEM': 'Science, Technology, Engineering, Mathematics',
+        'ABM': 'Accountancy, Business, Management',
+        'HUMSS': 'Humanities and Social Sciences',
+        'GAS': 'General Academic Strand'
+      };
+      
+      return strandNames[this.userProfile.strand] || this.userProfile.strand;
+    },
+    
+    // Get formatted grade display
+    gradeDisplay() {
+      if (!this.userProfile.grade) return 'Grade not set';
+      
+      if (this.isSeniorHigh && this.userProfile.strand) {
+        return `Grade ${this.userProfile.grade} - ${this.userProfile.strand}`;
+      }
+      
+      return `Grade ${this.userProfile.grade}`;
+    }
   },
   watch: {
     '$route'() {
@@ -462,11 +519,12 @@ export default {
         console.log('');
         console.log('📋 STEP 4: Setting userProfile data...');
         
-        // FIXED: Direct assignment without fallbacks that cause issues
+        // Set all profile data including strand
         this.userProfile.fullName = studentData.full_name || '';
         this.userProfile.email = studentData.email || '';
         this.userProfile.studentId = studentData.student_id || '';
         this.userProfile.grade = studentData.grade_level;
+        this.userProfile.strand = studentData.strand || null;
         this.userProfile.role = 'student';
         this.userProfile.profilePhoto = profileData.profile_photo || null;
 
@@ -476,6 +534,9 @@ export default {
         console.log('Full Name:', this.userProfile.fullName);
         console.log('Student ID:', this.userProfile.studentId);
         console.log('Grade Level:', this.userProfile.grade);
+        console.log('Strand:', this.userProfile.strand);
+        console.log('School Level:', this.schoolLevel);
+        console.log('Is Senior High:', this.isSeniorHigh);
         console.log('Role:', this.userProfile.role);
         console.log('Email:', this.userProfile.email);
         console.log('Profile Photo:', this.userProfile.profilePhoto);
@@ -543,6 +604,7 @@ export default {
             if (payload.new) {
               this.userProfile.studentId = payload.new.student_id || this.userProfile.studentId;
               this.userProfile.grade = payload.new.grade_level;
+              this.userProfile.strand = payload.new.strand || null;
               this.$forceUpdate();
             }
           }
@@ -582,6 +644,7 @@ export default {
       this.userProfile.email = 'Check Console';
       this.userProfile.studentId = 'ERROR';
       this.userProfile.grade = null;
+      this.userProfile.strand = null;
       this.userProfile.role = 'student';
       this.userProfile.profilePhoto = null;
       this.$forceUpdate();
@@ -694,7 +757,16 @@ export default {
 
     handleProfileUpdate(event) {
       console.log('📢 Handling profile update event:', event.detail);
-      const { gradeChanged, nameChanged, studentIdChanged, newGrade, newName, newStudentId } = event.detail || {};
+      const { 
+        gradeChanged, 
+        nameChanged, 
+        studentIdChanged, 
+        strandChanged,
+        newGrade, 
+        newName, 
+        newStudentId,
+        newStrand 
+      } = event.detail || {};
       
       if (gradeChanged && newGrade !== undefined) {
         this.userProfile.grade = newGrade;
@@ -704,6 +776,9 @@ export default {
       }
       if (studentIdChanged && newStudentId) {
         this.userProfile.studentId = newStudentId;
+      }
+      if (strandChanged !== undefined) {
+        this.userProfile.strand = newStrand || null;
       }
       
       this.$forceUpdate();
@@ -1914,5 +1989,138 @@ html, body {
     width: 24px;
     height: 24px;
   }
+}
+
+/* ============================================
+   STRAND DISPLAY STYLES - ADD TO <style scoped>
+   ============================================ */
+
+/* Sidebar Grade with Strand Inline */
+.user-info .grade {
+  font-size: 0.85rem;
+  color: var(--accent-color);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+  word-break: break-word;
+  min-height: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.strand-inline {
+  color: var(--accent-light);
+  font-weight: 600;
+}
+
+/* School Level Indicator */
+.school-level {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 0.5rem;
+  opacity: 0.8;
+}
+
+/* Mobile Header Grade with Strand Badge */
+.header-left .grade {
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin: 0;
+  color: var(--accent-color);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.strand-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-light) 100%);
+  color: white;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(95, 179, 160, 0.2);
+}
+
+/* Profile Dropdown Strand Display */
+.grade-text {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--accent-color);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0.25rem 0 0 0;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.strand-text {
+  color: var(--accent-light);
+  font-weight: 600;
+}
+
+/* ============================================
+   RESPONSIVE STYLES FOR MOBILE
+   ============================================ */
+
+/* Small Mobile Devices */
+@media (max-width: 480px) {
+  .strand-badge {
+    font-size: 0.65rem;
+    padding: 0.12rem 0.4rem;
+  }
+  
+  .strand-inline {
+    font-size: 0.8rem;
+  }
+}
+
+/* iPhone 12 Pro and Similar */
+@media (max-width: 390px) {
+  .header-left .grade {
+    font-size: 0.7rem;
+  }
+  
+  .strand-badge {
+    font-size: 0.65rem;
+    padding: 0.1rem 0.4rem;
+  }
+}
+
+/* ============================================
+   DARK MODE ENHANCEMENTS (Optional)
+   ============================================ */
+
+:root.dark .strand-badge {
+  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-light) 100%);
+  box-shadow: 0 2px 4px rgba(95, 179, 160, 0.3);
+}
+
+:root.dark .strand-inline {
+  color: var(--accent-light);
+}
+
+:root.dark .strand-text {
+  color: var(--accent-light);
+}
+
+:root.dark .school-level {
+  color: var(--text-muted);
+  opacity: 0.9;
 }
 </style>
