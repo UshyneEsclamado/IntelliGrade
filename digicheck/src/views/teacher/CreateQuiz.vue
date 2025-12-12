@@ -402,7 +402,11 @@
                   </svg>
                   Question Type
                 </label>
-                <select v-model="question.type" class="modern-select">
+                <select 
+                  v-model="question.type" 
+                  @change="handleQuestionTypeChange(question, question.type)"
+                  class="modern-select"
+                >
                   <option value="multiple_choice">Multiple Choice</option>
                   <option value="true_false">True/False</option>
                   <option value="fill_blank">Fill in the Blanks</option>
@@ -518,6 +522,27 @@
                   placeholder="Enter the exact answer..." 
                   class="modern-input"
                 />
+                
+                <!-- Case Sensitivity Toggle -->
+                <div class="case-sensitivity-toggle">
+                  <label class="toggle-label">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M11,7H13A1,1 0 0,1 14,8V16A1,1 0 0,1 13,17H11A1,1 0 0,1 10,16V8A1,1 0 0,1 11,7M11,9V15H13V9H11M8,11H9V13H8V15H6V13C6,11.89 6.9,11 8,11Z"/>
+                    </svg>
+                    <span class="toggle-text">Case Sensitive</span>
+                    <div class="toggle-switch">
+                      <input 
+                        v-model="question.caseSensitive" 
+                        type="checkbox" 
+                        class="toggle-input"
+                      />
+                      <div class="toggle-slider"></div>
+                    </div>
+                  </label>
+                  <p class="toggle-description">
+                    When enabled, answers must match exactly (e.g., "Apple" ≠ "apple")
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -831,6 +856,17 @@
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#20c997" stroke-width="2" style="vertical-align:middle;"><polyline points="20 6 9 17 4 12"/></svg> Correct Answer:
                 </span>
                 <span class="correct-text">{{ question.correctAnswer }}</span>
+              </div>
+              <div class="case-sensitivity-display">
+                <span class="case-label">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M11,7H13A1,1 0 0,1 14,8V16A1,1 0 0,1 13,17H11A1,1 0 0,1 10,16V8A1,1 0 0,1 11,7M11,9V15H13V9H11M8,11H9V13H8V15H6V13C6,11.89 6.9,11 8,11Z"/>
+                  </svg>
+                  Case Sensitive: 
+                </span>
+                <span :class="['case-status', question.caseSensitive ? 'enabled' : 'disabled']">
+                  {{ question.caseSensitive ? 'Yes' : 'No' }}
+                </span>
               </div>
             </div>
           </div>
@@ -1259,7 +1295,8 @@ const addQuestion = () => {
     type: 'multiple_choice',
     text: '',
     options: ['', '', '', ''],
-    correctAnswer: null
+    correctAnswer: null,
+    caseSensitive: false // Default to case insensitive, will be set to true when type is fill_blank
   });
 };
 
@@ -1287,6 +1324,23 @@ const removeOption = (questionIndex, optionIndex) => {
     }
   } else {
     alert('A question must have at least 2 options');
+  }
+};
+
+const handleQuestionTypeChange = (question, newType) => {
+  // Reset question type-specific properties
+  if (newType === 'multiple_choice') {
+    question.options = ['', '', '', ''];
+    question.correctAnswer = null;
+    question.caseSensitive = false;
+  } else if (newType === 'true_false') {
+    question.options = [];
+    question.correctAnswer = null;
+    question.caseSensitive = false;
+  } else if (newType === 'fill_blank') {
+    question.options = [];
+    question.correctAnswer = '';
+    question.caseSensitive = false; // Default to case insensitive for better user experience
   }
 };
 
@@ -1562,7 +1616,7 @@ const publishQuiz = async () => {
         const answerData = {
           question_id: questionId,
           correct_answer: String(question.correctAnswer).trim(),
-          case_sensitive: question.type === 'fill_blank'
+          case_sensitive: question.type === 'fill_blank' ? (question.caseSensitive ?? false) : false
         };
 
         console.log(`  Inserting answer:`, answerData);
@@ -4181,6 +4235,58 @@ input[type="datetime-local"]::-webkit-clear-button {
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
 }
 
+/* Case Sensitivity Toggle */
+.case-sensitivity-toggle {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.dark .case-sensitivity-toggle {
+  background: #1e293b;
+  border-color: #374151;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+}
+
+.toggle-text {
+  flex: 1;
+  font-weight: 500;
+  color: #374151;
+  font-size: 0.875rem;
+}
+
+.dark .toggle-text {
+  color: #d1d5db;
+}
+
+.toggle-description {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin: 0;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.dark .toggle-description {
+  color: #9ca3af;
+}
+
+.toggle-input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
 /* Time Input Group */
 .time-input-group {
   display: flex;
@@ -4688,6 +4794,69 @@ input[type="datetime-local"]::-webkit-clear-button {
 .dark .correct-text {
   background: #1e293b;
   color: #f1f5f9;
+}
+
+/* Case Sensitivity Display */
+.case-sensitivity-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.dark .case-sensitivity-display {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.case-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.dark .case-label {
+  color: #94a3b8;
+}
+
+.case-status {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.125rem 0.5rem;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.case-status.enabled {
+  background: #dcfce7;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+.case-status.disabled {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.dark .case-status.enabled {
+  background: rgba(34, 197, 94, 0.1);
+  color: #4ade80;
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
+.dark .case-status.disabled {
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.2);
 }
 
 @media (max-width: 768px) {

@@ -941,6 +941,11 @@ export default {
                 .eq('question_id', question.id)
                 .single();
 
+              // Debug logging for answer loading
+              console.log(`📋 Loaded answer for Q${question.question_number} (${question.question_type}):`);
+              console.log(`   Answer: "${answer?.correct_answer}"`);
+              console.log(`   Case sensitive: ${answer?.case_sensitive}`);
+
               return { ...question, correct_answer: answer };
             }
             
@@ -1255,14 +1260,30 @@ export default {
             }
           } else if (question.question_type === 'fill_blank') {
             if (studentAnswer.answer_text && question.correct_answer) {
-              const studentAns = question.correct_answer.case_sensitive 
+              // Debug logging
+              console.log(`🔍 Fill-in-the-blank validation for Q${question.question_number}:`);
+              console.log(`   Student answer: "${studentAnswer.answer_text}"`);
+              console.log(`   Correct answer: "${question.correct_answer.correct_answer}"`);
+              console.log(`   Case sensitive (raw): ${question.correct_answer.case_sensitive}`);
+              
+              // Handle case sensitivity - default to false if null/undefined
+              const isCaseSensitive = question.correct_answer.case_sensitive === true;
+              console.log(`   Case sensitive (processed): ${isCaseSensitive}`);
+              
+              const studentAns = isCaseSensitive 
                 ? studentAnswer.answer_text.trim()
                 : studentAnswer.answer_text.toLowerCase().trim();
-              const correctAns = question.correct_answer.case_sensitive
+              const correctAns = isCaseSensitive
                 ? question.correct_answer.correct_answer.trim()
                 : question.correct_answer.correct_answer.toLowerCase().trim();
+                
+              console.log(`   Student (processed): "${studentAns}"`);
+              console.log(`   Correct (processed): "${correctAns}"`);
+              
               isCorrect = studentAns === correctAns;
               pointsEarned = isCorrect ? question.points : 0;
+              
+              console.log(`   Match result: ${isCorrect} (${pointsEarned}/${question.points} pts)`);
             }
           }
 
