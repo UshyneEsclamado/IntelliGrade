@@ -4488,18 +4488,31 @@ const fetchSubjects = async (forceRefresh = false) => {
     loadingMessage.value = 'Finalizing...'
 
     // Process subjects efficiently - include all subjects, even those without sections
+    // For SHS (Grades 11-12), group by name + grade + strand to keep different strands separate
+    // For other grades, group by name + grade only
     const subjectGroups = new Map()
 
     subjectsData.forEach(subject => {
-      const subjectName = subject.name
+      // Create a unique key for each subject based on grade level
+      let subjectKey
+      if (subject.grade_level >= 11 && subject.strand) {
+        // For SHS with strand: name + grade + strand
+        subjectKey = `${subject.name}_${subject.grade_level}_${subject.strand}`
+      } else {
+        // For other grades or SHS without strand: name + grade
+        subjectKey = `${subject.name}_${subject.grade_level}`
+      }
 
-      if (!subjectGroups.has(subjectName)) {
-        subjectGroups.set(subjectName, {
+      console.log(`🔑 Creating subject key: "${subjectKey}" for subject: ${subject.name} Grade ${subject.grade_level}${subject.strand ? ` ${subject.strand}` : ''}`)
+
+      if (!subjectGroups.has(subjectKey)) {
+        subjectGroups.set(subjectKey, {
           id: subject.id,
-          subject_name: subjectName,
-          name: subjectName,
+          subject_name: subject.name,
+          name: subject.name,
           description: subject.description,
           strand: subject.strand,
+          grade_level: subject.grade_level, // Keep the actual grade level
           sections: [],
           grade_levels: new Set(),
           total_students: 0,
@@ -4508,7 +4521,7 @@ const fetchSubjects = async (forceRefresh = false) => {
         })
       }
 
-      const subjectGroup = subjectGroups.get(subjectName)
+      const subjectGroup = subjectGroups.get(subjectKey)
       subjectGroup.grade_levels.add(subject.grade_level)
 
       // Process sections if they exist
@@ -4557,7 +4570,22 @@ const fetchSubjects = async (forceRefresh = false) => {
     
     console.log(`📊 Subjects loaded: ${processedSubjects.length} subjects total`)
     console.log('Raw subjects data:', subjectsData.length, 'records from database')
-    console.log('Processed subjects:', processedSubjects.map(s => ({ name: s.name, sections: s.section_count })))
+    console.log('Subject groups created:', subjectGroups.size, 'unique subject names')
+    console.log('Raw data from database:', subjectsData.map(s => ({ 
+      id: s.id, 
+      name: s.name, 
+      grade_level: s.grade_level, 
+      strand: s.strand,
+      sections_count: s.sections?.length || 0
+    })))
+    console.log('Processed subjects:', processedSubjects.map(s => ({ 
+      id: s.id, 
+      name: s.name, 
+      grade_level: s.grade_level,
+      strand: s.strand,
+      sections: s.section_count,
+      grade_levels: s.grade_levels
+    })))
     
     // Update selectedSubject and selectedSection if they exist
     if (selectedSubject.value) {
@@ -4826,6 +4854,101 @@ const manageStudents = async (subject, section) => {
 // ============================================================
 // SUBJECT MANAGEMENT - ENHANCED WITH AUTH CHECKS
 // ============================================================
+
+// Validation function to check for duplicate subjects
+const validateSubjectDuplicates = async (subjectData, currentSubjectId = null) => {
+  try {
+    console.log('🔍 Validating subject duplicates:', {
+      name: subjectData.name,
+      grade_level: subjectData.grade_level,
+      strand: subjectData.strand,
+      teacher_id: subjectData.teacher_id
+    })
+    
+    // Build the query to check for EXACT duplicates only
+    // For Grades 11-12: Subject Name + Grade Level + Strand must ALL match to be a duplicate
+    // For other grades: Subject Name + Grade Level must match to be a duplicate
+    let query = supabase
+      .from('subjects')
+      .select('id, name, grade_level, strand')
+      .eq('teacher_id', teacherInfo.value.id)
+      .eq('name', subjectData.name)
+      .eq('grade_level', subjectData.grade_level)
+      .eq('is_active', true)
+    
+    // ALWAYS check strand for grades 11-12 to allow same subject in different strands
+    if (subjectData.grade_level >= 11) {
+      console.log('🎯 Grade 11/12 - Checking for EXACT strand match only:', subjectData.strand)
+      if (subjectData.strand && subjectData.strand.trim() !== '') {
+        // Only prevent if EXACT same strand
+        query = query.eq('strand', subjectData.strand)
+      } else {
+        // If no strand provided, check for subjects without strand
+        query = query.is('strand', null)
+      }
+    }
+    // For grades below 11, only check name + grade (strand not used)
+    
+    // If editing, exclude the current subject from the check
+    if (currentSubjectId) {
+      query = query.neq('id', currentSubjectId)
+      console.log('✏️ Excluding current subject ID:', currentSubjectId)
+    }
+    
+    console.log('🔎 Final query conditions - ONLY prevents EXACT duplicates:', {
+      teacher_id: teacherInfo.value.id,
+      name: subjectData.name,
+      grade_level: subjectData.grade_level,
+      strand: subjectData.grade_level >= 11 ? subjectData.strand || null : 'not checked',
+      message: 'This allows same subject name in different strands'
+    })
+    
+    const { data: existingSubjects, error } = await query
+    
+    if (error) {
+      console.error('❌ Error checking duplicates:', error)
+      throw error
+    }
+    
+    console.log('📋 Existing EXACT duplicates found:', existingSubjects?.length || 0, existingSubjects)
+    
+    if (existingSubjects && existingSubjects.length > 0) {
+      const existing = existingSubjects[0]
+      let errorMessage = `You already have "${existing.name}" for Grade ${existing.grade_level}`
+      
+      // Add strand info for grades 11-12 to make the error specific
+      if (existing.grade_level >= 11) {
+        if (existing.strand) {
+          errorMessage += ` in ${existing.strand} strand`
+        } else {
+          errorMessage += ` (no strand specified)`
+        }
+      }
+      
+      errorMessage += '. Please choose a different name or modify the existing subject.'
+      
+      console.log('❌ EXACT duplicate found:', errorMessage)
+      
+      return {
+        isValid: false,
+        errorMessage: errorMessage
+      }
+    }
+    
+    console.log('✅ No EXACT duplicates found - validation passed! Same subject name in different strands is allowed.')
+    return {
+      isValid: true,
+      errorMessage: null
+    }
+  } catch (error) {
+    console.error('❌ Validation error:', error)
+    return {
+      isValid: false,
+      errorMessage: 'Error validating subject. Please try again.'
+    }
+  }
+}
+
 const generateSections = () => {
   const numSections = parseInt(formData.value.number_of_sections)
   formData.value.sections = []
@@ -4861,7 +4984,7 @@ const saveSubject = async () => {
     }
     
     isLoading.value = true
-    loadingMessage.value = isEditing.value ? 'Updating subject...' : 'Creating subject...'
+    loadingMessage.value = isEditing.value ? 'Validating subject...' : 'Validating subject...'
     
     console.log('📝 Saving subject with teacher ID:', teacherInfo.value.id)
 
@@ -4873,6 +4996,20 @@ const saveSubject = async () => {
       strand: formData.value.strand || null,
       is_active: true
     }
+
+    // Validate for duplicates before proceeding
+    console.log('🔍 Validating subject for duplicates...')
+    const validation = await validateSubjectDuplicates(subjectData, isEditing.value ? currentSubjectId.value : null)
+    
+    if (!validation.isValid) {
+      console.warn('❌ Validation failed:', validation.errorMessage)
+      showToast(validation.errorMessage, 'error')
+      isLoading.value = false
+      return
+    }
+    
+    console.log('✅ Validation passed, proceeding with save...')
+    loadingMessage.value = isEditing.value ? 'Updating subject...' : 'Creating subject...'
 
     let subjectId
 
@@ -4961,6 +5098,13 @@ const saveSubject = async () => {
 
     console.log('✅ All sections created successfully')
 
+    // Refresh subjects list BEFORE closing modal to ensure data is ready
+    console.log('🔄 Refreshing subjects list...')
+    await fetchSubjects(true)
+    
+    // Small delay to ensure UI state is properly updated
+    await new Promise(resolve => setTimeout(resolve, 100))
+
     // Close modal
     closeModal()
 
@@ -4969,10 +5113,6 @@ const saveSubject = async () => {
     
     successMessage.value = `Subject "${formData.value.name}" ${isEditing.value ? 'updated' : 'created'} successfully!\n\nSections Created:\n${sectionsCreatedText}\n\nYou can now add students directly to each section through the "Manage Students" option.`
     showSuccessModal.value = true
-
-    // Refresh subjects list
-    console.log('🔄 Refreshing subjects list...')
-    await fetchSubjects(true)
     
     isLoading.value = false
     console.log('✅ Save complete!')
@@ -5415,9 +5555,13 @@ const closeStudentRosterModal = () => {
   currentStudentRoster.value = null
 }
 
-const closeSuccessModal = () => {
+const closeSuccessModal = async () => {
   showSuccessModal.value = false
   successMessage.value = ''
+  
+  // Force a final refresh to ensure UI is completely up to date
+  console.log('🔄 Final refresh after success modal closed...')
+  await fetchSubjects(true)
 }
 
 // ============================================================

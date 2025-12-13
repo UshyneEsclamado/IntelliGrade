@@ -254,11 +254,25 @@
               <span>Name</span>
               <span>Status</span>
               <span>Enrolled</span>
+              <span>Actions</span>
             </div>
             <div v-for="student in filteredStudents" :key="student.id" class="students-list-row">
               <span>{{ student.full_name }}</span>
               <span :class="['status-badge', student.status]">{{ student.status }}</span>
               <span>{{ formatDate(student.enrolled_at) }}</span>
+              <div class="student-actions">
+                <button 
+                  @click="confirmUnenrollStudent(student)" 
+                  class="btn-unenroll"
+                  :disabled="isUnenrolling"
+                  title="Unenroll student from this section"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19,13H5V11H19V13Z"/>
+                  </svg>
+                  Unenroll
+                </button>
+              </div>
             </div>
           </div>
           <div v-else-if="students.length === 0" class="empty-state">
@@ -303,6 +317,38 @@
               <div class="logout-spinner"></div>
               Redirecting...
             </span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Unenroll Confirmation Modal -->
+    <div v-if="showUnenrollModal" class="modal-overlay" @click="closeUnenrollModal">
+      <div class="modal-content unenroll-modal" @click.stop>
+        <div class="modal-header unenroll-header">
+          <h3>Confirm Unenrollment</h3>
+        </div>
+        <div class="modal-body">
+          <div class="unenroll-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" class="warning-icon">
+              <path d="M1,21H23L12,2M12,6L19.53,19H4.47M11,10V14H13V10M11,16V18H13V16"/>
+            </svg>
+          </div>
+          <p class="unenroll-message">
+            Are you sure you want to unenroll <strong>{{ studentToUnenroll?.full_name }}</strong> from this section?
+          </p>
+          <p class="unenroll-submessage">
+            This action will remove the student from "{{ sectionName }}" and cannot be undone. 
+            The student will lose access to all materials and assessments for this section.
+          </p>
+        </div>
+        <div class="modal-footer unenroll-footer">
+          <button @click="closeUnenrollModal" class="btn-cancel" :disabled="isUnenrolling">Cancel</button>
+          <button @click="unenrollStudent" class="btn-unenroll-confirm" :disabled="isUnenrolling">
+            <svg v-if="isUnenrolling" class="spinner" width="16" height="16" viewBox="0 0 24 24">
+              <circle class="spinner-path" cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            {{ isUnenrolling ? 'Unenrolling...' : 'Unenroll Student' }}
           </button>
         </div>
       </div>
@@ -373,6 +419,11 @@ const notifications = ref<Notification[]>([])
 const showLogoutModal = ref(false)
 const isLoggingOut = ref(false)
 
+// Unenroll modal states
+const showUnenrollModal = ref(false)
+const isUnenrolling = ref(false)
+const studentToUnenroll = ref<Student | null>(null)
+
 // Profile dropdown functions
 const toggleProfileDropdown = () => {
   showProfileDropdown.value = !showProfileDropdown.value
@@ -422,6 +473,131 @@ const confirmLogout = () => {
 
 const logout = () => {
   openLogoutModal()
+}
+
+// Unenroll confirmation modal functions
+const confirmUnenrollStudent = (student: Student) => {
+  studentToUnenroll.value = student
+  showUnenrollModal.value = true
+}
+
+const closeUnenrollModal = () => {
+  showUnenrollModal.value = false
+  studentToUnenroll.value = null
+}
+
+const unenrollStudent = async () => {
+  if (!studentToUnenroll.value) {
+    console.error('❌ No student selected for unenrollment')
+    return
+  }
+
+  // Store student reference to avoid null issues during async operations
+  const studentToRemove = studentToUnenroll.value
+
+  try {
+    isUnenrolling.value = true
+    console.log('🔄 Unenrolling student:', studentToRemove.full_name)
+    console.log('📝 Student data:', studentToRemove)
+    console.log('🆔 Enrollment ID:', studentToRemove.enrollment_id)
+
+    if (!studentToRemove.enrollment_id) {
+      console.error('❌ No enrollment ID found for student')
+      alert('Error: Student enrollment ID is missing')
+      return
+    }
+
+    // Verify enrollment exists first
+    const { data: existingEnrollment, error: checkError } = await supabase
+      .from('enrollments')
+      .select('*')
+      .eq('id', studentToRemove.enrollment_id)
+      .single()
+
+    if (checkError) {
+      console.error('❌ Error checking enrollment:', checkError)
+      alert(`Error checking enrollment: ${checkError.message}`)
+      return
+    }
+
+    console.log('✅ Found enrollment:', existingEnrollment)
+
+    // Option 1: Try to update status to 'dropped' instead of deleting
+    console.log('🔄 Attempting to mark enrollment as dropped...')
+    const { data: updateData, error: updateError } = await supabase
+      .from('enrollments')
+      .update({ status: 'dropped' })
+      .eq('id', studentToRemove.enrollment_id)
+      .select()
+
+    if (!updateError && updateData && updateData.length > 0) {
+      console.log('✅ Successfully marked enrollment as dropped:', updateData)
+      
+      // Remove from local state
+      students.value = students.value.filter(s => s.id !== studentToRemove.id)
+      
+      // Close modal
+      closeUnenrollModal()
+
+      // Show success message
+      alert(`${studentToRemove.full_name} has been successfully unenrolled from ${sectionName.value}.`)
+      return
+    }
+
+    console.log('⚠️ Update failed, trying delete approach...')
+
+    // Option 2: Try to delete the enrollment record
+    const { data: deleteData, error } = await supabase
+      .from('enrollments')
+      .delete()
+      .eq('id', studentToRemove.enrollment_id)
+      .select()
+
+    if (error) {
+      console.error('❌ Unenroll error:', error)
+      alert(`Failed to unenroll student: ${error.message}`)
+      return
+    }
+
+    console.log('🗑️ Delete operation result:', deleteData)
+
+    // Verify the record was actually deleted
+    if (!deleteData || deleteData.length === 0) {
+      console.error('❌ No rows were deleted - possible permission issue')
+      alert('Failed to unenroll student: No records were deleted. This might be a permission issue.')
+      return
+    }
+
+    // Double-check that enrollment no longer exists
+    const { data: verifyDeleted, error: verifyError } = await supabase
+      .from('enrollments')
+      .select('*')
+      .eq('id', studentToRemove.enrollment_id)
+      .single()
+
+    if (!verifyError && verifyDeleted) {
+      console.error('❌ Record still exists after delete operation')
+      alert('Failed to unenroll student: Record was not properly deleted from database.')
+      return
+    }
+
+    console.log('✅ Verified: Student enrollment has been deleted from database')
+
+    // Remove from local state
+    students.value = students.value.filter(s => s.id !== studentToRemove.id)
+    
+    // Close modal
+    closeUnenrollModal()
+
+    // Show success message
+    alert(`${studentToRemove.full_name} has been successfully unenrolled from ${sectionName.value}.`)
+
+  } catch (error) {
+    console.error('❌ Unenroll error:', error)
+    alert(`Failed to unenroll student: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  } finally {
+    isUnenrolling.value = false
+  }
 }
 
 // Computed
@@ -2066,5 +2242,198 @@ onUnmounted(() => {
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+/* Student Actions Styles */
+.student-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-unenroll {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.75rem;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.btn-unenroll:hover:not(:disabled) {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.btn-unenroll:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-unenroll svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Update students list header to accommodate actions column */
+.students-list-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: #f8f9fa;
+  border-bottom: 2px solid #e5e7eb;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.students-list-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid #f3f4f6;
+  align-items: center;
+  transition: background-color 0.2s ease;
+}
+
+.students-list-row:hover {
+  background-color: #f9fafb;
+}
+
+/* Unenroll Modal Styles */
+.unenroll-modal {
+  max-width: 450px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: white;
+  border: 2px solid #ef4444;
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+.unenroll-header {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  padding: 1.5rem;
+}
+
+.unenroll-header h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.unenroll-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.unenroll-icon .warning-icon {
+  color: #f59e0b;
+}
+
+.unenroll-message {
+  font-size: 1rem;
+  color: #374151;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.unenroll-submessage {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.unenroll-footer {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  padding: 1.5rem;
+  background: #fef2f2;
+  border-top: 1px solid #fecaca;
+}
+
+.btn-unenroll-confirm {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-unenroll-confirm:hover:not(:disabled) {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.btn-unenroll-confirm:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+.spinner-path {
+  stroke-dasharray: 90, 150;
+  stroke-dashoffset: 0;
+  stroke-linecap: round;
+}
+
+/* Dark mode styles for unenroll functionality */
+.dark .btn-unenroll {
+  background: #dc2626;
+}
+
+.dark .btn-unenroll:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.dark .unenroll-modal {
+  background: #1f2937;
+  border-color: #ef4444;
+}
+
+.dark .unenroll-message {
+  color: #f3f4f6;
+}
+
+.dark .unenroll-submessage {
+  color: #9ca3af;
+}
+
+.dark .unenroll-footer {
+  background: #374151;
+  border-top-color: #4b5563;
+}
+
+.dark .students-list-header {
+  background: #374151;
+  color: #f3f4f6;
+}
+
+.dark .students-list-row:hover {
+  background-color: #374151;
 }
 </style>

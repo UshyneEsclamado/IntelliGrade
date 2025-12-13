@@ -522,6 +522,7 @@ export default {
               full_name: this.fullName.trim(),
               email: this.email.toLowerCase().trim(),
               grade_level: gradeNum,
+              strand: (gradeNum === 11 || gradeNum === 12) ? this.strand : null, // Include strand for SHS
               is_active: true
             })
             .select()
@@ -557,6 +558,7 @@ export default {
                 full_name: this.fullName.trim(),
                 email: this.email.toLowerCase().trim(),
                 grade_level: gradeNum,
+                strand: (gradeNum === 11 || gradeNum === 12) ? this.strand : null, // Include strand for SHS
                 is_active: true
               })
               .select()
@@ -613,6 +615,12 @@ Your account has been verified and you can now log in.`;
           this.error = 'An account with this email already exists. Please try logging in instead.';
         } else if (err.message?.includes('Student ID')) {
           this.error = err.message;
+        } else if (err.message?.includes('strand') && err.message?.includes('required')) {
+          this.error = 'Strand is required for Senior High School (Grades 11 and 12). Please select a strand.';
+        } else if (err.message?.includes('students_strand_required_for_senior_high')) {
+          this.error = 'Strand is required for Senior High School (Grades 11 and 12). Please select a strand and try again.';
+        } else if (err.message?.includes('students_strand_values_check')) {
+          this.error = 'Invalid strand selected. Please choose from STEM, ABM, HUMSS, or GAS for Senior High School.';
         } else if (err.message?.includes('rate limit')) {
           this.error = 'Too many signup attempts. Please wait a few minutes and try again.';
         } else if (err.message?.includes('contact support')) {

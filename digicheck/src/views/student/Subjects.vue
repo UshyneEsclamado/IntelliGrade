@@ -185,7 +185,7 @@
                 </svg>
               </button>
               
-              <div class="dropdown" v-if="!archivedSubjects.has(subject.id)">
+              <div class="dropdown">
                 <button 
                   @click.stop="toggleOptionsMenu(subject.id)"
                   class="action-icon-btn options-btn"
@@ -202,11 +202,11 @@
                     </svg>
                     View Details
                   </button>
-                  <button @click.stop="confirmUnenroll(subject)" class="dropdown-item danger">
+                  <button @click.stop="toggleArchive(subject.id)" class="dropdown-item">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/>
+                      <path d="M20,21H4V10H6V19H18V10H20V21ZM3,3H21V9H3V3ZM9.5,11A0.5,0.5 0 0,1 10,11.5V13.5A0.5,0.5 0 0,1 9.5,14H14.5A0.5,0.5 0 0,1 14,13.5V11.5A0.5,0.5 0 0,1 14.5,11H9.5Z"/>
                     </svg>
-                    Unenroll
+                    {{ archivedSubjects.has(subject.id) ? 'Unarchive' : 'Archive' }}
                   </button>
                 </div>
               </div>
@@ -356,52 +356,6 @@
       </div>
     </div>
 
-    <!-- Unenroll Confirmation Modal -->
-    <div v-if="showUnenrollModal" class="modal-overlay" @click="cancelUnenroll">
-      <div class="modal-content unenroll-modal" @click.stop>
-        <div class="modal-header">
-          <h2>Confirm Unenrollment</h2>
-          <button @click="cancelUnenroll" class="close-btn">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
-            </svg>
-          </button>
-        </div>
-
-        <div class="unenroll-content">
-          <div class="warning-icon">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" />
-            </svg>
-          </div>
-          
-          <p class="warning-text">
-            Are you sure you want to unenroll from <strong>{{ unenrollSubject?.name }}</strong>?
-          </p>
-          
-          <div class="unenroll-details">
-            <p><strong>Section:</strong> {{ unenrollSubject?.section }}</p>
-            <p><strong>Teacher:</strong> {{ unenrollSubject?.instructor }}</p>
-            <p><strong>Code:</strong> {{ unenrollSubject?.code }}</p>
-          </div>
-
-          <div class="warning-note">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z" />
-            </svg>
-            <span>This action cannot be undone. You will lose access to all quizzes and grades for this class.</span>
-          </div>
-
-          <div class="modal-actions">
-            <button type="button" @click="cancelUnenroll" class="cancel-btn">Cancel</button>
-            <button type="button" @click="processUnenroll" :disabled="isUnenrolling" class="unenroll-btn">
-              {{ isUnenrolling ? 'Unenrolling...' : 'Yes, Unenroll' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Loading Overlay -->
     <div v-if="isLoading" class="loading-overlay">
       <div class="loading-content">
@@ -424,11 +378,8 @@ export default {
     return {
       searchQuery: '',
       activeFilter: 'all',
-      showUnenrollModal: false,
-      isUnenrolling: false,
       isLoading: true,
       loadingMessage: 'Loading your subjects...',
-      unenrollSubject: null,
       filters: [
         { key: 'all', label: 'All Subjects' },
         { key: 'favorites', label: 'Favorites' },
@@ -442,6 +393,7 @@ export default {
       profile: null,
       favoriteSubjects: new Set(),
       archivedSubjects: new Set(),
+      enrollmentSubscription: null,
     };
   },
   watch: {
@@ -687,6 +639,16 @@ export default {
     viewSubjectDetails(subject) {
       // Show subject details modal or navigate to detail page
       this.navigateToSubject(subject);
+    },
+
+    toggleArchive(subjectId) {
+      if (this.archivedSubjects.has(subjectId)) {
+        this.archivedSubjects.delete(subjectId);
+      } else {
+        this.archivedSubjects.add(subjectId);
+      }
+      this.saveUserPreferences();
+      this.closeAllOptionsMenus();
     },
 
     async fetchSubjects() {
@@ -1048,47 +1010,58 @@ export default {
       }
     },
 
-    confirmUnenroll(subject) {
-      this.unenrollSubject = subject
-      this.showUnenrollModal = true
-      this.closeAllOptionsMenus()
+    setupEnrollmentSubscription() {
+      if (!this.studentInfo?.id) {
+        console.log('⚠️ No student info for subscription')
+        return
+      }
+
+      console.log('🔔 Setting up real-time enrollment subscription for student:', this.studentInfo.id)
+      
+      // Subscribe to enrollment changes for this student
+      this.enrollmentSubscription = supabase
+        .channel('student_enrollments')
+        .on('postgres_changes', 
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'enrollments',
+            filter: `student_id=eq.${this.studentInfo.id}`
+          }, 
+          async (payload) => {
+            console.log('📢 Enrollment change detected:', payload)
+            
+            const { eventType, new: newRecord, old: oldRecord } = payload
+            
+            if (eventType === 'DELETE' || 
+               (eventType === 'UPDATE' && newRecord?.status !== 'active') ||
+               (eventType === 'UPDATE' && oldRecord?.status === 'active' && newRecord?.status !== 'active')) {
+              
+              console.log('👋 Student was unenrolled, refreshing subjects...')
+              
+              // Small delay to ensure database consistency
+              setTimeout(async () => {
+                await this.fetchSubjects()
+              }, 500)
+            } else if (eventType === 'INSERT' && newRecord?.status === 'active') {
+              console.log('🎉 New enrollment detected, refreshing subjects...')
+              
+              setTimeout(async () => {
+                await this.fetchSubjects()
+              }, 500)
+            }
+          }
+        )
+        .subscribe((status) => {
+          console.log('📡 Enrollment subscription status:', status)
+        })
     },
 
-    cancelUnenroll() {
-      this.showUnenrollModal = false
-      this.unenrollSubject = null
-    },
-
-    async processUnenroll() {
-      if (!this.unenrollSubject || !this.studentInfo) return
-
-      this.isUnenrolling = true
-
-      try {
-        const { error } = await supabase
-          .from('enrollments')
-          .update({ status: 'dropped' })
-          .eq('id', this.unenrollSubject.enrollmentId)
-          .eq('student_id', this.studentInfo.id)
-
-        if (error) throw error
-
-        this.showUnenrollModal = false
-        
-        this.favoriteSubjects.delete(this.unenrollSubject.id)
-        this.archivedSubjects.delete(this.unenrollSubject.id)
-        this.saveUserPreferences()
-
-        await this.fetchSubjects()
-
-        alert(`You have been successfully unenrolled from ${this.unenrollSubject.name}.`)
-        this.unenrollSubject = null
-
-      } catch (error) {
-        console.error('❌ Unenrollment error:', error)
-        alert(`Failed to unenroll: ${error.message}`)
-      } finally {
-        this.isUnenrolling = false
+    cleanupEnrollmentSubscription() {
+      if (this.enrollmentSubscription) {
+        console.log('🧹 Cleaning up enrollment subscription')
+        supabase.removeChannel(this.enrollmentSubscription)
+        this.enrollmentSubscription = null
       }
     },
 
@@ -1298,6 +1271,9 @@ export default {
       this.loadUserPreferences()
       await this.fetchSubjects()
       
+      // Setup real-time enrollment subscription
+      this.setupEnrollmentSubscription()
+      
       document.addEventListener('click', this.closeAllOptionsMenus)
       
       console.log('✅ INITIALIZATION COMPLETE')
@@ -1323,6 +1299,7 @@ export default {
   
   beforeUnmount() {
     if (this.pollingInterval) clearInterval(this.pollingInterval)
+    this.cleanupEnrollmentSubscription()
     document.removeEventListener('click', this.closeAllOptionsMenus)
   }
 }
@@ -1586,7 +1563,7 @@ export default {
   padding: 1.5rem;
   transition: all 0.3s ease;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   min-height: 420px;
@@ -1721,6 +1698,7 @@ export default {
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
+  position: relative;
 }
 
 .action-icon-btn {
@@ -2148,19 +2126,44 @@ export default {
 /* Dropdown Styles */
 .dropdown {
   position: relative;
+  z-index: 10;
 }
 
 .options-dropdown {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 8px);
   right: 0;
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  padding: 0.5rem;
-  z-index: 10;
-  min-width: 160px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  padding: 0.75rem;
+  z-index: 1000;
+  min-width: 180px;
+  animation: dropdownFadeIn 0.2s ease-out;
+  /* Ensure dropdown stays within viewport */
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive dropdown positioning */
+@media (max-width: 768px) {
+  .options-dropdown {
+    right: 0;
+    left: auto;
+    transform: none;
+  }
 }
 
 .dropdown-item {
@@ -2168,7 +2171,7 @@ export default {
   align-items: center;
   gap: 0.75rem;
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.875rem 1rem;
   border: none;
   background: none;
   color: #374151;
@@ -2179,20 +2182,26 @@ export default {
   font-weight: 500;
   text-align: left;
   border-radius: 8px;
+  margin-bottom: 0.25rem;
+}
+
+.dropdown-item:last-child {
+  margin-bottom: 0;
 }
 
 .dropdown-item:hover {
-  background: #f3f4f6;
-  color: #1f2937;
+  background: #f0f9ff;
+  color: #0369a1;
+  transform: translateX(2px);
 }
 
-.dropdown-item.danger {
-  color: #ef4444;
+.dropdown-item svg {
+  color: #6b7280;
+  transition: color 0.2s ease;
 }
 
-.dropdown-item.danger:hover {
-  background: #fee2e2;
-  color: #dc2626;
+.dropdown-item:hover svg {
+  color: #0369a1;
 }
 
 /* Loading State */
@@ -3292,9 +3301,9 @@ export default {
 }
 
 .options-btn {
-  background: none;
-  border: none;
-  color: var(--text-muted);
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  color: #6b7280;
   cursor: pointer;
   padding: 0.5rem;
   border-radius: 8px;
@@ -3302,11 +3311,28 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  min-width: 36px;
+  height: 36px;
 }
 
 .options-btn:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
+  background: #f3f4f6;
+  color: #374151;
+  border-color: #d1d5db;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dark .options-btn {
+  background: #374151;
+  border-color: #4b5563;
+  color: #9ca3af;
+}
+
+.dark .options-btn:hover {
+  background: #4b5563;
+  color: #f3f4f6;
+  border-color: #6b7280;
 }
 
 .options-dropdown {

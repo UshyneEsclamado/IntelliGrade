@@ -291,7 +291,8 @@ export default {
       pollInterval: null,
       enrolledSectionIds: [],
       subjectMap: new Map(),
-      sectionMap: new Map()
+      sectionMap: new Map(),
+      enrollmentSubscription: null
     };
   },
   
@@ -817,7 +818,7 @@ export default {
       console.log('🔄 Setting up real-time subscriptions...');
 
       try {
-        // Subscribe to enrollment changes
+        // Subscribe to enrollment changes with enhanced handling
         const enrollSub = supabase
           .channel(`enrollments_${this.studentRecordId}`)
           .on('postgres_changes', {
@@ -825,11 +826,34 @@ export default {
             schema: 'public',
             table: 'enrollments',
             filter: `student_id=eq.${this.studentRecordId}`
-          }, () => {
-            console.log('📚 Enrollment changed, reloading...');
-            this.loadEnrolledSections().then(() => {
-              this.loadAvailableQuizzes();
-            });
+          }, (payload) => {
+            console.log('📚 Enrollment change detected:', payload);
+            
+            const { eventType, new: newRecord, old: oldRecord } = payload;
+            
+            // Handle unenrollment or status changes
+            if (eventType === 'DELETE' || 
+               (eventType === 'UPDATE' && newRecord?.status !== 'active') ||
+               (eventType === 'UPDATE' && oldRecord?.status === 'active' && newRecord?.status !== 'active')) {
+              
+              console.log('👋 Student was unenrolled, refreshing dashboard...');
+              
+              // Refresh all data with a small delay to ensure database consistency
+              setTimeout(async () => {
+                await this.loadEnrolledSections();
+                await this.loadAvailableQuizzes();
+                await this.loadNotifications();
+              }, 500);
+              
+            } else if (eventType === 'INSERT' && newRecord?.status === 'active') {
+              console.log('🎉 New enrollment detected, refreshing dashboard...');
+              
+              setTimeout(async () => {
+                await this.loadEnrolledSections();
+                await this.loadAvailableQuizzes();
+                await this.loadNotifications();
+              }, 500);
+            }
           })
           .subscribe();
 

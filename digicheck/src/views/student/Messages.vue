@@ -788,6 +788,7 @@ const deletedConversationKeys = ref<Set<string>>(new Set())
 // Real-time subscriptions
 let messageChannel: any = null
 let presenceChannel: any = null
+let enrollmentChannel: any = null
 
 // Data
 const enrolledSubjects = ref<any[]>([])
@@ -2037,12 +2038,97 @@ const setupRealTimeSubscriptions = () => {
       }
     )
     .subscribe()
+
+  // ================================
+  // ENROLLMENT SUBSCRIPTION
+  // ================================
+  
+  console.log('🔔 Setting up enrollment subscription for Messages')
+  enrollmentChannel = supabase
+    .channel('student-messages-enrollment')
+    .on('postgres_changes', 
+      { 
+        event: '*', 
+        schema: 'public', 
+        table: 'enrollments',
+        filter: `student_id=eq.${currentStudentId.value}`
+      }, 
+      async (payload) => {
+        console.log('📢 Messages: Enrollment change detected:', payload)
+        
+        const { eventType, new: newRecord, old: oldRecord } = payload
+        
+        if (eventType === 'DELETE' || 
+           (eventType === 'UPDATE' && newRecord?.status !== 'active') ||
+           (eventType === 'UPDATE' && oldRecord?.status === 'active' && newRecord?.status !== 'active')) {
+          
+          console.log('👋 Messages: Student was unenrolled, refreshing available teachers...')
+          
+          // Close any open conversations if they're no longer available
+          if (activeTeacher.value && isModalOpen.value) {
+            // Check if the conversation is still valid
+            setTimeout(async () => {
+              const stillEnrolled = await checkIfStillEnrolled(activeTeacher.value.id, activeTeacher.value.section_id)
+              if (!stillEnrolled) {
+                console.log('🚪 Closing conversation - no longer enrolled')
+                closeModal()
+              }
+            }, 500)
+          }
+          
+          // Refresh the teacher/subject list
+          setTimeout(async () => {
+            await loadEnrolledSubjectsAndTeachers()
+          }, 500)
+          
+        } else if (eventType === 'INSERT' && newRecord?.status === 'active') {
+          console.log('🎉 Messages: New enrollment detected, refreshing available teachers...')
+          
+          setTimeout(async () => {
+            await loadEnrolledSubjectsAndTeachers()
+          }, 500)
+        }
+      }
+    )
+    .subscribe()
 }
 
 const cleanupRealTimeSubscriptions = () => {
   if (messageChannel) {
     messageChannel.unsubscribe()
     messageChannel = null
+  }
+  if (enrollmentChannel) {
+    enrollmentChannel.unsubscribe()
+    enrollmentChannel = null
+  }
+}
+
+// ================================
+// ENROLLMENT CHECK HELPER
+// ================================
+
+const checkIfStillEnrolled = async (teacherId, sectionId) => {
+  if (!currentStudentId.value) return false
+  
+  try {
+    const { data, error } = await supabase
+      .from('enrollments')
+      .select('id')
+      .eq('student_id', currentStudentId.value)
+      .eq('section_id', sectionId)
+      .eq('status', 'active')
+      .limit(1)
+
+    if (error) {
+      console.error('❌ Error checking enrollment:', error)
+      return false
+    }
+
+    return data && data.length > 0
+  } catch (error) {
+    console.error('❌ Error in checkIfStillEnrolled:', error)
+    return false
   }
 }
 
