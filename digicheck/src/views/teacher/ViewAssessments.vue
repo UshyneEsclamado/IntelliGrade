@@ -1034,15 +1034,18 @@ const editQuiz = async (quiz) => {
 const editAssignment = async (assignment) => {
   try {
     await router.push({
-      name: 'CreateAssignment',
-      params: { subjectId: subjectId.value, sectionId: sectionId.value },
+      name: 'EditQuiz',
+      params: { 
+        quizId: assignment.id,  // Changed from assignmentId to quizId
+        subjectId: subjectId.value, 
+        sectionId: sectionId.value 
+      },
       query: {
-        assignmentId: assignment.id,
         subjectName: subjectName.value,
         sectionName: sectionName.value,
         gradeLevel: gradeLevel.value,
         sectionCode: sectionCode.value,
-        mode: 'edit'
+        type: 'assignment'  // Add this to distinguish it's an assignment
       }
     })
   } catch (error) {

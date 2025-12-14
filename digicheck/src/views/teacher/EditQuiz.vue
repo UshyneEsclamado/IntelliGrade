@@ -16,6 +16,17 @@
         
         <!-- Right: User Profile -->
         <div class="navbar-right">
+          <!-- Notification Bell -->
+          <div class="notif-wrapper">
+            <button class="nav-icon-btn rounded-bg" aria-label="Notifications">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+            </button>
+          </div>
+          
+          <!-- User Profile -->
           <div class="user-profile-wrapper">
             <div class="user-profile rounded-bg">
               <div class="user-avatar">
@@ -60,15 +71,6 @@
           </div>
           <span class="sidebar-tooltip">Gradebook</span>
         </router-link>
-        <router-link to="/teacher/upload-assessment" class="sidebar-item rounded-bg">
-          <div class="sidebar-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 19V6M5 12l7-7 7 7" />
-              <rect x="5" y="19" width="14" height="2" rx="1" />
-            </svg>
-          </div>
-          <span class="sidebar-tooltip">Upload Assessment</span>
-        </router-link>
         <router-link to="/teacher/analytics" class="sidebar-item rounded-bg">
           <div class="sidebar-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -88,6 +90,29 @@
           </div>
           <span class="sidebar-tooltip">Messages</span>
         </router-link>
+        
+        <div class="sidebar-divider"></div>
+        
+        <router-link to="/teacher/settings" class="sidebar-item rounded-bg">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Profile & Settings</span>
+        </router-link>
+        
+        <button @click="logout" class="sidebar-item sidebar-logout rounded-bg">
+          <div class="sidebar-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+          </div>
+          <span class="sidebar-tooltip">Logout</span>
+        </button>
       </nav>
     </aside>
 
@@ -104,12 +129,12 @@
             </div>
           </div>
           <div>
-            <h1>Edit Quiz</h1>
-            <p>{{ quiz.title || 'Loading...' }}</p>
+            <h1>Edit Assessment</h1>
+            <p>{{ assessmentTitle || 'Loading...' }}</p>
           </div>
         </div>
         <div class="header-right">
-          <button @click="saveQuiz" :disabled="isSaving" class="create-subject-btn">
+          <button @click="saveAssessment" :disabled="isSaving" class="create-subject-btn">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z" />
             </svg>
@@ -124,261 +149,280 @@
         </div>
       </div>
 
-      <!-- Main Content -->
-  <div class="content-wrapper">
-      <!-- Loading State -->
-      <div v-if="isLoading" class="loading-state">
-        <div class="loading-spinner"></div>
-        <p>Loading quiz...</p>
-      </div>
-
-      <!-- Error State -->
-      <div v-else-if="error" class="empty-state">
-        <div class="empty-icon">
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M11,15H13V17H11V15M11,7H13V13H11V7M12,2C6.47,2 2,6.5 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20Z" />
-          </svg>
-        </div>
-        <h3 class="empty-title">Error Loading Quiz</h3>
-        <p class="empty-desc">{{ error }}</p>
-        <button @click="loadQuiz" class="create-quiz-btn">Try Again</button>
-      </div>
-
-      <!-- Edit Form -->
-      <div v-else class="edit-form">
-        <!-- Quiz Settings Card -->
-        <div class="form-card">
-          <div class="card-header">
-            <h3>Quiz Settings</h3>
-          </div>
-          <div class="card-body">
-            <div class="form-group">
-              <label for="title">Quiz Title *</label>
-              <input 
-                type="text" 
-                id="title" 
-                v-model="quiz.title" 
-                placeholder="Enter quiz title"
-                required
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="description">Description</label>
-              <textarea 
-                id="description" 
-                v-model="quiz.description" 
-                placeholder="Enter quiz description (optional)"
-                rows="3"
-              ></textarea>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label for="status">Status</label>
-                <select id="status" v-model="quiz.status">
-                  <option value="draft">Draft</option>
-                  <option value="published">Published</option>
-                  <option value="archived">Archived</option>
-                </select>
+      <!-- Assessment Type Selector -->
+      <div class="content-wrapper">
+        <div v-if="!assessmentType" class="assessment-type-selector">
+          <div class="selector-card">
+            <div class="selector-header">
+              <div class="selector-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M11,16.5L6.5,12L7.91,10.59L11,13.67L16.59,8.09L18,9.5L11,16.5Z" />
+                </svg>
               </div>
+              <h2>Choose Assessment Type</h2>
+              <p>Select what type of assessment you want to edit</p>
+            </div>
+            
+            <div class="type-options">
+              <button @click="selectAssessmentType('quiz')" class="type-option-btn quiz-option">
+                <div class="option-icon">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9,5V9H21V7.5L22.5,6L21,4.5L19.5,6L18,4.5L16.5,6L18,7.5V9H15V5H9M9,19V15H15V19H9M21,15V13.5L19.5,12L18,13.5V15H21Z" />
+                  </svg>
+                </div>
+                <h3>Edit Quiz</h3>
+                <p>Multiple choice, True/False, Fill-in-blank questions</p>
+              </button>
+              
+              <button @click="selectAssessmentType('assignment')" class="type-option-btn assignment-option">
+                <div class="option-icon">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                  </svg>
+                </div>
+                <h3>Edit Assignment</h3>
+                <p>Essays, Projects, Research tasks, File submissions</p>
+              </button>
+            </div>
+          </div>
+        </div>
 
+        <!-- Quiz Editor -->
+        <div v-if="assessmentType === 'quiz' && !isLoading && !error">
+          <!-- Quiz Settings Card -->
+          <div class="form-card">
+            <div class="card-header">
+              <h3>Quiz Settings</h3>
+            </div>
+            <div class="card-body">
               <div class="form-group">
-                <label for="attempts">Attempts Allowed *</label>
+                <label for="quiz-title">Quiz Title *</label>
                 <input 
-                  type="number" 
-                  id="attempts" 
-                  v-model.number="quiz.attempts_allowed" 
-                  min="1"
-                  max="999"
+                  type="text" 
+                  id="quiz-title" 
+                  v-model="quiz.title" 
+                  placeholder="Enter quiz title"
                   required
                 />
-                <small>Use 999 for unlimited attempts</small>
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group checkbox-group">
-                <label>
-                  <input type="checkbox" v-model="quiz.has_time_limit" />
-                  <span>Enable Time Limit</span>
-                </label>
-              </div>
-
-              <div class="form-group" v-if="quiz.has_time_limit">
-                <label for="timeLimit">Time Limit (minutes) *</label>
-                <input 
-                  type="number" 
-                  id="timeLimit" 
-                  v-model.number="quiz.time_limit_minutes" 
-                  min="1"
-                  :required="quiz.has_time_limit"
-                />
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group checkbox-group">
-                <label>
-                  <input type="checkbox" v-model="quiz.shuffle_questions" />
-                  <span>Shuffle Questions</span>
-                </label>
-              </div>
-
-              <div class="form-group checkbox-group">
-                <label>
-                  <input type="checkbox" v-model="quiz.shuffle_options" />
-                  <span>Shuffle Options</span>
-                </label>
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label for="startDate">Start Date</label>
-                <input 
-                  type="datetime-local" 
-                  id="startDate" 
-                  v-model="quiz.start_date" 
-                />
               </div>
 
               <div class="form-group">
-                <label for="endDate">End Date</label>
-                <input 
-                  type="datetime-local" 
-                  id="endDate" 
-                  v-model="quiz.end_date" 
-                />
+                <label for="quiz-description">Description</label>
+                <textarea 
+                  id="quiz-description" 
+                  v-model="quiz.description" 
+                  placeholder="Enter quiz description (optional)"
+                  rows="3"
+                ></textarea>
               </div>
-            </div>
-          </div>
-        </div>
 
-        <!-- Questions Card -->
-        <div class="form-card">
-          <div class="card-header">
-            <h3>Questions ({{ questions.length }})</h3>
-            <button @click="addQuestion" class="add-question-btn">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
-              </svg>
-              Add Question
-            </button>
-          </div>
-          <div class="card-body">
-            <div v-if="questions.length === 0" class="no-questions">
-              <p>No questions added yet. Click "Add Question" to get started.</p>
-            </div>
-
-            <div v-else class="questions-list">
-              <div 
-                v-for="(question, index) in questions" 
-                :key="question.id || `new-${index}`"
-                class="question-item"
-              >
-                <div class="question-header">
-                  <div class="question-number">{{ index + 1 }}</div>
-                  <button @click="removeQuestion(index)" class="delete-question-btn">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
-                    </svg>
-                  </button>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="quiz-status">Status</label>
+                  <select id="quiz-status" v-model="quiz.status">
+                    <option value="draft">Draft</option>
+                    <option value="published">Published</option>
+                    <option value="archived">Archived</option>
+                  </select>
                 </div>
 
-                <div class="question-content">
-                  <div class="form-group">
-                    <label>Question Type *</label>
-                    <select v-model="question.question_type" @change="onQuestionTypeChange(question)">
-                      <option value="multiple_choice">Multiple Choice</option>
-                      <option value="true_false">True/False</option>
-                      <option value="fill_blank">Fill in the Blank</option>
-                    </select>
-                  </div>
+                <div class="form-group">
+                  <label for="quiz-attempts">Attempts Allowed *</label>
+                  <input 
+                    type="number" 
+                    id="quiz-attempts" 
+                    v-model.number="quiz.attempts_allowed" 
+                    min="1"
+                    max="999"
+                    required
+                  />
+                  <small>Use 999 for unlimited attempts</small>
+                </div>
+              </div>
 
-                  <div class="form-group">
-                    <label>Question Text *</label>
-                    <textarea 
-                      v-model="question.question_text" 
-                      placeholder="Enter your question"
-                      rows="2"
-                      required
-                    ></textarea>
-                  </div>
+              <div class="form-row">
+                <div class="form-group checkbox-group">
+                  <label>
+                    <input type="checkbox" v-model="quiz.has_time_limit" />
+                    <span>Enable Time Limit</span>
+                  </label>
+                </div>
 
-                  <div class="form-group">
-                    <label>Points *</label>
-                    <input 
-                      type="number" 
-                      v-model.number="question.points" 
-                      min="0.01"
-                      step="0.01"
-                      required
-                    />
-                  </div>
+                <div class="form-group" v-if="quiz.has_time_limit">
+                  <label for="quiz-timeLimit">Time Limit (minutes) *</label>
+                  <input 
+                    type="number" 
+                    id="quiz-timeLimit" 
+                    v-model.number="quiz.time_limit_minutes" 
+                    min="1"
+                    :required="quiz.has_time_limit"
+                  />
+                </div>
+              </div>
 
-                  <!-- Multiple Choice Options -->
-                  <div v-if="question.question_type === 'multiple_choice'" class="options-section">
-                    <label>Options *</label>
-                    <div class="options-list">
-                      <div 
-                        v-for="(option, optIndex) in question.options" 
-                        :key="optIndex"
-                        class="option-item"
-                      >
-                        <input 
-                          type="radio" 
-                          :name="`correct-${question.id || index}`"
-                          :checked="option.is_correct"
-                          @change="setCorrectOption(question, optIndex)"
-                        />
-                        <input 
-                          type="text" 
-                          v-model="option.option_text" 
-                          :placeholder="`Option ${optIndex + 1}`"
-                          required
-                        />
-                        <button 
-                          v-if="question.options.length > 2"
-                          @click="removeOption(question, optIndex)"
-                          class="remove-option-btn"
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                    <button @click="addOption(question)" class="add-option-btn">
-                      Add Option
+              <div class="form-row">
+                <div class="form-group checkbox-group">
+                  <label>
+                    <input type="checkbox" v-model="quiz.shuffle_questions" />
+                    <span>Shuffle Questions</span>
+                  </label>
+                </div>
+
+                <div class="form-group checkbox-group">
+                  <label>
+                    <input type="checkbox" v-model="quiz.shuffle_options" />
+                    <span>Shuffle Options</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="quiz-startDate">Start Date</label>
+                  <input 
+                    type="datetime-local" 
+                    id="quiz-startDate" 
+                    v-model="quiz.start_date" 
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="quiz-endDate">End Date</label>
+                  <input 
+                    type="datetime-local" 
+                    id="quiz-endDate" 
+                    v-model="quiz.end_date" 
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Questions Card -->
+          <div class="form-card">
+            <div class="card-header">
+              <h3>Questions ({{ questions.length }})</h3>
+              <button @click="addQuestion" class="add-question-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+                </svg>
+                Add Question
+              </button>
+            </div>
+            <div class="card-body">
+              <div v-if="questions.length === 0" class="no-questions">
+                <p>No questions added yet. Click "Add Question" to get started.</p>
+              </div>
+
+              <div v-else class="questions-list">
+                <div 
+                  v-for="(question, index) in questions" 
+                  :key="question.id || `new-${index}`"
+                  class="question-item"
+                >
+                  <div class="question-header">
+                    <div class="question-number">{{ index + 1 }}</div>
+                    <button @click="removeQuestion(index)" class="delete-question-btn">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
+                      </svg>
                     </button>
                   </div>
 
-                  <!-- True/False Answer -->
-                  <div v-else-if="question.question_type === 'true_false'" class="answer-section">
-                    <label>Correct Answer *</label>
-                    <select v-model="question.answer.correct_answer" required>
-                      <option value="true">True</option>
-                      <option value="false">False</option>
-                    </select>
-                  </div>
-
-                  <!-- Fill in the Blank Answer -->
-                  <div v-else-if="question.question_type === 'fill_blank'" class="answer-section">
+                  <div class="question-content">
                     <div class="form-group">
-                      <label>Correct Answer *</label>
+                      <label>Question Type *</label>
+                      <select v-model="question.question_type" @change="onQuestionTypeChange(question)">
+                        <option value="multiple_choice">Multiple Choice</option>
+                        <option value="true_false">True/False</option>
+                        <option value="fill_blank">Fill in the Blank</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label>Question Text *</label>
+                      <textarea 
+                        v-model="question.question_text" 
+                        placeholder="Enter your question"
+                        rows="2"
+                        required
+                      ></textarea>
+                    </div>
+
+                    <div class="form-group">
+                      <label>Points *</label>
                       <input 
-                        type="text" 
-                        v-model="question.answer.correct_answer" 
-                        placeholder="Enter the correct answer"
+                        type="number" 
+                        v-model.number="question.points" 
+                        min="0.01"
+                        step="0.01"
                         required
                       />
                     </div>
-                    <div class="form-group checkbox-group">
-                      <label>
-                        <input type="checkbox" v-model="question.answer.case_sensitive" />
-                        <span>Case Sensitive</span>
-                      </label>
+
+                    <!-- Multiple Choice Options -->
+                    <div v-if="question.question_type === 'multiple_choice'" class="options-section">
+                      <label>Options *</label>
+                      <div class="options-list">
+                        <div 
+                          v-for="(option, optIndex) in question.options" 
+                          :key="optIndex"
+                          class="option-item"
+                        >
+                          <input 
+                            type="radio" 
+                            :name="`correct-${question.id || index}`"
+                            :checked="option.is_correct"
+                            @change="setCorrectOption(question, optIndex)"
+                          />
+                          <input 
+                            type="text" 
+                            v-model="option.option_text" 
+                            :placeholder="`Option ${optIndex + 1}`"
+                            required
+                          />
+                          <button 
+                            v-if="question.options.length > 2"
+                            @click="removeOption(question, optIndex)"
+                            class="remove-option-btn"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      <button @click="addOption(question)" class="add-option-btn">
+                        Add Option
+                      </button>
+                    </div>
+
+                    <!-- True/False Answer -->
+                    <div v-else-if="question.question_type === 'true_false'" class="answer-section">
+                      <label>Correct Answer *</label>
+                      <select v-model="question.answer.correct_answer" required>
+                        <option value="true">True</option>
+                        <option value="false">False</option>
+                      </select>
+                    </div>
+
+                    <!-- Fill in the Blank Answer -->
+                    <div v-else-if="question.question_type === 'fill_blank'" class="answer-section">
+                      <div class="form-group">
+                        <label>Correct Answer *</label>
+                        <input 
+                          type="text" 
+                          v-model="question.answer.correct_answer" 
+                          placeholder="Enter the correct answer"
+                          required
+                        />
+                      </div>
+                      <div class="form-group checkbox-group">
+                        <label>
+                          <input type="checkbox" v-model="question.answer.case_sensitive" />
+                          <span>Case Sensitive</span>
+                        </label>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -387,21 +431,158 @@
           </div>
         </div>
 
+        <!-- Assignment Editor -->
+        <div v-if="assessmentType === 'assignment' && !isLoading && !error">
+          <!-- Assignment Settings Card -->
+          <div class="form-card">
+            <div class="card-header">
+              <h3>Assignment Settings</h3>
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label for="assignment-title">Assignment Title *</label>
+                <input 
+                  type="text" 
+                  id="assignment-title" 
+                  v-model="assignment.title" 
+                  placeholder="Enter assignment title"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="assignment-description">Description / Instructions</label>
+                <textarea 
+                  id="assignment-description" 
+                  v-model="assignment.description" 
+                  placeholder="Provide detailed instructions for the assignment..."
+                  rows="4"
+                ></textarea>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="assignment-points">Total Points *</label>
+                  <input 
+                    type="number" 
+                    id="assignment-points" 
+                    v-model.number="assignment.total_points" 
+                    min="1"
+                    placeholder="100"
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="assignment-dueDate">Due Date *</label>
+                  <input 
+                    type="datetime-local" 
+                    id="assignment-dueDate" 
+                    v-model="assignment.due_date" 
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="assignment-type">Assignment Type *</label>
+                  <select id="assignment-type" v-model="assignment.assignment_type" required>
+                    <option value="">Select assignment type</option>
+                    <option value="homework">Homework</option>
+                    <option value="project">Project</option>
+                    <option value="essay">Essay</option>
+                    <option value="presentation">Presentation</option>
+                    <option value="research">Research Paper</option>
+                    <option value="lab">Lab Work</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="assignment-submission">Submission Type *</label>
+                  <select id="assignment-submission" v-model="assignment.submission_type" required>
+                    <option value="">Select submission type</option>
+                    <option value="file_upload">File Upload</option>
+                    <option value="text_entry">Text Entry</option>
+                    <option value="link">External Link</option>
+                    <option value="physical">Physical Submission</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="settings-section">
+                <h4>Additional Settings</h4>
+                
+                <div class="checkbox-group">
+                  <label>
+                    <input type="checkbox" v-model="assignment.allow_late_submission" />
+                    <span>Allow late submissions</span>
+                  </label>
+                </div>
+
+                <div v-if="assignment.allow_late_submission" class="form-group indent">
+                  <label for="assignment-penalty">Late Penalty (%)</label>
+                  <input 
+                    type="number" 
+                    id="assignment-penalty" 
+                    v-model.number="assignment.late_penalty" 
+                    min="0"
+                    max="100"
+                    placeholder="10"
+                  />
+                </div>
+
+                <div class="checkbox-group">
+                  <label>
+                    <input type="checkbox" v-model="assignment.require_plagiarism_check" />
+                    <span>Require plagiarism check</span>
+                  </label>
+                </div>
+
+                <div class="checkbox-group">
+                  <label>
+                    <input type="checkbox" v-model="assignment.publish_immediately" />
+                    <span>Published</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div v-if="isLoading" class="loading-state">
+          <div class="loading-spinner"></div>
+          <p>Loading assessment...</p>
+        </div>
+
+        <!-- Error State -->
+        <div v-if="error" class="empty-state">
+          <div class="empty-icon">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M11,15H13V17H11V15M11,7H13V13H11V7M12,2C6.47,2 2,6.5 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20Z" />
+            </svg>
+          </div>
+          <h3 class="empty-title">Error Loading Assessment</h3>
+          <p class="empty-desc">{{ error }}</p>
+          <button @click="loadAssessment" class="create-quiz-btn">Try Again</button>
+        </div>
+
         <!-- Save Button (Bottom) -->
-        <div class="form-actions">
+        <div v-if="assessmentType" class="form-actions">
           <button @click="goBack" class="cancel-btn">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M10 19l-7-7 7-7m-7 7h18"></path>
             </svg>
             Cancel
           </button>
-          <button @click="saveQuiz" :disabled="isSaving" class="save-btn-large">
+          <button @click="saveAssessment" :disabled="isSaving" class="save-btn-large">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z" />
             </svg>
             {{ isSaving ? 'Saving Changes...' : 'Save All Changes' }}
           </button>
-          </div>
         </div>
       </div>
     </main>
@@ -424,8 +605,8 @@ const { teacherInfo, initializeAuth } = useTeacherAuth()
 const router = useRouter()
 const route = useRoute()
 
-// Get quiz ID and route params from query
-const quizId = ref(route.params.quizId)
+// Get quiz/assignment ID and route params from query
+const assessmentId = ref(route.params.quizId) // Can be quiz_id or assignment_id
 const subjectId = ref(route.query.subjectId)
 const sectionId = ref(route.query.sectionId)
 const subjectName = ref(route.query.subjectName)
@@ -434,6 +615,10 @@ const gradeLevel = ref(route.query.gradeLevel)
 const sectionCode = ref(route.query.sectionCode)
 
 // State
+const assessmentType = ref(null) // 'quiz' or 'assignment'
+const assessmentTitle = ref('')
+
+// Quiz state
 const quiz = ref({
   title: '',
   description: '',
@@ -449,12 +634,28 @@ const quiz = ref({
 })
 
 const questions = ref([])
+
+// Assignment state
+const assignment = ref({
+  title: '',
+  description: '',
+  assignment_type: '',
+  submission_type: '',
+  total_points: 100,
+  due_date: null,
+  allow_late_submission: false,
+  late_penalty: 0,
+  require_plagiarism_check: false,
+  publish_immediately: false,
+  status: 'draft'
+})
+
 const isLoading = ref(false)
 const isSaving = ref(false)
 const error = ref(null)
 const fullName = ref('Teacher')
 
-// TIMEZONE UTILITY FUNCTIONS - Matching CreateQuiz.vue exactly
+// TIMEZONE UTILITY FUNCTIONS
 const formatPHTime = (utcDateString) => {
   if (!utcDateString) return 'Not set';
   try {
@@ -478,25 +679,14 @@ const formatPHTime = (utcDateString) => {
 const convertPHTimeToUTC = (phDateString) => {
   if (!phDateString) return null;
   try {
-    // The datetime-local input gives us local time without timezone info
-    // We need to interpret this as Philippines time and convert to UTC
     const localDate = new Date(phDateString);
-    
-    // Get the timezone offset for Philippines (should be -480 minutes for UTC+8)
-    const phOffset = -8 * 60; // UTC+8 = -480 minutes
-    const localOffset = localDate.getTimezoneOffset(); // Browser's timezone offset
-    
-    // Calculate the difference between local timezone and Philippines timezone
+    const phOffset = -8 * 60;
+    const localOffset = localDate.getTimezoneOffset();
     const offsetDiff = localOffset - phOffset;
-    
-    // Adjust the date to treat the input as Philippines time
     const utcTime = new Date(localDate.getTime() + (offsetDiff * 60 * 1000));
     
     console.log('🕐 Converting PH to UTC:');
     console.log('  Input PH time:', phDateString);
-    console.log('  Local offset:', localOffset);
-    console.log('  PH offset:', phOffset);
-    console.log('  Offset diff:', offsetDiff);
     console.log('  Result UTC:', utcTime.toISOString());
     
     return utcTime.toISOString();
@@ -510,8 +700,6 @@ const convertUTCtoPHForInput = (utcDateString) => {
   if (!utcDateString) return '';
   try {
     const utcDate = new Date(utcDateString);
-    
-    // Convert UTC to Philippines time for the datetime-local input
     const phTime = new Intl.DateTimeFormat('sv-SE', {
       timeZone: 'Asia/Manila',
       year: 'numeric',
@@ -532,38 +720,70 @@ const convertUTCtoPHForInput = (utcDateString) => {
   }
 };
 
-const debugTimeConversion = () => {
-  const now = new Date();
-  console.log('🕐 EDITQUIZ TIMEZONE DEBUG:');
-  console.log('Browser timezone offset (minutes):', now.getTimezoneOffset());
-  console.log('Current local time:', now.toString());
-  console.log('Current UTC time:', now.toISOString());
-  console.log('Formatted as PH time:', formatPHTime(now.toISOString()));
-};
-
-// Load quiz data - REAL-TIME, NO TIMEOUTS
-const loadQuiz = async () => {
+// Detect assessment type and load data
+const loadAssessment = async () => {
   isLoading.value = true
   error.value = null
   
   try {
-  console.log('Loading quiz:', quizId.value)
+    console.log('Loading assessment:', assessmentId.value)
     
-    // Fetch quiz details
+    // First, try to load as quiz
     const { data: quizData, error: quizError } = await supabase
       .from('quizzes')
       .select('*')
-      .eq('id', quizId.value)
+      .eq('id', assessmentId.value)
       .single()
     
-    if (quizError) {
-  console.error('Quiz fetch error:', quizError)
-      throw quizError
+    if (quizData && !quizError) {
+      // It's a quiz
+      assessmentType.value = 'quiz'
+      assessmentTitle.value = quizData.title
+      await loadQuiz()
+      return
     }
-
-  console.log('Quiz data loaded:', quizData)
     
-    // FIXED: Use proper timezone conversion for datetime-local inputs
+    // If not a quiz, try to load as assignment
+    const { data: assignmentData, error: assignmentError } = await supabase
+      .from('assignments')
+      .select('*')
+      .eq('id', assessmentId.value)
+      .single()
+    
+    if (assignmentData && !assignmentError) {
+      // It's an assignment
+      assessmentType.value = 'assignment'
+      assessmentTitle.value = assignmentData.title
+      await loadAssignment()
+      return
+    }
+    
+    // Neither found
+    throw new Error('Assessment not found')
+    
+  } catch (err) {
+    console.error('Error detecting assessment type:', err)
+    error.value = err.message
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Load quiz data
+const loadQuiz = async () => {
+  try {
+    console.log('Loading quiz:', assessmentId.value)
+    
+    const { data: quizData, error: quizError } = await supabase
+      .from('quizzes')
+      .select('*')
+      .eq('id', assessmentId.value)
+      .single()
+    
+    if (quizError) throw quizError
+    
+    console.log('Quiz data loaded:', quizData)
+    
     quiz.value = {
       ...quizData,
       start_date: quizData.start_date ? convertUTCtoPHForInput(quizData.start_date) : null,
@@ -571,39 +791,29 @@ const loadQuiz = async () => {
     }
     
     // Fetch questions
-  console.log('Loading questions for quiz:', quizId.value)
+    console.log('Loading questions for quiz:', assessmentId.value)
     const { data: questionsData, error: questionsError } = await supabase
       .from('quiz_questions')
       .select('*')
-      .eq('quiz_id', quizId.value)
+      .eq('quiz_id', assessmentId.value)
       .order('question_number')
     
-    if (questionsError) {
-      console.error('❌ Questions fetch error:', questionsError)
-      throw questionsError
-    }
-
+    if (questionsError) throw questionsError
+    
     console.log('✅ Questions loaded:', questionsData?.length || 0)
     
     // Load options and answers for each question
     for (const question of questionsData || []) {
       if (question.question_type === 'multiple_choice') {
-        console.log('Loading options for question:', question.id)
         const { data: options, error: optionsError } = await supabase
           .from('question_options')
           .select('*')
           .eq('question_id', question.id)
           .order('option_number')
         
-        if (optionsError) {
-          console.error('❌ Options fetch error:', optionsError)
-          throw optionsError
-        }
-        
+        if (optionsError) throw optionsError
         question.options = options || []
-  console.log('Options loaded:', options?.length || 0)
       } else {
-  console.log('Loading answer for question:', question.id)
         const { data: answer, error: answerError } = await supabase
           .from('question_answers')
           .select('*')
@@ -612,30 +822,58 @@ const loadQuiz = async () => {
         
         if (!answerError && answer) {
           question.answer = answer
-          console.log('Answer loaded')
         } else {
           question.answer = {
             correct_answer: question.question_type === 'true_false' ? 'true' : '',
             case_sensitive: false
           }
-          console.log('No answer found, using default')
         }
       }
     }
     
     questions.value = questionsData || []
-  console.log('All quiz data loaded successfully')
+    console.log('All quiz data loaded successfully')
     
   } catch (err) {
-  console.error('Error loading quiz:', err)
-    error.value = err.message
-  } finally {
-    isLoading.value = false
-  console.log('Load quiz completed')
+    console.error('Error loading quiz:', err)
+    throw err
   }
 }
 
+// Load assignment data
+const loadAssignment = async () => {
+  try {
+    console.log('Loading assignment:', assessmentId.value)
+    
+    const { data: assignmentData, error: assignmentError } = await supabase
+      .from('assignments')
+      .select('*')
+      .eq('id', assessmentId.value)
+      .single()
+    
+    if (assignmentError) throw assignmentError
+    
+    console.log('Assignment data loaded:', assignmentData)
+    
+    assignment.value = {
+      ...assignmentData,
+      due_date: assignmentData.due_date ? convertUTCtoPHForInput(assignmentData.due_date) : null,
+      publish_immediately: assignmentData.status === 'published'
+    }
+    
+    console.log('Assignment loaded successfully')
+    
+  } catch (err) {
+    console.error('Error loading assignment:', err)
+    throw err
+  }
+}
 
+// Select assessment type (for new assessments)
+const selectAssessmentType = (type) => {
+  assessmentType.value = type
+  console.log('Assessment type selected:', type)
+}
 
 // Question management
 const addQuestion = () => {
@@ -654,13 +892,12 @@ const addQuestion = () => {
 
 const removeQuestion = (index) => {
   if (confirm('Are you sure you want to remove this question?')) {
-  console.log('Removing question:', index + 1)
+    console.log('Removing question:', index + 1)
     questions.value.splice(index, 1)
-    // Renumber questions
     questions.value.forEach((q, i) => {
       q.question_number = i + 1
     })
-  console.log('Question removed and renumbered')
+    console.log('Question removed and renumbered')
   }
 }
 
@@ -694,7 +931,6 @@ const addOption = (question) => {
 const removeOption = (question, index) => {
   console.log('Removing option:', index + 1)
   question.options.splice(index, 1)
-  // Renumber options
   question.options.forEach((opt, i) => {
     opt.option_number = i + 1
   })
@@ -707,7 +943,16 @@ const setCorrectOption = (question, index) => {
   })
 }
 
-// Save quiz - REAL-TIME, NO TIMEOUTS
+// Save assessment
+const saveAssessment = async () => {
+  if (assessmentType.value === 'quiz') {
+    await saveQuiz()
+  } else if (assessmentType.value === 'assignment') {
+    await saveAssignmentData()
+  }
+}
+
+// Save quiz
 const saveQuiz = async () => {
   console.log('Starting save quiz process...')
   
@@ -757,21 +1002,10 @@ const saveQuiz = async () => {
   isSaving.value = true
   
   try {
-    // Step 1: Update quiz settings
-  console.log('Updating quiz settings...')
+    console.log('Updating quiz settings...')
     
-    // Convert dates to UTC for storage
     const startDateUTC = convertPHTimeToUTC(quiz.value.start_date);
     const endDateUTC = convertPHTimeToUTC(quiz.value.end_date);
-    
-    // Debug timezone conversion during save
-    console.log('🕐 EDIT SAVE TIMEZONE DEBUG:');
-    console.log('Original start date input:', quiz.value.start_date);
-    console.log('Converted start date UTC:', startDateUTC);
-    console.log('Formatted back to PH:', formatPHTime(startDateUTC));
-    console.log('Original end date input:', quiz.value.end_date);
-    console.log('Converted end date UTC:', endDateUTC);
-    console.log('Formatted back to PH:', formatPHTime(endDateUTC));
     
     const { error: quizError } = await supabase
       .from('quizzes')
@@ -789,30 +1023,23 @@ const saveQuiz = async () => {
         number_of_questions: questions.value.length,
         updated_at: new Date().toISOString()
       })
-      .eq('id', quizId.value)
+      .eq('id', assessmentId.value)
     
-    if (quizError) {
-      console.error('❌ Quiz update error:', quizError)
-      throw quizError
-    }
+    if (quizError) throw quizError
     
-  console.log('Quiz settings updated')
+    console.log('Quiz settings updated')
     
-    // Step 2: Get all existing question IDs
-  console.log('Fetching existing questions...')
+    // Get existing questions
     const { data: existingQuestions, error: fetchError } = await supabase
       .from('quiz_questions')
       .select('id')
-      .eq('quiz_id', quizId.value)
+      .eq('quiz_id', assessmentId.value)
     
-    if (fetchError) {
-      console.error('❌ Fetch questions error:', fetchError)
-      throw fetchError
-    }
+    if (fetchError) throw fetchError
     
-    // Step 3: Delete old questions (cascade to options and answers)
+    // Delete old questions
     if (existingQuestions && existingQuestions.length > 0) {
-  console.log(`Deleting ${existingQuestions.length} existing questions...`)
+      console.log(`Deleting ${existingQuestions.length} existing questions...`)
       const questionIds = existingQuestions.map(q => q.id)
       
       const { error: deleteError } = await supabase
@@ -820,26 +1047,21 @@ const saveQuiz = async () => {
         .delete()
         .in('id', questionIds)
       
-      if (deleteError) {
-        console.error('❌ Delete questions error:', deleteError)
-        throw deleteError
-      }
-      
-  console.log('Old questions deleted')
+      if (deleteError) throw deleteError
+      console.log('Old questions deleted')
     }
     
-    // Step 4: Insert new questions with their options/answers
-  console.log(`Inserting ${questions.value.length} new questions...`)
+    // Insert new questions
+    console.log(`Inserting ${questions.value.length} new questions...`)
     
     for (let i = 0; i < questions.value.length; i++) {
       const question = questions.value[i]
-  console.log(`Processing question ${i + 1}...`)
+      console.log(`Processing question ${i + 1}...`)
       
-      // Insert question
       const { data: insertedQuestion, error: questionError } = await supabase
         .from('quiz_questions')
         .insert({
-          quiz_id: quizId.value,
+          quiz_id: assessmentId.value,
           question_number: question.question_number,
           question_type: question.question_type,
           question_text: question.question_text,
@@ -848,16 +1070,12 @@ const saveQuiz = async () => {
         .select()
         .single()
       
-      if (questionError) {
-        console.error(`❌ Question ${i + 1} insert error:`, questionError)
-        throw new Error(`Failed to save question ${i + 1}: ${questionError.message}`)
-      }
+      if (questionError) throw new Error(`Failed to save question ${i + 1}: ${questionError.message}`)
       
-  console.log(`Question ${i + 1} inserted:`, insertedQuestion.id)
+      console.log(`Question ${i + 1} inserted:`, insertedQuestion.id)
       
-      // Insert options or answers
       if (question.question_type === 'multiple_choice') {
-  console.log(`Inserting ${question.options.length} options...`)
+        console.log(`Inserting ${question.options.length} options...`)
         
         const optionsToInsert = question.options.map(opt => ({
           question_id: insertedQuestion.id,
@@ -870,14 +1088,11 @@ const saveQuiz = async () => {
           .from('question_options')
           .insert(optionsToInsert)
         
-        if (optionsError) {
-          console.error(`❌ Options insert error for question ${i + 1}:`, optionsError)
-          throw new Error(`Failed to save options for question ${i + 1}: ${optionsError.message}`)
-        }
+        if (optionsError) throw new Error(`Failed to save options for question ${i + 1}: ${optionsError.message}`)
         
-  console.log(`Options inserted for question ${i + 1}`)
+        console.log(`Options inserted for question ${i + 1}`)
       } else {
-  console.log(`Inserting answer for question ${i + 1}...`)
+        console.log(`Inserting answer for question ${i + 1}...`)
         
         const { error: answerError } = await supabase
           .from('question_answers')
@@ -887,43 +1102,112 @@ const saveQuiz = async () => {
             case_sensitive: question.answer.case_sensitive || false
           })
         
-        if (answerError) {
-          console.error(`❌ Answer insert error for question ${i + 1}:`, answerError)
-          throw new Error(`Failed to save answer for question ${i + 1}: ${answerError.message}`)
-        }
+        if (answerError) throw new Error(`Failed to save answer for question ${i + 1}: ${answerError.message}`)
         
-  console.log(`Answer inserted for question ${i + 1}`)
+        console.log(`Answer inserted for question ${i + 1}`)
       }
     }
     
-  console.log('All questions saved successfully!')
-    alert('Quiz updated successfully!')
-    goBack()
+    console.log('All questions saved successfully!')
+    
+    // Show success message
+    if (confirm('✅ Quiz updated successfully! Click OK to go back.')) {
+      goBack()
+    }
     
   } catch (err) {
     console.error('❌ Error saving quiz:', err)
-    alert(`Error saving quiz: ${err.message || 'Unknown error occurred'}`)
+    alert(`❌ Error saving quiz: ${err.message || 'Unknown error occurred'}`)
   } finally {
     isSaving.value = false
-  console.log('Save quiz completed')
+  }
+}
+
+// Save assignment
+const saveAssignmentData = async () => {
+  console.log('Starting save assignment process...')
+  
+  // Validation
+  if (!assignment.value.title.trim()) {
+    alert('Please enter an assignment title')
+    return
+  }
+  
+  if (!assignment.value.assignment_type) {
+    alert('Please select an assignment type')
+    return
+  }
+  
+  if (!assignment.value.submission_type) {
+    alert('Please select a submission type')
+    return
+  }
+  
+  if (!assignment.value.due_date) {
+    alert('Please set a due date')
+    return
+  }
+  
+  if (!assignment.value.total_points || assignment.value.total_points < 1) {
+    alert('Please enter valid total points')
+    return
+  }
+  
+  isSaving.value = true
+  
+  try {
+    console.log('Updating assignment...')
+    
+    const dueDateUTC = convertPHTimeToUTC(assignment.value.due_date);
+    
+    const { error: assignmentError } = await supabase
+      .from('assignments')
+      .update({
+        title: assignment.value.title,
+        description: assignment.value.description,
+        assignment_type: assignment.value.assignment_type,
+        submission_type: assignment.value.submission_type,
+        total_points: assignment.value.total_points,
+        due_date: dueDateUTC,
+        allow_late_submission: assignment.value.allow_late_submission,
+        late_penalty: assignment.value.allow_late_submission ? assignment.value.late_penalty : 0,
+        require_plagiarism_check: assignment.value.require_plagiarism_check,
+        status: assignment.value.publish_immediately ? 'published' : 'draft',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', assessmentId.value)
+    
+    if (assignmentError) throw assignmentError
+    
+    console.log('Assignment updated successfully!')
+    
+    // Show success message
+    if (confirm('✅ Assignment updated successfully! Click OK to go back.')) {
+      goBack()
+    }
+    
+  } catch (err) {
+    console.error('❌ Error saving assignment:', err)
+    alert(`❌ Error saving assignment: ${err.message || 'Unknown error occurred'}`)
+  } finally {
+    isSaving.value = false
   }
 }
 
 const goBack = () => {
-  console.log('Navigating back to quiz management')
-  router.push({
-    name: 'ViewQuizzes',
-    params: {
-      subjectId: subjectId.value,
-      sectionId: sectionId.value
-    },
-    query: {
-      subjectName: subjectName.value,
-      sectionName: sectionName.value,
-      gradeLevel: gradeLevel.value,
-      sectionCode: sectionCode.value
-    }
-  })
+  console.log('Navigating back')
+  // Use router.go(-1) to go back to previous page
+  router.go(-1)
+  
+  // Alternative: If you want to navigate to a specific route
+  // router.push({
+  //   path: `/teacher/subjects/${subjectId.value}/sections/${sectionId.value}/quizzes`
+  // })
+}
+
+const logout = () => {
+  // Implement logout logic
+  console.log('Logout clicked')
 }
 
 // Lifecycle
@@ -931,11 +1215,9 @@ onMounted(async () => {
   console.log('EditQuiz component mounted')
   initDarkMode()
   
-  // Initialize auth and load teacher name
   try {
     await initializeAuth()
     
-    // Load teacher name
     if (teacherInfo.value?.id) {
       try {
         const { data: teacher, error: teacherError } = await supabase
@@ -950,23 +1232,19 @@ onMounted(async () => {
         }
       } catch (err) {
         console.warn('⚠️ Failed to load teacher name:', err)
-        // Continue anyway - name is not critical
       }
     }
   } catch (err) {
     console.warn('⚠️ Auth initialization warning:', err)
   }
   
-  // Debug timezone conversion
-  debugTimeConversion();
-  
-  if (!quizId.value) {
-    console.error('❌ Quiz ID is missing')
-    error.value = 'Quiz ID is missing'
+  if (!assessmentId.value) {
+    console.error('❌ Assessment ID is missing')
+    error.value = 'Assessment ID is missing'
     return
   }
   
-  await loadQuiz()
+  await loadAssessment()
   console.log('Component initialization complete')
 })
 </script>
@@ -2350,4 +2628,385 @@ onMounted(async () => {
   overflow-x: hidden;
 }
 
+/* Notification Bell */
+.notif-wrapper {
+  position: relative;
+}
+
+.nav-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Sidebar Divider */
+.sidebar-divider {
+  width: 48px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 0.75rem 0;
+}
+
+.sidebar-logout {
+  background: transparent;
+  border: none;
+  color: white;
+}
+
+.sidebar-logout:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* Content Wrapper */
+.content-wrapper {
+  margin-top: 2rem;
+}
+
+/* Assessment Type Selector */
+.assessment-type-selector {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 0;
+}
+
+.selector-card {
+  background: white;
+  border-radius: 20px;
+  border: 1.5px solid #e5e7eb;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  padding: 2.5rem;
+  max-width: 800px;
+  width: 100%;
+}
+
+.dark .selector-card {
+  background: #23272b;
+  border-color: #374151;
+}
+
+.selector-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.selector-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  color: #3D8D7A;
+}
+
+.dark .selector-icon {
+  color: #A3D1C6;
+}
+
+.selector-header h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.dark .selector-header h2 {
+  color: #f1f5f9;
+}
+
+.selector-header p {
+  color: #64748b;
+  font-size: 1rem;
+}
+
+.dark .selector-header p {
+  color: #94a3b8;
+}
+
+/* Type Options */
+.type-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.type-option-btn {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.dark .type-option-btn {
+  background: #1e2329;
+  border-color: #374151;
+}
+
+.type-option-btn:hover {
+  border-color: #3D8D7A;
+  box-shadow: 0 8px 24px rgba(61, 141, 122, 0.15);
+  transform: translateY(-4px);
+}
+
+.dark .type-option-btn:hover {
+  border-color: #A3D1C6;
+  box-shadow: 0 8px 24px rgba(163, 209, 198, 0.15);
+}
+
+.quiz-option:hover {
+  background: linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%);
+}
+
+.assignment-option:hover {
+  background: linear-gradient(135deg, #fef3c7 0%, #fef9e7 100%);
+}
+
+.option-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1rem;
+  background: linear-gradient(135deg, #3D8D7A, #2d6a5a);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.dark .option-icon {
+  background: linear-gradient(135deg, #A3D1C6, #20c997);
+}
+
+.assignment-option .option-icon {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.type-option-btn h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.dark .type-option-btn h3 {
+  color: #f1f5f9;
+}
+
+.type-option-btn p {
+  color: #64748b;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.dark .type-option-btn p {
+  color: #94a3b8;
+}
+
+/* Settings Section */
+.settings-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.dark .settings-section {
+  border-top-color: #374151;
+}
+
+.settings-section h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 1rem;
+}
+
+.dark .settings-section h4 {
+  color: #e5e7eb;
+}
+
+.indent {
+  margin-left: 2rem;
+}
+
+/* Assignment Type Specific Styles */
+#assignment-type,
+#assignment-submission {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 12px;
+  padding-right: 2.5rem;
+}
+
+/* Custom Scrollbar Styling - Green Theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #3D8D7A, #20c997);
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #2d6a5a, #18a577);
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.3);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(135deg, #1e5a4a, #146e5a);
+}
+
+::-webkit-scrollbar-corner {
+  background: #f1f5f9;
+}
+
+/* Firefox Scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3D8D7A #f1f5f9;
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-track {
+  background: #1a1d21;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #20c997, #18a577);
+  border: 1px solid #374151;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #18a577, #146e5a);
+  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.3);
+}
+
+.dark ::-webkit-scrollbar-corner {
+  background: #1a1d21;
+}
+
+/* Main content scroll behavior */
+.main-content {
+  scroll-behavior: smooth;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .type-options {
+    grid-template-columns: 1fr;
+  }
+  
+  .selector-card {
+    padding: 1.5rem;
+  }
+  
+  .type-option-btn {
+    padding: 1.5rem 1rem;
+  }
+  
+  .option-icon {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .indent {
+    margin-left: 1rem;
+  }
+}
+
+/* Main Content - FIXED: Added scroll and height constraints */
+.main-content {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  max-height: calc(100vh - 64px);  /* NEW */
+  overflow-y: auto;                 /* NEW */
+  overflow-x: hidden;               /* NEW */
+  scroll-behavior: smooth;          /* NEW */
+}
+
+/* Custom Scrollbar Styling - ADDED */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #3D8D7A, #20c997);
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #2d6a5a, #18a577);
+  box-shadow: 0 2px 8px rgba(61, 141, 122, 0.3);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(135deg, #1e5a4a, #146e5a);
+}
+
+::-webkit-scrollbar-corner {
+  background: #f1f5f9;
+}
+
+/* Firefox Scrollbar - ADDED */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3D8D7A #f1f5f9;
+}
+
+/* Dark mode scrollbar - ADDED */
+.dark ::-webkit-scrollbar-track {
+  background: #1a1d21;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #20c997, #18a577);
+  border: 1px solid #374151;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #18a577, #146e5a);
+  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.3);
+}
+
+.dark ::-webkit-scrollbar-corner {
+  background: #1a1d21;
+}
+
+/* Content Wrapper - ADDED */
+.content-wrapper {
+  margin-top: 2rem;
+}
 </style>

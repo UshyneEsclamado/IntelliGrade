@@ -522,36 +522,11 @@ const unenrollStudent = async () => {
 
     console.log('✅ Found enrollment:', existingEnrollment)
 
-    // Option 1: Try to update status to 'dropped' instead of deleting
-    console.log('🔄 Attempting to mark enrollment as dropped...')
-    const { data: updateData, error: updateError } = await supabase
-      .from('enrollments')
-      .update({ status: 'dropped' })
-      .eq('id', studentToRemove.enrollment_id)
-      .select()
-
-    if (!updateError && updateData && updateData.length > 0) {
-      console.log('✅ Successfully marked enrollment as dropped:', updateData)
-      
-      // Remove from local state
-      students.value = students.value.filter(s => s.id !== studentToRemove.id)
-      
-      // Close modal
-      closeUnenrollModal()
-
-      // Show success message
-      alert(`${studentToRemove.full_name} has been successfully unenrolled from ${sectionName.value}.`)
-      return
-    }
-
-    console.log('⚠️ Update failed, trying delete approach...')
-
-    // Option 2: Try to delete the enrollment record
-    const { data: deleteData, error } = await supabase
+    // Delete the enrollment record
+    const { error } = await supabase
       .from('enrollments')
       .delete()
       .eq('id', studentToRemove.enrollment_id)
-      .select()
 
     if (error) {
       console.error('❌ Unenroll error:', error)
@@ -559,29 +534,7 @@ const unenrollStudent = async () => {
       return
     }
 
-    console.log('🗑️ Delete operation result:', deleteData)
-
-    // Verify the record was actually deleted
-    if (!deleteData || deleteData.length === 0) {
-      console.error('❌ No rows were deleted - possible permission issue')
-      alert('Failed to unenroll student: No records were deleted. This might be a permission issue.')
-      return
-    }
-
-    // Double-check that enrollment no longer exists
-    const { data: verifyDeleted, error: verifyError } = await supabase
-      .from('enrollments')
-      .select('*')
-      .eq('id', studentToRemove.enrollment_id)
-      .single()
-
-    if (!verifyError && verifyDeleted) {
-      console.error('❌ Record still exists after delete operation')
-      alert('Failed to unenroll student: Record was not properly deleted from database.')
-      return
-    }
-
-    console.log('✅ Verified: Student enrollment has been deleted from database')
+    console.log('✅ Student unenrolled successfully')
 
     // Remove from local state
     students.value = students.value.filter(s => s.id !== studentToRemove.id)
