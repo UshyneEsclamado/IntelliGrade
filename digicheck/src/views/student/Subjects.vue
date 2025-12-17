@@ -1,4 +1,4 @@
-@media (max-width: 768px) {
+﻿@media (max-width: 768px) {
   .stats-grid {
     gap: 0.25rem;
     margin-bottom: 0.25rem;
@@ -444,8 +444,6 @@ export default {
   methods: {
     async initializeAuth() {
       try {
-        console.log('🔐 Initializing student authentication...')
-        
         const { data: { session }, error: sessionError } = await supabase.auth.getSession()
         
         if (sessionError) {
@@ -454,12 +452,10 @@ export default {
         }
         
         if (!session?.user) {
-          console.log('⚠️ No active session found')
           await this.$router.push('/login')
           return false
         }
         
-        console.log('✓ Session found for user:', session.user.id)
         this.currentUser = session.user
         
         const { data: profile, error: profileError } = await supabase
@@ -474,7 +470,6 @@ export default {
         }
 
         if (!profile) {
-          console.log('⚠️ Profile not found, creating...')
           const { data: newProfile, error: createError } = await supabase
             .from('profiles')
             .insert({
@@ -492,14 +487,11 @@ export default {
           }
 
           this.profile = newProfile
-          console.log('✓ Profile created')
         } else {
           this.profile = profile
-          console.log('✓ Profile loaded')
         }
 
         if (this.profile.role !== 'student') {
-          console.error('❌ Not a student account')
           alert('Access denied. Student account required.')
           await this.$router.push('/login')
           return false
@@ -517,8 +509,6 @@ export default {
         }
 
         if (!student) {
-          console.log('⚠️ Student record not found, creating...')
-          
           const gradeLevel = session.user.user_metadata?.grade_level || 7
           
           const { data: newStudent, error: createStudentError } = await supabase
@@ -539,17 +529,14 @@ export default {
           }
 
           this.studentInfo = newStudent
-          console.log('✓ Student record created:', newStudent.id)
         } else {
           if (!student.is_active) {
-            console.error('❌ Student account inactive')
             alert('Your account is currently inactive. Please contact support.')
             await this.$router.push('/login')
             return false
           }
 
           this.studentInfo = student
-          console.log('✓ Student info loaded:', student.id)
         }
 
         return true
@@ -654,15 +641,12 @@ export default {
     async fetchSubjects() {
       try {
         if (!this.studentInfo?.id) {
-          console.log('⚠️ No student info available')
           this.subjects = []
           this.isLoading = false
           return
         }
 
-        console.log('📚 Fetching subjects for student:', this.studentInfo.id)
         this.isLoading = true
-        this.loadingMessage = 'Loading your subjects...'
 
         let { data: enrollments, error: viewError } = await supabase
           .from('student_dashboard')
@@ -670,48 +654,37 @@ export default {
           .eq('student_id', this.studentInfo.id)
           .eq('enrollment_status', 'active')
 
-        console.log('View query result:', { enrollments, viewError })
-
         if (viewError || !enrollments || enrollments.length === 0) {
-          console.log('⚠️ View query failed or empty, using direct query...')
-          
-          const { data: enrollmentsData, error: enrollError } = await supabase
-            .from('enrollments')
-            .select('id, student_id, section_id, subject_id, status, enrolled_at')
-            .eq('student_id', this.studentInfo.id)
-            .eq('status', 'active')
+          // Fallback to direct query
+          const [enrollmentsData, sectionsData, subjectsData, teachersData] = await Promise.all([
+            supabase
+              .from('enrollments')
+              .select('id, student_id, section_id, subject_id, status, enrolled_at')
+              .eq('student_id', this.studentInfo.id)
+              .eq('status', 'active')
+              .then(res => res.data || []),
+            
+            supabase
+              .from('sections')
+              .select('id, name, section_code, subject_id')
+              .then(res => res.data || []),
+            
+            supabase
+              .from('subjects')
+              .select('id, name, grade_level, description, teacher_id')
+              .then(res => res.data || []),
+            
+            supabase
+              .from('teachers')
+              .select('id, full_name, email, department')
+              .then(res => res.data || [])
+          ])
 
-          if (enrollError) {
-            console.error('❌ Enrollment query error:', enrollError)
-            throw enrollError
-          }
-
-          if (!enrollmentsData || enrollmentsData.length === 0) {
-            console.log('ℹ️ No enrollments found')
+          if (enrollmentsData.length === 0) {
             this.subjects = []
             this.isLoading = false
             return
           }
-
-          console.log('✓ Found', enrollmentsData.length, 'enrollments')
-
-          const sectionIds = enrollmentsData.map(e => e.section_id)
-          const { data: sectionsData } = await supabase
-            .from('sections')
-            .select('id, name, section_code, subject_id')
-            .in('id', sectionIds)
-
-          const subjectIds = [...new Set(sectionsData.map(s => s.subject_id))]
-          const { data: subjectsData } = await supabase
-            .from('subjects')
-            .select('id, name, grade_level, description, teacher_id')
-            .in('id', subjectIds)
-
-          const teacherIds = [...new Set(subjectsData.map(s => s.teacher_id))]
-          const { data: teachersData } = await supabase
-            .from('teachers')
-            .select('id, full_name, email, department')
-            .in('id', teacherIds)
 
           const sectionsMap = new Map(sectionsData.map(s => [s.id, s]))
           const subjectsMap = new Map(subjectsData.map(s => [s.id, s]))
@@ -743,147 +716,79 @@ export default {
         }
 
         if (!enrollments || enrollments.length === 0) {
-          console.log('ℹ️ No enrollments found after processing')
           this.subjects = []
           this.isLoading = false
           return
         }
 
-        console.log('✓ Processing', enrollments.length, 'enrollments')
-
         const sectionIds = enrollments.map(e => e.section_id)
 
-        // ============================================
-        // FETCH QUIZZES - FIXED LOGIC
-        // ============================================
-        console.log('📝 Fetching quizzes for sections:', sectionIds)
-        
-        // 🔍 DEBUG: Check ALL quizzes in the entire database first
-        const { data: allQuizzes, error: quizzesError } = await supabase
-          .from('quizzes')
-          .select('id, section_id, title, status, start_date, end_date, created_at')
-          .in('section_id', sectionIds)
-          .eq('status', 'published')
-
-        if (quizzesError) {
-          console.error('❌ Error fetching quizzes:', quizzesError)
-        }
-
-        console.log('📊 Loaded', allQuizzes?.length || 0, 'published quizzes')
-
-        const quizzesBySection = {}
-        if (allQuizzes) {
-          allQuizzes.forEach(quiz => {
-            if (!quizzesBySection[quiz.section_id]) {
-              quizzesBySection[quiz.section_id] = []
-            }
-            quizzesBySection[quiz.section_id].push(quiz)
-          })
-        }
-
-        // Fetch quiz results for student
-        const allQuizIds = allQuizzes ? allQuizzes.map(q => q.id) : []
-        const resultsByQuizId = {}
-        
-        if (allQuizIds.length > 0) {
-          console.log('📈 Fetching quiz results for', allQuizIds.length, 'quizzes')
+        // Fetch quizzes, assignments, results, and submissions in parallel
+        const [quizzesResponse, assignmentsResponse, quizResultsResponse, submissionsResponse] = await Promise.all([
+          supabase
+            .from('quizzes')
+            .select('id, section_id, title, status, start_date, end_date')
+            .in('section_id', sectionIds)
+            .eq('status', 'published'),
           
-          const { data: allResults, error: resultsError } = await supabase
-            .from('quiz_results')
-            .select('quiz_id, best_score, best_percentage, total_attempts')
-            .eq('student_id', this.studentInfo.id)
-            .in('quiz_id', allQuizIds)
-          
-          console.log('📊 Quiz results:', { count: allResults?.length || 0, error: resultsError })
-          
-          if (resultsError) {
-            console.error('❌ Error fetching quiz results:', resultsError)
-          }
-          
-          if (allResults) {
-            allResults.forEach(result => {
-              resultsByQuizId[result.quiz_id] = result
-            })
-          }
-        }
-
-        console.log('📋 Results by quiz ID:', resultsByQuizId)
-
-        // ============================================
-        // FETCH ASSIGNMENTS
-        // ============================================
-        const assignmentsBySection = {}
-        const assignmentsCompletedBySection = {}
-        
-        if (sectionIds.length > 0) {
-          console.log('📝 Fetching assignments for sections:', sectionIds)
-          
-          const { data: allAssignments, error: assignmentsError } = await supabase
+          supabase
             .from('assignments')
             .select('id, section_id, subject_id, status, due_date')
             .in('section_id', sectionIds)
-            .eq('status', 'published')
+            .eq('status', 'published'),
+          
+          supabase
+            .from('quiz_results')
+            .select('quiz_id, best_score, best_percentage, total_attempts')
+            .eq('student_id', this.studentInfo.id),
+          
+          supabase
+            .from('assignment_submissions')
+            .select('assignment_id, assignment:assignments!inner(section_id)')
+            .eq('student_id', this.studentInfo.id)
+        ])
 
-          console.log('📝 Assignments query result:', { 
-            count: allAssignments?.length || 0, 
-            error: assignmentsError,
-            assignments: allAssignments 
-          })
-
-          if (assignmentsError) {
-            console.error('❌ Error fetching assignments:', assignmentsError)
+        const allQuizzes = quizzesResponse.data || []
+        const allAssignments = assignmentsResponse.data || []
+        const allResults = quizResultsResponse.data || []
+        const submissions = submissionsResponse.data || []
+        
+        // Build lookup maps
+        const quizzesBySection = {}
+        allQuizzes.forEach(quiz => {
+          if (!quizzesBySection[quiz.section_id]) {
+            quizzesBySection[quiz.section_id] = []
           }
+          quizzesBySection[quiz.section_id].push(quiz)
+        })
 
-          if (allAssignments) {
-            allAssignments.forEach(assignment => {
-              const sectionId = assignment.section_id
-              assignmentsBySection[sectionId] = (assignmentsBySection[sectionId] || 0) + 1
-            })
+        const resultsByQuizId = {}
+        allResults.forEach(result => {
+          resultsByQuizId[result.quiz_id] = result
+        })
 
-            const assignmentIds = allAssignments.map(a => a.id)
-            if (assignmentIds.length > 0) {
-              const { data: submissions, error: submissionsError } = await supabase
-                .from('assignment_submissions')
-                .select('assignment_id, assignment:assignments!inner(section_id)')
-                .in('assignment_id', assignmentIds)
-                .eq('student_id', this.studentInfo.id)
+        // Count assignments by section
+        const assignmentsBySection = {}
+        const assignmentsCompletedBySection = {}
+        
+        allAssignments.forEach(assignment => {
+          const sectionId = assignment.section_id
+          assignmentsBySection[sectionId] = (assignmentsBySection[sectionId] || 0) + 1
+        })
 
-              console.log('📋 Submissions query result:', { 
-                count: submissions?.length || 0, 
-                error: submissionsError 
-              })
-
-              if (submissionsError) {
-                console.error('❌ Error fetching submissions:', submissionsError)
-              }
-
-              if (submissions) {
-                submissions.forEach(submission => {
-                  const sectionId = submission.assignment?.section_id || submission.assignments?.section_id
-                  if (sectionId) {
-                    assignmentsCompletedBySection[sectionId] = (assignmentsCompletedBySection[sectionId] || 0) + 1
-                  }
-                })
-              }
-            }
+        submissions.forEach(submission => {
+          const sectionId = submission.assignment?.section_id || submission.assignments?.section_id
+          if (sectionId) {
+            assignmentsCompletedBySection[sectionId] = (assignmentsCompletedBySection[sectionId] || 0) + 1
           }
+        })
 
-          sectionIds.forEach(sId => {
-            if (!(sId in assignmentsBySection)) {
-              assignmentsBySection[sId] = 0
-            }
-            if (!(sId in assignmentsCompletedBySection)) {
-              assignmentsCompletedBySection[sId] = 0
-            }
-          })
+        sectionIds.forEach(sId => {
+          if (!(sId in assignmentsBySection)) assignmentsBySection[sId] = 0
+          if (!(sId in assignmentsCompletedBySection)) assignmentsCompletedBySection[sId] = 0
+        })
 
-          console.log('📊 Assignment counts by section:', assignmentsBySection)
-          console.log('📊 Completed assignments by section:', assignmentsCompletedBySection)
-        }
-
-        // ============================================
-        // BUILD SUBJECTS ARRAY
-        // ============================================
+        // Build subjects array
         const now = new Date()
         
         const newSubjects = enrollments.map(enrollment => {
@@ -892,30 +797,13 @@ export default {
 
           const sectionQuizzes = quizzesBySection[sectionId] || []
           
-          console.log(`\n📚 Processing section ${sectionId}:`)
-          console.log('  Total quizzes:', sectionQuizzes.length)
-          
-          // ✅ FIXED: Calculate available quizzes correctly
+          // Calculate available quizzes
           const availableQuizzesList = sectionQuizzes.filter(quiz => {
-            // Check if quiz has started
             const hasStarted = !quiz.start_date || new Date(quiz.start_date) <= now
-            // Check if quiz has not expired
             const hasNotExpired = !quiz.end_date || new Date(quiz.end_date) > now
-            // Check if quiz is not completed
             const result = resultsByQuizId[quiz.id]
             const isNotCompleted = !result || result.total_attempts === 0
-            
-            const isAvailable = hasStarted && hasNotExpired && isNotCompleted
-            
-            console.log(`  Quiz "${quiz.title}":`, {
-              hasStarted,
-              hasNotExpired,
-              isNotCompleted,
-              isAvailable,
-              result: result ? `${result.total_attempts} attempts` : 'no attempts'
-            })
-            
-            return isAvailable
+            return hasStarted && hasNotExpired && isNotCompleted
           })
           
           const completedQuizIds = sectionQuizzes
@@ -929,22 +817,10 @@ export default {
           const completedQuizzes = completedQuizIds.length
           const availableQuizzes = availableQuizzesList.length
 
-          console.log('  Final counts:', {
-            total: totalQuizzes,
-            completed: completedQuizzes,
-            available: availableQuizzes
-          })
-
           // Get assignment counts
           const totalAssignments = assignmentsBySection[sectionId] || 0
           const completedAssignments = assignmentsCompletedBySection[sectionId] || 0
           const availableAssignments = Math.max(0, totalAssignments - completedAssignments)
-
-          console.log(`  Assignments:`, { 
-            total: totalAssignments, 
-            completed: completedAssignments, 
-            available: availableAssignments 
-          })
 
           // Calculate total assessments
           const totalAssessments = totalQuizzes + totalAssignments
@@ -978,15 +854,12 @@ export default {
             gradeLevel: enrollment.subject_grade_level || 'N/A',
             color: this.generateSubjectColor(enrollment.subject_name || 'default'),
             status: 'active',
-            // Quiz stats
             completedQuizzes,
             availableQuizzes,
             totalQuizzes,
-            // Assignment stats
             completedAssignments,
             availableAssignments,
             totalAssignments,
-            // Overall stats
             totalAssessments,
             completedAssessments,
             currentGrade,
@@ -998,8 +871,7 @@ export default {
         })
         
         this.subjects = newSubjects
-        console.log('\n✅ Successfully loaded', this.subjects.length, 'subjects')
-        console.log('📋 Final subjects data:', this.subjects)
+        console.log('✅ Loaded', this.subjects.length, 'subjects')
 
       } catch (error) {
         console.error('❌ Error fetching subjects:', error)
@@ -1016,11 +888,17 @@ export default {
         return
       }
 
-      console.log('🔔 Setting up real-time enrollment subscription for student:', this.studentInfo.id)
+      console.log('🔔 Setting up real-time subscriptions for student:', this.studentInfo.id)
       
-      // Subscribe to enrollment changes for this student
+      // Get all section IDs for this student
+      const sectionIds = this.subjects.map(s => s.sectionId).filter(Boolean)
+      console.log('📡 Monitoring sections:', sectionIds)
+      
+      // Create a single channel for all real-time updates
       this.enrollmentSubscription = supabase
-        .channel('student_enrollments')
+        .channel('student_realtime_updates')
+        
+        // 1. Listen for ENROLLMENT changes
         .on('postgres_changes', 
           { 
             event: '*', 
@@ -1030,30 +908,98 @@ export default {
           }, 
           async (payload) => {
             console.log('📢 Enrollment change detected:', payload)
-            
             const { eventType, new: newRecord, old: oldRecord } = payload
             
             if (eventType === 'DELETE' || 
-               (eventType === 'UPDATE' && newRecord?.status !== 'active') ||
-               (eventType === 'UPDATE' && oldRecord?.status === 'active' && newRecord?.status !== 'active')) {
-              
-              console.log('👋 Student was unenrolled, refreshing subjects...')
-              
-              // Small delay to ensure database consistency
-              setTimeout(async () => {
-                await this.fetchSubjects()
-              }, 500)
+               (eventType === 'UPDATE' && newRecord?.status !== 'active')) {
+              console.log('👋 Unenrolled - refreshing...')
+              setTimeout(async () => await this.fetchSubjects(), 500)
             } else if (eventType === 'INSERT' && newRecord?.status === 'active') {
-              console.log('🎉 New enrollment detected, refreshing subjects...')
-              
-              setTimeout(async () => {
-                await this.fetchSubjects()
-              }, 500)
+              console.log('🎉 New enrollment - refreshing...')
+              setTimeout(async () => await this.fetchSubjects(), 500)
             }
           }
         )
+        
+        // 2. Listen for NEW QUIZZES
+        .on('postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'quizzes'
+          },
+          async (payload) => {
+            const quiz = payload.new
+            console.log('� New quiz detected:', quiz.title)
+            
+            if (sectionIds.includes(quiz.section_id)) {
+              console.log('✨ New quiz in your section! Updating...')
+              this.fetchSubjects()
+            }
+          }
+        )
+        
+        // 3. Listen for QUIZ STATUS UPDATES (draft -> published)
+        .on('postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'quizzes'
+          },
+          async (payload) => {
+            const quiz = payload.new
+            const oldQuiz = payload.old
+            
+            if (sectionIds.includes(quiz.section_id) && 
+                quiz.status === 'published' && 
+                oldQuiz.status !== 'published') {
+              console.log('📢 Quiz published:', quiz.title)
+              this.fetchSubjects()
+            }
+          }
+        )
+        
+        // 4. Listen for NEW ASSIGNMENTS
+        .on('postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'assignments'
+          },
+          async (payload) => {
+            const assignment = payload.new
+            
+            if (sectionIds.includes(assignment.section_id)) {
+              console.log('✨ New assignment published!')
+              this.fetchSubjects()
+            }
+          }
+        )
+        
+        // 5. Listen for ASSIGNMENT STATUS UPDATES (draft -> published)
+        .on('postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'assignments'
+          },
+          async (payload) => {
+            const assignment = payload.new
+            const oldAssignment = payload.old
+            
+            if (sectionIds.includes(assignment.section_id) && 
+                assignment.status === 'published' && 
+                oldAssignment.status !== 'published') {
+              console.log('📢 Assignment published:', assignment.title)
+              this.fetchSubjects()
+            }
+          }
+        )
+        
         .subscribe((status) => {
-          console.log('📡 Enrollment subscription status:', status)
+          if (status === 'SUBSCRIBED') {
+            console.log('✅ Live updates active!')
+          }
         })
     },
 
@@ -1210,7 +1156,24 @@ export default {
       }
     },
 
-    closeAllOptionsMenus() {
+    closeAllOptionsMenus(event) {
+      // Don't interfere with navigation clicks
+      if (event) {
+        const target = event.target;
+        // Check if click is on a navigation link or inside sidebar
+        if (target.closest('.nav-item') || 
+            target.closest('.mobile-nav-item') || 
+            target.closest('.sidebar') ||
+            target.closest('.mobile-bottom-nav') ||
+            target.closest('a[href]')) {
+          return;
+        }
+        // Check if click is within an options menu or its trigger
+        if (target.closest('.options-menu') || target.closest('.options-btn')) {
+          return;
+        }
+      }
+      
       this.subjects.forEach(subject => {
         subject.showOptions = false
       })
@@ -1261,6 +1224,15 @@ export default {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
     
     try {
+      // Setup click handler immediately
+      this.$nextTick(() => {
+        document.addEventListener('click', this.closeAllOptionsMenus, false)
+      })
+
+      // Load preferences immediately (no await needed)
+      this.loadUserPreferences()
+
+      // Initialize auth and fetch subjects in parallel with UI render
       const authSuccess = await this.initializeAuth()
       
       if (!authSuccess) {
@@ -1268,13 +1240,11 @@ export default {
         return
       }
 
-      this.loadUserPreferences()
-      await this.fetchSubjects()
+      // Start fetching subjects immediately (don't block UI)
+      this.fetchSubjects()
       
-      // Setup real-time enrollment subscription
+      // Setup real-time subscription (non-blocking)
       this.setupEnrollmentSubscription()
-      
-      document.addEventListener('click', this.closeAllOptionsMenus)
       
       console.log('✅ INITIALIZATION COMPLETE')
       
@@ -1287,7 +1257,7 @@ export default {
       console.log('🔐 Auth state changed:', event)
       if (event === 'SIGNED_IN' && session?.user) {
         const success = await this.initializeAuth()
-        if (success) await this.fetchSubjects()
+        if (success) this.fetchSubjects()
       } else if (event === 'SIGNED_OUT') {
         this.subjects = []
         this.currentUser = null
@@ -1298,9 +1268,10 @@ export default {
   },
   
   beforeUnmount() {
+    console.log('🔄 COMPONENT UNMOUNTING - Cleaning up')
     if (this.pollingInterval) clearInterval(this.pollingInterval)
     this.cleanupEnrollmentSubscription()
-    document.removeEventListener('click', this.closeAllOptionsMenus)
+    document.removeEventListener('click', this.closeAllOptionsMenus, false)
   }
 }
 </script>

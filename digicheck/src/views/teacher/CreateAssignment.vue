@@ -392,13 +392,6 @@
 
               <div class="checkbox-group">
                 <label class="checkbox-label">
-                  <input type="checkbox" v-model="formData.require_plagiarism_check" />
-                  <span>Require plagiarism check</span>
-                </label>
-              </div>
-
-              <div class="checkbox-group">
-                <label class="checkbox-label">
                   <input type="checkbox" v-model="formData.publish_immediately" />
                   <span>Publish immediately</span>
                 </label>
@@ -512,7 +505,6 @@ const formData = ref({
   submission_type: '',
   allow_late_submission: false,
   late_penalty: 10,
-  require_plagiarism_check: false,
   publish_immediately: true
 })
 
@@ -528,9 +520,14 @@ const errorMessage = ref('')
 
 // Computed
 const minDate = computed(() => {
+  // ✅ FIXED: Return current PH time as minimum date
   const now = new Date()
-  now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
-  return now.toISOString().slice(0, 16)
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  const hours = String(now.getHours()).padStart(2, '0')
+  const minutes = String(now.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day}T${hours}:${minutes}`
 })
 
 // ✅✅✅ TAMANG LOAD TEACHER INFO - Para sa iyong DB structure
@@ -715,6 +712,17 @@ const createAssignment = async () => {
       throw new Error('Due date is required')
     }
 
+    // ✅ FIXED: Convert datetime-local to UTC for database storage
+    // The datetime-local input gives us the local time (PH time)
+    // We need to convert it to UTC for proper storage
+    const localDueDate = new Date(formData.value.due_date)
+    const utcDueDate = localDueDate.toISOString()
+    
+    console.log('📅 Due date conversion:')
+    console.log('  Local input:', formData.value.due_date)
+    console.log('  Parsed local:', localDueDate.toString())
+    console.log('  UTC for DB:', utcDueDate)
+
     // Create assignment record
     const assignmentData = {
       teacher_id: teacherId.value,
@@ -723,12 +731,11 @@ const createAssignment = async () => {
       title: formData.value.title.trim(),
       description: formData.value.description?.trim() || null,
       total_points: formData.value.total_points,
-      due_date: formData.value.due_date,
+      due_date: utcDueDate, // ✅ Store as UTC
       assignment_type: formData.value.assignment_type,
       submission_type: formData.value.submission_type,
       allow_late_submission: formData.value.allow_late_submission,
       late_penalty: formData.value.allow_late_submission ? formData.value.late_penalty : 0,
-      require_plagiarism_check: formData.value.require_plagiarism_check,
       status: formData.value.publish_immediately ? 'published' : 'draft',
       published_at: formData.value.publish_immediately ? new Date().toISOString() : null,
       attachments: []
@@ -803,15 +810,20 @@ const createAnother = () => {
     submission_type: '',
     allow_late_submission: false,
     late_penalty: 10,
-    require_plagiarism_check: false,
     publish_immediately: true
   }
   selectedFiles.value = []
   
-  const nextWeek = new Date()
-  nextWeek.setDate(nextWeek.getDate() + 7)
-  nextWeek.setMinutes(nextWeek.getMinutes() - nextWeek.getTimezoneOffset())
-  formData.value.due_date = nextWeek.toISOString().slice(0, 16)
+  // ✅ Set default due date to TODAY at current time
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  const hours = String(today.getHours()).padStart(2, '0')
+  const minutes = String(today.getMinutes()).padStart(2, '0')
+  formData.value.due_date = `${year}-${month}-${day}T${hours}:${minutes}`
+  
+  console.log('📅 Set default due date to TODAY (PH time):', formData.value.due_date)
 }
 
 const goToAssignments = () => {
@@ -852,11 +864,16 @@ onMounted(async () => {
   
   await loadTeacherInfo()
   
-  const nextWeek = new Date()
-  nextWeek.setDate(nextWeek.getDate() + 7)
-  nextWeek.setMinutes(nextWeek.getMinutes() - nextWeek.getTimezoneOffset())
-  formData.value.due_date = nextWeek.toISOString().slice(0, 16)
+  // ✅ Set default due date to TODAY at current time
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  const hours = String(today.getHours()).padStart(2, '0')
+  const minutes = String(today.getMinutes()).padStart(2, '0')
+  formData.value.due_date = `${year}-${month}-${day}T${hours}:${minutes}`
   
+  console.log('📅 Set default due date to TODAY (PH time):', formData.value.due_date)
   console.log('✅ Component ready!')
 })
 </script>

@@ -199,7 +199,7 @@
     </aside>
 
     <main class="main-content">
-      <router-view :key="$route.fullPath" />
+      <router-view />
     </main>
 
     <!-- Mobile Bottom Navigation -->
@@ -369,18 +369,15 @@ export default {
     };
   },
   computed: {
-    // Check if student is in Senior High School (Grades 11-12)
     isSeniorHigh() {
       return this.userProfile.grade === 11 || this.userProfile.grade === 12;
     },
     
-    // Get school level text
     schoolLevel() {
       if (!this.userProfile.grade) return '';
       return this.isSeniorHigh ? 'Senior High School' : 'Junior High School';
     },
     
-    // Get full strand name
     strandFullName() {
       if (!this.userProfile.strand) return '';
       
@@ -394,7 +391,6 @@ export default {
       return strandNames[this.userProfile.strand] || this.userProfile.strand;
     },
     
-    // Get formatted grade display
     gradeDisplay() {
       if (!this.userProfile.grade) return 'Grade not set';
       
@@ -406,7 +402,7 @@ export default {
     }
   },
   watch: {
-    '$route'() {
+    '$route'(to, from) {
       this.isProfileMenuOpen = false;
       this.isHelpMenuOpen = false;
     }
@@ -415,19 +411,27 @@ export default {
     console.log('========================================');
     console.log('StudentDashboard Component Mounted');
     console.log('========================================');
+    
     await this.loadUserProfile();
     this.setupRealtimeSubscription();
     this.initializeDarkMode();
-    
-    window.addEventListener('studentProfileUpdated', this.handleProfileUpdate);
-    document.addEventListener('click', this.handleClickOutside);
+    this.setupEventListeners();
   },
   beforeUnmount() {
     this.cleanupSubscriptions();
-    window.removeEventListener('studentProfileUpdated', this.handleProfileUpdate);
-    document.removeEventListener('click', this.handleClickOutside);
+    this.removeEventListeners();
   },
   methods: {
+    setupEventListeners() {
+      window.addEventListener('studentProfileUpdated', this.handleProfileUpdate);
+      document.addEventListener('click', this.handleClickOutside);
+    },
+    
+    removeEventListeners() {
+      window.removeEventListener('studentProfileUpdated', this.handleProfileUpdate);
+      document.removeEventListener('click', this.handleClickOutside);
+    },
+    
     async loadUserProfile() {
       try {
         this.isLoadingProfile = true;
@@ -437,13 +441,13 @@ export default {
         
         if (authError) {
           console.error('❌ Authentication Error:', authError);
-          this.$router.push('/login');
+          await this.$router.push('/login');
           return;
         }
 
         if (!user) {
           console.error('❌ No authenticated user found');
-          this.$router.push('/login');
+          await this.$router.push('/login');
           return;
         }
 
@@ -487,7 +491,7 @@ export default {
 
         if (profileData.role !== 'student') {
           console.error('❌ Access Denied: User role is', profileData.role, 'not student');
-          this.$router.push('/login');
+          await this.$router.push('/login');
           return;
         }
 
@@ -519,14 +523,15 @@ export default {
         console.log('');
         console.log('📋 STEP 4: Setting userProfile data...');
         
-        // Set all profile data including strand
-        this.userProfile.fullName = studentData.full_name || '';
-        this.userProfile.email = studentData.email || '';
-        this.userProfile.studentId = studentData.student_id || '';
-        this.userProfile.grade = studentData.grade_level;
-        this.userProfile.strand = studentData.strand || null;
-        this.userProfile.role = 'student';
-        this.userProfile.profilePhoto = profileData.profile_photo || null;
+        this.userProfile = {
+          fullName: studentData.full_name || '',
+          email: studentData.email || '',
+          studentId: studentData.student_id || '',
+          grade: studentData.grade_level,
+          strand: studentData.strand || null,
+          role: 'student',
+          profilePhoto: profileData.profile_photo || null
+        };
 
         console.log('✅ ========================================');
         console.log('✅ USER PROFILE SUCCESSFULLY LOADED');
@@ -542,6 +547,7 @@ export default {
         console.log('Profile Photo:', this.userProfile.profilePhoto);
         console.log('========================================');
 
+        await this.$nextTick();
         this.$forceUpdate();
 
       } catch (error) {
@@ -581,7 +587,9 @@ export default {
               this.userProfile.fullName = payload.new.full_name || this.userProfile.fullName;
               this.userProfile.email = payload.new.email || this.userProfile.email;
               this.userProfile.profilePhoto = payload.new.profile_photo || this.userProfile.profilePhoto;
-              this.$forceUpdate();
+              this.$nextTick(() => {
+                this.$forceUpdate();
+              });
             }
           }
         )
@@ -605,7 +613,9 @@ export default {
               this.userProfile.studentId = payload.new.student_id || this.userProfile.studentId;
               this.userProfile.grade = payload.new.grade_level;
               this.userProfile.strand = payload.new.strand || null;
-              this.$forceUpdate();
+              this.$nextTick(() => {
+                this.$forceUpdate();
+              });
             }
           }
         )
@@ -640,13 +650,15 @@ export default {
 
     handleProfileError() {
       console.error('⚠️ Setting error state in userProfile');
-      this.userProfile.fullName = 'Error Loading';
-      this.userProfile.email = 'Check Console';
-      this.userProfile.studentId = 'ERROR';
-      this.userProfile.grade = null;
-      this.userProfile.strand = null;
-      this.userProfile.role = 'student';
-      this.userProfile.profilePhoto = null;
+      this.userProfile = {
+        fullName: 'Error Loading',
+        email: 'Check Console',
+        studentId: 'ERROR',
+        grade: null,
+        strand: null,
+        role: 'student',
+        profilePhoto: null
+      };
       this.$forceUpdate();
     },
 
@@ -659,25 +671,27 @@ export default {
 
     showLogoutModal() {
       this.isLogoutModalVisible = true;
+      document.body.style.overflow = 'hidden';
     },
 
     hideLogoutModal() {
       this.isLogoutModalVisible = false;
+      document.body.style.overflow = '';
     },
 
     async confirmLogout() {
       console.log('🚪 Starting logout process...');
       
       this.isLogoutModalVisible = false;
+      document.body.style.overflow = '';
       this.isLoggingOut = true;
       
       try {
         console.log('Step 1: Cleaning up subscriptions');
         this.cleanupSubscriptions();
         
-        console.log('Step 2: Clearing local storage');
-        localStorage.clear();
-        sessionStorage.clear();
+        console.log('Step 2: Removing event listeners');
+        this.removeEventListeners();
         
         console.log('Step 3: Signing out from Supabase');
         const { error } = await supabase.auth.signOut({ scope: 'local' });
@@ -689,22 +703,27 @@ export default {
         
         console.log('✅ Logout successful');
         
-        console.log('Step 4: Redirecting to login');
-        this.$router.push('/login').then(() => {
-          this.isLoggingOut = false;
-        });
+        console.log('Step 4: Clearing storage');
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        console.log('Step 5: Redirecting to login');
+        window.location.href = '/login';
         
       } catch (error) {
         console.error('❌ Error during logout:', error);
-        this.isLoggingOut = false;
         localStorage.clear();
         sessionStorage.clear();
-        this.$router.push('/login');
+        this.isLoggingOut = false;
+        window.location.href = '/login';
       }
     },
 
     toggleProfileMenu() {
       this.isProfileMenuOpen = !this.isProfileMenuOpen;
+      if (this.isProfileMenuOpen) {
+        this.isHelpMenuOpen = false;
+      }
     },
 
     closeProfileMenu() {
@@ -713,22 +732,24 @@ export default {
 
     async handleLogout() {
       this.closeProfileMenu();
+      await this.$nextTick();
       this.showLogoutModal();
     },
 
     handleClickOutside(event) {
-      const profileDropdown = document.querySelector('.profile-dropdown');
-      const profileMenuBtn = document.querySelector('.profile-menu-btn');
-      const helpMenu = document.querySelector('.help-menu');
-      const helpBtn = document.querySelector('.floating-help-btn');
+      const profileDropdown = this.$el?.querySelector('.profile-dropdown');
+      const profileMenuBtn = this.$el?.querySelector('.profile-menu-btn');
       
-      if (this.isProfileMenuOpen && profileDropdown && 
+      if (this.isProfileMenuOpen && profileDropdown && profileMenuBtn &&
           !profileDropdown.contains(event.target) && 
           !profileMenuBtn.contains(event.target)) {
         this.closeProfileMenu();
       }
       
-      if (this.isHelpMenuOpen && helpMenu && 
+      const helpMenu = this.$el?.querySelector('.help-menu');
+      const helpBtn = this.$el?.querySelector('.floating-help-btn');
+      
+      if (this.isHelpMenuOpen && helpMenu && helpBtn &&
           !helpMenu.contains(event.target) && 
           !helpBtn.contains(event.target)) {
         this.isHelpMenuOpen = false;
@@ -737,21 +758,28 @@ export default {
 
     toggleHelpMenu() {
       this.isHelpMenuOpen = !this.isHelpMenuOpen;
+      if (this.isHelpMenuOpen) {
+        this.isProfileMenuOpen = false;
+      }
     },
 
     openGuide() {
+      console.log('Opening Student Guide...');
       this.isHelpMenuOpen = false;
     },
 
     openFAQ() {
+      console.log('Opening FAQ...');
       this.isHelpMenuOpen = false;
     },
 
     contactSupport() {
+      console.log('Opening Contact Support...');
       this.isHelpMenuOpen = false;
     },
 
     reportIssue() {
+      console.log('Opening Report Issue...');
       this.isHelpMenuOpen = false;
     },
 
@@ -781,7 +809,9 @@ export default {
         this.userProfile.strand = newStrand || null;
       }
       
-      this.$forceUpdate();
+      this.$nextTick(() => {
+        this.$forceUpdate();
+      });
     }
   }
 };

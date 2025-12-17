@@ -3727,10 +3727,15 @@
                 <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
               </svg>
             </div>
-            <div>
-              <h3 class="section-title">Find Existing Students</h3>
-              <p class="enroll-description">Search by name or ID, then select students to add</p>
-            </div>
+           <div>
+  <h3 class="section-title">Find Existing Students</h3>
+  <p class="enroll-description" v-if="selectedSubjectForStudents?.grade_level >= 11 && selectedSubjectForStudents?.strand">
+    Search and select students to add (Only Grade {{ selectedSubjectForStudents?.grade_level }} {{ selectedSubjectForStudents?.strand }} students will be shown)
+  </p>
+  <p class="enroll-description" v-else>
+    Search and select students to add (Only Grade {{ selectedSubjectForStudents?.grade_level }} students will be shown)
+  </p>
+</div>
           </div>
         </div>
         
@@ -3817,30 +3822,37 @@
               <span>Searching students...</span>
             </div>
 
-            <div v-else-if="availableStudents.length === 0 && studentSearchQuery" class="empty-search-enhanced-premium">
-              <div class="empty-content-box">
-                <div class="empty-icon-premium">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M7,13H17V11H7"/>
-                  </svg>
-                </div>
-                <div class="empty-text-container">
-                  <div class="empty-title-box">
-                    <h5>No Students Found</h5>
-                  </div>
-                  <div class="empty-message-box">
-                    <p>We couldn't find any students matching "<span class="search-term">{{ studentSearchQuery }}</span>"</p>
-                    <div class="suggestion-box">
-                      <ul class="suggestion-list">
-                        <li>Try a different search term</li>
-                        <li>Check spelling and try again</li>
-                        <li>Verify students are eligible for Grade {{ selectedSubjectForStudents?.grade_level }}</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <div v-else-if="availableStudents.length === 0 && !isSearchingStudents" class="empty-search-enhanced-premium">
+  <div class="empty-content-box">
+    <div class="empty-icon-premium success">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M16,4C18.21,4 20,5.79 20,8C20,10.21 18.21,12 16,12C13.79,12 12,10.21 12,8C12,5.79 13.79,4 16,4M16,14C20.42,14 24,15.79 24,18V20H8V18C8,15.79 11.58,14 16,14M21,6.41L19.59,5L16,8.59L14.41,7L13,8.41L16,11.41L21,6.41Z"/>
+      </svg>
+    </div>
+    <div class="empty-text-container">
+      <div class="empty-title-box success">
+        <h5>All Eligible Students Enrolled!</h5>
+      </div>
+      <div class="empty-message-box success">
+        <p v-if="selectedSubjectForStudents?.grade_level >= 11 && selectedSubjectForStudents?.strand">
+          Great job! All eligible students for <span class="grade-highlight">Grade {{ selectedSubjectForStudents?.grade_level }} {{ selectedSubjectForStudents?.strand }}</span> are already enrolled in this subject.
+        </p>
+        <p v-else>
+          Great job! All eligible students for <span class="grade-highlight">Grade {{ selectedSubjectForStudents?.grade_level }}</span> are already enrolled in this subject.
+        </p>
+        <div class="success-info-box">
+          <div class="info-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/>
+            </svg>
+            <span v-if="selectedSubjectForStudents?.grade_level >= 11">Only showing students matching grade level and strand</span>
+            <span v-else>Only showing students matching grade level</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
             <div v-else-if="availableStudents.length === 0 && !isSearchingStudents" class="empty-search-enhanced-premium">
               <div class="empty-content-box">
@@ -5401,6 +5413,13 @@ const searchStudents = async () => {
       await waitForAuth()
     }
 
+    console.log('🔍 Searching students for:', {
+      subject: selectedSubjectForStudents.value.subject_name,
+      grade: selectedSubjectForStudents.value.grade_level,
+      strand: selectedSubjectForStudents.value.strand,
+      section: selectedSectionForStudents.value.section_name
+    })
+
     // Build query for teacher_available_students view
     let query = supabase
       .from('teacher_available_students')
@@ -5429,6 +5448,7 @@ const searchStudents = async () => {
       return
     }
 
+    console.log(`✅ Found ${data?.length || 0} eligible students`)
     availableStudents.value = data || []
 
   } catch (error) {

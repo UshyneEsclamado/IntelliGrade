@@ -465,22 +465,33 @@ const isSubmitting = ref(false)
 let assignmentSubscription = null
 
 // Utility Functions
-const formatPHTime = (utcDateString) => {
-  if (!utcDateString) return 'Not set'
+const formatPHTime = (dateString) => {
+  if (!dateString) return 'Not set'
   try {
-    const utcDate = new Date(utcDateString)
+    // ✅ FIXED: Parse UTC date from database and convert to Philippine Time (UTC+8)
+    const utcDate = new Date(dateString)
+    
+    console.log('🕐 Time conversion:')
+    console.log('  UTC from DB:', dateString)
+    console.log('  Parsed UTC:', utcDate.toISOString())
+    
+    // Format in Philippine Time (Asia/Manila timezone)
     const options = {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-      timeZone: 'Asia/Manila',
-      hour12: true
+      hour12: true,
+      timeZone: 'Asia/Manila' // ✅ Force Philippine timezone
     }
-    return utcDate.toLocaleString('en-PH', options) + ' PHT'
+    
+    const formatted = utcDate.toLocaleString('en-US', options)
+    console.log('  PH Time display:', formatted)
+    
+    return formatted
   } catch (error) {
-    console.error('Error formatting PH time:', error)
+    console.error('Error formatting time:', error)
     return 'Invalid date'
   }
 }
@@ -810,9 +821,11 @@ const setupRealtimeSubscription = () => {
 
 // Navigation Methods
 const goBack = () => {
-  router.push({
-    name: 'StudentSubjects'
-  })
+  console.log('🔙 Navigating back to subjects...')
+  
+  // Force a fresh navigation using window.location
+  // This ensures it works even after being on the page for a while
+  window.location.href = '/student/subjects'
 }
 
 const viewAssignmentDetails = (assignment) => {
@@ -970,7 +983,7 @@ onMounted(async () => {
   if (!paramsLoaded) {
     console.error('❌ Failed to load route params')
     alert('Missing information')
-    router.push('/student/subjects')
+    window.location.href = '/student/subjects'
     return
   }
 

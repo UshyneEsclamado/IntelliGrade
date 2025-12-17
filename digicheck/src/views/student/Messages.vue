@@ -1,17 +1,6 @@
 
 <template>
   <div class="messages-container">
-    <!-- Loading Overlay (uniform with Subjects.vue) -->
-    <div v-if="isInitialLoading" class="loading-overlay">
-      <div class="loading-content">
-        <div class="loading-spinner-container">
-          <div class="loading-spinner"></div>
-        </div>
-        <div class="loading-text">Loading Messages</div>
-        <div class="loading-subtext">Please wait while we fetch your conversations...</div>
-      </div>
-    </div>
-
     <!-- Header Section (Uniform Card Style) -->
     <div class="section-header-card minimal-header-card">
       <div class="section-header-content">
@@ -25,15 +14,6 @@
             <div class="section-header-title minimal-header-title">Messages</div>
             <div class="section-header-sub minimal-header-sub">Chat with your enrolled teachers and view announcements</div>
           </div>
-        </div>
-        <div class="header-actions">
-          <button @click="refreshPage" class="refresh-page-btn" :disabled="isRefreshingPage" title="Refresh Messages">
-            <svg :class="{ 'spin': isRefreshingPage }" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="23 4 23 10 17 10"></polyline>
-              <polyline points="1 20 1 14 7 14"></polyline>
-              <path d="m3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-            </svg>
-          </button>
         </div>
       </div>
     </div>
@@ -89,16 +69,8 @@
       <!-- Teachers Tab -->
       <div v-if="currentTab === 'teachers' || currentTab === 'archive'" class="tab-content">
 
-        <!-- Loading State -->
-        <div v-if="isLoadingTeachers" class="loading-state">
-          <div class="loading-spinner-small">
-            <div class="spinner"></div>
-          </div>
-          <p>Loading teachers...</p>
-        </div>
-
         <!-- Empty state when no deleted conversations -->
-        <div v-else-if="filteredTeachers.length === 0 && !hasDeletedConversations" class="empty-state">
+        <div v-if="filteredTeachers.length === 0 && !hasDeletedConversations" class="empty-state">
           <p>{{ showArchive ? 'No archived conversations' : 'No teachers found' }}</p>
           <span class="empty-subtext">{{ showArchive ? 'Archived conversations will appear here.' : 'Teachers from your enrolled subjects will appear here.' }}</span>
         </div>
@@ -670,6 +642,17 @@
         </div>
       </div>
     </div>
+
+    <!-- Loading Overlay -->
+    <div v-if="isLoading" class="loading-overlay">
+      <div class="loading-content">
+        <div class="loading-spinner-container">
+          <div class="loading-spinner"></div>
+        </div>
+        <p class="loading-text">{{ loadingMessage }}</p>
+        <p class="loading-subtext">Please wait a moment...</p>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -771,12 +754,10 @@ const messagesContainer = ref<HTMLElement | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
 
 // Loading states
-const isInitialLoading = ref(true)
-const isLoadingTeachers = ref(false)
-const isLoadingNotifications = ref(false)
+const isLoading = ref(true)
+const loadingMessage = ref('Loading messages...')
 const isLoadingMessages = ref(false)
 const isSendingMessage = ref(false)
-const isRefreshingPage = ref(false)
 const isRefreshingConversation = ref(false)
 
 const activeTeacherOptionsId = ref(null)
@@ -1290,292 +1271,266 @@ const getCurrentUser = async () => {
 // DATA LOADING METHODS
 // ================================
 
-const loadEnrolledSubjectsAndTeachers = async () => {
+const fetchMessages = async () => {
   try {
     if (!currentStudentId.value) {
-      console.error('No student ID available')
-      return
-    }
-    
-    isLoadingTeachers.value = true
-    console.log('Loading subjects and teachers for student:', currentStudentId.value)
-    
-    const { data: enrollments, error: enrollError } = await supabase
-      .from('enrollments')
-      .select('section_id')
-      .eq('student_id', currentStudentId.value)
-      .eq('status', 'active')
-    
-    if (enrollError) {
-      console.error('Error fetching enrollments:', enrollError)
-      throw enrollError
-    }
-    
-    console.log('Enrollments found:', enrollments)
-    
-    if (!enrollments || enrollments.length === 0) {
-      console.log('No enrollments found for this student')
+      console.log('⚠️ No student ID available')
       enrolledSubjects.value = []
       enrolledTeachers.value = []
+      notifications.value = []
+      isLoading.value = false
       return
     }
     
-    const sectionIds = enrollments.map(e => e.section_id)
+    console.log('📧 Fetching messages for student:', currentStudentId.value)
+    isLoading.value = true
+    loadingMessage.value = 'Loading your messages...'
     
-    console.log('Fetching sections for IDs:', sectionIds)
-    const { data: sections, error: sectionsError } = await supabase
-      .from('sections')
-      .select(`
-        id,
-        name,
-        section_code,
-        subject_id
-      `)
-      .in('id', sectionIds)
-    
-    if (sectionsError) {
-      console.error('Error fetching sections:', sectionsError)
-      throw sectionsError
-    }
-    
-    console.log('Sections found:', sections)
-    
-    if (!sections || sections.length === 0) {
-      enrolledSubjects.value = []
-      enrolledTeachers.value = []
-      return
-    }
-    
-    const subjectIds = [...new Set(sections.map(s => s.subject_id))]
-    const { data: subjects, error: subjectsError } = await supabase
-      .from('subjects')
-      .select('id, name, teacher_id')
-      .in('id', subjectIds)
-    
-    if (subjectsError) throw subjectsError
-    
-    const teacherIds = [...new Set(subjects.map(s => s.teacher_id))]
-    const { data: teachers, error: teachersError } = await supabase
-      .from('teachers')
-      .select('id, full_name, email')
-      .in('id', teacherIds)
-    
-    if (teachersError) throw teachersError
-    
-    console.log('Subjects:', subjects)
-    console.log('Teachers:', teachers)
-    
-    const processedSubjects = []
-    const processedTeachers = []
-    const subjectMap = new Map()
-    
-    const subjectsDataMap = new Map(subjects.map(s => [s.id, s]))
-    const teachersDataMap = new Map(teachers.map(t => [t.id, t]))
-    
-    for (const section of sections) {
-      const subject = subjectsDataMap.get(section.subject_id)
-      if (!subject) continue
+    // ============================================
+    // FETCH TEACHERS AND NOTIFICATIONS IN PARALLEL
+    // ============================================
+    const [teachersData, notificationsData] = await Promise.all([
+      // Fetch Teachers
+      (async () => {
+        const { data: enrollments, error: enrollError } = await supabase
+          .from('enrollments')
+          .select('section_id')
+          .eq('student_id', currentStudentId.value)
+          .eq('status', 'active')
+        
+        if (enrollError) {
+          console.error('Error fetching enrollments:', enrollError)
+          return { subjects: [], teachers: [] }
+        }
+        
+        if (!enrollments || enrollments.length === 0) {
+          console.log('No enrollments found for this student')
+          return { subjects: [], teachers: [] }
+        }
+        
+        const sectionIds = enrollments.map(e => e.section_id)
+        
+        const { data: sections, error: sectionsError } = await supabase
+          .from('sections')
+          .select('id, name, section_code, subject_id')
+          .in('id', sectionIds)
+        
+        if (sectionsError || !sections || sections.length === 0) {
+          return { subjects: [], teachers: [] }
+        }
+        
+        const subjectIds = [...new Set(sections.map(s => s.subject_id))]
+        const { data: subjects } = await supabase
+          .from('subjects')
+          .select('id, name, teacher_id')
+          .in('id', subjectIds)
+        
+        const teacherIds = [...new Set(subjects?.map(s => s.teacher_id) || [])]
+        const { data: teachers } = await supabase
+          .from('teachers')
+          .select('id, full_name, email')
+          .in('id', teacherIds)
+        
+        const processedSubjects = []
+        const processedTeachers = []
+        const subjectMap = new Map()
+        
+        const subjectsDataMap = new Map(subjects?.map(s => [s.id, s]) || [])
+        const teachersDataMap = new Map(teachers?.map(t => [t.id, t]) || [])
+        
+        for (const section of sections) {
+          const subject = subjectsDataMap.get(section.subject_id)
+          if (!subject) continue
+          
+          const teacher = teachersDataMap.get(subject.teacher_id)
+          if (!teacher) continue
+          
+          if (!subjectMap.has(subject.id)) {
+            processedSubjects.push({
+              id: subject.id,
+              name: subject.name,
+              code: section.section_code
+            })
+            subjectMap.set(subject.id, true)
+          }
+          
+          const { count: unreadCount } = await supabase
+            .from('messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('section_id', section.id)
+            .eq('sender_id', teacher.id)
+            .eq('recipient_id', currentStudentId.value)
+            .eq('message_type', 'direct')
+            .eq('is_read', false)
+          
+          const { data: lastMsgData } = await supabase
+            .from('messages')
+            .select('message_text, sent_at')
+            .eq('section_id', section.id)
+            .or(`and(sender_id.eq.${currentStudentId.value},recipient_id.eq.${teacher.id}),and(sender_id.eq.${teacher.id},recipient_id.eq.${currentStudentId.value})`)
+            .eq('message_type', 'direct')
+            .order('sent_at', { ascending: false })
+            .limit(1)
+          
+          const lastMsg = lastMsgData && lastMsgData.length > 0 ? lastMsgData[0] : null
+          
+          processedTeachers.push({
+            id: teacher.id,
+            teacher_name: teacher.full_name,
+            email: teacher.email,
+            subject_id: subject.id,
+            subject_name: subject.name,
+            section_id: section.id,
+            section_name: section.name,
+            section_code: section.section_code,
+            unread_count: unreadCount || 0,
+            last_message: lastMsg?.message_text || null,
+            last_message_time: lastMsg?.sent_at || null,
+            name: teacher.full_name,
+            archived: false
+          })
+        }
+        
+        return { subjects: processedSubjects, teachers: processedTeachers }
+      })(),
       
-      const teacher = teachersDataMap.get(subject.teacher_id)
-      if (!teacher) continue
-      
-      if (!subjectMap.has(subject.id)) {
-        processedSubjects.push({
-          id: subject.id,
-          name: subject.name,
-          code: section.section_code
+      // Fetch Notifications
+      (async () => {
+        const { data: enrollments } = await supabase
+          .from('enrollments')
+          .select('section_id')
+          .eq('student_id', currentStudentId.value)
+          .eq('status', 'active')
+        
+        if (!enrollments || enrollments.length === 0) {
+          return []
+        }
+        
+        const sectionIds = enrollments.map(e => e.section_id)
+        
+        const { data: messages, error } = await supabase
+          .from('messages')
+          .select('*')
+          .in('section_id', sectionIds)
+          .eq('message_type', 'announcement')
+          .is('recipient_id', null)
+          .order('sent_at', { ascending: false })
+        
+        if (error || !messages || messages.length === 0) {
+          return []
+        }
+        
+        const messageIds = messages.map(m => m.id)
+        let attachmentsMap: Record<string, any[]> = {}
+        
+        try {
+          const { data: attachments } = await supabase
+            .from('message_attachments')
+            .select('*')
+            .in('message_id', messageIds)
+          
+          if (attachments) {
+            attachments.forEach(att => {
+              if (!attachmentsMap[att.message_id]) {
+                attachmentsMap[att.message_id] = []
+              }
+              attachmentsMap[att.message_id].push({
+                name: att.file_name,
+                url: att.file_url,
+                type: att.file_type,
+                size: att.file_size || 'Unknown size',
+                path: att.file_path,
+                mimeType: att.mime_type
+              })
+            })
+          }
+        } catch (attachError) {
+          console.warn('Error loading attachments:', attachError)
+        }
+        
+        const { data: sections } = await supabase
+          .from('sections')
+          .select('id, name, subject_id')
+          .in('id', sectionIds)
+        
+        const sectionMap = new Map(sections?.map(s => [s.id, s]) || [])
+        
+        const subjectIds = [...new Set(sections?.map(s => s.subject_id) || [])]
+        const { data: subjects } = await supabase
+          .from('subjects')
+          .select('id, name')
+          .in('id', subjectIds)
+        
+        const subjectMap = new Map(subjects?.map(s => [s.id, s]) || [])
+        
+        const senderIds = [...new Set(messages.map(m => m.sender_id))]
+        const { data: senders } = await supabase
+          .from('teachers')
+          .select('id, full_name')
+          .in('id', senderIds)
+        
+        const senderMap = new Map(senders?.map(s => [s.id, s]) || [])
+        
+        const { data: messageReads } = await supabase
+          .from('message_reads')
+          .select('message_id, read_at')
+          .eq('reader_id', currentStudentId.value)
+          .in('message_id', messageIds)
+        
+        const readMap = new Map(messageReads?.map(mr => [mr.message_id, mr.read_at]) || [])
+        
+        return messages.map(msg => {
+          const section = sectionMap.get(msg.section_id)
+          const subject = section ? subjectMap.get(section.subject_id) : null
+          const sender = senderMap.get(msg.sender_id)
+          const messageAttachments = attachmentsMap[msg.id] || []
+          const isRead = readMap.has(msg.id)
+          
+          return {
+            notification_id: msg.id,
+            title: 'Class Announcement',
+            body: msg.message_text,
+            created_at: msg.sent_at,
+            is_read: isRead,
+            read_at: readMap.get(msg.id),
+            notification_type: 'announcement',
+            teacher_name: sender?.full_name || 'Unknown Teacher',
+            subject_name: subject?.name || 'Unknown Subject',
+            section_name: section?.name || 'Unknown Section',
+            section_id: msg.section_id,
+            has_attachments: messageAttachments.length > 0,
+            attachments: messageAttachments
+          }
         })
-        subjectMap.set(subject.id, true)
-      }
-      
-      const { count: unreadCount } = await supabase
-        .from('messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('section_id', section.id)
-        .eq('sender_id', teacher.id)
-        .eq('recipient_id', currentStudentId.value)
-        .eq('message_type', 'direct')
-        .eq('is_read', false)
-      
-      const { data: lastMsgData } = await supabase
-        .from('messages')
-        .select('message_text, sent_at')
-        .eq('section_id', section.id)
-        .or(`and(sender_id.eq.${currentStudentId.value},recipient_id.eq.${teacher.id}),and(sender_id.eq.${teacher.id},recipient_id.eq.${currentStudentId.value})`)
-        .eq('message_type', 'direct')
-        .order('sent_at', { ascending: false })
-        .limit(1)
-      
-      const lastMsg = lastMsgData && lastMsgData.length > 0 ? lastMsgData[0] : null
-      
-      processedTeachers.push({
-        id: teacher.id,
-        teacher_name: teacher.full_name,
-        email: teacher.email,
-        subject_id: subject.id,
-        subject_name: subject.name,
-        section_id: section.id,
-        section_name: section.name,
-        section_code: section.section_code,
-        unread_count: unreadCount || 0,
-        last_message: lastMsg?.message_text || null,
-        last_message_time: lastMsg?.sent_at || null,
-        name: teacher.full_name,
-        archived: false
-      })
-    }
+      })()
+    ])
     
-    enrolledSubjects.value = processedSubjects
-    enrolledTeachers.value = processedTeachers
+    // Update state
+    enrolledSubjects.value = teachersData.subjects
+    enrolledTeachers.value = teachersData.teachers
+    notifications.value = notificationsData
     
-    console.log('Processed subjects:', processedSubjects)
-    console.log('Processed teachers:', processedTeachers)
+    console.log('✓ Messages loaded:', {
+      subjects: teachersData.subjects.length,
+      teachers: teachersData.teachers.length,
+      notifications: notificationsData.length
+    })
     
   } catch (error) {
-    console.error('Error loading enrolled data:', error)
-    alert('Error loading messaging data. Please check console for details.')
+    console.error('❌ Error fetching messages:', error)
   } finally {
-    isLoadingTeachers.value = false
+    isLoading.value = false
   }
 }
 
+// Keep these for backward compatibility (they now just call fetchMessages)
+const loadEnrolledSubjectsAndTeachers = async () => {
+  await fetchMessages()
+}
+
 const loadNotifications = async () => {
-  try {
-    if (!currentStudentId.value) return
-    
-    isLoadingNotifications.value = true
-    console.log('Loading notifications for student:', currentStudentId.value)
-    
-    // Get student enrollments
-    const { data: enrollments } = await supabase
-      .from('enrollments')
-      .select('section_id')
-      .eq('student_id', currentStudentId.value)
-      .eq('status', 'active')
-    
-    if (!enrollments || enrollments.length === 0) {
-      notifications.value = []
-      return
-    }
-    
-    const sectionIds = enrollments.map(e => e.section_id)
-    
-    // Get broadcast messages for these sections
-    const { data: messages, error } = await supabase
-      .from('messages')
-      .select('*')
-      .in('section_id', sectionIds)
-      .eq('message_type', 'announcement')
-      .is('recipient_id', null) // Ensure it's a broadcast message
-      .order('sent_at', { ascending: false })
-    
-    if (error) throw error
-    
-    if (!messages || messages.length === 0) {
-      notifications.value = []
-      return
-    }
-    
-    // Load attachments for all messages
-    const messageIds = messages.map(m => m.id)
-    let attachmentsMap: Record<string, any[]> = {}
-    
-    try {
-      const { data: attachments, error: attachError } = await supabase
-        .from('message_attachments')
-        .select('*')
-        .in('message_id', messageIds)
-      
-      if (attachError) {
-        console.warn('Error loading attachments:', attachError)
-      } else if (attachments) {
-        attachments.forEach(att => {
-          if (!attachmentsMap[att.message_id]) {
-            attachmentsMap[att.message_id] = []
-          }
-          attachmentsMap[att.message_id].push({
-            name: att.file_name,
-            url: att.file_url,
-            type: att.file_type,
-            size: att.file_size || 'Unknown size',
-            path: att.file_path,
-            mimeType: att.mime_type
-          })
-        })
-      }
-    } catch (attachError) {
-      console.warn('Message attachments table not found or error:', attachError)
-    }
-    
-    // Load section details
-    const { data: sections } = await supabase
-      .from('sections')
-      .select('id, name, subject_id')
-      .in('id', sectionIds)
-    
-    const sectionMap = new Map(sections?.map(s => [s.id, s]) || [])
-    
-    // Load subject details
-    const subjectIds = [...new Set(sections?.map(s => s.subject_id) || [])]
-    const { data: subjects } = await supabase
-      .from('subjects')
-      .select('id, name')
-      .in('id', subjectIds)
-    
-    const subjectMap = new Map(subjects?.map(s => [s.id, s]) || [])
-    
-    // Load teacher details
-    const senderIds = [...new Set(messages.map(m => m.sender_id))]
-    const { data: senders } = await supabase
-      .from('teachers')
-      .select('id, full_name')
-      .in('id', senderIds)
-    
-    const senderMap = new Map(senders?.map(s => [s.id, s]) || [])
-    
-    // Check message reads for this student
-    const { data: messageReads } = await supabase
-      .from('message_reads')
-      .select('message_id, read_at')
-      .eq('reader_id', currentStudentId.value)
-      .in('message_id', messageIds)
-    
-    const readMap = new Map(messageReads?.map(mr => [mr.message_id, mr.read_at]) || [])
-    
-    // Transform messages to notifications
-    notifications.value = messages.map(msg => {
-      const section = sectionMap.get(msg.section_id)
-      const subject = section ? subjectMap.get(section.subject_id) : null
-      const sender = senderMap.get(msg.sender_id)
-      const messageAttachments = attachmentsMap[msg.id] || []
-      const isRead = readMap.has(msg.id)
-      
-      return {
-        notification_id: msg.id,
-        title: 'Class Announcement',
-        body: msg.message_text,
-        created_at: msg.sent_at,
-        is_read: isRead,
-        read_at: readMap.get(msg.id),
-        notification_type: 'announcement',
-        teacher_name: sender?.full_name || 'Unknown Teacher',
-        subject_name: subject?.name || 'Unknown Subject',
-        section_name: section?.name || 'Unknown Section',
-        section_id: msg.section_id,
-        has_attachments: messageAttachments.length > 0,
-        attachments: messageAttachments
-      }
-    })
-    
-    console.log('Loaded notifications with attachments:', notifications.value.length, 'notifications')
-    console.log('Attachments found:', Object.keys(attachmentsMap).length, 'messages have attachments')
-    
-  } catch (error) {
-    console.error('Error loading notifications:', error)
-    notifications.value = []
-  } finally {
-    isLoadingNotifications.value = false
-  }
+  // This now just calls fetchMessages() which loads everything
+  await fetchMessages()
 }
 
 // ================================
@@ -1917,7 +1872,7 @@ const clearNotifications = async () => {
 const setupRealTimeSubscriptions = () => {
   if (!currentStudentId.value) return
   
-  console.log('Setting up real-time subscriptions for student messages')
+  console.log('🔔 Setting up real-time subscriptions for student messages')
   
   messageChannel = supabase
     .channel('student-messages-realtime')
@@ -1929,19 +1884,23 @@ const setupRealTimeSubscriptions = () => {
         table: 'messages'
       },
       async (payload) => {
-        console.log('New message received:', payload.new)
+        console.log('📨 New message received:', payload.new)
         
         const newMessageData = payload.new
         
+        // If it's an announcement, refresh all messages
         if (newMessageData.message_type === 'announcement') {
-          await loadNotifications()
+          console.log('📢 New announcement - refreshing...')
+          setTimeout(async () => await fetchMessages(), 500)
           return
         }
         
+        // If it's a direct message to this student
         if (newMessageData.recipient_id === currentStudentId.value && 
             newMessageData.message_type === 'direct') {
           
-          await loadEnrolledSubjectsAndTeachers()
+          // Refresh the messages list to update unread counts
+          setTimeout(async () => await fetchMessages(), 500)
           
           if (isModalOpen.value && 
               activeTeacher.value && 
@@ -2003,7 +1962,30 @@ const setupRealTimeSubscriptions = () => {
           }
         }
         
-        await loadEnrolledSubjectsAndTeachers()
+        // Refresh messages to update unread counts
+        setTimeout(async () => await fetchMessages(), 500)
+      }
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'messages'
+      },
+      async (payload) => {
+        console.log('🗑️ Message deleted:', payload.old)
+        
+        // If a message was deleted, refresh the message list
+        setTimeout(async () => await fetchMessages(), 500)
+        
+        // If viewing the conversation, remove the message from current view
+        if (isModalOpen.value && activeTeacher.value) {
+          const messageIndex = currentMessages.value.findIndex(m => m.id === payload.old.id)
+          if (messageIndex !== -1) {
+            currentMessages.value.splice(messageIndex, 1)
+          }
+        }
       }
     )
     .on(
@@ -2035,6 +2017,20 @@ const setupRealTimeSubscriptions = () => {
             console.log('Attachment added to message:', newAttachment)
           }
         }
+      }
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'message_reads'
+      },
+      async (payload) => {
+        console.log('📖 Message marked as read:', payload.new)
+        
+        // Refresh to update unread counts
+        setTimeout(async () => await fetchMessages(), 500)
       }
     )
     .subscribe()
@@ -2078,14 +2074,14 @@ const setupRealTimeSubscriptions = () => {
           
           // Refresh the teacher/subject list
           setTimeout(async () => {
-            await loadEnrolledSubjectsAndTeachers()
+            await fetchMessages()
           }, 500)
           
         } else if (eventType === 'INSERT' && newRecord?.status === 'active') {
           console.log('🎉 Messages: New enrollment detected, refreshing available teachers...')
           
           setTimeout(async () => {
-            await loadEnrolledSubjectsAndTeachers()
+            await fetchMessages()
           }, 500)
         }
       }
@@ -2277,27 +2273,6 @@ const updateStudentPresence = async (isOnline) => {
 // REFRESH FUNCTIONS
 // ================================
 
-const refreshPage = async () => {
-  if (isRefreshingPage.value) return
-  
-  try {
-    isRefreshingPage.value = true
-    console.log('Refreshing student messages page...')
-    
-    // Refresh both teachers and notifications
-    await Promise.all([
-      loadEnrolledSubjectsAndTeachers(),
-      loadNotifications()
-    ])
-    
-    console.log('Student messages page refreshed successfully')
-  } catch (error) {
-    console.error('Error refreshing student messages page:', error)
-  } finally {
-    isRefreshingPage.value = false
-  }
-}
-
 const refreshConversation = async () => {
   if (!activeTeacher.value || isRefreshingConversation.value) return
   
@@ -2321,27 +2296,37 @@ const refreshConversation = async () => {
 // ================================
 
 onMounted(async () => {
-  console.log('Student messages component mounted')
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+  console.log('🚀 MESSAGES COMPONENT MOUNTED')
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
   
   document.addEventListener('click', handleClickOutside)
   
-  const userData = await getCurrentUser()
-  if (userData) {
-    console.log('Student authenticated:', userData.profile.full_name)
+  try {
+    const userData = await getCurrentUser()
+    if (!userData) {
+      console.error('❌ Authentication failed or user is not a student')
+      isLoading.value = false
+      await router.push('/login')
+      return
+    }
     
-    await Promise.all([
-      loadEnrolledSubjectsAndTeachers(),
-      loadNotifications()
-    ])
+    console.log('✓ Student authenticated:', userData.profile.full_name)
     
-    isInitialLoading.value = false
+    // Fetch all messages data
+    await fetchMessages()
     
+    // Setup real-time subscriptions
     setupRealTimeSubscriptions()
     await setupPresenceTracking()
     await updateStudentPresence(true)
-  } else {
-    console.error('Authentication failed or user is not a student')
-    isInitialLoading.value = false
+    
+    console.log('✅ INITIALIZATION COMPLETE')
+    
+  } catch (error) {
+    console.error('❌ MOUNT ERROR:', error)
+    isLoading.value = false
+    await router.push('/login')
   }
 })
 
@@ -3721,20 +3706,6 @@ onUnmounted(() => {
     font-size: 0.9rem;
   }
   
-  .header-actions {
-    align-self: flex-end;
-  }
-  
-  .refresh-page-btn {
-    width: 40px;
-    height: 40px;
-  }
-  
-  .refresh-page-btn svg {
-    width: 18px;
-    height: 18px;
-  }
-  
   /* Controls section mobile optimization */
   .controls-section {
     margin: 0.5rem;
@@ -4167,16 +4138,6 @@ onUnmounted(() => {
     font-size: 1.125rem;
   }
   
-  .refresh-page-btn {
-    width: 36px;
-    height: 36px;
-  }
-  
-  .refresh-page-btn svg {
-    width: 16px;
-    height: 16px;
-  }
-  
   .controls-section {
     margin: 0 0.75rem 1.25rem 0.75rem;
     padding: 0.875rem;
@@ -4457,21 +4418,18 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 3rem 2rem;
-  color: #6c757d;
-}
-.dark .loading-state {
-  color: #adb5bd;
+  padding: 4rem 2rem;
+  text-align: center;
 }
 
-.loading-spinner-small {
-  margin-bottom: 1rem;
-}
-
-.loading-spinner-small .spinner {
+.loading-spinner {
   width: 40px;
   height: 40px;
-  border-width: 3px;
+  border: 3px solid #f3f4f6;
+  border-top: 3px solid #3d8d7a;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
 }
 
 .loading-state p {
@@ -7974,46 +7932,6 @@ onUnmounted(() => {
 }
 
 /* Page Refresh Button */
-.refresh-page-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border: none;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #20c997, #17a085);
-  color: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.2);
-}
-
-.refresh-page-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #17a085, #138a72);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(32, 201, 151, 0.35);
-}
-
-.refresh-page-btn:active:not(:disabled) {
-  transform: translateY(0px);
-  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.2);
-}
-
-.refresh-page-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: 0 2px 8px rgba(32, 201, 151, 0.1);
-  background: linear-gradient(135deg, #20c997, #17a085);
-}
-
-.refresh-page-btn svg {
-  width: 20px;
-  height: 20px;
-  transition: transform 0.3s ease;
-}
 
 /* Modal Header Actions */
 .simple-header-actions {
@@ -8065,8 +7983,7 @@ onUnmounted(() => {
 }
 
 /* Spin Animation */
-.refresh-btn svg.spin,
-.refresh-page-btn svg.spin {
+.refresh-btn svg.spin {
   animation: spin 1s linear infinite;
 }
 
@@ -8080,21 +7997,18 @@ onUnmounted(() => {
 }
 
 /* Dark Mode Support */
-.dark .refresh-btn,
-.dark .refresh-page-btn {
+.dark .refresh-btn {
   background: linear-gradient(135deg, #20c997, #17a085);
   color: white;
   box-shadow: 0 2px 8px rgba(32, 201, 151, 0.3);
 }
 
-.dark .refresh-btn:hover:not(:disabled),
-.dark .refresh-page-btn:hover:not(:disabled) {
+.dark .refresh-btn:hover:not(:disabled) {
   background: linear-gradient(135deg, #17a085, #138a72);
   box-shadow: 0 6px 16px rgba(32, 201, 151, 0.4);
 }
 
-.dark .refresh-btn:disabled,
-.dark .refresh-page-btn:disabled {
+.dark .refresh-btn:disabled {
   background: linear-gradient(135deg, #20c997, #17a085);
   box-shadow: 0 2px 8px rgba(32, 201, 151, 0.2);
 }

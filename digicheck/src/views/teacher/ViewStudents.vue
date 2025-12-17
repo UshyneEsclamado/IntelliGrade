@@ -500,6 +500,7 @@ const unenrollStudent = async () => {
     console.log('🔄 Unenrolling student:', studentToRemove.full_name)
     console.log('📝 Student data:', studentToRemove)
     console.log('🆔 Enrollment ID:', studentToRemove.enrollment_id)
+    console.log('🆔 Section ID:', sectionId.value)
 
     if (!studentToRemove.enrollment_id) {
       console.error('❌ No enrollment ID found for student')
@@ -523,18 +524,34 @@ const unenrollStudent = async () => {
     console.log('✅ Found enrollment:', existingEnrollment)
 
     // Delete the enrollment record
-    const { error } = await supabase
+    const { data: deleteData, error: deleteError } = await supabase
       .from('enrollments')
       .delete()
       .eq('id', studentToRemove.enrollment_id)
+      .select()
 
-    if (error) {
-      console.error('❌ Unenroll error:', error)
-      alert(`Failed to unenroll student: ${error.message}`)
+    if (deleteError) {
+      console.error('❌ Unenroll error:', deleteError)
+      alert(`Failed to unenroll student: ${deleteError.message}`)
       return
     }
 
-    console.log('✅ Student unenrolled successfully')
+    console.log('✅ Delete operation completed:', deleteData)
+
+    // Verify deletion by trying to fetch the enrollment again
+    const { data: verifyData, error: verifyError } = await supabase
+      .from('enrollments')
+      .select('*')
+      .eq('id', studentToRemove.enrollment_id)
+      .maybeSingle()
+
+    if (verifyData) {
+      console.error('❌ Enrollment still exists after deletion!')
+      alert('Error: Failed to unenroll student. The enrollment record was not deleted.')
+      return
+    }
+
+    console.log('✅ Verified: Student enrollment successfully deleted')
 
     // Remove from local state
     students.value = students.value.filter(s => s.id !== studentToRemove.id)
@@ -544,6 +561,9 @@ const unenrollStudent = async () => {
 
     // Show success message
     alert(`${studentToRemove.full_name} has been successfully unenrolled from ${sectionName.value}.`)
+
+    // Refresh the students list to ensure consistency
+    await fetchStudents()
 
   } catch (error) {
     console.error('❌ Unenroll error:', error)
